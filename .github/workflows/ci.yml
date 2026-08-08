@@ -23,13 +23,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Lint with flake8
+      - name: Lint
         run: |
           pip install flake8
-          flake8 personal_index/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 personal_index/ --max-line-length=120 --ignore=E501,W503
       - name: Run tests
         run: |
-          python -m pytest tests/ -v --tb=short
-      - name: Check coverage
-        run: |
-          python -m pytest tests/ --cov=personal_index --cov-report=term-missing
+          pytest tests/ -v --tb=short
