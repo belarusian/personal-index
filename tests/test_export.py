@@ -18,8 +18,8 @@ from personal_index.export import (
     export_to_markdown,
     export_to_markdown_results,
 )
-from personal_index.index import SearchIndex
-from personal_index.models import IndexedPage, SearchResult
+from personal_index.index import SearchIndex, IndexedPage
+from personal_index.models import SearchResult
 
 
 @pytest.fixture
@@ -81,7 +81,6 @@ class TestExportToJson:
 
     def test_export_to_json_indent(self, sample_index):
         result = export_to_json(sample_index, indent=4)
-        # Should have 4-space indentation
         assert "    " in result
 
 
