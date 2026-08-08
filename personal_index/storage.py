@@ -1,161 +1,151 @@
-"""
-Storage management for personal-index.
+"""Page storage for crawled content."""
 
-Handles file-based storage for crawled pages, cache, and metadata.
-"""
+from __future__ import annotations
 
 import hashlib
-import json
 import os
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 
 @dataclass
 class StoredPage:
     """A page stored on disk."""
+
     url: str
-    title: str
-    content: str
-    content_type: str = "text/html"
-    status_code: int = 200
-    crawled_at: str = ""
+    title: str = ""
+    content: str = ""
     file_hash: str = ""
     file_size: int = 0
+    stored_at: str = ""
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        return {
+            "url": self.url,
+            "title": self.title,
+            "content": self.content,
+            "file_hash": self.file_hash,
+            "file_size": self.file_size,
+            "stored_at": self.stored_at,
+        }
 
     @classmethod
     def from_dict(cls, data: dict) -> "StoredPage":
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        return cls(**data)
 
 
+@dataclass
 class PageStore:
-    """File-based storage for crawled pages."""
+    """Stores crawled pages on disk."""
 
-    def __init__(self, store_dir: Optional[str] = None):
-        if store_dir is None:
-            store_dir = str(Path.home() / ".local" / "share" / "personal-index" / "pages")
-        self.store_dir = store_dir
-        self._metadata_path = os.path.join(store_dir, "metadata.json")
-        self._pages: dict[str, StoredPage] = {}
-        self._ensure_dir()
+    store_dir: str
+    _metadata: Dict[str, StoredPage] = field(default_factory=dict, repr=False)
+
+    def __post_init__(self):
+        os.makedirs(self.store_dir, exist_ok=True)
         self._load_metadata()
 
-    def _ensure_dir(self) -> None:
-        """Ensure the store directory exists."""
-        Path(self.store_dir).mkdir(parents=True, exist_ok=True)
-
     def _url_to_filename(self, url: str) -> str:
-        """Convert a URL to a safe filename."""
-        hash_input = url.encode("utf-8")
-        file_hash = hashlib.sha256(hash_input).hexdigest()[:16]
-        return f"{file_hash}.html"
+        """Convert URL to a safe filename."""
+        hash_val = hashlib.md5(url.encode()).hexdigest()[:16]
+        return f"{hash_val}.html"
 
     def _load_metadata(self) -> None:
-        """Load page metadata from file."""
-        if os.path.exists(self._metadata_path):
+        """Load metadata from disk."""
+        meta_file = os.path.join(self.store_dir, "_metadata.json")
+        if os.path.exists(meta_file):
             try:
-                with open(self._metadata_path, "r") as f:
+                import json
+                with open(meta_file, "r") as f:
                     data = json.load(f)
-                for url, page_data in data.items():
-                    self._pages[url] = StoredPage.from_dict(page_data)
+                self._metadata = {
+                    url: StoredPage.from_dict(d) for url, d in data.items()
+                }
             except (json.JSONDecodeError, KeyError):
-                self._pages = {}
+                self._metadata = {}
 
     def _save_metadata(self) -> None:
-        """Save page metadata to file."""
-        with open(self._metadata_path, "w") as f:
-            json.dump({url: p.to_dict() for url, p in self._pages.items()}, f, indent=2)
+        """Save metadata to disk."""
+        import json
+        meta_file = os.path.join(self.store_dir, "_metadata.json")
+        data = {url: page.to_dict() for url, page in self._metadata.items()}
+        with open(meta_file, "w") as f:
+            json.dump(data, f, indent=2)
 
-    def save_page(self, url: str, content: str, title: str = "",
-                  content_type: str = "text/html", status_code: int = 200) -> StoredPage:
+    def save_page(self, url: str, content: str, title: str = "") -> StoredPage:
         """Save a page to disk."""
         filename = self._url_to_filename(url)
         filepath = os.path.join(self.store_dir, filename)
-
-        with open(filepath, "w", encoding="utf-8") as f:
+        with open(filepath, "w") as f:
             f.write(content)
-
-        file_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        file_hash = hashlib.md5(content.encode()).hexdigest()
         file_size = os.path.getsize(filepath)
-
         page = StoredPage(
             url=url,
             title=title,
-            content="",  # Don't store full content in metadata
-            content_type=content_type,
-            status_code=status_code,
-            crawled_at=datetime.utcnow().isoformat(),
+            content=content,
             file_hash=file_hash,
             file_size=file_size,
+            stored_at=datetime.utcnow().isoformat(),
         )
-        self._pages[url] = page
+        self._metadata[url] = page
         self._save_metadata()
         return page
 
     def get_page(self, url: str) -> Optional[StoredPage]:
-        """Get metadata for a stored page."""
-        return self._pages.get(url)
+        """Get page metadata."""
+        return self._metadata.get(url)
 
     def get_page_content(self, url: str) -> Optional[str]:
-        """Get the raw content of a stored page."""
+        """Get page content from disk."""
+        if url not in self._metadata:
+            return None
         filename = self._url_to_filename(url)
         filepath = os.path.join(self.store_dir, filename)
         if os.path.exists(filepath):
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, "r") as f:
                 return f.read()
         return None
 
     def delete_page(self, url: str) -> bool:
-        """Delete a stored page."""
+        """Delete a page from disk."""
+        if url not in self._metadata:
+            return False
         filename = self._url_to_filename(url)
         filepath = os.path.join(self.store_dir, filename)
-
         if os.path.exists(filepath):
             os.remove(filepath)
+        del self._metadata[url]
+        self._save_metadata()
+        return True
 
-        if url in self._pages:
-            del self._pages[url]
-            self._save_metadata()
-            return True
-        return False
-
-    def list_pages(self) -> list[StoredPage]:
+    def list_pages(self) -> List[StoredPage]:
         """List all stored pages."""
-        return list(self._pages.values())
+        return list(self._metadata.values())
 
     def count_pages(self) -> int:
         """Count stored pages."""
-        return len(self._pages)
+        return len(self._metadata)
 
     def get_total_size(self) -> int:
-        """Get total storage size in bytes."""
-        total = 0
-        for page in self._pages.values():
-            total += page.file_size
-        return total
+        """Get total size of stored pages."""
+        return sum(p.file_size for p in self._metadata.values())
 
     def clear(self) -> None:
         """Clear all stored pages."""
-        for page in self._pages.values():
-            filename = self._url_to_filename(page.url)
+        for filename in os.listdir(self.store_dir):
             filepath = os.path.join(self.store_dir, filename)
-            if os.path.exists(filepath):
+            if os.path.isfile(filepath) and filename != "_metadata.json":
                 os.remove(filepath)
-        self._pages.clear()
+        self._metadata = {}
         self._save_metadata()
 
     def has_page(self, url: str) -> bool:
         """Check if a page is stored."""
-        return url in self._pages
+        return url in self._metadata
 
     def get_page_hash(self, url: str) -> Optional[str]:
-        """Get the content hash of a stored page."""
-        page = self._pages.get(url)
-        if page:
-            return page.file_hash
-        return None
+        """Get the hash of a stored page."""
+        page = self._metadata.get(url)
+        return page.file_hash if page else None
