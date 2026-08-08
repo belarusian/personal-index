@@ -1,276 +1,297 @@
-"""Local search index with full-text search and relevance scoring."""
+"""
+Local search index for personal-index.
 
-import json
+Provides full-text search with relevance scoring using an inverted index
+stored in SQLite.
+"""
+
+import sqlite3
 import math
+import re
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
-from personal_index.content import ExtractedContent, tokenize, remove_stopwords, compute_tf
 
 
 @dataclass
-class DocumentEntry:
-    """A document entry in the search index."""
-
+class IndexedPage:
+    """A page stored in the search index."""
     url: str
-    title: str = ""
-    text: str = ""
-    meta_description: str = ""
-    keywords: List[str] = field(default_factory=list)
-    token_count: int = 0
-    indexed_at: str = ""
-    interest_topics: List[str] = field(default_factory=list)
+    title: str
+    content: str
+    keywords: list[str]
+    score: float
+    indexed_at: str
+    source_interest: str = ""
+    word_count: int = 0
 
     def to_dict(self) -> dict:
         return {
             "url": self.url,
             "title": self.title,
-            "text": self.text,
-            "meta_description": self.meta_description,
+            "content": self.content,
             "keywords": self.keywords,
-            "token_count": self.token_count,
+            "score": self.score,
             "indexed_at": self.indexed_at,
-            "interest_topics": self.interest_topics,
+            "source_interest": self.source_interest,
+            "word_count": self.word_count,
         }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "DocumentEntry":
-        return cls(**data)
 
 
 @dataclass
 class SearchResult:
-    """A single search result with relevance score."""
-
+    """A single search result."""
     url: str
     title: str
-    snippet: str = ""
-    score: float = 0.0
-    matched_terms: List[str] = field(default_factory=list)
-    interest_topics: List[str] = field(default_factory=list)
+    snippet: str
+    relevance_score: float
+    source_interest: str = ""
+    indexed_at: str = ""
 
     def to_dict(self) -> dict:
         return {
             "url": self.url,
             "title": self.title,
             "snippet": self.snippet,
-            "score": self.score,
-            "matched_terms": self.matched_terms,
-            "interest_topics": self.interest_topics,
+            "relevance_score": self.relevance_score,
+            "source_interest": self.source_interest,
+            "indexed_at": self.indexed_at,
         }
 
 
 class SearchIndex:
-    """Inverted index for full-text search with relevance scoring."""
+    """Full-text search index backed by SQLite."""
 
-    def __init__(self, index_dir: Optional[Path] = None):
-        self.index_dir = index_dir or Path("index")
-        self.index_dir.mkdir(parents=True, exist_ok=True)
-        self.inverted_index: Dict[str, Dict[str, float]] = {}
-        self.documents: Dict[str, DocumentEntry] = {}
-        self._load()
+    SCHEMA_VERSION = 1
 
-    def _index_path(self) -> Path:
-        return self.index_dir / "inverted_index.json"
+    def __init__(self, db_path: Optional[str] = None):
+        if db_path is None:
+            data_dir = Path.home() / ".local" / "share" / "personal-index"
+            db_path = str(data_dir / "index.db")
+        self.db_path = db_path
+        self._ensure_dirs()
+        self._conn = sqlite3.connect(self.db_path)
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA synchronous=NORMAL")
+        self._init_schema()
 
-    def _docs_path(self) -> Path:
-        return self.index_dir / "documents.json"
+    def _ensure_dirs(self) -> None:
+        """Ensure the database directory exists."""
+        path = Path(self.db_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
-    def _load(self) -> None:
-        """Load index from disk."""
-        if self._index_path().exists():
-            with open(self._index_path()) as f:
-                self.inverted_index = json.load(f)
-        if self._docs_path().exists():
-            with open(self._docs_path()) as f:
-                docs_data = json.load(f)
-                self.documents = {
-                    url: DocumentEntry.from_dict(d) for url, d in docs_data.items()
-                }
+    def _init_schema(self) -> None:
+        """Initialize the database schema."""
+        self._conn.executescript("""
+            CREATE TABLE IF NOT EXISTS pages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL DEFAULT '',
+                content TEXT NOT NULL DEFAULT '',
+                keywords TEXT NOT NULL DEFAULT '',
+                score REAL NOT NULL DEFAULT 0.0,
+                indexed_at TEXT NOT NULL,
+                source_interest TEXT NOT NULL DEFAULT '',
+                word_count INTEGER NOT NULL DEFAULT 0
+            );
 
-    def save(self) -> None:
-        """Save index to disk."""
-        with open(self._index_path(), "w") as f:
-            json.dump(self.inverted_index, f)
-        with open(self._docs_path(), "w") as f:
-            json.dump(
-                {url: doc.to_dict() for url, doc in self.documents.items()}, f
+            CREATE TABLE IF NOT EXISTS inverted_index (
+                word TEXT NOT NULL,
+                page_id INTEGER NOT NULL,
+                frequency INTEGER NOT NULL DEFAULT 1,
+                PRIMARY KEY (word, page_id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_word ON inverted_index(word);
+            CREATE INDEX IF NOT EXISTS idx_page ON inverted_index(page_id);
+            CREATE INDEX IF NOT EXISTS idx_score ON pages(score);
+            CREATE INDEX IF NOT EXISTS idx_interest ON pages(source_interest);
+        """)
+        self._conn.commit()
+
+    def _tokenize(self, text: str) -> list[str]:
+        """Tokenize text into lowercase words."""
+        if not text:
+            return []
+        text = text.lower()
+        words = re.findall(r'\b[a-z0-9]+\b', text)
+        return [w for w in words if len(w) > 1]
+
+    def _tf_idf_score(self, word: str, doc_freq: int, term_freq: int, total_docs: int) -> float:
+        """Calculate TF-IDF score for a word."""
+        if total_docs == 0:
+            return 0.0
+        tf = term_freq
+        idf = math.log((1 + total_docs) / (1 + doc_freq)) + 1
+        return tf * idf
+
+    def add_page(self, page: IndexedPage) -> int:
+        """Add or update a page in the index. Returns page id."""
+        tokens = self._tokenize(page.content)
+        word_freq: dict[str, int] = {}
+        for token in tokens:
+            word_freq[token] = word_freq.get(token, 0) + 1
+
+        cursor = self._conn.cursor()
+        cursor.execute(
+            "SELECT id FROM pages WHERE url = ?", (page.url,)
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            page_id = existing[0]
+            cursor.execute(
+                """UPDATE pages SET title = ?, content = ?, keywords = ?,
+                   score = ?, indexed_at = ?, source_interest = ?, word_count = ?
+                   WHERE id = ?""",
+                (page.title, page.content, ",".join(page.keywords),
+                 page.score, page.indexed_at, page.source_interest,
+                 page.word_count, page_id)
+            )
+            cursor.execute("DELETE FROM inverted_index WHERE page_id = ?", (page_id,))
+        else:
+            cursor.execute(
+                """INSERT INTO pages (url, title, content, keywords, score,
+                   indexed_at, source_interest, word_count)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (page.url, page.title, page.content, ",".join(page.keywords),
+                 page.score, page.indexed_at, page.source_interest,
+                 page.word_count)
+            )
+            page_id = cursor.lastrowid
+
+        for word, freq in word_freq.items():
+            cursor.execute(
+                "INSERT OR REPLACE INTO inverted_index (word, page_id, frequency) VALUES (?, ?, ?)",
+                (word, page_id, freq)
             )
 
-    def add_document(self, content: ExtractedContent, interest_topics: Optional[List[str]] = None) -> None:
-        """Add a document to the index."""
-        if interest_topics is None:
-            interest_topics = []
+        self._conn.commit()
+        return page_id
 
-        searchable_text = content.get_searchable_text()
-        tokens = tokenize(searchable_text)
-        tokens = remove_stopwords(tokens)
-        tf = compute_tf(tokens)
+    def remove_page(self, url: str) -> bool:
+        """Remove a page from the index."""
+        cursor = self._conn.cursor()
+        cursor.execute("SELECT id FROM pages WHERE url = ?", (url,))
+        row = cursor.fetchone()
+        if row:
+            page_id = row[0]
+            cursor.execute("DELETE FROM inverted_index WHERE page_id = ?", (page_id,))
+            cursor.execute("DELETE FROM pages WHERE id = ?", (page_id,))
+            self._conn.commit()
+            return True
+        return False
 
-        # Store document
-        entry = DocumentEntry(
-            url=content.url,
-            title=content.title,
-            text=content.text[:5000],  # Limit stored text
-            meta_description=content.meta_description,
-            keywords=content.get_keywords(),
-            token_count=len(tokens),
-            indexed_at=content.fetched_at,
-            interest_topics=interest_topics,
-        )
-        self.documents[content.url] = entry
-
-        # Update inverted index
-        doc_id = content.url
-        for token, freq in tf.items():
-            if token not in self.inverted_index:
-                self.inverted_index[token] = {}
-            self.inverted_index[token][doc_id] = freq
-
-    def remove_document(self, url: str) -> bool:
-        """Remove a document from the index."""
-        if url not in self.documents:
-            return False
-
-        entry = self.documents[url]
-        searchable_text = entry.title + " " + entry.meta_description + " " + entry.text
-        tokens = tokenize(searchable_text)
-        tokens = remove_stopwords(tokens)
-
-        for token in set(tokens):
-            if token in self.inverted_index:
-                self.inverted_index[token].pop(url, None)
-                if not self.inverted_index[token]:
-                    del self.inverted_index[token]
-
-        del self.documents[url]
-        return True
-
-    def _compute_idf(self, term: str) -> float:
-        """Compute IDF for a term with smoothing."""
-        num_docs = len(self.documents)
-        num_containing = len(self.inverted_index.get(term, {}))
-        # Smoothed IDF to avoid zero scores
-        return math.log(1 + (num_docs / (1 + num_containing))) + 0.1
-
-    def search(
-        self,
-        query: str,
-        limit: int = 20,
-        boost_interests: bool = True,
-    ) -> List[SearchResult]:
-        """Search the index and return ranked results."""
-        query_tokens = tokenize(query)
-        query_tokens = remove_stopwords(query_tokens)
-
-        if not query_tokens:
+    def search(self, query: str, limit: int = 20) -> list[SearchResult]:
+        """Search the index for a query string."""
+        tokens = self._tokenize(query)
+        if not tokens:
             return []
 
-        # Find matching documents
-        scores: Dict[str, float] = {}
-        matched_terms: Dict[str, set] = {}
+        cursor = self._conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM pages")
+        total_docs = cursor.fetchone()[0]
 
-        for token in query_tokens:
-            if token in self.inverted_index:
-                idf = self._compute_idf(token)
-                for doc_id, tf in self.inverted_index[token].items():
-                    if doc_id not in scores:
-                        scores[doc_id] = 0.0
-                        matched_terms[doc_id] = set()
-                    scores[doc_id] += tf * idf
-                    matched_terms[doc_id].add(token)
+        page_scores: dict[int, float] = {}
 
-        # Boost documents matching interest topics
-        if boost_interests:
-            query_lower = query.lower()
-            for doc_id in scores:
-                if doc_id in self.documents:
-                    entry = self.documents[doc_id]
-                    for topic in entry.interest_topics:
-                        if topic.lower() in query_lower:
-                            scores[doc_id] *= 1.5
+        for token in tokens:
+            cursor.execute(
+                """SELECT page_id, frequency FROM inverted_index WHERE word = ?""",
+                (token,)
+            )
+            rows = cursor.fetchall()
+            doc_freq = len(rows)
 
-        # Title boost
-        for doc_id in scores:
-            if doc_id in self.documents:
-                entry = self.documents[doc_id]
-                title_tokens = set(tokenize(entry.title))
-                query_set = set(query_tokens)
-                title_overlap = title_tokens & query_set
-                if title_overlap:
-                    scores[doc_id] *= (1 + 0.5 * len(title_overlap))
+            for page_id, freq in rows:
+                score = self._tf_idf_score(token, doc_freq, freq, total_docs)
+                page_scores[page_id] = page_scores.get(page_id, 0) + score
 
-        # Sort by score
-        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        if not page_scores:
+            return []
+
+        page_ids = list(page_scores.keys())
+        placeholders = ",".join("?" * len(page_ids))
+        cursor.execute(
+            f"""SELECT id, url, title, source_interest, indexed_at FROM pages
+                WHERE id IN ({placeholders})""",
+            page_ids
+        )
 
         results = []
-        for doc_id, score in ranked[:limit]:
-            if doc_id in self.documents:
-                entry = self.documents[doc_id]
-                snippet = self._generate_snippet(entry, query_tokens)
-                result = SearchResult(
-                    url=doc_id,
-                    title=entry.title,
-                    snippet=snippet,
-                    score=round(score, 4),
-                    matched_terms=list(matched_terms.get(doc_id, set())),
-                    interest_topics=entry.interest_topics,
-                )
-                results.append(result)
+        for row in cursor.fetchall():
+            page_id, url, title, source_interest, indexed_at = row
+            relevance = page_scores[page_id]
+            snippet = self._generate_snippet(title, url, query)
+            results.append(SearchResult(
+                url=url,
+                title=title,
+                snippet=snippet,
+                relevance_score=relevance,
+                source_interest=source_interest,
+                indexed_at=indexed_at,
+            ))
 
-        return results
+        results.sort(key=lambda r: r.relevance_score, reverse=True)
+        return results[:limit]
 
-    def _generate_snippet(self, entry: DocumentEntry, query_tokens: List[str]) -> str:
-        """Generate a text snippet around matched terms."""
-        text = entry.text
-        if not text:
-            return entry.meta_description or ""
+    def _generate_snippet(self, title: str, url: str, query: str, max_length: int = 150) -> str:
+        """Generate a snippet for a search result."""
+        return title[:max_length]
 
-        # Find first occurrence of any query term
-        best_pos = 0
-        for token in query_tokens:
-            pos = text.lower().find(token)
-            if pos != -1 and (best_pos == 0 or pos < best_pos):
-                best_pos = pos
+    def get_page_count(self) -> int:
+        """Get the total number of indexed pages."""
+        cursor = self._conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM pages")
+        return cursor.fetchone()[0]
 
-        # Extract snippet around the match
-        start = max(0, best_pos - 50)
-        end = min(len(text), best_pos + 150)
-        snippet = text[start:end].strip()
-        if start > 0:
-            snippet = "..." + snippet
-        if end < len(text):
-            snippet += "..."
-        return snippet
+    def get_page(self, url: str) -> Optional[IndexedPage]:
+        """Get a page by URL."""
+        cursor = self._conn.cursor()
+        cursor.execute(
+            "SELECT url, title, content, keywords, score, indexed_at, source_interest, word_count FROM pages WHERE url = ?",
+            (url,)
+        )
+        row = cursor.fetchone()
+        if row:
+            return IndexedPage(
+                url=row[0], title=row[1], content=row[2],
+                keywords=row[3].split(",") if row[3] else [],
+                score=row[4], indexed_at=row[5],
+                source_interest=row[6], word_count=row[7]
+            )
+        return None
 
-    def get_document(self, url: str) -> Optional[DocumentEntry]:
-        """Get a document by URL."""
-        return self.documents.get(url)
-
-    def get_document_count(self) -> int:
-        """Get total number of indexed documents."""
-        return len(self.documents)
-
-    def get_term_count(self) -> int:
-        """Get total number of unique terms in the index."""
-        return len(self.inverted_index)
+    def list_pages(self, limit: int = 50, offset: int = 0) -> list[IndexedPage]:
+        """List indexed pages."""
+        cursor = self._conn.cursor()
+        cursor.execute(
+            "SELECT url, title, content, keywords, score, indexed_at, source_interest, word_count FROM pages ORDER BY score DESC LIMIT ? OFFSET ?",
+            (limit, offset)
+        )
+        pages = []
+        for row in cursor.fetchall():
+            pages.append(IndexedPage(
+                url=row[0], title=row[1], content=row[2],
+                keywords=row[3].split(",") if row[3] else [],
+                score=row[4], indexed_at=row[5],
+                source_interest=row[6], word_count=row[7]
+            ))
+        return pages
 
     def clear(self) -> None:
-        """Clear the entire index."""
-        self.inverted_index = {}
-        self.documents = {}
-        self.save()
+        """Clear all indexed data."""
+        self._conn.executescript("DELETE FROM inverted_index; DELETE FROM pages;")
+        self._conn.commit()
 
-    def get_urls(self) -> List[str]:
-        """Get all indexed URLs."""
-        return list(self.documents.keys())
+    def close(self) -> None:
+        """Close the database connection."""
+        if self._conn:
+            self._conn.close()
 
-    def get_stats(self) -> dict:
-        """Get index statistics."""
-        return {
-            "document_count": len(self.documents),
-            "term_count": len(self.inverted_index),
-            "index_dir": str(self.index_dir),
-        }
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
