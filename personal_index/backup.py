@@ -90,17 +90,21 @@ class BackupManager:
             mode = "w"
         archive_path = backup_path / archive_name
 
-        with tarfile.open(archive_path, mode) as tar:
+        with tarfile.open(str(archive_path), mode) as tar:
             for f in files:
-                tar.add(f, arcname=str(f.relative_to(source_path)))
+                tar.add(str(f), arcname=str(f.relative_to(source_path)))
 
         # Save manifest
         manifest_path = backup_path / f"backup_{manifest.backup_id}.json"
-        with open(manifest_path, "w") as f:
+        with open(str(manifest_path), "w") as f:
             json.dump(manifest.to_dict(), f, indent=2)
 
-        manifest.metadata["archive_path"] = str(archive_path)
+        manifest.metadata["archive_path"] = str(archive_path.resolve())
         manifest.metadata["compressed"] = compress
+
+        # Re-save manifest with updated metadata
+        with open(str(manifest_path), "w") as f:
+            json.dump(manifest.to_dict(), f, indent=2)
 
         return manifest
 
@@ -113,7 +117,7 @@ class BackupManager:
         manifests = []
         for manifest_file in sorted(backup_path.glob("backup_*.json")):
             try:
-                with open(manifest_file) as f:
+                with open(str(manifest_file)) as f:
                     data = json.load(f)
                 manifests.append(BackupManifest.from_dict(data))
             except (json.JSONDecodeError, KeyError):
@@ -129,20 +133,20 @@ class BackupManager:
         if not manifest_file.exists():
             raise FileNotFoundError(f"Backup not found: {backup_id}")
 
-        with open(manifest_file) as f:
+        with open(str(manifest_file)) as f:
             manifest = BackupManifest.from_dict(json.load(f))
 
         # Find archive
         archive_path = Path(manifest.metadata.get("archive_path", ""))
-        if not archive_path.exists():
-            # Try to find by name
+        if not archive_path.exists() or not archive_path.is_file():
+            # Try to find by name in backup directory
             archive_name = f"backup_{backup_id}.tar.gz"
             archive_path = backup_path / archive_name
-            if not archive_path.exists():
+            if not archive_path.exists() or not archive_path.is_file():
                 archive_name = f"backup_{backup_id}.tar"
                 archive_path = backup_path / archive_name
 
-        if not archive_path.exists():
+        if not archive_path.exists() or not archive_path.is_file():
             raise FileNotFoundError(f"Archive not found for backup: {backup_id}")
 
         # Determine mode
@@ -154,10 +158,10 @@ class BackupManager:
         target.mkdir(parents=True, exist_ok=True)
 
         restored_files = 0
-        with tarfile.open(archive_path, mode) as tar:
+        with tarfile.open(str(archive_path), mode) as tar:
             members = tar.getnames()
             restored_files = len(members)
-            tar.extractall(path=target)
+            tar.extractall(path=str(target))
 
         return {
             "backup_id": backup_id,
@@ -192,7 +196,7 @@ class BackupManager:
         if not manifest_file.exists():
             return None
 
-        with open(manifest_file) as f:
+        with open(str(manifest_file)) as f:
             return BackupManifest.from_dict(json.load(f))
 
     def get_total_backup_size(self) -> int:
