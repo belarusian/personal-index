@@ -1,7 +1,7 @@
 """Data models for personal-index."""
 
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import json
 
@@ -13,7 +13,7 @@ class Interest:
     keywords: list = field(default_factory=list)
     url_patterns: list = field(default_factory=list)
     topics: list = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     enabled: bool = True
 
     def to_dict(self) -> dict:
@@ -53,7 +53,7 @@ class IndexedPage:
     content: str = ""
     keywords: list = field(default_factory=list)
     matched_interests: list = field(default_factory=list)
-    crawled_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    crawled_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     domain: str = ""
     status_code: int = 200
     content_length: int = 0
