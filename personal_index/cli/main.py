@@ -6,11 +6,23 @@ and viewing results.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 import click
 
 from personal_index.config import AppConfig, Interest
+
+
+def _get_config(config_dir: Optional[str]) -> AppConfig:
+    """Load config, optionally from a custom directory."""
+    if config_dir:
+        config = AppConfig.load(Path(config_dir) / "config.json")
+        config.config_dir = Path(config_dir)
+        config.index_dir = Path(config_dir) / "index"
+    else:
+        config = AppConfig.load()
+    return config
 
 
 @click.group()
@@ -60,11 +72,7 @@ def interest_add(
     config_dir: Optional[str],
 ) -> None:
     """Add a new interest to track."""
-    config = AppConfig.load()
-    if config_dir:
-        from pathlib import Path
-
-        config.config_dir = Path(config_dir)
+    config = _get_config(config_dir)
 
     # Check for duplicate topic
     for existing in config.interests:
@@ -93,11 +101,7 @@ def interest_add(
 @click.option("--config-dir", type=click.Path(), default=None, help="Config directory.")
 def interest_list(config_dir: Optional[str]) -> None:
     """List all tracked interests."""
-    config = AppConfig.load()
-    if config_dir:
-        from pathlib import Path
-
-        config.config_dir = Path(config_dir)
+    config = _get_config(config_dir)
 
     if not config.interests:
         click.echo("No interests configured. Use 'personal-index interest add' to add one.")
@@ -120,11 +124,7 @@ def interest_list(config_dir: Optional[str]) -> None:
 @click.option("--config-dir", type=click.Path(), default=None, help="Config directory.")
 def interest_remove(topic: str, config_dir: Optional[str]) -> None:
     """Remove a tracked interest."""
-    config = AppConfig.load()
-    if config_dir:
-        from pathlib import Path
-
-        config.config_dir = Path(config_dir)
+    config = _get_config(config_dir)
 
     original_len = len(config.interests)
     config.interests = [i for i in config.interests if i.topic.lower() != topic.lower()]
@@ -159,11 +159,7 @@ def crawl(
     from personal_index.filter import ContentFilter
     from personal_index.indexer import SearchIndex
 
-    config = AppConfig.load()
-    if config_dir:
-        from pathlib import Path
-
-        config.config_dir = Path(config_dir)
+    config = _get_config(config_dir)
 
     if depth is not None:
         config.crawler.max_depth = depth
@@ -217,11 +213,7 @@ def search(
     """Search the local index."""
     from personal_index.indexer import SearchIndex
 
-    config = AppConfig.load()
-    if config_dir:
-        from pathlib import Path
-
-        config.config_dir = Path(config_dir)
+    config = _get_config(config_dir)
 
     index = SearchIndex(index_dir=config.index_dir)
     index.load()
@@ -256,11 +248,7 @@ def status(config_dir: Optional[str]) -> None:
     """Show index and configuration status."""
     from personal_index.indexer import SearchIndex
 
-    config = AppConfig.load()
-    if config_dir:
-        from pathlib import Path
-
-        config.config_dir = Path(config_dir)
+    config = _get_config(config_dir)
 
     index = SearchIndex(index_dir=config.index_dir)
     index.load()
@@ -286,11 +274,7 @@ def stats(config_dir: Optional[str]) -> None:
     """Show detailed index statistics."""
     from personal_index.indexer import SearchIndex
 
-    config = AppConfig.load()
-    if config_dir:
-        from pathlib import Path
-
-        config.config_dir = Path(config_dir)
+    config = _get_config(config_dir)
 
     index = SearchIndex(index_dir=config.index_dir)
     index.load()
