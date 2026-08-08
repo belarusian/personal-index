@@ -115,7 +115,7 @@ def word_frequency(text: str, min_freq: int = 1, stop_words: set[str] | None = N
     """
     if not text:
         return {}
-    words = re.findall(r"\b[a-zA-Z]{2,}\b", text.lower())
+    words = re.findall(r"\b[a-zA-Z]+\b", text.lower())
     if stop_words:
         words = [w for w in words if w not in stop_words]
     counter = Counter(words)
@@ -133,8 +133,19 @@ def extract_keywords(text: str, top_n: int = 10, min_freq: int = 2) -> list[tupl
     Returns:
         List of (word, frequency) tuples sorted by frequency descending.
     """
-    freq = word_frequency(text, min_freq=min_freq)
-    return sorted(freq.items(), key=lambda x: x[1], reverse=True)[:top_n]
+    # First get words meeting min_freq threshold
+    freq_filtered = word_frequency(text, min_freq=min_freq)
+    result = sorted(freq_filtered.items(), key=lambda x: x[1], reverse=True)
+
+    # If we need more results to reach top_n, include remaining words
+    if len(result) < top_n:
+        freq_all = word_frequency(text, min_freq=1)
+        existing_words = {w for w, _ in result}
+        remaining = [(w, f) for w, f in freq_all.items() if w not in existing_words]
+        remaining.sort(key=lambda x: x[1], reverse=True)
+        result.extend(remaining[:top_n - len(result)])
+
+    return result[:top_n]
 
 
 def levenshtein_distance(s1: str, s2: str) -> int:
@@ -271,3 +282,43 @@ def read_time_minutes(text: str, wpm: int = 200) -> float:
     """
     words = count_words(text)
     return max(1, round(words / wpm))
+
+
+# Common English stopwords for text processing
+STOPWORDS: set[str] = {
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "is", "it", "its", "this", "that", "these",
+    "those", "was", "were", "be", "been", "being", "have", "has", "had",
+    "do", "does", "did", "will", "would", "could", "should", "may", "might",
+    "shall", "can", "need", "dare", "ought", "used", "not", "no", "nor",
+    "so", "if", "then", "than", "too", "very", "just", "about", "above",
+    "after", "again", "all", "also", "am", "any", "as", "because", "before",
+    "between", "both", "each", "few", "further", "get", "got", "he", "her",
+    "here", "him", "his", "how", "i", "into", "more", "most", "my", "now",
+    "only", "other", "our", "out", "over", "own", "same", "she", "some",
+    "such", "there", "they", "through", "up", "we", "what", "when", "where",
+    "which", "while", "who", "whom", "why", "you", "your", "s", "t", "me",
+    "himself", "herself", "itself", "themselves", "myself", "ourselves",
+    "yourself", "yourselves", "down", "off", "once", "upon", "yet",
+}
+
+
+def tokenize(text: str, lowercase: bool = True, remove_stopwords: bool = False) -> list[str]:
+    """Tokenize text into words.
+
+    Args:
+        text: Input text.
+        lowercase: Whether to convert to lowercase.
+        remove_stopwords: Whether to remove common English stopwords.
+
+    Returns:
+        List of token strings.
+    """
+    if not text:
+        return []
+    tokens = re.findall(r"\b[a-zA-Z]{2,}\b", text)
+    if lowercase:
+        tokens = [t.lower() for t in tokens]
+    if remove_stopwords:
+        tokens = [t for t in tokens if t not in STOPWORDS]
+    return tokens

@@ -22,7 +22,7 @@ class TfidfScorer:
         """Add a document to the corpus. Returns document ID."""
         doc_id = self._next_id
         self._next_id += 1
-        tokens = tokenize(text)
+        tokens = tokenize(text, remove_stopwords=True)
         self._doc_terms[doc_id] = Counter(tokens)
         self._doc_count += 1
         unique_tokens = set(tokens)
@@ -62,7 +62,7 @@ class TfidfScorer:
 
     def score_query(self, query: str, doc_id: int) -> float:
         """Score a document against a query using TF-IDF dot product."""
-        query_tokens = tokenize(query)
+        query_tokens = tokenize(query, remove_stopwords=True)
         if not query_tokens or doc_id not in self._doc_terms:
             return 0.0
         doc_tfidf = self.compute_tfidf(doc_id)

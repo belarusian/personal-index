@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from collections import Counter
 from dataclasses import dataclass
@@ -40,7 +41,7 @@ class KeywordExtractor:
         """Extract keywords from text."""
         if not text:
             return []
-        tokens = tokenize(text)
+        tokens = tokenize(text, remove_stopwords=True)
         tokens = [t for t in tokens if len(t) >= self.min_length]
         if not tokens:
             return []
@@ -57,7 +58,6 @@ class KeywordExtractor:
                 positions[token].append(i)
 
         # Score keywords: frequency * log(1 + frequency) for emphasis on repeats
-        import math
         keywords = []
         for word, count in freq.items():
             score = count * math.log(1 + count)
@@ -76,7 +76,7 @@ class KeywordExtractor:
         """Extract n-gram phrases from text."""
         if not text:
             return []
-        tokens = tokenize(text)
+        tokens = tokenize(text, remove_stopwords=True)
         tokens = [t for t in tokens if len(t) >= self.min_length]
         if len(tokens) < n:
             return []
@@ -96,7 +96,7 @@ class KeywordExtractor:
 
     def compute_term_frequency(self, text: str) -> Dict[str, float]:
         """Compute term frequency for each token in text."""
-        tokens = tokenize(text)
+        tokens = tokenize(text, remove_stopwords=True)
         tokens = [t for t in tokens if len(t) >= self.min_length]
         if not tokens:
             return {}
