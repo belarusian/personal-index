@@ -174,3 +174,7 @@ class Crawler:
     def close(self) -> None:
         """Close the crawler session."""
         self.session.close()
+
+
+# Backwards-compatible alias
+WebCrawler = Crawler
