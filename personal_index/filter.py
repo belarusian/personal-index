@@ -1,98 +1,162 @@
-"""Content filtering module to only store content matching user interests."""
+"""Content filtering module for matching pages against user interests."""
 
 import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set
-from personal_index.interests import Interest, InterestManager
-from personal_index.index import Document
+
+from personal_index.config import Interest
+from personal_index.content import ExtractedContent, tokenize
 
 
 @dataclass
-class FilterConfig:
-    """Configuration for content filtering."""
-    min_content_length: int = 100
-    min_title_length: int = 3
-    blocked_extensions: List[str] = field(default_factory=lambda: [
-        '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip', '.mp4', '.mp3',
-        '.exe', '.bin', '.tar', '.gz', '.rar', '.7z',
-    ])
-    blocked_content_types: List[str] = field(default_factory=lambda: [
-        'image/', 'video/', 'audio/', 'application/',
-    ])
-    max_content_length: int = 1_000_000  # 1MB
-    require_interest_match: bool = True
+class FilterResult:
+    """Result of filtering content against interests."""
+
+    url: str
+    passed: bool
+    matched_interests: List[str] = field(default_factory=list)
+    matched_keywords: List[str] = field(default_factory=list)
+    relevance_score: float = 0.0
+    reasons: List[str] = field(default_factory=list)
 
 
 class ContentFilter:
-    """Filters crawled content based on user interests and configuration."""
+    """Filters web content based on user-defined interests."""
 
-    def __init__(self, interest_manager: InterestManager, config: Optional[FilterConfig] = None):
-        self.interest_manager = interest_manager
-        self.config = config or FilterConfig()
+    def __init__(self, interests: List[Interest] = None):
+        self.interests = interests or []
+        self._keyword_index: Dict[str, List[str]] = {}
+        self._build_keyword_index()
 
-    def should_filter(self, document: Document) -> bool:
-        """Return True if document should be filtered out (not stored)."""
-        if self._is_blocked_extension(document.url):
-            return True
+    def _build_keyword_index(self) -> None:
+        """Build an inverted index of keywords to interest topics."""
+        self._keyword_index = {}
+        for interest in self.interests:
+            if not interest.enabled:
+                continue
+            for keyword in interest.keywords:
+                kw_lower = keyword.lower()
+                if kw_lower not in self._keyword_index:
+                    self._keyword_index[kw_lower] = []
+                self._keyword_index[kw_lower].append(interest.topic)
+            # Also index the topic itself
+            topic_lower = interest.topic.lower()
+            if topic_lower not in self._keyword_index:
+                self._keyword_index[topic_lower] = []
+            self._keyword_index[topic_lower].append(interest.topic)
 
-        if self._is_blocked_content_type(document.metadata.get('content_type', '')):
-            return True
+    def add_interest(self, interest: Interest) -> None:
+        """Add an interest to the filter."""
+        self.interests.append(interest)
+        self._build_keyword_index()
 
-        if self._is_too_short(document):
-            return True
-
-        if self._is_too_long(document):
-            return True
-
-        if self.config.require_interest_match:
-            if not self._matches_interests(document):
-                return True
-
-        return False
-
-    def _is_blocked_extension(self, url: str) -> bool:
-        """Check if URL has a blocked file extension."""
-        url_lower = url.lower().split('?')[0]
-        for ext in self.config.blocked_extensions:
-            if url_lower.endswith(ext):
-                return True
-        return False
-
-    def _is_blocked_content_type(self, content_type: str) -> bool:
-        """Check if content type is blocked."""
-        if not content_type:
-            return False
-        for blocked in self.config.blocked_content_types:
-            if content_type.startswith(blocked):
+    def remove_interest(self, topic: str) -> bool:
+        """Remove an interest by topic name."""
+        for i, interest in enumerate(self.interests):
+            if interest.topic == topic:
+                self.interests.pop(i)
+                self._build_keyword_index()
                 return True
         return False
 
-    def _is_too_short(self, document: Document) -> bool:
-        """Check if document content is too short."""
-        if len(document.title) < self.config.min_title_length:
-            return True
-        if len(document.content) < self.config.min_content_length:
-            return True
-        return False
+    def filter_content(self, content: ExtractedContent) -> FilterResult:
+        """Filter a single piece of content against all interests."""
+        result = FilterResult(url=content.url, passed=False)
 
-    def _is_too_long(self, document: Document) -> bool:
-        """Check if document content is too long."""
-        return len(document.content) > self.config.max_content_length
+        searchable_text = content.get_searchable_text().lower()
+        tokens = set(tokenize(searchable_text))
 
-    def _matches_interests(self, document: Document) -> bool:
-        """Check if document matches any user interest."""
-        if not self.interest_manager.list_interests():
-            return True  # No interests defined = accept all
+        matched_topics = set()
+        matched_kws = set()
 
-        text = document.searchable_text
-        matching = self.interest_manager.matches_any(text=text, url=document.url)
-        return len(matching) > 0
+        for interest in self.interests:
+            if not interest.enabled:
+                continue
 
-    def get_matching_interests(self, document: Document) -> List[str]:
-        """Return list of interest names that match the document."""
-        text = document.searchable_text
-        return self.interest_manager.matches_any(text=text, url=document.url)
+            # Check keyword matches
+            for keyword in interest.keywords:
+                kw_lower = keyword.lower()
+                if kw_lower in searchable_text or kw_lower in tokens:
+                    matched_topics.add(interest.topic)
+                    matched_kws.add(keyword)
 
-    def filter_documents(self, documents: List[Document]) -> List[Document]:
-        """Filter a list of documents, returning only those that pass."""
-        return [doc for doc in documents if not self.should_filter(doc)]
+            # Check topic match
+            if interest.topic.lower() in searchable_text:
+                matched_topics.add(interest.topic)
+
+            # Check URL pattern matches
+            for pattern in interest.url_patterns:
+                if self._url_matches_pattern(content.url, pattern):
+                    matched_topics.add(interest.topic)
+
+        result.matched_interests = list(matched_topics)
+        result.matched_keywords = list(matched_kws)
+        result.passed = len(matched_topics) > 0
+
+        # Calculate relevance score
+        result.relevance_score = self._calculate_relevance(
+            matched_topics, matched_kws, interest
+        )
+
+        # Build reasons
+        if result.passed:
+            result.reasons = [
+                f"Matched interests: {', '.join(result.matched_interests)}",
+                f"Matched keywords: {', '.join(result.matched_keywords)}",
+            ]
+        else:
+            result.reasons = ["No matching interests found"]
+
+        return result
+
+    def filter_batch(self, contents: List[ExtractedContent]) -> List[FilterResult]:
+        """Filter multiple content items."""
+        return [self.filter_content(c) for c in contents]
+
+    def get_matching_interests(self, text: str) -> List[Interest]:
+        """Get all interests that match a given text."""
+        text_lower = text.lower()
+        tokens = set(tokenize(text_lower))
+        matching = []
+        for interest in self.interests:
+            if not interest.enabled:
+                continue
+            if interest.matches(text):
+                matching.append(interest)
+        return matching
+
+    def _url_matches_pattern(self, url: str, pattern: str) -> bool:
+        """Check if URL matches a pattern with wildcards."""
+        regex_pattern = "^" + re.escape(pattern).replace(r"\*", ".*").replace(r"\?", ".") + "$"
+        return bool(re.match(regex_pattern, url, re.IGNORECASE))
+
+    def _calculate_relevance(
+        self,
+        matched_topics: Set[str],
+        matched_keywords: Set[str],
+        interest: Optional[Interest] = None,
+    ) -> float:
+        """Calculate relevance score for matched content."""
+        score = 0.0
+
+        # Base score from number of matched interests
+        score += len(matched_topics) * 10
+
+        # Bonus for keyword matches
+        score += len(matched_keywords) * 5
+
+        # Priority boost from matched interests
+        for topic in matched_topics:
+            for interest in self.interests:
+                if interest.topic == topic:
+                    score += interest.priority
+
+        return round(score, 2)
+
+    def get_stats(self) -> dict:
+        """Get filter statistics."""
+        return {
+            "total_interests": len(self.interests),
+            "enabled_interests": sum(1 for i in self.interests if i.enabled),
+            "indexed_keywords": len(self._keyword_index),
+        }
