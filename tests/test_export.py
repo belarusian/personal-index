@@ -1,240 +1,239 @@
-"""Tests for export functionality."""
+"""Tests for the export module."""
 
 from __future__ import annotations
 
 import csv
-import io
 import json
-import tempfile
-from datetime import datetime, timezone
+import os
+from io import StringIO
 
 import pytest
 
-from personal_index.export import (
-    export_to_json,
-    export_to_csv,
-    export_search_results_to_json,
-    export_search_results_to_csv,
-    export_to_markdown,
-    export_to_markdown_results,
-)
-from personal_index.index import SearchIndex, IndexedPage, SearchResult
+from personal_index.export import Exporter, ExportResult
+from personal_index.bookmarks import Bookmark, BookmarkManager
 
 
-@pytest.fixture
-def sample_index():
-    """Create a SearchIndex with sample data."""
-    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-        idx = SearchIndex(db_path=f.name)
-        idx.add_page(IndexedPage(
-            url="http://example.com/page1",
-            title="First Page",
-            content="This is the first page content about python",
-            score=8.5,
-            indexed_at=datetime.now(timezone.utc).isoformat(),
-        ))
-        idx.add_page(IndexedPage(
-            url="http://example.com/page2",
-            title="Second Page",
-            content="This is the second page about javascript",
-            score=6.0,
-            indexed_at=datetime.now(timezone.utc).isoformat(),
-        ))
-        return idx
+class TestExportResult:
+    def test_default_values(self):
+        result = ExportResult()
+        assert result.total_exported == 0
+        assert result.output_path == ""
+        assert result.format == ""
+        assert result.errors == []
+        assert result.exported_at != ""
 
 
-class TestExportToJson:
-    """Tests for JSON export."""
+class TestExporter:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A", category="tech", tags=["python"]))
+        self.manager.add(Bookmark(url="http://b.com", title="B", category="news", is_favorite=True))
+        self.exporter = Exporter(self.manager)
 
-    def test_export_to_json_basic(self, sample_index):
-        result = export_to_json(sample_index)
-        data = json.loads(result)
-        assert data["total_pages"] == 2
-        assert len(data["pages"]) == 2
+    def test_manager_property(self):
+        assert self.exporter.manager is self.manager
 
-    def test_export_to_json_includes_urls(self, sample_index):
-        result = export_to_json(sample_index)
-        data = json.loads(result)
-        urls = [p["url"] for p in data["pages"]]
-        assert "http://example.com/page1" in urls
-        assert "http://example.com/page2" in urls
-
-    def test_export_to_json_excludes_content(self, sample_index):
-        result = export_to_json(sample_index, include_content=False)
-        data = json.loads(result)
-        for page in data["pages"]:
-            assert "content" not in page
-
-    def test_export_to_json_includes_content(self, sample_index):
-        result = export_to_json(sample_index, include_content=True)
-        data = json.loads(result)
-        assert any("python" in p.get("content", "") for p in data["pages"])
-
-    def test_export_to_json_empty_index(self):
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-            idx = SearchIndex(db_path=f.name)
-        result = export_to_json(idx)
-        data = json.loads(result)
-        assert data["total_pages"] == 0
-        assert data["pages"] == []
-
-    def test_export_to_json_indent(self, sample_index):
-        result = export_to_json(sample_index, indent=4)
-        assert "    " in result
+    def test_supported_formats(self):
+        assert "json" in Exporter.SUPPORTED_FORMATS
+        assert "csv" in Exporter.SUPPORTED_FORMATS
+        assert "markdown" in Exporter.SUPPORTED_FORMATS
 
 
-class TestExportToCsv:
-    """Tests for CSV export."""
+class TestExportJson:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A", category="tech"))
+        self.exporter = Exporter(self.manager)
 
-    def test_export_to_csv_basic(self, sample_index):
-        result = export_to_csv(sample_index)
-        reader = csv.reader(io.StringIO(result))
-        rows = list(reader)
-        assert len(rows) == 3  # header + 2 pages
-        assert rows[0] == ["url", "title", "score", "indexed_at", "content"]
+    def test_export_json_content(self):
+        content = self.exporter.export_to_content("json")
+        assert content is not None
+        data = json.loads(content)
+        assert len(data) == 1
+        assert data[0]["url"] == "http://a.com"
+        assert data[0]["title"] == "A"
 
-    def test_export_to_csv_includes_content(self, sample_index):
-        result = export_to_csv(sample_index, include_content=True)
-        reader = csv.reader(io.StringIO(result))
-        rows = list(reader)[1:]  # skip header
-        content_values = [r[4] for r in rows]
-        assert any("python" in c for c in content_values)
-
-    def test_export_to_csv_excludes_content(self, sample_index):
-        result = export_to_csv(sample_index, include_content=False)
-        reader = csv.reader(io.StringIO(result))
-        rows = list(reader)[1:]
-        assert all(r[4] == "" for r in rows)
-
-    def test_export_to_csv_empty_index(self):
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-            idx = SearchIndex(db_path=f.name)
-        result = export_to_csv(idx)
-        reader = csv.reader(io.StringIO(result))
-        rows = list(reader)
-        assert len(rows) == 1  # only header
-
-
-class TestExportSearchResults:
-    """Tests for search result export."""
-
-    def test_export_search_results_to_json(self):
-        results = [
-            SearchResult(
-                url="http://example.com",
-                title="Test Page",
-                snippet="Some content here",
-                relevance_score=5.0,
-            )
-        ]
-        data = json.loads(export_search_results_to_json(results))
-        assert data["total_results"] == 1
-        assert data["results"][0]["title"] == "Test Page"
-
-    def test_export_search_results_to_csv(self):
-        results = [
-            SearchResult(
-                url="http://example.com",
-                title="Test Page",
-                snippet="Some content here",
-                relevance_score=5.0,
-            )
-        ]
-        reader = csv.reader(io.StringIO(export_search_results_to_csv(results)))
-        rows = list(reader)
-        assert len(rows) == 2
-        assert rows[0] == ["url", "title", "snippet", "relevance_score"]
-
-    def test_export_search_results_empty(self):
-        data = json.loads(export_search_results_to_json([]))
-        assert data["total_results"] == 0
-
-
-class TestExportToMarkdown:
-    """Tests for Markdown export."""
-
-    def test_export_to_markdown_basic(self, sample_index):
-        result = export_to_markdown(sample_index)
-        assert "# Indexed Pages" in result
-        assert "First Page" in result
-        assert "Second Page" in result
-
-    def test_export_to_markdown_includes_content(self, sample_index):
-        result = export_to_markdown(sample_index, include_content=True)
-        assert "python" in result
-
-    def test_export_to_markdown_excludes_content(self, sample_index):
-        result = export_to_markdown(sample_index, include_content=False)
-        assert "python" not in result
-
-    def test_export_to_markdown_results(self):
-        results = [
-            SearchResult(
-                url="http://example.com",
-                title="Test Page",
-                snippet="Some content",
-                relevance_score=5.0,
-            )
-        ]
-        result = export_to_markdown_results(results)
-        assert "# Search Results" in result
-        assert "Test Page" in result
-        assert "5.00" in result
-
-
-class TestJSONExporter:
-    def test_export_entry(self, tmp_path):
-        from personal_index.export import JSONExporter
-        exporter = JSONExporter()
-        entry = {"url": "http://example.com", "title": "Test"}
-        result = exporter.export_entry(entry)
-        assert "http://example.com" in result
-        assert "Test" in result
-
-    def test_export_entries_to_file(self, tmp_path):
-        from personal_index.export import JSONExporter
-        exporter = JSONExporter()
-        entries = [
-            {"url": "http://example.com/1", "title": "Page 1"},
-            {"url": "http://example.com/2", "title": "Page 2"},
-        ]
-        filepath = str(tmp_path / "export.json")
-        result = exporter.export_entries(entries, filepath)
-        assert result == filepath
-        import json
-        with open(filepath) as f:
+    def test_export_json_file(self, tmp_path):
+        path = tmp_path / "bookmarks.json"
+        result = self.exporter.export_to_file(str(path))
+        assert result.total_exported == 1
+        assert result.format == "json"
+        assert os.path.exists(str(path))
+        with open(path) as f:
             data = json.load(f)
-        assert data["total_entries"] == 2
-        assert len(data["entries"]) == 2
+        assert len(data) == 1
 
-    def test_export_batch(self):
-        from personal_index.export import JSONExporter
-        exporter = JSONExporter()
-        entries = [{"url": f"http://example.com/{i}"} for i in range(250)]
-        batches = exporter.export_batch(entries, batch_size=100)
-        assert len(batches) == 3
-        import json
-        first = json.loads(batches[0])
-        assert first["count"] == 100
-        assert first["batch_index"] == 0
+    def test_export_json_empty(self):
+        exporter = Exporter()
+        content = exporter.export_to_content("json")
+        assert content == "[]"
 
-    def test_export_empty(self, tmp_path):
-        from personal_index.export import JSONExporter
-        exporter = JSONExporter()
-        filepath = str(tmp_path / "empty.json")
-        result = exporter.export_entries([], filepath)
-        import json
-        with open(result) as f:
-            data = json.load(f)
-        assert data["total_entries"] == 0
-        assert data["entries"] == []
 
-    def test_export_preserves_unicode(self, tmp_path):
-        from personal_index.export import JSONExporter
-        exporter = JSONExporter()
-        entries = [{"url": "http://example.com", "title": "日本語テスト"}]
-        filepath = str(tmp_path / "unicode.json")
-        exporter.export_entries(entries, filepath)
-        with open(filepath, encoding="utf-8") as f:
-            content = f.read()
-        assert "日本語テスト" in content
+class TestExportCsv:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A", category="tech", tags=["python", "web"]))
+        self.exporter = Exporter(self.manager)
+
+    def test_export_csv_content(self):
+        content = self.exporter.export_to_content("csv")
+        reader = csv.reader(StringIO(content))
+        rows = list(reader)
+        assert len(rows) == 2  # header + 1 data row
+        assert rows[0][0] == "url"
+        assert rows[1][0] == "http://a.com"
+        assert rows[1][1] == "A"
+        assert rows[1][4] == "python;web"
+
+    def test_export_csv_file(self, tmp_path):
+        path = tmp_path / "bookmarks.csv"
+        result = self.exporter.export_to_file(str(path))
+        assert result.total_exported == 1
+        assert result.format == "csv"
+
+
+class TestExportHtml:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A"))
+        self.exporter = Exporter(self.manager)
+
+    def test_export_html_content(self):
+        content = self.exporter.export_to_content("html")
+        assert "DOCTYPE NETSCAPE-Bookmark-file" in content
+        assert 'HREF="http://a.com"' in content
+        assert "A" in content
+
+    def test_export_html_escapes_special_chars(self):
+        self.manager.add(Bookmark(url="http://b.com", title='A & "B" <C>'))
+        content = self.exporter.export_to_content("html")
+        assert "&amp;" in content
+        assert "&lt;" in content
+        assert "&gt;" in content
+
+    def test_export_html_file(self, tmp_path):
+        path = tmp_path / "bookmarks.html"
+        result = self.exporter.export_to_file(str(path))
+        assert result.total_exported == 1
+
+
+class TestExportXml:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A", description="Desc", category="tech", tags=["python"]))
+        self.exporter = Exporter(self.manager)
+
+    def test_export_xml_content(self):
+        content = self.exporter.export_to_content("xml")
+        assert '<?xml version="1.0"' in content
+        assert "<bookmarks>" in content
+        assert 'url="http://a.com"' in content
+        assert "<title>A</title>" in content
+        assert "<description>Desc</description>" in content
+        assert "<category>tech</category>" in content
+        assert "<tags>python</tags>" in content
+
+    def test_export_xml_escapes_special_chars(self):
+        self.manager.add(Bookmark(url="http://b.com", title="A & B"))
+        content = self.exporter.export_to_content("xml")
+        assert "&amp;" in content
+
+    def test_export_xml_file(self, tmp_path):
+        path = tmp_path / "bookmarks.xml"
+        result = self.exporter.export_to_file(str(path))
+        assert result.total_exported == 1
+
+
+class TestExportMarkdown:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A", category="tech", tags=["python"]))
+        self.manager.add(Bookmark(url="http://b.com", title="B", category="news", is_favorite=True))
+        self.exporter = Exporter(self.manager)
+
+    def test_export_markdown_content(self):
+        content = self.exporter.export_to_content("markdown")
+        assert "# Bookmarks" in content
+        assert "## tech" in content
+        assert "## news" in content
+        assert "[A](http://a.com)" in content
+        assert "[B](http://b.com) ⭐" in content
+        assert "Tags: python" in content
+
+    def test_export_markdown_file(self, tmp_path):
+        path = tmp_path / "bookmarks.md"
+        result = self.exporter.export_to_file(str(path))
+        assert result.total_exported == 2
+        assert result.format == "markdown"
+
+
+class TestExportOpml:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A"))
+        self.exporter = Exporter(self.manager)
+
+    def test_export_opml_content(self):
+        content = self.exporter.export_to_content("opml")
+        assert '<?xml version="1.0"' in content
+        assert "<opml version=\"2.0\">" in content
+        assert 'htmlUrl="http://a.com"' in content
+        assert 'text="A"' in content
+
+    def test_export_opml_file(self, tmp_path):
+        path = tmp_path / "bookmarks.opml"
+        result = self.exporter.export_to_file(str(path))
+        assert result.total_exported == 1
+
+
+class TestExportFiltered:
+    def setup_method(self):
+        self.manager = BookmarkManager()
+        self.manager.add(Bookmark(url="http://a.com", title="A", category="tech", tags=["python"]))
+        self.manager.add(Bookmark(url="http://b.com", title="B", category="news", tags=["web"]))
+        self.manager.add(Bookmark(url="http://c.com", title="C", category="tech", is_favorite=True))
+        self.exporter = Exporter(self.manager)
+
+    def test_export_filtered_by_category(self):
+        content = self.exporter.export_filtered("json", category="tech")
+        data = json.loads(content)
+        assert len(data) == 2
+        urls = {d["url"] for d in data}
+        assert urls == {"http://a.com", "http://c.com"}
+
+    def test_export_filtered_by_tag(self):
+        content = self.exporter.export_filtered("json", tag="python")
+        data = json.loads(content)
+        assert len(data) == 1
+        assert data[0]["url"] == "http://a.com"
+
+    def test_export_filtered_favorites_only(self):
+        content = self.exporter.export_filtered("json", favorites_only=True)
+        data = json.loads(content)
+        assert len(data) == 1
+        assert data[0]["url"] == "http://c.com"
+
+    def test_export_filtered_combined(self):
+        content = self.exporter.export_filtered("json", category="tech", favorites_only=True)
+        data = json.loads(content)
+        assert len(data) == 1
+        assert data[0]["url"] == "http://c.com"
+
+    def test_export_filtered_no_match(self):
+        content = self.exporter.export_filtered("json", category="nonexistent")
+        data = json.loads(content)
+        assert len(data) == 0
+
+
+class TestExportErrors:
+    def test_export_unsupported_format(self, tmp_path):
+        exporter = Exporter()
+        path = tmp_path / "bookmarks.xyz"
+        result = exporter.export_to_file(str(path))
+        assert result.total_exported == 0
+        assert len(result.errors) > 0
+
+    def test_export_to_content_unsupported(self):
+        exporter = Exporter()
+        content = exporter.export_to_content("xyz")
+        assert content is None

@@ -1,146 +1,231 @@
-"""Export indexed data to various formats."""
+"""Export bookmarks and indexed content to various formats."""
 
 from __future__ import annotations
 
 import csv
-import io
 import json
-import time
-from typing import List, Optional
+import os
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from io import StringIO
+from pathlib import Path
+from typing import Dict, List, Optional
 
-from personal_index.index import SearchIndex, IndexedPage
-from personal_index.models import SearchResult
-
-
-def export_to_json(
-    index: SearchIndex,
-    include_content: bool = True,
-    indent: int = 2,
-) -> str:
-    """Export all indexed pages to JSON string."""
-    pages = index.list_pages()
-    data = {
-        "total_pages": len(pages),
-        "pages": [],
-    }
-    for page in pages:
-        page_dict = page.to_dict()
-        if not include_content:
-            page_dict.pop("content", None)
-        data["pages"].append(page_dict)
-    return json.dumps(data, indent=indent, default=str)
+from .bookmarks import Bookmark, BookmarkManager
 
 
-def export_to_csv(
-    index: SearchIndex,
-    include_content: bool = False,
-) -> str:
-    """Export indexed pages to CSV string."""
-    pages = index.list_pages()
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["url", "title", "score", "indexed_at", "content"])
-    for page in pages:
-        row = [
-            page.url,
-            page.title,
-            page.score,
-            page.indexed_at,
-            page.content if include_content else "",
-        ]
-        writer.writerow(row)
-    return output.getvalue()
+# Map file extensions to format names
+EXTENSION_MAP = {
+    "json": "json",
+    "csv": "csv",
+    "html": "html",
+    "htm": "html",
+    "xml": "xml",
+    "md": "markdown",
+    "markdown": "markdown",
+    "opml": "opml",
+}
 
 
-def export_search_results_to_json(
-    results: List[SearchResult], indent: int = 2
-) -> str:
-    """Export search results to JSON string."""
-    data = {
-        "total_results": len(results),
-        "results": [],
-    }
-    for r in results:
-        data["results"].append({
-            "url": r.url,
-            "title": r.title,
-            "snippet": r.snippet,
-            "relevance_score": r.relevance_score,
-        })
-    return json.dumps(data, indent=indent)
+@dataclass
+class ExportResult:
+    """Result of an export operation."""
+    total_exported: int = 0
+    output_path: str = ""
+    format: str = ""
+    exported_at: str = ""
+    errors: List[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not self.exported_at:
+            self.exported_at = datetime.now(timezone.utc).isoformat()
 
 
-def export_search_results_to_csv(results: List[SearchResult]) -> str:
-    """Export search results to CSV string."""
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["url", "title", "snippet", "relevance_score"])
-    for r in results:
-        writer.writerow([r.url, r.title, r.snippet, r.relevance_score])
-    return output.getvalue()
+class Exporter:
+    """Export bookmarks to various file formats."""
 
+    SUPPORTED_FORMATS = {"json", "csv", "html", "xml", "markdown", "opml"}
 
-def export_to_markdown(
-    index: SearchIndex,
-    include_content: bool = False,
-) -> str:
-    """Export indexed pages to Markdown format."""
-    pages = index.list_pages()
-    lines = ["# Indexed Pages", f"\n**Total pages:** {len(pages)}\n"]
-    for page in pages:
-        lines.append(f"## {page.title}")
-        lines.append(f"- **URL:** {page.url}")
-        lines.append(f"- **Score:** {page.score}")
-        lines.append(f"- **Indexed:** {page.indexed_at}")
-        if include_content and page.content:
-            lines.append(f"\n{page.content[:500]}")
-        lines.append("")
-    return "\n".join(lines)
+    def __init__(self, manager: Optional[BookmarkManager] = None):
+        self._manager = manager or BookmarkManager()
 
+    @property
+    def manager(self) -> BookmarkManager:
+        return self._manager
 
-def export_to_markdown_results(results: List[SearchResult]) -> str:
-    """Export search results to Markdown format."""
-    lines = ["# Search Results", f"\n**Total results:** {len(results)}\n"]
-    for i, r in enumerate(results, 1):
-        lines.append(f"## {i}. {r.title}")
-        lines.append(f"- **URL:** {r.url}")
-        lines.append(f"- **Score:** {r.relevance_score:.2f}")
-        if r.snippet:
-            lines.append(f"\n> {r.snippet[:200]}")
-        lines.append("")
-    return "\n".join(lines)
+    def export_to_file(self, filepath: str, fmt: Optional[str] = None) -> ExportResult:
+        """Export bookmarks to a file, auto-detecting format from extension."""
+        if fmt is None:
+            ext = Path(filepath).suffix.lstrip(".").lower()
+            fmt = EXTENSION_MAP.get(ext)
+            if fmt is None:
+                return ExportResult(errors=[f"Unsupported format: {ext}"])
 
+        content = self.export_to_content(fmt)
+        if content is None:
+            return ExportResult(errors=[f"Export failed for format: {fmt}"])
 
-class JSONExporter:
-    """Export indexed data to JSON format."""
-
-    def __init__(self, indent: int = 2):
-        self.indent = indent
-
-    def export_entries(self, entries: list[dict], filepath: str) -> str:
-        """Export entries to a JSON file."""
-        data = {
-            "exported_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "total_entries": len(entries),
-            "entries": entries,
-        }
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=self.indent, ensure_ascii=False, default=str)
-        return filepath
+            f.write(content)
 
-    def export_entry(self, entry: dict) -> str:
-        """Serialize a single entry to JSON string."""
-        return json.dumps(entry, indent=self.indent, ensure_ascii=False, default=str)
+        return ExportResult(
+            total_exported=self._manager.count(),
+            output_path=filepath,
+            format=fmt,
+        )
 
-    def export_batch(self, entries: list[dict], batch_size: int = 100) -> list[str]:
-        """Export entries in batches, returning JSON strings."""
-        batches = []
-        for i in range(0, len(entries), batch_size):
-            batch = entries[i : i + batch_size]
-            data = {
-                "batch_index": i // batch_size,
-                "count": len(batch),
-                "entries": batch,
-            }
-            batches.append(json.dumps(data, indent=self.indent, ensure_ascii=False, default=str))
-        return batches
+    def export_to_content(self, fmt: str) -> Optional[str]:
+        """Export bookmarks to a string in the specified format."""
+        fmt = fmt.lower()
+        if fmt == "json":
+            return self._export_json()
+        elif fmt == "csv":
+            return self._export_csv()
+        elif fmt == "html":
+            return self._export_html()
+        elif fmt == "xml":
+            return self._export_xml()
+        elif fmt == "markdown":
+            return self._export_markdown()
+        elif fmt == "opml":
+            return self._export_opml()
+        return None
+
+    def _export_json(self) -> str:
+        """Export as JSON."""
+        bookmarks = [b.to_dict() for b in self._manager.list_all()]
+        return json.dumps(bookmarks, indent=2, ensure_ascii=False)
+
+    def _export_csv(self) -> str:
+        """Export as CSV."""
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["url", "title", "description", "category", "tags", "is_favorite", "created_at", "updated_at"])
+        for b in self._manager.list_all():
+            writer.writerow([
+                b.url,
+                b.title,
+                b.description,
+                b.category,
+                ";".join(b.tags),
+                b.is_favorite,
+                b.created_at,
+                b.updated_at,
+            ])
+        return output.getvalue()
+
+    def _export_html(self) -> str:
+        """Export as Netscape HTML bookmark format."""
+        lines = [
+            '<!DOCTYPE NETSCAPE-Bookmark-file-1>',
+            '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
+            f'<TITLE>Bookmarks exported at {datetime.now(timezone.utc).isoformat()}</TITLE>',
+            '<H1>Bookmarks</H1>',
+            '<DL><p>',
+        ]
+
+        for b in self._manager.list_all():
+            lines.append(
+                f'<DT><A HREF="{b.url}" ADD_DATE="0">{self._escape_html(b.title or b.url)}</A>'
+            )
+
+        lines.extend(["</DL><p>", "</DL>"])
+        return "\n".join(lines)
+
+    def _escape_html(self, text: str) -> str:
+        """Escape HTML special characters."""
+        return (
+            text.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+        )
+
+    def _export_xml(self) -> str:
+        """Export as XML."""
+        lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<bookmarks>"]
+        for b in self._manager.list_all():
+            tags_str = ",".join(b.tags)
+            lines.append(
+                f'  <bookmark url="{self._escape_xml(b.url)}">'
+                f'<title>{self._escape_xml(b.title)}</title>'
+                f'<description>{self._escape_xml(b.description)}</description>'
+                f'<category>{self._escape_xml(b.category)}</category>'
+                f'<tags>{self._escape_xml(tags_str)}</tags>'
+                f'<is_favorite>{b.is_favorite}</is_favorite>'
+                f'<created_at>{b.created_at}</created_at>'
+                f'<updated_at>{b.updated_at}</updated_at>'
+                f"</bookmark>"
+            )
+        lines.append("</bookmarks>")
+        return "\n".join(lines)
+
+    def _escape_xml(self, text: str) -> str:
+        """Escape XML special characters."""
+        return (
+            text.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&apos;")
+        )
+
+    def _export_markdown(self) -> str:
+        """Export as Markdown."""
+        lines = ["# Bookmarks", ""]
+
+        categories = self._manager.get_categories()
+        for category in categories:
+            lines.append(f"## {category}")
+            lines.append("")
+            bookmarks = self._manager.list_by_category(category)
+            for b in bookmarks:
+                fav_marker = " ⭐" if b.is_favorite else ""
+                title = b.title or b.url
+                lines.append(f"- [{title}]({b.url}){fav_marker}")
+                if b.description:
+                    lines.append(f"  - {b.description}")
+                if b.tags:
+                    lines.append(f"  - Tags: {', '.join(b.tags)}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def _export_opml(self) -> str:
+        """Export as OPML format."""
+        lines = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<opml version="2.0">',
+            "<body>",
+        ]
+        for b in self._manager.list_all():
+            lines.append(
+                f'  <outline text="{self._escape_xml(b.title or b.url)}" '
+                f'htmlUrl="{b.url}" type="bookmark"/>'
+            )
+        lines.extend(["</body>", "</opml>"])
+        return "\n".join(lines)
+
+    def export_filtered(
+        self,
+        fmt: str,
+        category: Optional[str] = None,
+        tag: Optional[str] = None,
+        favorites_only: bool = False,
+    ) -> Optional[str]:
+        """Export filtered bookmarks to a string."""
+        bookmarks = self._manager.list_all()
+
+        if category:
+            bookmarks = [b for b in bookmarks if b.category == category]
+        if tag:
+            bookmarks = [b for b in bookmarks if tag in b.tags]
+        if favorites_only:
+            bookmarks = [b for b in bookmarks if b.is_favorite]
+
+        # Temporarily replace manager's bookmarks for export
+        original = self._manager._bookmarks
+        self._manager._bookmarks = {b.url: b for b in bookmarks}
+        content = self.export_to_content(fmt)
+        self._manager._bookmarks = original
+        return content
