@@ -23,16 +23,16 @@ def normalize_url(url: str, remove_fragment: bool = True,
 
     # Lowercase path if requested
     path = parsed.path.lower() if lowercase_path else parsed.path
-    # Normalize path: remove trailing slash (except root), collapse slashes
+    # Normalize path: collapse slashes
     path = re.sub(r"/+", "/", path)
-    if path != "/" and path.endswith("/"):
-        path = path.rstrip("/")
 
     # Sort query parameters
     query = parsed.query
     if sort_query_params and query:
         params = parse_qs(query, keep_blank_values=True)
-        query = urlencode(params, doseq=True)
+        # Sort by key for deterministic output
+        sorted_params = dict(sorted(params.items()))
+        query = urlencode(sorted_params, doseq=True)
 
     # Remove fragment
     fragment = "" if remove_fragment else parsed.fragment
@@ -72,7 +72,7 @@ def get_domain(url: str) -> str:
 def get_path(url: str) -> str:
     """Extract the path from a URL."""
     parsed = urlparse(url)
-    return parsed.path
+    return parsed.path if parsed.path else "/"
 
 
 def get_query_string(url: str) -> str:
