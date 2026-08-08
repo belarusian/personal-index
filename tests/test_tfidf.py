@@ -112,13 +112,14 @@ class TestTfidfScorer:
 
     def test_tfidf_favors_rare_terms(self):
         """Rare terms should get higher IDF scores."""
-        self.scorer.add_document("the cat sat on the mat")
-        self.scorer.add_document("the dog ran in the park")
-        self.scorer.add_document("quantum physics is fascinating")
-        scores_cat = self.scorer.compute_tfidf(0)
-        scores_quantum = self.scorer.compute_tfidf(2)
-        # "quantum" appears in fewer docs than "the", so higher IDF
-        assert scores_quantum.get("quantum", 0) > scores_cat.get("cat", 0)
+        # "common" appears in all 3 docs, "rare" only in 1
+        self.scorer.add_document("common word one")
+        self.scorer.add_document("common word two")
+        self.scorer.add_document("rare unique term")
+        scores_common = self.scorer.compute_tfidf(0)
+        scores_rare = self.scorer.compute_tfidf(2)
+        # "common" appears in 3 docs, "rare" in 1 doc
+        assert scores_rare.get("rare", 0) > scores_common.get("common", 0)
 
     def test_stopwords_filtered_in_tfidf(self):
         """Stop words should be filtered out during tokenization."""
@@ -126,3 +127,22 @@ class TestTfidfScorer:
         scores = self.scorer.compute_tfidf(0)
         assert "the" not in scores
         assert "quick" in scores
+
+    def test_tfidf_higher_for_more_frequent_term(self):
+        """Terms appearing more in a doc get higher TF component."""
+        self.scorer.add_document("alpha alpha alpha beta")
+        scores = self.scorer.compute_tfidf(0)
+        assert scores["alpha"] > scores["beta"]
+
+    def test_rank_documents_returns_sorted(self):
+        """Results should be sorted by score descending."""
+        self.scorer.add_document("alpha beta gamma")
+        self.scorer.add_document("alpha alpha alpha")
+        results = self.scorer.rank_documents("alpha")
+        assert results[0][1] >= results[1][1]
+
+    def test_score_query_case_insensitive(self):
+        """Query matching should be case insensitive."""
+        self.scorer.add_document("Hello World")
+        score = self.scorer.score_query("HELLO", 0)
+        assert score > 0
