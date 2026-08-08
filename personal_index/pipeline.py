@@ -94,13 +94,14 @@ class ContentPipeline:
             if not step.enabled:
                 continue
             try:
-                data = step.execute(data)
+                data = step.handler(data)
                 steps_executed += 1
             except Exception as e:
                 steps_failed += 1
                 errors.append(f"Step '{step.name}': {e}")
                 if step.on_error == "stop":
                     break
+                # On continue, keep data as-is for this step
 
         return PipelineResult(
             success=steps_failed == 0,
