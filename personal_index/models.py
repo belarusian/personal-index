@@ -34,6 +34,8 @@ class Interest:
 
     def matches_text(self, text: str) -> bool:
         """Check if text matches any of the interest keywords."""
+        if not self.keywords:
+            return False
         text_lower = text.lower()
         for keyword in self.keywords:
             if keyword.lower() in text_lower:
@@ -101,3 +103,23 @@ class CrawlConfig:
     allowed_domains: list[str] = field(default_factory=list)
     blocked_domains: list[str] = field(default_factory=list)
     max_content_length: int = 1_000_000  # 1MB max page content
+
+
+@dataclass
+class CrawlStats:
+    """Statistics about a crawl run."""
+
+    pages_crawled: int = 0
+    pages_filtered: int = 0
+    pages_stored: int = 0
+    errors: int = 0
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    urls_queued: int = 0
+
+    @property
+    def duration(self) -> Optional[float]:
+        """Duration of crawl in seconds."""
+        if self.start_time and self.end_time:
+            return (self.end_time - self.start_time).total_seconds()
+        return None

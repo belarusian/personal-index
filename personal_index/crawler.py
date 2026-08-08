@@ -17,30 +17,10 @@ from urllib.parse import urlparse, urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from personal_index.models import CrawledPage, CrawlConfig
+from personal_index.models import CrawledPage, CrawlConfig, CrawlStats
 from personal_index.filter import ContentFilter
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class CrawlStats:
-    """Statistics about a crawl run."""
-
-    pages_crawled: int = 0
-    pages_filtered: int = 0
-    pages_stored: int = 0
-    errors: int = 0
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    urls_queued: int = 0
-
-    @property
-    def duration(self) -> Optional[float]:
-        """Duration of crawl in seconds."""
-        if self.start_time and self.end_time:
-            return (self.end_time - self.start_time).total_seconds()
-        return None
 
 
 class RateLimiter:
@@ -83,6 +63,8 @@ class LinkExtractor:
         links = set()
         for tag in soup.find_all("a", href=True):
             href = tag["href"]
+            if not isinstance(href, str):
+                continue
             # Skip javascript, mailto, tel, anchor-only links
             if href.startswith(("javascript:", "mailto:", "tel:", "#")):
                 continue
@@ -108,13 +90,13 @@ class PageParser:
         title = ""
         title_tag = soup.find("title")
         if title_tag and title_tag.string:
-            title = title_tag.string.strip()
+            title = str(title_tag.string).strip()
 
         # Extract meta description
         meta_description = ""
         meta_desc = soup.find("meta", attrs={"name": "description"})
         if meta_desc and meta_desc.get("content"):
-            meta_description = meta_desc["content"].strip()
+            meta_description = str(meta_desc["content"]).strip()
 
         # Extract text content
         # Remove script and style elements

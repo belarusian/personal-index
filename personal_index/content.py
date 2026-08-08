@@ -43,7 +43,7 @@ class ExtractedContent:
 
 def extract_content(html: str, url: str, status_code: int = 200) -> ExtractedContent:
     """Extract structured content from HTML."""
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     content = ExtractedContent(url=url, status_code=status_code)
 
     # Extract title
@@ -54,13 +54,13 @@ def extract_content(html: str, url: str, status_code: int = 200) -> ExtractedCon
     # Extract meta description
     meta_desc = soup.find("meta", attrs={"name": "description"})
     if meta_desc:
-        content.meta_description = meta_desc.get("content", "")
+        content.meta_description = meta_desc.get("content", "") or ""
 
     # Extract meta keywords
     meta_kw = soup.find("meta", attrs={"name": "keywords"})
     if meta_kw:
         content.meta_keywords = [
-            k.strip() for k in meta_kw.get("content", "").split(",") if k.strip()
+            k.strip() for k in (meta_kw.get("content", "") or "").split(",") if k.strip()
         ]
 
     # Extract headings
@@ -134,7 +134,7 @@ def remove_stopwords(tokens: List[str], stopwords: Optional[set] = None) -> List
 
 def compute_tf(tokens: List[str]) -> dict:
     """Compute term frequency for a list of tokens."""
-    tf = {}
+    tf: dict[str, float] = {}
     total = len(tokens)
     if total == 0:
         return tf

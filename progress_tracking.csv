@@ -1,1 +1,1 @@
-commit_number,commit_hash,branch,pr_number,status,description,files_changed,timestamp
+commit_number,commit_hash,pr_number,pr_title,stage,status,files_changed,description

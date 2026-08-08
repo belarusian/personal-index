@@ -99,7 +99,7 @@ class SearchIndex:
                 {url: doc.to_dict() for url, doc in self.documents.items()}, f
             )
 
-    def add_document(self, content: ExtractedContent, interest_topics: List[str] = None) -> None:
+    def add_document(self, content: ExtractedContent, interest_topics: Optional[List[str]] = None) -> None:
         """Add a document to the index."""
         if interest_topics is None:
             interest_topics = []
@@ -232,7 +232,7 @@ class SearchIndex:
         best_pos = 0
         for token in query_tokens:
             pos = text.lower().find(token)
-            if pos != -1 and pos < best_pos or best_pos == 0:
+            if pos != -1 and (best_pos == 0 or pos < best_pos):
                 best_pos = pos
 
         # Extract snippet around the match

@@ -11,11 +11,11 @@ import logging
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Callable, Optional
 
-from personal_index.models import CrawlConfig, Interest
+from personal_index.models import CrawlConfig, CrawlStats, Interest
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,6 @@ class CrawlSchedule:
 
     def _calculate_next_run(self) -> datetime:
         """Calculate when the next run should happen."""
-        from datetime import timedelta
         return self.last_run + timedelta(hours=self.interval_hours)
 
 
@@ -139,13 +138,20 @@ class CrawlScheduler:
                     "max_depth": sched.config.max_depth,
                     "max_pages": sched.config.max_pages,
                     "rate_limit": sched.config.rate_limit,
+                    "politeness_delay": sched.config.politeness_delay,
                     "timeout": sched.config.timeout,
+                    "user_agent": sched.config.user_agent,
+                    "respect_robots": sched.config.respect_robots,
+                    "allowed_domains": sched.config.allowed_domains,
+                    "blocked_domains": sched.config.blocked_domains,
+                    "max_content_length": sched.config.max_content_length,
                 }
             schedules_data[key] = sched_dict
 
         jobs_data = {}
         for key, job in self._jobs.items():
             jobs_data[key] = {
+                "job_id": job.job_id,
                 "topic": job.topic,
                 "status": job.status,
                 "started_at": job.started_at.isoformat() if job.started_at else None,
@@ -158,7 +164,6 @@ class CrawlScheduler:
 
         with open(self.schedules_file, "w") as f:
             json.dump({"schedules": schedules_data}, f, indent=2)
-
         with open(self.jobs_file, "w") as f:
             json.dump({"jobs": jobs_data}, f, indent=2)
 
