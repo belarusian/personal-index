@@ -18,6 +18,12 @@ from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from personal_index.config import CrawlerConfig
 from personal_index.filter import ContentFilter
 from personal_index.index import SearchIndex, IndexedPage
+from personal_index.text_utils import (
+    extract_text_from_html,
+    extract_title_from_html,
+    extract_links_from_html,
+    count_words,
+)
 
 
 @dataclass
@@ -83,7 +89,6 @@ class RobotsChecker:
 
     def _parse_robots(self, content: str) -> list[str]:
         """Parse robots.txt content. Returns list of allowed URL patterns."""
-        # Simple parser - returns empty list (allow all) if no disallow rules
         for line in content.splitlines():
             line = line.strip().lower()
             if line.startswith("disallow:") and not line.startswith("disallow: "):
@@ -180,7 +185,7 @@ class WebCrawler:
                                 score=should_index.score,
                                 indexed_at=page.crawled_at,
                                 source_interest=",".join(should_index.matching_interests),
-                                word_count=len(page.content.split()),
+                                word_count=count_words(page.content),
                             )
                             self.search_index.add_page(indexed_page)
                             self._stats["pages_indexed"] += 1
@@ -194,7 +199,7 @@ class WebCrawler:
                             keywords=[],
                             score=0.0,
                             indexed_at=page.crawled_at,
-                            word_count=len(page.content.split()),
+                            word_count=count_words(page.content),
                         )
                         self.search_index.add_page(indexed_page)
                         self._stats["pages_indexed"] += 1
@@ -229,7 +234,9 @@ class WebCrawler:
                 if len(text) > self.config.max_page_size:
                     text = text[:self.config.max_page_size]
 
-                title, content, links = self._parse_html(text, url)
+                title = extract_title_from_html(text)
+                content = extract_text_from_html(text)
+                links = extract_links_from_html(text, url)
                 return CrawledPage(
                     url=url,
                     title=title,
@@ -245,54 +252,27 @@ class WebCrawler:
                 error=str(e),
             )
 
-    def _parse_html(self, html: str, base_url: str) -> tuple[str, str, list[str]]:
-        """Parse HTML to extract title, text content, and links."""
-        title = self._extract_title(html)
-        content = self._extract_text(html)
-        links = self._extract_links(html, base_url)
-        return title, content, links
-
     def _extract_title(self, html: str) -> str:
-        """Extract page title from HTML."""
-        match = re.search(r'<title[^>]*>(.*?)</title>', html, re.IGNORECASE | re.DOTALL)
-        if match:
-            return self._clean_text(match.group(1))
-        return ""
+        """Extract page title from HTML (legacy method)."""
+        return extract_title_from_html(html)
 
     def _extract_text(self, html: str) -> str:
-        """Extract text content from HTML."""
-        # Remove script and style elements
-        text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.IGNORECASE | re.DOTALL)
-        text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.IGNORECASE | re.DOTALL)
-        # Remove HTML tags
-        text = re.sub(r'<[^>]+>', ' ', text)
-        # Decode common HTML entities
-        text = text.replace('&nbsp;', ' ')
-        text = text.replace('&amp;', '&')
-        text = text.replace('&lt;', '<')
-        text = text.replace('&gt;', '>')
-        text = text.replace('&quot;', '"')
-        text = text.replace('&#39;', "'")
-        return self._clean_text(text)
+        """Extract text content from HTML (legacy method)."""
+        return extract_text_from_html(html)
 
     def _extract_links(self, html: str, base_url: str) -> list[str]:
-        """Extract all links from HTML."""
-        links = []
-        pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>'
-        for match in re.finditer(pattern, html, re.IGNORECASE):
-            href = match.group(1).strip()
-            if href.startswith(('http://', 'https://')):
-                parsed = urlparse(href)
-                if parsed.netloc:
-                    links.append(href)
-            elif href.startswith('/'):
-                parsed = urlparse(base_url)
-                links.append(f"{parsed.scheme}://{parsed.netloc}{href}")
-            elif not href.startswith(('#', 'mailto:', 'tel:', 'javascript:')):
-                links.append(urljoin(base_url, href))
-        return links
+        """Extract all links from HTML (legacy method)."""
+        return extract_links_from_html(html, base_url)
 
     def _clean_text(self, text: str) -> str:
-        """Clean and normalize text."""
+        """Clean and normalize text (legacy method)."""
+        import re
         text = re.sub(r'\s+', ' ', text)
         return text.strip()
+
+    def _parse_html(self, html: str, base_url: str) -> tuple[str, str, list[str]]:
+        """Parse HTML to extract title, text content, and links (legacy method)."""
+        title = extract_title_from_html(html)
+        content = extract_text_from_html(html)
+        links = extract_links_from_html(html, base_url)
+        return title, content, links
