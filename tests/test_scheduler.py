@@ -1,205 +1,191 @@
-"""Tests for scheduler module."""
+"""Tests for personal_index.scheduler."""
 
 import pytest
-import time
-from datetime import datetime, timezone, timedelta
-from personal_index.config import AppConfig
-from personal_index.scheduler import CrawlScheduler, ScheduleEntry
+import tempfile
+import shutil
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock
+
+from personal_index.models import CrawlConfig, CrawlStats
+from personal_index.scheduler import (
+    CrawlSchedule,
+    CrawlJob,
+    CrawlScheduler,
+)
 
 
-class TestScheduleEntry:
-    def test_creation(self):
-        entry = ScheduleEntry(name="daily crawl", interval_hours=24)
-        assert entry.name == "daily crawl"
-        assert entry.interval_hours == 24
-        assert entry.enabled is True
+@pytest.fixture
+def temp_data_dir():
+    """Create a temporary directory for scheduler data."""
+    tmpdir = tempfile.mkdtemp()
+    yield tmpdir
+    shutil.rmtree(tmpdir, ignore_errors=True)
 
-    def test_to_dict(self):
-        entry = ScheduleEntry(
-            name="test",
-            interval_hours=12,
-            seed_urls=["http://example.com"],
-            topics=["AI"],
+
+@pytest.fixture
+def scheduler(temp_data_dir):
+    """Create a CrawlScheduler with a temp directory."""
+    return CrawlScheduler(data_dir=temp_data_dir)
+
+
+class TestCrawlSchedule:
+    def test_create_schedule(self):
+        schedule = CrawlSchedule(topic="python", interval_hours=24.0)
+        assert schedule.topic == "python"
+        assert schedule.interval_hours == 24.0
+        assert schedule.enabled is True
+        assert schedule.last_run is None
+
+    def test_is_due_no_next_run(self):
+        schedule = CrawlSchedule(topic="python")
+        assert schedule.is_due() is True
+
+    def test_is_due_past_next_run(self):
+        schedule = CrawlSchedule(
+            topic="python",
+            next_run=datetime.utcnow() - timedelta(hours=1),
         )
-        d = entry.to_dict()
-        assert d["name"] == "test"
-        assert d["interval_hours"] == 12
-        assert d["seed_urls"] == ["http://example.com"]
+        assert schedule.is_due() is True
 
-    def test_from_dict(self):
-        data = {
-            "name": "test",
-            "interval_hours": 12,
-            "last_run": None,
-            "next_run": None,
-            "enabled": True,
-            "seed_urls": ["http://example.com"],
-            "topics": ["AI"],
-        }
-        entry = ScheduleEntry.from_dict(data)
-        assert entry.name == "test"
-        assert entry.interval_hours == 12
+    def test_is_due_future_next_run(self):
+        schedule = CrawlSchedule(
+            topic="python",
+            next_run=datetime.utcnow() + timedelta(hours=1),
+        )
+        assert schedule.is_due() is False
+
+    def test_is_due_when_disabled(self):
+        schedule = CrawlSchedule(
+            topic="python",
+            enabled=False,
+            next_run=datetime.utcnow() - timedelta(hours=1),
+        )
+        assert schedule.is_due() is False
+
+    def test_mark_run(self):
+        schedule = CrawlSchedule(topic="python", interval_hours=24.0)
+        schedule.mark_run()
+        assert schedule.last_run is not None
+        assert schedule.next_run is not None
+        expected_next = schedule.last_run + timedelta(hours=24.0)
+        assert abs((schedule.next_run - expected_next).total_seconds()) < 1
+
+
+class TestCrawlJob:
+    def test_create_job(self):
+        job = CrawlJob(job_id="test-1", topic="python")
+        assert job.job_id == "test-1"
+        assert job.topic == "python"
+        assert job.status == "pending"
+        assert job.pages_crawled == 0
+
+    def test_job_status_transitions(self):
+        job = CrawlJob(job_id="test-1", topic="python")
+        job.status = "running"
+        assert job.status == "running"
+        job.status = "completed"
+        assert job.status == "completed"
 
 
 class TestCrawlScheduler:
-    def test_creation(self):
-        scheduler = CrawlScheduler()
-        assert len(scheduler.entries) == 0
-        assert scheduler._running is False
+    def test_add_schedule(self, scheduler):
+        schedule = scheduler.add_schedule("python", interval_hours=12.0)
+        assert schedule.topic == "python"
+        assert schedule.interval_hours == 12.0
 
-    def test_add_schedule(self):
-        scheduler = CrawlScheduler()
-        entry = scheduler.add_schedule("daily", interval_hours=24)
-        assert len(scheduler.entries) == 1
-        assert entry.name == "daily"
-        assert entry.interval_hours == 24
+    def test_add_schedule_with_config(self, scheduler):
+        config = CrawlConfig(max_depth=3, max_pages=200)
+        schedule = scheduler.add_schedule("python", config=config)
+        assert schedule.config.max_depth == 3
+        assert schedule.config.max_pages == 200
 
-    def test_add_schedule_with_urls(self):
-        scheduler = CrawlScheduler()
-        entry = scheduler.add_schedule(
-            "news",
-            interval_hours=6,
-            seed_urls=["http://news.example.com"],
-            topics=["news"],
-        )
-        assert entry.seed_urls == ["http://news.example.com"]
-        assert entry.topics == ["news"]
-
-    def test_remove_schedule(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_schedule("daily")
-        removed = scheduler.remove_schedule("daily")
-        assert removed is True
-        assert len(scheduler.entries) == 0
-
-    def test_remove_nonexistent_schedule(self):
-        scheduler = CrawlScheduler()
-        removed = scheduler.remove_schedule("nonexistent")
-        assert removed is False
-
-    def test_enable_schedule(self):
-        scheduler = CrawlScheduler()
-        entry = scheduler.add_schedule("daily")
-        entry.enabled = False
-        enabled = scheduler.enable_schedule("daily")
-        assert enabled is True
-        assert entry.enabled is True
-
-    def test_disable_schedule(self):
-        scheduler = CrawlScheduler()
-        entry = scheduler.add_schedule("daily")
-        disabled = scheduler.disable_schedule("daily")
-        assert disabled is True
-        assert entry.enabled is False
-
-    def test_get_schedule(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_schedule("daily")
-        entry = scheduler.get_schedule("daily")
-        assert entry is not None
-        assert entry.name == "daily"
-
-    def test_get_nonexistent_schedule(self):
-        scheduler = CrawlScheduler()
-        entry = scheduler.get_schedule("nonexistent")
-        assert entry is None
-
-    def test_list_schedules(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_schedule("daily")
-        scheduler.add_schedule("hourly")
+    def test_list_schedules(self, scheduler):
+        scheduler.add_schedule("python", interval_hours=12.0)
+        scheduler.add_schedule("ai", interval_hours=6.0)
         schedules = scheduler.list_schedules()
         assert len(schedules) == 2
 
-    def test_run_due_first_run(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_schedule("daily", seed_urls=["http://example.com"])
-        executed = []
+    def test_remove_schedule(self, scheduler):
+        scheduler.add_schedule("python")
+        assert scheduler.remove_schedule("python") is True
+        assert scheduler.remove_schedule("python") is False
 
-        def callback(entry):
-            executed.append(entry.name)
+    def test_get_schedule(self, scheduler):
+        scheduler.add_schedule("python")
+        schedule = scheduler.get_schedule("python")
+        assert schedule is not None
+        assert schedule.topic == "python"
 
-        scheduler.set_crawl_callback(callback)
-        result = scheduler.run_due()
-        assert "daily" in result
-        assert "daily" in executed
+    def test_get_nonexistent_schedule(self, scheduler):
+        assert scheduler.get_schedule("nonexistent") is None
 
-    def test_run_due_not_yet(self):
-        scheduler = CrawlScheduler()
-        entry = scheduler.add_schedule("daily", interval_hours=24)
-        # Set last_run to now
-        entry.last_run = datetime.now(timezone.utc).isoformat()
-        executed = []
+    def test_toggle_schedule(self, scheduler):
+        scheduler.add_schedule("python")
+        schedule = scheduler.toggle_schedule("python")
+        assert schedule.enabled is False
+        schedule = scheduler.toggle_schedule("python")
+        assert schedule.enabled is True
 
-        def callback(entry):
-            executed.append(entry.name)
+    def test_persistence(self, temp_data_dir):
+        """Test that schedules persist across instances."""
+        scheduler1 = CrawlScheduler(data_dir=temp_data_dir)
+        scheduler1.add_schedule("python", interval_hours=12.0)
 
-        scheduler.set_crawl_callback(callback)
-        result = scheduler.run_due()
-        assert len(result) == 0
-        assert len(executed) == 0
+        scheduler2 = CrawlScheduler(data_dir=temp_data_dir)
+        schedules = scheduler2.list_schedules()
+        assert len(schedules) == 1
+        assert schedules[0].topic == "python"
 
-    def test_run_due_disabled(self):
-        scheduler = CrawlScheduler()
-        entry = scheduler.add_schedule("daily")
-        entry.enabled = False
-        executed = []
+    def test_run_now_without_callback(self, scheduler):
+        scheduler.add_schedule("python")
+        job = scheduler.run_now("python")
+        assert job is None
 
-        def callback(entry):
-            executed.append(entry.name)
+    def test_run_now_with_callback(self, scheduler):
+        scheduler.add_schedule("python")
 
-        scheduler.set_crawl_callback(callback)
-        result = scheduler.run_due()
-        assert len(result) == 0
+        mock_stats = CrawlStats(
+            pages_crawled=10,
+            pages_stored=5,
+            errors=0,
+        )
+        scheduler.set_crawl_callback(lambda s: mock_stats)
+        job = scheduler.run_now("python")
 
-    def test_run_due_multiple(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_schedule("daily", interval_hours=24)
-        scheduler.add_schedule("hourly", interval_hours=1)
-        executed = []
+        assert job is not None
+        assert job.status == "completed"
+        assert job.pages_crawled == 10
+        assert job.pages_stored == 5
 
-        def callback(entry):
-            executed.append(entry.name)
+    def test_run_now_with_failing_callback(self, scheduler):
+        scheduler.add_schedule("python")
+        scheduler.set_crawl_callback(lambda s: 1 / 0)
+        job = scheduler.run_now("python")
 
-        scheduler.set_crawl_callback(callback)
-        result = scheduler.run_due()
-        assert len(result) == 2
-        assert "daily" in executed
-        assert "hourly" in executed
+        assert job is not None
+        assert job.status == "failed"
+        assert job.error_message is not None
 
-    def test_run_due_callback_error(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_schedule("daily")
+    def test_run_now_nonexistent_topic(self, scheduler):
+        scheduler.set_crawl_callback(lambda s: CrawlStats())
+        job = scheduler.run_now("nonexistent")
+        assert job is None
 
-        def bad_callback(entry):
-            raise ValueError("test error")
+    def test_list_jobs(self, scheduler):
+        scheduler.add_schedule("python")
+        scheduler.set_crawl_callback(lambda s: CrawlStats(pages_crawled=5))
+        scheduler.run_now("python")
+        jobs = scheduler.list_jobs()
+        assert len(jobs) >= 1
 
-        scheduler.set_crawl_callback(bad_callback)
-        result = scheduler.run_due()
-        assert len(result) == 0
+    def test_get_job(self, scheduler):
+        scheduler.add_schedule("python")
+        scheduler.set_crawl_callback(lambda s: CrawlStats())
+        job = scheduler.run_now("python")
+        retrieved = scheduler.get_job(job.job_id)
+        assert retrieved is not None
+        assert retrieved.job_id == job.job_id
 
-    def test_start_stop(self):
-        scheduler = CrawlScheduler()
-        scheduler.start(poll_interval=1)
-        assert scheduler.is_running() is True
-        time.sleep(0.1)
-        scheduler.stop()
-        assert scheduler.is_running() is False
-
-    def test_start_already_running(self):
-        scheduler = CrawlScheduler()
-        scheduler.start(poll_interval=1)
-        scheduler.start(poll_interval=1)
-        assert scheduler.is_running() is True
-        scheduler.stop()
-
-    def test_get_stats(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_schedule("daily")
-        scheduler.add_schedule("hourly")
-        scheduler.disable_schedule("hourly")
-        stats = scheduler.get_stats()
-        assert stats["total_schedules"] == 2
-        assert stats["enabled"] == 1
-        assert stats["disabled"] == 1
-        assert stats["running"] is False
+    def test_run_now_nonexistent_topic(self, scheduler):
+        job = scheduler.run_now("nonexistent")
+        assert job is None
