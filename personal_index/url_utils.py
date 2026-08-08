@@ -42,9 +42,11 @@ def normalize_url(url: str) -> str:
         elif scheme == "https" and netloc.endswith(":443"):
             netloc = netloc[:-4]
         path = parsed.path
-        # Remove trailing slash except for root path
-        if path != "/" and path.endswith("/"):
+        # Remove trailing slash from all paths including root
+        if path.endswith("/") and path != "":
             path = path.rstrip("/")
+        if not path:
+            path = ""
         # Remove fragment
         normalized = urlunparse(
             (scheme, netloc, path, parsed.params, parsed.query, "")
@@ -159,13 +161,15 @@ def join_urls(base: str, relative: str) -> str:
 
 
 def extract_all_urls(html: str, base_url: str = "") -> list:
-    """Extract all URLs from HTML content.
+    """Extract all URLs from HTML content or plain text.
 
     If base_url is not provided, extracts URLs that are already absolute.
+    Also supports extracting URLs from plain text using regex.
     """
-    from bs4 import BeautifulSoup
     urls = []
+    # First try to extract from HTML using BeautifulSoup
     try:
+        from bs4 import BeautifulSoup
         soup = BeautifulSoup(html, "html.parser")
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
@@ -180,6 +184,17 @@ def extract_all_urls(html: str, base_url: str = "") -> list:
                 urls.append(normalized)
     except Exception:
         pass
+
+    # Also extract URLs from plain text using regex
+    if not urls:
+        regex_urls = re.findall(
+            r'https?://[^\s<>"\')\]]+', html
+        )
+        for url in regex_urls:
+            normalized = normalize_url(url)
+            if is_valid_url(normalized) and normalized not in urls:
+                urls.append(normalized)
+
     return urls
 
 
