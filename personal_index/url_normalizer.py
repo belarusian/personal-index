@@ -25,6 +25,9 @@ def normalize_url(url: str, remove_fragment: bool = True,
     path = parsed.path.lower() if lowercase_path else parsed.path
     # Normalize path: collapse slashes
     path = re.sub(r"/+", "/", path)
+    # Remove trailing slash (except for root path)
+    if path != "/" and path.endswith("/"):
+        path = path.rstrip("/")
 
     # Sort query parameters
     query = parsed.query
