@@ -9,7 +9,7 @@ from personal_index.serializer import (
 
 
 @dataclass
-class TestItem:
+class _TestItem:
     name: str
     value: int
     timestamp: datetime = None
@@ -41,7 +41,7 @@ class TestSerializer:
 
     def test_to_json_dataclass(self):
         s = Serializer()
-        item = TestItem(name="test", value=42, timestamp=datetime(2024, 1, 1))
+        item = _TestItem(name="test", value=42, timestamp=datetime(2024, 1, 1))
         result = s.to_json(item)
         assert "test" in result
         assert "42" in result
@@ -67,7 +67,7 @@ class TestSerializer:
 
     def test_to_dict_dataclass(self):
         s = Serializer()
-        item = TestItem(name="test", value=42)
+        item = _TestItem(name="test", value=42)
         result = s.to_dict(item)
         assert result["name"] == "test"
         assert result["value"] == 42
@@ -108,7 +108,7 @@ class TestSerializer:
 
     def test_exclude_none(self):
         s = Serializer(config=SerializationConfig(include_none=False))
-        item = TestItem(name="test", value=42, timestamp=None)
+        item = _TestItem(name="test", value=42, timestamp=None)
         result = s.to_dict(item)
         assert "timestamp" not in result
 
