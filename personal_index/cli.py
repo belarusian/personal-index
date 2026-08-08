@@ -8,8 +8,11 @@ from pathlib import Path
 
 import click
 
+from personal_index.content_filter import ContentFilter, FilterConfig
+from personal_index.crawler import Crawler, CrawlerConfig
 from personal_index.interest_store import InterestStore
 from personal_index.models import Interest, InterestType
+from personal_index.search_index import SearchIndex
 
 
 DEFAULT_DATA_DIR = os.path.expanduser("~/.personal-index")
@@ -25,6 +28,11 @@ def get_interest_store() -> InterestStore:
     return InterestStore(storage_path=os.path.join(get_data_dir(), "interests.json"))
 
 
+def get_search_index() -> SearchIndex:
+    """Get the default search index."""
+    return SearchIndex(index_path=os.path.join(get_data_dir(), "index.json"))
+
+
 @click.group()
 @click.version_option(version="0.1.0", prog_name="personal-index")
 def cli():
@@ -34,6 +42,8 @@ def cli():
     """
     pass
 
+
+# ── Interest commands ──────────────────────────────────────────────
 
 @cli.group()
 def interests():
@@ -132,4 +142,157 @@ def priority(name, priority):
         click.echo(f"Updated priority for '{name}' to {result.priority}")
     else:
         click.echo(f"Error: Interest '{name}' not found.", err=True)
+        raise SystemExit(1)
+
+
+# ── Crawl commands ─────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("seed-urls", nargs=-1, required=True)
+@click.option(
+    "--depth", "-d", type=int, default=3,
+    help="Maximum crawl depth (default: 3)",
+)
+@click.option(
+    "--max-pages", "-m", type=int, default=100,
+    help="Maximum pages to crawl (default: 100)",
+)
+@click.option(
+    "--delay", type=float, default=1.0,
+    help="Delay between requests to same domain in seconds (default: 1.0)",
+)
+@click.option(
+    "--timeout", type=int, default=10,
+    help="Request timeout in seconds (default: 10)",
+)
+@click.option(
+    "--domain", multiple=True,
+    help="Restrict crawling to these domains (can be repeated)",
+)
+@click.option(
+    "--dry-run", is_flag=True,
+    help="Show what would be crawled without actually crawling",
+)
+def crawl(seed_urls, depth, max_pages, delay, timeout, domain, dry_run):
+    """Crawl the web starting from seed URLs."""
+    store = get_interest_store()
+    index = get_search_index()
+
+    if not store.list_all(enabled_only=True):
+        click.echo("Warning: No enabled interests configured. All pages will be indexed.")
+
+    config = CrawlerConfig(
+        max_depth=depth,
+        max_pages=max_pages,
+        delay=delay,
+        timeout=timeout,
+        allowed_domains=list(domain),
+    )
+
+    crawler = Crawler(config=config, interest_store=store)
+
+    if dry_run:
+        click.echo(f"Would crawl from {len(seed_urls)} seed URL(s):")
+        for url in seed_urls:
+            click.echo(f"  {url}")
+        click.echo(f"Max depth: {depth}, Max pages: {max_pages}, Delay: {delay}s")
+        return
+
+    click.echo(f"Crawling from {len(seed_urls)} seed URL(s)...")
+    click.echo(f"Max depth: {depth}, Max pages: {max_pages}, Delay: {delay}s")
+
+    pages = crawler.crawl(list(seed_urls))
+
+    # Filter and index
+    filter_config = FilterConfig(
+        require_interest_match=len(store.list_all(enabled_only=True)) > 0,
+    )
+    content_filter = ContentFilter(config=filter_config, interest_store=store)
+    filtered = content_filter.filter_pages(pages)
+
+    for page in filtered:
+        index.add(page)
+
+    click.echo(f"\nCrawled: {crawler.pages_crawled} pages")
+    click.echo(f"Matched interests: {len(filtered)} pages")
+    click.echo(f"Total indexed: {index.count()} pages")
+
+
+# ── Search commands ────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("query")
+@click.option(
+    "--limit", "-l", type=int, default=10,
+    help="Maximum results to show (default: 10)",
+)
+@click.option(
+    "--show-content", "-c", is_flag=True,
+    help="Show content snippet with results",
+)
+def search(query, limit, show_content):
+    """Search the local index."""
+    index = get_search_index()
+
+    if index.count() == 0:
+        click.echo("Index is empty. Run 'personal-index crawl' first.")
+        return
+
+    results = index.search(query, limit=limit)
+
+    if not results:
+        click.echo(f"No results found for: {query}")
+        return
+
+    click.echo(f"\nSearch results for: {query} ({len(results)} found)\n")
+    click.echo("-" * 80)
+
+    for i, (url, score) in enumerate(results, 1):
+        page = index.get(url)
+        if page:
+            click.echo(f"\n[{i}] {page.title or 'Untitled'}")
+            click.echo(f"    URL: {url}")
+            click.echo(f"    Score: {score:.2f}")
+            if page.matched_interests:
+                click.echo(f"    Interests: {', '.join(page.matched_interests)}")
+            if show_content and page.content:
+                snippet = page.content[:200].replace("\n", " ")
+                click.echo(f"    Content: {snippet}...")
+            click.echo("-" * 80)
+
+
+# ── Index commands ─────────────────────────────────────────────────
+
+@cli.command()
+def status():
+    """Show index and interest status."""
+    store = get_interest_store()
+    index = get_search_index()
+
+    click.echo("=== personal-index Status ===\n")
+    click.echo(f"Data directory: {get_data_dir()}")
+    click.echo(f"Interests: {len(store.list_all())} total, "
+               f"{len(store.list_all(enabled_only=True))} enabled")
+    click.echo(f"Indexed pages: {index.count()}")
+    click.echo(f"Indexed URLs: {len(index.urls())}")
+
+
+@cli.command()
+@click.confirmation_option(prompt="Are you sure you want to clear the index?")
+def clear():
+    """Clear the search index."""
+    index = get_search_index()
+    index.clear()
+    click.echo("Index cleared.")
+
+
+@cli.command()
+@click.option("--url", "-u", required=True, help="URL to remove from index")
+def remove_url(url):
+    """Remove a specific URL from the index."""
+    index = get_search_index()
+    if index.remove(url):
+        click.echo(f"Removed: {url}")
+    else:
+        click.echo(f"URL not found in index: {url}")
         raise SystemExit(1)
