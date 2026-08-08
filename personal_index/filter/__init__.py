@@ -1,5 +1,5 @@
-"""Content filtering module for Personal Index."""
+"""Content filtering module."""
 
-from personal_index.filter.content_filter import ContentFilter, FilterResult
+from personal_index.filter.matcher import ContentMatcher, InterestFilter
 
-__all__ = ["ContentFilter", "FilterResult"]
+__all__ = ["ContentMatcher", "InterestFilter"]
