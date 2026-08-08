@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import time
 from typing import List, Optional
 
 from personal_index.index import SearchIndex, IndexedPage
@@ -118,7 +119,6 @@ class JSONExporter:
 
     def export_entries(self, entries: list[dict], filepath: str) -> str:
         """Export entries to a JSON file."""
-        import json
         data = {
             "exported_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "total_entries": len(entries),
@@ -130,12 +130,10 @@ class JSONExporter:
 
     def export_entry(self, entry: dict) -> str:
         """Serialize a single entry to JSON string."""
-        import json
         return json.dumps(entry, indent=self.indent, ensure_ascii=False, default=str)
 
     def export_batch(self, entries: list[dict], batch_size: int = 100) -> list[str]:
         """Export entries in batches, returning JSON strings."""
-        import json
         batches = []
         for i in range(0, len(entries), batch_size):
             batch = entries[i : i + batch_size]
