@@ -10,7 +10,6 @@ def slugify(text: str) -> str:
     - Replaces whitespace and special characters with hyphens
     - Removes consecutive hyphens
     - Strips leading/trailing hyphens
-    - Strips non-ASCII characters
 
     Args:
         text: The input string to slugify.
@@ -27,13 +26,8 @@ def slugify(text: str) -> str:
     text = text.lower().strip()
     # Replace dots with hyphens before stripping special chars
     text = text.replace('.', '-')
-    # Remove non-ASCII characters
-    text = text.encode('ascii', 'ignore').decode('ascii')
-    # Remove remaining special characters
     text = re.sub(r'[^\w\s-]', '', text)
-    # Replace whitespace and underscores with hyphens
     text = re.sub(r'[\s_]+', '-', text)
-    # Remove consecutive hyphens
     text = re.sub(r'-+', '-', text)
     return text.strip('-')
 
@@ -41,16 +35,16 @@ def slugify(text: str) -> str:
 def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """Truncate a string to a specified maximum length.
 
-    If the text exceeds max_length, it is cut off and a suffix is appended.
-    The total length of the result (including suffix) will not exceed max_length.
+    If the text is longer than max_length, it is cut off and a suffix
+    is appended. The suffix is included in the max_length count.
 
     Args:
         text: The input string to truncate.
-        max_length: Maximum allowed length of the result (including suffix).
-        suffix: String to append when truncation occurs.
+        max_length: The maximum allowed length (including suffix).
+        suffix: The string to append when truncation occurs.
 
     Returns:
-        The truncated string.
+        The truncated string, or the original if it fits.
 
     Examples:
         >>> truncate("Hello, World!", 8)
@@ -61,7 +55,7 @@ def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
     if len(text) <= max_length:
         return text
 
-    if len(suffix) >= max_length:
+    if max_length < len(suffix):
         return suffix[:max_length]
 
     return text[: max_length - len(suffix)] + suffix
@@ -71,18 +65,19 @@ def word_count(text: str) -> int:
     """Count the number of words in a string.
 
     Words are defined as sequences of non-whitespace characters.
-    Empty strings and strings with only whitespace return 0.
 
     Args:
         text: The input string to count words in.
 
     Returns:
-        The number of words in the string.
+        The number of words in the text.
 
     Examples:
         >>> word_count("Hello world")
         2
-        >>> word_count("  ")
+        >>> word_count("  One   two  three  ")
+        3
+        >>> word_count("")
         0
     """
     if not text or not text.strip():
