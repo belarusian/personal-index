@@ -30,11 +30,17 @@ class RobotsPolicy:
         parsed = urlparse(url)
         path = parsed.path or "/"
 
-        # Collect applicable rules
-        applicable_rules = []
+        # Collect applicable rules - prefer specific user agent over wildcard
+        specific_rules = []
+        wildcard_rules = []
         for rule in self.rules:
-            if rule.user_agent == "*" or rule.user_agent.lower() == user_agent.lower():
-                applicable_rules.append(rule)
+            if rule.user_agent.lower() == user_agent.lower():
+                specific_rules.append(rule)
+            elif rule.user_agent == "*":
+                wildcard_rules.append(rule)
+
+        # Use specific rules if available, otherwise wildcard
+        applicable_rules = specific_rules if specific_rules else wildcard_rules
 
         # If no rules apply, allow
         if not applicable_rules:
@@ -56,11 +62,10 @@ class RobotsPolicy:
 
     def _path_matches(self, path: str, pattern: str) -> bool:
         """Check if path matches a robots.txt pattern."""
-        # Handle $ anchor (end of path)
+        # Handle $ anchor (end of path) - exact match only
         if pattern.endswith("$"):
             pattern = pattern[:-1]
-            # Exact match or prefix match
-            return path == pattern or path.startswith(pattern + "/")
+            return path == pattern
 
         # Handle * wildcard
         if "*" in pattern:
