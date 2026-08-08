@@ -91,7 +91,7 @@ class TestContentFilter:
         assert f.should_include(page) is False
 
     def test_blocked_pattern(self, filter_no_store):
-        config = FilterConfig(blocked_patterns=[r"advertis?\b"])
+        config = FilterConfig(blocked_patterns=[r"advertis"])
         f = ContentFilter(config=config)
         page = CrawledPage(
             url="https://example.com",
