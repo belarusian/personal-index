@@ -1,6 +1,9 @@
-"""Configuration management for Personal Index."""
+"""
+Configuration management for personal-index.
 
-from __future__ import annotations
+Handles loading, saving, and validating user configuration
+including interests, crawler settings, and schedule preferences.
+"""
 
 import json
 import os
@@ -9,101 +12,91 @@ from pathlib import Path
 from typing import Optional
 
 
-DEFAULT_CONFIG_DIR = Path.home() / ".config" / "personal_index"
-DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR / "config.json"
-DEFAULT_INDEX_DIR = Path.home() / ".local" / "share" / "personal_index"
+DEFAULT_CONFIG_PATH = os.path.expanduser("~/.config/personal-index/config.json")
 
 
 @dataclass
 class CrawlerConfig:
     """Configuration for the web crawler."""
-
     max_depth: int = 3
     politeness_delay: float = 1.0
-    rate_limit: float = 1.0
-    max_pages_per_domain: int = 100
-    user_agent: str = "PersonalIndex/0.1.0"
-    timeout: int = 30
+    max_concurrent_requests: int = 5
+    request_timeout: int = 30
+    max_page_size: int = 1024 * 1024  # 1MB
+    user_agent: str = "personal-index/0.1.0"
     respect_robots_txt: bool = True
-    max_content_size: int = 1_000_000  # 1MB
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict) -> CrawlerConfig:
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 @dataclass
-class Interest:
-    """Represents a user-defined interest to track."""
-
-    topic: str
-    keywords: list[str] = field(default_factory=list)
-    url_patterns: list[str] = field(default_factory=list)
-    enabled: bool = True
-    priority: int = 5  # 1-10, higher = more important
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict) -> Interest:
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
-
-
-@dataclass
-class SchedulerConfig:
+class ScheduleConfig:
     """Configuration for scheduled crawling."""
-
     enabled: bool = False
     interval_hours: int = 24
-    max_concurrent_crawls: int = 1
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict) -> SchedulerConfig:
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+    max_pages_per_run: int = 100
 
 
 @dataclass
 class AppConfig:
     """Main application configuration."""
-
-    config_dir: Path = field(default_factory=lambda: DEFAULT_CONFIG_DIR)
-    index_dir: Path = field(default_factory=lambda: DEFAULT_INDEX_DIR)
+    config_dir: str = field(default_factory=lambda: os.path.expanduser("~/.config/personal-index"))
+    data_dir: str = field(default_factory=lambda: os.path.expanduser("~/.local/share/personal-index"))
     crawler: CrawlerConfig = field(default_factory=CrawlerConfig)
-    interests: list[Interest] = field(default_factory=list)
-    scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
+    schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
 
-    def save(self) -> None:
-        """Save configuration to disk."""
-        self.config_dir.mkdir(parents=True, exist_ok=True)
-        self.index_dir.mkdir(parents=True, exist_ok=True)
-        data = {
-            "crawler": self.crawler.to_dict(),
-            "interests": [i.to_dict() for i in self.interests],
-            "scheduler": self.scheduler.to_dict(),
-        }
-        with open(self.config_dir / "config.json", "w") as f:
-            json.dump(data, f, indent=2)
+    def to_dict(self) -> dict:
+        return asdict(self)
 
     @classmethod
-    def load(cls, config_path: Optional[Path] = None) -> AppConfig:
-        """Load configuration from disk."""
-        path = config_path or DEFAULT_CONFIG_FILE
-        if not path.exists():
-            return cls()
-        with open(path) as f:
-            data = json.load(f)
-        config = cls()
-        if "crawler" in data:
-            config.crawler = CrawlerConfig.from_dict(data["crawler"])
-        if "interests" in data:
-            config.interests = [Interest.from_dict(i) for i in data["interests"]]
-        if "scheduler" in data:
-            config.scheduler = SchedulerConfig.from_dict(data["scheduler"])
-        return config
+    def from_dict(cls, data: dict) -> "AppConfig":
+        crawler_data = data.get("crawler", {})
+        schedule_data = data.get("schedule", {})
+        crawler = CrawlerConfig(**{k: v for k, v in crawler_data.items() if k in CrawlerConfig.__dataclass_fields__})
+        schedule = ScheduleConfig(**{k: v for k, v in schedule_data.items() if k in ScheduleConfig.__dataclass_fields__})
+        return cls(
+            config_dir=data.get("config_dir", cls().config_dir),
+            data_dir=data.get("data_dir", cls().data_dir),
+            crawler=crawler,
+            schedule=schedule,
+        )
+
+
+class ConfigManager:
+    """Manages loading and saving application configuration."""
+
+    def __init__(self, config_path: Optional[str] = None):
+        self.config_path = config_path or DEFAULT_CONFIG_PATH
+        self._config: Optional[AppConfig] = None
+
+    @property
+    def config(self) -> AppConfig:
+        if self._config is None:
+            self._config = self.load()
+        return self._config
+
+    def load(self) -> AppConfig:
+        """Load configuration from file, or return defaults."""
+        path = Path(self.config_path)
+        if path.exists():
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+                self._config = AppConfig.from_dict(data)
+                return self._config
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"Warning: Could not parse config: {e}. Using defaults.")
+        self._config = AppConfig()
+        return self._config
+
+    def save(self, config: Optional[AppConfig] = None) -> None:
+        """Save configuration to file."""
+        if config is None:
+            config = self.config
+        path = Path(self.config_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(config.to_dict(), f, indent=2)
+
+    def ensure_dirs(self) -> None:
+        """Ensure all required directories exist."""
+        Path(self.config.config_dir).mkdir(parents=True, exist_ok=True)
+        Path(self.config.data_dir).mkdir(parents=True, exist_ok=True)
