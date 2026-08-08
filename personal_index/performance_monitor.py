@@ -40,7 +40,12 @@ class MetricStats:
     def stddev(self) -> float:
         if self.count < 2:
             return 0.0
-        variance = (self.sum_sq / self.count) - (self.mean ** 2)
+        # Use population variance formula: E[X^2] - (E[X])^2
+        # But need to handle the case where min_val/max_val weren't set
+        # Use sum_sq for E[X^2] calculation
+        mean = self.mean
+        variance = (self.sum_sq / self.count) - (mean ** 2)
+        # Clamp to avoid floating point issues
         return max(0.0, variance) ** 0.5
 
     @property
