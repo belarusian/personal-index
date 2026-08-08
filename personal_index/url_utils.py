@@ -1,18 +1,19 @@
-"""
-URL utilities for personal-index.
+"""URL utilities for validation, normalization, and extraction."""
 
-Provides URL validation, normalization, and classification.
-"""
+from __future__ import annotations
 
 import re
-from urllib.parse import urlparse, urljoin, urlunparse
-from typing import Optional
+from urllib.parse import (
+    parse_qs,
+    quote,
+    unquote,
+    urlparse,
+    urlunparse,
+)
 
 
 def is_valid_url(url: str) -> bool:
     """Check if a string is a valid URL."""
-    if not url or not isinstance(url, str):
-        return False
     try:
         parsed = urlparse(url)
         return parsed.scheme in ("http", "https") and bool(parsed.netloc)
@@ -21,27 +22,30 @@ def is_valid_url(url: str) -> bool:
 
 
 def normalize_url(url: str) -> str:
-    """Normalize a URL by removing fragments, trailing slashes, etc."""
-    if not url:
-        return url
+    """Normalize a URL by removing fragments, normalizing case, etc."""
     try:
         parsed = urlparse(url)
+        # Lowercase scheme and netloc
+        scheme = parsed.scheme.lower()
+        netloc = parsed.netloc.lower()
+        # Normalize path
+        path = parsed.path
+        # Remove trailing slash (except for root)
+        if path != "/" and path.endswith("/"):
+            path = path.rstrip("/")
+        # Remove default ports
+        if ":" in netloc:
+            host, port = netloc.rsplit(":", 1)
+            if (scheme == "http" and port == "80") or \
+               (scheme == "https" and port == "443"):
+                netloc = host
         # Remove fragment
-        path = parsed.path.rstrip("/") or "/"
-        normalized = urlunparse((
-            parsed.scheme.lower(),
-            parsed.netloc.lower(),
-            path,
-            parsed.params,
-            parsed.query,
-            "",  # No fragment
-        ))
-        return normalized
+        return urlunparse((scheme, netloc, path, parsed.params, parsed.query, ""))
     except Exception:
         return url
 
 
-def get_domain(url: str) -> str:
+def extract_domain(url: str) -> str:
     """Extract the domain from a URL."""
     try:
         parsed = urlparse(url)
@@ -50,167 +54,87 @@ def get_domain(url: str) -> str:
         return ""
 
 
-def get_base_url(url: str) -> str:
-    """Get the base URL (scheme + domain) from a URL."""
-    try:
-        parsed = urlparse(url)
-        return f"{parsed.scheme}://{parsed.netloc}"
-    except Exception:
-        return ""
-
-
 def is_same_domain(url1: str, url2: str) -> bool:
     """Check if two URLs are from the same domain."""
-    return get_domain(url1) == get_domain(url2)
+    return extract_domain(url1) == extract_domain(url2)
 
 
-def is_external_link(url: str, base_url: str) -> bool:
-    """Check if a URL is external to the base domain."""
-    return not is_same_domain(url, base_url)
+def extract_subdomain(url: str) -> str:
+    """Extract the subdomain from a URL."""
+    domain = extract_domain(url)
+    parts = domain.split(".")
+    if len(parts) > 2:
+        return ".".join(parts[:-2])
+    return ""
 
 
-def resolve_url(url: str, base_url: str) -> str:
-    """Resolve a relative URL against a base URL."""
-    if not url:
-        return base_url
-    if url.startswith(("http://", "https://")):
-        return normalize_url(url)
-    return normalize_url(urljoin(base_url, url))
-
-
-def is_crawlable_url(url: str) -> bool:
-    """Check if a URL is suitable for crawling."""
-    if not is_valid_url(url):
-        return False
-    parsed = urlparse(url)
-    # Skip non-HTTP URLs
-    if parsed.scheme not in ("http", "https"):
-        return False
-    # Skip mailto, tel, javascript
-    if url.startswith(("mailto:", "tel:", "javascript:", "data:", "ftp:")):
-        return False
-    # Skip fragment-only URLs
-    if not parsed.path and not parsed.query:
-        return False
-    return True
-
-
-def is_resource_url(url: str) -> bool:
-    """Check if a URL points to a static resource (image, CSS, JS, etc.)."""
-    resource_extensions = {
-        '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.ico', '.bmp',
-        '.css', '.js', '.woff', '.woff2', '.ttf', '.eot', '.otf',
-        '.pdf', '.zip', '.tar', '.gz', '.rar', '.7z',
-        '.mp3', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm',
-        '.apk', '.exe', '.dmg', '.iso',
-    }
-    parsed = urlparse(url)
-    path_lower = parsed.path.lower()
-    for ext in resource_extensions:
-        if path_lower.endswith(ext):
-            return True
-    # Check content-type-like patterns in URL
-    if any(ext in path_lower for ext in ['.json', '.xml', '.rss', '.atom']):
-        return False  # These are crawlable
-    return False
-
-
-def classify_url(url: str) -> str:
-    """Classify a URL by type."""
-    if not is_valid_url(url):
-        return "invalid"
-    if is_resource_url(url):
-        return "resource"
-    parsed = urlparse(url)
-    path = parsed.path.lower()
-    if path.endswith(('.html', '.htm')) or path == '/':
-        return "page"
-    if any(ext in path for ext in ['.json', '.xml', '.rss', '.atom']):
-        return "feed"
-    return "page"  # Default classification
-
-
-def extract_path_segments(url: str) -> list[str]:
-    """Extract path segments from a URL."""
-    try:
-        parsed = urlparse(url)
-        segments = [s for s in parsed.path.split("/") if s]
-        return segments
-    except Exception:
-        return []
-
-
-def url_depth(url: str) -> int:
-    """Get the depth of a URL path."""
-    return len(extract_path_segments(url))
-
-
-def is_well_known(url: str) -> bool:
-    """Check if a URL is a well-known path (robots.txt, sitemap.xml, etc.)."""
-    well_known = {
-        '/robots.txt',
-        '/sitemap.xml',
-        '/sitemap_index.xml',
-        '/.well-known/',
-        '/favicon.ico',
-    }
-    parsed = urlparse(url)
-    path = parsed.path.rstrip("/") or "/"
-    for wk in well_known:
-        if path == wk or path.startswith(wk):
-            return True
-    return False
-
-
-def generate_sitemap_url(url: str) -> str:
-    """Generate a sitemap URL from a base URL."""
-    base = get_base_url(url)
-    return f"{base}/sitemap.xml"
-
-
-# Alias for backward compatibility
-extract_domain = get_domain
+def get_tld(url: str) -> str:
+    """Get the top-level domain from a URL."""
+    domain = extract_domain(url)
+    parts = domain.split(".")
+    if parts:
+        return parts[-1]
+    return ""
 
 
 def is_internal_link(url: str, base_url: str) -> bool:
-    """Check if a URL is internal to the base domain."""
+    """Check if a URL is an internal link relative to a base URL."""
     return is_same_domain(url, base_url)
 
 
-def sanitize_url(url: str) -> str:
-    """Sanitize a URL by removing dangerous components."""
-    if not url:
-        return url
-    # Remove fragments
-    if "#" in url:
-        url = url.split("#")[0]
-    # Remove query parameters that could be dangerous
+def remove_query_params(url: str, params: list[str] | None = None) -> str:
+    """Remove specific query parameters from a URL."""
     parsed = urlparse(url)
-    # Normalize
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    if params:
+        for param in params:
+            query.pop(param, None)
+    # Rebuild query string
+    new_query = "&".join(
+        f"{k}={v[0]}" for k, v in sorted(query.items())
+    )
     return urlunparse((
-        parsed.scheme.lower(),
-        parsed.netloc.lower(),
+        parsed.scheme,
+        parsed.netloc,
         parsed.path,
         parsed.params,
-        parsed.query,
-        "",
+        new_query,
+        parsed.fragment,
     ))
 
 
 def url_to_path(url: str) -> str:
     """Convert a URL to a safe filesystem path."""
-    import hashlib
-    # Use hash of URL as filename to avoid path issues
-    url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
-    return f"pages/{url_hash}.html"
+    parsed = urlparse(url)
+    # Replace special characters
+    safe_path = re.sub(r'[<>:"/\\|?*]', '_', parsed.path)
+    # Ensure non-empty
+    if not safe_path or safe_path == "_":
+        safe_path = "index"
+    return f"{parsed.netloc}{safe_path}"
 
 
-def generate_seed_urls(topics: list[str], max_per_topic: int = 5) -> list[str]:
-    """Generate seed URLs for given topics using a search engine."""
-    # Simple implementation: generate Wikipedia URLs for topics
-    urls = []
-    for topic in topics:
-        # Wikipedia as a seed source
-        wiki_url = f"https://en.wikipedia.org/wiki/{topic.replace(' ', '_')}"
-        urls.append(wiki_url)
-    return urls[:max_per_topic * len(topics)]
+def join_urls(base: str, relative: str) -> str:
+    """Join a base URL with a relative URL."""
+    from urllib.parse import urljoin
+    return urljoin(base, relative)
+
+
+def extract_all_urls(text: str) -> list[str]:
+    """Extract all URLs from text."""
+    url_pattern = r'https?://[^\s<>"\')\]]+'
+    urls = re.findall(url_pattern, text)
+    return [normalize_url(u) for u in urls if is_valid_url(u)]
+
+
+def is_robotstxt(url: str) -> bool:
+    """Check if URL points to a robots.txt file."""
+    parsed = urlparse(url)
+    return parsed.path.lower() == "/robots.txt"
+
+
+def is_sitemap(url: str) -> bool:
+    """Check if URL points to a sitemap."""
+    parsed = urlparse(url)
+    path_lower = parsed.path.lower()
+    return "sitemap" in path_lower or path_lower.endswith(".xml")
