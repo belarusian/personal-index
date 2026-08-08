@@ -27,21 +27,47 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-def normalize_url(url: str) -> str:
-    """Normalize URL: lowercase domain, remove fragments."""
-    if not url:
-        return url
+def normalize_url(url: str, base_url: str = "") -> Optional[str]:
+    """Normalize URL: lowercase domain, remove fragments, default ports.
+
+    Args:
+        url: The URL to normalize.
+        base_url: Optional base URL to resolve relative URLs against.
+
+    Returns:
+        Normalized URL string, or None if URL is invalid.
+    """
+    if not url or not url.strip():
+        return None
+    url = url.strip()
     try:
+        # Resolve relative URLs
+        if base_url and not url.startswith(("http://", "https://")):
+            url = urljoin(base_url, url)
+
         parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return None
+        if not parsed.netloc:
+            return None
+
         scheme = parsed.scheme.lower()
         netloc = parsed.netloc.lower()
+
+        # Remove default ports
+        if scheme == "http" and netloc.endswith(":80"):
+            netloc = netloc[:-3]
+        elif scheme == "https" and netloc.endswith(":443"):
+            netloc = netloc[:-4]
+
         path = parsed.path
         if path != "/" and path.endswith("/"):
             path = path.rstrip("/")
+
         query = ("?" + parsed.query) if parsed.query else ""
         return f"{scheme}://{netloc}{path}{query}"
     except Exception:
-        return url
+        return None
 
 
 def resolve_relative_url(base_url: str, relative_url: str) -> Optional[str]:
@@ -57,12 +83,17 @@ def resolve_relative_url(base_url: str, relative_url: str) -> Optional[str]:
 
 
 def extract_domain(url: str) -> Optional[str]:
-    """Extract domain from URL."""
+    """Extract domain from URL, stripping port number."""
     if not url:
         return None
     try:
         parsed = urlparse(url)
-        return parsed.netloc.lower() if parsed.netloc else None
+        netloc = parsed.netloc.lower() if parsed.netloc else None
+        if netloc:
+            # Strip port number
+            if ":" in netloc:
+                netloc = netloc.rsplit(":", 1)[0]
+        return netloc
     except Exception:
         return None
 
