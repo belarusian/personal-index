@@ -1,177 +1,163 @@
-"""Text processing utilities for personal-index.
+"""
+Text utilities for personal-index.
 
-Handles text extraction, cleaning, tokenization, and stopword removal.
+Provides text extraction, normalization, and snippet generation.
 """
 
-from __future__ import annotations
-
 import re
-import string
-from collections import Counter
+import html
 from typing import Optional
 
 
-# Common English stopwords
-STOPWORDS = {
-    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
-    "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
-    "being", "have", "has", "had", "do", "does", "did", "will", "would",
-    "could", "should", "may", "might", "shall", "can", "need", "dare",
-    "ought", "used", "it", "its", "this", "that", "these", "those",
-    "i", "you", "he", "she", "we", "they", "what", "which", "who",
-    "whom", "whose", "where", "when", "how", "all", "each", "every",
-    "both", "few", "more", "most", "other", "some", "such", "no", "nor",
-    "not", "only", "own", "same", "so", "than", "too", "very", "just",
-    "because", "as", "until", "while", "about", "between", "through",
-    "during", "before", "after", "above", "below", "up", "down", "out",
-    "off", "over", "under", "again", "further", "then", "once", "here",
-    "there", "any", "if", "into",
-}
+def extract_text_from_html(html_content: str) -> str:
+    """Extract clean text content from HTML."""
+    if not html_content:
+        return ""
 
-
-def clean_html(html: str) -> str:
-    """Remove HTML tags and entities from text.
-
-    Args:
-        html: Raw HTML string.
-
-    Returns:
-        Clean text string.
-    """
     # Remove script and style elements
-    clean = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
-    clean = re.sub(r"<style[^>]*>.*?</style>", "", clean, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r'<script[^>]*>.*?</script>', ' ', html_content, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<style[^>]*>.*?</style>', ' ', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text, flags=re.IGNORECASE | re.DOTALL)
 
-    # Remove all other tags
-    clean = re.sub(r"<[^>]+>", "", clean)
+    # Handle common block elements
+    text = re.sub(r'</?(p|div|article|section|header|footer|nav|main|aside|blockquote|pre|ul|ol|li|h[1-6])[^>]*>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'</?(br|hr)[^>]*>/', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'</?(span|strong|em|b|i|u|a)[^>]*>', ' ', text, flags=re.IGNORECASE)
 
-    # Decode common HTML entities
-    entity_map = {
-        "&amp;": "&",
-        "&lt;": "<",
-        "&gt;": ">",
-        "&quot;": '"',
-        "&#39;": "'",
-        "&nbsp;": " ",
+    # Remove remaining HTML tags
+    text = re.sub(r'<[^>]+>', ' ', text)
+
+    # Decode HTML entities
+    text = html.unescape(text)
+
+    # Clean whitespace
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+
+
+def extract_title_from_html(html_content: str) -> str:
+    """Extract the title from HTML."""
+    if not html_content:
+        return ""
+    match = re.search(r'<title[^>]*>(.*?)</title>', html_content, re.IGNORECASE | re.DOTALL)
+    if match:
+        return html.unescape(match.group(1).strip())
+    return ""
+
+
+def extract_meta_description(html_content: str) -> str:
+    """Extract meta description from HTML."""
+    if not html_content:
+        return ""
+    match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']*)["\']', html_content, re.IGNORECASE)
+    if not match:
+        match = re.search(r'<meta[^>]*content=["\']([^"\']*)["\'][^>]*name=["\']description["\']', html_content, re.IGNORECASE)
+    if match:
+        return html.unescape(match.group(1).strip())
+    return ""
+
+
+def tokenize(text: str) -> list[str]:
+    """Tokenize text into lowercase words, filtering stopwords."""
+    if not text:
+        return []
+    STOPWORDS = {
+        'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+        'of', 'with', 'by', 'from', 'is', 'it', 'as', 'was', 'are', 'be',
+        'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'we', 'they',
+        'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their',
+        'not', 'no', 'do', 'does', 'did', 'has', 'have', 'had', 'will', 'would',
+        'could', 'should', 'may', 'might', 'can', 'shall', 'been', 'being',
+        'what', 'which', 'who', 'whom', 'when', 'where', 'why', 'how',
+        'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such',
+        'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'also',
+        'about', 'up', 'out', 'if', 'then', 'else', 'into', 'over', 'after',
+        'before', 'between', 'under', 'again', 'further', 'here', 'there',
     }
-    for entity, char in entity_map.items():
-        clean = clean.replace(entity, char)
-
-    # Normalize whitespace
-    clean = re.sub(r"\s+", " ", clean).strip()
-
-    return clean
+    words = re.findall(r'\b[a-z0-9]+\b', text.lower())
+    return [w for w in words if len(w) > 1 and w not in STOPWORDS]
 
 
-def tokenize(text: str, lowercase: bool = True) -> list[str]:
-    """Tokenize text into words.
+def generate_snippet(text: str, query: str, max_length: int = 200) -> str:
+    """Generate a search snippet highlighting query terms."""
+    if not text:
+        return ""
 
-    Args:
-        text: Input text string.
-        lowercase: Whether to convert to lowercase.
+    query_terms = tokenize(query)
+    if not query_terms:
+        return text[:max_length]
 
-    Returns:
-        List of token strings.
-    """
-    if lowercase:
-        text = text.lower()
+    text_lower = text.lower()
 
-    # Split on whitespace and punctuation
-    tokens = re.findall(r"[a-zA-Z0-9]+(?:'[a-zA-Z]+)?", text)
-    return tokens
+    # Find the best context around query terms
+    best_start = 0
+    best_score = -1
 
+    for term in query_terms:
+        idx = text_lower.find(term)
+        if idx != -1:
+            score = len(term)
+            if score > best_score:
+                best_score = score
+                best_start = max(0, idx - 50)
 
-def remove_stopwords(tokens: list[str], stopwords: Optional[set[str]] = None) -> list[str]:
-    """Remove stopwords from a list of tokens.
+    snippet = text[best_start:best_start + max_length]
+    if len(snippet) < len(text):
+        snippet = "..." + snippet
+    if best_start > 0:
+        snippet = snippet + "..."
 
-    Args:
-        tokens: List of token strings.
-        stopwords: Custom set of stopwords, or use defaults.
-
-    Returns:
-        Filtered list of tokens.
-    """
-    stop = stopwords or STOPWORDS
-    return [t for t in tokens if t.lower() not in stop]
-
-
-def extract_keywords(text: str, top_n: int = 10) -> list[tuple[str, int]]:
-    """Extract top keywords from text using term frequency.
-
-    Args:
-        text: Input text string.
-        top_n: Number of top keywords to return.
-
-    Returns:
-        List of (keyword, count) tuples sorted by frequency.
-    """
-    tokens = tokenize(text)
-    filtered = remove_stopwords(tokens)
-    freq = Counter(filtered)
-    return freq.most_common(top_n)
-
-
-def truncate_text(text: str, max_length: int = 500, suffix: str = "...") -> str:
-    """Truncate text to a maximum length.
-
-    Args:
-        text: Input text.
-        max_length: Maximum length.
-        suffix: Suffix to append when truncated.
-
-    Returns:
-        Truncated text string.
-    """
-    if len(text) <= max_length:
-        return text
-    return text[: max_length - len(suffix)].rsplit(" ", 1)[0] + suffix
+    return snippet
 
 
 def compute_text_similarity(text1: str, text2: str) -> float:
-    """Compute simple text similarity using Jaccard index.
+    """Compute simple text similarity using word overlap."""
+    words1 = set(tokenize(text1))
+    words2 = set(tokenize(text2))
 
-    Args:
-        text1: First text.
-        text2: Second text.
-
-    Returns:
-        Similarity score between 0.0 and 1.0.
-    """
-    tokens1 = set(tokenize(text1))
-    tokens2 = set(tokenize(text2))
-
-    if not tokens1 and not tokens2:
-        return 1.0
-    if not tokens1 or not tokens2:
+    if not words1 or not words2:
         return 0.0
 
-    intersection = tokens1 & tokens2
-    union = tokens1 | tokens2
+    intersection = words1 & words2
+    union = words1 | words2
 
     return len(intersection) / len(union)
 
 
-def extract_email_addresses(text: str) -> list[str]:
-    """Extract email addresses from text.
-
-    Args:
-        text: Input text.
-
-    Returns:
-        List of email address strings.
-    """
-    pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-    return re.findall(pattern, text)
+def truncate_text(text: str, max_length: int = 1000) -> str:
+    """Truncate text to a maximum length, preserving word boundaries."""
+    if len(text) <= max_length:
+        return text
+    truncated = text[:max_length]
+    last_space = truncated.rfind(' ')
+    if last_space > max_length * 0.8:
+        truncated = truncated[:last_space]
+    return truncated + "..."
 
 
-def extract_urls(text: str) -> list[str]:
-    """Extract URLs from text.
+def count_words(text: str) -> int:
+    """Count words in text."""
+    if not text:
+        return 0
+    return len(re.findall(r'\b\w+\b', text))
 
-    Args:
-        text: Input text.
 
-    Returns:
-        List of URL strings.
-    """
-    pattern = r"https?://[a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]+"
-    return re.findall(pattern, text)
+def extract_links_from_html(html_content: str, base_url: str) -> list[str]:
+    """Extract all valid links from HTML content."""
+    links = []
+    pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>'
+    for match in re.finditer(pattern, html_content, re.IGNORECASE):
+        href = match.group(1).strip()
+        if href.startswith(('http://', 'https://')):
+            from urllib.parse import urlparse
+            parsed = urlparse(href)
+            if parsed.netloc:
+                links.append(href)
+        elif href.startswith('/'):
+            from urllib.parse import urlparse
+            parsed = urlparse(base_url)
+            links.append(f"{parsed.scheme}://{parsed.netloc}{href}")
+        elif not href.startswith(('#', 'mailto:', 'tel:', 'javascript:')):
+            from urllib.parse import urljoin
+            links.append(urljoin(base_url, href))
+    return links
