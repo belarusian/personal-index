@@ -18,8 +18,7 @@ from personal_index.export import (
     export_to_markdown,
     export_to_markdown_results,
 )
-from personal_index.index import SearchIndex, IndexedPage
-from personal_index.models import SearchResult
+from personal_index.index import SearchIndex, IndexedPage, SearchResult
 
 
 @pytest.fixture
