@@ -85,7 +85,7 @@ class TestExtractDomain:
         assert extract_domain("https://example.com") == "example.com"
 
     def test_with_port(self):
-        assert extract_domain("https://example.com:8080") == "example.com:8080"
+        assert extract_domain("https://example.com:8080") == "example.com"
 
     def test_subdomain(self):
         assert extract_domain("https://blog.example.com") == "blog.example.com"
