@@ -1,92 +1,104 @@
-"""Tests for personal_index.config."""
+"""Tests for configuration management."""
 
+import json
 import pytest
-import tempfile
-import shutil
 from pathlib import Path
+from personal_index.config import (
+    AppConfig,
+    CrawlerConfig,
+    Interest,
+    SchedulerConfig,
+)
 
-from personal_index.config import AppConfig, ConfigManager
+
+class TestCrawlerConfig:
+    def test_default_values(self):
+        config = CrawlerConfig()
+        assert config.max_depth == 3
+        assert config.politeness_delay == 1.0
+        assert config.rate_limit == 1.0
+        assert config.max_pages_per_domain == 100
+        assert config.timeout == 30
+        assert config.respect_robots_txt is True
+
+    def test_custom_values(self):
+        config = CrawlerConfig(max_depth=5, politeness_delay=2.0)
+        assert config.max_depth == 5
+        assert config.politeness_delay == 2.0
+
+    def test_to_dict(self):
+        config = CrawlerConfig(max_depth=5)
+        data = config.to_dict()
+        assert data["max_depth"] == 5
+        assert isinstance(data, dict)
+
+    def test_from_dict(self):
+        data = {"max_depth": 5, "politeness_delay": 2.0}
+        config = CrawlerConfig.from_dict(data)
+        assert config.max_depth == 5
+        assert config.politeness_delay == 2.0
+
+
+class TestInterest:
+    def test_create_interest(self):
+        interest = Interest(topic="machine learning")
+        assert interest.topic == "machine learning"
+        assert interest.keywords == []
+        assert interest.enabled is True
+        assert interest.priority == 5
+
+    def test_create_interest_with_keywords(self):
+        interest = Interest(
+            topic="AI",
+            keywords=["neural networks", "deep learning"],
+            priority=8,
+        )
+        assert interest.topic == "AI"
+        assert len(interest.keywords) == 2
+        assert interest.priority == 8
+
+    def test_to_dict(self):
+        interest = Interest(topic="AI", keywords=["ml"])
+        data = interest.to_dict()
+        assert data["topic"] == "AI"
+        assert data["keywords"] == ["ml"]
+
+    def test_from_dict(self):
+        data = {"topic": "AI", "keywords": ["ml"], "enabled": True, "priority": 8}
+        interest = Interest.from_dict(data)
+        assert interest.topic == "AI"
+        assert interest.priority == 8
+
+
+class TestSchedulerConfig:
+    def test_default_values(self):
+        config = SchedulerConfig()
+        assert config.enabled is False
+        assert config.interval_hours == 24
+
+    def test_custom_values(self):
+        config = SchedulerConfig(enabled=True, interval_hours=12)
+        assert config.enabled is True
+        assert config.interval_hours == 12
 
 
 class TestAppConfig:
     def test_default_config(self):
         config = AppConfig()
-        assert config.data_dir == "~/.personal-index"
-        assert config.default_crawl_depth == 2
-        assert config.default_max_pages == 100
-        assert config.default_rate_limit == 1.0
-        assert config.respect_robots is True
+        assert len(config.interests) == 0
+        assert config.crawler.max_depth == 3
 
-    def test_custom_config(self):
-        config = AppConfig(
-            data_dir="/custom/path",
-            default_crawl_depth=5,
-            default_max_pages=500,
-        )
-        assert config.data_dir == "/custom/path"
-        assert config.default_crawl_depth == 5
-        assert config.default_max_pages == 500
+    def test_save_and_load(self, tmp_path: Path):
+        config_dir = tmp_path / "config"
+        config = AppConfig(config_dir=config_dir)
+        config.interests.append(Interest(topic="test"))
+        config.save()
 
-    def test_search_index_dir_default(self):
-        config = AppConfig(data_dir="/test")
-        assert "test" in config.search_index_dir
-        assert "index" in config.search_index_dir
+        loaded = AppConfig.load(config_dir / "config.json")
+        assert len(loaded.interests) == 1
+        assert loaded.interests[0].topic == "test"
 
-
-@pytest.fixture
-def temp_config_file():
-    """Create a temporary config file path."""
-    tmpdir = tempfile.mkdtemp()
-    config_file = Path(tmpdir) / "config.json"
-    yield config_file
-    shutil.rmtree(tmpdir, ignore_errors=True)
-
-
-class TestConfigManager:
-    def test_default_config(self, temp_config_file):
-        manager = ConfigManager(config_file=str(temp_config_file))
-        assert manager.get("default_crawl_depth") == 2
-
-    def test_set_and_get(self, temp_config_file):
-        manager = ConfigManager(config_file=str(temp_config_file))
-        manager.set("default_crawl_depth", 5)
-        assert manager.get("default_crawl_depth") == 5
-
-    def test_save_and_load(self, temp_config_file):
-        manager = ConfigManager(config_file=str(temp_config_file))
-        manager.set("default_crawl_depth", 5)
-        manager.set("default_max_pages", 200)
-        manager.save()
-
-        manager2 = ConfigManager(config_file=str(temp_config_file))
-        assert manager2.get("default_crawl_depth") == 5
-        assert manager2.get("default_max_pages") == 200
-
-    def test_reset(self, temp_config_file):
-        manager = ConfigManager(config_file=str(temp_config_file))
-        manager.set("default_crawl_depth", 5)
-        manager.save()
-        manager.reset()
-        assert manager.get("default_crawl_depth") == 2
-
-    def test_as_dict(self, temp_config_file):
-        manager = ConfigManager(config_file=str(temp_config_file))
-        config_dict = manager.as_dict()
-        assert isinstance(config_dict, dict)
-        assert "default_crawl_depth" in config_dict
-
-    def test_set_unknown_key(self, temp_config_file):
-        manager = ConfigManager(config_file=str(temp_config_file))
-        with pytest.raises(AttributeError, match="Unknown config key"):
-            manager.set("nonexistent_key", "value")
-
-    def test_get_with_default(self, temp_config_file):
-        manager = ConfigManager(config_file=str(temp_config_file))
-        assert manager.get("nonexistent_key", "default_value") == "default_value"
-
-    def test_load_invalid_json(self, temp_config_file):
-        """Test handling of corrupted config file."""
-        temp_config_file.write_text("not valid json{{{")
-        manager = ConfigManager(config_file=str(temp_config_file))
-        # Should fall back to defaults
-        assert manager.get("default_crawl_depth") == 2
+    def test_load_nonexistent(self):
+        config = AppConfig.load(Path("/nonexistent/config.json"))
+        assert config is not None
+        assert len(config.interests) == 0
