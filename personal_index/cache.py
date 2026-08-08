@@ -1,170 +1,270 @@
-"""HTTP response cache for personal-index."""
+"""Caching utilities with LRU and TTL strategies."""
 
 from __future__ import annotations
 
-import json
-import os
 import time
-import hashlib
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
-from typing import Optional
+import threading
+from collections import OrderedDict
+from typing import Any, Generic, TypeVar
+
+T = TypeVar("T")
 
 
-@dataclass
-class CacheEntry:
-    """A single cached HTTP response."""
-    url: str
-    content: str = ""
-    cached_at: float = field(default_factory=time.time)
-    expires_at: float = 0  # 0 means no expiry
-    content_type: str = ""
-    status_code: int = 200
-    etag: str = ""
+class LRUCache:
+    """Thread-safe LRU cache with optional size limit.
 
-    def is_expired(self) -> bool:
-        """Check if this cache entry has expired."""
-        if self.expires_at == 0:
-            return False
-        return time.time() > self.expires_at
+    Uses OrderedDict for O(1) get/put operations.
+    """
 
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "CacheEntry":
-        return cls(**{k: v for k, v in data.items()
-                      if k in cls.__dataclass_fields__})
-
-
-class Cache:
-    """In-memory and file-backed HTTP response cache."""
-
-    def __init__(
-        self,
-        cache_dir: str = ".cache",
-        ttl: int = 3600,
-        max_size: int = 1000,
-    ):
-        self.cache_dir = Path(cache_dir)
-        self.ttl = ttl
+    def __init__(self, max_size: int = 128) -> None:
         self.max_size = max_size
-        self.hits = 0
-        self.misses = 0
-        self._memory_cache: dict[str, CacheEntry] = {}
-        self._load_from_disk()
+        self._cache: OrderedDict[str, Any] = OrderedDict()
+        self._lock = threading.Lock()
+        self._hits = 0
+        self._misses = 0
 
-    def _url_to_key(self, url: str) -> str:
-        """Convert URL to a safe filename key."""
-        return hashlib.sha256(url.encode()).hexdigest()
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get value by key, moving it to end (most recently used).
 
-    def _entry_path(self, key: str) -> Path:
-        return self.cache_dir / f"{key}.json"
+        Args:
+            key: Cache key.
+            default: Value to return if key not found.
 
-    def _load_from_disk(self):
-        """Load cache entries from disk."""
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        for f in self.cache_dir.glob("*.json"):
-            try:
-                with open(f, "r") as fh:
-                    data = json.load(fh)
-                entry = CacheEntry.from_dict(data)
-                self._memory_cache[data["url"]] = entry
-            except (json.JSONDecodeError, KeyError):
-                pass
+        Returns:
+            Cached value or default.
+        """
+        with self._lock:
+            if key not in self._cache:
+                self._misses += 1
+                return default
+            self._cache.move_to_end(key)
+            self._hits += 1
+            return self._cache[key]
 
-    def put(
-        self,
-        url: str,
-        content: str,
-        content_type: str = "",
-        status_code: int = 200,
-        etag: str = "",
-    ):
-        """Store a response in the cache."""
-        now = time.time()
-        # TTL of 0 means immediate expiry (expires_at = now)
-        if self.ttl > 0:
-            expires_at = now + self.ttl
-        else:
-            expires_at = now  # expires immediately
-        entry = CacheEntry(
-            url=url,
-            content=content,
-            cached_at=now,
-            expires_at=expires_at,
-            content_type=content_type,
-            status_code=status_code,
-            etag=etag,
-        )
-        # Evict oldest if at max size
-        if len(self._memory_cache) >= self.max_size:
-            self._evict_oldest()
-        self._memory_cache[url] = entry
-        self._save_entry(entry)
+    def put(self, key: str, value: Any) -> None:
+        """Store value in cache, evicting LRU item if at capacity.
 
-    def get(self, url: str) -> Optional[CacheEntry]:
-        """Retrieve a cached response."""
-        if url in self._memory_cache:
-            entry = self._memory_cache[url]
-            if entry.is_expired():
-                self.invalidate(url)
-                self.misses += 1
-                return None
-            self.hits += 1
-            return entry
-        self.misses += 1
-        return None
+        Args:
+            key: Cache key.
+            value: Value to store.
+        """
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            self._cache[key] = value
+            while len(self._cache) > self.max_size:
+                self._cache.popitem(last=False)
 
-    def invalidate(self, url: str):
-        """Remove a specific entry from the cache."""
-        if url in self._memory_cache:
-            del self._memory_cache[url]
-            key = self._url_to_key(url)
-            path = self._entry_path(key)
-            if path.exists():
-                path.unlink()
+    def delete(self, key: str) -> bool:
+        """Remove key from cache.
 
-    def clear(self):
-        """Clear all cache entries and reset counters."""
-        self._memory_cache.clear()
-        self.hits = 0
-        self.misses = 0
-        for f in self.cache_dir.glob("*.json"):
-            f.unlink()
+        Args:
+            key: Cache key to remove.
 
-    def _evict_oldest(self):
-        """Evict the oldest cache entry."""
-        if not self._memory_cache:
-            return
-        oldest_url = min(
-            self._memory_cache,
-            key=lambda u: self._memory_cache[u].cached_at,
-        )
-        self.invalidate(oldest_url)
+        Returns:
+            True if key was found and removed.
+        """
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+                return True
+            return False
 
-    def _save_entry(self, entry: CacheEntry):
-        """Persist a single entry to disk."""
-        key = self._url_to_key(entry.url)
-        path = self._entry_path(key)
-        with open(path, "w") as fh:
-            json.dump(entry.to_dict(), fh)
+    def clear(self) -> None:
+        """Remove all items from cache."""
+        with self._lock:
+            self._cache.clear()
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._cache
+
+    def __len__(self) -> int:
+        return len(self._cache)
+
+    @property
+    def size(self) -> int:
+        """Current number of items in cache."""
+        return len(self._cache)
 
     @property
     def hit_rate(self) -> float:
-        """Calculate cache hit rate."""
-        total = self.hits + self.misses
-        if total == 0:
-            return 0.0
-        return self.hits / total
+        """Cache hit rate as a fraction (0.0 to 1.0)."""
+        total = self._hits + self._misses
+        return self._hits / total if total > 0 else 0.0
 
-    def stats(self) -> dict:
+    def stats(self) -> dict[str, Any]:
         """Return cache statistics."""
         return {
-            "memory_entries": len(self._memory_cache),
-            "hits": self.hits,
-            "misses": self.misses,
-            "hit_rate": self.hit_rate,
-            "ttl": self.ttl,
+            "size": self.size,
             "max_size": self.max_size,
+            "hits": self._hits,
+            "misses": self._misses,
+            "hit_rate": self.hit_rate,
         }
+
+
+class TTLCache:
+    """Cache with time-to-live expiration.
+
+    Each entry expires after the specified TTL in seconds.
+    """
+
+    def __init__(self, ttl: float = 300.0, max_size: int = 1000) -> None:
+        """Initialize TTL cache.
+
+        Args:
+            ttl: Time-to-live in seconds for each entry.
+            max_size: Maximum number of entries before eviction.
+        """
+        self.ttl = ttl
+        self.max_size = max_size
+        self._cache: dict[str, tuple[Any, float]] = {}
+        self._lock = threading.Lock()
+        self._hits = 0
+        self._misses = 0
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get value if not expired.
+
+        Args:
+            key: Cache key.
+            default: Value to return if key not found or expired.
+
+        Returns:
+            Cached value or default.
+        """
+        with self._lock:
+            if key not in self._cache:
+                self._misses += 1
+                return default
+            value, expiry = self._cache[key]
+            if time.monotonic() > expiry:
+                del self._cache[key]
+                self._misses += 1
+                return default
+            self._hits += 1
+            return value
+
+    def put(self, key: str, value: Any, ttl: float | None = None) -> None:
+        """Store value with expiration.
+
+        Args:
+            key: Cache key.
+            value: Value to store.
+            ttl: Optional per-entry TTL override.
+        """
+        with self._lock:
+            effective_ttl = ttl if ttl is not None else self.ttl
+            expiry = time.monotonic() + effective_ttl
+            self._cache[key] = (value, expiry)
+            # Evict expired entries if over capacity
+            if len(self._cache) > self.max_size:
+                self._evict_expired()
+                if len(self._cache) > self.max_size:
+                    # Remove oldest entries
+                    oldest_keys = sorted(
+                        self._cache.keys(),
+                        key=lambda k: self._cache[k][1],
+                    )[: len(self._cache) - self.max_size]
+                    for k in oldest_keys:
+                        del self._cache[k]
+
+    def delete(self, key: str) -> bool:
+        """Remove key from cache.
+
+        Args:
+            key: Cache key to remove.
+
+        Returns:
+            True if key was found and removed.
+        """
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+                return True
+            return False
+
+    def clear(self) -> None:
+        """Remove all items from cache."""
+        with self._lock:
+            self._cache.clear()
+
+    def __contains__(self, key: str) -> bool:
+        with self._lock:
+            if key not in self._cache:
+                return False
+            _, expiry = self._cache[key]
+            if time.monotonic() > expiry:
+                del self._cache[key]
+                return False
+            return True
+
+    def __len__(self) -> int:
+        return len(self._cache)
+
+    @property
+    def size(self) -> int:
+        """Current number of non-expired items."""
+        now = time.monotonic()
+        expired = [k for k, (_, exp) in self._cache.items() if now > exp]
+        for k in expired:
+            del self._cache[k]
+        return len(self._cache)
+
+    def _evict_expired(self) -> int:
+        """Remove expired entries. Returns count of evicted items."""
+        now = time.monotonic()
+        expired = [k for k, (_, exp) in self._cache.items() if now > exp]
+        for k in expired:
+            del self._cache[k]
+        return len(expired)
+
+    @property
+    def hit_rate(self) -> float:
+        """Cache hit rate as a fraction."""
+        total = self._hits + self._misses
+        return self._hits / total if total > 0 else 0.0
+
+    def stats(self) -> dict[str, Any]:
+        """Return cache statistics."""
+        return {
+            "size": len(self._cache),
+            "max_size": self.max_size,
+            "ttl": self.ttl,
+            "hits": self._hits,
+            "misses": self._misses,
+            "hit_rate": self.hit_rate,
+        }
+
+
+class CacheDecorator:
+    """Decorator that wraps a function with caching.
+
+    Usage:
+        @CacheDecorator(lru_size=100)
+        def expensive_func(x):
+            return x * x
+    """
+
+    def __init__(self, lru_size: int = 128, ttl: float | None = None) -> None:
+        self.lru_size = lru_size
+        self.ttl = ttl
+
+    def __call__(self, func):
+        if self.ttl is not None:
+            cache = TTLCache(ttl=self.ttl, max_size=self.lru_size)
+        else:
+            cache = LRUCache(max_size=self.lru_size)
+
+        def wrapper(*args, **kwargs):
+            key = f"{func.__name__}:{args}:{sorted(kwargs.items())}"
+            result = cache.get(key)
+            if result is not None:
+                return result
+            result = func(*args, **kwargs)
+            cache.put(key, result)
+            return result
+
+        wrapper.cache = cache
+        wrapper.__wrapped__ = func
+        return wrapper

@@ -1,157 +1,231 @@
-"""Tests for the cache module."""
+"""Tests for cache module."""
 
-import os
+from __future__ import annotations
+
 import time
 import pytest
-from personal_index.cache import Cache, CacheEntry
+from personal_index.cache import LRUCache, TTLCache, CacheDecorator
 
 
-class TestCacheEntry:
-    def test_create_entry(self):
-        entry = CacheEntry(url="https://example.com", content="Hello")
-        assert entry.url == "https://example.com"
-        assert entry.content == "Hello"
+class TestLRUCache:
+    def test_get_put(self):
+        cache = LRUCache(max_size=3)
+        cache.put("a", 1)
+        assert cache.get("a") == 1
 
-    def test_not_expired(self):
-        entry = CacheEntry(
-            url="https://example.com",
-            content="Hello",
-            cached_at=time.time(),
-            expires_at=time.time() + 3600,
-        )
-        assert entry.is_expired() is False
+    def test_get_missing(self):
+        cache = LRUCache()
+        assert cache.get("missing") is None
+        assert cache.get("missing", "default") == "default"
 
-    def test_expired(self):
-        entry = CacheEntry(
-            url="https://example.com",
-            content="Hello",
-            cached_at=time.time() - 7200,
-            expires_at=time.time() - 3600,
-        )
-        assert entry.is_expired() is True
+    def test_lru_eviction(self):
+        cache = LRUCache(max_size=3)
+        cache.put("a", 1)
+        cache.put("b", 2)
+        cache.put("c", 3)
+        cache.put("d", 4)  # Should evict "a"
+        assert cache.get("a") is None
+        assert cache.get("b") == 2
+        assert cache.get("c") == 3
+        assert cache.get("d") == 4
 
-    def test_no_expiry(self):
-        entry = CacheEntry(url="https://example.com", content="Hello", expires_at=0)
-        assert entry.is_expired() is False
+    def test_lru_access_updates_order(self):
+        cache = LRUCache(max_size=3)
+        cache.put("a", 1)
+        cache.put("b", 2)
+        cache.put("c", 3)
+        cache.get("a")  # Access "a", making it most recent
+        cache.put("d", 4)  # Should evict "b" (LRU)
+        assert cache.get("a") == 1
+        assert cache.get("b") is None
+        assert cache.get("c") == 3
+        assert cache.get("d") == 4
 
-    def test_to_dict_and_from_dict(self):
-        entry = CacheEntry(
-            url="https://example.com",
-            content="Hello",
-            etag="abc123",
-        )
-        data = entry.to_dict()
-        restored = CacheEntry.from_dict(data)
-        assert restored.url == "https://example.com"
-        assert restored.etag == "abc123"
+    def test_update_existing_key(self):
+        cache = LRUCache(max_size=3)
+        cache.put("a", 1)
+        cache.put("a", 2)
+        assert cache.get("a") == 2
+        assert len(cache) == 1
 
+    def test_delete(self):
+        cache = LRUCache()
+        cache.put("a", 1)
+        assert cache.delete("a") is True
+        assert cache.get("a") is None
+        assert cache.delete("nonexistent") is False
 
-class TestCache:
-    def test_create_cache(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        assert cache.hits == 0
-        assert cache.misses == 0
+    def test_clear(self):
+        cache = LRUCache()
+        cache.put("a", 1)
+        cache.put("b", 2)
+        cache.clear()
+        assert len(cache) == 0
+        assert cache.get("a") is None
 
-    def test_put_and_get(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        cache.put("https://example.com", "<html>Hello</html>")
-        entry = cache.get("https://example.com")
-        assert entry is not None
-        assert entry.content == "<html>Hello</html>"
-        assert cache.hits == 1
+    def test_contains(self):
+        cache = LRUCache()
+        cache.put("a", 1)
+        assert "a" in cache
+        assert "b" not in cache
 
-    def test_get_nonexistent(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        entry = cache.get("https://nonexistent.com")
-        assert entry is None
-        assert cache.misses == 1
+    def test_len(self):
+        cache = LRUCache()
+        assert len(cache) == 0
+        cache.put("a", 1)
+        assert len(cache) == 1
 
-    def test_hit_rate(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        cache.put("https://example.com", "Hello")
-        cache.get("https://example.com")  # hit
-        cache.get("https://other.com")  # miss
+    def test_hit_rate(self):
+        cache = LRUCache()
+        cache.put("a", 1)
+        cache.get("a")  # hit
+        cache.get("b")  # miss
         assert cache.hit_rate == 0.5
 
-    def test_invalidate(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        cache.put("https://example.com", "Hello")
-        cache.invalidate("https://example.com")
-        assert cache.get("https://example.com") is None
+    def test_hit_rate_no_access(self):
+        cache = LRUCache()
+        assert cache.hit_rate == 0.0
 
-    def test_clear(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        cache.put("https://a.com", "A")
-        cache.put("https://b.com", "B")
-        cache.clear()
-        assert len(cache._memory_cache) == 0
-        assert cache.hits == 0
-        assert cache.misses == 0
-        # After clear, gets should return None and count as misses
-        assert cache.get("https://a.com") is None
-        assert cache.get("https://b.com") is None
-        assert cache.misses == 2
-
-    def test_ttl_expiry(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"), ttl=0)
-        cache.put("https://example.com", "Hello")
-        # TTL is 0, so it expires immediately
-        time.sleep(0.01)
-        entry = cache.get("https://example.com")
-        assert entry is None
-
-    def test_max_size_eviction(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"), max_size=2)
-        cache.put("https://a.com", "A")
-        cache.put("https://b.com", "B")
-        cache.put("https://c.com", "C")  # Should evict oldest
-        assert len(cache._memory_cache) <= 2
-
-    def test_stats(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
+    def test_stats(self):
+        cache = LRUCache(max_size=10)
+        cache.put("a", 1)
+        cache.get("a")
         stats = cache.stats()
-        assert "memory_entries" in stats
-        assert "hits" in stats
-        assert "misses" in stats
-        assert "hit_rate" in stats
-        assert "ttl" in stats
+        assert stats["size"] == 1
+        assert stats["max_size"] == 10
+        assert stats["hits"] == 1
+        assert stats["hit_rate"] == 1.0
 
-    def test_content_type_stored(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        cache.put("https://example.com", "Hello", content_type="text/plain")
-        entry = cache.get("https://example.com")
-        assert entry.content_type == "text/plain"
+    def test_size_property(self):
+        cache = LRUCache()
+        cache.put("a", 1)
+        cache.put("b", 2)
+        assert cache.size == 2
 
-    def test_status_code_stored(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        cache.put("https://example.com", "Hello", status_code=200)
-        entry = cache.get("https://example.com")
-        assert entry.status_code == 200
 
-    def test_etag_stored(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        cache.put("https://example.com", "Hello", etag="abc123")
-        entry = cache.get("https://example.com")
-        assert entry.etag == "abc123"
+class TestTTLCache:
+    def test_get_put(self):
+        cache = TTLCache(ttl=60.0)
+        cache.put("a", 1)
+        assert cache.get("a") == 1
 
-    def test_persistence(self, tmp_path):
-        cache_dir = str(tmp_path / "cache")
-        cache = Cache(cache_dir=cache_dir)
-        cache.put("https://example.com", "Hello")
+    def test_ttl_expiration(self):
+        cache = TTLCache(ttl=0.05)
+        cache.put("a", 1)
+        time.sleep(0.1)
+        assert cache.get("a") is None
 
-        cache2 = Cache(cache_dir=cache_dir)
-        entry = cache2.get("https://example.com")
-        assert entry is not None
-        assert entry.content == "Hello"
+    def test_get_missing(self):
+        cache = TTLCache()
+        assert cache.get("missing") is None
+        assert cache.get("missing", "default") == "default"
 
-    def test_url_to_key_deterministic(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        key1 = cache._url_to_key("https://example.com")
-        key2 = cache._url_to_key("https://example.com")
-        assert key1 == key2
+    def test_per_entry_ttl(self):
+        cache = TTLCache(ttl=60.0)
+        cache.put("a", 1, ttl=0.05)
+        time.sleep(0.1)
+        assert cache.get("a") is None
 
-    def test_url_to_key_different(self, tmp_path):
-        cache = Cache(cache_dir=str(tmp_path / "cache"))
-        key1 = cache._url_to_key("https://a.com")
-        key2 = cache._url_to_key("https://b.com")
-        assert key1 != key2
+    def test_delete(self):
+        cache = TTLCache()
+        cache.put("a", 1)
+        assert cache.delete("a") is True
+        assert cache.get("a") is None
+
+    def test_clear(self):
+        cache = TTLCache()
+        cache.put("a", 1)
+        cache.put("b", 2)
+        cache.clear()
+        assert len(cache) == 0
+
+    def test_contains_expired(self):
+        cache = TTLCache(ttl=0.05)
+        cache.put("a", 1)
+        time.sleep(0.1)
+        assert "a" not in cache
+
+    def test_contains_valid(self):
+        cache = TTLCache(ttl=60.0)
+        cache.put("a", 1)
+        assert "a" in cache
+
+    def test_max_size_eviction(self):
+        cache = TTLCache(ttl=60.0, max_size=3)
+        cache.put("a", 1)
+        cache.put("b", 2)
+        cache.put("c", 3)
+        cache.put("d", 4)
+        assert len(cache) <= 3
+
+    def test_hit_rate(self):
+        cache = TTLCache(ttl=60.0)
+        cache.put("a", 1)
+        cache.get("a")  # hit
+        cache.get("b")  # miss
+        assert cache.hit_rate == 0.5
+
+    def test_stats(self):
+        cache = TTLCache(ttl=30.0, max_size=100)
+        cache.put("a", 1)
+        stats = cache.stats()
+        assert stats["ttl"] == 30.0
+        assert stats["max_size"] == 100
+
+    def test_size_property_evicts_expired(self):
+        cache = TTLCache(ttl=0.05)
+        cache.put("a", 1)
+        cache.put("b", 2)
+        time.sleep(0.1)
+        assert cache.size == 0
+
+
+class TestCacheDecorator:
+    def test_lru_decorator(self):
+        call_count = 0
+
+        @CacheDecorator(lru_size=10)
+        def add(a, b):
+            nonlocal call_count
+            call_count += 1
+            return a + b
+
+        assert add(1, 2) == 3
+        assert add(1, 2) == 3  # cached
+        assert call_count == 1
+
+    def test_ttl_decorator(self):
+        call_count = 0
+
+        @CacheDecorator(lru_size=10, ttl=0.05)
+        def multiply(a, b):
+            nonlocal call_count
+            call_count += 1
+            return a * b
+
+        assert multiply(3, 4) == 12
+        time.sleep(0.1)
+        assert multiply(3, 4) == 12  # expired, recomputed
+        assert call_count == 2
+
+    def test_decorator_cache_attribute(self):
+        @CacheDecorator(lru_size=10)
+        def func(x):
+            return x
+
+        assert hasattr(func, "cache")
+        assert hasattr(func.cache, "stats")
+
+    def test_decorator_different_args(self):
+        call_count = 0
+
+        @CacheDecorator(lru_size=10)
+        def greet(name):
+            nonlocal call_count
+            call_count += 1
+            return f"Hello, {name}!"
+
+        assert greet("Alice") == "Hello, Alice!"
+        assert greet("Bob") == "Hello, Bob!"
+        assert greet("Alice") == "Hello, Alice!"  # cached
+        assert call_count == 2
