@@ -1,128 +1,85 @@
-"""Core data models for Personal Index."""
+"""Data models for personal-index."""
 
 from __future__ import annotations
 
-import hashlib
+import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
 
-class PageStatus(Enum):
-    """Status of a crawled page."""
-
-    PENDING = "pending"
-    CRAWLED = "crawled"
-    FAILED = "failed"
-    SKIPPED = "skipped"
-    BLOCKED = "blocked"
+class InterestType(Enum):
+    """Types of interests to track."""
+    TOPIC = "topic"
+    KEYWORD = "keyword"
+    URL_PATTERN = "url_pattern"
 
 
 @dataclass
-class URL:
-    """Represents a URL to crawl or that has been crawled."""
+class Interest:
+    """Represents a user-defined interest to track."""
 
-    url: str
-    depth: int = 0
-    status: PageStatus = PageStatus.PENDING
-    domain: str = ""
-    parent_url: Optional[str] = None
-    crawled_at: Optional[datetime] = None
-    error: Optional[str] = None
+    name: str
+    interest_type: InterestType
+    value: str
+    priority: int = 5  # 1-10 scale, default 5
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    enabled: bool = True
 
-    def __post_init__(self) -> None:
-        if not self.domain:
-            self.domain = URL._extract_domain(self.url)
+    def matches(self, text: str, url: str = "") -> bool:
+        """Check if given text/url matches this interest."""
+        if not self.enabled:
+            return False
 
-    @staticmethod
-    def _extract_domain(url: str) -> str:
-        """Extract domain from URL."""
-        url = url.split("://", 1)[-1] if "://" in url else url
-        return url.split("/")[0].split(":")[0].split("@")[-1]
+        if self.interest_type == InterestType.KEYWORD:
+            return self.value.lower() in text.lower()
+        elif self.interest_type == InterestType.TOPIC:
+            # Topic matches if any of the space-separated terms appear
+            terms = self.value.lower().split()
+            text_lower = text.lower()
+            return any(term in text_lower for term in terms)
+        elif self.interest_type == InterestType.URL_PATTERN:
+            try:
+                return bool(re.search(self.value, url))
+            except re.error:
+                return False
+        return False
 
-    @property
-    def id(self) -> str:
-        """Generate unique ID for this URL."""
-        return hashlib.sha256(self.url.encode()).hexdigest()[:16]
+    def score(self, text: str, url: str = "") -> float:
+        """Return a relevance score for this interest against text/url."""
+        if not self.enabled:
+            return 0.0
 
-    def to_dict(self) -> dict:
-        return {
-            "url": self.url,
-            "depth": self.depth,
-            "status": self.status.value,
-            "domain": self.domain,
-            "parent_url": self.parent_url,
-            "crawled_at": self.crawled_at.isoformat() if self.crawled_at else None,
-            "error": self.error,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> URL:
-        crawled_at = None
-        if data.get("crawled_at"):
-            crawled_at = datetime.fromisoformat(data["crawled_at"])
-        return cls(
-            url=data["url"],
-            depth=data.get("depth", 0),
-            status=PageStatus(data.get("status", "pending")),
-            domain=data.get("domain", ""),
-            parent_url=data.get("parent_url"),
-            crawled_at=crawled_at,
-            error=data.get("error"),
-        )
+        if self.interest_type == InterestType.KEYWORD:
+            count = text.lower().count(self.value.lower())
+            return count * self.priority
+        elif self.interest_type == InterestType.TOPIC:
+            terms = self.value.lower().split()
+            text_lower = text.lower()
+            matches = sum(1 for term in terms if term in text_lower)
+            return (matches / max(len(terms), 1)) * self.priority
+        elif self.interest_type == InterestType.URL_PATTERN:
+            try:
+                if re.search(self.value, url):
+                    return float(self.priority)
+            except re.error:
+                pass
+        return 0.0
 
 
 @dataclass
-class Page:
-    """Represents a crawled page with its content."""
+class CrawledPage:
+    """Represents a crawled web page."""
 
     url: str
     title: str = ""
     content: str = ""
     meta_description: str = ""
-    links: list[str] = field(default_factory=list)
-    crawled_at: Optional[datetime] = None
-    status_code: int = 200
-    content_type: str = "text/html"
-    content_length: int = 0
+    headers: dict = field(default_factory=dict)
+    status_code: int = 0
+    crawled_at: datetime = field(default_factory=datetime.utcnow)
     matched_interests: list[str] = field(default_factory=list)
     relevance_score: float = 0.0
-
-    @property
-    def id(self) -> str:
-        return hashlib.sha256(self.url.encode()).hexdigest()[:16]
-
-    def to_dict(self) -> dict:
-        return {
-            "url": self.url,
-            "title": self.title,
-            "content": self.content,
-            "meta_description": self.meta_description,
-            "links": self.links,
-            "crawled_at": self.crawled_at.isoformat() if self.crawled_at else None,
-            "status_code": self.status_code,
-            "content_type": self.content_type,
-            "content_length": self.content_length,
-            "matched_interests": self.matched_interests,
-            "relevance_score": self.relevance_score,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> Page:
-        crawled_at = None
-        if data.get("crawled_at"):
-            crawled_at = datetime.fromisoformat(data["crawled_at"])
-        return cls(
-            url=data["url"],
-            title=data.get("title", ""),
-            content=data.get("content", ""),
-            meta_description=data.get("meta_description", ""),
-            links=data.get("links", []),
-            crawled_at=crawled_at,
-            status_code=data.get("status_code", 200),
-            content_type=data.get("content_type", "text/html"),
-            content_length=data.get("content_length", 0),
-            matched_interests=data.get("matched_interests", []),
-            relevance_score=data.get("relevance_score", 0.0),
-        )
+    depth: int = 0
+    parent_url: Optional[str] = None
