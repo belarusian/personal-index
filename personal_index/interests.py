@@ -1,75 +1,87 @@
-"""
-Interest management for personal-index.
+"""Interest management module for CLI interface."""
 
-Allows users to define topics, keywords, and URL patterns to track.
-Interests are stored in a JSON file and used by the crawler and filter.
-"""
+from __future__ import annotations
 
 import json
+import os
 import re
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
-from typing import Optional
-from datetime import datetime
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Set
+
+from personal_index.models import InterestType
 
 
 @dataclass
 class Interest:
-    """A single interest to track."""
+    """User interest for tracking topics."""
+
     name: str
-    keywords: list[str] = field(default_factory=list)
-    url_patterns: list[str] = field(default_factory=list)
-    topics: list[str] = field(default_factory=list)
-    priority: int = 1  # 1-5, higher = more important
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    keywords: List[str] = field(default_factory=list)
+    topics: List[str] = field(default_factory=list)
+    url_patterns: List[str] = field(default_factory=list)
+    priority: int = 1
     enabled: bool = True
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        """Serialize to dictionary."""
+        return {
+            "name": self.name,
+            "keywords": self.keywords,
+            "topics": self.topics,
+            "url_patterns": self.url_patterns,
+            "priority": self.priority,
+            "enabled": self.enabled,
+        }
 
     @classmethod
     def from_dict(cls, data: dict) -> "Interest":
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        """Deserialize from dictionary."""
+        return cls(
+            name=data["name"],
+            keywords=data.get("keywords", []),
+            topics=data.get("topics", []),
+            url_patterns=data.get("url_patterns", []),
+            priority=data.get("priority", 1),
+            enabled=data.get("enabled", True),
+        )
 
 
+@dataclass
 class InterestStore:
-    """Manages the collection of user interests."""
+    """Persistent storage for interests (CLI-facing)."""
 
-    def __init__(self, store_path: Optional[str] = None):
-        self.store_path = store_path
-        self._interests: dict[str, Interest] = {}
-        self._load()
+    store_path: Optional[str] = None
+    _interests: Dict[str, Interest] = field(default_factory=dict, repr=False)
 
-    def _get_default_path(self) -> str:
-        config_dir = Path.home() / ".config" / "personal-index"
-        return str(config_dir / "interests.json")
+    def __post_init__(self):
+        if self.store_path and os.path.exists(self.store_path):
+            self._load()
 
     def _load(self) -> None:
-        """Load interests from storage."""
-        path = Path(self.store_path or self._get_default_path())
-        if path.exists():
-            try:
-                with open(path, "r") as f:
-                    data = json.load(f)
-                for name, interest_data in data.items():
-                    self._interests[name] = Interest.from_dict(interest_data)
-            except (json.JSONDecodeError, KeyError):
-                self._interests = {}
+        """Load interests from file."""
+        try:
+            with open(self.store_path, "r") as f:
+                data = json.load(f)
+            self._interests = {name: Interest.from_dict(d) for name, d in data.items()}
+        except (json.JSONDecodeError, KeyError, TypeError):
+            self._interests = {}
 
     def _save(self) -> None:
-        """Save interests to storage."""
-        path = Path(self.store_path or self._get_default_path())
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w") as f:
-            json.dump({name: i.to_dict() for name, i in self._interests.items()}, f, indent=2)
+        """Save interests to file."""
+        if not self.store_path:
+            return
+        os.makedirs(os.path.dirname(self.store_path) or ".", exist_ok=True)
+        data = {name: interest.to_dict() for name, interest in self._interests.items()}
+        with open(self.store_path, "w") as f:
+            json.dump(data, f, indent=2)
 
     def add(self, interest: Interest) -> None:
-        """Add or update an interest."""
+        """Add an interest."""
         self._interests[interest.name] = interest
         self._save()
 
     def remove(self, name: str) -> bool:
-        """Remove an interest by name. Returns True if removed."""
+        """Remove an interest by name."""
         if name in self._interests:
             del self._interests[name]
             self._save()
@@ -80,43 +92,46 @@ class InterestStore:
         """Get an interest by name."""
         return self._interests.get(name)
 
-    def list_all(self) -> list[Interest]:
+    def list_all(self) -> List[Interest]:
         """List all interests."""
         return list(self._interests.values())
 
-    def get_enabled(self) -> list[Interest]:
-        """List all enabled interests."""
+    def get_enabled(self) -> List[Interest]:
+        """List enabled interests."""
         return [i for i in self._interests.values() if i.enabled]
 
     def toggle(self, name: str) -> Optional[Interest]:
-        """Toggle an interest's enabled state."""
+        """Toggle an interest's enabled status."""
         interest = self._interests.get(name)
-        if interest:
-            interest.enabled = not interest.enabled
-            self._save()
+        if interest is None:
+            return None
+        interest.enabled = not interest.enabled
+        self._save()
         return interest
 
-    def get_all_keywords(self) -> set[str]:
-        """Get all keywords from enabled interests."""
+    def get_all_keywords(self) -> Set[str]:
+        """Get all keywords from all interests (lowercase)."""
         keywords = set()
-        for interest in self.get_enabled():
-            keywords.update(k.lower() for k in interest.keywords)
+        for interest in self._interests.values():
+            for kw in interest.keywords:
+                keywords.add(kw.lower())
         return keywords
 
-    def get_all_url_patterns(self) -> list[re.Pattern]:
-        """Get compiled URL patterns from enabled interests."""
+    def get_all_url_patterns(self) -> List[re.Pattern]:
+        """Get all compiled URL patterns."""
         patterns = []
-        for interest in self.get_enabled():
-            for pattern in interest.url_patterns:
+        for interest in self._interests.values():
+            for pattern_str in interest.url_patterns:
                 try:
-                    patterns.append(re.compile(pattern, re.IGNORECASE))
+                    patterns.append(re.compile(pattern_str))
                 except re.error:
-                    continue
+                    pass
         return patterns
 
-    def get_all_topics(self) -> set[str]:
-        """Get all topics from enabled interests."""
+    def get_all_topics(self) -> Set[str]:
+        """Get all topics from all interests (lowercase)."""
         topics = set()
-        for interest in self.get_enabled():
-            topics.update(t.lower() for t in interest.topics)
+        for interest in self._interests.values():
+            for topic in interest.topics:
+                topics.add(topic.lower())
         return topics
