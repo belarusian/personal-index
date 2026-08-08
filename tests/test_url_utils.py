@@ -60,7 +60,7 @@ class TestNormalizeUrl:
         assert normalize_url("http://example.com:80/path") == "http://example.com/path"
 
     def test_remove_default_https_port(self):
-        assert normalize_url("https://example.com:443/path") == "https://example.com"
+        assert normalize_url("https://example.com:443/path") == "https://example.com/path"
 
     def test_keep_non_default_port(self):
         assert normalize_url("https://example.com:8080/path") == "https://example.com:8080/path"
