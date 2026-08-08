@@ -207,3 +207,34 @@ class Crawler:
     def close(self):
         """Close the crawler session."""
         self.session.close()
+
+
+class WebCrawler:
+    """High-level web crawler interface for integration tests."""
+
+    def __init__(self, config=None, content_filter=None):
+        self.config = config
+        self.content_filter = content_filter
+        self.crawler = Crawler()
+        self.session = self.crawler.session
+
+    def crawl(self, seed_urls: list[str], max_depth: int = 3) -> list:
+        """Crawl starting from seed URLs and return Page objects."""
+        pages = self.crawler.crawl(seed_urls, max_depth=max_depth)
+        # Convert CrawledPage to Page objects
+        from personal_index.models import Page
+        result = []
+        for page in pages:
+            p = Page(
+                url=page.url,
+                title=page.title,
+                content=page.content,
+                meta_description=page.meta_description,
+                matched_interests=page.matched_interests,
+            )
+            result.append(p)
+        return result
+
+    def close(self):
+        """Close the crawler session."""
+        self.crawler.close()

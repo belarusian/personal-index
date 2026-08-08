@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass, field
 from typing import List, Set
 
-from personal_index.config.models import Interest
+from personal_index.config import Interest
 
 
 @dataclass
@@ -37,7 +37,7 @@ class ContentFilter:
         for interest in self.interests:
             for pattern in interest.url_patterns:
                 try:
-                    patterns.append((interest.name, re.compile(pattern)))
+                    patterns.append((interest.topic, re.compile(pattern)))
                 except re.error:
                     pass
         return patterns
@@ -61,14 +61,24 @@ class ContentFilter:
                 kw_lower = kw.lower()
                 if kw_lower in text:
                     result.matched = True
-                    result.matching_interests.add(interest.name)
+                    result.matching_interests.add(interest.topic)
                     result.matched_keywords.add(kw)
                     result.score += interest.priority
 
         return result
 
-    def filter_page(self, url: str, content: str, title: str = "") -> FilterResult:
-        """Filter a complete page (URL + content + title)."""
+    def filter_page(self, page_or_url, content: str = "", title: str = "") -> FilterResult:
+        """Filter a page (Page object or URL string) against interests."""
+        # Handle Page object
+        if hasattr(page_or_url, 'url'):
+            url = page_or_url.url
+            if not content:
+                content = getattr(page_or_url, 'content', '')
+            if not title:
+                title = getattr(page_or_url, 'title', '')
+        else:
+            url = page_or_url
+
         url_result = self.filter_url(url)
         content_result = self.filter_content(content, title)
 
@@ -80,6 +90,7 @@ class ContentFilter:
             ),
             matched_keywords=content_result.matched_keywords,
             score=url_result.score + content_result.score,
+            passed=url_result.matched or content_result.matched,
         )
         return result
 

@@ -48,6 +48,10 @@ class CrawlConfig:
                       if k in cls.__dataclass_fields__})
 
 
+# Alias for compatibility
+CrawlerConfig = CrawlConfig
+
+
 @dataclass
 class SchedulerConfig:
     """Scheduler configuration."""
@@ -71,6 +75,7 @@ class AppConfig:
     schedule: SchedulerConfig = field(default_factory=SchedulerConfig)
     config_dir: Optional[str] = None
     index_dir: Optional[str] = None
+    crawler: Optional[CrawlConfig] = None
 
     def to_dict(self) -> dict:
         return {
