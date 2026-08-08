@@ -12,10 +12,16 @@ from typing import Optional
 class Interest:
     """An interest to track."""
     topic: str = ""
+    name: str = ""
     keywords: list[str] = field(default_factory=list)
     url_patterns: list[str] = field(default_factory=list)
     priority: int = 5
     enabled: bool = True
+
+    def __post_init__(self):
+        # Default name to topic if not set
+        if not self.name and self.topic:
+            self.name = self.topic
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -76,6 +82,11 @@ class AppConfig:
     config_dir: Optional[str] = None
     index_dir: Optional[str] = None
     crawler: Optional[CrawlConfig] = None
+
+    def __post_init__(self):
+        # Default crawler to crawl if not set
+        if self.crawler is None:
+            self.crawler = self.crawl
 
     def to_dict(self) -> dict:
         return {
