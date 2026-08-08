@@ -108,7 +108,7 @@ class WebhookSender:
                         "success": True,
                         "attempts": attempt + 1,
                     }
-            except (URLError, OSError) as e:
+            except Exception as e:
                 last_error = str(e)
                 if attempt < config.retry_count:
                     time.sleep(config.retry_delay)
