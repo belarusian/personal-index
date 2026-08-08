@@ -15,13 +15,18 @@ def slugify(text: str) -> str:
         text: The input string to slugify.
 
     Returns:
-        A slugified version of the input string.
+        A URL-friendly slug string.
+
+    Examples:
+        >>> slugify("Hello World!")
+        'hello-world'
+        >>> slugify("  Python 3.10 is great  ")
+        'python-3-10-is-great'
     """
     text = text.lower().strip()
     text = re.sub(r'[^\w\s-]', '', text)
-    text = re.sub(r'[\s_]+', '-', text)
-    text = re.sub(r'-+', '-', text)
-    text = text.strip('-')
+    text = re.sub(r'[\s_-]+', '-', text)
+    text = re.sub(r'^-+|-+$', '', text)
     return text
 
 
@@ -34,13 +39,24 @@ def truncate(text: str, max_length: int, suffix: str = "...") -> str:
         suffix: The string to append when truncation occurs. Defaults to "...".
 
     Returns:
-        The truncated string with suffix if it exceeded max_length, otherwise
-        the original string.
+        The truncated string with suffix if needed, or the original string
+        if it fits within max_length.
+
+    Raises:
+        ValueError: If max_length is less than the length of the suffix.
+
+    Examples:
+        >>> truncate("Hello, World!", 8)
+        'Hello...'
+        >>> truncate("Hi", 10)
+        'Hi'
     """
+    if max_length < len(suffix):
+        raise ValueError(
+            f"max_length ({max_length}) must be at least the length of the suffix ({len(suffix)})"
+        )
     if len(text) <= max_length:
         return text
-    if max_length <= len(suffix):
-        return suffix[:max_length]
     return text[: max_length - len(suffix)] + suffix
 
 
@@ -53,8 +69,15 @@ def word_count(text: str) -> int:
         text: The input string to count words in.
 
     Returns:
-        The number of words in the string. Returns 0 for empty or
-        whitespace-only strings.
+        The number of words in the text. Returns 0 for empty or whitespace-only strings.
+
+    Examples:
+        >>> word_count("Hello world")
+        2
+        >>> word_count("  One  two   three  ")
+        3
+        >>> word_count("")
+        0
     """
     if not text or not text.strip():
         return 0
