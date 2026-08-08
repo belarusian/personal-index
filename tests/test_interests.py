@@ -1,75 +1,101 @@
-"""Tests for the interests module."""
+"""Tests for the interest management module."""
 
+import json
+import os
 import pytest
-from personal_index.interests import Interest, InterestManager
+from personal_index.interests import Interest, InterestStore
 
 
 class TestInterest:
     def test_create_interest(self):
         interest = Interest(name="python", keywords=["python", "programming"])
         assert interest.name == "python"
-        assert "python" in interest.keywords
+        assert interest.keywords == ["python", "programming"]
+        assert interest.enabled is True
+        assert interest.priority == 1
 
-    def test_matches_text_positive(self):
-        interest = Interest(name="python", keywords=["python"])
-        assert interest.matches_text("I love Python programming") is True
+    def test_to_dict_and_from_dict(self):
+        interest = Interest(name="ai", keywords=["ai", "ml"], priority=3)
+        data = interest.to_dict()
+        restored = Interest.from_dict(data)
+        assert restored.name == "ai"
+        assert restored.priority == 3
 
-    def test_matches_text_negative(self):
-        interest = Interest(name="python", keywords=["python"])
-        assert interest.matches_text("I love Java programming") is False
-
-    def test_matches_text_case_insensitive(self):
-        interest = Interest(name="python", keywords=["python"])
-        assert interest.matches_text("PYTHON is great") is True
-
-    def test_matches_url_positive(self):
-        interest = Interest(name="docs", url_patterns=[r"docs\.example\.com"])
-        assert interest.matches_url("https://docs.example.com/page") is True
-
-    def test_matches_url_negative(self):
-        interest = Interest(name="docs", url_patterns=[r"docs\.example\.com"])
-        assert interest.matches_url("https://blog.example.com/page") is False
-
-    def test_empty_keywords_matches_all(self):
-        interest = Interest(name="all")
-        assert interest.matches_text("anything") is True
-
-    def test_empty_url_patterns_matches_all(self):
-        interest = Interest(name="all")
-        assert interest.matches_url("https://anywhere.com") is True
+    def test_custom_priority(self):
+        interest = Interest(name="news", priority=5)
+        assert interest.priority == 5
 
 
-class TestInterestManager:
-    def test_add_interest(self):
-        mgr = InterestManager()
-        mgr.add_interest(Interest(name="python"))
-        assert len(mgr.list_interests()) == 1
+class TestInterestStore:
+    def test_add_interest(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        interest = Interest(name="tech", keywords=["technology"])
+        store.add(interest)
+        assert store.get("tech") is not None
+        assert store.get("tech").keywords == ["technology"]
 
-    def test_add_duplicate_raises(self):
-        mgr = InterestManager()
-        mgr.add_interest(Interest(name="python"))
-        with pytest.raises(ValueError):
-            mgr.add_interest(Interest(name="python"))
+    def test_remove_interest(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="tech", keywords=["technology"]))
+        result = store.remove("tech")
+        assert result is True
+        assert store.get("tech") is None
 
-    def test_remove_interest(self):
-        mgr = InterestManager()
-        mgr.add_interest(Interest(name="python"))
-        mgr.remove_interest("python")
-        assert len(mgr.list_interests()) == 0
+    def test_remove_nonexistent(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        result = store.remove("nonexistent")
+        assert result is False
 
-    def test_get_interest(self):
-        mgr = InterestManager()
-        mgr.add_interest(Interest(name="python"))
-        assert mgr.get_interest("python").name == "python"
+    def test_list_all(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="tech", keywords=["technology"]))
+        store.add(Interest(name="science", keywords=["science"]))
+        assert len(store.list_all()) == 2
 
-    def test_get_interest_not_found(self):
-        mgr = InterestManager()
-        assert mgr.get_interest("nonexistent") is None
+    def test_get_enabled(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="tech", enabled=True))
+        store.add(Interest(name="disabled", enabled=False))
+        assert len(store.get_enabled()) == 1
 
-    def test_matches_any(self):
-        mgr = InterestManager()
-        mgr.add_interest(Interest(name="python", keywords=["python"]))
-        mgr.add_interest(Interest(name="java", keywords=["java"]))
-        result = mgr.matches_any(text="learning python basics")
-        assert "python" in result
-        assert "java" not in result
+    def test_toggle(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="tech", enabled=True))
+        result = store.toggle("tech")
+        assert result.enabled is False
+
+    def test_persistence(self, tmp_path):
+        path = str(tmp_path / "interests.json")
+        store = InterestStore(store_path=path)
+        store.add(Interest(name="test", keywords=["test"]))
+
+        store2 = InterestStore(store_path=path)
+        assert store2.get("test").keywords == ["test"]
+
+    def test_get_all_keywords(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="a", keywords=["Python", "Java"]))
+        store.add(Interest(name="b", keywords=["JavaScript"]))
+        keywords = store.get_all_keywords()
+        assert "python" in keywords
+        assert "java" in keywords
+        assert "javascript" in keywords
+
+    def test_get_all_url_patterns(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="news", url_patterns=[r"https://news\.example\.com/.*"]))
+        patterns = store.get_all_url_patterns()
+        assert len(patterns) == 1
+        assert patterns[0].match("https://news.example.com/article")
+
+    def test_get_all_topics(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="a", topics=["AI", "ML"]))
+        topics = store.get_all_topics()
+        assert "ai" in topics
+        assert "ml" in topics
+
+    def test_empty_store(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        assert len(store.list_all()) == 0
+        assert store.get_all_keywords() == set()
