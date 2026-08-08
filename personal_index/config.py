@@ -16,6 +16,29 @@ DEFAULT_CONFIG_PATH = os.path.expanduser("~/.config/personal-index/config.json")
 
 
 @dataclass
+class Interest:
+    """A user-defined interest to track."""
+    topic: str
+    keywords: list[str] = field(default_factory=list)
+    url_patterns: list[str] = field(default_factory=list)
+    priority: int = 5
+    enabled: bool = True
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Interest":
+        return cls(
+            topic=data.get("topic", ""),
+            keywords=data.get("keywords", []),
+            url_patterns=data.get("url_patterns", []),
+            priority=data.get("priority", 5),
+            enabled=data.get("enabled", True),
+        )
+
+
+@dataclass
 class CrawlerConfig:
     """Configuration for the web crawler."""
     max_depth: int = 3
@@ -25,6 +48,7 @@ class CrawlerConfig:
     max_page_size: int = 1024 * 1024  # 1MB
     user_agent: str = "personal-index/0.1.0"
     respect_robots_txt: bool = True
+    max_pages_per_domain: int = 100
 
 
 @dataclass
@@ -36,12 +60,28 @@ class ScheduleConfig:
 
 
 @dataclass
+class SchedulerConfig:
+    """Configuration for the crawl scheduler."""
+    enabled: bool = False
+    interval_hours: int = 24
+    max_pages_per_run: int = 100
+
+
+@dataclass
 class AppConfig:
     """Main application configuration."""
-    config_dir: str = field(default_factory=lambda: os.path.expanduser("~/.config/personal-index"))
-    data_dir: str = field(default_factory=lambda: os.path.expanduser("~/.local/share/personal-index"))
+    config_dir: str = field(
+        default_factory=lambda: os.path.expanduser("~/.config/personal-index")
+    )
+    data_dir: str = field(
+        default_factory=lambda: os.path.expanduser("~/.local/share/personal-index")
+    )
+    index_dir: str = field(
+        default_factory=lambda: os.path.expanduser("~/.local/share/personal-index/index")
+    )
     crawler: CrawlerConfig = field(default_factory=CrawlerConfig)
     schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
+    interests: list[Interest] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -50,14 +90,50 @@ class AppConfig:
     def from_dict(cls, data: dict) -> "AppConfig":
         crawler_data = data.get("crawler", {})
         schedule_data = data.get("schedule", {})
-        crawler = CrawlerConfig(**{k: v for k, v in crawler_data.items() if k in CrawlerConfig.__dataclass_fields__})
-        schedule = ScheduleConfig(**{k: v for k, v in schedule_data.items() if k in ScheduleConfig.__dataclass_fields__})
+        crawler = CrawlerConfig(
+            **{
+                k: v
+                for k, v in crawler_data.items()
+                if k in CrawlerConfig.__dataclass_fields__
+            }
+        )
+        schedule = ScheduleConfig(
+            **{
+                k: v
+                for k, v in schedule_data.items()
+                if k in ScheduleConfig.__dataclass_fields__
+            }
+        )
+        interests_data = data.get("interests", [])
+        interests = [Interest.from_dict(i) for i in interests_data]
         return cls(
             config_dir=data.get("config_dir", cls().config_dir),
             data_dir=data.get("data_dir", cls().data_dir),
+            index_dir=data.get("index_dir", cls().index_dir),
             crawler=crawler,
             schedule=schedule,
+            interests=interests,
         )
+
+    @classmethod
+    def load(cls, config_path: Optional[str] = None) -> "AppConfig":
+        """Load configuration from file, or return defaults."""
+        path = Path(config_path) if config_path else Path(DEFAULT_CONFIG_PATH)
+        if path.exists():
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+                return cls.from_dict(data)
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"Warning: Could not parse config: {e}. Using defaults.")
+        return cls()
+
+    def save(self, config_path: Optional[str] = None) -> None:
+        """Save configuration to file."""
+        path = Path(config_path) if config_path else Path(DEFAULT_CONFIG_PATH)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
 
 
 class ConfigManager:

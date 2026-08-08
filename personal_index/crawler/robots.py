@@ -118,3 +118,7 @@ class RobotsParser:
         else:
             regex = regex + "$"
         return f"^{regex}"
+
+
+# Alias for backward compatibility
+RobotsChecker = RobotsParser

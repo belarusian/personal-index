@@ -117,7 +117,8 @@ class WebCrawler:
                         and self._should_crawl(normalized)
                     ):
                         self._crawled_urls.add(normalized)
-                        self._domain_counts[normalized.split("/")[2].split(":")[0]] += 1
+                        domain = URL._extract_domain(normalized)
+                        self._domain_counts[domain] += 1
                         queue.append(
                             URL(
                                 url=normalized,
@@ -144,7 +145,7 @@ class WebCrawler:
         try:
             response = self.session.get(
                 url_obj.url,
-                timeout=self.config.timeout,
+                timeout=self.config.request_timeout,
                 allow_redirects=True,
             )
 
@@ -161,7 +162,7 @@ class WebCrawler:
                 return None
 
             content = response.text
-            if len(content) > self.config.max_content_size:
+            if len(content) > self.config.max_page_size:
                 url_obj.status = PageStatus.SKIPPED
                 self._crawl_stats["skipped_too_large"] += 1
                 return None

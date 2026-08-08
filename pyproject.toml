@@ -6,16 +6,50 @@ build-backend = "setuptools.backends._legacy:_Backend"
 name = "personal-index"
 version = "0.1.0"
 description = "A personal web search engine that scans, filters, and indexes the web based on your interests"
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
+authors = [
+    {name = "Personal Index Team"}
+]
+keywords = ["search", "crawler", "index", "personal", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
 dependencies = [
+    "click>=8.1.0",
     "aiohttp>=3.9.0",
     "beautifulsoup4>=4.12.0",
-    "aiosqlite>=0.19.0",
+    "whoosh>=2.7.4",
+    "pyyaml>=6.0",
     "schedule>=1.2.0",
-    "click>=8.1.0",
-    "rich>=13.6.0",
-    "python-dateutil>=2.8.0",
+    "tqdm>=4.66.0",
+    "rich>=13.7.0",
+    "aiosqlite>=0.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "flake8>=6.1.0",
+    "mypy>=1.8.0",
 ]
 
 [project.scripts]
-personal-index = "personal_index.cli:main"
+personal-index = "personal_index.cli.main:cli"
+
+[tool.setuptools.packages.find]
+include = ["personal_index*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
