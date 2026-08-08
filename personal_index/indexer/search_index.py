@@ -88,9 +88,6 @@ class SearchIndex:
         for term, count in tf.items():
             # Normalize TF
             normalized_tf = count / max(len(tokens), 1)
-            old_page_id = None
-            if term in self._term_index and page_id in self._term_index[term]:
-                old_page_id = page_id
 
             if page_id not in self._term_index[term]:
                 self._doc_freq[term] += 1
@@ -118,15 +115,16 @@ class SearchIndex:
         if page_id in self._doc_lengths:
             del self._doc_lengths[page_id]
 
-        # Remove from inverted index
-        for term in self._term_index:
-            if page_id in self._term_index[term]:
-                del self._term_index[term][page_id]
-                self._doc_freq[term] -= 1
-                if self._doc_freq[term] <= 0:
-                    del self._doc_freq[term]
-                    if not self._term_index[term]:
-                        del self._term_index[term]
+        # Collect terms to remove (avoid modifying dict during iteration)
+        terms_to_update = [term for term in self._term_index if page_id in self._term_index[term]]
+
+        for term in terms_to_update:
+            del self._term_index[term][page_id]
+            self._doc_freq[term] -= 1
+            if self._doc_freq[term] <= 0:
+                del self._doc_freq[term]
+                if not self._term_index[term]:
+                    del self._term_index[term]
 
         self._num_docs = len(self._documents)
         return True
@@ -162,7 +160,7 @@ class SearchIndex:
                 continue
 
             # IDF: log(N / df)
-            idf = math.log(self._num_docs / max(self._doc_freq.get(term, 1), 1))
+            idf = math.log(1 + self._num_docs / max(self._doc_freq.get(term, 1), 1))
 
             for page_id, tf in self._term_index[term].items():
                 # TF-IDF score
@@ -197,8 +195,8 @@ class SearchIndex:
                 )
             )
 
-        # Sort by score descending
-        results.sort(key=lambda r: r.score, reverse=True)
+        # Sort by score descending, then by URL for stability
+        results.sort(key=lambda r: (-r.score, r.page.url))
         return results[:limit]
 
     def save(self) -> None:
