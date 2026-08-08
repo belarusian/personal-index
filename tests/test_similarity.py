@@ -19,9 +19,11 @@ class TestSimilarityEngine:
         assert result.score == 1.0
 
     def test_completely_different(self):
+        # Short texts use levenshtein; spaces at positions 3 and 7 match,
+        # so score is 1 - 9/11 ≈ 0.18, not exactly 0.0
         engine = SimilarityEngine()
         result = engine.compare("abc def ghi", "xyz uvw rst")
-        assert result.score == 0.0
+        assert result.score < 0.25
 
     def test_partial_overlap(self):
         engine = SimilarityEngine()
@@ -45,7 +47,8 @@ class TestSimilarityEngine:
         engine = SimilarityEngine()
         result = engine.compare("a b c", "a b d", method="jaccard")
         assert result.method == "jaccard"
-        assert result.score == pytest.approx(2/3, rel=0.01)
+        # intersection={a,b}=2, union={a,b,c,d}=4, score=2/4=0.5
+        assert result.score == pytest.approx(0.5, rel=0.01)
 
     def test_cosine_method(self):
         engine = SimilarityEngine()
