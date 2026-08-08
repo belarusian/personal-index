@@ -1,187 +1,112 @@
-"""Tests for personal_index.models."""
-
-import re
-from datetime import datetime
+"""Tests for data models."""
 
 import pytest
-
-from personal_index.models import (
-    CrawledPage,
-    Interest,
-    InterestType,
-)
+from personal_index.models import Interest, CrawlConfig, IndexedPage, SearchResult
 
 
 class TestInterest:
-    """Tests for the Interest model."""
-
-    def test_create_keyword_interest(self):
-        interest = Interest(
-            name="Python news",
-            interest_type=InterestType.KEYWORD,
-            value="python",
-            priority=7,
-        )
-        assert interest.name == "Python news"
-        assert interest.interest_type == InterestType.KEYWORD
-        assert interest.value == "python"
-        assert interest.priority == 7
+    def test_create_interest_with_name_only(self):
+        interest = Interest(name="python")
+        assert interest.name == "python"
+        assert interest.keywords == []
+        assert interest.url_patterns == []
         assert interest.enabled is True
 
-    def test_create_topic_interest(self):
-        interest = Interest(
-            name="Machine learning",
-            interest_type=InterestType.TOPIC,
-            value="machine learning AI",
-            priority=8,
-        )
-        assert interest.interest_type == InterestType.TOPIC
-        assert interest.value == "machine learning AI"
+    def test_create_interest_with_keywords(self):
+        interest = Interest(name="python", keywords=["python", "programming"])
+        assert interest.keywords == ["python", "programming"]
 
-    def test_create_url_pattern_interest(self):
-        interest = Interest(
-            name="GitHub repos",
-            interest_type=InterestType.URL_PATTERN,
-            value=r"github\.com/[\w-]+/[\w-]+",
-            priority=6,
-        )
-        assert interest.interest_type == InterestType.URL_PATTERN
+    def test_create_interest_with_url_patterns(self):
+        interest = Interest(name="python", url_patterns=["*.python.org"])
+        assert interest.url_patterns == ["*.python.org"]
 
-    def test_keyword_match(self):
-        interest = Interest(
-            name="test",
-            interest_type=InterestType.KEYWORD,
-            value="python",
-        )
-        assert interest.matches("I love Python programming") is True
-        assert interest.matches("Java is great") is False
+    def test_interest_to_dict(self):
+        interest = Interest(name="python", keywords=["python"])
+        d = interest.to_dict()
+        assert d["name"] == "python"
+        assert d["keywords"] == ["python"]
 
-    def test_keyword_match_case_insensitive(self):
-        interest = Interest(
-            name="test",
-            interest_type=InterestType.KEYWORD,
-            value="Python",
-        )
-        assert interest.matches("PYTHON is awesome") is True
-        assert interest.matches("python rocks") is True
+    def test_interest_from_dict(self):
+        data = {"name": "python", "keywords": ["python"], "url_patterns": [], "topics": [], "enabled": True}
+        interest = Interest.from_dict(data)
+        assert interest.name == "python"
+        assert interest.keywords == ["python"]
 
-    def test_topic_match(self):
-        interest = Interest(
-            name="ML",
-            interest_type=InterestType.TOPIC,
-            value="machine learning neural networks",
-        )
-        assert interest.matches("Deep learning with neural networks") is True
-        assert interest.matches("machine learning basics") is True
-        assert interest.matches("cooking recipes") is False
-
-    def test_topic_match_any_term(self):
-        interest = Interest(
-            name="tech",
-            interest_type=InterestType.TOPIC,
-            value="docker kubernetes helm",
-        )
-        assert interest.matches("Deploying with Docker") is True
-        assert interest.matches("Kubernetes cluster setup") is True
-        assert interest.matches("Helm charts explained") is True
-
-    def test_url_pattern_match(self):
-        interest = Interest(
-            name="GitHub",
-            interest_type=InterestType.URL_PATTERN,
-            value=r"github\.com",
-        )
-        assert interest.matches("", "https://github.com/user/repo") is True
-        assert interest.matches("", "https://gitlab.com/user/repo") is False
-
-    def test_disabled_interest_no_match(self):
-        interest = Interest(
-            name="test",
-            interest_type=InterestType.KEYWORD,
-            value="python",
-            enabled=False,
-        )
-        assert interest.matches("python is great") is False
-
-    def test_keyword_score(self):
-        interest = Interest(
-            name="test",
-            interest_type=InterestType.KEYWORD,
-            value="python",
-            priority=5,
-        )
-        score = interest.score("python python python")
-        assert score == 15.0  # 3 occurrences * priority 5
-
-    def test_topic_score(self):
-        interest = Interest(
-            name="ML",
-            interest_type=InterestType.TOPIC,
-            value="machine learning AI",
-            priority=6,
-        )
-        score = interest.score("machine learning and AI together")
-        assert score == pytest.approx(6.0)  # all 3 terms match
-
-    def test_topic_partial_score(self):
-        interest = Interest(
-            name="ML",
-            interest_type=InterestType.TOPIC,
-            value="machine learning AI",
-            priority=6,
-        )
-        score = interest.score("machine learning basics")
-        assert score == pytest.approx(4.0)  # 2/3 terms match
-
-    def test_score_disabled_returns_zero(self):
-        interest = Interest(
-            name="test",
-            interest_type=InterestType.KEYWORD,
-            value="python",
-            enabled=False,
-        )
-        assert interest.score("python") == 0.0
-
-    def test_created_at_default(self):
-        interest = Interest(
-            name="test",
-            interest_type=InterestType.KEYWORD,
-            value="test",
-        )
-        assert isinstance(interest.created_at, datetime)
+    def test_interest_roundtrip(self):
+        interest = Interest(name="python", keywords=["python", "dev"], enabled=False)
+        d = interest.to_dict()
+        restored = Interest.from_dict(d)
+        assert restored.name == interest.name
+        assert restored.keywords == interest.keywords
+        assert restored.enabled == interest.enabled
 
 
-class TestCrawledPage:
-    """Tests for the CrawledPage model."""
+class TestCrawlConfig:
+    def test_default_config(self):
+        config = CrawlConfig()
+        assert config.max_depth == 3
+        assert config.politeness_delay == 1.0
+        assert config.rate_limit == 10
+        assert config.respect_robots_txt is True
 
-    def test_create_crawled_page(self):
-        page = CrawledPage(
-            url="https://example.com",
-            title="Example",
-            content="Hello world",
-        )
+    def test_custom_config(self):
+        config = CrawlConfig(max_depth=5, politeness_delay=2.0)
+        assert config.max_depth == 5
+        assert config.politeness_delay == 2.0
+
+    def test_config_to_dict(self):
+        config = CrawlConfig(max_depth=5)
+        d = config.to_dict()
+        assert d["max_depth"] == 5
+
+    def test_config_from_dict(self):
+        data = {"max_depth": 5, "politeness_delay": 2.0, "rate_limit": 10,
+                "max_pages_per_domain": 100, "timeout": 30,
+                "user_agent": "test", "respect_robots_txt": True,
+                "allowed_domains": [], "blocked_domains": []}
+        config = CrawlConfig.from_dict(data)
+        assert config.max_depth == 5
+        assert config.politeness_delay == 2.0
+
+
+class TestIndexedPage:
+    def test_create_page(self):
+        page = IndexedPage(url="https://example.com")
         assert page.url == "https://example.com"
-        assert page.title == "Example"
-        assert page.content == "Hello world"
-        assert page.status_code == 0
-        assert page.depth == 0
-        assert page.parent_url is None
-
-    def test_crawled_page_defaults(self):
-        page = CrawledPage(url="https://example.com")
         assert page.title == ""
-        assert page.content == ""
-        assert page.meta_description == ""
-        assert page.headers == {}
-        assert page.matched_interests == []
-        assert page.relevance_score == 0.0
-        assert isinstance(page.crawled_at, datetime)
+        assert page.status_code == 200
 
-    def test_crawled_page_with_parent(self):
-        page = CrawledPage(
-            url="https://example.com/page2",
-            parent_url="https://example.com",
-            depth=1,
-        )
-        assert page.parent_url == "https://example.com"
-        assert page.depth == 1
+    def test_page_with_content(self):
+        page = IndexedPage(url="https://example.com", title="Test", content="Hello")
+        assert page.title == "Test"
+        assert page.content == "Hello"
+
+    def test_page_to_dict(self):
+        page = IndexedPage(url="https://example.com", title="Test")
+        d = page.to_dict()
+        assert d["url"] == "https://example.com"
+        assert d["title"] == "Test"
+
+    def test_page_from_dict(self):
+        data = {"url": "https://example.com", "title": "Test", "content": "Hello",
+                "keywords": [], "matched_interests": [], "domain": "",
+                "status_code": 200, "content_length": 0, "language": "en"}
+        page = IndexedPage.from_dict(data)
+        assert page.url == "https://example.com"
+        assert page.title == "Test"
+
+
+class TestSearchResult:
+    def test_create_result(self):
+        page = IndexedPage(url="https://example.com", title="Test")
+        result = SearchResult(page=page, score=0.95)
+        assert result.score == 0.95
+        assert result.page.url == "https://example.com"
+
+    def test_result_to_dict(self):
+        page = IndexedPage(url="https://example.com")
+        result = SearchResult(page=page, score=0.5, matched_terms=["test"])
+        d = result.to_dict()
+        assert d["score"] == 0.5
+        assert d["matched_terms"] == ["test"]
+        assert d["page"]["url"] == "https://example.com"
