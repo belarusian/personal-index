@@ -1,171 +1,162 @@
-"""Tests for content filter module."""
+"""Tests for personal_index.filter."""
 
 import pytest
-from personal_index.config import Interest
-from personal_index.content import ExtractedContent
+from personal_index.models import CrawledPage, Interest
 from personal_index.filter import ContentFilter, FilterResult
 
 
 @pytest.fixture
-def sample_content():
-    return ExtractedContent(
-        url="http://example.com/ai-news",
-        title="Latest AI Breakthrough",
-        text="Researchers have made a breakthrough in artificial intelligence and machine learning.",
-        meta_description="AI and ML news",
-        headings=["h1: AI News"],
+def sample_interests():
+    return [
+        Interest(
+            topic="python",
+            keywords=["python", "programming", "code"],
+            url_patterns=["python.org", "docs.python.org"],
+        ),
+        Interest(
+            topic="ai",
+            keywords=["artificial intelligence", "machine learning", "neural network"],
+            url_patterns=["ai-news.com"],
+        ),
+    ]
+
+
+@pytest.fixture
+def disabled_interest():
+    return Interest(
+        topic="disabled",
+        keywords=["should not match"],
+        enabled=False,
     )
 
 
-class TestFilterResult:
-    def test_creation(self):
-        result = FilterResult(url="http://example.com", passed=True)
-        assert result.url == "http://example.com"
-        assert result.passed is True
-        assert result.relevance_score == 0.0
-
-    def test_with_matches(self):
-        result = FilterResult(
-            url="http://example.com",
-            passed=True,
-            matched_interests=["AI"],
-            matched_keywords=["neural"],
-            relevance_score=15.0,
-        )
-        assert result.matched_interests == ["AI"]
-        assert result.matched_keywords == ["neural"]
-        assert result.relevance_score == 15.0
-
-
 class TestContentFilter:
-    def test_creation_empty(self):
-        f = ContentFilter()
-        assert len(f.interests) == 0
-
-    def test_creation_with_interests(self):
-        interests = [Interest(topic="AI", keywords=["neural", "deep learning"])]
-        f = ContentFilter(interests=interests)
-        assert len(f.interests) == 1
-
-    def test_add_interest(self):
-        f = ContentFilter()
-        f.add_interest(Interest(topic="AI", keywords=["neural"]))
-        assert len(f.interests) == 1
-
-    def test_remove_interest(self):
-        f = ContentFilter()
-        f.add_interest(Interest(topic="AI", keywords=["neural"]))
-        removed = f.remove_interest("AI")
-        assert removed is True
-        assert len(f.interests) == 0
-
-    def test_remove_nonexistent_interest(self):
-        f = ContentFilter()
-        removed = f.remove_interest("nonexistent")
-        assert removed is False
-
-    def test_filter_match(self, sample_content):
-        interests = [Interest(topic="AI", keywords=["artificial intelligence", "machine learning"])]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(sample_content)
+    def test_filter_matches_keywords_in_content(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://example.com/python-tutorial",
+            title="Python Tutorial",
+            content="Learn python programming and write better code",
+        )
+        result = content_filter.filter_page(page)
         assert result.passed is True
-        assert "AI" in result.matched_interests
+        assert "python" in result.matched_interests
 
-    def test_filter_no_match(self, sample_content):
-        interests = [Interest(topic="Cooking", keywords=["recipes", "cooking"])]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(sample_content)
+    def test_filter_matches_keywords_in_title(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://example.com/article",
+            title="Machine Learning Basics",
+            content="Some random content without keywords",
+        )
+        result = content_filter.filter_page(page)
+        assert result.passed is True
+        assert "ai" in result.matched_interests
+
+    def test_filter_rejects_unmatched_content(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://example.com/cooking",
+            title="How to Cook Pasta",
+            content="Boil water and add pasta",
+        )
+        result = content_filter.filter_page(page)
+        assert result.passed is False
+        assert result.matched_interests == []
+
+    def test_filter_matches_url_patterns(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://docs.python.org/3/tutorial",
+            title="Python Documentation",
+            content="Official Python docs",
+        )
+        result = content_filter.filter_page(page)
+        assert result.passed is True
+        assert "python" in result.matched_interests
+
+    def test_filter_ignores_disabled_interests(self, disabled_interest):
+        content_filter = ContentFilter([disabled_interest])
+        page = CrawledPage(
+            url="https://example.com",
+            title="Should Not Match",
+            content="This should not match disabled interest",
+        )
+        result = content_filter.filter_page(page)
         assert result.passed is False
 
-    def test_filter_disabled_interest(self, sample_content):
-        interests = [Interest(topic="AI", keywords=["neural"], enabled=False)]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(sample_content)
+    def test_filter_case_insensitive(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://example.com",
+            title="PYTHON Programming",
+            content="Learn PYTHON",
+        )
+        result = content_filter.filter_page(page)
+        assert result.passed is True
+
+    def test_filter_empty_interests(self):
+        content_filter = ContentFilter([])
+        page = CrawledPage(
+            url="https://example.com",
+            title="Any Title",
+            content="Any content",
+        )
+        result = content_filter.filter_page(page)
         assert result.passed is False
 
-    def test_filter_url_pattern(self):
-        content = ExtractedContent(
-            url="http://techblog.example.com/ai-post",
-            title="AI Post",
-            text="Some content about AI",
+    def test_filter_sets_matched_interests_on_page(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://example.com/python",
+            title="Python Guide",
+            content="Python programming guide",
         )
-        interests = [Interest(topic="Tech", url_patterns=["http://techblog.example.com/*"])]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(content)
-        assert result.passed is True
-        assert "Tech" in result.matched_interests
+        result = content_filter.filter_page(page)
+        assert "python" in page.matched_interests
 
-    def test_filter_relevance_score(self, sample_content):
-        interests = [
-            Interest(topic="AI", keywords=["artificial intelligence"], priority=8),
-            Interest(topic="ML", keywords=["machine learning"], priority=5),
-        ]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(sample_content)
-        assert result.relevance_score > 0
-
-    def test_filter_batch(self, sample_content):
-        interests = [Interest(topic="AI", keywords=["neural"])]
-        f = ContentFilter(interests=interests)
-        contents = [sample_content]
-        results = f.filter_batch(contents)
-        assert len(results) == 1
-
-    def test_filter_multiple_matches(self):
-        content = ExtractedContent(
-            url="http://example.com",
-            title="AI and ML",
-            text="Artificial intelligence and machine learning are transforming technology.",
+    def test_filter_result_reason(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://example.com/python",
+            title="Python Guide",
+            content="Python programming",
         )
-        interests = [
-            Interest(topic="AI", keywords=["artificial intelligence"]),
-            Interest(topic="ML", keywords=["machine learning"]),
-        ]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(content)
-        assert result.passed is True
-        assert len(result.matched_interests) == 2
+        result = content_filter.filter_page(page)
+        assert "Matched:" in result.reason
+        assert "python" in result.reason
 
-    def test_get_matching_interests(self):
-        interests = [
-            Interest(topic="AI", keywords=["neural"]),
-            Interest(topic="Cooking", keywords=["recipes"]),
-        ]
-        f = ContentFilter(interests=interests)
-        matching = f.get_matching_interests("neural networks are cool")
-        assert len(matching) == 1
-        assert matching[0].topic == "AI"
-
-    def test_filter_reasons(self, sample_content):
-        interests = [Interest(topic="AI", keywords=["machine learning"])]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(sample_content)
-        assert len(result.reasons) > 0
-
-    def test_filter_reasons_no_match(self, sample_content):
-        interests = [Interest(topic="Cooking", keywords=["recipes"])]
-        f = ContentFilter(interests=interests)
-        result = f.filter_content(sample_content)
-        assert "No matching interests found" in result.reasons
-
-    def test_get_stats(self):
-        interests = [
-            Interest(topic="AI", keywords=["neural", "deep learning"]),
-            Interest(topic="ML", keywords=["machine learning"], enabled=False),
-        ]
-        f = ContentFilter(interests=interests)
-        stats = f.get_stats()
-        assert stats["total_interests"] == 2
-        assert stats["enabled_interests"] == 1
-        assert stats["indexed_keywords"] > 0
-
-    def test_keyword_index_case_insensitive(self):
-        interests = [Interest(topic="AI", keywords=["Neural Networks"])]
-        f = ContentFilter(interests=interests)
-        content = ExtractedContent(
-            url="http://example.com",
-            title="Test",
-            text="neural networks are great",
+    def test_filter_result_reason_no_match(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        page = CrawledPage(
+            url="https://example.com",
+            title="Unrelated",
+            content="Nothing relevant here",
         )
-        result = f.filter_content(content)
-        assert result.passed is True
+        result = content_filter.filter_page(page)
+        assert "No matching interests" in result.reason
+
+
+class TestShouldCrawlUrl:
+    def test_should_crawl_matching_url(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        should_crawl, interests = content_filter.should_crawl_url(
+            "https://docs.python.org/3"
+        )
+        assert should_crawl is True
+        assert "python" in interests
+
+    def test_should_crawl_url_with_keyword(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        should_crawl, interests = content_filter.should_crawl_url(
+            "https://example.com/python-tutorial"
+        )
+        assert should_crawl is True
+        assert "python" in interests
+
+    def test_should_not_crawl_unrelated_url(self, sample_interests):
+        content_filter = ContentFilter(sample_interests)
+        should_crawl, interests = content_filter.should_crawl_url(
+            "https://example.com/cooking-recipe"
+        )
+        assert should_crawl is False
