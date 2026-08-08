@@ -125,18 +125,31 @@ def count_words(text: str) -> int:
     return len(text.split())
 
 
-def extract_links_from_html(html: str) -> List[str]:
-    """Extract all links from HTML."""
+def extract_links_from_html(html: str, base_url: str = "") -> List[str]:
+    """Extract all links from HTML, resolving against base_url.
+
+    Excludes javascript:, mailto:, and hash-only links.
+    """
     if not html:
         return []
     try:
+        from urllib.parse import urljoin
         soup = BeautifulSoup(html, "html.parser")
         links = []
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
-            if href and not href.startswith("#"):
-                if not href.startswith("javascript:"):
-                    links.append(href)
+            # Skip hash-only links
+            if href.startswith("#"):
+                continue
+            # Skip javascript and mailto
+            if href.startswith(("javascript:", "mailto:", "data:", "tel:")):
+                continue
+            # Resolve relative URLs
+            if base_url:
+                full_url = urljoin(base_url, href)
+            else:
+                full_url = href
+            links.append(full_url)
         return links
     except Exception:
         return []
