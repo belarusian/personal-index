@@ -2,6 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
+import requests
 from personal_index.config import CrawlerConfig, Interest
 from personal_index.filter import ContentFilter
 from personal_index.models import Page, PageStatus
@@ -68,7 +69,7 @@ class TestWebCrawler:
     def test_crawl_handles_connection_error(self):
         crawler = WebCrawler(config=CrawlerConfig(politeness_delay=0))
 
-        with patch.object(crawler.session, "get", side_effect=Exception("Connection refused")):
+        with patch.object(crawler.session, "get", side_effect=requests.exceptions.ConnectionError("Connection refused")):
             pages = crawler.crawl(["https://example.com"], max_depth=0)
             assert len(pages) == 0
 

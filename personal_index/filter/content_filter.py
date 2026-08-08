@@ -68,11 +68,15 @@ class ContentFilter:
                 all_matched_keywords.extend(result.matched_keywords)
                 best_score = max(best_score, result.relevance_score)
 
-        passed = (
-            len(all_matched_interests) > 0
-            and best_score >= self.min_relevance_score
-            and len(all_matched_keywords) >= self.min_keyword_matches
-        )
+        # If no interests defined, pass all pages through
+        if not self.interests:
+            passed = True
+        else:
+            passed = (
+                len(all_matched_interests) > 0
+                and best_score >= self.min_relevance_score
+                and len(all_matched_keywords) >= self.min_keyword_matches
+            )
 
         return FilterResult(
             passed=passed,

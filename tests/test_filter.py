@@ -109,7 +109,8 @@ class TestContentFilter:
         f = ContentFilter([])
         page = Page(url="https://example.com", content="anything")
         result = f.filter_page(page)
-        assert result.passed is False
+        # With no interests, all pages pass through
+        assert result.passed is True
 
     def test_wildcard_pattern_matching(self):
         interests = [
