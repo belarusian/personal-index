@@ -6,7 +6,6 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -75,7 +74,6 @@ class SearchIndex:
     def add(self, page: CrawledPage) -> None:
         """Add a page to the index."""
         self._pages[page.url] = page
-        # Build word index
         text = f"{page.title} {page.content}".lower()
         tokens = self._tokenize(text)
         for token in set(tokens):
@@ -90,7 +88,6 @@ class SearchIndex:
         if url not in self._pages:
             return False
         page = self._pages.pop(url)
-        # Remove from word index
         text = f"{page.title} {page.content}".lower()
         tokens = set(self._tokenize(text))
         for token in self._word_index:
@@ -119,8 +116,10 @@ class SearchIndex:
         """Return list of all indexed URLs."""
         return list(self._pages.keys())
 
-    def search(self, query: str, limit: int = 10) -> List[Tuple[str, float]]:
-        """Search the index and return (url, score) tuples sorted by relevance."""
+    def search(
+        self, query: str, limit: int = 10
+    ) -> List[Tuple[str, float]]:
+        """Search and return (url, score) tuples by relevance."""
         if not query:
             return []
         tokens = self._tokenize(query)
@@ -133,14 +132,15 @@ class SearchIndex:
                 for url in self._word_index[token]:
                     if url not in scores:
                         scores[url] = 0.0
-                    # Count occurrences in title (boosted) and content
                     page = self._pages.get(url)
                     if page:
                         title_count = page.title.lower().count(token)
                         content_count = page.content.lower().count(token)
-                        scores[url] += title_count * 3.0 + content_count * 1.0
-                        # Boost by interest relevance score
+                        scores[url] += title_count * 3.0
+                        scores[url] += content_count * 1.0
                         scores[url] += page.relevance_score * 0.5
 
-        results = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        results = sorted(
+            scores.items(), key=lambda x: x[1], reverse=True
+        )
         return results[:limit]

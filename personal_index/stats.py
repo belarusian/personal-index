@@ -64,30 +64,36 @@ class StatsCollector:
             if page is None:
                 continue
 
-            # Count words
             total_words += len(page.content.split())
             total_content_length += len(page.content)
 
-            # Count domains
             domain = extract_domain(url)
             if domain:
                 domain_counts[domain] = domain_counts.get(domain, 0) + 1
 
-            # Count interests
             for interest_name in page.matched_interests:
-                interest_counts[interest_name] = interest_counts.get(interest_name, 0) + 1
+                interest_counts[interest_name] = (
+                    interest_counts.get(interest_name, 0) + 1
+                )
                 pages_with_interests += 1
 
-            # Track timestamps
             if page.crawled_at:
                 timestamps.append(page.crawled_at)
 
         stats.total_words = total_words
         stats.unique_domains = len(domain_counts)
-        stats.avg_content_length = total_content_length / max(stats.total_pages, 1)
+        stats.avg_content_length = (
+            total_content_length / max(stats.total_pages, 1)
+        )
         stats.pages_with_interests = pages_with_interests
-        stats.top_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-        stats.top_interests = sorted(interest_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        stats.top_domains = sorted(
+            domain_counts.items(),
+            key=lambda x: x[1], reverse=True
+        )[:10]
+        stats.top_interests = sorted(
+            interest_counts.items(),
+            key=lambda x: x[1], reverse=True
+        )[:10]
 
         if timestamps:
             stats.oldest_page = min(timestamps)
@@ -103,7 +109,7 @@ class StatsCollector:
             f"Total pages: {stats.total_pages}",
             f"Total words: {stats.total_words}",
             f"Unique domains: {stats.unique_domains}",
-            f"Average content length: {stats.avg_content_length:.0f}",
+            f"Avg content length: {stats.avg_content_length:.0f}",
             f"Pages with interests: {stats.pages_with_interests}",
         ]
 

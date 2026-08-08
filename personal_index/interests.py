@@ -8,8 +8,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set
 
-from personal_index.models import InterestType
-
 
 @dataclass
 class Interest:
@@ -51,7 +49,9 @@ class InterestStore:
     """Persistent storage for interests (CLI-facing)."""
 
     store_path: Optional[str] = None
-    _interests: Dict[str, Interest] = field(default_factory=dict, repr=False)
+    _interests: Dict[str, Interest] = field(
+        default_factory=dict, repr=False
+    )
 
     def __post_init__(self):
         if self.store_path and os.path.exists(self.store_path):
@@ -62,7 +62,10 @@ class InterestStore:
         try:
             with open(self.store_path, "r") as f:
                 data = json.load(f)
-            self._interests = {name: Interest.from_dict(d) for name, d in data.items()}
+            self._interests = {
+                name: Interest.from_dict(d)
+                for name, d in data.items()
+            }
         except (json.JSONDecodeError, KeyError, TypeError):
             self._interests = {}
 
@@ -70,8 +73,13 @@ class InterestStore:
         """Save interests to file."""
         if not self.store_path:
             return
-        os.makedirs(os.path.dirname(self.store_path) or ".", exist_ok=True)
-        data = {name: interest.to_dict() for name, interest in self._interests.items()}
+        os.makedirs(
+            os.path.dirname(self.store_path) or ".", exist_ok=True
+        )
+        data = {
+            name: interest.to_dict()
+            for name, interest in self._interests.items()
+        }
         with open(self.store_path, "w") as f:
             json.dump(data, f, indent=2)
 

@@ -42,7 +42,9 @@ class ScheduleStore:
     """Persistent storage for schedule entries."""
 
     path: str
-    _entries: Dict[str, ScheduleEntry] = field(default_factory=dict, repr=False)
+    _entries: Dict[str, ScheduleEntry] = field(
+        default_factory=dict, repr=False
+    )
 
     def __post_init__(self):
         self._load()
@@ -58,17 +60,25 @@ class ScheduleStore:
             self._entries = {}
             for name, entry_data in data.items():
                 config = ScheduleConfig(**entry_data["config"])
+                last_run = None
+                if entry_data.get("last_run"):
+                    last_run = datetime.fromisoformat(
+                        entry_data["last_run"]
+                    )
+                next_run = None
+                if entry_data.get("next_run"):
+                    next_run = datetime.fromisoformat(
+                        entry_data["next_run"]
+                    )
                 entry = ScheduleEntry(
                     name=name,
                     config=config,
                     run_count=entry_data.get("run_count", 0),
-                    total_pages_indexed=entry_data.get("total_pages_indexed", 0),
-                    last_run=datetime.fromisoformat(entry_data["last_run"])
-                    if entry_data.get("last_run")
-                    else None,
-                    next_run=datetime.fromisoformat(entry_data["next_run"])
-                    if entry_data.get("next_run")
-                    else None,
+                    total_pages_indexed=entry_data.get(
+                        "total_pages_indexed", 0
+                    ),
+                    last_run=last_run,
+                    next_run=next_run,
                 )
                 self._entries[name] = entry
         except (json.JSONDecodeError, KeyError, TypeError):
@@ -84,8 +94,14 @@ class ScheduleStore:
                 "config": asdict(entry.config),
                 "run_count": entry.run_count,
                 "total_pages_indexed": entry.total_pages_indexed,
-                "last_run": entry.last_run.isoformat() if entry.last_run else None,
-                "next_run": entry.next_run.isoformat() if entry.next_run else None,
+                "last_run": (
+                    entry.last_run.isoformat()
+                    if entry.last_run else None
+                ),
+                "next_run": (
+                    entry.next_run.isoformat()
+                    if entry.next_run else None
+                ),
             }
         with open(self.path, "w") as f:
             json.dump(data, f, indent=2)
@@ -172,14 +188,17 @@ class Scheduler:
         return due
 
     def update_next_run_times(self) -> None:
-        """Update next_run times for all schedules based on last_run."""
+        """Update next_run times based on last_run."""
         for entry in self.schedule_store.list_all():
             if entry.last_run is not None:
-                entry.next_run = entry.last_run + timedelta(hours=entry.config.interval_hours)
+                interval = entry.config.interval_hours
+                entry.next_run = entry.last_run + timedelta(
+                    hours=interval
+                )
                 self.schedule_store.update(entry)
 
     def run_schedule(self, name: str) -> int:
-        """Run a scheduled crawl job. Returns number of pages indexed."""
+        """Run a scheduled crawl job. Returns pages indexed."""
         entry = self.schedule_store.get(name)
         if entry is None or not entry.config.enabled:
             return 0
@@ -191,7 +210,9 @@ class Scheduler:
             max_pages=entry.config.max_pages_per_run,
             delay=entry.config.delay,
         )
-        crawler = Crawler(config=config, interest_store=self.interest_store)
+        crawler = Crawler(
+            config=config, interest_store=self.interest_store
+        )
         pages = crawler.crawl(entry.config.seed_urls)
         crawler.close()
 
@@ -201,7 +222,8 @@ class Scheduler:
         entry.run_count += 1
         entry.total_pages_indexed += len(pages)
         entry.last_run = datetime.utcnow()
-        entry.next_run = entry.last_run + timedelta(hours=entry.config.interval_hours)
+        interval = entry.config.interval_hours
+        entry.next_run = entry.last_run + timedelta(hours=interval)
         self.schedule_store.update(entry)
 
         return len(pages)

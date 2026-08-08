@@ -49,26 +49,39 @@ class DomainManager:
         try:
             with open(self.rules_file, "r") as f:
                 data = json.load(f)
-            self._rules = {d: DomainRule.from_dict(r) for d, r in data.items()}
-            self._has_whitelist = any(r.allowed for r in self._rules.values())
+            self._rules = {
+                d: DomainRule.from_dict(r) for d, r in data.items()
+            }
+            self._has_whitelist = any(
+                r.allowed for r in self._rules.values()
+            )
         except (json.JSONDecodeError, KeyError):
             self._rules = {}
 
     def _save(self) -> None:
         if not self.rules_file:
             return
-        os.makedirs(os.path.dirname(self.rules_file) or ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(self.rules_file) or ".", exist_ok=True
+        )
         data = {d: r.to_dict() for d, r in self._rules.items()}
         with open(self.rules_file, "w") as f:
             json.dump(data, f, indent=2)
 
-    def add_allow(self, domain: str, max_pages: int = 100, max_depth: int = 3) -> None:
-        self._rules[domain] = DomainRule(domain=domain, allowed=True, max_pages=max_pages, max_depth=max_depth)
+    def add_allow(
+        self, domain: str, max_pages: int = 100, max_depth: int = 3
+    ) -> None:
+        self._rules[domain] = DomainRule(
+            domain=domain, allowed=True,
+            max_pages=max_pages, max_depth=max_depth
+        )
         self._has_whitelist = True
         self._save()
 
     def add_block(self, domain: str, reason: str = "") -> None:
-        self._rules[domain] = DomainRule(domain=domain, allowed=False, reason=reason)
+        self._rules[domain] = DomainRule(
+            domain=domain, allowed=False, reason=reason
+        )
         self._save()
 
     def is_allowed(self, domain: str) -> bool:

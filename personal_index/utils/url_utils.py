@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from urllib.parse import urlparse, urljoin
 from typing import Optional
 
@@ -29,7 +28,7 @@ def is_valid_url(url: str) -> bool:
 
 
 def normalize_url(url: str) -> str:
-    """Normalize URL: lowercase domain, remove fragments, trailing slashes."""
+    """Normalize URL: lowercase domain, remove fragments."""
     if not url:
         return url
     try:
@@ -39,8 +38,8 @@ def normalize_url(url: str) -> str:
         path = parsed.path
         if path != "/" and path.endswith("/"):
             path = path.rstrip("/")
-        # Remove fragment
-        return f"{scheme}://{netloc}{path}{('?' + parsed.query) if parsed.query else ''}"
+        query = ("?" + parsed.query) if parsed.query else ""
+        return f"{scheme}://{netloc}{path}{query}"
     except Exception:
         return url
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Set
+from typing import List, Set
 
 from personal_index.config.models import Interest
 
@@ -24,7 +24,9 @@ class FilterResult:
 class ContentFilter:
     """Filters content based on user interests."""
 
-    def __init__(self, interests: List[Interest], min_relevance_score: float = 0.0):
+    def __init__(
+        self, interests: List[Interest], min_relevance_score: float = 0.0
+    ):
         self.interests = interests
         self.min_relevance_score = min_relevance_score
         self._compiled_patterns = self._compile_url_patterns()
@@ -72,7 +74,10 @@ class ContentFilter:
 
         result = FilterResult(
             matched=url_result.matched or content_result.matched,
-            matching_interests=url_result.matching_interests | content_result.matching_interests,
+            matching_interests=(
+                url_result.matching_interests
+                | content_result.matching_interests
+            ),
             matched_keywords=content_result.matched_keywords,
             score=url_result.score + content_result.score,
         )
@@ -98,7 +103,6 @@ class ContentFilter:
         """Extract relevant text, truncating if needed."""
         if len(text) <= max_length:
             return text
-        # Truncate at word boundary
         truncated = text[:max_length]
         last_space = truncated.rfind(" ")
         if last_space > max_length * 0.5:

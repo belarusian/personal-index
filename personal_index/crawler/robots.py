@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import fnmatch
-import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 from urllib.parse import urlparse
 
 
@@ -32,16 +31,18 @@ class RobotsPolicy:
         parsed = urlparse(url)
         path = parsed.path or "/"
 
-        # Find applicable rules
         applicable_rules = []
         for rule in self.rules:
-            if rule.user_agent == "*" or rule.user_agent.lower() == user_agent.lower():
+            ua_match = (
+                rule.user_agent == "*"
+                or rule.user_agent.lower() == user_agent.lower()
+            )
+            if ua_match:
                 applicable_rules.append(rule)
 
         if not applicable_rules:
             return True
 
-        # Find the most specific matching rule
         best_match = None
         best_length = -1
         for rule in applicable_rules:
@@ -60,14 +61,11 @@ class RobotsPolicy:
         """Check if path matches a robots.txt pattern."""
         if pattern == "*":
             return True
-        # Handle $ anchor
         if pattern.endswith("$"):
             pattern = pattern[:-1]
             return fnmatch.fnmatch(path, pattern) or path == pattern
-        # Handle wildcard
         if "*" in pattern:
             return fnmatch.fnmatch(path, pattern)
-        # Prefix match
         return path.startswith(pattern)
 
 
@@ -82,7 +80,6 @@ def parse_robots_txt(text: str, base_url: str = "") -> RobotsPolicy:
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-
         if ":" not in line:
             continue
 
@@ -93,9 +90,19 @@ def parse_robots_txt(text: str, base_url: str = "") -> RobotsPolicy:
         if key == "user-agent":
             current_agent = value
         elif key == "disallow" and current_agent:
-            policy.rules.append(RobotsRule(user_agent=current_agent, allowed=False, pattern=value))
+            policy.rules.append(
+                RobotsRule(
+                    user_agent=current_agent,
+                    allowed=False, pattern=value
+                )
+            )
         elif key == "allow" and current_agent:
-            policy.rules.append(RobotsRule(user_agent=current_agent, allowed=True, pattern=value))
+            policy.rules.append(
+                RobotsRule(
+                    user_agent=current_agent,
+                    allowed=True, pattern=value
+                )
+            )
         elif key == "crawl-delay":
             try:
                 policy.crawl_delay = float(value)
@@ -130,9 +137,12 @@ class RobotsParser:
         domain = parsed.netloc
         if domain in self._policies:
             return self._policies[domain].can_fetch(url, user_agent)
-        # Use inline rules
         path = parsed.path or "/"
-        applicable = [r for r in self._rules if r.user_agent == "*" or r.user_agent.lower() == user_agent.lower()]
+        applicable = [
+            r for r in self._rules
+            if r.user_agent == "*"
+            or r.user_agent.lower() == user_agent.lower()
+        ]
         if not applicable:
             return True
         best_match = None

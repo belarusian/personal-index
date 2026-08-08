@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import ParseResult, urlparse, urljoin, urlunparse
+from urllib.parse import urlparse, urljoin, urlunparse
 
 # Common file extensions to exclude from crawling
 EXCLUDED_EXTENSIONS = {
@@ -29,25 +29,23 @@ def is_valid_url(url: str) -> bool:
 
 
 def normalize_url(url: str) -> str:
-    """Normalize a URL by lowercasing scheme/domain, removing fragments and default ports."""
+    """Normalize URL: lowercase scheme/domain, remove fragments."""
     if not url:
         return url
     try:
         parsed = urlparse(url)
-        # Lowercase scheme and netloc
         scheme = parsed.scheme.lower()
         netloc = parsed.netloc.lower()
-        # Remove default ports
-        if (scheme == "http" and netloc.endswith(":80")):
+        if scheme == "http" and netloc.endswith(":80"):
             netloc = netloc[:-3]
-        elif (scheme == "https" and netloc.endswith(":443")):
+        elif scheme == "https" and netloc.endswith(":443"):
             netloc = netloc[:-4]
-        # Remove fragment
         path = parsed.path
-        # Remove trailing slash except for root
         if path != "/" and path.endswith("/"):
             path = path.rstrip("/")
-        normalized = urlunparse((scheme, netloc, path, parsed.params, parsed.query, ""))
+        normalized = urlunparse(
+            (scheme, netloc, path, parsed.params, parsed.query, "")
+        )
         return normalized
     except Exception:
         return url
@@ -101,9 +99,15 @@ def remove_query_params(url: str, params: list = None) -> str:
     try:
         parsed = urlparse(url)
         query_parts = parsed.query.split("&")
-        filtered = [p for p in query_parts if not any(p.startswith(f"{param}=") for param in params)]
+        filtered = [
+            p for p in query_parts
+            if not any(p.startswith(f"{param}=") for param in params)
+        ]
         new_query = "&".join(filtered)
-        return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+        return urlunparse((
+            parsed.scheme, parsed.netloc, parsed.path,
+            parsed.params, new_query, parsed.fragment
+        ))
     except Exception:
         return url
 

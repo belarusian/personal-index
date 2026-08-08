@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Set
+from typing import List, Optional
 
 from bs4 import BeautifulSoup
 
@@ -67,21 +67,25 @@ def extract_meta_description(html: Optional[str]) -> str:
 
 
 def tokenize(text: Optional[str]) -> List[str]:
-    """Tokenize text into lowercase words, filtering stopwords and short words."""
+    """Tokenize text into lowercase words, filtering stopwords."""
     if not text:
         return []
     tokens = re.findall(r"[a-z0-9]+", text.lower())
     return [t for t in tokens if t not in STOPWORDS and len(t) > 1]
 
 
-def generate_snippet(text: str, query: str, max_length: int = 200) -> str:
+def generate_snippet(
+    text: str, query: str, max_length: int = 200
+) -> str:
     """Generate a snippet highlighting query terms."""
     if not text:
         return ""
     query_lower = query.lower()
     idx = text.lower().find(query_lower)
     if idx == -1:
-        return text[:max_length] + ("..." if len(text) > max_length else "")
+        return text[:max_length] + (
+            "..." if len(text) > max_length else ""
+        )
     start = max(0, idx - 50)
     end = min(len(text), idx + len(query) + max_length)
     snippet = text[start:end]
@@ -130,8 +134,9 @@ def extract_links_from_html(html: str) -> List[str]:
         links = []
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
-            if href and not href.startswith("#") and not href.startswith("javascript:"):
-                links.append(href)
+            if href and not href.startswith("#"):
+                if not href.startswith("javascript:"):
+                    links.append(href)
         return links
     except Exception:
         return []

@@ -6,10 +6,9 @@ import csv
 import io
 import json
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 from personal_index.search_index import SearchIndex
-from personal_index.models import CrawledPage
 
 
 @dataclass
@@ -41,7 +40,9 @@ class ResultsFormatter:
         if result.snippet:
             lines.append(f"    {result.snippet}")
         if result.matched_interests:
-            lines.append(f"    Interests: {', '.join(result.matched_interests)}")
+            lines.append(
+                f"    Interests: {', '.join(result.matched_interests)}"
+            )
         if result.meta_description:
             lines.append(f"    {result.meta_description}")
         return "\n".join(lines)
@@ -56,7 +57,9 @@ class ResultsFormatter:
             lines.append("-" * 60)
         return "\n".join(lines)
 
-    def create_snippet(self, text: str, query: str, max_length: int = 200) -> str:
+    def create_snippet(
+        self, text: str, query: str, max_length: int = 200
+    ) -> str:
         """Create a snippet highlighting the query."""
         if not text:
             return ""
@@ -98,7 +101,9 @@ class ResultsExporter:
         """Export results as CSV."""
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["rank", "url", "title", "score", "snippet", "interests"])
+        writer.writerow([
+            "rank", "url", "title", "score", "snippet", "interests"
+        ])
         for r in results:
             writer.writerow([
                 r.rank, r.url, r.title, r.score, r.snippet,
@@ -117,7 +122,9 @@ class ResultsExporter:
             if r.snippet:
                 lines.append(f"{r.snippet}")
             if r.matched_interests:
-                lines.append(f"**Interests**: {', '.join(r.matched_interests)}")
+                lines.append(
+                    f"**Interests**: {', '.join(r.matched_interests)}"
+                )
             lines.append("")
         return "\n".join(lines)
 

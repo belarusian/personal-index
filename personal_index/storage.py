@@ -1,7 +1,6 @@
 """Storage layer for personal-index using JSON files."""
 
 import json
-import os
 from pathlib import Path
 from typing import Optional
 from personal_index.models import Interest, CrawlConfig, IndexedPage
@@ -30,7 +29,9 @@ class Storage:
     def _read_json(self, filepath: Path) -> list | dict:
         content = filepath.read_text()
         if not content.strip():
-            return [] if filepath.name in ("interests.json", "pages.json") else {}
+            if filepath.name in ("interests.json", "pages.json"):
+                return []
+            return {}
         return json.loads(content)
 
     def _write_json(self, filepath: Path, data):
@@ -41,7 +42,6 @@ class Storage:
     def add_interest(self, interest: Interest) -> Interest:
         """Add a new interest."""
         interests = self._read_json(self.interests_file)
-        # Check for duplicate names
         for i, existing in enumerate(interests):
             if existing["name"] == interest.name:
                 interests[i] = interest.to_dict()
@@ -151,8 +151,12 @@ class Storage:
         pages = self.get_pages()
         return {
             "total_interests": len(interests),
-            "enabled_interests": sum(1 for i in interests if i.enabled),
+            "enabled_interests": sum(
+                1 for i in interests if i.enabled
+            ),
             "total_pages": len(pages),
-            "total_content_bytes": sum(p.content_length for p in pages),
+            "total_content_bytes": sum(
+                p.content_length for p in pages
+            ),
             "data_dir": str(self.data_dir),
         }

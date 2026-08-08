@@ -1,16 +1,31 @@
 """Data models for personal-index."""
 
+from __future__ import annotations
+
+import uuid
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
+from enum import Enum
+from typing import Optional
+
+
+class InterestType(Enum):
+    """Type of interest to track."""
+    KEYWORD = "keyword"
+    TOPIC = "topic"
+    URL_PATTERN = "url_pattern"
 
 
 @dataclass
 class Interest:
     """Represents a user-defined interest to track."""
     name: str
+    interest_type: InterestType = InterestType.KEYWORD
+    value: str = ""
     keywords: list = field(default_factory=list)
     url_patterns: list = field(default_factory=list)
     topics: list = field(default_factory=list)
+    priority: int = 5
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -25,6 +40,38 @@ class Interest:
             **{k: v for k, v in data.items()
                if k in cls.__dataclass_fields__}
         )
+
+    def matches(self, text: str, url: str = "") -> bool:
+        """Check if text/url matches this interest."""
+        if not self.enabled:
+            return False
+        text_lower = text.lower()
+        for kw in self.keywords:
+            if kw.lower() in text_lower:
+                return True
+        for topic in self.topics:
+            if topic.lower() in text_lower:
+                return True
+        for pattern in self.url_patterns:
+            try:
+                import re
+                if re.search(pattern, url, re.IGNORECASE):
+                    return True
+            except re.error:
+                pass
+        return False
+
+    def score(self, text: str) -> float:
+        """Calculate relevance score for text."""
+        if not self.enabled:
+            return 0.0
+        text_lower = text.lower()
+        total = 0.0
+        for kw in self.keywords:
+            total += text_lower.count(kw.lower())
+        for topic in self.topics:
+            total += text_lower.count(topic.lower())
+        return min(total * self.priority, self.priority * 10)
 
 
 @dataclass
@@ -48,6 +95,43 @@ class CrawlConfig:
         return cls(
             **{k: v for k, v in data.items()
                if k in cls.__dataclass_fields__}
+        )
+
+
+@dataclass
+class CrawledPage:
+    """A page that has been crawled."""
+    url: str
+    title: str = ""
+    content: str = ""
+    meta_description: str = ""
+    status_code: int = 200
+    depth: int = 0
+    parent_url: str = ""
+    headers: dict = field(default_factory=dict)
+    matched_interests: list = field(default_factory=list)
+    relevance_score: float = 0.0
+    crawled_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "CrawledPage":
+        crawled_at = data.get("crawled_at", "")
+        if isinstance(crawled_at, str) and crawled_at:
+            try:
+                crawled_at = datetime.fromisoformat(crawled_at)
+            except ValueError:
+                crawled_at = datetime.now(timezone.utc)
+        elif not isinstance(crawled_at, datetime):
+            crawled_at = datetime.now(timezone.utc)
+        return cls(
+            **{k: v for k, v in data.items()
+               if k in cls.__dataclass_fields__},
+            crawled_at=crawled_at
         )
 
 
@@ -93,3 +177,32 @@ class SearchResult:
             "matched_terms": self.matched_terms,
             "snippet": self.snippet,
         }
+
+
+@dataclass
+class Page:
+    """A page model for the search index."""
+    url: str
+    title: str = ""
+    content: str = ""
+    meta_description: str = ""
+    matched_interests: list = field(default_factory=list)
+    id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    crawled_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    domain: str = ""
+    status_code: int = 200
+    content_length: int = 0
+    language: str = "en"
+    keywords: list = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Page":
+        return cls(
+            **{k: v for k, v in data.items()
+               if k in cls.__dataclass_fields__}
+        )

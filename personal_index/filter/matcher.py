@@ -24,9 +24,13 @@ class ContentMatcher:
         text_lower = text.lower()
 
         if self.interest.match_mode == MatchMode.ANY:
-            return any(kw.lower() in text_lower for kw in self.interest.keywords)
+            return any(
+                kw.lower() in text_lower for kw in self.interest.keywords
+            )
         elif self.interest.match_mode == MatchMode.ALL:
-            return all(kw.lower() in text_lower for kw in self.interest.keywords)
+            return all(
+                kw.lower() in text_lower for kw in self.interest.keywords
+            )
         elif self.interest.match_mode == MatchMode.REGEX:
             for kw in self.interest.keywords:
                 try:
@@ -57,8 +61,11 @@ class ContentMatcher:
         total = 0.0
         for kw in self.interest.keywords:
             total += text_lower.count(kw.lower())
-        # Scale by priority and cap at priority
-        score = min(total * self.interest.priority / max(len(self.interest.keywords), 1), self.interest.priority)
+        num_kw = max(len(self.interest.keywords), 1)
+        score = min(
+            total * self.interest.priority / num_kw,
+            self.interest.priority
+        )
         return score
 
 
@@ -82,7 +89,9 @@ class InterestFilter:
                     best = matcher.interest
         return best
 
-    def get_matching_interests(self, text: str, url: str = "") -> List[Interest]:
+    def get_matching_interests(
+        self, text: str, url: str = ""
+    ) -> List[Interest]:
         """Get all matching interests sorted by score."""
         results = []
         for matcher in self._matchers:

@@ -8,7 +8,9 @@ from personal_index.index import IndexedPage, SearchResult
 from personal_index.interests import Interest
 
 
-def format_search_results(results: List[SearchResult], limit: int = 10) -> str:
+def format_search_results(
+    results: List[SearchResult], limit: int = 10
+) -> str:
     """Format search results for display."""
     if not results:
         return "No results found."
@@ -33,7 +35,9 @@ def format_interest(interest: Interest) -> str:
     if interest.topics:
         lines.append(f"  Topics: {', '.join(interest.topics)}")
     if interest.url_patterns:
-        lines.append(f"  URL Patterns: {', '.join(interest.url_patterns)}")
+        lines.append(
+            f"  URL Patterns: {', '.join(interest.url_patterns)}"
+        )
     lines.append(f"  Priority: {interest.priority}")
     return "\n".join(lines)
 
@@ -63,19 +67,21 @@ def format_index_page(page: IndexedPage) -> str:
     return "\n".join(lines)
 
 
-def format_schedule_job(job: "ScheduledJob") -> str:
+def format_schedule_job(job: Dict[str, Any]) -> str:
     """Format a scheduled job for display."""
     lines = [
-        f"  Name: {job.name}",
-        f"  Interval: {job.interval_hours} hours",
-        f"  Runs: {job.run_count}",
-        f"  Last run: {job.last_run or 'Never'}",
-        f"  Seed URLs: {', '.join(job.seed_urls)}",
+        f"  Name: {job.get('name', 'unknown')}",
+        f"  Interval: {job.get('interval_hours', 0)} hours",
+        f"  Runs: {job.get('run_count', 0)}",
+        f"  Last run: {job.get('last_run') or 'Never'}",
+        f"  Seed URLs: {', '.join(job.get('seed_urls', []))}",
     ]
     return "\n".join(lines)
 
 
-def format_table(headers: List[str], rows: List[List[str]]) -> str:
+def format_table(
+    headers: List[str], rows: List[List[str]]
+) -> str:
     """Format data as a text table."""
     if not headers or not rows:
         return ""
@@ -86,13 +92,19 @@ def format_table(headers: List[str], rows: List[List[str]]) -> str:
             if i < len(col_widths):
                 col_widths[i] = max(col_widths[i], len(str(cell)))
 
-    header_line = " | ".join(h.ljust(col_widths[i]) for i, h in enumerate(headers))
+    header_line = " | ".join(
+        h.ljust(col_widths[i]) for i, h in enumerate(headers)
+    )
     separator = "-+-".join("-" * w for w in col_widths)
     lines = [header_line, separator]
     for row in rows:
-        line = " | ".join(str(row[i]).ljust(col_widths[i]) if i < len(row) else "".ljust(col_widths[i])
-                          for i in range(len(headers)))
-        lines.append(line)
+        cells = []
+        for i in range(len(headers)):
+            if i < len(row):
+                cells.append(str(row[i]).ljust(col_widths[i]))
+            else:
+                cells.append("".ljust(col_widths[i]))
+        lines.append(" | ".join(cells))
     return "\n".join(lines)
 
 
