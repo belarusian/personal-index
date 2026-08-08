@@ -163,9 +163,30 @@ class Scheduler:
         self.schedule_store.add(entry)
         return entry
 
+    def add_job(
+        self,
+        name: str,
+        seed_urls: List[str] | None = None,
+        interval_hours: int = 24,
+        **kwargs,
+    ) -> ScheduleEntry:
+        """Add a scheduled job (alias for add_schedule, CLI-compatible)."""
+        if seed_urls is None:
+            seed_urls = []
+        return self.add_schedule(
+            name=name,
+            seed_urls=seed_urls,
+            interval_hours=interval_hours,
+            **kwargs,
+        )
+
     def remove_schedule(self, name: str) -> bool:
         """Remove a scheduled crawl job."""
         return self.schedule_store.remove(name)
+
+    def remove_job(self, name: str) -> bool:
+        """Remove a scheduled job (alias for remove_schedule, CLI-compatible)."""
+        return self.remove_schedule(name)
 
     def toggle_schedule(self, name: str) -> Optional[ScheduleEntry]:
         """Toggle a schedule's enabled status."""
@@ -244,19 +265,3 @@ class ScheduledJob:
     last_run: Optional[str] = None
     next_run: Optional[str] = None
     enabled: bool = True
-
-    def add_job(self, name: str, seed_urls: list[str] | None = None,
-                interval_hours: int = 24, **kwargs) -> ScheduleEntry:
-        """Add a scheduled job (alias for add_schedule)."""
-        if seed_urls is None:
-            seed_urls = []
-        return self.add_schedule(
-            name=name,
-            seed_urls=seed_urls,
-            interval_hours=interval_hours,
-            **kwargs,
-        )
-
-    def remove_job(self, name: str) -> bool:
-        """Remove a scheduled job (alias for remove_schedule)."""
-        return self.remove_schedule(name)
