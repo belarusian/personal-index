@@ -1,155 +1,273 @@
-"""Text processing utilities."""
+"""Text processing utilities for content indexing."""
 
 from __future__ import annotations
 
 import re
-from typing import List, Optional
-
-from bs4 import BeautifulSoup
-
-STOPWORDS = {
-    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "do", "does", "did", "will", "would", "could",
-    "should", "may", "might", "shall", "can", "need", "dare", "ought",
-    "used", "to", "of", "in", "for", "on", "with", "at", "by", "from",
-    "as", "into", "through", "during", "before", "after", "above", "below",
-    "between", "out", "off", "over", "under", "again", "further", "then",
-    "once", "here", "there", "when", "where", "why", "how", "all", "both",
-    "each", "few", "more", "most", "other", "some", "such", "no", "nor",
-    "not", "only", "own", "same", "so", "than", "too", "very", "just",
-    "because", "but", "and", "or", "if", "while", "that", "this", "these",
-    "those", "it", "its", "i", "me", "my", "we", "our", "you", "your",
-    "he", "him", "his", "she", "her", "they", "them", "their", "what",
-    "which", "who", "whom", "am", "about", "up", "down",
-}
+import unicodedata
+from collections import Counter
+from typing import Any
 
 
-def extract_text_from_html(html: Optional[str]) -> str:
-    """Extract visible text from HTML, removing scripts and styles."""
+def normalize_whitespace(text: str) -> str:
+    """Collapse all whitespace sequences into single spaces and strip.
+
+    Args:
+        text: Input text with potentially irregular whitespace.
+
+    Returns:
+        Normalized text with single spaces between words.
+    """
+    if not text:
+        return ""
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def remove_html_tags(html: str) -> str:
+    """Strip HTML tags from text, preserving content.
+
+    Args:
+        html: HTML string to clean.
+
+    Returns:
+        Plain text with HTML tags removed.
+    """
     if not html:
         return ""
-    try:
-        soup = BeautifulSoup(html, "html.parser")
-        for tag in soup(["script", "style", "noscript"]):
-            tag.decompose()
-        text = soup.get_text(separator=" ", strip=True)
-        return " ".join(text.split())
-    except Exception:
-        return ""
+    # Remove script and style content first
+    text = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    # Remove all remaining tags
+    text = re.sub(r"<[^>]+>", "", text)
+    # Decode common HTML entities
+    text = text.replace("&nbsp;", " ")
+    text = text.replace("&amp;", "&")
+    text = text.replace("&lt;", "<")
+    text = text.replace("&gt;", ">")
+    text = text.replace("&quot;", '"')
+    text = text.replace("&#39;", "'")
+    return normalize_whitespace(text)
 
 
-def extract_title_from_html(html: Optional[str]) -> str:
-    """Extract page title from HTML."""
-    if not html:
-        return ""
-    try:
-        soup = BeautifulSoup(html, "html.parser")
-        title = soup.find("title")
-        if title and title.string:
-            return title.string.strip()
-        return ""
-    except Exception:
-        return ""
+def truncate_text(text: str, max_length: int = 200, suffix: str = "...") -> str:
+    """Truncate text to a maximum length without breaking words.
+
+    Args:
+        text: Text to truncate.
+        max_length: Maximum character length.
+        suffix: String to append when truncated.
+
+    Returns:
+        Truncated text.
+    """
+    if not text or len(text) <= max_length:
+        return text or ""
+    truncated = text[:max_length]
+    # Don't break in the middle of a word
+    last_space = truncated.rfind(" ")
+    if last_space > max_length * 0.6:
+        truncated = truncated[:last_space]
+    return truncated.rstrip() + suffix
 
 
-def extract_meta_description(html: Optional[str]) -> str:
-    """Extract meta description from HTML."""
-    if not html:
-        return ""
-    try:
-        soup = BeautifulSoup(html, "html.parser")
-        meta = soup.find("meta", attrs={"name": "description"})
-        if meta and meta.get("content"):
-            return meta["content"].strip()
-        return ""
-    except Exception:
-        return ""
+def extract_sentences(text: str, min_length: int = 10) -> list[str]:
+    """Split text into sentences.
 
+    Args:
+        text: Input text.
+        min_length: Minimum sentence length to include.
 
-def tokenize(text: Optional[str]) -> List[str]:
-    """Tokenize text into lowercase words, filtering stopwords."""
+    Returns:
+        List of sentence strings.
+    """
     if not text:
         return []
-    tokens = re.findall(r"[a-z0-9]+", text.lower())
-    return [t for t in tokens if t not in STOPWORDS and len(t) > 1]
+    # Split on sentence-ending punctuation
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    return [s.strip() for s in sentences if len(s.strip()) >= min_length]
 
 
-def generate_snippet(
-    text: str, query: str, max_length: int = 200
-) -> str:
-    """Generate a snippet highlighting query terms."""
+def extract_paragraphs(text: str, min_length: int = 20) -> list[str]:
+    """Split text into paragraphs.
+
+    Args:
+        text: Input text.
+        min_length: Minimum paragraph length to include.
+
+    Returns:
+        List of paragraph strings.
+    """
+    if not text:
+        return []
+    paragraphs = re.split(r"\n\s*\n", text)
+    return [p.strip() for p in paragraphs if len(p.strip()) >= min_length]
+
+
+def word_frequency(text: str, min_freq: int = 1, stop_words: set[str] | None = None) -> dict[str, int]:
+    """Calculate word frequency in text.
+
+    Args:
+        text: Input text.
+        min_freq: Minimum frequency to include.
+        stop_words: Optional set of words to exclude.
+
+    Returns:
+        Dict mapping words to their frequencies.
+    """
+    if not text:
+        return {}
+    words = re.findall(r"\b[a-zA-Z]{2,}\b", text.lower())
+    if stop_words:
+        words = [w for w in words if w not in stop_words]
+    counter = Counter(words)
+    return {word: freq for word, freq in counter.items() if freq >= min_freq}
+
+
+def extract_keywords(text: str, top_n: int = 10, min_freq: int = 2) -> list[tuple[str, int]]:
+    """Extract top keywords from text by frequency.
+
+    Args:
+        text: Input text.
+        top_n: Number of top keywords to return.
+        min_freq: Minimum frequency threshold.
+
+    Returns:
+        List of (word, frequency) tuples sorted by frequency descending.
+    """
+    freq = word_frequency(text, min_freq=min_freq)
+    return sorted(freq.items(), key=lambda x: x[1], reverse=True)[:top_n]
+
+
+def levenshtein_distance(s1: str, s2: str) -> int:
+    """Calculate Levenshtein edit distance between two strings.
+
+    Args:
+        s1: First string.
+        s2: Second string.
+
+    Returns:
+        Number of single-character edits to transform s1 into s2.
+    """
+    if len(s1) < len(s2):
+        return levenshtein_distance(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+
+    prev_row = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1):
+        curr_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = prev_row[j + 1] + 1
+            deletions = curr_row[j] + 1
+            substitutions = prev_row[j] + (c1 != c2)
+            curr_row.append(min(insertions, deletions, substitutions))
+        prev_row = curr_row
+
+    return prev_row[-1]
+
+
+def similarity_ratio(s1: str, s2: str) -> float:
+    """Calculate similarity ratio between two strings (0.0 to 1.0).
+
+    Uses Levenshtein distance normalized by the longer string length.
+
+    Args:
+        s1: First string.
+        s2: Second string.
+
+    Returns:
+        Similarity ratio where 1.0 means identical.
+    """
+    if not s1 and not s2:
+        return 1.0
+    if not s1 or not s2:
+        return 0.0
+    distance = levenshtein_distance(s1, s2)
+    max_len = max(len(s1), len(s2))
+    return 1.0 - (distance / max_len)
+
+
+def slugify(text: str) -> str:
+    """Convert text to URL-friendly slug.
+
+    Args:
+        text: Input text.
+
+    Returns:
+        Lowercase, hyphen-separated slug.
+    """
     if not text:
         return ""
-    query_lower = query.lower()
-    idx = text.lower().find(query_lower)
-    if idx == -1:
-        return text[:max_length] + (
-            "..." if len(text) > max_length else ""
-        )
-    start = max(0, idx - 50)
-    end = min(len(text), idx + len(query) + max_length)
-    snippet = text[start:end]
-    if start > 0:
-        snippet = "..." + snippet
-    if end < len(text):
-        snippet = snippet + "..."
-    return snippet
+    # Normalize unicode
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    # Replace non-alphanumeric with hyphens
+    text = re.sub(r"[^\w\s-]", "", text.lower())
+    text = re.sub(r"[\s_-]+", "-", text)
+    return text.strip("-")
 
 
-def compute_text_similarity(text1: str, text2: str) -> float:
-    """Compute similarity between two texts based on shared tokens."""
-    tokens1 = set(tokenize(text1))
-    tokens2 = set(tokenize(text2))
-    if not tokens1 or not tokens2:
-        return 0.0
-    intersection = tokens1 & tokens2
-    union = tokens1 | tokens2
-    return len(intersection) / len(union)
+def highlight_text(text: str, terms: list[str], tag: str = "mark") -> str:
+    """Highlight search terms in text.
 
+    Args:
+        text: Input text.
+        terms: List of terms to highlight.
+        tag: HTML tag to wrap matches with.
 
-def truncate_text(text: str, max_length: int = 200) -> str:
-    """Truncate text at word boundary."""
-    if len(text) <= max_length:
+    Returns:
+        Text with terms wrapped in HTML tags.
+    """
+    if not text or not terms:
         return text
-    truncated = text[:max_length]
-    last_space = truncated.rfind(" ")
-    if last_space > max_length * 0.5:
-        truncated = truncated[:last_space]
-    return truncated.rstrip() + "..."
+    result = text
+    for term in terms:
+        if not term:
+            continue
+        pattern = re.compile(re.escape(term), re.IGNORECASE)
+        result = pattern.sub(f"<{tag}>{term}</{tag}>", result)
+    return result
 
 
 def count_words(text: str) -> int:
-    """Count words in text."""
+    """Count words in text.
+
+    Args:
+        text: Input text.
+
+    Returns:
+        Number of words.
+    """
     if not text:
         return 0
     return len(text.split())
 
 
-def extract_links_from_html(html: str, base_url: str = "") -> List[str]:
-    """Extract all links from HTML, resolving against base_url.
+def count_characters(text: str, include_spaces: bool = True) -> int:
+    """Count characters in text.
 
-    Excludes javascript:, mailto:, and hash-only links.
+    Args:
+        text: Input text.
+        include_spaces: Whether to count whitespace.
+
+    Returns:
+        Character count.
     """
-    if not html:
-        return []
-    try:
-        from urllib.parse import urljoin
-        soup = BeautifulSoup(html, "html.parser")
-        links = []
-        for a in soup.find_all("a", href=True):
-            href = a["href"].strip()
-            # Skip hash-only links
-            if href.startswith("#"):
-                continue
-            # Skip javascript and mailto
-            if href.startswith(("javascript:", "mailto:", "data:", "tel:")):
-                continue
-            # Resolve relative URLs
-            if base_url:
-                full_url = urljoin(base_url, href)
-            else:
-                full_url = href
-            links.append(full_url)
-        return links
-    except Exception:
-        return []
+    if not text:
+        return 0
+    if include_spaces:
+        return len(text)
+    return len(text.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", ""))
+
+
+def read_time_minutes(text: str, wpm: int = 200) -> float:
+    """Estimate reading time in minutes.
+
+    Args:
+        text: Input text.
+        wpm: Words per minute reading speed.
+
+    Returns:
+        Estimated reading time in minutes.
+    """
+    words = count_words(text)
+    return max(1, round(words / wpm))

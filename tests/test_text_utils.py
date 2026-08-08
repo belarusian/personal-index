@@ -1,213 +1,283 @@
-"""Tests for text utilities module."""
+"""Tests for text_utils module."""
+
+from __future__ import annotations
 
 import pytest
 from personal_index.text_utils import (
-    extract_text_from_html,
-    extract_title_from_html,
-    extract_meta_description,
-    tokenize,
-    generate_snippet,
-    compute_text_similarity,
+    normalize_whitespace,
+    remove_html_tags,
     truncate_text,
+    extract_sentences,
+    extract_paragraphs,
+    word_frequency,
+    extract_keywords,
+    levenshtein_distance,
+    similarity_ratio,
+    slugify,
+    highlight_text,
     count_words,
-    extract_links_from_html,
+    count_characters,
+    read_time_minutes,
 )
 
 
-class TestExtractTextFromHtml:
-    def test_basic_extraction(self):
-        html = "<html><body><p>Hello World</p></body></html>"
-        text = extract_text_from_html(html)
-        assert "Hello World" in text
+class TestNormalizeWhitespace:
+    def test_collapse_spaces(self):
+        assert normalize_whitespace("hello   world") == "hello world"
 
-    def test_removes_scripts(self):
-        html = "<html><body><script>alert('xss')</script><p>Safe</p></body></html>"
-        text = extract_text_from_html(html)
-        assert "alert" not in text
-        assert "Safe" in text
+    def test_collapse_tabs_newlines(self):
+        assert normalize_whitespace("hello\t\nworld") == "hello world"
 
-    def test_removes_styles(self):
-        html = "<html><body><style>.hidden { display: none; }</style><p>Visible</p></body></html>"
-        text = extract_text_from_html(html)
-        assert "display" not in text
-        assert "Visible" in text
+    def test_strip_leading_trailing(self):
+        assert normalize_whitespace("  hello  ") == "hello"
 
-    def test_handles_empty_input(self):
-        assert extract_text_from_html("") == ""
-        assert extract_text_from_html(None) == ""
+    def test_empty_string(self):
+        assert normalize_whitespace("") == ""
 
-    def test_handles_html_entities(self):
-        html = "<p>Hello &amp; World</p>"
-        text = extract_text_from_html(html)
-        assert "&" in text
+    def test_none(self):
+        assert normalize_whitespace(None) == ""  # type: ignore
 
-    def test_cleans_whitespace(self):
-        html = "<p>  Hello    World  </p>"
-        text = extract_text_from_html(html)
-        assert text == "Hello World"
-
-    def test_removes_noscript(self):
-        html = "<html><body><noscript>No JS</noscript><p>Content</p></body></html>"
-        text = extract_text_from_html(html)
-        assert "No JS" not in text
-        assert "Content" in text
+    def test_single_word(self):
+        assert normalize_whitespace("hello") == "hello"
 
 
-class TestExtractTitleFromHtml:
-    def test_basic_title(self):
-        html = "<html><head><title>My Page</title></head></html>"
-        assert extract_title_from_html(html) == "My Page"
+class TestRemoveHtmlTags:
+    def test_basic_tags(self):
+        assert remove_html_tags("<p>Hello</p>") == "Hello"
 
-    def test_title_with_attributes(self):
-        html = "<html><head><title class=\"x\">My Page</title></head></html>"
-        assert extract_title_from_html(html) == "My Page"
+    def test_nested_tags(self):
+        assert remove_html_tags("<div><p>Hello <b>world</b></p></div>") == "Hello world"
 
-    def test_no_title(self):
-        html = "<html><body>No title here</body></html>"
-        assert extract_title_from_html(html) == ""
+    def test_script_removal(self):
+        result = remove_html_tags("<p>Text</p><script>alert('xss')</script>")
+        assert "alert" not in result
+        assert "Text" in result
 
-    def test_empty_input(self):
-        assert extract_title_from_html("") == ""
-        assert extract_title_from_html(None) == ""
+    def test_style_removal(self):
+        result = remove_html_tags("<style>.x{color:red}</style><p>Text</p>")
+        assert "color" not in result
+        assert "Text" in result
 
+    def test_html_entities(self):
+        result = remove_html_tags("&nbsp;hello&nbsp;")
+        assert "hello" in result
 
-class TestExtractMetaDescription:
-    def test_basic_meta(self):
-        html = '<meta name="description" content="A test description">'
-        assert extract_meta_description(html) == "A test description"
+    def test_amp_entity(self):
+        assert remove_html_tags("a&amp;b") == "a&b"
 
-    def test_reversed_attributes(self):
-        html = '<meta content="A test description" name="description">'
-        assert extract_meta_description(html) == "A test description"
+    def test_empty_html(self):
+        assert remove_html_tags("") == ""
 
-    def test_no_meta(self):
-        html = "<html><body>No meta</body></html>"
-        assert extract_meta_description(html) == ""
-
-    def test_empty_input(self):
-        assert extract_meta_description("") == ""
-        assert extract_meta_description(None) == ""
-
-
-class TestTokenize:
-    def test_basic_tokenization(self):
-        tokens = tokenize("Hello World this is a test")
-        assert "hello" in tokens
-        assert "world" in tokens
-        assert "test" in tokens
-
-    def test_filters_stopwords(self):
-        tokens = tokenize("The quick brown fox")
-        assert "the" not in tokens
-        assert "quick" in tokens
-        assert "brown" in tokens
-        assert "fox" in tokens
-
-    def test_lowercase(self):
-        tokens = tokenize("HELLO WORLD")
-        assert "hello" in tokens
-        assert "world" in tokens
-
-    def test_empty_input(self):
-        assert tokenize("") == []
-        assert tokenize(None) == []
-
-    def test_filters_short_words(self):
-        tokens = tokenize("a I am")
-        assert len(tokens) == 0
-
-    def test_keeps_numbers(self):
-        tokens = tokenize("Python 3.10 is great")
-        assert "3" in tokens or "10" in tokens
-
-
-class TestGenerateSnippet:
-    def test_basic_snippet(self):
-        text = "This is a long text about Python programming"
-        snippet = generate_snippet(text, "python", max_length=30)
-        assert "Python" in snippet or "python" in snippet.lower()
-
-    def test_truncates_long_text(self):
-        text = "A" * 500
-        snippet = generate_snippet(text, "a", max_length=100)
-        assert len(snippet) <= 105  # max_length + ellipsis
-
-    def test_empty_text(self):
-        assert generate_snippet("", "query") == ""
-
-    def test_no_query_terms(self):
-        text = "Some text here"
-        snippet = generate_snippet(text, "!!!", max_length=100)
-        assert snippet == "Some text here"
-
-
-class TestComputeTextSimilarity:
-    def test_identical_texts(self):
-        assert compute_text_similarity("hello world", "hello world") == 1.0
-
-    def test_completely_different(self):
-        assert compute_text_similarity("hello world", "foo bar") == 0.0
-
-    def test_partial_overlap(self):
-        sim = compute_text_similarity("hello world foo", "hello world bar")
-        assert 0 < sim < 1
-
-    def test_empty_texts(self):
-        assert compute_text_similarity("", "hello") == 0.0
-        assert compute_text_similarity("hello", "") == 0.0
+    def test_none_input(self):
+        assert remove_html_tags(None) == ""  # type: ignore
 
 
 class TestTruncateText:
     def test_no_truncation_needed(self):
-        text = "Short text"
-        assert truncate_text(text, max_length=100) == text
+        assert truncate_text("short", max_length=100) == "short"
 
     def test_truncation(self):
-        text = "A" * 200
-        result = truncate_text(text, max_length=100)
-        assert len(result) <= 103
+        result = truncate_text("hello world foo bar", max_length=10)
+        assert len(result) <= 13
         assert result.endswith("...")
 
-    def test_preserves_word_boundaries(self):
-        text = "Hello World Foo Bar"
-        result = truncate_text(text, max_length=10)
-        assert " " not in result or result.endswith("...")
+    def test_custom_suffix(self):
+        result = truncate_text("hello world", max_length=5, suffix=">>")
+        assert result.endswith(">>")
+
+    def test_empty_string(self):
+        assert truncate_text("", max_length=10) == ""
+
+    def test_none_input(self):
+        assert truncate_text(None, max_length=10) == ""  # type: ignore
+
+
+class TestExtractSentences:
+    def test_basic_sentences(self):
+        text = "Hello world. This is a test. Final sentence!"
+        sentences = extract_sentences(text)
+        assert len(sentences) == 3
+
+    def test_min_length_filter(self):
+        text = "Hi. This is a longer sentence. Go."
+        sentences = extract_sentences(text, min_length=10)
+        assert len(sentences) == 1
+
+    def test_empty_text(self):
+        assert extract_sentences("") == []
+
+    def test_no_punctuation(self):
+        text = "This has no punctuation at all"
+        sentences = extract_sentences(text)
+        assert len(sentences) == 1
+
+
+class TestExtractParagraphs:
+    def test_basic_paragraphs(self):
+        text = "First paragraph with enough words.\n\nSecond paragraph with more content here.\n\nThird paragraph is also long enough."
+        paragraphs = extract_paragraphs(text)
+        assert len(paragraphs) == 3
+
+    def test_min_length_filter(self):
+        text = "Short.\n\nThis is a much longer paragraph with more content."
+        paragraphs = extract_paragraphs(text, min_length=20)
+        assert len(paragraphs) == 1
+
+    def test_empty_text(self):
+        assert extract_paragraphs("") == []
+
+    def test_single_paragraph(self):
+        text = "This is a single paragraph with enough content."
+        paragraphs = extract_paragraphs(text)
+        assert len(paragraphs) == 1
+
+
+class TestWordFrequency:
+    def test_basic_frequency(self):
+        freq = word_frequency("the cat sat on the mat")
+        assert freq["the"] == 2
+        assert freq["cat"] == 1
+
+    def test_min_freq_filter(self):
+        freq = word_frequency("the cat sat on the mat", min_freq=2)
+        assert "cat" not in freq
+        assert "the" in freq
+
+    def test_stop_words(self):
+        freq = word_frequency("the cat sat", stop_words={"the"})
+        assert "the" not in freq
+        assert "cat" in freq
+
+    def test_empty_text(self):
+        assert word_frequency("") == {}
+
+    def test_case_insensitive(self):
+        freq = word_frequency("Hello hello HELLO")
+        assert freq["hello"] == 3
+
+
+class TestExtractKeywords:
+    def test_basic_keywords(self):
+        text = "python is great python programming python"
+        keywords = extract_keywords(text, top_n=2, min_freq=2)
+        assert len(keywords) == 2
+        assert keywords[0][0] == "python"
+
+    def test_empty_text(self):
+        assert extract_keywords("") == []
+
+    def test_top_n_limit(self):
+        text = "a a b b c c d d e e"
+        keywords = extract_keywords(text, top_n=3, min_freq=2)
+        assert len(keywords) == 3
+
+
+class TestLevenshteinDistance:
+    def test_identical(self):
+        assert levenshtein_distance("hello", "hello") == 0
+
+    def test_completely_different(self):
+        assert levenshtein_distance("abc", "xyz") == 3
+
+    def test_empty_strings(self):
+        assert levenshtein_distance("", "") == 0
+        assert levenshtein_distance("abc", "") == 3
+        assert levenshtein_distance("", "abc") == 3
+
+    def test_single_edit(self):
+        assert levenshtein_distance("cat", "bat") == 1
+
+    def test_insertion(self):
+        assert levenshtein_distance("cat", "cats") == 1
+
+
+class TestSimilarityRatio:
+    def test_identical(self):
+        assert similarity_ratio("hello", "hello") == 1.0
+
+    def test_completely_different(self):
+        assert similarity_ratio("a", "b") == 0.0
+
+    def test_empty_both(self):
+        assert similarity_ratio("", "") == 1.0
+
+    def test_one_empty(self):
+        assert similarity_ratio("hello", "") == 0.0
+        assert similarity_ratio("", "hello") == 0.0
+
+    def test_similar(self):
+        ratio = similarity_ratio("hello", "hallo")
+        assert 0.5 < ratio < 1.0
+
+
+class TestSlugify:
+    def test_basic_slug(self):
+        assert slugify("Hello World") == "hello-world"
+
+    def test_special_characters(self):
+        assert slugify("Hello, World!") == "hello-world"
+
+    def test_unicode(self):
+        result = slugify("café")
+        assert "caf" in result
+
+    def test_empty_string(self):
+        assert slugify("") == ""
+
+    def test_multiple_spaces(self):
+        assert slugify("hello   world") == "hello-world"
+
+
+class TestHighlightText:
+    def test_basic_highlight(self):
+        result = highlight_text("hello world", ["world"])
+        assert "<mark>world</mark>" in result
+
+    def test_case_insensitive(self):
+        result = highlight_text("Hello World", ["hello"])
+        assert "<mark>hello</mark>" in result
+
+    def test_multiple_terms(self):
+        result = highlight_text("hello world foo", ["hello", "foo"])
+        assert "<mark>hello</mark>" in result
+        assert "<mark>foo</mark>" in result
+
+    def test_empty_terms(self):
+        assert highlight_text("hello", []) == "hello"
+
+    def test_empty_text(self):
+        assert highlight_text("", ["hello"]) == ""
 
 
 class TestCountWords:
-    def test_basic_count(self):
-        assert count_words("Hello World") == 2
+    def test_basic(self):
+        assert count_words("hello world") == 2
 
     def test_empty(self):
         assert count_words("") == 0
-        assert count_words(None) == 0
 
-    def test_multiple_spaces(self):
-        assert count_words("Hello   World") == 2
+    def test_none(self):
+        assert count_words(None) == 0  # type: ignore
 
 
-class TestExtractLinksFromHtml:
-    def test_absolute_links(self):
-        html = '<a href="https://example.com/page">Link</a>'
-        links = extract_links_from_html(html, "https://example.com")
-        assert "https://example.com/page" in links
+class TestCountCharacters:
+    def test_with_spaces(self):
+        assert count_characters("hello world") == 11
 
-    def test_relative_links(self):
-        html = '<a href="/page">Link</a>'
-        links = extract_links_from_html(html, "https://example.com")
-        assert "https://example.com/page" in links
+    def test_without_spaces(self):
+        assert count_characters("hello world", include_spaces=False) == 10
 
-    def test_excludes_javascript(self):
-        html = '<a href="javascript:void(0)">Link</a>'
-        links = extract_links_from_html(html, "https://example.com")
-        assert len(links) == 0
+    def test_empty(self):
+        assert count_characters("") == 0
 
-    def test_excludes_mailto(self):
-        html = '<a href="mailto:test@example.com">Link</a>'
-        links = extract_links_from_html(html, "https://example.com")
-        assert len(links) == 0
 
-    def test_excludes_hash(self):
-        html = '<a href="#section">Link</a>'
-        links = extract_links_from_html(html, "https://example.com")
-        assert len(links) == 0
+class TestReadTimeMinutes:
+    def test_basic(self):
+        text = "word " * 400
+        assert read_time_minutes(text) == 2
+
+    def test_short_text(self):
+        assert read_time_minutes("hello") == 1
+
+    def test_empty(self):
+        assert read_time_minutes("") == 1
