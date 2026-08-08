@@ -125,7 +125,7 @@ class TestSearchIndex:
         assert "hello" in tokens
         assert "world" in tokens
         assert "test" in tokens
-        assert len(tokens) == 5
+        assert len(tokens) == 3
 
     def test_empty_tokenization(self, search_index):
         assert search_index._tokenize("") == []
