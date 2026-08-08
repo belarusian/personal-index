@@ -65,7 +65,33 @@ class SitemapParser:
 
         sitemap = Sitemap(source_url=source_url)
 
-        # Check if this is a sitemap index
+        # Check if this is a sitemap index (root tag is sitemapindex)
+        root_tag = root.tag
+        # Strip namespace if present
+        if "}" in root_tag:
+            root_tag = root_tag.split("}", 1)[1]
+
+        if root_tag == "sitemapindex":
+            # Try with namespace first
+            for sitemap_elem in root.findall("ns:sitemap", self.NAMESPACES):
+                loc_elem = sitemap_elem.find("ns:loc", self.NAMESPACES)
+                if loc_elem is not None and loc_elem.text:
+                    loc = loc_elem.text.strip()
+                    if source_url and not loc.startswith(("http://", "https://")):
+                        loc = urljoin(source_url, loc)
+                    sitemap.sitemaps.append(loc)
+            # Also try without namespace
+            if not sitemap.sitemaps:
+                for sitemap_elem in root.findall("sitemap"):
+                    loc_elem = sitemap_elem.find("loc")
+                    if loc_elem is not None and loc_elem.text:
+                        loc = loc_elem.text.strip()
+                        if source_url and not loc.startswith(("http://", "https://")):
+                            loc = urljoin(source_url, loc)
+                        sitemap.sitemaps.append(loc)
+            return sitemap
+
+        # Also check for nested sitemapindex element
         sitemap_index = root.find("ns:sitemapindex", self.NAMESPACES)
         if sitemap_index is not None:
             for sitemap_elem in sitemap_index.findall("ns:sitemap", self.NAMESPACES):

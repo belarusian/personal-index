@@ -55,6 +55,11 @@ class ContentTypeDetector:
             r"(let |const |var |=>|\.map\(|\.filter\(|\.reduce\()",
             re.MULTILINE,
         ),
+        # SQL patterns
+        re.compile(
+            r"(SELECT |INSERT |UPDATE |DELETE |CREATE TABLE|FROM |WHERE )",
+            re.IGNORECASE | re.MULTILINE,
+        ),
     ]
 
     LANGUAGE_INDICATORS: Dict[str, List[re.Pattern]] = {
@@ -189,4 +194,12 @@ class ContentTypeDetector:
                 metadata={"content_type_header": content_type_header},
             )
 
-        return self.detect(content)
+        # Unknown content type header - return UNKNOWN
+        return ContentAnalysis(
+            content_type=ContentType.UNKNOWN,
+            confidence=0.1,
+            word_count=self._count_words(content) if content else 0,
+            char_count=len(content) if content else 0,
+            line_count=content.count("\n") + 1 if content else 0,
+            metadata={"content_type_header": content_type_header},
+        )
