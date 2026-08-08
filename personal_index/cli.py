@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import click
+import os
 from typing import Optional
 
 from personal_index.interests import InterestStore
@@ -108,7 +109,12 @@ def crawl(url, depth):
     """Crawl a URL and index matching content."""
     from personal_index.crawler.main import WebCrawler
     from personal_index.config.loader import load_config
-    config = load_config()
+    from personal_index.config.models import AppConfig
+    config_path = os.environ.get("PERSONAL_INDEX_CONFIG", "config.yaml")
+    if os.path.exists(config_path):
+        config = load_config(config_path)
+    else:
+        config = AppConfig()
     crawler = WebCrawler(config=config)
     pages = crawler.crawl([url], max_depth=depth)
     click.echo(f"Crawled {len(pages)} pages")
