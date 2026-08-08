@@ -1,1 +1,1 @@
-"""Utility modules for personal-index."""
+"""Utilities package."""
