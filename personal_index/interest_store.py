@@ -12,6 +12,16 @@ from typing import List, Optional
 from personal_index.models import Interest, InterestType
 
 
+def _serialize_interest(interest: Interest) -> dict:
+    """Serialize an Interest to a JSON-safe dict."""
+    d = asdict(interest)
+    if isinstance(d.get("interest_type"), InterestType):
+        d["interest_type"] = d["interest_type"].value
+    if isinstance(d.get("created_at"), datetime):
+        d["created_at"] = d["created_at"].isoformat()
+    return d
+
+
 @dataclass
 class InterestStore:
     """Persistent storage for user interests."""
@@ -30,19 +40,31 @@ class InterestStore:
         try:
             with open(self.storage_path, "r") as f:
                 data = json.load(f)
-            self._interests = [
-                Interest(
+            self._interests = []
+            for i in data:
+                interest_type = i.get("interest_type", "keyword")
+                if isinstance(interest_type, str):
+                    interest_type = InterestType(interest_type)
+                created_at = i.get("created_at", "")
+                if isinstance(created_at, str) and created_at:
+                    try:
+                        created_at = datetime.fromisoformat(created_at)
+                    except ValueError:
+                        created_at = datetime.utcnow()
+                elif not isinstance(created_at, datetime):
+                    created_at = datetime.utcnow()
+                interest = Interest(
                     name=i["name"],
-                    interest_type=InterestType(i["interest_type"]),
-                    value=i["value"],
-                    priority=i["priority"],
+                    interest_type=interest_type,
+                    value=i.get("value", ""),
+                    keywords=i.get("keywords", []),
+                    url_patterns=i.get("url_patterns", []),
+                    topics=i.get("topics", []),
+                    priority=i.get("priority", 5),
+                    created_at=created_at,
                     enabled=i.get("enabled", True),
-                    created_at=datetime.fromisoformat(i["created_at"])
-                    if "created_at" in i
-                    else datetime.utcnow(),
                 )
-                for i in data
-            ]
+                self._interests.append(interest)
         except (json.JSONDecodeError, KeyError, TypeError):
             self._interests = []
 
@@ -50,7 +72,7 @@ class InterestStore:
         """Save interests to storage file."""
         parent = Path(self.storage_path).parent
         parent.mkdir(parents=True, exist_ok=True)
-        data = [asdict(i) for i in self._interests]
+        data = [_serialize_interest(i) for i in self._interests]
         with open(self.storage_path, "w") as f:
             json.dump(data, f, indent=2)
 
