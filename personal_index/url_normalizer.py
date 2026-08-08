@@ -25,15 +25,16 @@ def normalize_url(url: str, remove_fragment: bool = True,
     path = parsed.path.lower() if lowercase_path else parsed.path
     # Normalize path: collapse slashes
     path = re.sub(r"/+", "/", path)
-    # Remove trailing slash (except for root path)
-    if path != "/" and path.endswith("/"):
+    # Remove trailing slash entirely (urlunparse with empty path = no slash)
+    if path.endswith("/") and path != "/":
         path = path.rstrip("/")
+    elif path == "/":
+        path = ""
 
     # Sort query parameters
     query = parsed.query
     if sort_query_params and query:
         params = parse_qs(query, keep_blank_values=True)
-        # Sort by key for deterministic output
         sorted_params = dict(sorted(params.items()))
         query = urlencode(sorted_params, doseq=True)
 
