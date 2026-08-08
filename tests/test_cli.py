@@ -1,98 +1,225 @@
-"""Tests for the CLI module."""
+"""Tests for CLI interface."""
 
 import pytest
-from personal_index.cli import build_parser, main, format_search_result
-from personal_index.index import Document, SearchResult
+from click.testing import CliRunner
+from pathlib import Path
+from personal_index.cli import main
+from personal_index.config import AppConfig
 
 
-class TestFormatSearchResult:
-    def test_format_basic(self):
-        doc = Document(url="https://example.com", title="Test Page", content="Some content here")
-        result = SearchResult(document=doc, score=0.95, matched_terms=["test"])
-        output = format_search_result(result, 1)
-        assert "1." in output
-        assert "Test Page" in output
-        assert "https://example.com" in output
-        assert "test" in output
-
-    def test_format_no_title(self):
-        doc = Document(url="https://example.com", content="Some content")
-        result = SearchResult(document=doc, score=0.5)
-        output = format_search_result(result, 2)
-        assert "2." in output
-        assert "https://example.com" in output
+@pytest.fixture
+def runner():
+    return CliRunner()
 
 
-class TestBuildParser:
-    def test_parser_created(self):
-        parser = build_parser()
-        assert parser.prog == "personal-index"
-
-    def test_add_interest_subparser(self):
-        parser = build_parser()
-        args = parser.parse_args(["add-interest", "-n", "python", "-k", "python", "code"])
-        assert args.command == "add-interest"
-        assert args.name == "python"
-        assert args.keywords == ["python", "code"]
-
-    def test_search_subparser(self):
-        parser = build_parser()
-        args = parser.parse_args(["search", "python", "-l", "5"])
-        assert args.command == "search"
-        assert args.query == "python"
-        assert args.limit == 5
-
-    def test_crawl_subparser(self):
-        parser = build_parser()
-        args = parser.parse_args(["crawl", "https://example.com", "-d", "5"])
-        assert args.command == "crawl"
-        assert args.url == "https://example.com"
-        assert args.depth == 5
-
-    def test_stats_subparser(self):
-        parser = build_parser()
-        args = parser.parse_args(["stats"])
-        assert args.command == "stats"
-
-    def test_list_interests_subparser(self):
-        parser = build_parser()
-        args = parser.parse_args(["list-interests"])
-        assert args.command == "list-interests"
-
-    def test_remove_interest_subparser(self):
-        parser = build_parser()
-        args = parser.parse_args(["remove-interest", "python"])
-        assert args.command == "remove-interest"
-        assert args.name == "python"
+@pytest.fixture
+def temp_config_dir(tmp_path):
+    return str(tmp_path / "config")
 
 
-class TestMain:
-    def test_main_no_command(self, capsys):
-        result = main([])
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "usage:" in captured.out.lower() or "personal-index" in captured.out.lower()
+class TestMainGroup:
+    def test_version(self, runner):
+        result = runner.invoke(main, ["--version"])
+        assert result.exit_code == 0
+        assert "0.1.0" in result.output
 
-    def test_main_list_interests_empty(self, capsys):
-        result = main(["list-interests"])
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "No interests" in captured.out
+    def test_help(self, runner):
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+        assert "personal-index" in result.output
+        assert "crawl" in result.output
+        assert "search" in result.output
 
-    def test_main_add_interest(self, capsys):
-        result = main(["add-interest", "-n", "test", "-k", "keyword"])
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Added interest: test" in captured.out
 
-    def test_main_search_empty_index(self, capsys):
-        result = main(["search", "python"])
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "No results found" in captured.out
+class TestInterestCommands:
+    def test_add_interest(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            [
+                "--config-dir", temp_config_dir,
+                "interest", "add",
+                "--topic", "AI",
+                "--keywords", "neural,deep learning",
+                "--priority", "8",
+            ],
+        )
+        assert result.exit_code == 0
+        assert "Added interest: AI" in result.output
 
-    def test_main_stats_empty(self, capsys):
-        result = main(["stats"])
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Total documents: 0" in captured.out
+    def test_add_interest_with_url_pattern(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            [
+                "--config-dir", temp_config_dir,
+                "interest", "add",
+                "--topic", "Tech",
+                "--url-pattern", "http://techblog.example.com/*",
+            ],
+        )
+        assert result.exit_code == 0
+        assert "Added interest: Tech" in result.output
+
+    def test_add_duplicate_interest(self, runner, temp_config_dir):
+        runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "add", "--topic", "AI"],
+        )
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "add", "--topic", "AI"],
+        )
+        assert result.exit_code == 0
+        assert "already exists" in result.output
+
+    def test_list_interests_empty(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "list"],
+        )
+        assert result.exit_code == 0
+        assert "No interests" in result.output
+
+    def test_list_interests(self, runner, temp_config_dir):
+        runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "add", "--topic", "AI", "--keywords", "neural"],
+        )
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "list"],
+        )
+        assert result.exit_code == 0
+        assert "AI" in result.output
+
+    def test_remove_interest(self, runner, temp_config_dir):
+        runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "add", "--topic", "AI"],
+        )
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "remove", "--topic", "AI"],
+        )
+        assert result.exit_code == 0
+        assert "Removed interest: AI" in result.output
+
+    def test_remove_nonexistent_interest(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "remove", "--topic", "Nonexistent"],
+        )
+        assert result.exit_code == 0
+        assert "not found" in result.output
+
+    def test_enable_interest(self, runner, temp_config_dir):
+        runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "add", "--topic", "AI"],
+        )
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "disable", "--topic", "AI"],
+        )
+        assert "Disabled" in result.output
+
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "enable", "--topic", "AI"],
+        )
+        assert result.exit_code == 0
+        assert "Enabled" in result.output
+
+    def test_disable_interest(self, runner, temp_config_dir):
+        runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "add", "--topic", "AI"],
+        )
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "interest", "disable", "--topic", "AI"],
+        )
+        assert result.exit_code == 0
+        assert "Disabled interest: AI" in result.output
+
+
+class TestSearchCommand:
+    def test_search_empty_index(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "search", "test"],
+        )
+        assert result.exit_code == 0
+        assert "empty" in result.output.lower()
+
+    def test_search_no_results(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "search", "nonexistent"],
+        )
+        assert result.exit_code == 0
+
+
+class TestResultsCommand:
+    def test_results_empty(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "results"],
+        )
+        assert result.exit_code == 0
+        assert "No indexed" in result.output
+
+    def test_results_json(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "results", "--format", "json"],
+        )
+        assert result.exit_code == 0
+        assert result.output == "[]"
+
+
+class TestStatsCommand:
+    def test_stats(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "stats"],
+        )
+        assert result.exit_code == 0
+        assert "Statistics" in result.output
+        assert "Interests" in result.output
+        assert "Index" in result.output
+
+
+class TestClearCommand:
+    def test_clear(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "clear"],
+            input="y\n",
+        )
+        assert result.exit_code == 0
+        assert "cleared" in result.output.lower()
+
+
+class TestScheduleCommands:
+    def test_add_schedule(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            [
+                "--config-dir", temp_config_dir,
+                "schedule", "add",
+                "--name", "daily",
+                "--interval", "24",
+                "--seed", "http://example.com",
+                "--topic", "AI",
+            ],
+        )
+        assert result.exit_code == 0
+        assert "Added schedule: daily" in result.output
+
+    def test_list_schedules_empty(self, runner, temp_config_dir):
+        result = runner.invoke(
+            main,
+            ["--config-dir", temp_config_dir, "schedule", "list"],
+        )
+        assert result.exit_code == 0
+        assert "No scheduled" in result.output
