@@ -1,1 +1,1 @@
-"""Migration tests package."""
+"""Tests for database migrations."""

@@ -1,14 +1,17 @@
-"""Base migration infrastructure for personal-index."""
+"""Base migration framework for personal-index."""
 
 from __future__ import annotations
 
+import importlib
 import json
 import logging
 import os
+import time
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Type
 
 logger = logging.getLogger(__name__)
 
@@ -16,237 +19,201 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MigrationRecord:
     """Record of an applied migration."""
-
-    version: int
     name: str
+    version: int
     applied_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
+    duration_ms: float = 0.0
     checksum: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "version": self.version,
             "name": self.name,
+            "version": self.version,
             "applied_at": self.applied_at,
+            "duration_ms": self.duration_ms,
             "checksum": self.checksum,
         }
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MigrationRecord":
-        return cls(**data)
-
 
 @dataclass
-class Migration:
-    """Represents a single database migration."""
+class MigrationStatus:
+    """Current migration status."""
+    current_version: int
+    total_migrations: int
+    pending: List[str]
+    applied: List[str]
+    is_up_to_date: bool
 
-    version: int
-    name: str
-    description: str = ""
-    up_fn: Optional[Callable] = None
-    down_fn: Optional[Callable] = None
-    checksum: str = ""
-
-    def apply(self, db: Any) -> bool:
-        """Apply the migration (up direction).
-
-        Args:
-            db: Database connection or storage backend.
-
-        Returns:
-            True if migration was applied successfully.
-        """
-        if self.up_fn is None:
-            logger.warning("Migration %s has no up function", self.name)
-            return False
-        logger.info("Applying migration %s (v%d)", self.name, self.version)
-        self.up_fn(db)
-        return True
-
-    def rollback(self, db: Any) -> bool:
-        """Rollback the migration (down direction).
-
-        Args:
-            db: Database connection or storage backend.
-
-        Returns:
-            True if migration was rolled back successfully.
-        """
-        if self.down_fn is None:
-            logger.warning("Migration %s has no down function", self.name)
-            return False
-        logger.info("Rolling back migration %s (v%d)", self.name, self.version)
-        self.down_fn(db)
-        return True
-
-
-class MigrationManager:
-    """Manages database migrations."""
-
-    def __init__(
-        self,
-        db: Any,
-        migrations_dir: Optional[str] = None,
-        state_file: Optional[str] = None,
-    ):
-        self.db = db
-        self.migrations_dir = Path(migrations_dir) if migrations_dir else Path(
-            os.path.dirname(__file__)
-        )
-        self.state_file = (
-            Path(state_file) if state_file else Path("migrations_state.json")
-        )
-        self._migrations: List[Migration] = []
-        self._applied: Dict[int, MigrationRecord] = {}
-        self._load_state()
-        self._discover_migrations()
-
-    def _load_state(self):
-        """Load migration state from disk."""
-        if self.state_file.exists():
-            try:
-                with open(self.state_file, "r") as f:
-                    data = json.load(f)
-                self._applied = {
-                    int(v): MigrationRecord.from_dict(d)
-                    for v, d in data.get("applied", {}).items()
-                }
-            except (json.JSONDecodeError, KeyError) as e:
-                logger.warning("Failed to load migration state: %s", e)
-                self._applied = {}
-        else:
-            self._applied = {}
-
-    def _save_state(self):
-        """Save migration state to disk."""
-        data = {
-            "applied": {
-                str(k): v.to_dict() for k, v in self._applied.items()
-            }
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "current_version": self.current_version,
+            "total_migrations": self.total_migrations,
+            "pending": self.pending,
+            "applied": self.applied,
+            "is_up_to_date": self.is_up_to_date,
         }
-        with open(self.state_file, "w") as f:
-            json.dump(data, f, indent=2)
 
-    def _discover_migrations(self):
-        """Discover migration files in the migrations directory."""
-        if not self.migrations_dir.exists():
-            logger.warning("Migrations directory not found: %s", self.migrations_dir)
-            return
 
-        for filepath in sorted(self.migrations_dir.glob("*.py")):
-            if filepath.name.startswith("__"):
-                continue
-            if filepath.name == "base.py":
-                continue
-            self._load_migration_file(filepath)
+class BaseMigration(ABC):
+    """Abstract base class for database migrations."""
 
-    def _load_migration_file(self, filepath: Path):
-        """Load a migration from a Python file."""
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            f"migration_{filepath.stem}", filepath
-        )
-        if spec is None or spec.loader is None:
-            return
-        module = importlib.util.module_from_spec(spec)
-        try:
-            spec.loader.exec_module(module)
-        except Exception as e:
-            logger.error("Failed to load migration %s: %s", filepath.name, e)
-            return
+    version: int = 0
+    name: str = ""
+    description: str = ""
 
-        if hasattr(module, "version") and hasattr(module, "name"):
-            migration = Migration(
-                version=module.version,
-                name=module.name,
-                description=getattr(module, "description", ""),
-                up_fn=getattr(module, "up", None),
-                down_fn=getattr(module, "down", None),
-            )
-            self._migrations.append(migration)
+    @abstractmethod
+    def upgrade(self) -> List[str]:
+        """Apply the migration. Returns list of operations performed."""
+        ...
 
-    def get_pending(self) -> List[Migration]:
-        """Get list of pending (not yet applied) migrations."""
-        applied_versions = set(self._applied.keys())
-        return [
-            m for m in self._migrations
-            if m.version not in applied_versions
-        ]
+    @abstractmethod
+    def downgrade(self) -> List[str]:
+        """Rollback the migration. Returns list of operations performed."""
+        ...
 
-    def get_applied(self) -> List[MigrationRecord]:
-        """Get list of applied migrations."""
-        return sorted(self._applied.values(), key=lambda r: r.version)
+    def validate(self) -> List[str]:
+        """Validate the migration can be applied. Returns list of errors."""
+        return []
 
-    def migrate(self, target: Optional[int] = None) -> List[MigrationRecord]:
-        """Apply pending migrations up to target version.
+    @property
+    def module_name(self) -> str:
+        if not self.name:
+            self.name = f"{self.version:03d}_{self.__class__.__name__.lower()}"
+        return self.name
 
-        Args:
-            target: Target version. If None, apply all pending.
 
-        Returns:
-            List of newly applied migration records.
-        """
-        pending = self.get_pending()
+class MigrationRegistry:
+    """Registry that discovers and manages migration classes."""
+
+    def __init__(self, migration_dir: Optional[str] = None):
+        self._migrations: Dict[int, Type[BaseMigration]] = {}
+        self._migration_dir = migration_dir
+        if migration_dir:
+            self._discover_migrations(migration_dir)
+
+    def register(self, migration_class: Type[BaseMigration]) -> None:
+        """Register a migration class."""
+        self._migrations[migration_class.version] = migration_class
+
+    def get_migration(self, version: int) -> Optional[Type[BaseMigration]]:
+        """Get a migration class by version."""
+        return self._migrations.get(version)
+
+    def get_all_versions(self) -> List[int]:
+        """Get all registered migration versions in order."""
+        return sorted(self._migrations.keys())
+
+    def get_pending(self, applied_versions: List[int]) -> List[Type[BaseMigration]]:
+        """Get migrations that haven't been applied yet."""
+        pending = []
+        for version in self.get_all_versions():
+            if version not in applied_versions:
+                cls = self._migrations[version]
+                pending.append(cls)
+        return pending
+
+    def get_applied(self, applied_versions: List[int]) -> List[Type[BaseMigration]]:
+        """Get migrations that have been applied."""
         applied = []
-
-        for migration in pending:
-            if target is not None and migration.version > target:
-                break
-            if migration.apply(self.db):
-                record = MigrationRecord(
-                    version=migration.version,
-                    name=migration.name,
-                )
-                self._applied[migration.version] = record
-                applied.append(record)
-                logger.info(
-                    "Applied migration v%d: %s", migration.version, migration.name
-                )
-
-        self._save_state()
+        for version in self.get_all_versions():
+            if version in applied_versions:
+                cls = self._migrations[version]
+                applied.append(cls)
         return applied
 
-    def rollback(self, steps: int = 1) -> List[MigrationRecord]:
-        """Rollback applied migrations.
+    def _discover_migrations(self, migration_dir: str) -> None:
+        """Discover migration modules in a directory."""
+        path = Path(migration_dir)
+        if not path.exists():
+            logger.warning("Migration directory not found: %s", migration_dir)
+            return
 
-        Args:
-            steps: Number of migrations to rollback.
-
-        Returns:
-            List of rolled back migration records.
-        """
-        applied = sorted(self._applied.values(), key=lambda r: r.version, reverse=True)
-        rolled_back = []
-
-        for record in applied[:steps]:
-            migration = next(
-                (m for m in self._migrations if m.version == record.version),
-                None,
-            )
-            if migration and migration.rollback(self.db):
-                del self._applied[record.version]
-                rolled_back.append(record)
-                logger.info(
-                    "Rolled back migration v%d: %s",
-                    record.version,
-                    record.name,
+        for filepath in sorted(path.glob("*.py")):
+            if filepath.name.startswith("_"):
+                continue
+            module_name = filepath.stem
+            try:
+                spec = importlib.util.spec_from_file_location(
+                    f"personal_index.migrations.{module_name}",
+                    str(filepath),
                 )
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    for attr_name in dir(module):
+                        attr = getattr(module, attr_name)
+                        if (
+                            isinstance(attr, type)
+                            and issubclass(attr, BaseMigration)
+                            and attr is not BaseMigration
+                        ):
+                            self.register(attr)
+                            logger.debug("Registered migration: %s (v%d)", attr_name, attr.version)
+            except Exception as e:
+                logger.error("Failed to load migration %s: %s", filepath.name, e)
 
-        self._save_state()
-        return rolled_back
 
-    def status(self) -> Dict[str, Any]:
-        """Get migration status summary."""
-        applied = self.get_applied()
-        pending = self.get_pending()
-        return {
-            "applied": [r.to_dict() for r in applied],
-            "pending": [
-                {"version": m.version, "name": m.name, "description": m.description}
-                for m in pending
-            ],
-            "total_applied": len(applied),
-            "total_pending": len(pending),
-            "latest_version": applied[-1].version if applied else 0,
+class MigrationStore:
+    """Stores migration history (in-memory or file-based)."""
+
+    def __init__(self, store_path: Optional[str] = None):
+        self._records: Dict[int, MigrationRecord] = {}
+        self._store_path = store_path
+        if store_path and os.path.exists(store_path):
+            self._load(store_path)
+
+    def record_applied(self, migration: BaseMigration, duration_ms: float = 0.0) -> MigrationRecord:
+        """Record that a migration was applied."""
+        record = MigrationRecord(
+            name=migration.name,
+            version=migration.version,
+            duration_ms=duration_ms,
+        )
+        self._records[migration.version] = record
+        if self._store_path:
+            self._save(self._store_path)
+        return record
+
+    def get_applied_versions(self) -> List[int]:
+        """Get list of applied migration versions."""
+        return sorted(self._records.keys())
+
+    def get_record(self, version: int) -> Optional[MigrationRecord]:
+        """Get migration record by version."""
+        return self._records.get(version)
+
+    def remove_record(self, version: int) -> bool:
+        """Remove a migration record (for rollback)."""
+        if version in self._records:
+            del self._records[version]
+            if self._store_path:
+                self._save(self._store_path)
+            return True
+        return False
+
+    def get_current_version(self) -> int:
+        """Get the current schema version."""
+        versions = self.get_applied_versions()
+        return max(versions) if versions else 0
+
+    def _save(self, path: str) -> None:
+        """Save migration records to file."""
+        data = {
+            "migrations": [r.to_dict() for r in self._records.values()],
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+
+    def _load(self, path: str) -> None:
+        """Load migration records from file."""
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+            for record_data in data.get("migrations", []):
+                record = MigrationRecord(**record_data)
+                self._records[record.version] = record
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            logger.warning("Failed to load migration store: %s", e)
