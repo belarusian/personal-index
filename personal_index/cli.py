@@ -12,6 +12,7 @@ from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.crawler import Crawler, CrawlerConfig
 from personal_index.interest_store import InterestStore
 from personal_index.models import Interest, InterestType
+from personal_index.scheduler import ScheduleStore, Scheduler
 from personal_index.search_index import SearchIndex
 
 
@@ -31,6 +32,11 @@ def get_interest_store() -> InterestStore:
 def get_search_index() -> SearchIndex:
     """Get the default search index."""
     return SearchIndex(index_path=os.path.join(get_data_dir(), "index.json"))
+
+
+def get_schedule_store() -> ScheduleStore:
+    """Get the default schedule store."""
+    return ScheduleStore(path=os.path.join(get_data_dir(), "schedules.json"))
 
 
 @click.group()
@@ -261,6 +267,122 @@ def search(query, limit, show_content):
             click.echo("-" * 80)
 
 
+# ── Schedule commands ──────────────────────────────────────────────
+
+@cli.group()
+def schedule():
+    """Manage scheduled crawling jobs."""
+    pass
+
+
+@schedule.command()
+@click.option("--name", "-n", required=True, help="Name for this schedule")
+@click.option("--url", "-u", "urls", multiple=True, required=True,
+              help="Seed URL to crawl (can be repeated)")
+@click.option(
+    "--interval", "-i", type=int, default=24,
+    help="Interval in hours between runs (default: 24)",
+)
+@click.option(
+    "--max-pages", "-m", type=int, default=50,
+    help="Max pages per run (default: 50)",
+)
+@click.option(
+    "--depth", "-d", type=int, default=2,
+    help="Crawl depth (default: 2)",
+)
+def add_schedule(name, urls, interval, max_pages, depth):
+    """Add a new scheduled crawl."""
+    store = get_interest_store()
+    index = get_search_index()
+    scheduler = Scheduler(
+        interest_store=store,
+        search_index=index,
+        schedule_store=get_schedule_store(),
+    )
+    entry = scheduler.add_schedule(
+        name=name,
+        seed_urls=list(urls),
+        interval_hours=interval,
+        max_pages=max_pages,
+        depth=depth,
+    )
+    click.echo(f"Added schedule: {name}")
+    click.echo(f"  URLs: {', '.join(entry.config.seed_urls)}")
+    click.echo(f"  Interval: every {interval} hours")
+    click.echo(f"  Max pages: {max_pages}, Depth: {depth}")
+
+
+@schedule.command("list")
+def list_schedules():
+    """List all scheduled crawls."""
+    store = get_schedule_store()
+    entries = store.list_all()
+
+    if not entries:
+        click.echo("No schedules configured.")
+        return
+
+    click.echo(f"{'Name':<20} {'Enabled':<10} {'Interval':<10} {'Runs':<6} {'Last Run':<20}")
+    click.echo("-" * 66)
+    for entry in entries:
+        last = entry.last_run.strftime("%Y-%m-%d %H:%M") if entry.last_run else "never"
+        click.echo(
+            f"{entry.name:<20} "
+            f"{'✓' if entry.config.enabled else '✗':<10} "
+            f"{entry.config.interval_hours}h{'':<5} "
+            f"{entry.run_count:<6} "
+            f"{last:<20}"
+        )
+
+
+@schedule.command()
+@click.option("--name", "-n", required=True, help="Name of schedule to remove")
+def remove_schedule(name):
+    """Remove a scheduled crawl."""
+    store = get_schedule_store()
+    if store.remove(name):
+        click.echo(f"Removed schedule: {name}")
+    else:
+        click.echo(f"Error: Schedule '{name}' not found.", err=True)
+        raise SystemExit(1)
+
+
+@schedule.command()
+@click.option("--name", "-n", required=True, help="Name of schedule to toggle")
+def toggle_schedule(name):
+    """Toggle a schedule on/off."""
+    store = get_interest_store()
+    index = get_search_index()
+    scheduler = Scheduler(
+        interest_store=store,
+        search_index=index,
+        schedule_store=get_schedule_store(),
+    )
+    entry = scheduler.toggle_schedule(name)
+    if entry:
+        status = "enabled" if entry.config.enabled else "disabled"
+        click.echo(f"Schedule '{name}' is now {status}")
+    else:
+        click.echo(f"Error: Schedule '{name}' not found.", err=True)
+        raise SystemExit(1)
+
+
+@schedule.command()
+@click.option("--name", "-n", required=True, help="Name of schedule to run")
+def run(name):
+    """Manually run a scheduled crawl."""
+    store = get_interest_store()
+    index = get_search_index()
+    scheduler = Scheduler(
+        interest_store=store,
+        search_index=index,
+        schedule_store=get_schedule_store(),
+    )
+    count = scheduler.run_schedule(name)
+    click.echo(f"Schedule '{name}' completed: {count} pages indexed")
+
+
 # ── Index commands ─────────────────────────────────────────────────
 
 @cli.command()
@@ -268,13 +390,14 @@ def status():
     """Show index and interest status."""
     store = get_interest_store()
     index = get_search_index()
+    schedule_store = get_schedule_store()
 
     click.echo("=== personal-index Status ===\n")
     click.echo(f"Data directory: {get_data_dir()}")
     click.echo(f"Interests: {len(store.list_all())} total, "
                f"{len(store.list_all(enabled_only=True))} enabled")
     click.echo(f"Indexed pages: {index.count()}")
-    click.echo(f"Indexed URLs: {len(index.urls())}")
+    click.echo(f"Schedules: {len(schedule_store.list_all())}")
 
 
 @cli.command()
