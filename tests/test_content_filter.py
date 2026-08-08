@@ -95,8 +95,8 @@ class TestContentFilter:
         f = ContentFilter(config=config)
         page = CrawledPage(
             url="https://example.com",
-            title="Test",
-            content="This page has an advertisement in it",
+            title="Test Page",
+            content="This page has an advertisement in it. " + "x" * 80,
         )
         assert f.should_include(page) is False
 
@@ -105,8 +105,8 @@ class TestContentFilter:
         f = ContentFilter(config=config)
         page = CrawledPage(
             url="https://example.com",
-            title="Test",
-            content="This is about python programming",
+            title="Test Page",
+            content="This is about python programming. " + "x" * 80,
         )
         assert f.should_include(page) is True
 
@@ -115,8 +115,8 @@ class TestContentFilter:
         f = ContentFilter(config=config)
         page = CrawledPage(
             url="https://example.com",
-            title="Test",
-            content="This is about java programming",
+            title="Test Page",
+            content="This is about java programming. " + "x" * 80,
         )
         assert f.should_include(page) is False
 
@@ -124,7 +124,7 @@ class TestContentFilter:
         page = CrawledPage(
             url="https://example.com",
             title="Python Guide",
-            content="Python is a great language for programming",
+            content="Python is a great language for programming. " + "x" * 80,
         )
         assert filter_with_store.should_include(page) is True
         assert "Py" in page.matched_interests
@@ -133,7 +133,7 @@ class TestContentFilter:
         page = CrawledPage(
             url="https://example.com",
             title="Cooking",
-            content="How to cook pasta",
+            content="How to cook pasta. " + "x" * 90,
         )
         assert filter_with_store.should_include(page) is False
 
@@ -143,7 +143,7 @@ class TestContentFilter:
         page = CrawledPage(
             url="https://example.com",
             title="Python",
-            content="python",
+            content="python " + "x" * 90,
         )
         # Score will be 5.0 (1 occurrence * priority 5)
         assert f.should_include(page) is False
