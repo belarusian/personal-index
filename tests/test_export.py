@@ -180,3 +180,61 @@ class TestExportToMarkdown:
         assert "# Search Results" in result
         assert "Test Page" in result
         assert "5.00" in result
+
+
+class TestJSONExporter:
+    def test_export_entry(self, tmp_path):
+        from personal_index.export import JSONExporter
+        exporter = JSONExporter()
+        entry = {"url": "http://example.com", "title": "Test"}
+        result = exporter.export_entry(entry)
+        assert "http://example.com" in result
+        assert "Test" in result
+
+    def test_export_entries_to_file(self, tmp_path):
+        from personal_index.export import JSONExporter
+        exporter = JSONExporter()
+        entries = [
+            {"url": "http://example.com/1", "title": "Page 1"},
+            {"url": "http://example.com/2", "title": "Page 2"},
+        ]
+        filepath = str(tmp_path / "export.json")
+        result = exporter.export_entries(entries, filepath)
+        assert result == filepath
+        import json
+        with open(filepath) as f:
+            data = json.load(f)
+        assert data["total_entries"] == 2
+        assert len(data["entries"]) == 2
+
+    def test_export_batch(self):
+        from personal_index.export import JSONExporter
+        exporter = JSONExporter()
+        entries = [{"url": f"http://example.com/{i}"} for i in range(250)]
+        batches = exporter.export_batch(entries, batch_size=100)
+        assert len(batches) == 3
+        import json
+        first = json.loads(batches[0])
+        assert first["count"] == 100
+        assert first["batch_index"] == 0
+
+    def test_export_empty(self, tmp_path):
+        from personal_index.export import JSONExporter
+        exporter = JSONExporter()
+        filepath = str(tmp_path / "empty.json")
+        result = exporter.export_entries([], filepath)
+        import json
+        with open(result) as f:
+            data = json.load(f)
+        assert data["total_entries"] == 0
+        assert data["entries"] == []
+
+    def test_export_preserves_unicode(self, tmp_path):
+        from personal_index.export import JSONExporter
+        exporter = JSONExporter()
+        entries = [{"url": "http://example.com", "title": "日本語テスト"}]
+        filepath = str(tmp_path / "unicode.json")
+        exporter.export_entries(entries, filepath)
+        with open(filepath, encoding="utf-8") as f:
+            content = f.read()
+        assert "日本語テスト" in content
