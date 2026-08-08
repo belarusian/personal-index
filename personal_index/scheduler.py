@@ -1,171 +1,184 @@
 """Scheduled crawling module for periodic re-scanning of tracked topics."""
 
-import time
+import logging
 import threading
+import time
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Set
-from enum import Enum
+from datetime import datetime, timezone
+from typing import Callable, List, Optional
 
+from personal_index.config import AppConfig, ScheduleConfig
 
-class ScheduleState(Enum):
-    """State of a scheduled crawl."""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+logger = logging.getLogger(__name__)
 
 
 @dataclass
-class CrawlSchedule:
-    """A scheduled crawl job."""
+class ScheduleEntry:
+    """Represents a scheduled crawl task."""
+
     name: str
-    url: str
-    interval_seconds: float = 3600  # default 1 hour
-    max_depth: int = 3
-    politeness_delay: float = 1.0
+    interval_hours: int = 24
+    last_run: Optional[str] = None
+    next_run: Optional[str] = None
     enabled: bool = True
-    state: ScheduleState = ScheduleState.PENDING
-    last_run: Optional[float] = None
-    next_run: Optional[float] = None
-    run_count: int = 0
-    error: Optional[str] = None
+    seed_urls: List[str] = field(default_factory=list)
+    topics: List[str] = field(default_factory=list)
 
-    def is_due(self) -> bool:
-        """Check if this schedule is due to run."""
-        if not self.enabled:
-            return False
-        if self.state == ScheduleState.RUNNING:
-            return False
-        if self.next_run is None:
-            return True
-        return time.time() >= self.next_run
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "interval_hours": self.interval_hours,
+            "last_run": self.last_run,
+            "next_run": self.next_run,
+            "enabled": self.enabled,
+            "seed_urls": self.seed_urls,
+            "topics": self.topics,
+        }
 
-    def mark_running(self) -> None:
-        """Mark the schedule as running."""
-        self.state = ScheduleState.RUNNING
-        self.last_run = time.time()
-
-    def mark_completed(self) -> None:
-        """Mark the schedule as completed."""
-        self.state = ScheduleState.COMPLETED
-        self.run_count += 1
-        self.next_run = time.time() + self.interval_seconds
-        self.error = None
-
-    def mark_failed(self, error: str) -> None:
-        """Mark the schedule as failed."""
-        self.state = ScheduleState.FAILED
-        self.error = error
-        self.next_run = time.time() + self.interval_seconds
-
-    def schedule_next(self) -> None:
-        """Schedule the next run."""
-        self.next_run = time.time() + self.interval_seconds
-        self.state = ScheduleState.PENDING
+    @classmethod
+    def from_dict(cls, data: dict) -> "ScheduleEntry":
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 class CrawlScheduler:
-    """Manages scheduled crawl jobs."""
+    """Manages scheduled crawling tasks."""
 
-    def __init__(self):
-        self.schedules: Dict[str, CrawlSchedule] = {}
+    def __init__(self, config: Optional[AppConfig] = None):
+        self.config = config or AppConfig()
+        self.entries: List[ScheduleEntry] = []
         self._running = False
         self._thread: Optional[threading.Thread] = None
-        self._lock = threading.Lock()
         self._crawl_callback: Optional[Callable] = None
-        self._check_interval: float = 60.0  # how often to check for due jobs
+        self._lock = threading.Lock()
 
     def set_crawl_callback(self, callback: Callable) -> None:
-        """Set the callback function to execute when a crawl is due."""
+        """Set the callback function to execute when a crawl is triggered."""
         self._crawl_callback = callback
 
-    def add_schedule(self, schedule: CrawlSchedule) -> None:
-        """Add a crawl schedule."""
-        with self._lock:
-            if schedule.name in self.schedules:
-                raise ValueError(f"Schedule '{schedule.name}' already exists")
-            schedule.schedule_next()
-            self.schedules[schedule.name] = schedule
+    def add_schedule(
+        self,
+        name: str,
+        interval_hours: int = 24,
+        seed_urls: List[str] = None,
+        topics: List[str] = None,
+    ) -> ScheduleEntry:
+        """Add a new scheduled crawl task."""
+        if seed_urls is None:
+            seed_urls = []
+        if topics is None:
+            topics = []
 
-    def remove_schedule(self, name: str) -> None:
-        """Remove a crawl schedule."""
-        with self._lock:
-            self.schedules.pop(name, None)
+        entry = ScheduleEntry(
+            name=name,
+            interval_hours=interval_hours,
+            seed_urls=seed_urls,
+            topics=topics,
+        )
+        self.entries.append(entry)
+        logger.info(f"Added schedule: {name} every {interval_hours}h")
+        return entry
 
-    def get_schedule(self, name: str) -> Optional[CrawlSchedule]:
-        """Get a schedule by name."""
-        return self.schedules.get(name)
+    def remove_schedule(self, name: str) -> bool:
+        """Remove a scheduled crawl task by name."""
+        for i, entry in enumerate(self.entries):
+            if entry.name == name:
+                self.entries.pop(i)
+                logger.info(f"Removed schedule: {name}")
+                return True
+        return False
 
-    def list_schedules(self) -> List[CrawlSchedule]:
-        """List all schedules."""
-        return list(self.schedules.values())
+    def enable_schedule(self, name: str) -> bool:
+        """Enable a scheduled crawl task."""
+        for entry in self.entries:
+            if entry.name == name:
+                entry.enabled = True
+                return True
+        return False
 
-    def get_due_schedules(self) -> List[CrawlSchedule]:
-        """Get all schedules that are due to run."""
-        return [s for s in self.schedules.values() if s.is_due()]
+    def disable_schedule(self, name: str) -> bool:
+        """Disable a scheduled crawl task."""
+        for entry in self.entries:
+            if entry.name == name:
+                entry.enabled = False
+                return True
+        return False
 
-    def enable_schedule(self, name: str) -> None:
-        """Enable a schedule."""
-        schedule = self.schedules.get(name)
-        if schedule:
-            schedule.enabled = True
-            if schedule.state == ScheduleState.CANCELLED:
-                schedule.schedule_next()
+    def get_schedule(self, name: str) -> Optional[ScheduleEntry]:
+        """Get a schedule entry by name."""
+        for entry in self.entries:
+            if entry.name == name:
+                return entry
+        return None
 
-    def disable_schedule(self, name: str) -> None:
-        """Disable a schedule."""
-        schedule = self.schedules.get(name)
-        if schedule:
-            schedule.enabled = False
+    def list_schedules(self) -> List[ScheduleEntry]:
+        """List all scheduled crawl tasks."""
+        return list(self.entries)
 
-    def run_due(self) -> int:
-        """Run all due schedules. Returns number of jobs executed."""
-        due = self.get_due_schedules()
-        executed = 0
-        for schedule in due:
-            if self._crawl_callback:
+    def run_due(self) -> List[str]:
+        """Run all due scheduled tasks. Returns list of executed task names."""
+        now = datetime.now(timezone.utc)
+        executed = []
+
+        for entry in self.entries:
+            if not entry.enabled:
+                continue
+
+            should_run = False
+            if entry.last_run is None:
+                should_run = True
+            else:
+                last_run = datetime.fromisoformat(entry.last_run)
+                elapsed = (now - last_run).total_seconds() / 3600
+                if elapsed >= entry.interval_hours:
+                    should_run = True
+
+            if should_run and self._crawl_callback:
+                logger.info(f"Running scheduled crawl: {entry.name}")
                 try:
-                    schedule.mark_running()
-                    self._crawl_callback(schedule)
-                    schedule.mark_completed()
-                    executed += 1
+                    self._crawl_callback(entry)
+                    entry.last_run = now.isoformat()
+                    executed.append(entry.name)
                 except Exception as e:
-                    schedule.mark_failed(str(e))
+                    logger.error(f"Error running schedule {entry.name}: {e}")
+
         return executed
 
-    def start(self) -> None:
-        """Start the scheduler loop."""
+    def start(self, poll_interval: int = 60) -> None:
+        """Start the scheduler in a background thread."""
         if self._running:
             return
+
         self._running = True
-        self._thread = threading.Thread(target=self._loop, daemon=True)
+
+        def _run():
+            while self._running:
+                try:
+                    self.run_due()
+                except Exception as e:
+                    logger.error(f"Scheduler error: {e}")
+                time.sleep(poll_interval)
+
+        self._thread = threading.Thread(target=_run, daemon=True)
         self._thread.start()
+        logger.info("Scheduler started")
 
     def stop(self) -> None:
-        """Stop the scheduler loop."""
+        """Stop the scheduler."""
         self._running = False
         if self._thread:
             self._thread.join(timeout=5)
             self._thread = None
+        logger.info("Scheduler stopped")
 
-    def _loop(self) -> None:
-        """Main scheduler loop."""
-        while self._running:
-            try:
-                self.run_due()
-            except Exception:
-                pass
-            time.sleep(self._check_interval)
+    def is_running(self) -> bool:
+        """Check if the scheduler is running."""
+        return self._running
 
-    def get_stats(self) -> Dict:
-        """Return scheduler statistics."""
+    def get_stats(self) -> dict:
+        """Get scheduler statistics."""
         return {
-            "total_schedules": len(self.schedules),
-            "enabled": sum(1 for s in self.schedules.values() if s.enabled),
-            "pending": sum(1 for s in self.schedules.values() if s.state == ScheduleState.PENDING),
-            "running": sum(1 for s in self.schedules.values() if s.state == ScheduleState.RUNNING),
-            "completed": sum(1 for s in self.schedules.values() if s.state == ScheduleState.COMPLETED),
-            "failed": sum(1 for s in self.schedules.values() if s.state == ScheduleState.FAILED),
-            "is_running": self._running,
+            "total_schedules": len(self.entries),
+            "enabled": sum(1 for e in self.entries if e.enabled),
+            "disabled": sum(1 for e in self.entries if not e.enabled),
+            "running": self._running,
         }
