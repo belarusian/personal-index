@@ -1,151 +1,158 @@
-"""Page storage for crawled content."""
+"""Storage layer for personal-index using JSON files."""
 
-from __future__ import annotations
-
-import hashlib
+import json
 import os
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Optional
+from personal_index.models import Interest, CrawlConfig, IndexedPage
 
 
-@dataclass
-class StoredPage:
-    """A page stored on disk."""
+class Storage:
+    """File-based storage for interests, config, and indexed pages."""
 
-    url: str
-    title: str = ""
-    content: str = ""
-    file_hash: str = ""
-    file_size: int = 0
-    stored_at: str = ""
+    def __init__(self, data_dir: str = ".personal-index"):
+        self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.interests_file = self.data_dir / "interests.json"
+        self.config_file = self.data_dir / "config.json"
+        self.pages_file = self.data_dir / "pages.json"
+        self._ensure_files()
 
-    def to_dict(self) -> dict:
-        return {
-            "url": self.url,
-            "title": self.title,
-            "content": self.content,
-            "file_hash": self.file_hash,
-            "file_size": self.file_size,
-            "stored_at": self.stored_at,
-        }
+    def _ensure_files(self):
+        """Create empty JSON files if they don't exist."""
+        if not self.interests_file.exists():
+            self.interests_file.write_text("[]")
+        if not self.config_file.exists():
+            self.config_file.write_text("{}")
+        if not self.pages_file.exists():
+            self.pages_file.write_text("[]")
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "StoredPage":
-        return cls(**data)
+    def _read_json(self, filepath: Path) -> list | dict:
+        content = filepath.read_text()
+        if not content.strip():
+            return [] if filepath.name in ("interests.json", "pages.json") else {}
+        return json.loads(content)
 
+    def _write_json(self, filepath: Path, data):
+        filepath.write_text(json.dumps(data, indent=2, default=str))
 
-@dataclass
-class PageStore:
-    """Stores crawled pages on disk."""
+    # --- Interests ---
 
-    store_dir: str
-    _metadata: Dict[str, StoredPage] = field(default_factory=dict, repr=False)
+    def add_interest(self, interest: Interest) -> Interest:
+        """Add a new interest."""
+        interests = self._read_json(self.interests_file)
+        # Check for duplicate names
+        for i, existing in enumerate(interests):
+            if existing["name"] == interest.name:
+                interests[i] = interest.to_dict()
+                self._write_json(self.interests_file, interests)
+                return interest
+        interests.append(interest.to_dict())
+        self._write_json(self.interests_file, interests)
+        return interest
 
-    def __post_init__(self):
-        os.makedirs(self.store_dir, exist_ok=True)
-        self._load_metadata()
+    def get_interests(self) -> list[Interest]:
+        """Get all interests."""
+        data = self._read_json(self.interests_file)
+        return [Interest.from_dict(item) for item in data]
 
-    def _url_to_filename(self, url: str) -> str:
-        """Convert URL to a safe filename."""
-        hash_val = hashlib.md5(url.encode()).hexdigest()[:16]
-        return f"{hash_val}.html"
-
-    def _load_metadata(self) -> None:
-        """Load metadata from disk."""
-        meta_file = os.path.join(self.store_dir, "_metadata.json")
-        if os.path.exists(meta_file):
-            try:
-                import json
-                with open(meta_file, "r") as f:
-                    data = json.load(f)
-                self._metadata = {
-                    url: StoredPage.from_dict(d) for url, d in data.items()
-                }
-            except (json.JSONDecodeError, KeyError):
-                self._metadata = {}
-
-    def _save_metadata(self) -> None:
-        """Save metadata to disk."""
-        import json
-        meta_file = os.path.join(self.store_dir, "_metadata.json")
-        data = {url: page.to_dict() for url, page in self._metadata.items()}
-        with open(meta_file, "w") as f:
-            json.dump(data, f, indent=2)
-
-    def save_page(self, url: str, content: str, title: str = "") -> StoredPage:
-        """Save a page to disk."""
-        filename = self._url_to_filename(url)
-        filepath = os.path.join(self.store_dir, filename)
-        with open(filepath, "w") as f:
-            f.write(content)
-        file_hash = hashlib.md5(content.encode()).hexdigest()
-        file_size = os.path.getsize(filepath)
-        page = StoredPage(
-            url=url,
-            title=title,
-            content=content,
-            file_hash=file_hash,
-            file_size=file_size,
-            stored_at=datetime.utcnow().isoformat(),
-        )
-        self._metadata[url] = page
-        self._save_metadata()
-        return page
-
-    def get_page(self, url: str) -> Optional[StoredPage]:
-        """Get page metadata."""
-        return self._metadata.get(url)
-
-    def get_page_content(self, url: str) -> Optional[str]:
-        """Get page content from disk."""
-        if url not in self._metadata:
-            return None
-        filename = self._url_to_filename(url)
-        filepath = os.path.join(self.store_dir, filename)
-        if os.path.exists(filepath):
-            with open(filepath, "r") as f:
-                return f.read()
+    def get_interest(self, name: str) -> Optional[Interest]:
+        """Get a single interest by name."""
+        for interest in self.get_interests():
+            if interest.name == name:
+                return interest
         return None
 
-    def delete_page(self, url: str) -> bool:
-        """Delete a page from disk."""
-        if url not in self._metadata:
-            return False
-        filename = self._url_to_filename(url)
-        filepath = os.path.join(self.store_dir, filename)
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        del self._metadata[url]
-        self._save_metadata()
-        return True
+    def remove_interest(self, name: str) -> bool:
+        """Remove an interest by name."""
+        interests = self._read_json(self.interests_file)
+        original_len = len(interests)
+        interests = [i for i in interests if i["name"] != name]
+        if len(interests) < original_len:
+            self._write_json(self.interests_file, interests)
+            return True
+        return False
 
-    def list_pages(self) -> List[StoredPage]:
-        """List all stored pages."""
-        return list(self._metadata.values())
+    def list_interests(self) -> list[dict]:
+        """List all interests with summary info."""
+        results = []
+        for interest in self.get_interests():
+            results.append({
+                "name": interest.name,
+                "keywords": interest.keywords,
+                "url_patterns": interest.url_patterns,
+                "topics": interest.topics,
+                "enabled": interest.enabled,
+                "created_at": interest.created_at,
+            })
+        return results
 
-    def count_pages(self) -> int:
-        """Count stored pages."""
-        return len(self._metadata)
+    # --- Crawl Config ---
 
-    def get_total_size(self) -> int:
-        """Get total size of stored pages."""
-        return sum(p.file_size for p in self._metadata.values())
+    def save_config(self, config: CrawlConfig) -> CrawlConfig:
+        """Save crawl configuration."""
+        self._write_json(self.config_file, config.to_dict())
+        return config
 
-    def clear(self) -> None:
-        """Clear all stored pages."""
-        for filename in os.listdir(self.store_dir):
-            filepath = os.path.join(self.store_dir, filename)
-            if os.path.isfile(filepath) and filename != "_metadata.json":
-                os.remove(filepath)
-        self._metadata = {}
-        self._save_metadata()
+    def get_config(self) -> CrawlConfig:
+        """Get crawl configuration."""
+        data = self._read_json(self.config_file)
+        if not data:
+            return CrawlConfig()
+        return CrawlConfig.from_dict(data)
 
-    def has_page(self, url: str) -> bool:
-        """Check if a page is stored."""
-        return url in self._metadata
+    # --- Indexed Pages ---
 
-    def get_page_hash(self, url: str) -> Optional[str]:
-        """Get the hash of a stored page."""
-        page = self._metadata.get(url)
-        return page.file_hash if page else None
+    def add_page(self, page: IndexedPage) -> IndexedPage:
+        """Add or update an indexed page."""
+        pages = self._read_json(self.pages_file)
+        for i, existing in enumerate(pages):
+            if existing["url"] == page.url:
+                pages[i] = page.to_dict()
+                self._write_json(self.pages_file, pages)
+                return page
+        pages.append(page.to_dict())
+        self._write_json(self.pages_file, pages)
+        return page
+
+    def get_pages(self) -> list[IndexedPage]:
+        """Get all indexed pages."""
+        data = self._read_json(self.pages_file)
+        return [IndexedPage.from_dict(item) for item in data]
+
+    def get_page(self, url: str) -> Optional[IndexedPage]:
+        """Get a single page by URL."""
+        for page in self.get_pages():
+            if page.url == url:
+                return page
+        return None
+
+    def remove_page(self, url: str) -> bool:
+        """Remove a page by URL."""
+        pages = self._read_json(self.pages_file)
+        original_len = len(pages)
+        pages = [p for p in pages if p["url"] != url]
+        if len(pages) < original_len:
+            self._write_json(self.pages_file, pages)
+            return True
+        return False
+
+    def get_page_count(self) -> int:
+        """Get total number of indexed pages."""
+        return len(self._read_json(self.pages_file))
+
+    def clear_pages(self):
+        """Clear all indexed pages."""
+        self._write_json(self.pages_file, [])
+
+    def get_stats(self) -> dict:
+        """Get storage statistics."""
+        interests = self.get_interests()
+        pages = self.get_pages()
+        return {
+            "total_interests": len(interests),
+            "enabled_interests": sum(1 for i in interests if i.enabled),
+            "total_pages": len(pages),
+            "total_content_bytes": sum(p.content_length for p in pages),
+            "data_dir": str(self.data_dir),
+        }
