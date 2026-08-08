@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass, field
 from typing import List, Set
 
-from personal_index.config import Interest
+from personal_index.config.models import Interest
 
 
 @dataclass
@@ -35,9 +35,11 @@ class ContentFilter:
         """Compile URL patterns with their interest names."""
         patterns = []
         for interest in self.interests:
+            if not interest.enabled:
+                continue
             for pattern in interest.url_patterns:
                 try:
-                    patterns.append((interest.topic, re.compile(pattern)))
+                    patterns.append((interest.name, re.compile(pattern)))
                 except re.error:
                     pass
         return patterns
@@ -57,11 +59,13 @@ class ContentFilter:
         text = f"{title} {content}".lower()
 
         for interest in self.interests:
+            if not interest.enabled:
+                continue
             for kw in interest.keywords:
                 kw_lower = kw.lower()
                 if kw_lower in text:
                     result.matched = True
-                    result.matching_interests.add(interest.topic)
+                    result.matching_interests.add(interest.name)
                     result.matched_keywords.add(kw)
                     result.score += interest.priority
 
