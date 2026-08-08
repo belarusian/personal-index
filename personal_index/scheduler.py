@@ -244,3 +244,19 @@ class ScheduledJob:
     last_run: Optional[str] = None
     next_run: Optional[str] = None
     enabled: bool = True
+
+    def add_job(self, name: str, seed_urls: list[str] | None = None,
+                interval_hours: int = 24, **kwargs) -> ScheduleEntry:
+        """Add a scheduled job (alias for add_schedule)."""
+        if seed_urls is None:
+            seed_urls = []
+        return self.add_schedule(
+            name=name,
+            seed_urls=seed_urls,
+            interval_hours=interval_hours,
+            **kwargs,
+        )
+
+    def remove_job(self, name: str) -> bool:
+        """Remove a scheduled job (alias for remove_schedule)."""
+        return self.remove_schedule(name)
