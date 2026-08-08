@@ -1,114 +1,84 @@
-"""Core data models for Personal Index."""
+"""Data models for personal-index."""
 
-from __future__ import annotations
-
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from datetime import datetime
-from enum import Enum
-from typing import List, Optional
-
-
-class InterestType(Enum):
-    """Type of interest matching."""
-
-    KEYWORD = "keyword"
-    TOPIC = "topic"
-    URL_PATTERN = "url_pattern"
+from typing import Optional
+import json
 
 
 @dataclass
 class Interest:
-    """Represents a user interest for content matching."""
-
+    """Represents a user-defined interest to track."""
     name: str
-    interest_type: InterestType = InterestType.KEYWORD
-    value: str = ""
-    priority: int = 5
+    keywords: list = field(default_factory=list)
+    url_patterns: list = field(default_factory=list)
+    topics: list = field(default_factory=list)
+    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
     enabled: bool = True
-    created_at: datetime = field(default_factory=datetime.utcnow)
 
-    def __post_init__(self):
-        self.priority = max(1, min(10, self.priority))
+    def to_dict(self) -> dict:
+        return asdict(self)
 
-    def matches(self, text: str, url: str = "") -> bool:
-        """Check if this interest matches the given text/url."""
-        if not self.enabled:
-            return False
-
-        if self.interest_type == InterestType.KEYWORD:
-            return self._match_keyword(text)
-        elif self.interest_type == InterestType.TOPIC:
-            return self._match_topic(text)
-        elif self.interest_type == InterestType.URL_PATTERN:
-            return self._match_url_pattern(url)
-        return False
-
-    def _match_keyword(self, text: str) -> bool:
-        """Match keyword in text (case-insensitive)."""
-        if not text or not self.value:
-            return False
-        return self.value.lower() in text.lower()
-
-    def _match_topic(self, text: str) -> bool:
-        """Match any topic term in text (case-insensitive)."""
-        if not text or not self.value:
-            return False
-        terms = self.value.lower().split()
-        text_lower = text.lower()
-        return any(term in text_lower for term in terms)
-
-    def _match_url_pattern(self, url: str) -> bool:
-        """Match URL against regex pattern."""
-        if not url or not self.value:
-            return False
-        try:
-            return bool(re.search(self.value, url))
-        except re.error:
-            return False
-
-    def score(self, text: str) -> float:
-        """Calculate relevance score for this interest against text."""
-        if not self.enabled or not text:
-            return 0.0
-
-        if self.interest_type == InterestType.KEYWORD:
-            return self._keyword_score(text)
-        elif self.interest_type == InterestType.TOPIC:
-            return self._topic_score(text)
-        return 0.0
-
-    def _keyword_score(self, text: str) -> float:
-        """Score based on keyword occurrence count * priority."""
-        if not self.value:
-            return 0.0
-        count = text.lower().count(self.value.lower())
-        return count * self.priority
-
-    def _topic_score(self, text: str) -> float:
-        """Score based on fraction of topic terms matched * priority."""
-        if not self.value:
-            return 0.0
-        terms = self.value.lower().split()
-        if not terms:
-            return 0.0
-        text_lower = text.lower()
-        matched = sum(1 for term in terms if term in text_lower)
-        return (matched / len(terms)) * self.priority
+    @classmethod
+    def from_dict(cls, data: dict) -> "Interest":
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 @dataclass
-class CrawledPage:
-    """Represents a crawled web page."""
+class CrawlConfig:
+    """Configuration for web crawling behavior."""
+    max_depth: int = 3
+    politeness_delay: float = 1.0  # seconds between requests to same host
+    rate_limit: int = 10  # max requests per minute per host
+    max_pages_per_domain: int = 100
+    timeout: int = 30  # seconds
+    user_agent: str = "personal-index/0.1.0"
+    respect_robots_txt: bool = True
+    allowed_domains: list = field(default_factory=list)
+    blocked_domains: list = field(default_factory=list)
 
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "CrawlConfig":
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class IndexedPage:
+    """Represents a crawled and indexed page."""
     url: str
     title: str = ""
     content: str = ""
-    meta_description: str = ""
-    status_code: int = 0
-    depth: int = 0
-    parent_url: Optional[str] = None
-    headers: dict = field(default_factory=dict)
+    keywords: list = field(default_factory=list)
     matched_interests: list = field(default_factory=list)
-    relevance_score: float = 0.0
-    crawled_at: datetime = field(default_factory=datetime.utcnow)
+    crawled_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    domain: str = ""
+    status_code: int = 200
+    content_length: int = 0
+    language: str = "en"
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "IndexedPage":
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class SearchResult:
+    """Represents a search result."""
+    page: IndexedPage
+    score: float = 0.0
+    matched_terms: list = field(default_factory=list)
+    snippet: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "page": self.page.to_dict(),
+            "score": self.score,
+            "matched_terms": self.matched_terms,
+            "snippet": self.snippet,
+        }
