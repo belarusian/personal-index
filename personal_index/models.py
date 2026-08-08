@@ -2,8 +2,6 @@
 
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
-from typing import Optional
-import json
 
 
 @dataclass
@@ -13,7 +11,9 @@ class Interest:
     keywords: list = field(default_factory=list)
     url_patterns: list = field(default_factory=list)
     topics: list = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     enabled: bool = True
 
     def to_dict(self) -> dict:
@@ -21,17 +21,20 @@ class Interest:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Interest":
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        return cls(
+            **{k: v for k, v in data.items()
+               if k in cls.__dataclass_fields__}
+        )
 
 
 @dataclass
 class CrawlConfig:
     """Configuration for web crawling behavior."""
     max_depth: int = 3
-    politeness_delay: float = 1.0  # seconds between requests to same host
-    rate_limit: int = 10  # max requests per minute per host
+    politeness_delay: float = 1.0
+    rate_limit: int = 10
     max_pages_per_domain: int = 100
-    timeout: int = 30  # seconds
+    timeout: int = 30
     user_agent: str = "personal-index/0.1.0"
     respect_robots_txt: bool = True
     allowed_domains: list = field(default_factory=list)
@@ -42,7 +45,10 @@ class CrawlConfig:
 
     @classmethod
     def from_dict(cls, data: dict) -> "CrawlConfig":
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        return cls(
+            **{k: v for k, v in data.items()
+               if k in cls.__dataclass_fields__}
+        )
 
 
 @dataclass
@@ -53,7 +59,9 @@ class IndexedPage:
     content: str = ""
     keywords: list = field(default_factory=list)
     matched_interests: list = field(default_factory=list)
-    crawled_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    crawled_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     domain: str = ""
     status_code: int = 200
     content_length: int = 0
@@ -64,7 +72,10 @@ class IndexedPage:
 
     @classmethod
     def from_dict(cls, data: dict) -> "IndexedPage":
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        return cls(
+            **{k: v for k, v in data.items()
+               if k in cls.__dataclass_fields__}
+        )
 
 
 @dataclass

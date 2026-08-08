@@ -35,7 +35,7 @@ class ContentFilter:
         for interest in self.interests:
             for pattern in interest.url_patterns:
                 try:
-                    patterns.append((interest.topic, re.compile(pattern)))
+                    patterns.append((interest.name, re.compile(pattern)))
                 except re.error:
                     pass
         return patterns
@@ -43,10 +43,10 @@ class ContentFilter:
     def filter_url(self, url: str) -> FilterResult:
         """Filter a URL against interest patterns."""
         result = FilterResult()
-        for topic, pattern in self._compiled_patterns:
+        for name, pattern in self._compiled_patterns:
             if pattern.search(url):
                 result.matched = True
-                result.matching_interests.add(topic)
+                result.matching_interests.add(name)
         return result
 
     def filter_content(self, content: str, title: str = "") -> FilterResult:
@@ -59,7 +59,7 @@ class ContentFilter:
                 kw_lower = kw.lower()
                 if kw_lower in text:
                     result.matched = True
-                    result.matching_interests.add(interest.topic)
+                    result.matching_interests.add(interest.name)
                     result.matched_keywords.add(kw)
                     result.score += interest.priority
 
