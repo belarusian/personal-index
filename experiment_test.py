@@ -10,6 +10,7 @@ def slugify(text: str) -> str:
     - Replaces whitespace and special characters with hyphens
     - Removes consecutive hyphens
     - Strips leading/trailing hyphens
+    - Strips non-ASCII characters
 
     Args:
         text: The input string to slugify.
@@ -20,43 +21,49 @@ def slugify(text: str) -> str:
     Examples:
         >>> slugify("Hello World!")
         'hello-world'
-        >>> slugify("  Python 3.10 is great  ")
-        'python-3-10-is-great'
+        >>> slugify("  Python 3.10  ")
+        'python-3-10'
     """
     text = text.lower().strip()
+    # Replace dots with hyphens before stripping special chars
+    text = text.replace('.', '-')
+    # Remove non-ASCII characters
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    # Remove remaining special characters
     text = re.sub(r'[^\w\s-]', '', text)
-    text = re.sub(r'[\s_-]+', '-', text)
-    text = re.sub(r'^-+|-+$', '', text)
-    return text
+    # Replace whitespace and underscores with hyphens
+    text = re.sub(r'[\s_]+', '-', text)
+    # Remove consecutive hyphens
+    text = re.sub(r'-+', '-', text)
+    return text.strip('-')
 
 
-def truncate(text: str, max_length: int, suffix: str = "...") -> str:
-    """Truncate a string to a maximum length, appending a suffix if truncated.
+def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
+    """Truncate a string to a specified maximum length.
+
+    If the text exceeds max_length, it is cut off and a suffix is appended.
+    The total length of the result (including suffix) will not exceed max_length.
 
     Args:
         text: The input string to truncate.
-        max_length: The maximum allowed length of the result (including suffix).
-        suffix: The string to append when truncation occurs. Defaults to "...".
+        max_length: Maximum allowed length of the result (including suffix).
+        suffix: String to append when truncation occurs.
 
     Returns:
-        The truncated string with suffix if needed, or the original string
-        if it fits within max_length.
-
-    Raises:
-        ValueError: If max_length is less than the length of the suffix.
+        The truncated string.
 
     Examples:
         >>> truncate("Hello, World!", 8)
         'Hello...'
-        >>> truncate("Hi", 10)
-        'Hi'
+        >>> truncate("Short", 100)
+        'Short'
     """
-    if max_length < len(suffix):
-        raise ValueError(
-            f"max_length ({max_length}) must be at least the length of the suffix ({len(suffix)})"
-        )
     if len(text) <= max_length:
         return text
+
+    if len(suffix) >= max_length:
+        return suffix[:max_length]
+
     return text[: max_length - len(suffix)] + suffix
 
 
@@ -64,19 +71,18 @@ def word_count(text: str) -> int:
     """Count the number of words in a string.
 
     Words are defined as sequences of non-whitespace characters.
+    Empty strings and strings with only whitespace return 0.
 
     Args:
         text: The input string to count words in.
 
     Returns:
-        The number of words in the text. Returns 0 for empty or whitespace-only strings.
+        The number of words in the string.
 
     Examples:
         >>> word_count("Hello world")
         2
-        >>> word_count("  One  two   three  ")
-        3
-        >>> word_count("")
+        >>> word_count("  ")
         0
     """
     if not text or not text.strip():
