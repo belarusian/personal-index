@@ -46,8 +46,12 @@ class Interest:
         if not self.enabled:
             return False
         text_lower = text.lower()
+        # Check value field as keyword
+        if self.value and self.value.lower() in text_lower:
+            return True
+        # Check keywords list
         for kw in self.keywords:
-            if kw.lower() in text_lower:
+            if isinstance(kw, str) and kw.lower() in text_lower:
                 return True
         for topic in self.topics:
             if topic.lower() in text_lower:
@@ -67,8 +71,13 @@ class Interest:
             return 0.0
         text_lower = text.lower()
         total = 0.0
+        # Check value field
+        if self.value:
+            total += text_lower.count(self.value.lower())
+        # Check keywords list
         for kw in self.keywords:
-            total += text_lower.count(kw.lower())
+            if isinstance(kw, str):
+                total += text_lower.count(kw.lower())
         for topic in self.topics:
             total += text_lower.count(topic.lower())
         return min(total * self.priority, self.priority * 10)
