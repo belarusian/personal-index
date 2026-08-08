@@ -21,7 +21,7 @@ class TestTextSummarizer:
         s = TextSummarizer(max_sentences=2)
         result = s.summarize(text, method="frequency")
         assert len(result.key_sentences) == 2
-        assert any("Python" in s for s in result.key_sentences)
+        assert any("Python" in sent for sent in result.key_sentences)
 
     def test_first_n_method(self):
         text = "First sentence. Second sentence. Third sentence. Fourth sentence."
@@ -45,8 +45,10 @@ class TestTextSummarizer:
 
     def test_unknown_method(self):
         s = TextSummarizer()
+        # Use text long enough to pass min_sentence_length filter
+        text = "This is a longer text that will be processed properly."
         with pytest.raises(ValueError):
-            s.summarize("text", method="unknown")
+            s.summarize(text, method="unknown")
 
     def test_compression_ratio(self):
         text = " ".join([f"Sentence number {i} with some words." for i in range(20)])
@@ -76,7 +78,7 @@ class TestTextSummarizer:
         s = TextSummarizer(min_sentence_length=10, max_sentences=2)
         result = s.summarize(text, method="first_n")
         assert len(result.key_sentences) == 2
-        assert all(len(s) >= 10 for s in result.key_sentences)
+        assert all(len(sent) >= 10 for sent in result.key_sentences)
 
     def test_summary_result_fields(self):
         s = TextSummarizer()
