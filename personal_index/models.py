@@ -49,8 +49,9 @@ class Interest:
         # Check value field as keyword
         if self.value and self.value.lower() in text_lower:
             return True
-        # Check keywords list
-        for kw in self.keywords:
+        # Check keywords list - handle case where keywords might be non-list
+        kws = self.keywords if isinstance(self.keywords, (list, tuple)) else []
+        for kw in kws:
             if isinstance(kw, str) and kw.lower() in text_lower:
                 return True
         for topic in self.topics:
@@ -74,8 +75,9 @@ class Interest:
         # Check value field
         if self.value:
             total += text_lower.count(self.value.lower())
-        # Check keywords list
-        for kw in self.keywords:
+        # Check keywords list - handle case where keywords might be non-list
+        kws = self.keywords if isinstance(self.keywords, (list, tuple)) else []
+        for kw in kws:
             if isinstance(kw, str):
                 total += text_lower.count(kw.lower())
         for topic in self.topics:
