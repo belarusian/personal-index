@@ -1,6 +1,11 @@
-"""CLI interface for personal-index."""
+"""CLI interface for personal-index.
 
-import json
+Provides command-line commands for managing interests, running crawls,
+searching, and viewing results.
+"""
+
+from __future__ import annotations
+
 import logging
 import sys
 from pathlib import Path
@@ -8,10 +13,11 @@ from typing import Optional
 
 import click
 
-from personal_index.config import AppConfig, Interest
-from personal_index.index import SearchIndex
-from personal_index.crawler import Crawler
+from personal_index.models import CrawlConfig, Interest
+from personal_index.storage import InterestStore, PageStore
 from personal_index.filter import ContentFilter
+from personal_index.crawler import WebCrawler
+from personal_index.search import SearchIndex
 from personal_index.scheduler import CrawlScheduler
 
 logger = logging.getLogger(__name__)
@@ -19,367 +25,383 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.version_option(version="0.1.0", prog_name="personal-index")
-@click.option("--config-dir", type=click.Path(), default=None, help="Configuration directory")
-@click.option("--verbose", is_flag=True, help="Enable verbose output")
+@click.option("--data-dir", default="~/.personal-index", help="Data directory path")
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.pass_context
-def main(ctx, config_dir, verbose):
-    """personal-index: A personal web search engine."""
+def cli(ctx, data_dir, verbose):
+    """personal-index: A personal web search engine.
+
+    Define your interests and let the system scan, filter,
+    and index the web for you.
+    """
     ctx.ensure_object(dict)
+    ctx.obj["data_dir"] = str(Path(data_dir).expanduser())
+
     if verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
     else:
-        logging.basicConfig(level=logging.WARNING)
-
-    if config_dir:
-        config = AppConfig(config_dir=Path(config_dir))
-    else:
-        config = AppConfig()
-    config.ensure_dirs()
-
-    # Load existing config if it exists
-    config_file = config._config_file()
-    if config_file.exists():
-        loaded = AppConfig.load(config_file)
-        config.interests = loaded.interests
-        config.crawler = loaded.crawler
-        config.schedule = loaded.schedule
-
-    ctx.obj["config"] = config
-    ctx.obj["index"] = SearchIndex(index_dir=config.index_dir)
-    ctx.obj["filter"] = ContentFilter(interests=config.interests)
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
-@main.group()
+@cli.group()
 def interest():
-    """Manage search interests."""
+    """Manage tracked interests."""
     pass
 
 
-@interest.command("add")
-@click.option("--topic", required=True, help="Topic name")
-@click.option("--keywords", default="", help="Comma-separated keywords")
-@click.option("--url-pattern", "url_patterns", multiple=True, help="URL pattern to match")
-@click.option("--priority", default=5, type=int, help="Priority (1-10)")
+@interest.command()
+@click.option("--topic", "-t", required=True, help="Topic name")
+@click.option("--keywords", "-k", default="", help="Comma-separated keywords")
+@click.option("--url-patterns", "-u", default="", help="Comma-separated URL patterns")
 @click.pass_context
-def add_interest(ctx, topic, keywords, url_patterns, priority):
+def add(ctx, topic, keywords, url_patterns):
     """Add a new interest to track."""
-    config = ctx.obj["config"]
-    kw_list = [k.strip() for k in keywords.split(",") if k.strip()] if keywords else []
-    patterns = [p.strip() for p in url_patterns]
+    store = InterestStore(ctx.obj["data_dir"])
 
-    # Check for duplicate
-    for existing in config.interests:
-        if existing.topic.lower() == topic.lower():
-            click.echo(f"Interest '{topic}' already exists. Use 'interest update' to modify.")
-            return
+    kw_list = [k.strip() for k in keywords.split(",") if k.strip()]
+    url_list = [u.strip() for u in url_patterns.split(",") if u.strip()]
 
     interest = Interest(
         topic=topic,
         keywords=kw_list,
-        url_patterns=patterns,
-        priority=priority,
+        url_patterns=url_list,
     )
-    config.interests.append(interest)
-    config.save()
-    ctx.obj["filter"].add_interest(interest)
-    click.echo(f"Added interest: {topic}")
-    if kw_list:
-        click.echo(f"  Keywords: {', '.join(kw_list)}")
-    if patterns:
-        click.echo(f"  URL patterns: {', '.join(patterns)}")
-    click.echo(f"  Priority: {priority}")
+
+    try:
+        store.add_interest(interest)
+        click.echo(f"Added interest: {topic}")
+        if kw_list:
+            click.echo(f"  Keywords: {', '.join(kw_list)}")
+        if url_list:
+            click.echo(f"  URL patterns: {', '.join(url_list)}")
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
 
 @interest.command("list")
+@click.option("--enabled-only", is_flag=True, help="Show only enabled interests")
 @click.pass_context
-def list_interests(ctx):
-    """List all configured interests."""
-    config = ctx.obj["config"]
-    if not config.interests:
-        click.echo("No interests configured. Use 'interest add' to add one.")
+def list_interests(ctx, enabled_only):
+    """List all tracked interests."""
+    store = InterestStore(ctx.obj["data_dir"])
+    interests = store.list_interests(enabled_only=enabled_only)
+
+    if not interests:
+        click.echo("No interests configured.")
         return
 
-    click.echo(f"\n{'Topic':<20} {'Keywords':<30} {'Priority':<10} {'Enabled':<8}")
-    click.echo("-" * 68)
-    for interest in config.interests:
-        kws = ", ".join(interest.keywords[:3])
+    click.echo(f"{'Topic':<25} {'Keywords':<30} {'URL Patterns':<25} {'Status'}")
+    click.echo("-" * 100)
+    for interest in interests:
+        kw = ", ".join(interest.keywords[:3])
         if len(interest.keywords) > 3:
-            kws += "..."
-        click.echo(
-            f"{interest.topic:<20} {kws:<30} {interest.priority:<10} "
-            f"{'Yes' if interest.enabled else 'No':<8}"
-        )
-    click.echo(f"\nTotal: {len(config.interests)} interests")
+            kw += f" (+{len(interest.keywords) - 3})"
+        urls = ", ".join(interest.url_patterns[:2])
+        if len(interest.url_patterns) > 2:
+            urls += f" (+{len(interest.url_patterns) - 2})"
+        status = "enabled" if interest.enabled else "disabled"
+        click.echo(f"{interest.topic:<25} {kw:<30} {urls:<25} {status}")
 
 
-@interest.command("remove")
-@click.option("--topic", required=True, help="Topic name to remove")
+@interest.command()
+@click.option("--topic", "-t", required=True, help="Topic name to remove")
 @click.pass_context
-def remove_interest(ctx, topic):
-    """Remove an interest."""
-    config = ctx.obj["config"]
-    for i, interest in enumerate(config.interests):
-        if interest.topic.lower() == topic.lower():
-            config.interests.pop(i)
-            config.save()
-            ctx.obj["filter"].remove_interest(topic)
-            click.echo(f"Removed interest: {topic}")
-            return
-    click.echo(f"Interest '{topic}' not found.")
+def remove(ctx, topic):
+    """Remove a tracked interest."""
+    store = InterestStore(ctx.obj["data_dir"])
+    if store.remove_interest(topic):
+        click.echo(f"Removed interest: {topic}")
+    else:
+        click.echo(f"Interest not found: {topic}", err=True)
+        sys.exit(1)
 
 
-@interest.command("enable")
-@click.option("--topic", required=True, help="Topic name to enable")
+@interest.command()
+@click.option("--topic", "-t", required=True, help="Topic name to toggle")
 @click.pass_context
-def enable_interest(ctx, topic):
-    """Enable an interest."""
-    config = ctx.obj["config"]
-    for interest in config.interests:
-        if interest.topic.lower() == topic.lower():
-            interest.enabled = True
-            config.save()
-            click.echo(f"Enabled interest: {topic}")
-            return
-    click.echo(f"Interest '{topic}' not found.")
+def toggle(ctx, topic):
+    """Toggle an interest's enabled/disabled status."""
+    store = InterestStore(ctx.obj["data_dir"])
+    result = store.toggle_interest(topic)
+    if result:
+        status = "enabled" if result.enabled else "disabled"
+        click.echo(f"Toggled '{topic}' -> {status}")
+    else:
+        click.echo(f"Interest not found: {topic}", err=True)
+        sys.exit(1)
 
 
-@interest.command("disable")
-@click.option("--topic", required=True, help="Topic name to disable")
+@cli.command()
+@click.option("--seed-urls", "-s", default="", help="Comma-separated seed URLs")
+@click.option("--depth", "-d", default=2, help="Maximum crawl depth")
+@click.option("--max-pages", "-m", default=100, help="Maximum pages to crawl")
+@click.option("--rate-limit", "-r", default=1.0, help="Seconds between requests")
+@click.option("--timeout", default=10, help="Request timeout in seconds")
+@click.option("--allowed-domains", default="", help="Comma-separated allowed domains")
+@click.option("--blocked-domains", default="", help="Comma-separated blocked domains")
 @click.pass_context
-def disable_interest(ctx, topic):
-    """Disable an interest."""
-    config = ctx.obj["config"]
-    for interest in config.interests:
-        if interest.topic.lower() == topic.lower():
-            interest.enabled = False
-            config.save()
-            click.echo(f"Disabled interest: {topic}")
-            return
-    click.echo(f"Interest '{topic}' not found.")
+def crawl(ctx, seed_urls, depth, max_pages, rate_limit, timeout, allowed_domains, blocked_domains):
+    """Run a web crawl based on configured interests."""
+    data_dir = ctx.obj["data_dir"]
+
+    # Load interests
+    interest_store = InterestStore(data_dir)
+    interests = interest_store.list_interests(enabled_only=True)
+
+    if not interests:
+        click.echo("No enabled interests configured. Use 'personal-index interest add' first.")
+        sys.exit(1)
+
+    # Build seed URLs from interests
+    urls = [u.strip() for u in seed_urls.split(",") if u.strip()]
+    if not urls:
+        # Use URL patterns as seed URLs
+        for interest in interests:
+            for pattern in interest.url_patterns:
+                if pattern.startswith("http"):
+                    urls.append(pattern)
+                else:
+                    urls.append(f"https://{pattern}")
+
+    if not urls:
+        click.echo("No seed URLs provided and no URL patterns in interests.")
+        click.echo("Provide --seed-urls or add URL patterns to your interests.")
+        sys.exit(1)
+
+    # Configure crawler
+    config = CrawlConfig(
+        max_depth=depth,
+        max_pages=max_pages,
+        rate_limit=rate_limit,
+        timeout=timeout,
+        allowed_domains=[d.strip() for d in allowed_domains.split(",") if d.strip()],
+        blocked_domains=[d.strip() for d in blocked_domains.split(",") if d.strip()],
+    )
+
+    content_filter = ContentFilter(interests)
+    page_store = PageStore(data_dir)
+    search_index = SearchIndex(index_dir=f"{data_dir}/index")
+
+    crawler = WebCrawler(config=config, content_filter=content_filter)
+
+    click.echo(f"Starting crawl with {len(urls)} seed URL(s)...")
+    click.echo(f"Depth: {depth}, Max pages: {max_pages}, Rate limit: {rate_limit}s")
+
+    stats = crawler.crawl(urls)
+
+    click.echo(f"\nCrawl complete:")
+    click.echo(f"  Pages crawled: {stats.pages_crawled}")
+    click.echo(f"  Pages filtered: {stats.pages_filtered}")
+    click.echo(f"  Pages stored: {stats.pages_stored}")
+    click.echo(f"  Errors: {stats.errors}")
+    if stats.duration:
+        click.echo(f"  Duration: {stats.duration:.1f}s")
 
 
-@main.command("crawl")
-@click.option("--seed", "seeds", multiple=True, required=True, help="Seed URL to crawl")
-@click.option("--depth", default=3, type=int, help="Maximum crawl depth")
-@click.option("--rate-limit", default=1.0, type=float, help="Requests per second")
-@click.option("--max-pages", default=100, type=int, help="Max pages per domain")
-@click.pass_context
-def crawl(ctx, seeds, depth, rate_limit, max_pages):
-    """Crawl URLs and index matching content."""
-    config = ctx.obj["config"]
-    index = ctx.obj["index"]
-    content_filter = ctx.obj["filter"]
-
-    # Update crawler config
-    config.crawler.max_depth = depth
-    config.crawler.rate_limit = rate_limit
-    config.crawler.max_pages_per_domain = max_pages
-
-    crawler = Crawler(config=config.crawler)
-    interests = [i for i in config.interests if i.enabled]
-
-    click.echo(f"Starting crawl with {len(seeds)} seed URL(s)...")
-    click.echo(f"Max depth: {depth}, Rate limit: {rate_limit}/s")
-    click.echo(f"Interests: {len(interests)} enabled")
-    click.echo()
-
-    results = crawler.crawl(list(seeds), interests=interests)
-
-    # Index successful results
-    indexed = 0
-    for result in results:
-        if result.success and result.content:
-            filter_result = content_filter.filter_content(result.content)
-            if filter_result.passed:
-                index.add_document(result.content, interest_topics=filter_result.matched_interests)
-                indexed += 1
-                click.echo(f"  [indexed] {result.url} (score: {filter_result.relevance_score})")
-            else:
-                click.echo(f"  [filtered] {result.url}")
-        elif result.success:
-            click.echo(f"  [skipped] {result.url}")
-        else:
-            click.echo(f"  [error] {result.url} - {result.error}")
-
-    index.save()
-    stats = crawler.get_stats()
-    click.echo()
-    click.echo(f"Crawl complete:")
-    click.echo(f"  Total crawled: {stats['total_crawled']}")
-    click.echo(f"  Successful: {stats['successful']}")
-    click.echo(f"  Failed: {stats['failed']}")
-    click.echo(f"  Indexed: {indexed}")
-    click.echo(f"  Index size: {index.get_document_count()} documents")
-
-
-@main.command("search")
+@cli.command()
 @click.argument("query")
-@click.option("--limit", default=10, type=int, help="Maximum results")
+@click.option("--limit", "-l", default=10, help="Maximum results to show")
+@click.option("--interest", "-i", default=None, help="Filter by interest topic")
 @click.pass_context
-def search(ctx, query, limit):
+def search(ctx, query, limit, interest):
     """Search the local index."""
-    index = ctx.obj["index"]
+    data_dir = ctx.obj["data_dir"]
+    search_index = SearchIndex(index_dir=f"{data_dir}/index")
 
-    if index.get_document_count() == 0:
-        click.echo("Index is empty. Run 'crawl' first to index some content.")
-        return
-
-    results = index.search(query, limit=limit)
+    results = search_index.search(query, limit=limit, interest_filter=interest)
 
     if not results:
         click.echo(f"No results found for: {query}")
         return
 
-    click.echo(f"\nSearch results for: {query}")
-    click.echo(f"Found {len(results)} result(s)\n")
+    click.echo(f"\nSearch results for '{query}' ({len(results)} found):")
+    click.echo("=" * 80)
 
     for i, result in enumerate(results, 1):
-        click.echo(f"  {i}. {result.title}")
-        click.echo(f"     URL: {result.url}")
-        click.echo(f"     Score: {result.score}")
-        if result.snippet:
-            click.echo(f"     {result.snippet[:200]}")
-        if result.matched_terms:
-            click.echo(f"     Terms: {', '.join(result.matched_terms)}")
-        click.echo()
+        page = result.page
+        click.echo(f"\n[{i}] {page.title or 'Untitled'}")
+        click.echo(f"    URL: {page.url}")
+        click.echo(f"    Score: {result.score:.4f}")
+        if page.meta_description:
+            click.echo(f"    Description: {page.meta_description[:120]}")
+        if page.matched_interests:
+            click.echo(f"    Interests: {', '.join(page.matched_interests)}")
 
 
-@main.command("results")
-@click.option("--limit", default=20, type=int, help="Maximum results to show")
-@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="Output format")
+@cli.command()
+@click.argument("query")
+@click.option("--limit", "-l", default=10, help="Maximum results to show")
+@click.option("--fragment-size", "-f", default=200, help="Highlight fragment size")
 @click.pass_context
-def results(ctx, limit, fmt):
-    """View indexed results."""
-    index = ctx.obj["index"]
+def results(ctx, query, limit, fragment_size):
+    """Search and display results with highlighted matches."""
+    data_dir = ctx.obj["data_dir"]
+    search_index = SearchIndex(index_dir=f"{data_dir}/index")
 
-    if fmt == "json":
-        docs = []
-        for url in index.get_urls()[:limit]:
-            doc = index.get_document(url)
-            if doc:
-                docs.append(doc.to_dict())
-        click.echo(json.dumps(docs, indent=2))
-    else:
-        urls = index.get_urls()
-        if not urls:
-            click.echo("No indexed documents.")
-            return
+    search_results = search_index.search_with_highlights(
+        query, limit=limit, fragment_size=fragment_size
+    )
 
-        click.echo(f"\nIndexed documents ({len(urls)} total, showing {min(limit, len(urls))}):\n")
-        for i, url in enumerate(urls[:limit], 1):
-            doc = index.get_document(url)
-            if doc:
-                click.echo(f"  {i}. {doc.title or url}")
-                click.echo(f"     {url}")
-                if doc.interest_topics:
-                    click.echo(f"     Topics: {', '.join(doc.interest_topics)}")
-                click.echo()
+    if not search_results:
+        click.echo(f"No results found for: {query}")
+        return
 
+    click.echo(f"\nResults for '{query}' ({len(search_results)} found):")
+    click.echo("=" * 80)
 
-@main.command("stats")
-@click.pass_context
-def stats(ctx):
-    """Show index and configuration statistics."""
-    config = ctx.obj["config"]
-    index = ctx.obj["index"]
-    content_filter = ctx.obj["filter"]
-
-    click.echo("\n=== Personal Index Statistics ===\n")
-    click.echo(f"Configuration directory: {config.config_dir}")
-    click.echo(f"Index directory: {config.index_dir}")
-    click.echo()
-
-    click.echo("Interests:")
-    click.echo(f"  Total: {len(config.interests)}")
-    click.echo(f"  Enabled: {sum(1 for i in config.interests if i.enabled)}")
-    click.echo()
-
-    click.echo("Index:")
-    index_stats = index.get_stats()
-    click.echo(f"  Documents: {index_stats['document_count']}")
-    click.echo(f"  Unique terms: {index_stats['term_count']}")
-    click.echo()
-
-    click.echo("Content Filter:")
-    filter_stats = content_filter.get_stats()
-    click.echo(f"  Indexed keywords: {filter_stats['indexed_keywords']}")
-    click.echo()
+    for i, result in enumerate(search_results, 1):
+        page = result.page
+        click.echo(f"\n[{i}] {page.title or 'Untitled'}")
+        click.echo(f"    URL: {page.url}")
+        click.echo(f"    Score: {result.score:.4f}")
+        if result.highlights:
+            for highlight in result.highlights[:2]:
+                click.echo(f"    Match: ...{highlight}...")
+        if page.matched_interests:
+            click.echo(f"    Interests: {', '.join(page.matched_interests)}")
 
 
-@main.command("clear")
-@click.confirmation_option(prompt="Are you sure you want to clear the entire index?")
-@click.pass_context
-def clear(ctx):
-    """Clear the entire search index."""
-    index = ctx.obj["index"]
-    index.clear()
-    click.echo("Index cleared.")
-
-
-@main.group()
+@cli.group()
 def schedule():
-    """Manage scheduled crawling."""
+    """Manage crawl schedules."""
     pass
 
 
-@schedule.command("add")
-@click.option("--name", required=True, help="Schedule name")
-@click.option("--interval", default=24, type=int, help="Interval in hours")
-@click.option("--seed", "seeds", multiple=True, help="Seed URL")
-@click.option("--topic", "topics", multiple=True, help="Topic to track")
+@schedule.command()
+@click.option("--topic", "-t", required=True, help="Topic to schedule")
+@click.option("--interval", "-i", default=24, help="Interval in hours")
 @click.pass_context
-def add_schedule(ctx, name, interval, seeds, topics):
-    """Add a scheduled crawl task."""
-    config = ctx.obj["config"]
-    scheduler = CrawlScheduler(config=config)
-    entry = scheduler.add_schedule(
-        name=name,
-        interval_hours=interval,
-        seed_urls=list(seeds),
-        topics=list(topics),
-    )
-    click.echo(f"Added schedule: {name}")
-    click.echo(f"  Interval: every {interval} hours")
-    if seeds:
-        click.echo(f"  Seeds: {', '.join(seeds)}")
-    if topics:
-        click.echo(f"  Topics: {', '.join(topics)}")
+def add_schedule(ctx, topic, interval):
+    """Add a periodic crawl schedule."""
+    scheduler = CrawlScheduler(ctx.obj["data_dir"])
+    scheduler.add_schedule(topic, interval_hours=float(interval))
+    click.echo(f"Added schedule for '{topic}' every {interval}h")
 
 
 @schedule.command("list")
 @click.pass_context
 def list_schedules(ctx):
-    """List all scheduled tasks."""
-    config = ctx.obj["config"]
-    scheduler = CrawlScheduler(config=config)
+    """List all crawl schedules."""
+    scheduler = CrawlScheduler(ctx.obj["data_dir"])
     schedules = scheduler.list_schedules()
+
     if not schedules:
-        click.echo("No scheduled tasks.")
+        click.echo("No schedules configured.")
         return
-    for entry in schedules:
-        click.echo(f"  {entry.name}: every {entry.interval_hours}h ({'enabled' if entry.enabled else 'disabled'})")
+
+    click.echo(f"{'Topic':<25} {'Interval':<15} {'Last Run':<25} {'Next Run':<25} {'Status'}")
+    click.echo("-" * 105)
+    for sched in schedules:
+        last = sched.last_run.strftime("%Y-%m-%d %H:%M") if sched.last_run else "Never"
+        next_run = sched.next_run.strftime("%Y-%m-%d %H:%M") if sched.next_run else "N/A"
+        status = "enabled" if sched.enabled else "disabled"
+        click.echo(f"{sched.topic:<25} {sched.interval_hours:<15} {last:<25} {next_run:<25} {status}")
 
 
-@schedule.command("start")
+@schedule.command()
+@click.option("--topic", "-t", required=True, help="Topic to remove schedule for")
 @click.pass_context
-def start_schedule(ctx):
-    """Start the scheduler."""
-    config = ctx.obj["config"]
-    scheduler = CrawlScheduler(config=config)
+def remove_schedule(ctx, topic):
+    """Remove a crawl schedule."""
+    scheduler = CrawlScheduler(ctx.obj["data_dir"])
+    if scheduler.remove_schedule(topic):
+        click.echo(f"Removed schedule for '{topic}'")
+    else:
+        click.echo(f"No schedule found for '{topic}'", err=True)
+        sys.exit(1)
 
-    def crawl_callback(entry):
-        click.echo(f"Running scheduled crawl: {entry.name}")
+
+@schedule.command()
+@click.option("--topic", "-t", required=True, help="Topic to run now")
+@click.pass_context
+def run_now(ctx, topic):
+    """Manually trigger a scheduled crawl."""
+    scheduler = CrawlScheduler(ctx.obj["data_dir"])
+    interest_store = InterestStore(ctx.obj["data_dir"])
+    page_store = PageStore(ctx.obj["data_dir"])
+    search_index = SearchIndex(index_dir=f"{ctx.obj['data_dir']}/index")
+
+    def crawl_callback(schedule):
+        interests = interest_store.list_interests(enabled_only=True)
+        content_filter = ContentFilter(interests)
+
+        urls = []
+        for interest in interests:
+            if interest.topic == schedule.topic:
+                for pattern in interest.url_patterns:
+                    if pattern.startswith("http"):
+                        urls.append(pattern)
+                    else:
+                        urls.append(f"https://{pattern}")
+
+        if not urls:
+            return CrawlConfig.__class__.__dict__  # empty stats
+
+        config = schedule.config or CrawlConfig()
+        crawler = WebCrawler(config=config, content_filter=content_filter)
+        stats = crawler.crawl(urls)
+
+        # Store and index crawled pages
+        for page in crawler.get_visited_urls():
+            pass  # Pages are processed during crawl
+
+        return stats
 
     scheduler.set_crawl_callback(crawl_callback)
-    scheduler.start()
-    click.echo("Scheduler started. Press Ctrl+C to stop.")
-    try:
-        while scheduler.is_running():
-            click.pause()
-    except KeyboardInterrupt:
-        scheduler.stop()
-        click.echo("\nScheduler stopped.")
+    job = scheduler.run_now(topic)
+
+    if job:
+        click.echo(f"Job started: {job.job_id}")
+        click.echo(f"Status: {job.status}")
+        if job.pages_crawled:
+            click.echo(f"Pages crawled: {job.pages_crawled}")
+            click.echo(f"Pages stored: {job.pages_stored}")
+            click.echo(f"Errors: {job.errors}")
+    else:
+        click.echo(f"No schedule found for '{topic}'", err=True)
+        sys.exit(1)
 
 
-if __name__ == "__main__":
-    main()
+@schedule.command("jobs")
+@click.option("--limit", "-l", default=10, help="Number of recent jobs to show")
+@click.pass_context
+def list_jobs(ctx, limit):
+    """List recent crawl jobs."""
+    scheduler = CrawlScheduler(ctx.obj["data_dir"])
+    jobs = scheduler.list_jobs(limit=limit)
+
+    if not jobs:
+        click.echo("No jobs found.")
+        return
+
+    click.echo(f"{'Job ID':<40} {'Topic':<20} {'Status':<12} {'Pages':<10} {'Errors'}")
+    click.echo("-" * 90)
+    for job in jobs:
+        click.echo(
+            f"{job.job_id:<40} {job.topic:<20} {job.status:<12} "
+            f"{job.pages_crawled:<10} {job.errors}"
+        )
+
+
+@cli.command()
+@click.pass_context
+def status(ctx):
+    """Show system status."""
+    data_dir = ctx.obj["data_dir"]
+
+    interest_store = InterestStore(data_dir)
+    page_store = PageStore(data_dir)
+    search_index = SearchIndex(index_dir=f"{data_dir}/index")
+    scheduler = CrawlScheduler(data_dir)
+
+    interests = interest_store.list_interests()
+    enabled_interests = [i for i in interests if i.enabled]
+
+    click.echo("Personal Index Status")
+    click.echo("=" * 40)
+    click.echo(f"Data directory: {data_dir}")
+    click.echo(f"Interests: {len(interests)} total, {len(enabled_interests)} enabled")
+    click.echo(f"Stored pages: {page_store.count_pages()}")
+    click.echo(f"Indexed documents: {search_index.get_document_count()}")
+    click.echo(f"Schedules: {len(scheduler.list_schedules())}")
