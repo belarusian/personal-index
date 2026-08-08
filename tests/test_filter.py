@@ -1,130 +1,110 @@
-"""Tests for content filtering."""
+"""Tests for the content filtering module."""
 
 import pytest
-from personal_index.config import Interest
-from personal_index.models import Page
-from personal_index.filter import ContentFilter
+from personal_index.interests import Interest, InterestStore
+from personal_index.filter import ContentFilter, FilterResult
+
+
+@pytest.fixture
+def interest_store(tmp_path):
+    store = InterestStore(store_path=str(tmp_path / "interests.json"))
+    store.add(Interest(
+        name="python",
+        keywords=["python", "programming", "developer"],
+        url_patterns=[r"https://python\.org/.*"],
+        topics=["coding"],
+        priority=3,
+    ))
+    store.add(Interest(
+        name="ai",
+        keywords=["artificial intelligence", "machine learning", "neural network"],
+        url_patterns=[r"https://ai\.example\.com/.*"],
+        topics=["AI", "ML"],
+        priority=5,
+    ))
+    return store
+
+
+class TestFilterResult:
+    def test_default_values(self):
+        result = FilterResult(matched=False)
+        assert result.matched is False
+        assert result.score == 0.0
+        assert result.matching_interests == []
+
+    def test_custom_values(self):
+        result = FilterResult(matched=True, score=1.5, matching_interests=["test"])
+        assert result.matched is True
+        assert result.score == 1.5
 
 
 class TestContentFilter:
-    def setup_method(self) -> None:
-        self.interests = [
-            Interest(
-                topic="machine learning",
-                keywords=["machine learning", "neural network", "deep learning"],
-                priority=8,
-            ),
-            Interest(
-                topic="cooking",
-                keywords=["recipe", "cooking", "baking"],
-                priority=5,
-            ),
-        ]
-        self.filter = ContentFilter(self.interests, min_relevance_score=0.5)
+    def test_filter_url_match(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.filter_url("https://python.org/docs")
+        assert result.matched is True
+        assert result.score > 0
 
-    def test_page_matches_interest(self):
-        page = Page(
-            url="https://example.com/ml-article",
-            title="Introduction to Machine Learning",
-            content="Machine learning is a subset of AI. Neural networks are used in deep learning.",
+    def test_filter_url_no_match(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.filter_url("https://random-site.com/page")
+        assert result.matched is False
+
+    def test_filter_content_keywords(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.filter_content("Learn Python programming today")
+        assert result.matched is True
+        assert "python" in result.matched_keywords
+        assert "programming" in result.matched_keywords
+
+    def test_filter_content_no_match(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.filter_content("This is about cooking recipes")
+        assert result.matched is False
+
+    def test_filter_content_case_insensitive(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.filter_content("PYTHON is great for PROGRAMMING")
+        assert result.matched is True
+
+    def test_should_index_url_match(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.should_index("https://python.org/about", "Python", "")
+        assert result.matched is True
+
+    def test_should_index_content_match(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.should_index(
+            "https://example.com/blog",
+            "Python Tips",
+            "Learn Python programming"
         )
-        result = self.filter.filter_page(page)
-        assert result.passed is True
-        assert "machine learning" in result.matched_interests
+        assert result.matched is True
 
-    def test_page_does_not_match(self):
-        page = Page(
-            url="https://example.com/recipe",
-            title="My Garden",
-            content="I love growing flowers in my garden.",
+    def test_should_index_no_match(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.should_index(
+            "https://example.com/blog",
+            "Cooking Tips",
+            "Learn to cook pasta"
         )
-        result = self.filter.filter_page(page)
-        assert result.passed is False
+        assert result.matched is False
 
-    def test_page_matches_cooking(self):
-        page = Page(
-            url="https://example.com/baking",
-            title="Baking Bread",
-            content="This recipe for baking bread is simple.",
+    def test_score_calculation(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.filter_content("Python Python Python")
+        assert result.score > 0
+
+    def test_multiple_interests_match(self, interest_store):
+        filter = ContentFilter(interest_store)
+        result = filter.filter_content(
+            "Python and artificial intelligence are both interesting"
         )
-        result = self.filter.filter_page(page)
-        assert result.passed is True
-        assert "cooking" in result.matched_interests
+        assert result.matched is True
+        assert len(result.matching_interests) >= 1
 
-    def test_url_pattern_matching(self):
-        interests = [
-            Interest(
-                topic="tech news",
-                keywords=["technology"],
-                url_patterns=["https://techcrunch.com/*"],
-            )
-        ]
-        f = ContentFilter(interests, min_relevance_score=0.0)
-        page = Page(
-            url="https://techcrunch.com/2024/ai-news",
-            title="AI News",
-            content="Technology is changing fast.",
-        )
-        result = f.filter_page(page)
-        assert result.passed is True
-
-    def test_disabled_interest_ignored(self):
-        interests = [
-            Interest(topic="test", keywords=["hello"], enabled=False),
-        ]
-        f = ContentFilter(interests)
-        page = Page(url="https://example.com", content="hello world")
-        result = f.filter_page(page)
-        assert result.passed is False
-
-    def test_min_relevance_score(self):
-        f = ContentFilter(self.interests, min_relevance_score=100.0)
-        page = Page(
-            url="https://example.com",
-            content="machine learning is great",
-        )
-        result = f.filter_page(page)
-        assert result.passed is False
-
-    def test_update_page(self):
-        page = Page(url="https://example.com", content="machine learning rocks")
-        result = self.filter.filter_page(page)
-        self.filter.update_page(page, result)
-        assert page.relevance_score == result.relevance_score
-        assert page.matched_interests == result.matched_interests
-
-    def test_pre_filter_url(self):
-        interests = [
-            Interest(
-                topic="tech",
-                keywords=["tech"],
-                url_patterns=["https://example.com/*"],
-            )
-        ]
-        f = ContentFilter(interests)
-        assert f.filter_url_pre_crawl("https://example.com/page") is True
-        assert f.filter_url_pre_crawl("https://other.com/page") is False
-
-    def test_empty_interests(self):
-        f = ContentFilter([])
-        page = Page(url="https://example.com", content="anything")
-        result = f.filter_page(page)
-        # With no interests, all pages pass through
-        assert result.passed is True
-
-    def test_wildcard_pattern_matching(self):
-        interests = [
-            Interest(
-                topic="docs",
-                keywords=["docs"],
-                url_patterns=["https://*.example.com/docs/*"],
-            )
-        ]
-        f = ContentFilter(interests, min_relevance_score=0.0)
-        page = Page(
-            url="https://api.example.com/docs/v1",
-            title="API Docs",
-            content="Documentation for the API.",
-        )
-        result = f.filter_page(page)
-        assert result.passed is True
+    def test_empty_interest_store(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        filter = ContentFilter(store)
+        result = filter.filter_content("Some random text")
+        assert result.matched is False
