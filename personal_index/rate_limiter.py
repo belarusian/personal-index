@@ -1,95 +1,154 @@
-"""Rate limiting for web crawling operations."""
+"""Rate limiting for web requests using token bucket algorithm."""
 
 from __future__ import annotations
 
+import threading
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 
 @dataclass
 class RateLimitConfig:
     """Configuration for rate limiting."""
     max_requests: int = 10
-    time_window: float = 60.0  # seconds
-    per_domain: bool = True
+    window_seconds: float = 60.0
+    burst_size: Optional[int] = None
+
+    def __post_init__(self):
+        if self.burst_size is None:
+            self.burst_size = self.max_requests
+
+
+@dataclass
+class RateLimitStatus:
+    """Current status of rate limiting."""
+    remaining: int
+    limit: int
+    reset_at: float
+    retry_after: float = 0.0
+
+
+class TokenBucket:
+    """Token bucket rate limiter for a single domain."""
+
+    def __init__(self, config: RateLimitConfig):
+        self._max_tokens = config.max_requests
+        self._burst_size = config.burst_size
+        self._refill_rate = config.max_requests / config.window_seconds
+        self._tokens = float(self._burst_size)
+        self._last_refill = time.monotonic()
+        self._lock = threading.Lock()
+
+    def _refill(self):
+        """Refill tokens based on elapsed time."""
+        now = time.monotonic()
+        elapsed = now - self._last_refill
+        self._tokens = min(
+            self._burst_size,
+            self._tokens + elapsed * self._refill_rate,
+        )
+        self._last_refill = now
+
+    def acquire(self) -> bool:
+        """Try to acquire a token. Returns True if successful."""
+        with self._lock:
+            self._refill()
+            if self._tokens >= 1.0:
+                self._tokens -= 1.0
+                return True
+            return False
+
+    def wait_time(self) -> float:
+        """Get time to wait before next request can be made."""
+        with self._lock:
+            self._refill()
+            if self._tokens >= 1.0:
+                return 0.0
+            return (1.0 - self._tokens) / self._refill_rate
+
+    def status(self) -> RateLimitStatus:
+        """Get current rate limit status."""
+        with self._lock:
+            self._refill()
+            remaining = int(self._tokens)
+            reset_at = time.monotonic() + (self._burst_size - self._tokens) / self._refill_rate
+            return RateLimitStatus(
+                remaining=remaining,
+                limit=self._burst_size,
+                reset_at=reset_at,
+                retry_after=self.wait_time(),
+            )
 
 
 class RateLimiter:
-    """Track and enforce rate limits for URL requests."""
+    """Rate limiter that manages limits per domain."""
 
-    def __init__(self, config: Optional[RateLimitConfig] = None):
-        self.config = config or RateLimitConfig()
-        self._request_times: Dict[str, List[float]] = defaultdict(list)
-        self._global_times: List[float] = []
+    def __init__(self, default_config: Optional[RateLimitConfig] = None):
+        self._default_config = default_config or RateLimitConfig()
+        self._buckets: Dict[str, TokenBucket] = {}
+        self._configs: Dict[str, RateLimitConfig] = {}
+        self._lock = threading.Lock()
 
-    def can_request(self, url: str) -> bool:
-        """Check if a request to the given URL is allowed."""
-        if self.config.per_domain:
-            domain = self._extract_domain(url)
-            return self._check_domain_limit(domain)
-        return self._check_global_limit()
+    def set_domain_config(self, domain: str, config: RateLimitConfig):
+        """Set rate limit config for a specific domain."""
+        with self._lock:
+            self._configs[domain] = config
+            self._buckets[domain] = TokenBucket(config)
 
-    def record_request(self, url: str) -> None:
-        """Record that a request was made to the given URL."""
-        now = time.time()
-        if self.config.per_domain:
-            domain = self._extract_domain(url)
-            self._request_times[domain].append(now)
-            self._cleanup(domain, self._request_times[domain])
-        self._global_times.append(now)
-        self._cleanup(None, self._global_times)
+    def _get_bucket(self, domain: str) -> TokenBucket:
+        """Get or create a token bucket for a domain."""
+        if domain not in self._buckets:
+            config = self._configs.get(domain, self._default_config)
+            self._buckets[domain] = TokenBucket(config)
+        return self._buckets[domain]
 
-    def wait_time(self, url: str) -> float:
-        """Get the time to wait before the next request is allowed."""
-        if self.can_request(url):
-            return 0.0
-        if self.config.per_domain:
-            domain = self._extract_domain(url)
-            times = self._request_times.get(domain, [])
-            if not times:
-                return 0.0
-            oldest = times[0]
-            window_end = oldest + self.config.time_window
-            return max(0.0, window_end - time.time())
-        return 0.0
+    def can_request(self, domain: str) -> bool:
+        """Check if a request to the domain is allowed."""
+        bucket = self._get_bucket(domain)
+        return bucket.acquire()
 
-    def _check_domain_limit(self, domain: str) -> bool:
-        """Check if domain-specific rate limit allows request."""
-        times = self._request_times.get(domain, [])
-        self._cleanup(domain, times)
-        return len(times) < self.config.max_requests
+    def wait_for_request(self, domain: str, timeout: float = 30.0) -> bool:
+        """Wait until a request can be made, or timeout."""
+        bucket = self._get_bucket(domain)
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if bucket.acquire():
+                return True
+            wait = bucket.wait_time()
+            if wait > 0:
+                time.sleep(min(wait, deadline - time.monotonic()))
+        return False
 
-    def _check_global_limit(self) -> bool:
-        """Check if global rate limit allows request."""
-        self._cleanup(None, self._global_times)
-        return len(self._global_times) < self.config.max_requests
+    def get_status(self, domain: str) -> RateLimitStatus:
+        """Get rate limit status for a domain."""
+        bucket = self._get_bucket(domain)
+        return bucket.status()
 
-    def _cleanup(self, domain: Optional[str], times: List[float]) -> None:
-        """Remove expired timestamps."""
-        cutoff = time.time() - self.config.time_window
-        while times and times[0] < cutoff:
-            times.pop(0)
+    def get_wait_time(self, domain: str) -> float:
+        """Get wait time for a domain."""
+        bucket = self._get_bucket(domain)
+        return bucket.wait_time()
 
-    @staticmethod
-    def _extract_domain(url: str) -> str:
-        """Extract domain from URL."""
-        try:
-            from urllib.parse import urlparse
-            parsed = urlparse(url)
-            return parsed.hostname or url
-        except Exception:
-            return url
+    def reset_domain(self, domain: str):
+        """Reset rate limit for a domain."""
+        with self._lock:
+            config = self._configs.get(domain, self._default_config)
+            self._buckets[domain] = TokenBucket(config)
 
-    def get_stats(self) -> Dict[str, int]:
-        """Get current rate limit statistics."""
+    def reset_all(self):
+        """Reset all rate limits."""
+        with self._lock:
+            for domain, config in self._configs.items():
+                self._buckets[domain] = TokenBucket(config)
+            # Reset default buckets
+            default_domains = set(self._buckets.keys()) - set(self._configs.keys())
+            for domain in default_domains:
+                self._buckets[domain] = TokenBucket(self._default_config)
+
+    def get_all_statuses(self) -> Dict[str, RateLimitStatus]:
+        """Get rate limit status for all tracked domains."""
         return {
-            "domains_tracked": len(self._request_times),
-            "global_requests": len(self._global_times),
+            domain: bucket.status()
+            for domain, bucket in self._buckets.items()
         }
-
-    def reset(self) -> None:
-        """Reset all rate limit tracking."""
-        self._request_times.clear()
-        self._global_times.clear()
