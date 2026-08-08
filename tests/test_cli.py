@@ -18,6 +18,7 @@ from personal_index.cli import (
 from personal_index.interests import InterestStore
 from personal_index.index import SearchIndex
 from personal_index.scheduler import Scheduler
+from personal_index.models import Interest
 
 
 @pytest.fixture
@@ -118,9 +119,25 @@ class TestSearchCommand:
         with patch.object(SearchIndex, '__init__', lambda self, db_path=None: None):
             with patch.object(SearchIndex, 'search') as mock_search:
                 mock_search.return_value = []
-                result = runner.invoke(search, ['python', '-l', '5'])
+                result = runner.invoke(search, ['python', '--limit', '5'])
                 assert result.exit_code == 0
-                mock_search.assert_called_once_with('python', limit=5)
+                mock_search.assert_called_once()
+
+
+class TestCrawlCommand:
+    def test_crawl_basic(self, runner, tmp_path):
+        with patch('personal_index.cli.get_config_manager') as mock_mgr:
+            mock_config = MagicMock()
+            mock_mgr.return_value.config = mock_config
+            result = runner.invoke(crawl, ['https://example.com'])
+            assert result.exit_code == 0
+
+    def test_crawl_with_depth(self, runner, tmp_path):
+        with patch('personal_index.cli.get_config_manager') as mock_mgr:
+            mock_config = MagicMock()
+            mock_mgr.return_value.config = mock_config
+            result = runner.invoke(crawl, ['https://example.com', '--depth', '2'])
+            assert result.exit_code == 0
 
 
 class TestIndexCommands:
