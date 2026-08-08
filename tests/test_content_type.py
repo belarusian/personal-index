@@ -3,143 +3,215 @@
 from __future__ import annotations
 
 import pytest
-
 from personal_index.content_type import (
-    ContentType,
     ContentTypeDetector,
-    ContentAnalysis,
+    ContentTypeInfo,
 )
 
 
-class TestContentTypeDetector:
-    """Tests for ContentTypeDetector class."""
+class TestContentTypeInfo:
+    def test_text_info(self):
+        info = ContentTypeInfo(
+            mime_type="text/plain",
+            category="text",
+            extension=".txt",
+            is_text=True,
+            is_media=False,
+            is_document=False,
+        )
+        assert info.is_downloadable is True
 
+    def test_document_info(self):
+        info = ContentTypeInfo(
+            mime_type="application/pdf",
+            category="document",
+            extension=".pdf",
+            is_text=False,
+            is_media=False,
+            is_document=True,
+        )
+        assert info.is_downloadable is True
+
+    def test_media_info_not_downloadable(self):
+        info = ContentTypeInfo(
+            mime_type="image/png",
+            category="image",
+            extension=".png",
+            is_text=False,
+            is_media=True,
+            is_document=False,
+        )
+        assert info.is_downloadable is False
+
+
+class TestContentTypeDetector:
     def setup_method(self):
         self.detector = ContentTypeDetector()
 
-    def test_detect_empty(self):
-        result = self.detector.detect("")
-        assert result.content_type == ContentType.UNKNOWN
-        assert result.confidence == 0.0
+    # --- detect_from_url ---
 
-    def test_detect_none(self):
-        result = self.detector.detect(None)
-        assert result.content_type == ContentType.UNKNOWN
+    def test_detect_html_url(self):
+        info = self.detector.detect_from_url("https://example.com/page.html")
+        assert info.category == "text"
+        assert info.is_text is True
 
-    def test_detect_html(self):
-        html = "<html><head><title>Test</title></head><body><p>Hello</p></body></html>"
-        result = self.detector.detect(html)
-        assert result.content_type == ContentType.HTML
+    def test_detect_pdf_url(self):
+        info = self.detector.detect_from_url("https://example.com/doc.pdf")
+        assert info.category == "document"
+        assert info.is_document is True
 
-    def test_detect_json(self):
-        json_str = '{"key": "value", "items": [1, 2, 3]}'
-        result = self.detector.detect(json_str)
-        assert result.content_type == ContentType.JSON
+    def test_detect_unknown_url(self):
+        info = self.detector.detect_from_url("https://example.com/noext")
+        assert info.category == "unknown"
 
-    def test_detect_xml(self):
-        xml = "<?xml version='1.0'?><root><item>test</item></root>"
-        result = self.detector.detect(xml)
-        assert result.content_type == ContentType.XML
+    def test_detect_url_with_query(self):
+        info = self.detector.detect_from_url("https://example.com/file.txt?q=1")
+        assert info.extension == ".txt"
 
-    def test_detect_csv(self):
-        csv_data = "name,age,city\nAlice,30,NYC\nBob,25,LA\nCharlie,35,Chicago"
-        result = self.detector.detect(csv_data)
-        assert result.content_type == ContentType.CSV
+    # --- detect_from_filename ---
 
-    def test_detect_markdown(self):
-        md = "# Heading\n\nSome text\n\n## Subheading\n\n- item 1\n- item 2"
-        result = self.detector.detect(md)
-        assert result.content_type == ContentType.MARKDOWN
+    def test_detect_md_file(self):
+        info = self.detector.detect_from_filename("notes.md")
+        assert info.category == "text"
+        assert info.is_text is True
 
-    def test_detect_python_code(self):
-        code = "def hello():\n    print('world')\n\nclass Foo:\n    def bar(self):\n        return True"
-        result = self.detector.detect(code)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "python"
+    def test_detect_docx_file(self):
+        info = self.detector.detect_from_filename("report.docx")
+        assert info.category == "document"
+        assert info.is_document is True
 
-    def test_detect_javascript_code(self):
-        code = "const x = 1;\nlet y = 'hello';\nconsole.log(x);\narr.map(x => x * 2)"
-        result = self.detector.detect(code)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "javascript"
+    def test_detect_png_file(self):
+        info = self.detector.detect_from_filename("photo.png")
+        assert info.is_media is True
 
-    def test_detect_plain_text(self):
-        text = "This is just some plain text with no special formatting or patterns."
-        result = self.detector.detect(text)
-        assert result.content_type == ContentType.TEXT
+    def test_detect_zip_file(self):
+        info = self.detector.detect_from_filename("archive.zip")
+        assert info.category == "archive"
 
-    def test_detect_word_count(self):
-        text = "one two three four five"
-        result = self.detector.detect(text)
-        assert result.word_count == 5
+    # --- detect_from_extension ---
 
-    def test_detect_char_count(self):
-        text = "hello"
-        result = self.detector.detect(text)
-        assert result.char_count == 5
+    def test_detect_py_extension(self):
+        info = self.detector.detect_from_extension(".py")
+        assert info.category == "text"
 
-    def test_detect_line_count(self):
-        text = "line1\nline2\nline3"
-        result = self.detector.detect(text)
-        assert result.line_count == 3
+    def test_detect_json_extension(self):
+        info = self.detector.detect_from_extension(".json")
+        assert info.category == "text"
 
-    def test_detect_from_headers_html(self):
-        result = self.detector.detect_from_headers("text/html; charset=utf-8", "<html></html>")
-        assert result.content_type == ContentType.HTML
-        assert result.confidence == 0.9
+    def test_detect_mp3_extension(self):
+        info = self.detector.detect_from_extension(".mp3")
+        assert info.is_media is True
 
-    def test_detect_from_headers_json(self):
-        result = self.detector.detect_from_headers("application/json", '{"a": 1}')
-        assert result.content_type == ContentType.JSON
+    def test_detect_unknown_extension(self):
+        info = self.detector.detect_from_extension(".xyz")
+        assert info.category in ("unknown", "text", "image", "video", "audio", "document", "archive")
 
-    def test_detect_from_headers_unknown(self):
-        result = self.detector.detect_from_headers("application/octet-stream", "data")
-        assert result.content_type == ContentType.UNKNOWN
+    def test_extension_without_dot(self):
+        info = self.detector.detect_from_extension("txt")
+        assert info.extension == ".txt"
 
-    def test_detect_from_headers_empty(self):
-        result = self.detector.detect_from_headers("", "some text")
-        assert result.content_type == ContentType.TEXT
+    # --- detect_from_bytes ---
 
-    def test_detect_sql(self):
-        sql = "SELECT * FROM users WHERE id = 1; INSERT INTO logs VALUES (1);"
-        result = self.detector.detect(sql)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "sql"
+    def test_detect_pdf_bytes(self):
+        info = self.detector.detect_from_bytes(b"%PDF-1.4 test content")
+        assert info.mime_type == "application/pdf"
+        assert info.category == "document"
 
-    def test_detect_typescript(self):
-        ts = "const x: string = 'hello';\ninterface User { name: string; }\ntype Id = number;"
-        result = self.detector.detect(ts)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "typescript"
+    def test_detect_gzip_bytes(self):
+        info = self.detector.detect_from_bytes(b"\x1f\x8b\x08\x00test")
+        assert info.mime_type == "application/gzip"
 
-    def test_detect_java(self):
-        java = "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"hi\");\n    }\n}"
-        result = self.detector.detect(java)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "java"
+    def test_detect_zip_bytes(self):
+        info = self.detector.detect_from_bytes(b"PK\x03\x04test")
+        assert info.mime_type == "application/zip"
 
-    def test_detect_rust(self):
-        rust = "fn main() {\n    let mut x: Option<i32> = Some(42);\n    use std::vec::Vec;\n}"
-        result = self.detector.detect(rust)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "rust"
+    def test_detect_png_bytes(self):
+        info = self.detector.detect_from_bytes(b"\x89PNG\r\n\x1a\n")
+        assert info.mime_type == "image/png"
 
-    def test_detect_go(self):
-        go = "package main\nimport \"fmt\"\nfunc main() {\n    fmt.Println(\"hi\")\n}"
-        result = self.detector.detect(go)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "go"
+    def test_detect_jpeg_bytes(self):
+        info = self.detector.detect_from_bytes(b"\xff\xd8\xff\xe0test")
+        assert info.mime_type == "image/jpeg"
 
-    def test_detect_c(self):
-        c = "#include <stdio.h>\nint main() {\n    printf(\"hello\");\n    return 0;\n}"
-        result = self.detector.detect(c)
-        assert result.content_type == ContentType.CODE
-        assert result.language == "c"
+    def test_detect_gif_bytes(self):
+        info = self.detector.detect_from_bytes(b"GIF89atest")
+        assert info.mime_type == "image/gif"
 
-    def test_confidence_range(self):
-        result = self.detector.detect("some text")
-        assert 0.0 <= result.confidence <= 1.0
+    def test_detect_webp_bytes(self):
+        info = self.detector.detect_from_bytes(b"RIFF\x00\x00\x00\x00WEBP")
+        assert info.mime_type == "image/webp"
 
-    def test_metadata_in_header_detection(self):
-        result = self.detector.detect_from_headers("text/html", "<html></html>")
-        assert "content_type_header" in result.metadata
+    def test_detect_text_bytes(self):
+        info = self.detector.detect_from_bytes(b"Hello world, this is text content")
+        assert info.mime_type == "text/plain"
+        assert info.is_text is True
+
+    def test_detect_binary_bytes(self):
+        info = self.detector.detect_from_bytes(b"\x00\x01\x02\x03\x04\x05")
+        assert info.category == "unknown"
+
+    def test_detect_empty_bytes(self):
+        info = self.detector.detect_from_bytes(b"")
+        assert info.category == "unknown"
+
+    # --- classify ---
+
+    def test_classify_text_plain(self):
+        assert self.detector.classify("text/plain") == "text"
+
+    def test_classify_text_html(self):
+        assert self.detector.classify("text/html") == "text"
+
+    def test_classify_image_png(self):
+        assert self.detector.classify("image/png") == "image"
+
+    def test_classify_video_mp4(self):
+        assert self.detector.classify("video/mp4") == "video"
+
+    def test_classify_audio_mp3(self):
+        assert self.detector.classify("audio/mpeg") == "audio"
+
+    def test_classify_pdf(self):
+        assert self.detector.classify("application/pdf") == "document"
+
+    def test_classify_json(self):
+        assert self.detector.classify("application/json") == "text"
+
+    def test_classify_unknown(self):
+        assert self.detector.classify("application/octet-stream") == "unknown"
+
+    def test_classify_empty(self):
+        assert self.detector.classify("") == "unknown"
+
+    def test_classify_no_slash(self):
+        assert self.detector.classify("weirdtype") == "unknown"
+
+    # --- should_index ---
+
+    def test_should_index_text(self):
+        assert self.detector.should_index("https://example.com/page.html") is True
+
+    def test_should_index_pdf(self):
+        assert self.detector.should_index("https://example.com/doc.pdf") is True
+
+    def test_should_not_index_image(self):
+        assert self.detector.should_index("https://example.com/photo.png") is False
+
+    def test_should_not_index_video(self):
+        assert self.detector.should_index("https://example.com/video.mp4") is False
+
+    def test_should_not_index_archive(self):
+        assert self.detector.should_index("https://example.com/file.zip") is False
+
+    def test_should_index_with_content_type(self):
+        assert self.detector.should_index("https://example.com/x", "text/html") is True
+
+    def test_should_not_index_with_content_type(self):
+        assert self.detector.should_index("https://example.com/x", "image/png") is False
+
+    # --- caching ---
+
+    def test_extension_caching(self):
+        info1 = self.detector.detect_from_extension(".txt")
+        info2 = self.detector.detect_from_extension(".txt")
+        assert info1 is info2

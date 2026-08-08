@@ -1,205 +1,319 @@
-"""Content type detection and classification."""
+"""Content type detection and classification utilities."""
 
 from __future__ import annotations
 
+import mimetypes
 import re
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, List, Optional, Tuple
-
-
-class ContentType(Enum):
-    """Types of content that can be detected."""
-    TEXT = "text"
-    HTML = "html"
-    JSON = "json"
-    XML = "xml"
-    CSV = "csv"
-    MARKDOWN = "markdown"
-    CODE = "code"
-    UNKNOWN = "unknown"
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
-class ContentAnalysis:
-    """Result of content type analysis."""
-    content_type: ContentType
-    confidence: float
-    language: str = "unknown"
-    word_count: int = 0
-    char_count: int = 0
-    line_count: int = 0
-    metadata: Dict[str, str] = field(default_factory=dict)
+class ContentTypeInfo:
+    """Information about detected content type."""
+
+    mime_type: str
+    category: str  # "text", "image", "video", "audio", "document", "archive", "unknown"
+    extension: str
+    is_text: bool
+    is_media: bool
+    is_document: bool
+    encoding: str = "utf-8"
+
+    @property
+    def is_downloadable(self) -> bool:
+        """Whether this content type should be downloaded."""
+        return self.is_document or self.is_text
+
+
+# Category mappings
+CATEGORY_MAP = {
+    "text": "text",
+    "image": "image",
+    "video": "video",
+    "audio": "audio",
+    "application/json": "text",
+    "application/xml": "text",
+    "application/javascript": "text",
+    "application/pdf": "document",
+    "application/msword": "document",
+    "application/vnd.openxmlformats-officedocument": "document",
+    "application/zip": "archive",
+    "application/gzip": "archive",
+    "application/x-tar": "archive",
+    "application/x-rar": "archive",
+    "application/octet-stream": "unknown",
+}
+
+# Known text extensions
+TEXT_EXTENSIONS = {
+    ".txt", ".md", ".rst", ".html", ".htm", ".xml", ".json", ".yaml",
+    ".yml", ".csv", ".tsv", ".py", ".js", ".ts", ".java", ".c", ".cpp",
+    ".h", ".css", ".sql", ".sh", ".bash", ".zsh", ".rb", ".go", ".rs",
+    ".php", ".pl", ".lua", ".r", ".ipynb", ".toml", ".ini", ".cfg",
+    ".conf", ".env", ".log", ".tex", ".bib", ".svg", ".graphql",
+}
+
+# Known document extensions
+DOCUMENT_EXTENSIONS = {
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".odt", ".ods", ".odp", ".epub", ".mobi", ".djvu",
+}
+
+# Known media extensions
+MEDIA_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".ico",
+    ".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv", ".webm",
+    ".mp3", ".wav", ".flac", ".ogg", ".aac", ".wma",
+}
+
+# Known archive extensions
+ARCHIVE_EXTENSIONS = {
+    ".zip", ".tar", ".gz", ".bz2", ".xz", ".7z", ".rar", ".tgz",
+}
 
 
 class ContentTypeDetector:
-    """Detect and classify content types."""
+    """Detects and classifies content types from URLs, filenames, or raw data."""
 
-    HTML_PATTERN = re.compile(
-        r"<\s*(html|head|body|div|p|span|a|table|script|style)\b",
-        re.IGNORECASE,
-    )
-    JSON_PATTERN = re.compile(r"^\s*[\{\[]", re.MULTILINE)
-    XML_PATTERN = re.compile(r"<\?xml\b|<\s*\w+\s+[^>]*>")
-    CSV_PATTERN = re.compile(r"^[^,]+(,[^,]+)+$", re.MULTILINE)
-    MARKDOWN_PATTERN = re.compile(
-        r"^(#{1,6}\s|[-*]\s|\d+\.\s|>\s)",
-        re.MULTILINE,
-    )
-    CODE_PATTERNS = [
-        re.compile(
-            r"(def |class |function |import |from |return |if |else |for |while )",
-            re.MULTILINE,
-        ),
-        re.compile(
-            r"(let |const |var |=>|\.map\(|\.filter\(|\.reduce\()",
-            re.MULTILINE,
-        ),
-        # SQL patterns
-        re.compile(
-            r"(SELECT |INSERT |UPDATE |DELETE |CREATE TABLE|FROM |WHERE )",
-            re.IGNORECASE | re.MULTILINE,
-        ),
-    ]
+    def __init__(self) -> None:
+        self._mime_cache: dict[str, ContentTypeInfo] = {}
 
-    LANGUAGE_INDICATORS: Dict[str, List[re.Pattern]] = {
-        "python": [
-            re.compile(r"(def |class |import |from |self\.|print\(|@property)", re.MULTILINE),
-        ],
-        "javascript": [
-            re.compile(r"(let |const |var |=>|\.map\(|console\.|document\.)", re.MULTILINE),
-        ],
-        "typescript": [
-            re.compile(r": (string|number|boolean|void|any)\b|interface |type ", re.MULTILINE),
-        ],
-        "rust": [
-            re.compile(r"(fn |let mut |pub struct |impl |use std::|Option<)", re.MULTILINE),
-        ],
-        "go": [
-            re.compile(r"(func |package |import \(|var |chan |goroutine)", re.MULTILINE),
-        ],
-        "java": [
-            re.compile(r"(public class |private |static void |System\.out|@Override)", re.MULTILINE),
-        ],
-        "c": [
-            re.compile(r"(#include|int main\(|printf\(|malloc\(|struct )", re.MULTILINE),
-        ],
-        "sql": [
-            re.compile(r"(SELECT |INSERT |UPDATE |DELETE |CREATE TABLE|FROM |WHERE )", re.IGNORECASE | re.MULTILINE),
-        ],
-    }
+    def detect_from_url(self, url: str) -> ContentTypeInfo:
+        """Detect content type from a URL.
 
-    def detect(self, content: str) -> ContentAnalysis:
-        """Detect the content type of the given text."""
-        if not content or not content.strip():
-            return ContentAnalysis(
-                content_type=ContentType.UNKNOWN,
-                confidence=0.0,
-                char_count=len(content) if content else 0,
-            )
+        Args:
+            url: The URL to analyze.
 
-        scores: Dict[ContentType, float] = {}
-        lines = content.strip().split("\n")
+        Returns:
+            ContentTypeInfo with detected type information.
+        """
+        # Try to get extension from URL path
+        path = url.split("?")[0].split("#")[0]
+        ext = self._get_extension(path)
 
-        html_matches = len(self.HTML_PATTERN.findall(content[:2000]))
-        if html_matches > 0:
-            scores[ContentType.HTML] = min(html_matches * 0.2, 1.0)
+        if ext:
+            return self.detect_from_extension(ext)
 
-        if self.JSON_PATTERN.search(content[:500]):
-            scores[ContentType.JSON] = 0.8
+        # Try mimetypes
+        mime_type, encoding = mimetypes.guess_type(url)
+        if mime_type:
+            return self._make_info(mime_type, ext or "")
 
-        xml_matches = len(self.XML_PATTERN.findall(content[:1000]))
-        if xml_matches > 0:
-            scores[ContentType.XML] = min(xml_matches * 0.3, 1.0)
-
-        if len(lines) > 1:
-            csv_lines = sum(1 for line in lines[:10] if self.CSV_PATTERN.match(line.strip()))
-            if csv_lines > len(lines[:10]) * 0.5:
-                scores[ContentType.CSV] = csv_lines / len(lines[:10])
-
-        md_matches = len(self.MARKDOWN_PATTERN.findall(content[:2000]))
-        if md_matches > 0:
-            scores[ContentType.MARKDOWN] = min(md_matches * 0.15, 1.0)
-
-        code_score = 0.0
-        for pattern in self.CODE_PATTERNS:
-            code_score += len(pattern.findall(content[:2000])) * 0.1
-        if code_score > 0:
-            scores[ContentType.CODE] = min(code_score, 1.0)
-
-        if not scores:
-            return ContentAnalysis(
-                content_type=ContentType.TEXT,
-                confidence=0.5,
-                word_count=self._count_words(content),
-                char_count=len(content),
-                line_count=len(lines),
-            )
-
-        best_type = max(scores, key=scores.get)
-        confidence = scores[best_type]
-
-        language = "unknown"
-        if best_type == ContentType.CODE:
-            language = self._detect_language(content)
-
-        return ContentAnalysis(
-            content_type=best_type,
-            confidence=confidence,
-            language=language,
-            word_count=self._count_words(content),
-            char_count=len(content),
-            line_count=len(lines),
+        return ContentTypeInfo(
+            mime_type="application/octet-stream",
+            category="unknown",
+            extension="",
+            is_text=False,
+            is_media=False,
+            is_document=False,
         )
 
-    def _detect_language(self, content: str) -> str:
-        """Detect programming language from content."""
-        best_lang = "unknown"
-        best_score = 0
-        for lang, patterns in self.LANGUAGE_INDICATORS.items():
-            score = sum(len(p.findall(content[:3000])) for p in patterns)
-            if score > best_score:
-                best_score = score
-                best_lang = lang
-        return best_lang
+    def detect_from_filename(self, filename: str) -> ContentTypeInfo:
+        """Detect content type from a filename.
 
-    @staticmethod
-    def _count_words(text: str) -> int:
-        """Count words in text."""
-        return len(text.split())
+        Args:
+            filename: The filename to analyze.
 
-    def detect_from_headers(self, content_type_header: str, content: str) -> ContentAnalysis:
-        """Detect content type using HTTP headers and content analysis."""
-        if not content_type_header:
-            return self.detect(content)
+        Returns:
+            ContentTypeInfo with detected type information.
+        """
+        ext = self._get_extension(filename)
+        if ext:
+            return self.detect_from_extension(ext)
 
-        header_type = content_type_header.lower().split(";")[0].strip()
-        type_map = {
-            "text/html": ContentType.HTML,
-            "application/json": ContentType.JSON,
-            "application/xml": ContentType.XML,
-            "text/csv": ContentType.CSV,
-            "text/plain": ContentType.TEXT,
-            "text/markdown": ContentType.MARKDOWN,
-            "application/javascript": ContentType.CODE,
-        }
+        mime_type, encoding = mimetypes.guess_type(filename)
+        if mime_type:
+            return self._make_info(mime_type, ext or "")
 
-        if header_type in type_map:
-            return ContentAnalysis(
-                content_type=type_map[header_type],
-                confidence=0.9,
-                word_count=self._count_words(content) if content else 0,
-                char_count=len(content) if content else 0,
-                line_count=content.count("\n") + 1 if content else 0,
-                metadata={"content_type_header": content_type_header},
+        return ContentTypeInfo(
+            mime_type="application/octet-stream",
+            category="unknown",
+            extension="",
+            is_text=False,
+            is_media=False,
+            is_document=False,
+        )
+
+    def detect_from_extension(self, ext: str) -> ContentTypeInfo:
+        """Detect content type from a file extension.
+
+        Args:
+            ext: File extension (with or without leading dot).
+
+        Returns:
+            ContentTypeInfo with detected type information.
+        """
+        ext = ext.lower() if ext.startswith(".") else f".{ext.lower()}"
+        cache_key = f"ext:{ext}"
+        if cache_key in self._mime_cache:
+            return self._mime_cache[cache_key]
+
+        if ext in TEXT_EXTENSIONS:
+            info = ContentTypeInfo(
+                mime_type="text/plain",
+                category="text",
+                extension=ext,
+                is_text=True,
+                is_media=False,
+                is_document=False,
+            )
+        elif ext in DOCUMENT_EXTENSIONS:
+            mime_type, _ = mimetypes.guess_type(f"file{ext}")
+            info = ContentTypeInfo(
+                mime_type=mime_type or "application/octet-stream",
+                category="document",
+                extension=ext,
+                is_text=False,
+                is_media=False,
+                is_document=True,
+            )
+        elif ext in MEDIA_EXTENSIONS:
+            mime_type, _ = mimetypes.guess_type(f"file{ext}")
+            info = ContentTypeInfo(
+                mime_type=mime_type or "application/octet-stream",
+                category="image" if ext in {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".ico"} else "media",
+                extension=ext,
+                is_text=False,
+                is_media=True,
+                is_document=False,
+            )
+        elif ext in ARCHIVE_EXTENSIONS:
+            info = ContentTypeInfo(
+                mime_type="application/zip" if ext == ".zip" else "application/x-archive",
+                category="archive",
+                extension=ext,
+                is_text=False,
+                is_media=False,
+                is_document=False,
+            )
+        else:
+            mime_type, encoding = mimetypes.guess_type(f"file{ext}")
+            info = self._make_info(mime_type or "application/octet-stream", ext)
+
+        self._mime_cache[cache_key] = info
+        return info
+
+    def detect_from_bytes(self, data: bytes) -> ContentTypeInfo:
+        """Detect content type from raw bytes (magic number detection).
+
+        Args:
+            data: Raw bytes to analyze.
+
+        Returns:
+            ContentTypeInfo with detected type information.
+        """
+        if not data:
+            return ContentTypeInfo(
+                mime_type="application/octet-stream",
+                category="unknown",
+                extension="",
+                is_text=False,
+                is_media=False,
+                is_document=False,
             )
 
-        # Unknown content type header - return UNKNOWN
-        return ContentAnalysis(
-            content_type=ContentType.UNKNOWN,
-            confidence=0.1,
-            word_count=self._count_words(content) if content else 0,
-            char_count=len(content) if content else 0,
-            line_count=content.count("\n") + 1 if content else 0,
-            metadata={"content_type_header": content_type_header},
+        # Check magic numbers
+        if data[:4] == b"%PDF":
+            return self._make_info("application/pdf", ".pdf")
+        if data[:2] == b"\x1f\x8b":
+            return self._make_info("application/gzip", ".gz")
+        if data[:4] == b"PK\x03\x04":
+            return self._make_info("application/zip", ".zip")
+        if data[:8] == b"\x89PNG\r\n\x1a\n":
+            return self._make_info("image/png", ".png")
+        if data[:2] == b"\xff\xd8":
+            return self._make_info("image/jpeg", ".jpg")
+        if data[:6] in (b"GIF87a", b"GIF89a"):
+            return self._make_info("image/gif", ".gif")
+        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+            return self._make_info("image/webp", ".webp")
+
+        # Try to detect text by checking for null bytes
+        try:
+            text = data.decode("utf-8")
+            if "\x00" not in text:
+                return self._make_info("text/plain", ".txt")
+        except (UnicodeDecodeError, ValueError):
+            pass
+
+        return ContentTypeInfo(
+            mime_type="application/octet-stream",
+            category="unknown",
+            extension="",
+            is_text=False,
+            is_media=False,
+            is_document=False,
+        )
+
+    def classify(self, content_type: str) -> str:
+        """Classify a MIME type into a category.
+
+        Args:
+            content_type: MIME type string.
+
+        Returns:
+            Category string: text, image, video, audio, document, archive, unknown.
+        """
+        if not content_type:
+            return "unknown"
+
+        # Direct match
+        if content_type in CATEGORY_MAP:
+            return CATEGORY_MAP[content_type]
+
+        # Prefix match
+        for prefix, category in CATEGORY_MAP.items():
+            if content_type.startswith(prefix):
+                return category
+
+        # Fallback based on major type
+        major = content_type.split("/")[0] if "/" in content_type else ""
+        if major == "text":
+            return "text"
+        elif major == "image":
+            return "image"
+        elif major == "video":
+            return "video"
+        elif major == "audio":
+            return "audio"
+
+        return "unknown"
+
+    def should_index(self, url: str, content_type: str | None = None) -> bool:
+        """Determine if content at URL should be indexed.
+
+        Args:
+            url: The URL to check.
+            content_type: Optional known MIME type.
+
+        Returns:
+            True if the content should be indexed.
+        """
+        if content_type:
+            category = self.classify(content_type)
+        else:
+            info = self.detect_from_url(url)
+            category = info.category
+
+        # Index text and documents, skip media and archives
+        return category in ("text", "document")
+
+    def _get_extension(self, path: str) -> str:
+        """Extract file extension from path."""
+        # Handle query strings and fragments
+        clean = path.split("?")[0].split("#")[0]
+        return Path(clean).suffix.lower()
+
+    def _make_info(self, mime_type: str, ext: str) -> ContentTypeInfo:
+        """Create a ContentTypeInfo from MIME type and extension."""
+        category = self.classify(mime_type)
+        return ContentTypeInfo(
+            mime_type=mime_type,
+            category=category,
+            extension=ext,
+            is_text=category == "text",
+            is_media=category in ("image", "video", "audio"),
+            is_document=category == "document",
         )
