@@ -10,6 +10,23 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 
+# Common stop words to exclude from indexing
+STOP_WORDS = frozenset({
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to",
+    "for", "of", "with", "by", "is", "it", "as", "be", "are", "was",
+    "were", "this", "that", "from", "not", "no", "do", "does", "did",
+    "has", "have", "had", "will", "would", "could", "should", "may",
+    "might", "can", "shall", "its", "he", "she", "we", "they", "i",
+    "me", "my", "our", "your", "his", "her", "their", "what", "which",
+    "who", "when", "where", "how", "all", "each", "every", "both",
+    "few", "more", "most", "other", "some", "such", "than", "too",
+    "very", "just", "about", "above", "after", "again", "also", "any",
+    "because", "before", "between", "during", "if", "into", "only",
+    "own", "same", "so", "then", "there", "these", "those", "up",
+    "while", "am", "being", "having", "doing", "get", "got",
+})
+
+
 @dataclass
 class IndexedPage:
     """A page stored in the search index."""
@@ -87,10 +104,11 @@ class SearchIndex:
 
     @staticmethod
     def _tokenize(text: str) -> List[str]:
-        """Tokenize text into lowercase words."""
+        """Tokenize text into lowercase words, filtering stop words."""
         if not text:
             return []
-        return re.findall(r"[a-z0-9]+", text.lower())
+        words = re.findall(r"[a-z0-9]+", text.lower())
+        return [w for w in words if w not in STOP_WORDS and len(w) > 1]
 
     def add_page(self, page: IndexedPage) -> int:
         """Add a page to the index. Returns page id."""
