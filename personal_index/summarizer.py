@@ -1,252 +1,161 @@
-"""Content summarization for indexed pages."""
+"""Content summarization utilities."""
 
 from __future__ import annotations
 
+import logging
 import re
-import string
+from collections import Counter
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SummaryResult:
-    """Result of a summarization operation."""
-    original_length: int = 0
-    summary_length: int = 0
-    compression_ratio: float = 0.0
-    summary_text: str = ""
-    key_sentences: List[str] = field(default_factory=list)
-    key_phrases: List[str] = field(default_factory=list)
-    topics: List[str] = field(default_factory=list)
+    """Result of content summarization."""
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "original_length": self.original_length,
-            "summary_length": self.summary_length,
-            "compression_ratio": round(self.compression_ratio, 2),
-            "summary_text": self.summary_text,
-            "key_sentences": self.key_sentences,
-            "key_phrases": self.key_phrases,
-            "topics": self.topics,
-        }
+    original_length: int
+    summary: str
+    summary_length: int
+    compression_ratio: float
+    method: str
+    key_sentences: list[str] = field(default_factory=list)
+    key_phrases: list[str] = field(default_factory=list)
 
 
-class Summarizer:
-    """Summarize content using extractive methods."""
+class TextSummarizer:
+    """Extractive text summarization using various methods."""
 
-    def __init__(self, max_sentences: int = 5, min_sentence_length: int = 20):
+    def __init__(self, max_sentences: int = 5, min_sentence_length: int = 10):
         self.max_sentences = max_sentences
         self.min_sentence_length = min_sentence_length
 
-    def summarize(self, text: str) -> SummaryResult:
-        """Generate an extractive summary of the text."""
+    def summarize(self, text: str, method: str = "frequency") -> SummaryResult:
+        """Generate a summary of the text."""
         if not text or not text.strip():
-            return SummaryResult()
-
-        original_length = len(text)
-        sentences = self._split_sentences(text)
-
-        if not sentences:
             return SummaryResult(
-                original_length=original_length,
-                summary_text=text[:500],
+                original_length=0,
+                summary="",
+                summary_length=0,
+                compression_ratio=0.0,
+                method=method,
             )
 
-        scored = self._score_sentences(sentences)
-        top_sentences = sorted(scored, key=lambda x: x[1], reverse=True)[:self.max_sentences]
+        sentences = self._split_sentences(text)
+        if not sentences:
+            return SummaryResult(
+                original_length=len(text),
+                summary=text,
+                summary_length=len(text),
+                compression_ratio=1.0,
+                method=method,
+            )
 
-        # Reorder by original position
-        top_sentences.sort(key=lambda x: x[2])
-        summary_sentences = [s[0] for s in top_sentences]
+        if method == "frequency":
+            key_sentences = self._frequency_based(sentences)
+        elif method == "first_n":
+            key_sentences = self._first_n(sentences)
+        elif method == "last_n":
+            key_sentences = self._last_n(sentences)
+        elif method == "middle":
+            key_sentences = self._middle(sentences)
+        else:
+            raise ValueError(f"Unknown method: {method}")
 
-        summary_text = " ".join(summary_sentences)
+        summary = " ".join(key_sentences)
+        original_length = len(text)
+        summary_length = len(summary)
+        compression_ratio = summary_length / original_length if original_length > 0 else 0.0
+
         key_phrases = self._extract_key_phrases(text)
 
         return SummaryResult(
             original_length=original_length,
-            summary_length=len(summary_text),
-            compression_ratio=1.0 - (len(summary_text) / original_length) if original_length > 0 else 0.0,
-            summary_text=summary_text,
-            key_sentences=summary_sentences,
+            summary=summary,
+            summary_length=summary_length,
+            compression_ratio=compression_ratio,
+            method=method,
+            key_sentences=key_sentences,
             key_phrases=key_phrases,
         )
 
-    def summarize_paragraphs(self, text: str, max_paragraphs: int = 3) -> SummaryResult:
-        """Summarize by selecting the most important paragraphs."""
-        if not text or not text.strip():
-            return SummaryResult()
-
-        original_length = len(text)
-        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-
-        if not paragraphs:
-            paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
-
-        if len(paragraphs) <= max_paragraphs:
-            return SummaryResult(
-                original_length=original_length,
-                summary_text=text,
-                key_sentences=paragraphs,
-            )
-
-        scored = []
-        for i, para in enumerate(paragraphs):
-            score = self._score_paragraph(para)
-            scored.append((para, score, i))
-
-        top = sorted(scored, key=lambda x: x[1], reverse=True)[:max_paragraphs]
-        top.sort(key=lambda x: x[2])
-
-        summary_text = "\n\n".join(p[0] for p in top)
-
-        return SummaryResult(
-            original_length=original_length,
-            summary_length=len(summary_text),
-            compression_ratio=1.0 - (len(summary_text) / original_length) if original_length > 0 else 0.0,
-            summary_text=summary_text,
-            key_sentences=[p[0] for p in top],
-        )
-
-    def extract_headlines(self, text: str, max_count: int = 5) -> List[str]:
-        """Extract headline-like sentences (short, impactful)."""
-        sentences = self._split_sentences(text)
-        headlines = []
-        for s in sentences:
-            words = s.split()
-            if 3 <= len(words) <= 15 and len(s) < 200:
-                headlines.append(s.strip())
-        return headlines[:max_count]
-
-    def get_brief(self, text: str, max_words: int = 50) -> str:
-        """Get a very brief summary (first N words of key content)."""
-        if not text:
-            return ""
-        words = text.split()
-        if len(words) <= max_words:
-            return text
-        return " ".join(words[:max_words]) + "..."
-
-    def _split_sentences(self, text: str) -> List[str]:
+    def _split_sentences(self, text: str) -> list[str]:
         """Split text into sentences."""
-        # Handle common sentence boundaries
+        # Split on sentence-ending punctuation followed by space or end
         sentences = re.split(r'(?<=[.!?])\s+', text)
+        # Filter out empty and too-short sentences
         return [s.strip() for s in sentences if len(s.strip()) >= self.min_sentence_length]
 
-    def _score_sentences(self, sentences: List[str]) -> List[Tuple[str, float, int]]:
-        """Score sentences for importance. Returns (sentence, score, position)."""
-        scored = []
-        word_freq = self._compute_word_frequency(sentences)
-        total_sentences = len(sentences)
+    def _frequency_based(self, sentences: list[str]) -> list[str]:
+        """Select sentences based on word frequency."""
+        if not sentences:
+            return []
 
+        # Count word frequencies across all sentences
+        word_freq: Counter = Counter()
+        for sentence in sentences:
+            words = self._tokenize(sentence)
+            word_freq.update(words)
+
+        # Score each sentence by sum of word frequencies
+        sentence_scores = []
         for i, sentence in enumerate(sentences):
-            score = 0.0
             words = self._tokenize(sentence)
-            word_count = len(words)
-
-            if word_count == 0:
-                scored.append((sentence, 0.0, i))
+            if not words:
+                sentence_scores.append((0, i, sentence))
                 continue
+            score = sum(word_freq.get(w, 0) for w in words) / len(words)
+            sentence_scores.append((score, i, sentence))
 
-            # Frequency score
-            freq_score = sum(word_freq.get(w, 0) for w in words) / word_count
+        # Sort by score descending, then by original order
+        sentence_scores.sort(key=lambda x: (-x[0], x[1]))
 
-            # Position bonus (first and last sentences are often important)
-            position_score = 0.0
-            if i == 0:
-                position_score = 2.0
-            elif i == total_sentences - 1:
-                position_score = 1.0
-            elif i < 3:
-                position_score = 0.5
+        # Take top N sentences, then sort back by original order
+        selected = sentence_scores[:self.max_sentences]
+        selected.sort(key=lambda x: x[1])
 
-            # Length bonus (not too short, not too long)
-            length_score = 0.0
-            if 10 <= word_count <= 30:
-                length_score = 1.0
-            elif word_count < 10:
-                length_score = 0.5
-            elif word_count > 50:
-                length_score = 0.3
+        return [s[2] for s in selected]
 
-            # Keyword density bonus
-            keyword_words = {w for w in words if w.isalpha() and len(w) > 3}
-            keyword_density = len(keyword_words) / word_count if word_count > 0 else 0
-            keyword_score = keyword_density * 2.0
+    def _first_n(self, sentences: list[str]) -> list[str]:
+        """Take the first N sentences."""
+        return sentences[:self.max_sentences]
 
-            score = (freq_score * 0.3 + position_score * 0.25 +
-                     length_score * 0.2 + keyword_score * 0.25)
+    def _last_n(self, sentences: list[str]) -> list[str]:
+        """Take the last N sentences."""
+        return sentences[-self.max_sentences:]
 
-            scored.append((sentence, score, i))
+    def _middle(self, sentences: list[str]) -> list[str]:
+        """Take sentences from the middle of the text."""
+        mid = len(sentences) // 2
+        half = self.max_sentences // 2
+        start = max(0, mid - half)
+        end = start + self.max_sentences
+        return sentences[start:end]
 
-        return scored
+    def _tokenize(self, text: str) -> list[str]:
+        """Tokenize text into lowercase words."""
+        return re.findall(r'\b[a-z]{2,}\b', text.lower())
 
-    def _score_paragraph(self, paragraph: str) -> float:
-        """Score a paragraph for importance."""
-        words = self._tokenize(paragraph)
-        if not words:
-            return 0.0
-
-        # Length score
-        length = len(words)
-        length_score = min(1.0, length / 100.0)
-
-        # Keyword density
-        keyword_words = {w for w in words if w.isalpha() and len(w) > 3}
-        keyword_density = len(keyword_words) / length
-
-        # Sentence count
-        sentences = self._split_sentences(paragraph)
-        sentence_score = min(1.0, len(sentences) / 5.0)
-
-        return length_score * 0.3 + keyword_density * 0.4 + sentence_score * 0.3
-
-    def _compute_word_frequency(self, sentences: List[str]) -> Dict[str, int]:
-        """Compute word frequency across all sentences."""
-        freq: Dict[str, int] = {}
-        stop_words = {
-            "the", "a", "an", "is", "are", "was", "were", "be", "been",
-            "being", "have", "has", "had", "do", "does", "did", "will",
-            "would", "could", "should", "may", "might", "shall", "can",
-            "to", "of", "in", "for", "on", "with", "at", "by", "from",
-            "as", "into", "through", "during", "before", "after", "above",
-            "below", "between", "out", "off", "over", "under", "again",
-            "further", "then", "once", "here", "there", "when", "where",
-            "why", "how", "all", "each", "every", "both", "few", "more",
-            "most", "other", "some", "such", "no", "nor", "not", "only",
-            "own", "same", "so", "than", "too", "very", "just", "because",
-            "but", "and", "or", "if", "while", "that", "this", "these",
-            "those", "it", "its", "i", "me", "my", "we", "our", "you",
-            "your", "he", "him", "his", "she", "her", "they", "them",
-            "what", "which", "who", "whom", "about", "up", "down",
-        }
-
-        for sentence in sentences:
-            words = self._tokenize(sentence)
-            for word in words:
-                if word.lower() not in stop_words and len(word) > 2:
-                    freq[word.lower()] = freq.get(word.lower(), 0) + 1
-
-        return freq
-
-    def _tokenize(self, text: str) -> List[str]:
-        """Simple tokenization."""
-        return re.findall(r'\b[a-zA-Z]+\b', text.lower())
-
-    def _extract_key_phrases(self, text: str, max_phrases: int = 10) -> List[str]:
+    def _extract_key_phrases(self, text: str, max_phrases: int = 10) -> list[str]:
         """Extract key phrases from text."""
-        sentences = self._split_sentences(text)
-        word_freq = self._compute_word_frequency(sentences)
+        # Simple approach: find bigrams and trigrams with high frequency
+        words = self._tokenize(text)
+        if len(words) < 2:
+            return []
 
-        # Find bigrams with high combined frequency
-        bigram_freq: Dict[str, float] = {}
-        for sentence in sentences:
-            words = self._tokenize(sentence)
-            for i in range(len(words) - 1):
-                if words[i].isalpha() and words[i+1].isalpha():
-                    bigram = f"{words[i]} {words[i+1]}"
-                    freq_i = word_freq.get(words[i], 0)
-                    freq_j = word_freq.get(words[i+1], 0)
-                    bigram_freq[bigram] = bigram_freq.get(bigram, 0) + (freq_i + freq_j)
+        ngrams: Counter = Counter()
+        for i in range(len(words) - 1):
+            ngrams[f"{words[i]} {words[i+1]}"] += 1
+        if len(words) >= 3:
+            for i in range(len(words) - 2):
+                ngrams[f"{words[i]} {words[i+1]} {words[i+2]}"] += 1
 
-        sorted_bigrams = sorted(bigram_freq.items(), key=lambda x: x[1], reverse=True)
-        return [b[0] for b in sorted_bigrams[:max_phrases]]
+        return [phrase for phrase, _ in ngrams.most_common(max_phrases)]
+
+    def truncate(self, text: str, max_length: int = 200, suffix: str = "...") -> str:
+        """Truncate text to a maximum length."""
+        if len(text) <= max_length:
+            return text
+        truncated = text[:max_length].rsplit(" ", 1)[0]
+        return truncated + suffix
