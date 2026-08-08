@@ -1,0 +1,223 @@
+"""Rate limiting middleware for the API server."""
+
+from __future__ import annotations
+
+import hashlib
+import logging
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class RateLimitRule:
+    """A rate limiting rule."""
+
+    max_requests: int
+    window_seconds: float
+    key: str = "ip"  # ip, user, api_key
+    path_pattern: Optional[str] = None
+    methods: Optional[List[str]] = None
+
+    def matches(self, method: str, path: str) -> bool:
+        """Check if this rule matches the request."""
+        if self.methods and method not in self.methods:
+            return False
+        if self.path_pattern:
+            if not path.startswith(self.path_pattern):
+                return False
+        return True
+
+
+@dataclass
+class RateLimitEntry:
+    """Tracks request timestamps for rate limiting."""
+
+    timestamps: List[float] = field(default_factory=list)
+    window_start: float = field(default_factory=time.monotonic)
+
+    def cleanup(self, current_time: float, window: float):
+        """Remove expired timestamps."""
+        cutoff = current_time - window
+        self.timestamps = [t for t in self.timestamps if t > cutoff]
+
+    def can_request(self, current_time: float, max_requests: int) -> bool:
+        """Check if a request is allowed."""
+        self.cleanup(current_time, window=0)  # Will be set by caller
+        return len(self.timestamps) < max_requests
+
+    def record_request(self, current_time: float):
+        """Record a new request timestamp."""
+        self.timestamps.append(current_time)
+
+
+class SlidingWindowRateLimiter:
+    """Sliding window rate limiter for API requests."""
+
+    def __init__(self, rules: Optional[List[RateLimitRule]] = None):
+        self.rules = rules or [
+            RateLimitRule(max_requests=100, window_seconds=60.0, key="ip"),
+        ]
+        self._buckets: Dict[str, Dict[str, RateLimitEntry]] = defaultdict(dict)
+        self._global_limit: int = 1000
+        self._global_window: float = 60.0
+        self._global_timestamps: List[float] = []
+
+    def _get_key(self, identifier: str, rule: RateLimitRule) -> str:
+        """Generate a rate limit key."""
+        return f"{rule.key}:{identifier}:{rule.path_pattern or '*'}"
+
+    def is_allowed(
+        self,
+        identifier: str,
+        method: str,
+        path: str,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """Check if a request is allowed under rate limits.
+
+        Args:
+            identifier: Client identifier (IP, user ID, etc.)
+            method: HTTP method
+            path: Request path
+
+        Returns:
+            Tuple of (allowed, rate_limit_headers)
+        """
+        now = time.monotonic()
+        headers = {}
+
+        # Check global limit
+        self._global_timestamps = [
+            t for t in self._global_timestamps if now - t < self._global_window
+        ]
+        if len(self._global_timestamps) >= self._global_limit:
+            retry_after = self._global_window - (now - self._global_timestamps[0])
+            headers["Retry-After"] = str(max(1, int(retry_after)))
+            return False, headers
+
+        # Check per-rule limits
+        for rule in self.rules:
+            if not rule.matches(method, path):
+                continue
+
+            key = self._get_key(identifier, rule)
+            if key not in self._buckets[identifier]:
+                self._buckets[identifier][key] = RateLimitEntry()
+
+            entry = self._buckets[identifier][key]
+            entry.cleanup(now, rule.window_seconds)
+
+            if len(entry.timestamps) >= rule.max_requests:
+                oldest = entry.timestamps[0] if entry.timestamps else now
+                retry_after = rule.window_seconds - (now - oldest)
+                headers["Retry-After"] = str(max(1, int(retry_after)))
+                headers["X-RateLimit-Limit"] = str(rule.max_requests)
+                headers["X-RateLimit-Remaining"] = "0"
+                return False, headers
+
+            entry.record_request(now)
+            remaining = rule.max_requests - len(entry.timestamps)
+            headers["X-RateLimit-Limit"] = str(rule.max_requests)
+            headers["X-RateLimit-Remaining"] = str(remaining)
+            headers["X-RateLimit-Reset"] = str(int(now + rule.window_seconds))
+
+        # Record in global tracker
+        self._global_timestamps.append(now)
+        return True, headers
+
+    def get_status(self, identifier: str) -> Dict[str, Any]:
+        """Get rate limit status for an identifier."""
+        now = time.monotonic()
+        status = {"identifier": identifier, "rules": []}
+
+        for rule in self.rules:
+            key = self._get_key(identifier, rule)
+            entry = self._buckets.get(identifier, {}).get(key)
+            if entry:
+                entry.cleanup(now, rule.window_seconds)
+                remaining = max(0, rule.max_requests - len(entry.timestamps))
+                status["rules"].append({
+                    "key": rule.key,
+                    "limit": rule.max_requests,
+                    "remaining": remaining,
+                    "window": rule.window_seconds,
+                })
+
+        return status
+
+    def reset(self, identifier: Optional[str] = None):
+        """Reset rate limits.
+
+        Args:
+            identifier: Specific identifier to reset, or None for all.
+        """
+        if identifier:
+            self._buckets.pop(identifier, None)
+        else:
+            self._buckets.clear()
+        self._global_timestamps.clear()
+
+
+class RateLimitMiddleware:
+    """ASGI middleware for rate limiting."""
+
+    def __init__(
+        self,
+        app: Any,
+        limiter: Optional[SlidingWindowRateLimiter] = None,
+        key_extractor: Optional[Callable] = None,
+    ):
+        self.app = app
+        self.limiter = limiter or SlidingWindowRateLimiter()
+        self.key_extractor = key_extractor or self._default_key_extractor
+
+    @staticmethod
+    def _default_key_extractor(scope: Dict[str, Any]) -> str:
+        """Extract client identifier from ASGI scope."""
+        client = scope.get("client")
+        if client:
+            return client[0]  # IP address
+        return "unknown"
+
+    async def __call__(self, scope, receive, send):
+        """Process request with rate limiting."""
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        identifier = self.key_extractor(scope)
+        method = scope.get("method", "GET")
+        path = scope.get("path", "/")
+
+        allowed, headers = self.limiter.is_allowed(identifier, method, path)
+
+        if not allowed:
+            await send({
+                "type": "http.response.start",
+                "status": 429,
+                "headers": [
+                    [k.encode(), v.encode()]
+                    for k, v in headers.items()
+                ],
+            })
+            await send({
+                "type": "http.response.body",
+                "body": b'{"error": "Rate limit exceeded"}',
+            })
+            return
+
+        # Add rate limit headers to response
+        original_send = send
+
+        async def add_headers(message):
+            if message["type"] == "http.response.start":
+                headers_list = list(message.get("headers", []))
+                for k, v in headers.items():
+                    headers_list.append([k.encode(), v.encode()])
+                message["headers"] = headers_list
+            await original_send(message)
+
+        await self.app(scope, receive, add_headers)
