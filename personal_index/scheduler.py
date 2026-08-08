@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -159,7 +159,7 @@ class Scheduler:
             delay=delay,
         )
         entry = ScheduleEntry(name=name, config=config)
-        entry.next_run = datetime.utcnow()
+        entry.next_run = datetime.now(timezone.utc)
         self.schedule_store.add(entry)
         return entry
 
@@ -199,7 +199,7 @@ class Scheduler:
 
     def get_due_schedules(self) -> List[ScheduleEntry]:
         """Get all schedules that are due to run."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         due = []
         for entry in self.schedule_store.list_all():
             if not entry.config.enabled:
@@ -242,7 +242,7 @@ class Scheduler:
 
         entry.run_count += 1
         entry.total_pages_indexed += len(pages)
-        entry.last_run = datetime.utcnow()
+        entry.last_run = datetime.now(timezone.utc)
         interval = entry.config.interval_hours
         entry.next_run = entry.last_run + timedelta(hours=interval)
         self.schedule_store.update(entry)

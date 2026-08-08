@@ -1,6 +1,6 @@
 """Tests for personal_index.scheduler."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -177,7 +177,7 @@ class TestScheduler:
     def test_get_due_schedules_none_due(self, scheduler):
         scheduler.add_schedule("test", ["https://example.com"])
         entry = scheduler.schedule_store.get("test")
-        entry.next_run = datetime.utcnow() + timedelta(hours=100)
+        entry.next_run = datetime.now(timezone.utc) + timedelta(hours=100)
         scheduler.schedule_store.update(entry)
         due = scheduler.get_due_schedules()
         assert len(due) == 0
@@ -185,7 +185,7 @@ class TestScheduler:
     def test_get_due_schedules_due(self, scheduler):
         scheduler.add_schedule("test", ["https://example.com"])
         entry = scheduler.schedule_store.get("test")
-        entry.next_run = datetime.utcnow() - timedelta(hours=1)
+        entry.next_run = datetime.now(timezone.utc) - timedelta(hours=1)
         scheduler.schedule_store.update(entry)
         due = scheduler.get_due_schedules()
         assert len(due) == 1
@@ -194,7 +194,7 @@ class TestScheduler:
         scheduler.add_schedule("test", ["https://example.com"])
         entry = scheduler.schedule_store.get("test")
         entry.config.enabled = False
-        entry.next_run = datetime.utcnow() - timedelta(hours=1)
+        entry.next_run = datetime.now(timezone.utc) - timedelta(hours=1)
         scheduler.schedule_store.update(entry)
         due = scheduler.get_due_schedules()
         assert len(due) == 0
