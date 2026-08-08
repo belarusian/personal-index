@@ -84,10 +84,13 @@ class TestCache:
         cache.put("https://a.com", "A")
         cache.put("https://b.com", "B")
         cache.clear()
-        assert cache.get("https://a.com") is None
-        assert cache.get("https://b.com") is None
+        assert len(cache._memory_cache) == 0
         assert cache.hits == 0
         assert cache.misses == 0
+        # After clear, gets should return None and count as misses
+        assert cache.get("https://a.com") is None
+        assert cache.get("https://b.com") is None
+        assert cache.misses == 2
 
     def test_ttl_expiry(self, tmp_path):
         cache = Cache(cache_dir=str(tmp_path / "cache"), ttl=0)
