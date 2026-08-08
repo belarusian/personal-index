@@ -1,230 +1,193 @@
-"""Tests for web crawler module."""
+"""Tests for personal_index.crawler."""
 
 import pytest
 from unittest.mock import patch, MagicMock
-from personal_index.config import CrawlerConfig, Interest
-from personal_index.crawler import Crawler, RateLimiter, CrawlResult
+from datetime import datetime
+from urllib.parse import urlparse
+
+from personal_index.models import CrawledPage, CrawlConfig, Interest
+from personal_index.crawler import (
+    RateLimiter,
+    LinkExtractor,
+    PageParser,
+    WebCrawler,
+    CrawlStats,
+)
+from personal_index.filter import ContentFilter
+
+
+class TestCrawlStats:
+    def test_default_stats(self):
+        stats = CrawlStats()
+        assert stats.pages_crawled == 0
+        assert stats.pages_filtered == 0
+        assert stats.pages_stored == 0
+        assert stats.errors == 0
+        assert stats.duration is None
+
+    def test_duration_calculation(self):
+        start = datetime(2024, 1, 1, 12, 0, 0)
+        end = datetime(2024, 1, 1, 12, 0, 30)
+        stats = CrawlStats(start_time=start, end_time=end)
+        assert stats.duration == 30.0
 
 
 class TestRateLimiter:
-    def test_creation(self):
-        limiter = RateLimiter(rate=1.0)
-        assert limiter.rate == 1.0
-        assert limiter.last_request == {}
+    def test_rate_limiter_init(self):
+        limiter = RateLimiter(rate_limit=1.0, politeness_delay=0.5)
+        assert limiter.rate_limit == 1.0
+        assert limiter.politeness_delay == 0.5
 
-    def test_wait_records_domain(self):
-        limiter = RateLimiter(rate=1000)  # Very fast rate
-        limiter.wait("example.com")
-        assert "example.com" in limiter.last_request
-
-
-class TestCrawlResult:
-    def test_creation(self):
-        result = CrawlResult(url="http://example.com", success=True)
-        assert result.url == "http://example.com"
-        assert result.success is True
-        assert result.error == ""
-
-    def test_failed_result(self):
-        result = CrawlResult(
-            url="http://example.com",
-            success=False,
-            error="Connection refused",
-        )
-        assert result.success is False
-        assert result.error == "Connection refused"
+    @patch("time.sleep")
+    def test_wait_respects_rate_limit(self, mock_sleep):
+        limiter = RateLimiter(rate_limit=0.001, politeness_delay=0.001)
+        limiter.wait("https://example.com/page1")
+        limiter.wait("https://example.com/page2")
+        # Should have slept at least once for rate limiting
+        mock_sleep.assert_called()
 
 
-class TestCrawler:
-    def test_default_config(self):
-        crawler = Crawler()
-        assert crawler.config.max_depth == 3
-        assert crawler.config.timeout == 30
+class TestLinkExtractor:
+    def test_extract_absolute_links(self):
+        html = """
+        <html><body>
+        <a href="https://example.com/page1">Link 1</a>
+        <a href="https://example.com/page2">Link 2</a>
+        </body></html>
+        """
+        links = LinkExtractor.extract_links(html, "https://example.com")
+        assert "https://example.com/page1" in links
+        assert "https://example.com/page2" in links
 
-    def test_custom_config(self):
-        config = CrawlerConfig(max_depth=5, rate_limit=2.0)
-        crawler = Crawler(config=config)
+    def test_extract_relative_links(self):
+        html = """
+        <html><body>
+        <a href="/page1">Link 1</a>
+        <a href="page2">Link 2</a>
+        </body></html>
+        """
+        links = LinkExtractor.extract_links(html, "https://example.com/base/")
+        assert "https://example.com/page1" in links
+        assert "https://example.com/base/page2" in links
+
+    def test_skip_javascript_links(self):
+        html = '<a href="javascript:void(0)">Click</a>'
+        links = LinkExtractor.extract_links(html, "https://example.com")
+        assert len(links) == 0
+
+    def test_skip_mailto_links(self):
+        html = '<a href="mailto:test@example.com">Email</a>'
+        links = LinkExtractor.extract_links(html, "https://example.com")
+        assert len(links) == 0
+
+    def test_skip_anchor_links(self):
+        html = '<a href="#section">Section</a>'
+        links = LinkExtractor.extract_links(html, "https://example.com")
+        assert len(links) == 0
+
+    def test_deduplicate_links(self):
+        html = """
+        <a href="https://example.com/page1">Link 1</a>
+        <a href="https://example.com/page1">Link 1 again</a>
+        """
+        links = LinkExtractor.extract_links(html, "https://example.com")
+        assert len(links) == 1
+
+    def test_remove_fragments(self):
+        html = '<a href="https://example.com/page#section">Link</a>'
+        links = LinkExtractor.extract_links(html, "https://example.com")
+        assert "https://example.com/page" in links
+        assert "https://example.com/page#section" not in links
+
+
+class TestPageParser:
+    def test_parse_title(self):
+        html = "<html><head><title>Test Page</title></head><body>Content</body></html>"
+        page = PageParser.parse(html, "https://example.com")
+        assert page.title == "Test Page"
+
+    def test_parse_meta_description(self):
+        html = """
+        <html><head>
+        <meta name="description" content="A test description">
+        </head><body>Content</body></html>
+        """
+        page = PageParser.parse(html, "https://example.com")
+        assert page.meta_description == "A test description"
+
+    def test_parse_content(self):
+        html = "<html><body><p>Hello World</p></body></html>"
+        page = PageParser.parse(html, "https://example.com")
+        assert "Hello World" in page.content
+
+    def test_parse_removes_scripts(self):
+        html = """
+        <html><body>
+        <p>Visible text</p>
+        <script>alert('hidden')</script>
+        </body></html>
+        """
+        page = PageParser.parse(html, "https://example.com")
+        assert "Visible text" in page.content
+        assert "alert" not in page.content
+
+    def test_parse_removes_styles(self):
+        html = """
+        <html><body>
+        <p>Visible text</p>
+        <style>.hidden { display: none; }</style>
+        </body></html>
+        """
+        page = PageParser.parse(html, "https://example.com")
+        assert "Visible text" in page.content
+        assert "display" not in page.content
+
+    def test_parse_word_count(self):
+        html = "<html><body><p>One two three four five</p></body></html>"
+        page = PageParser.parse(html, "https://example.com")
+        assert page.word_count == 5
+
+    def test_parse_truncates_long_content(self):
+        long_content = "word " * 60000
+        html = f"<html><body><p>{long_content}</p></body></html>"
+        page = PageParser.parse(html, "https://example.com")
+        assert len(page.content) <= 50000
+
+
+class TestWebCrawler:
+    def test_crawler_default_config(self):
+        crawler = WebCrawler()
+        assert crawler.config.max_depth == 2
+        assert crawler.config.max_pages == 100
+
+    def test_crawler_custom_config(self):
+        config = CrawlConfig(max_depth=5, max_pages=50)
+        crawler = WebCrawler(config=config)
         assert crawler.config.max_depth == 5
-        assert crawler.rate_limiter.rate == 2.0
+        assert crawler.config.max_pages == 50
 
-    def test_reset(self):
-        crawler = Crawler()
-        crawler.visited.add("http://example.com")
-        crawler.domain_counts["example.com"] = 1
-        crawler.results = [CrawlResult(url="http://example.com", success=True)]
-        crawler.reset()
-        assert len(crawler.visited) == 0
-        assert len(crawler.domain_counts) == 0
-        assert len(crawler.results) == 0
+    def test_is_allowed_domain_no_restrictions(self):
+        crawler = WebCrawler()
+        assert crawler._is_allowed_domain("https://example.com") is True
 
-    @patch("personal_index.crawler.Crawler._fetch_and_process")
-    def test_crawl_single_url(self, mock_fetch):
-        mock_fetch.return_value = CrawlResult(
-            url="http://example.com",
-            success=True,
-            depth=0,
-            links_found=0,
-        )
-        crawler = Crawler()
-        results = crawler.crawl(["http://example.com"])
-        assert len(results) == 1
-        assert "example.com" in results[0].url
+    def test_is_allowed_domain_with_blocked(self):
+        config = CrawlConfig(blocked_domains=["spam.com"])
+        crawler = WebCrawler(config=config)
+        assert crawler._is_allowed_domain("https://spam.com") is False
+        assert crawler._is_allowed_domain("https://example.com") is True
 
-    @patch("personal_index.crawler.Crawler._fetch_and_process")
-    def test_crawl_respects_max_depth(self, mock_fetch):
-        mock_fetch.return_value = CrawlResult(
-            url="http://example.com",
-            success=True,
-            depth=0,
-            links_found=0,
-        )
-        config = CrawlerConfig(max_depth=1)
-        crawler = Crawler(config=config)
-        results = crawler.crawl(["http://example.com"])
-        assert len(results) == 1
+    def test_is_allowed_domain_with_allowed(self):
+        config = CrawlConfig(allowed_domains=["example.com"])
+        crawler = WebCrawler(config=config)
+        assert crawler._is_allowed_domain("https://example.com") is True
+        assert crawler._is_allowed_domain("https://other.com") is False
 
-    @patch("personal_index.crawler.Crawler._fetch_and_process")
-    def test_crawl_invalid_url(self, mock_fetch):
-        crawler = Crawler()
-        results = crawler.crawl(["not-a-url"])
-        assert len(results) == 0
+    def test_crawler_tracks_visited(self):
+        crawler = WebCrawler()
+        crawler._visited.add("https://example.com")
+        assert "https://example.com" in crawler.get_visited_urls()
 
-    @patch("personal_index.crawler.Crawler._fetch_and_process")
-    def test_crawl_progress_callback(self, mock_fetch):
-        mock_fetch.return_value = CrawlResult(
-            url="http://example.com",
-            success=True,
-            depth=0,
-            links_found=0,
-        )
-        progress_calls = []
-
-        def on_progress(url, depth, success):
-            progress_calls.append((url, depth, success))
-
-        crawler = Crawler()
-        crawler.crawl(["http://example.com"], on_progress=on_progress)
-        assert len(progress_calls) == 1
-        assert "example.com" in progress_calls[0][0]
-        assert progress_calls[0][2] is True
-
-    @patch("personal_index.crawler.Crawler._fetch_and_process")
-    def test_crawl_domain_limit(self, mock_fetch):
-        mock_fetch.return_value = CrawlResult(
-            url="http://example.com",
-            success=True,
-            depth=0,
-            links_found=0,
-        )
-        config = CrawlerConfig(max_pages_per_domain=1)
-        crawler = Crawler(config=config)
-        results = crawler.crawl([
-            "http://example.com/page1",
-            "http://example.com/page2",
-        ])
-        assert len(results) == 1
-
-    def test_get_stats(self):
-        crawler = Crawler()
-        crawler.results = [
-            CrawlResult(url="http://example.com/a", success=True),
-            CrawlResult(url="http://example.com/b", success=False),
-        ]
-        crawler.domain_counts = {"example.com": 2}
-        stats = crawler.get_stats()
-        assert stats["total_crawled"] == 2
-        assert stats["successful"] == 1
-        assert stats["failed"] == 1
-        assert stats["unique_domains"] == 1
-
-    def test_matches_interests_empty(self):
-        crawler = Crawler()
-        assert crawler._matches_interests("some text", []) is True
-
-    def test_matches_interests_match(self):
-        crawler = Crawler()
-        interest = Interest(topic="AI", keywords=["neural"])
-        assert crawler._matches_interests("neural networks", [interest]) is True
-
-    def test_matches_interests_no_match(self):
-        crawler = Crawler()
-        interest = Interest(topic="AI", keywords=["neural"])
-        assert crawler._matches_interests("cooking recipes", [interest]) is False
-
-    @patch("personal_index.crawler.requests.Session.get")
-    def test_fetch_success(self, mock_get):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"<html><body>Test content</body></html>"
-        mock_response.headers = {"Content-Type": "text/html"}
-        mock_response.text = "<html><body>Test content</body></html>"
-        mock_get.return_value = mock_response
-
-        crawler = Crawler()
-        result = crawler._fetch_and_process("http://example.com", 0, [])
-        assert result.success is True
-        assert result.content is not None
-
-    @patch("personal_index.crawler.requests.Session.get")
-    def test_fetch_404(self, mock_get):
-        mock_response = MagicMock()
-        mock_response.status_code = 404
-        mock_get.return_value = mock_response
-
-        crawler = Crawler()
-        result = crawler._fetch_and_process("http://example.com", 0, [])
-        assert result.success is False
-        assert "404" in result.error
-
-    @patch("personal_index.crawler.requests.Session.get")
-    def test_fetch_too_large(self, mock_get):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"x" * 2_000_000
-        mock_response.headers = {"Content-Type": "text/html"}
-        mock_response.text = "x" * 2_000_000
-        mock_get.return_value = mock_response
-
-        crawler = Crawler()
-        result = crawler._fetch_and_process("http://example.com", 0, [])
-        assert result.success is False
-        assert "too large" in result.error.lower()
-
-    @patch("personal_index.crawler.requests.Session.get")
-    def test_fetch_wrong_content_type(self, mock_get):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"binary data"
-        mock_response.headers = {"Content-Type": "application/pdf"}
-        mock_response.text = "binary data"
-        mock_get.return_value = mock_response
-
-        crawler = Crawler()
-        result = crawler._fetch_and_process("http://example.com", 0, [])
-        assert result.success is False
-        assert "content type" in result.error.lower()
-
-    @patch("personal_index.crawler.requests.Session.get")
-    def test_fetch_interest_filter(self, mock_get):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"<html><body>Cooking recipes</body></html>"
-        mock_response.headers = {"Content-Type": "text/html"}
-        mock_response.text = "<html><body>Cooking recipes</body></html>"
-        mock_get.return_value = mock_response
-
-        crawler = Crawler()
-        interest = Interest(topic="AI", keywords=["neural", "machine learning"])
-        result = crawler._fetch_and_process("http://example.com", 0, [interest])
-        assert result.success is False
-        assert "interest" in result.error.lower()
-
-    @patch("personal_index.crawler.requests.Session.get")
-    def test_fetch_request_exception(self, mock_get):
-        from requests.exceptions import ConnectionError
-        mock_get.side_effect = ConnectionError("Connection refused")
-
-        crawler = Crawler()
-        result = crawler._fetch_and_process("http://example.com", 0, [])
-        assert result.success is False
-        assert "Connection" in result.error
+    def test_crawler_queue_size(self):
+        crawler = WebCrawler()
+        crawler._queue.append(("https://example.com", 1, None))
+        assert crawler.get_queue_size() == 1
