@@ -163,7 +163,7 @@ def schedule():
 def add_schedule(name, url, interval):
     """Add a scheduled crawl job."""
     scheduler = Scheduler()
-    scheduler.add_job(name=name, url=url, interval_hours=interval)
+    scheduler.add_job(name=name, seed_urls=[url], interval_hours=interval)
     click.echo(f"Added scheduled job: {name}")
 
 
@@ -176,7 +176,8 @@ def list_schedule():
         click.echo("No scheduled jobs.")
         return
     for job in jobs:
-        click.echo(f"  {job.name}: {job.url} (every {job.interval_hours}h)")
+        urls = ', '.join(job.config.seed_urls) if job.config.seed_urls else 'none'
+        click.echo(f"  {job.name}: {urls} (every {job.config.interval_hours}h)")
 
 
 @schedule.command("remove")
