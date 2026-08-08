@@ -33,7 +33,7 @@ class URL:
 
     def __post_init__(self) -> None:
         if not self.domain:
-            self.domain = self._extract_domain()
+            self.domain = URL._extract_domain(self.url)
 
     @staticmethod
     def _extract_domain(url: str) -> str:
