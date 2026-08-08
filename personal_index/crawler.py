@@ -1,247 +1,297 @@
-"""Web crawler with configurable depth, politeness, and rate limiting."""
+"""Web crawler for personal-index.
 
-import time
+Handles fetching web pages with configurable depth, politeness,
+and rate limiting. Extracts links for further crawling.
+"""
+
+from __future__ import annotations
+
 import logging
+import time
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Set
-from urllib.parse import urlparse
+from datetime import datetime
+from typing import Optional
+from urllib.parse import urlparse, urljoin
 
 import requests
-from requests.exceptions import RequestException
+from bs4 import BeautifulSoup
 
-from personal_index.config import CrawlerConfig, Interest
-from personal_index.content import ExtractedContent, extract_content
-from personal_index.url_utils import (
-    is_valid_url,
-    normalize_url,
-    extract_links,
-    get_domain,
-    is_same_domain,
-    get_url_depth,
-)
+from personal_index.models import CrawledPage, CrawlConfig
+from personal_index.filter import ContentFilter
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class CrawlResult:
-    """Result of crawling a single URL."""
+class CrawlStats:
+    """Statistics about a crawl run."""
 
-    url: str
-    success: bool
-    content: Optional[ExtractedContent] = None
-    error: str = ""
-    depth: int = 0
-    links_found: int = 0
-    crawled_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    pages_crawled: int = 0
+    pages_filtered: int = 0
+    pages_stored: int = 0
+    errors: int = 0
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    urls_queued: int = 0
+
+    @property
+    def duration(self) -> Optional[float]:
+        """Duration of crawl in seconds."""
+        if self.start_time and self.end_time:
+            return (self.end_time - self.start_time).total_seconds()
+        return None
 
 
 class RateLimiter:
-    """Rate limiter for controlling request frequency."""
+    """Rate limiter that enforces delays between requests."""
 
-    def __init__(self, rate: float = 1.0):
-        self.rate = rate
-        self.last_request: Dict[str, float] = {}
+    def __init__(self, rate_limit: float = 1.0, politeness_delay: float = 0.5):
+        self.rate_limit = rate_limit
+        self.politeness_delay = politeness_delay
+        self._last_request_time: float = 0
+        self._last_request_per_host: dict[str, float] = {}
 
-    def wait(self, domain: str) -> None:
-        """Wait if needed to respect rate limit for a domain."""
+    def wait(self, url: str) -> None:
+        """Wait before making a request to respect rate limits."""
         now = time.time()
-        last = self.last_request.get(domain, 0)
-        delay = 1.0 / self.rate
-        elapsed = now - last
-        if elapsed < delay:
-            time.sleep(delay - elapsed)
-        self.last_request[domain] = time.time()
+        parsed = urlparse(url)
+        host = parsed.netloc
+
+        # Global rate limit
+        elapsed_since_last = now - self._last_request_time
+        if elapsed_since_last < self.rate_limit:
+            time.sleep(self.rate_limit - elapsed_since_last)
+
+        # Per-host politeness delay
+        if host in self._last_request_per_host:
+            elapsed_since_host = now - self._last_request_per_host[host]
+            if elapsed_since_host < self.politeness_delay:
+                time.sleep(self.politeness_delay - elapsed_since_host)
+
+        self._last_request_time = time.time()
+        self._last_request_per_host[host] = time.time()
 
 
-class Crawler:
-    """Web crawler with configurable depth, politeness, and rate limiting."""
+class LinkExtractor:
+    """Extracts links from HTML content."""
 
-    def __init__(self, config: Optional[CrawlerConfig] = None):
-        self.config = config or CrawlerConfig()
-        self.rate_limiter = RateLimiter(rate=self.config.rate_limit)
-        self.visited: Set[str] = set()
-        self.domain_counts: Dict[str, int] = {}
-        self.results: List[CrawlResult] = []
-        self.session = requests.Session()
-        self.session.headers.update(
-            {"User-Agent": self.config.user_agent}
+    @staticmethod
+    def extract_links(html: str, base_url: str) -> list[str]:
+        """Extract all unique, absolute links from HTML."""
+        soup = BeautifulSoup(html, "html.parser")
+        links = set()
+        for tag in soup.find_all("a", href=True):
+            href = tag["href"]
+            # Skip javascript, mailto, tel, anchor-only links
+            if href.startswith(("javascript:", "mailto:", "tel:", "#")):
+                continue
+            # Resolve relative URLs
+            absolute_url = urljoin(base_url, href)
+            # Normalize: remove fragment
+            parsed = urlparse(absolute_url)
+            normalized = parsed._replace(fragment="").geturl()
+            if normalized.startswith(("http://", "https://")):
+                links.add(normalized)
+        return list(links)
+
+
+class PageParser:
+    """Parses HTML content into structured data."""
+
+    @staticmethod
+    def parse(html: str, url: str) -> CrawledPage:
+        """Parse HTML into a CrawledPage."""
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Extract title
+        title = ""
+        title_tag = soup.find("title")
+        if title_tag and title_tag.string:
+            title = title_tag.string.strip()
+
+        # Extract meta description
+        meta_description = ""
+        meta_desc = soup.find("meta", attrs={"name": "description"})
+        if meta_desc and meta_desc.get("content"):
+            meta_description = meta_desc["content"].strip()
+
+        # Extract text content
+        # Remove script and style elements
+        for element in soup(["script", "style", "nav", "footer", "header"]):
+            element.decompose()
+        content = soup.get_text(separator="\n", strip=True)
+
+        # Truncate very long content
+        max_length = 50000
+        if len(content) > max_length:
+            content = content[:max_length]
+
+        word_count = len(content.split())
+
+        return CrawledPage(
+            url=url,
+            title=title,
+            content=content,
+            meta_description=meta_description,
+            word_count=word_count,
         )
 
-    def crawl(
+
+class WebCrawler:
+    """Web crawler with configurable depth, politeness, and rate limiting."""
+
+    def __init__(
         self,
-        seed_urls: List[str],
-        interests: List[Interest] = None,
-        on_progress=None,
-    ) -> List[CrawlResult]:
-        """Crawl starting from seed URLs."""
-        if interests is None:
-            interests = []
+        config: Optional[CrawlConfig] = None,
+        content_filter: Optional[ContentFilter] = None,
+    ):
+        self.config = config or CrawlConfig()
+        self.content_filter = content_filter
+        self.rate_limiter = RateLimiter(
+            rate_limit=self.config.rate_limit,
+            politeness_delay=self.config.politeness_delay,
+        )
+        self._visited: set[str] = set()
+        self._queue: deque[tuple[str, int, Optional[str]]] = deque()
+        self.stats = CrawlStats()
+        self._session = requests.Session()
+        self._session.headers.update({
+            "User-Agent": self.config.user_agent,
+        })
 
-        queue = deque()
+    def crawl(self, seed_urls: list[str]) -> CrawlStats:
+        """Start crawling from seed URLs.
+
+        Args:
+            seed_urls: Initial URLs to crawl from.
+
+        Returns:
+            CrawlStats with statistics about the crawl.
+        """
+        self.stats.start_time = datetime.utcnow()
+        self._visited.clear()
+        self._queue.clear()
+
         for url in seed_urls:
-            normalized = normalize_url(url)
-            if is_valid_url(normalized) and normalized not in self.visited:
-                queue.append((normalized, 0))
-                self.visited.add(normalized)
+            self._enqueue(url, depth=0, parent=None)
 
-        while queue:
-            url, depth = queue.popleft()
+        while self._queue and self.stats.pages_crawled < self.config.max_pages:
+            url, depth, parent_url = self._queue.popleft()
+
+            if url in self._visited:
+                continue
 
             if depth > self.config.max_depth:
                 continue
 
-            # Check domain limit
-            domain = get_domain(url)
-            if self.domain_counts.get(domain, 0) >= self.config.max_pages_per_domain:
+            # Check domain restrictions
+            if not self._is_allowed_domain(url):
                 continue
 
-            # Crawl the URL
-            result = self._fetch_and_process(url, depth, interests)
-            self.results.append(result)
-            self.domain_counts[domain] = self.domain_counts.get(domain, 0) + 1
+            self._visited.add(url)
+            self.stats.pages_crawled += 1
 
-            # Report progress
-            if on_progress:
-                on_progress(url, depth, result.success)
+            logger.info(f"Crawling [{self.stats.pages_crawled}]: {url}")
 
-            # Queue new links if successful
-            if result.success and result.content and depth < self.config.max_depth:
-                new_links = self._get_next_links(
-                    result.content, url, interests
+            try:
+                page = self._fetch_and_parse(url, depth, parent_url)
+                if page:
+                    self._process_page(page)
+            except Exception as e:
+                self.stats.errors += 1
+                logger.warning(f"Error crawling {url}: {e}")
+
+        self.stats.end_time = datetime.utcnow()
+        return self.stats
+
+    def _enqueue(
+        self, url: str, depth: int, parent: Optional[str]
+    ) -> None:
+        """Add a URL to the crawl queue."""
+        if url not in self._visited:
+            self._queue.append((url, depth + 1, parent))
+            self.stats.urls_queued += 1
+
+    def _is_allowed_domain(self, url: str) -> bool:
+        """Check if URL domain is allowed."""
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower()
+
+        if self.config.blocked_domains:
+            for blocked in self.config.blocked_domains:
+                if blocked.lower() in domain:
+                    return False
+
+        if self.config.allowed_domains:
+            for allowed in self.config.allowed_domains:
+                if allowed.lower() in domain:
+                    return True
+            return False
+
+        return True
+
+    def _fetch_and_parse(
+        self, url: str, depth: int, parent_url: Optional[str]
+    ) -> Optional[CrawledPage]:
+        """Fetch a URL and parse its content."""
+        self.rate_limiter.wait(url)
+
+        response = self._session.get(
+            url,
+            timeout=self.config.timeout,
+            allow_redirects=True,
+        )
+        response.raise_for_status()
+
+        # Check content length
+        content_length = len(response.content)
+        if content_length > self.config.max_content_length:
+            logger.warning(f"Skipping {url}: content too large ({content_length} bytes)")
+            return None
+
+        # Check content type
+        content_type = response.headers.get("Content-Type", "")
+        if "text/html" not in content_type and "application/xhtml" not in content_type:
+            logger.debug(f"Skipping {url}: not HTML (content-type: {content_type})")
+            return None
+
+        page = PageParser.parse(response.text, url)
+        page.status_code = response.status_code
+        page.depth = depth
+        page.parent_url = parent_url
+        page.headers = dict(response.headers)
+
+        return page
+
+    def _process_page(self, page: CrawledPage) -> None:
+        """Process a crawled page: filter, store, extract links."""
+        # Apply content filter
+        if self.content_filter:
+            filter_result = self.content_filter.filter_page(page)
+            if not filter_result.passed:
+                self.stats.pages_filtered += 1
+                logger.debug(f"Filtered out: {page.url}")
+                return
+
+        self.stats.pages_stored += 1
+
+        # Extract and queue links for further crawling
+        if page.depth < self.config.max_depth:
+            try:
+                links = LinkExtractor.extract_links(
+                    f"<html><body>{page.content}</body></html>",
+                    page.url,
                 )
-                for link in new_links:
-                    normalized = normalize_url(link)
-                    if (
-                        normalized not in self.visited
-                        and is_valid_url(normalized)
-                    ):
-                        self.visited.add(normalized)
-                        link_domain = get_domain(normalized)
-                        if self.domain_counts.get(link_domain, 0) < self.config.max_pages_per_domain:
-                            queue.append((normalized, depth + 1))
+                for link in links:
+                    self._enqueue(link, page.depth, page.url)
+            except Exception as e:
+                logger.debug(f"Error extracting links from {page.url}: {e}")
 
-        return self.results
+    def get_visited_urls(self) -> set[str]:
+        """Return set of visited URLs."""
+        return self._visited.copy()
 
-    def _fetch_and_process(
-        self, url: str, depth: int, interests: List[Interest]
-    ) -> CrawlResult:
-        """Fetch a URL and process its content."""
-        domain = get_domain(url)
-        self.rate_limiter.wait(domain)
-
-        try:
-            response = self.session.get(
-                url,
-                timeout=self.config.timeout,
-                allow_redirects=True,
-            )
-
-            if response.status_code != 200:
-                return CrawlResult(
-                    url=url,
-                    success=False,
-                    error=f"HTTP {response.status_code}",
-                    depth=depth,
-                )
-
-            # Check content length
-            if len(response.content) > self.config.max_content_length:
-                return CrawlResult(
-                    url=url,
-                    success=False,
-                    error="Content too large",
-                    depth=depth,
-                )
-
-            # Check content type
-            content_type = response.headers.get("Content-Type", "")
-            if "text/html" not in content_type and "application/xhtml" not in content_type:
-                return CrawlResult(
-                    url=url,
-                    success=False,
-                    error=f"Unsupported content type: {content_type}",
-                    depth=depth,
-                )
-
-            # Check if content matches interests
-            if interests and not self._matches_interests(response.text, interests):
-                return CrawlResult(
-                    url=url,
-                    success=False,
-                    error="No interest match",
-                    depth=depth,
-                )
-
-            # Extract content
-            content = extract_content(
-                response.text, url, status_code=response.status_code
-            )
-            links = extract_links(response.text, url)
-
-            return CrawlResult(
-                url=url,
-                success=True,
-                content=content,
-                depth=depth,
-                links_found=len(links),
-            )
-
-        except RequestException as e:
-            return CrawlResult(
-                url=url,
-                success=False,
-                error=str(e),
-                depth=depth,
-            )
-        except Exception as e:
-            return CrawlResult(
-                url=url,
-                success=False,
-                error=f"Unexpected error: {str(e)}",
-                depth=depth,
-            )
-
-    def _matches_interests(self, text: str, interests: List[Interest]) -> bool:
-        """Check if text matches any of the given interests."""
-        if not interests:
-            return True
-        return any(interest.matches(text) for interest in interests)
-
-    def _get_next_links(
-        self,
-        content: ExtractedContent,
-        current_url: str,
-        interests: List[Interest],
-    ) -> List[str]:
-        """Get next links to crawl from content."""
-        links = extract_links(content.text if content.text else "", current_url)
-        # Also check the original content links
-        for link in content.links:
-            from urllib.parse import urljoin
-            absolute = urljoin(current_url, link)
-            if is_valid_url(absolute):
-                links.append(normalize_url(absolute))
-        return list(set(links))
-
-    def get_stats(self) -> dict:
-        """Get crawl statistics."""
-        successful = sum(1 for r in self.results if r.success)
-        failed = sum(1 for r in self.results if not r.success)
-        return {
-            "total_crawled": len(self.results),
-            "successful": successful,
-            "failed": failed,
-            "unique_domains": len(self.domain_counts),
-            "visited_urls": len(self.visited),
-        }
-
-    def reset(self) -> None:
-        """Reset crawler state."""
-        self.visited = set()
-        self.domain_counts = {}
-        self.results = []
+    def get_queue_size(self) -> int:
+        """Return current queue size."""
+        return len(self._queue)
