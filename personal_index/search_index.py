@@ -90,7 +90,8 @@ class SearchIndex:
         page = self._pages.pop(url)
         text = f"{page.title} {page.content}".lower()
         tokens = set(self._tokenize(text))
-        for token in self._word_index:
+        # Iterate over a copy of keys to avoid RuntimeError
+        for token in list(self._word_index.keys()):
             if url in self._word_index[token]:
                 self._word_index[token].remove(url)
                 if not self._word_index[token]:
