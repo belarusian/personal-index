@@ -209,3 +209,16 @@ class Scheduler:
     def list_jobs(self) -> List[ScheduleEntry]:
         """List all scheduled jobs."""
         return self.schedule_store.list_all()
+
+
+@dataclass
+class ScheduledJob:
+    """A scheduled crawl job (CLI-facing)."""
+
+    name: str
+    seed_urls: List[str] = field(default_factory=list)
+    interval_hours: int = 24
+    run_count: int = 0
+    last_run: Optional[str] = None
+    next_run: Optional[str] = None
+    enabled: bool = True
