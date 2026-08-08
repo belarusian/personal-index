@@ -37,6 +37,7 @@ class SearchIndex:
         self.inverted_index: Dict[str, set] = {}  # term -> set of urls
         self.doc_lengths: Dict[str, float] = {}  # url -> number of terms
         self.term_doc_freq: Dict[str, int] = {}  # term -> number of docs containing it
+        self.term_counts: Dict[str, Dict[str, int]] = {}  # url -> {term: count}
         self._num_docs = 0
 
     @staticmethod
@@ -61,6 +62,9 @@ class SearchIndex:
         tokens = self.tokenize(doc.searchable_text)
         self.doc_lengths[doc.url] = len(tokens)
 
+        # Store term counts per document
+        self.term_counts[doc.url] = Counter(tokens)
+
         # Update inverted index and term frequencies
         unique_tokens = set(tokens)
         for token in unique_tokens:
@@ -79,6 +83,7 @@ class SearchIndex:
         doc = self.documents.pop(url)
         tokens = set(self.tokenize(doc.searchable_text))
         del self.doc_lengths[url]
+        self.term_counts.pop(url, None)
 
         for token in tokens:
             if token in self.inverted_index:
@@ -91,15 +96,9 @@ class SearchIndex:
         self._num_docs = max(0, self._num_docs - 1)
 
     def _tf(self, term: str, url: str) -> float:
-        """Calculate term frequency for a term in a document."""
-        doc = self.documents.get(url)
-        if not doc:
-            return 0.0
-        tokens = self.tokenize(doc.searchable_text)
-        count = tokens.count(term)
-        if not tokens:
-            return 0.0
-        return count / len(tokens)
+        """Calculate term frequency for a term in a document using raw count."""
+        counts = self.term_counts.get(url, {})
+        return counts.get(term, 0)
 
     def _idf(self, term: str) -> float:
         """Calculate inverse document frequency for a term."""
@@ -130,11 +129,11 @@ class SearchIndex:
                     matched[url] = []
                 matched[url].append(term)
 
-        # Normalize scores by document length
+        # Normalize scores by document length to prevent bias toward long docs
         results = []
         for url, score in scores.items():
             doc_len = self.doc_lengths.get(url, 1)
-            normalized = score / math.log(1 + doc_len) if doc_len > 0 else score
+            normalized = score / math.log(1 + doc_len) if doc_len > 1 else score
             results.append(SearchResult(
                 document=self.documents[url],
                 score=normalized,
@@ -162,4 +161,5 @@ class SearchIndex:
         self.inverted_index.clear()
         self.doc_lengths.clear()
         self.term_doc_freq.clear()
+        self.term_counts.clear()
         self._num_docs = 0
