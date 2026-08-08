@@ -1,111 +1,163 @@
-"""URL utilities for parsing, validation, and normalization."""
+"""URL utilities for personal-index.
+
+Provides URL normalization, validation, and domain extraction.
+"""
+
+from __future__ import annotations
 
 import re
-from urllib.parse import urlparse, urljoin, urlunparse, parse_qs, urlencode
-from typing import Optional, Set
+from urllib.parse import urlparse, urlunparse
+
+
+def normalize_url(url: str) -> str:
+    """Normalize a URL for consistent comparison and storage.
+
+    - Removes fragments
+    - Lowercases the scheme and netloc
+    - Removes trailing slashes (except for root)
+    - Sorts query parameters for consistency
+
+    Args:
+        url: URL to normalize.
+
+    Returns:
+        Normalized URL string.
+    """
+    parsed = urlparse(url)
+
+    # Lowercase scheme and netloc
+    normalized = parsed._replace(
+        scheme=parsed.scheme.lower(),
+        netloc=parsed.netloc.lower(),
+        fragment="",  # Remove fragment
+    )
+
+    # Remove trailing slash (except for root path)
+    path = normalized.path
+    if path != "/" and path.endswith("/"):
+        path = path.rstrip("/")
+    normalized = normalized._replace(path=path)
+
+    return urlunparse(normalized)
 
 
 def is_valid_url(url: str) -> bool:
-    """Check if a string is a valid URL."""
+    """Check if a string is a valid HTTP/HTTPS URL.
+
+    Args:
+        url: URL string to validate.
+
+    Returns:
+        True if the URL is valid.
+    """
     try:
-        result = urlparse(url)
-        return all([result.scheme in ("http", "https"), result.netloc])
+        parsed = urlparse(url)
+        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
     except Exception:
         return False
 
 
-def normalize_url(url: str) -> str:
-    """Normalize a URL by removing fragments, trailing slashes, and standardizing."""
-    parsed = urlparse(url)
-    path = parsed.path.rstrip("/") or "/"
-    normalized = urlunparse((
-        parsed.scheme.lower(),
-        parsed.netloc.lower().rstrip(":"),
-        path,
-        parsed.params,
-        parsed.query,
-        "",  # Remove fragment
-    ))
-    # Remove default ports
-    if parsed.port in (80, 443):
-        host = parsed.hostname
-        normalized = urlunparse((
-            parsed.scheme.lower(),
-            host,
-            path,
-            parsed.params,
-            parsed.query,
-            "",
-        ))
-    return normalized
+def extract_domain(url: str) -> str:
+    """Extract the domain from a URL.
 
+    Args:
+        url: URL string.
 
-def extract_links(html: str, base_url: str) -> list:
-    """Extract all links from HTML content."""
-    from bs4 import BeautifulSoup
-
-    soup = BeautifulSoup(html, "lxml")
-    links = []
-    for tag in soup.find_all("a", href=True):
-        href = tag["href"].strip()
-        if not href or href.startswith(("javascript:", "mailto:", "tel:", "#")):
-            continue
-        absolute_url = urljoin(base_url, href)
-        if is_valid_url(absolute_url):
-            links.append(normalize_url(absolute_url))
-    return list(set(links))
-
-
-def get_domain(url: str) -> str:
-    """Extract domain from URL."""
+    Returns:
+        Domain string (e.g., 'example.com').
+    """
     parsed = urlparse(url)
     return parsed.netloc.lower()
 
 
-def url_matches_pattern(url: str, pattern: str) -> bool:
-    """Check if URL matches a given pattern (supports wildcards)."""
-    regex_pattern = "^" + re.escape(pattern).replace(r"\*", ".*").replace(r"\?", ".") + "$"
-    return bool(re.match(regex_pattern, url, re.IGNORECASE))
-
-
 def is_same_domain(url1: str, url2: str) -> bool:
-    """Check if two URLs are from the same domain."""
-    return get_domain(url1) == get_domain(url2)
+    """Check if two URLs are on the same domain.
+
+    Args:
+        url1: First URL.
+        url2: Second URL.
+
+    Returns:
+        True if both URLs share the same domain.
+    """
+    return extract_domain(url1) == extract_domain(url2)
 
 
-def get_url_depth(url: str, seed_url: str) -> int:
-    """Calculate the depth of a URL relative to a seed URL."""
-    seed_parsed = urlparse(seed_url)
-    url_parsed = urlparse(url)
-    seed_path_parts = [p for p in seed_parsed.path.split("/") if p]
-    url_path_parts = [p for p in url_parsed.path.split("/") if p]
-    if not is_same_domain(url, seed_url):
-        return -1
-    return len(url_path_parts) - len(seed_path_parts)
+def is_internal_link(url: str, base_url: str) -> bool:
+    """Check if a URL is an internal link relative to a base URL.
+
+    Args:
+        url: URL to check.
+        base_url: Base URL for comparison.
+
+    Returns:
+        True if the URL is on the same domain as the base URL.
+    """
+    return is_same_domain(url, base_url)
 
 
-def filter_urls(
-    urls: list,
-    allowed_extensions: Optional[list] = None,
-    blocked_domains: Optional[Set[str]] = None,
-    url_patterns: Optional[list] = None,
-) -> list:
-    """Filter URLs based on criteria."""
-    filtered = []
-    for url in urls:
-        if blocked_domains and get_domain(url) in blocked_domains:
-            continue
-        if allowed_extensions:
-            parsed = urlparse(url)
-            ext = ""
-            if "." in parsed.path:
-                ext = "." + parsed.path.rsplit(".", 1)[-1].lower()
-            if ext not in allowed_extensions and ext != "":
-                if parsed.path.endswith(allowed_extensions):
-                    filtered.append(url)
-                continue
-        if url_patterns:
-            if not any(url_matches_pattern(url, p) for p in url_patterns):
-                continue
-        filtered.append(url)
-    return filtered
+def sanitize_url(url: str) -> str:
+    """Sanitize a URL by removing potentially dangerous components.
+
+    - Removes fragments
+    - Removes encoded null bytes
+    - Normalizes whitespace
+
+    Args:
+        url: URL to sanitize.
+
+    Returns:
+        Sanitized URL string.
+    """
+    # Remove fragments
+    if "#" in url:
+        url = url.split("#")[0]
+
+    # Remove encoded null bytes
+    url = url.replace("%00", "").replace("\x00", "")
+
+    # Normalize whitespace
+    url = " ".join(url.split()).strip()
+
+    return url
+
+
+def url_to_path(url: str) -> str:
+    """Convert a URL to a safe filesystem path.
+
+    Args:
+        url: URL to convert.
+
+    Returns:
+        Safe filesystem path string.
+    """
+    parsed = urlparse(url)
+    # Replace unsafe characters
+    safe_path = re.sub(r"[^a-zA-Z0-9._-]", "_", parsed.path)
+    if not safe_path or safe_path == "_":
+        safe_path = "index"
+    return f"{parsed.netloc}/{safe_path}"
+
+
+def generate_seed_urls(
+    keywords: list[str],
+    search_engine: str = "google",
+) -> list[str]:
+    """Generate seed URLs from keywords using a search engine.
+
+    Args:
+        keywords: List of keywords to search for.
+        search_engine: Search engine to use ('google', 'duckduckgo', 'bing').
+
+    Returns:
+        List of search result URLs to use as seed URLs.
+    """
+    query = "+".join(keywords)
+
+    engines = {
+        "google": f"https://www.google.com/search?q={query}",
+        "duckduckgo": f"https://duckduckgo.com/?q={query}",
+        "bing": f"https://www.bing.com/search?q={query}",
+    }
+
+    return [engines.get(search_engine, engines["google"])]
