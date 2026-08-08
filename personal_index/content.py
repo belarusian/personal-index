@@ -2,7 +2,7 @@
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from urllib.parse import urlparse
 
@@ -22,7 +22,7 @@ class ExtractedContent:
     links: List[str] = field(default_factory=list)
     content_length: int = 0
     language: str = "en"
-    fetched_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    fetched_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     status_code: int = 0
 
     def get_searchable_text(self) -> str:
