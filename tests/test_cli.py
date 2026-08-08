@@ -174,7 +174,7 @@ class TestResultsCommand:
             ["--config-dir", temp_config_dir, "results", "--format", "json"],
         )
         assert result.exit_code == 0
-        assert result.output == "[]"
+        assert result.output.strip() == "[]"
 
 
 class TestStatsCommand:

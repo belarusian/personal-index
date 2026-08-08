@@ -1,7 +1,6 @@
 """Configuration management for personal-index."""
 
 import json
-import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import List, Optional
@@ -89,6 +88,17 @@ class AppConfig:
     interests: List[Interest] = field(default_factory=list)
     schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
 
+    def __post_init__(self):
+        """Ensure data_dir and index_dir are relative to config_dir."""
+        if not hasattr(self, '_initialized'):
+            self.data_dir = self.config_dir / "data"
+            self.index_dir = self.config_dir / "index"
+            self._initialized = True
+
+    def _config_file(self) -> Path:
+        """Get the config file path based on config_dir."""
+        return self.config_dir / "config.json"
+
     def ensure_dirs(self) -> None:
         """Create necessary directories."""
         self.config_dir.mkdir(parents=True, exist_ok=True)
@@ -103,16 +113,18 @@ class AppConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AppConfig":
+    def from_dict(cls, data: dict, config_dir: Path = None) -> "AppConfig":
         crawler = CrawlerConfig.from_dict(data.get("crawler", {}))
         interests = [Interest.from_dict(i) for i in data.get("interests", [])]
         schedule = ScheduleConfig.from_dict(data.get("schedule", {}))
+        if config_dir:
+            return cls(config_dir=config_dir, crawler=crawler, interests=interests, schedule=schedule)
         return cls(crawler=crawler, interests=interests, schedule=schedule)
 
     def save(self, path: Optional[Path] = None) -> None:
         """Save configuration to file."""
         self.ensure_dirs()
-        filepath = path or DEFAULT_CONFIG_FILE
+        filepath = path or self._config_file()
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
@@ -120,9 +132,14 @@ class AppConfig:
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "AppConfig":
         """Load configuration from file."""
+        if path:
+            config_dir = path.parent
+        else:
+            config_dir = DEFAULT_CONFIG_DIR
+
         filepath = path or DEFAULT_CONFIG_FILE
         if filepath.exists():
             with open(filepath) as f:
                 data = json.load(f)
-            return cls.from_dict(data)
+            return cls.from_dict(data, config_dir=config_dir)
         return cls()

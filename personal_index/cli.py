@@ -35,6 +35,15 @@ def main(ctx, config_dir, verbose):
     else:
         config = AppConfig()
     config.ensure_dirs()
+
+    # Load existing config if it exists
+    config_file = config._config_file()
+    if config_file.exists():
+        loaded = AppConfig.load(config_file)
+        config.interests = loaded.interests
+        config.crawler = loaded.crawler
+        config.schedule = loaded.schedule
+
     ctx.obj["config"] = config
     ctx.obj["index"] = SearchIndex(index_dir=config.index_dir)
     ctx.obj["filter"] = ContentFilter(interests=config.interests)
