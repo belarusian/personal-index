@@ -32,10 +32,11 @@ class TestMetricStats:
         assert stats.mean == 5.0
 
     def test_stddev(self):
+        # Values 4 and 6: mean=5, variance=1, stddev=1
         stats = MetricStats(name="test")
         stats.count = 2
         stats.total = 10.0
-        stats.sum_sq = 50.0
+        stats.sum_sq = 52.0  # 4^2 + 6^2 = 16 + 36 = 52
         assert stats.stddev > 0
 
     def test_min_max(self):
