@@ -14,7 +14,7 @@ from personal_index.models import CrawledPage
 class FilterConfig:
     """Configuration for content filtering."""
 
-    min_content_length: int = 100
+    min_content_length: int = 10
     max_content_length: int = 100000
     min_title_length: int = 3
     require_interest_match: bool = True
