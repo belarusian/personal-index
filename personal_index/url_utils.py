@@ -29,20 +29,23 @@ def is_valid_url(url: str) -> bool:
 
 
 def normalize_url(url: str) -> str:
-    """Normalize URL: lowercase scheme/domain, remove fragments."""
+    """Normalize URL: lowercase scheme/domain, remove fragments, default ports."""
     if not url:
         return url
     try:
         parsed = urlparse(url)
         scheme = parsed.scheme.lower()
         netloc = parsed.netloc.lower()
+        # Remove default ports
         if scheme == "http" and netloc.endswith(":80"):
             netloc = netloc[:-3]
         elif scheme == "https" and netloc.endswith(":443"):
             netloc = netloc[:-4]
         path = parsed.path
+        # Remove trailing slash except for root path
         if path != "/" and path.endswith("/"):
             path = path.rstrip("/")
+        # Remove fragment
         normalized = urlunparse(
             (scheme, netloc, path, parsed.params, parsed.query, "")
         )
@@ -125,12 +128,41 @@ def url_to_path(url: str) -> str:
 
 
 def join_urls(base: str, relative: str) -> str:
-    """Join a base URL with a relative URL."""
-    return urljoin(base, relative)
+    """Join a base URL with a relative URL.
+
+    If base ends with a path (not /), relative paths are appended to it.
+    If relative starts with /, it replaces the path.
+    If relative is a full URL, it is returned as-is.
+    """
+    parsed = urlparse(relative)
+    if parsed.scheme in ("http", "https"):
+        return relative
+    # Use urljoin but handle the case where base has a path component
+    # urljoin treats base as a file if it doesn't end with /
+    # We want /base + page -> /base/page
+    base_parsed = urlparse(base)
+    if relative.startswith("/"):
+        # Absolute path replaces the entire path
+        return urlunparse((
+            base_parsed.scheme, base_parsed.netloc, relative,
+            "", "", ""
+        ))
+    # Relative path: append to base path
+    base_path = base_parsed.path
+    if not base_path.endswith("/"):
+        base_path += "/"
+    new_path = base_path + relative
+    return urlunparse((
+        base_parsed.scheme, base_parsed.netloc, new_path,
+        "", "", ""
+    ))
 
 
-def extract_all_urls(html: str, base_url: str) -> list:
-    """Extract all URLs from HTML content."""
+def extract_all_urls(html: str, base_url: str = "") -> list:
+    """Extract all URLs from HTML content.
+
+    If base_url is not provided, extracts URLs that are already absolute.
+    """
     from bs4 import BeautifulSoup
     urls = []
     try:
@@ -139,7 +171,10 @@ def extract_all_urls(html: str, base_url: str) -> list:
             href = a["href"].strip()
             if href.startswith("#") or href.startswith("javascript:"):
                 continue
-            full_url = urljoin(base_url, href)
+            if base_url:
+                full_url = urljoin(base_url, href)
+            else:
+                full_url = href
             normalized = normalize_url(full_url)
             if is_valid_url(normalized):
                 urls.append(normalized)
