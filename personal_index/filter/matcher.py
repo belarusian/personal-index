@@ -82,8 +82,13 @@ class InterestFilter:
         best = None
         best_score = 0.0
         for matcher in self._matchers:
-            if matcher.matches_content(text) or matcher.matches_url(url):
+            content_match = matcher.matches_content(text)
+            url_match = matcher.matches_url(url)
+            if content_match or url_match:
                 score = matcher.relevance_score(text)
+                # For URL-only matches, use priority as score
+                if url_match and not content_match:
+                    score = max(score, matcher.interest.priority)
                 if score > best_score:
                     best_score = score
                     best = matcher.interest
