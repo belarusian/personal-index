@@ -1,163 +1,137 @@
-"""
-Text utilities for personal-index.
+"""Text processing utilities."""
 
-Provides text extraction, normalization, and snippet generation.
-"""
+from __future__ import annotations
 
 import re
-import html
-from typing import Optional
+from typing import List, Optional, Set
+
+from bs4 import BeautifulSoup
+
+STOPWORDS = {
+    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did", "will", "would", "could",
+    "should", "may", "might", "shall", "can", "need", "dare", "ought",
+    "used", "to", "of", "in", "for", "on", "with", "at", "by", "from",
+    "as", "into", "through", "during", "before", "after", "above", "below",
+    "between", "out", "off", "over", "under", "again", "further", "then",
+    "once", "here", "there", "when", "where", "why", "how", "all", "both",
+    "each", "few", "more", "most", "other", "some", "such", "no", "nor",
+    "not", "only", "own", "same", "so", "than", "too", "very", "just",
+    "because", "but", "and", "or", "if", "while", "that", "this", "these",
+    "those", "it", "its", "i", "me", "my", "we", "our", "you", "your",
+    "he", "him", "his", "she", "her", "they", "them", "their", "what",
+    "which", "who", "whom", "am", "about", "up", "down",
+}
 
 
-def extract_text_from_html(html_content: str) -> str:
-    """Extract clean text content from HTML."""
-    if not html_content:
+def extract_text_from_html(html: Optional[str]) -> str:
+    """Extract visible text from HTML, removing scripts and styles."""
+    if not html:
+        return ""
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup(["script", "style", "noscript"]):
+            tag.decompose()
+        text = soup.get_text(separator=" ", strip=True)
+        return " ".join(text.split())
+    except Exception:
         return ""
 
-    # Remove script and style elements
-    text = re.sub(r'<script[^>]*>.*?</script>', ' ', html_content, flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r'<style[^>]*>.*?</style>', ' ', text, flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text, flags=re.IGNORECASE | re.DOTALL)
 
-    # Handle common block elements
-    text = re.sub(r'</?(p|div|article|section|header|footer|nav|main|aside|blockquote|pre|ul|ol|li|h[1-6])[^>]*>', '\n', text, flags=re.IGNORECASE)
-    text = re.sub(r'</?(br|hr)[^>]*>/', '\n', text, flags=re.IGNORECASE)
-    text = re.sub(r'</?(span|strong|em|b|i|u|a)[^>]*>', ' ', text, flags=re.IGNORECASE)
-
-    # Remove remaining HTML tags
-    text = re.sub(r'<[^>]+>', ' ', text)
-
-    # Decode HTML entities
-    text = html.unescape(text)
-
-    # Clean whitespace
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
-
-
-def extract_title_from_html(html_content: str) -> str:
-    """Extract the title from HTML."""
-    if not html_content:
+def extract_title_from_html(html: Optional[str]) -> str:
+    """Extract page title from HTML."""
+    if not html:
         return ""
-    match = re.search(r'<title[^>]*>(.*?)</title>', html_content, re.IGNORECASE | re.DOTALL)
-    if match:
-        return html.unescape(match.group(1).strip())
-    return ""
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        title = soup.find("title")
+        if title and title.string:
+            return title.string.strip()
+        return ""
+    except Exception:
+        return ""
 
 
-def extract_meta_description(html_content: str) -> str:
+def extract_meta_description(html: Optional[str]) -> str:
     """Extract meta description from HTML."""
-    if not html_content:
+    if not html:
         return ""
-    match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']*)["\']', html_content, re.IGNORECASE)
-    if not match:
-        match = re.search(r'<meta[^>]*content=["\']([^"\']*)["\'][^>]*name=["\']description["\']', html_content, re.IGNORECASE)
-    if match:
-        return html.unescape(match.group(1).strip())
-    return ""
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        meta = soup.find("meta", attrs={"name": "description"})
+        if meta and meta.get("content"):
+            return meta["content"].strip()
+        return ""
+    except Exception:
+        return ""
 
 
-def tokenize(text: str) -> list[str]:
-    """Tokenize text into lowercase words, filtering stopwords."""
+def tokenize(text: Optional[str]) -> List[str]:
+    """Tokenize text into lowercase words, filtering stopwords and short words."""
     if not text:
         return []
-    STOPWORDS = {
-        'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-        'of', 'with', 'by', 'from', 'is', 'it', 'as', 'was', 'are', 'be',
-        'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'we', 'they',
-        'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their',
-        'not', 'no', 'do', 'does', 'did', 'has', 'have', 'had', 'will', 'would',
-        'could', 'should', 'may', 'might', 'can', 'shall', 'been', 'being',
-        'what', 'which', 'who', 'whom', 'when', 'where', 'why', 'how',
-        'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such',
-        'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'also',
-        'about', 'up', 'out', 'if', 'then', 'else', 'into', 'over', 'after',
-        'before', 'between', 'under', 'again', 'further', 'here', 'there',
-    }
-    words = re.findall(r'\b[a-z0-9]+\b', text.lower())
-    return [w for w in words if len(w) > 1 and w not in STOPWORDS]
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    return [t for t in tokens if t not in STOPWORDS and len(t) > 1]
 
 
 def generate_snippet(text: str, query: str, max_length: int = 200) -> str:
-    """Generate a search snippet highlighting query terms."""
+    """Generate a snippet highlighting query terms."""
     if not text:
         return ""
-
-    query_terms = tokenize(query)
-    if not query_terms:
-        return text[:max_length]
-
-    text_lower = text.lower()
-
-    # Find the best context around query terms
-    best_start = 0
-    best_score = -1
-
-    for term in query_terms:
-        idx = text_lower.find(term)
-        if idx != -1:
-            score = len(term)
-            if score > best_score:
-                best_score = score
-                best_start = max(0, idx - 50)
-
-    snippet = text[best_start:best_start + max_length]
-    if len(snippet) < len(text):
+    query_lower = query.lower()
+    idx = text.lower().find(query_lower)
+    if idx == -1:
+        return text[:max_length] + ("..." if len(text) > max_length else "")
+    start = max(0, idx - 50)
+    end = min(len(text), idx + len(query) + max_length)
+    snippet = text[start:end]
+    if start > 0:
         snippet = "..." + snippet
-    if best_start > 0:
+    if end < len(text):
         snippet = snippet + "..."
-
     return snippet
 
 
 def compute_text_similarity(text1: str, text2: str) -> float:
-    """Compute simple text similarity using word overlap."""
-    words1 = set(tokenize(text1))
-    words2 = set(tokenize(text2))
-
-    if not words1 or not words2:
+    """Compute similarity between two texts based on shared tokens."""
+    tokens1 = set(tokenize(text1))
+    tokens2 = set(tokenize(text2))
+    if not tokens1 or not tokens2:
         return 0.0
-
-    intersection = words1 & words2
-    union = words1 | words2
-
+    intersection = tokens1 & tokens2
+    union = tokens1 | tokens2
     return len(intersection) / len(union)
 
 
-def truncate_text(text: str, max_length: int = 1000) -> str:
-    """Truncate text to a maximum length, preserving word boundaries."""
+def truncate_text(text: str, max_length: int = 200) -> str:
+    """Truncate text at word boundary."""
     if len(text) <= max_length:
         return text
     truncated = text[:max_length]
-    last_space = truncated.rfind(' ')
-    if last_space > max_length * 0.8:
+    last_space = truncated.rfind(" ")
+    if last_space > max_length * 0.5:
         truncated = truncated[:last_space]
-    return truncated + "..."
+    return truncated.rstrip() + "..."
 
 
 def count_words(text: str) -> int:
     """Count words in text."""
     if not text:
         return 0
-    return len(re.findall(r'\b\w+\b', text))
+    return len(text.split())
 
 
-def extract_links_from_html(html_content: str, base_url: str) -> list[str]:
-    """Extract all valid links from HTML content."""
-    links = []
-    pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>'
-    for match in re.finditer(pattern, html_content, re.IGNORECASE):
-        href = match.group(1).strip()
-        if href.startswith(('http://', 'https://')):
-            from urllib.parse import urlparse
-            parsed = urlparse(href)
-            if parsed.netloc:
+def extract_links_from_html(html: str) -> List[str]:
+    """Extract all links from HTML."""
+    if not html:
+        return []
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        links = []
+        for a in soup.find_all("a", href=True):
+            href = a["href"].strip()
+            if href and not href.startswith("#") and not href.startswith("javascript:"):
                 links.append(href)
-        elif href.startswith('/'):
-            from urllib.parse import urlparse
-            parsed = urlparse(base_url)
-            links.append(f"{parsed.scheme}://{parsed.netloc}{href}")
-        elif not href.startswith(('#', 'mailto:', 'tel:', 'javascript:')):
-            from urllib.parse import urljoin
-            links.append(urljoin(base_url, href))
-    return links
+        return links
+    except Exception:
+        return []
