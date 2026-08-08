@@ -16,7 +16,8 @@ class TestRobotsCacheEntry:
         entry = RobotsCacheEntry(domain="example.com")
         entry.fetched_at = time.time() - 7200
         assert entry.is_expired(ttl=3600) is True
-        assert entry.is_expired(ttl=7200) is False
+        # Use 7201 to account for tiny timing gap between setup and assertion
+        assert entry.is_expired(ttl=7201) is False
 
     def test_allows_agent(self):
         entry = RobotsCacheEntry(domain="example.com")
