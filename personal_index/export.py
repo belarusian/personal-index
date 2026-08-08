@@ -5,11 +5,10 @@ from __future__ import annotations
 import csv
 import io
 import json
-from dataclasses import asdict
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-from personal_index.index import SearchIndex
-from personal_index.models import IndexedPage, SearchResult
+from personal_index.index import SearchIndex, IndexedPage
+from personal_index.models import SearchResult
 
 
 def export_to_json(
@@ -24,7 +23,7 @@ def export_to_json(
         "pages": [],
     }
     for page in pages:
-        page_dict = asdict(page)
+        page_dict = page.to_dict()
         if not include_content:
             page_dict.pop("content", None)
         data["pages"].append(page_dict)
