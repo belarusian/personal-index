@@ -83,11 +83,16 @@ class Cache:
     ):
         """Store a response in the cache."""
         now = time.time()
+        # TTL of 0 means immediate expiry (expires_at = now)
+        if self.ttl > 0:
+            expires_at = now + self.ttl
+        else:
+            expires_at = now  # expires immediately
         entry = CacheEntry(
             url=url,
             content=content,
             cached_at=now,
-            expires_at=now + self.ttl if self.ttl > 0 else 0,
+            expires_at=expires_at,
             content_type=content_type,
             status_code=status_code,
             etag=etag,
@@ -121,12 +126,12 @@ class Cache:
                 path.unlink()
 
     def clear(self):
-        """Clear all cache entries."""
+        """Clear all cache entries and reset counters."""
+        self._memory_cache.clear()
         self.hits = 0
         self.misses = 0
         for f in self.cache_dir.glob("*.json"):
             f.unlink()
-        self._memory_cache.clear()
 
     def _evict_oldest(self):
         """Evict the oldest cache entry."""
