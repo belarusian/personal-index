@@ -1,172 +1,222 @@
-"""Tests for the scheduler module."""
+"""Tests for personal_index.scheduler."""
 
-import json
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 
-from personal_index.scheduler import Scheduler, ScheduledJob, SchedulerStats
-from personal_index.config import ScheduleConfig
+from personal_index.scheduler import (
+    ScheduleConfig,
+    ScheduleEntry,
+    ScheduleStore,
+    Scheduler,
+)
+from personal_index.interest_store import InterestStore
+from personal_index.models import Interest, InterestType
+from personal_index.search_index import SearchIndex
 
 
-class TestScheduledJob:
-    def test_create_job(self):
-        job = ScheduledJob(
-            name="daily-news",
-            seed_urls=["https://news.example.com"],
-            interval_hours=24,
-        )
-        assert job.name == "daily-news"
-        assert job.enabled is True
-        assert job.status == "pending"
-        assert job.run_count == 0
+@pytest.fixture
+def schedule_store_path(tmp_path):
+    return str(tmp_path / "schedules.json")
 
-    def test_job_with_custom_values(self):
-        job = ScheduledJob(
-            name="tech",
-            seed_urls=["https://tech.example.com"],
+
+@pytest.fixture
+def store(schedule_store_path):
+    return ScheduleStore(path=schedule_store_path)
+
+
+@pytest.fixture
+def interest_store(tmp_path):
+    s = InterestStore(storage_path=str(tmp_path / "interests.json"))
+    s.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+    return s
+
+
+@pytest.fixture
+def search_index(tmp_path):
+    return SearchIndex(index_path=str(tmp_path / "index.json"))
+
+
+@pytest.fixture
+def scheduler(interest_store, search_index, schedule_store_path):
+    schedule_store = ScheduleStore(path=schedule_store_path)
+    return Scheduler(
+        interest_store=interest_store,
+        search_index=search_index,
+        schedule_store=schedule_store,
+    )
+
+
+class TestScheduleConfig:
+    """Tests for ScheduleConfig."""
+
+    def test_defaults(self):
+        config = ScheduleConfig()
+        assert config.interval_hours == 24
+        assert config.enabled is True
+        assert config.seed_urls == []
+        assert config.max_pages_per_run == 50
+        assert config.crawl_depth == 2
+        assert config.delay == 1.0
+
+    def test_custom_config(self):
+        config = ScheduleConfig(
             interval_hours=6,
-            enabled=False,
+            seed_urls=["https://example.com"],
+            max_pages_per_run=200,
         )
-        assert job.enabled is False
-        assert job.interval_hours == 6
+        assert config.interval_hours == 6
+        assert config.seed_urls == ["https://example.com"]
+        assert config.max_pages_per_run == 200
 
 
-class TestSchedulerStats:
-    def test_default_stats(self):
-        stats = SchedulerStats()
-        assert stats.total_runs == 0
-        assert stats.total_pages_crawled == 0
-        assert stats.total_errors == 0
+class TestScheduleEntry:
+    """Tests for ScheduleEntry."""
+
+    def test_create_entry(self):
+        config = ScheduleConfig(seed_urls=["https://example.com"])
+        entry = ScheduleEntry(name="daily", config=config)
+        assert entry.name == "daily"
+        assert entry.run_count == 0
+        assert entry.total_pages_indexed == 0
+        assert entry.last_run is None
+        assert entry.next_run is None
+
+
+class TestScheduleStore:
+    """Tests for ScheduleStore."""
+
+    def test_empty_store(self, store):
+        assert store.list_all() == []
+
+    def test_add_entry(self, store):
+        config = ScheduleConfig(seed_urls=["https://example.com"])
+        entry = ScheduleEntry(name="daily", config=config)
+        store.add(entry)
+        assert len(store.list_all()) == 1
+
+    def test_get_entry(self, store):
+        config = ScheduleConfig(seed_urls=["https://example.com"])
+        entry = ScheduleEntry(name="daily", config=config)
+        store.add(entry)
+        found = store.get("daily")
+        assert found is not None
+        assert found.name == "daily"
+
+    def test_get_nonexistent(self, store):
+        assert store.get("nonexistent") is None
+
+    def test_remove_entry(self, store):
+        config = ScheduleConfig(seed_urls=["https://example.com"])
+        entry = ScheduleEntry(name="daily", config=config)
+        store.add(entry)
+        assert store.remove("daily") is True
+        assert len(store.list_all()) == 0
+
+    def test_remove_nonexistent(self, store):
+        assert store.remove("nonexistent") is False
+
+    def test_update_entry(self, store):
+        config = ScheduleConfig(seed_urls=["https://example.com"])
+        entry = ScheduleEntry(name="daily", config=config)
+        store.add(entry)
+        entry.run_count = 5
+        store.update(entry)
+        assert store.get("daily").run_count == 5
+
+    def test_persistence(self, schedule_store_path):
+        store1 = ScheduleStore(path=schedule_store_path)
+        config = ScheduleConfig(seed_urls=["https://example.com"])
+        entry = ScheduleEntry(name="daily", config=config)
+        store1.add(entry)
+
+        store2 = ScheduleStore(path=schedule_store_path)
+        assert len(store2.list_all()) == 1
+        assert store2.get("daily").config.seed_urls == ["https://example.com"]
+
+    def test_persistence_with_timestamps(self, schedule_store_path):
+        store1 = ScheduleStore(path=schedule_store_path)
+        config = ScheduleConfig(seed_urls=["https://example.com"])
+        entry = ScheduleEntry(
+            name="daily",
+            config=config,
+            last_run=datetime(2024, 1, 1, 12, 0),
+            next_run=datetime(2024, 1, 2, 12, 0),
+        )
+        store1.add(entry)
+
+        store2 = ScheduleStore(path=schedule_store_path)
+        loaded = store2.get("daily")
+        assert loaded.last_run == datetime(2024, 1, 1, 12, 0)
+        assert loaded.next_run == datetime(2024, 1, 2, 12, 0)
 
 
 class TestScheduler:
-    def test_create_scheduler(self):
-        scheduler = Scheduler()
-        assert len(scheduler.list_jobs()) == 0
-        assert scheduler.stats.total_runs == 0
+    """Tests for Scheduler."""
 
-    def test_add_job(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        job = ScheduledJob(
-            name="test-job",
+    def test_add_schedule(self, scheduler):
+        entry = scheduler.add_schedule(
+            name="daily-python",
             seed_urls=["https://example.com"],
-            interval_hours=12,
+            interval_hours=24,
         )
-        scheduler.add_job(job)
-        assert len(scheduler.list_jobs()) == 1
-        assert scheduler.get_job("test-job") is not None
+        assert entry.name == "daily-python"
+        assert entry.config.interval_hours == 24
 
-    def test_remove_job(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        scheduler.add_job(ScheduledJob(
-            name="test-job",
-            seed_urls=["https://example.com"],
-            interval_hours=12,
-        ))
-        assert scheduler.remove_job("test-job") is True
-        assert len(scheduler.list_jobs()) == 0
+    def test_remove_schedule(self, scheduler):
+        scheduler.add_schedule("test", ["https://example.com"])
+        assert scheduler.remove_schedule("test") is True
 
-    def test_remove_nonexistent_job(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        assert scheduler.remove_job("nonexistent") is False
+    def test_toggle_schedule(self, scheduler):
+        scheduler.add_schedule("test", ["https://example.com"])
+        entry = scheduler.toggle_schedule("test")
+        assert entry is not None
+        assert entry.config.enabled is False
 
-    def test_enable_job(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        scheduler.add_job(ScheduledJob(
-            name="test-job",
-            seed_urls=["https://example.com"],
-            interval_hours=12,
-            enabled=False,
-        ))
-        assert scheduler.enable_job("test-job") is True
-        assert scheduler.get_job("test-job").enabled is True
+    def test_get_due_schedules_none_due(self, scheduler):
+        scheduler.add_schedule("test", ["https://example.com"])
+        entry = scheduler.schedule_store.get("test")
+        entry.next_run = datetime.utcnow() + timedelta(hours=100)
+        scheduler.schedule_store.update(entry)
+        due = scheduler.get_due_schedules()
+        assert len(due) == 0
 
-    def test_disable_job(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        scheduler.add_job(ScheduledJob(
-            name="test-job",
-            seed_urls=["https://example.com"],
-            interval_hours=12,
-            enabled=True,
-        ))
-        assert scheduler.disable_job("test-job") is True
-        assert scheduler.get_job("test-job").enabled is False
+    def test_get_due_schedules_due(self, scheduler):
+        scheduler.add_schedule("test", ["https://example.com"])
+        entry = scheduler.schedule_store.get("test")
+        entry.next_run = datetime.utcnow() - timedelta(hours=1)
+        scheduler.schedule_store.update(entry)
+        due = scheduler.get_due_schedules()
+        assert len(due) == 1
 
-    def test_job_persistence(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        scheduler.add_job(ScheduledJob(
-            name="persistent-job",
-            seed_urls=["https://example.com"],
-            interval_hours=6,
-        ))
+    def test_get_due_schedules_disabled(self, scheduler):
+        scheduler.add_schedule("test", ["https://example.com"])
+        entry = scheduler.schedule_store.get("test")
+        entry.config.enabled = False
+        entry.next_run = datetime.utcnow() - timedelta(hours=1)
+        scheduler.schedule_store.update(entry)
+        due = scheduler.get_due_schedules()
+        assert len(due) == 0
 
-        scheduler2 = Scheduler(jobs_file=jobs_file)
-        assert len(scheduler2.list_jobs()) == 1
-        assert scheduler2.get_job("persistent-job").interval_hours == 6
+    def test_update_next_run_times(self, scheduler):
+        scheduler.add_schedule("test", ["https://example.com"])
+        entry = scheduler.schedule_store.get("test")
+        entry.last_run = datetime(2024, 1, 1, 12, 0)
+        scheduler.schedule_store.update(entry)
 
-    def test_run_job_no_crawler(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        scheduler.add_job(ScheduledJob(
-            name="test-job",
-            seed_urls=["https://example.com"],
-            interval_hours=12,
-        ))
-        import asyncio
-        result = asyncio.run(scheduler.run_job("test-job"))
-        assert "error" in result
+        scheduler.update_next_run_times()
+        updated = scheduler.schedule_store.get("test")
+        assert updated.next_run == datetime(2024, 1, 2, 12, 0)
 
-    def test_run_nonexistent_job(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        import asyncio
-        result = asyncio.run(scheduler.run_job("nonexistent"))
-        assert "error" in result
+    def test_run_schedule_disabled(self, scheduler):
+        scheduler.add_schedule("test", ["https://example.com"])
+        entry = scheduler.schedule_store.get("test")
+        entry.config.enabled = False
+        scheduler.schedule_store.update(entry)
+        count = scheduler.run_schedule("test")
+        assert count == 0
 
-    def test_calculate_next_run(self):
-        scheduler = Scheduler()
-        next_run = scheduler._calculate_next_run(24)
-        assert next_run is not None
-        assert len(next_run) > 0
-
-    def test_is_due_no_next_run(self):
-        scheduler = Scheduler()
-        job = ScheduledJob(name="test", seed_urls=[], interval_hours=1)
-        assert scheduler._is_due(job) is True
-
-    def test_is_due_with_past_next_run(self):
-        scheduler = Scheduler()
-        job = ScheduledJob(
-            name="test",
-            seed_urls=[],
-            interval_hours=1,
-            next_run="2020-01-01T00:00:00",
-        )
-        assert scheduler._is_due(job) is True
-
-    def test_add_callback(self):
-        scheduler = Scheduler()
-        callback_called = []
-        def my_callback(job, pages):
-            callback_called.append(True)
-        scheduler.add_callback(my_callback)
-        assert len(scheduler._callbacks) == 1
-
-    def test_list_jobs_empty(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        assert scheduler.list_jobs() == []
-
-    def test_multiple_jobs(self, tmp_path):
-        jobs_file = str(tmp_path / "jobs.json")
-        scheduler = Scheduler(jobs_file=jobs_file)
-        scheduler.add_job(ScheduledJob(name="job1", seed_urls=["https://a.com"], interval_hours=12))
-        scheduler.add_job(ScheduledJob(name="job2", seed_urls=["https://b.com"], interval_hours=6))
-        assert len(scheduler.list_jobs()) == 2
+    def test_run_schedule_nonexistent(self, scheduler):
+        count = scheduler.run_schedule("nonexistent")
+        assert count == 0
