@@ -1,14 +1,14 @@
-"""Statistics and analytics for the personal-index system."""
+"""Statistics collection and reporting."""
 
 from __future__ import annotations
 
-from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 from personal_index.interest_store import InterestStore
 from personal_index.search_index import SearchIndex
+from personal_index.url_utils import extract_domain
 
 
 @dataclass
@@ -20,8 +20,8 @@ class IndexStats:
     unique_domains: int = 0
     avg_content_length: float = 0.0
     pages_with_interests: int = 0
-    top_domains: list[tuple[str, int]] = field(default_factory=list)
-    top_interests: list[tuple[str, int]] = field(default_factory=list)
+    top_domains: List[Tuple[str, int]] = field(default_factory=list)
+    top_interests: List[Tuple[str, int]] = field(default_factory=list)
     oldest_page: Optional[datetime] = None
     newest_page: Optional[datetime] = None
 
@@ -32,101 +32,94 @@ class CrawlStats:
 
     total_crawls: int = 0
     total_pages_crawled: int = 0
-    total_pages_indexed: int = 0
     total_errors: int = 0
-    avg_crawl_duration: float = 0.0
-    last_crawl: Optional[datetime] = None
-    pages_per_crawl: list[int] = field(default_factory=list)
+    total_bytes_fetched: int = 0
 
 
+@dataclass
 class StatsCollector:
-    """Collect and compute statistics about the system."""
+    """Collects and reports statistics."""
 
-    def __init__(
-        self,
-        interest_store: Optional[InterestStore] = None,
-        search_index: Optional[SearchIndex] = None,
-    ):
-        self.interest_store = interest_store
-        self.search_index = search_index
+    interest_store: Optional[InterestStore] = None
+    search_index: Optional[SearchIndex] = None
 
     def get_index_stats(self) -> IndexStats:
-        """Compute statistics about the search index."""
-        if not self.search_index:
-            return IndexStats()
-
+        """Calculate current index statistics."""
         stats = IndexStats()
-        pages = list(self.search_index._documents.values())
-        stats.total_pages = len(pages)
-
-        if not pages:
+        if not self.search_index:
             return stats
 
-        # Count words
+        pages = self.search_index.urls()
+        stats.total_pages = len(pages)
+
+        domain_counts: Dict[str, int] = {}
+        interest_counts: Dict[str, int] = {}
         total_words = 0
         total_content_length = 0
-        domains = Counter()
-        interests = Counter()
-        dates = []
+        pages_with_interests = 0
+        timestamps = []
 
-        for page in pages:
-            content = f"{page.title} {page.content} {page.meta_description}"
-            words = len(content.split())
-            total_words += words
+        for url in pages:
+            page = self.search_index.get(url)
+            if page is None:
+                continue
+
+            # Count words
+            total_words += len(page.content.split())
             total_content_length += len(page.content)
 
-            # Extract domain
-            from urllib.parse import urlparse
-            domain = urlparse(page.url).netloc
+            # Count domains
+            domain = extract_domain(url)
             if domain:
-                domains[domain] += 1
+                domain_counts[domain] = domain_counts.get(domain, 0) + 1
 
             # Count interests
             for interest_name in page.matched_interests:
-                interests[interest_name] += 1
-            if page.matched_interests:
-                stats.pages_with_interests += 1
+                interest_counts[interest_name] = interest_counts.get(interest_name, 0) + 1
+                pages_with_interests += 1
 
-            # Track dates
-            dates.append(page.crawled_at)
+            # Track timestamps
+            if page.crawled_at:
+                timestamps.append(page.crawled_at)
 
         stats.total_words = total_words
-        stats.avg_content_length = total_content_length / max(len(pages), 1)
-        stats.unique_domains = len(domains)
-        stats.top_domains = domains.most_common(10)
-        stats.top_interests = interests.most_common(10)
+        stats.unique_domains = len(domain_counts)
+        stats.avg_content_length = total_content_length / max(stats.total_pages, 1)
+        stats.pages_with_interests = pages_with_interests
+        stats.top_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        stats.top_interests = sorted(interest_counts.items(), key=lambda x: x[1], reverse=True)[:10]
 
-        if dates:
-            stats.oldest_page = min(dates)
-            stats.newest_page = max(dates)
+        if timestamps:
+            stats.oldest_page = min(timestamps)
+            stats.newest_page = max(timestamps)
 
         return stats
 
     def format_index_stats(self) -> str:
-        """Format index statistics as a readable string."""
+        """Format index statistics as a string."""
         stats = self.get_index_stats()
         lines = [
             "=== Index Statistics ===",
             f"Total pages: {stats.total_pages}",
-            f"Total words: {stats.total_words:,}",
+            f"Total words: {stats.total_words}",
             f"Unique domains: {stats.unique_domains}",
-            f"Avg content length: {stats.avg_content_length:.0f} chars",
+            f"Average content length: {stats.avg_content_length:.0f}",
             f"Pages with interests: {stats.pages_with_interests}",
         ]
 
         if stats.top_domains:
             lines.append("\nTop domains:")
-            for domain, count in stats.top_domains[:5]:
+            for domain, count in stats.top_domains:
                 lines.append(f"  {domain}: {count}")
 
         if stats.top_interests:
-            lines.append("\nTop matched interests:")
-            for interest, count in stats.top_interests[:5]:
+            lines.append("\nTop interests:")
+            for interest, count in stats.top_interests:
                 lines.append(f"  {interest}: {count}")
 
         if stats.oldest_page:
-            lines.append(f"\nOldest page: {stats.oldest_page:%Y-%m-%d %H:%M}")
+            lines.append(f"\nOldest page: {stats.oldest_page}")
         if stats.newest_page:
-            lines.append(f"Newest page: {stats.newest_page:%Y-%m-%d %H:%M}")
+            lines.append(f"Newest page: {stats.newest_page}")
 
         return "\n".join(lines)
