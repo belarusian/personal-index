@@ -129,15 +129,23 @@ class TestCrawlCommand:
         with patch('personal_index.cli.get_config_manager') as mock_mgr:
             mock_config = MagicMock()
             mock_mgr.return_value.config = mock_config
-            result = runner.invoke(crawl, ['https://example.com'])
-            assert result.exit_code == 0
+            with patch('personal_index.crawler.main.WebCrawler') as mock_crawler_cls:
+                mock_crawler = MagicMock()
+                mock_crawler_cls.return_value = mock_crawler
+                mock_crawler.crawl.return_value = []
+                result = runner.invoke(crawl, ['https://example.com'])
+                assert result.exit_code == 0
 
     def test_crawl_with_depth(self, runner, tmp_path):
         with patch('personal_index.cli.get_config_manager') as mock_mgr:
             mock_config = MagicMock()
             mock_mgr.return_value.config = mock_config
-            result = runner.invoke(crawl, ['https://example.com', '--depth', '2'])
-            assert result.exit_code == 0
+            with patch('personal_index.crawler.main.WebCrawler') as mock_crawler_cls:
+                mock_crawler = MagicMock()
+                mock_crawler_cls.return_value = mock_crawler
+                mock_crawler.crawl.return_value = []
+                result = runner.invoke(crawl, ['https://example.com', '--depth', '2'])
+                assert result.exit_code == 0
 
 
 class TestIndexCommands:

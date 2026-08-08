@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import click
 import os
 from typing import Optional
+
+import click
 
 from personal_index.interests import InterestStore
 from personal_index.index import SearchIndex
@@ -105,22 +106,6 @@ def search(query, limit):
 @main.command("crawl")
 @click.argument("url")
 @click.option("-d", "--depth", default=3, type=int, help="Max crawl depth")
-
-def get_config_manager():
-    """Get configuration manager with config attribute."""
-    from personal_index.config.loader import load_config
-    from personal_index.config.models import AppConfig
-    config_path = os.environ.get("PERSONAL_INDEX_CONFIG", "config.yaml")
-    if os.path.exists(config_path):
-        config = load_config(config_path)
-    else:
-        config = AppConfig()
-    # Return a simple manager object with .config attribute
-    class _ConfigManager:
-        def __init__(self, cfg):
-            self.config = cfg
-    return _ConfigManager(config)
-
 def crawl(url, depth):
     """Crawl a URL and index matching content."""
     from personal_index.crawler.main import WebCrawler
@@ -273,8 +258,10 @@ def config_set_schedule(interval, enable, disable):
 
 class _ConfigManager:
     """Simple config manager for CLI."""
+
     def __init__(self):
         from dataclasses import dataclass, field
+
         @dataclass
         class _CrawlerSettings:
             max_depth: int = 3
