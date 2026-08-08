@@ -215,7 +215,19 @@ class WebCrawler:
     def __init__(self, config=None, content_filter=None):
         self.config = config
         self.content_filter = content_filter
-        self.crawler = Crawler()
+        # Pass config to Crawler if it's a CrawlerConfig, otherwise use default
+        from personal_index.crawler.__init__ import CrawlerConfig as _CC
+        crawler_config = None
+        if config is not None:
+            if isinstance(config, _CC):
+                crawler_config = config
+            elif hasattr(config, 'crawler'):
+                # AppConfig has a .crawler attribute
+                crawler_config = config.crawler
+            elif hasattr(config, 'max_depth'):
+                # It's some config-like object, try to use it directly
+                crawler_config = config
+        self.crawler = Crawler(config=crawler_config)
         self.session = self.crawler.session
 
     def crawl(self, seed_urls: list[str], max_depth: int = 3) -> list:

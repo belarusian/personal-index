@@ -105,9 +105,9 @@ def search(query, limit):
 @main.command("crawl")
 @click.argument("url")
 @click.option("-d", "--depth", default=3, type=int, help="Max crawl depth")
-def crawl(url, depth):
-    """Crawl a URL and index matching content."""
-    from personal_index.crawler.main import WebCrawler
+
+def get_config_manager():
+    """Get configuration manager with config attribute."""
     from personal_index.config.loader import load_config
     from personal_index.config.models import AppConfig
     config_path = os.environ.get("PERSONAL_INDEX_CONFIG", "config.yaml")
@@ -115,7 +115,17 @@ def crawl(url, depth):
         config = load_config(config_path)
     else:
         config = AppConfig()
-    crawler = WebCrawler(config=config)
+    # Return a simple manager object with .config attribute
+    class _ConfigManager:
+        def __init__(self, cfg):
+            self.config = cfg
+    return _ConfigManager(config)
+
+def crawl(url, depth):
+    """Crawl a URL and index matching content."""
+    from personal_index.crawler.main import WebCrawler
+    manager = get_config_manager()
+    crawler = WebCrawler(config=manager.config)
     pages = crawler.crawl([url], max_depth=depth)
     click.echo(f"Crawled {len(pages)} pages")
     crawler.close()
