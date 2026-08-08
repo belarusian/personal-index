@@ -1,4 +1,4 @@
-"""HTML content scraper with configurable extraction options."""
+"""HTML page scraper with content extraction."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ScraperConfig:
-    """Configuration for the HTML scraper."""
+    """Configuration for HTML scraping."""
 
     extract_meta: bool = True
     extract_links: bool = True
@@ -23,17 +23,15 @@ class ScraperConfig:
     extract_headings: bool = True
     extract_tables: bool = False
     remove_scripts: bool = True
-    remove_styles: bool = True
     max_content_length: int = 1_000_000
-    allowed_tags: Optional[list[str]] = None
-    blocked_tags: list[str] = field(default_factory=lambda: ["script", "style", "noscript", "iframe"])
+    blocked_tags: list[str] = field(default_factory=lambda: ["script", "style", "noscript"])
 
 
 @dataclass
 class ScrapedContent:
-    """Result of scraping an HTML page."""
+    """Content extracted from an HTML page."""
 
-    url: str
+    url: str = ""
     title: str = ""
     meta_description: str = ""
     meta_keywords: str = ""
@@ -48,13 +46,13 @@ class ScrapedContent:
 
 
 class HTMLScraper:
-    """Scrapes and extracts structured content from HTML pages."""
+    """Scraps HTML content and extracts structured data."""
 
     def __init__(self, config: Optional[ScraperConfig] = None):
         self.config = config or ScraperConfig()
 
     def scrape(self, html: str, base_url: str = "") -> ScrapedContent:
-        """Scrape content from raw HTML string."""
+        """Scrape HTML content and return structured data."""
         soup = BeautifulSoup(html, "html.parser")
         result = ScrapedContent(url=base_url)
 
@@ -139,9 +137,11 @@ class HTMLScraper:
         seen = set()
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
-            if not href or href in seen:
+            if not href:
                 continue
             absolute = urljoin(base_url, href)
+            if absolute in seen:
+                continue
             seen.add(absolute)
             text = a.get_text(strip=True)
             result.links.append({
