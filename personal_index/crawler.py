@@ -125,20 +125,19 @@ class WebCrawler:
     def crawl(self, start_url: str, depth: int = 0) -> List[CrawlResult]:
         """Crawl starting from a URL up to max_depth.
 
-        This is a synchronous simulation method. In production, this would
-        use aiohttp or similar for actual HTTP requests.
+        Returns all accumulated results (self.results).
         """
         if depth > self.config.max_depth:
-            return []
+            return self.results
 
         if start_url in self.crawled_urls:
-            return []
+            return self.results
 
         if len(self.crawled_urls) >= self.config.max_pages:
-            return []
+            return self.results
 
         if not self._is_allowed(start_url):
-            return []
+            return self.results
 
         host = self._get_host(start_url)
         if not self.rate_limiter.acquire(host):
