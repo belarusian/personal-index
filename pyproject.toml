@@ -7,28 +7,32 @@ name = "personal-index"
 version = "0.1.0"
 description = "A personal web search engine that scans, filters, and indexes the web based on your interests"
 readme = "README.md"
-requires-python = ">=3.10"
 license = {text = "MIT"}
+requires-python = ">=3.10"
 dependencies = [
     "click>=8.1.0",
     "requests>=2.31.0",
     "beautifulsoup4>=4.12.0",
-    "apscheduler>=3.10.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-    "flake8>=6.1.0",
-    "responses>=0.23.0",
+    "schedule>=1.2.0",
+    "whoosh>=2.7.4",
 ]
 
 [project.scripts]
 personal-index = "personal_index.cli:cli"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+]
 
 [tool.setuptools.packages.find]
 include = ["personal_index*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
