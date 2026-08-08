@@ -419,3 +419,16 @@ def remove_url(url):
     else:
         click.echo(f"URL not found in index: {url}")
         raise SystemExit(1)
+
+
+# ── Stats commands ─────────────────────────────────────────────────
+
+@cli.command()
+def stats():
+    """Show index and crawl statistics."""
+    from personal_index.stats import StatsCollector
+
+    store = get_interest_store()
+    index = get_search_index()
+    collector = StatsCollector(interest_store=store, search_index=index)
+    click.echo(collector.format_index_stats())
