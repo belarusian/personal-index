@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from personal_index.index import IndexedPage, SearchResult
 from personal_index.interests import Interest
+from personal_index.scheduler import ScheduledJob
 
 
 def format_search_results(
@@ -67,14 +68,34 @@ def format_index_page(page: IndexedPage) -> str:
     return "\n".join(lines)
 
 
-def format_schedule_job(job: Dict[str, Any]) -> str:
+def format_schedule_job(job: Union[Dict[str, Any], ScheduledJob]) -> str:
     """Format a scheduled job for display."""
+    if isinstance(job, ScheduledJob):
+        name = job.name
+        interval_hours = job.interval_hours
+        run_count = job.run_count
+        last_run = job.last_run
+        seed_urls = job.seed_urls
+    elif isinstance(job, dict):
+        name = job.get('name', 'unknown')
+        interval_hours = job.get('interval_hours', 0)
+        run_count = job.get('run_count', 0)
+        last_run = job.get('last_run')
+        seed_urls = job.get('seed_urls', [])
+    else:
+        # Try attribute access as fallback
+        name = getattr(job, 'name', 'unknown')
+        interval_hours = getattr(job, 'interval_hours', 0)
+        run_count = getattr(job, 'run_count', 0)
+        last_run = getattr(job, 'last_run', None)
+        seed_urls = getattr(job, 'seed_urls', [])
+
     lines = [
-        f"  Name: {job.get('name', 'unknown')}",
-        f"  Interval: {job.get('interval_hours', 0)} hours",
-        f"  Runs: {job.get('run_count', 0)}",
-        f"  Last run: {job.get('last_run') or 'Never'}",
-        f"  Seed URLs: {', '.join(job.get('seed_urls', []))}",
+        f"  Name: {name}",
+        f"  Interval: {interval_hours} hours",
+        f"  Runs: {run_count}",
+        f"  Last run: {last_run or 'Never'}",
+        f"  Seed URLs: {', '.join(seed_urls)}",
     ]
     return "\n".join(lines)
 
