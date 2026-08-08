@@ -65,12 +65,14 @@ class TestDeduplicationEngine:
         )
         assert is_dup is False
 
-    def test_is_duplicate_different_title(self):
+    def test_is_duplicate_same_content_different_title(self):
+        """Same content with different titles is still a duplicate."""
         self.engine.is_duplicate("http://example.com/page1", "Title A", "Content")
         is_dup, original = self.engine.is_duplicate(
             "http://example.com/page2", "Title B", "Content"
         )
-        assert is_dup is False
+        assert is_dup is True
+        assert original == "http://example.com/page1"
 
     def test_document_count(self):
         self.engine.is_duplicate("http://a.com", "T", "C1")
