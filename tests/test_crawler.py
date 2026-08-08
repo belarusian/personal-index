@@ -1,186 +1,196 @@
-"""Tests for the web crawler module."""
+"""Tests for personal_index.crawler."""
 
-import asyncio
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from urllib.parse import urlparse
+import responses
 
-from personal_index.crawler import (
-    CrawledPage,
-    RateLimiter,
-    RobotsChecker,
-    WebCrawler,
-)
-from personal_index.config import CrawlerConfig
-from personal_index.filter import ContentFilter
-from personal_index.index import SearchIndex
-from personal_index.interests import Interest, InterestStore
+from personal_index.crawler import Crawler, CrawlerConfig
+from personal_index.interest_store import InterestStore
+from personal_index.models import Interest, InterestType
 
 
-class TestCrawledPage:
-    def test_create_page(self):
-        page = CrawledPage(url="https://example.com", title="Test", content="Hello")
-        assert page.url == "https://example.com"
-        assert page.title == "Test"
-        assert page.status_code == 0
-
-    def test_page_with_error(self):
-        page = CrawledPage(url="https://example.com", title="", content="", error="timeout")
-        assert page.error == "timeout"
+@pytest.fixture
+def config():
+    return CrawlerConfig(
+        max_depth=2,
+        max_pages=10,
+        delay=0,  # No delay for tests
+        timeout=5,
+    )
 
 
-class TestRateLimiter:
-    @pytest.mark.asyncio
-    async def test_rate_limiter_no_wait_first_request(self):
-        limiter = RateLimiter(delay=0.1)
-        # First request should not wait
-        await limiter.wait("example.com")
-
-    @pytest.mark.asyncio
-    async def test_rate_limiter_different_domains(self):
-        limiter = RateLimiter(delay=0.1)
-        await limiter.wait("example.com")
-        await limiter.wait("other.com")  # Different domain, no wait needed
+@pytest.fixture
+def crawler(config):
+    return Crawler(config=config)
 
 
-class TestRobotsChecker:
-    def test_parse_robots_allow_all(self):
-        checker = RobotsChecker()
-        result = checker._parse_robots("User-agent: *\nAllow: /")
-        assert result == []  # No disallow rules
+class TestCrawlerConfig:
+    """Tests for CrawlerConfig."""
 
-    def test_parse_robots_with_disallow(self):
-        checker = RobotsChecker()
-        result = checker._parse_robots("User-agent: *\nDisallow: /private")
-        assert result is None  # Has disallow rules
-
-
-class TestWebCrawler:
     def test_default_config(self):
-        crawler = WebCrawler()
-        assert crawler.config.max_depth == 3
-        assert crawler.config.politeness_delay == 1.0
+        config = CrawlerConfig()
+        assert config.max_depth == 3
+        assert config.max_pages == 100
+        assert config.delay == 1.0
+        assert config.timeout == 10
+        assert config.respect_robots is True
 
     def test_custom_config(self):
-        config = CrawlerConfig(max_depth=5, politeness_delay=0.5)
-        crawler = WebCrawler(config=config)
-        assert crawler.config.max_depth == 5
+        config = CrawlerConfig(
+            max_depth=5,
+            max_pages=50,
+            delay=2.0,
+            allowed_domains=["example.com"],
+        )
+        assert config.max_depth == 5
+        assert config.max_pages == 50
+        assert config.delay == 2.0
+        assert "example.com" in config.allowed_domains
 
-    def test_stats_initial(self):
-        crawler = WebCrawler()
-        assert crawler.stats["pages_crawled"] == 0
-        assert crawler.stats["pages_indexed"] == 0
 
-    def test_reset_stats(self):
-        crawler = WebCrawler()
-        crawler._stats["pages_crawled"] = 10
-        crawler.reset_stats()
-        assert crawler.stats["pages_crawled"] == 0
+class TestCrawler:
+    """Tests for Crawler."""
 
-    def test_extract_title(self):
-        crawler = WebCrawler()
-        html = "<html><head><title>Test Page</title></head></html>"
-        assert crawler._extract_title(html) == "Test Page"
+    def test_init_default(self):
+        crawler = Crawler()
+        assert crawler.config.max_depth == 3
+        assert crawler._pages_crawled == 0
 
-    def test_extract_title_missing(self):
-        crawler = WebCrawler()
-        html = "<html><body>No title</body></html>"
-        assert crawler._extract_title(html) == ""
+    def test_get_domain(self, crawler):
+        assert crawler._get_domain("https://example.com/path") == "example.com"
+        assert crawler._get_domain("http://sub.example.com") == "sub.example.com"
 
-    def test_extract_text(self):
-        crawler = WebCrawler()
-        html = "<html><body><p>Hello World</p><script>var x=1;</script></body></html>"
-        text = crawler._extract_text(html)
-        assert "Hello World" in text
-        assert "var x=1" not in text
+    def test_should_crawl_not_visited(self, crawler):
+        assert crawler._should_crawl("https://example.com") is True
 
-    def test_extract_text_removes_scripts(self):
-        crawler = WebCrawler()
-        html = "<html><body><script>alert('xss')</script><p>Safe text</p></body></html>"
-        text = crawler._extract_text(html)
-        assert "alert" not in text
-        assert "Safe text" in text
+    def test_should_crawl_already_visited(self, crawler):
+        crawler._visited.add("https://example.com")
+        assert crawler._should_crawl("https://example.com") is False
 
-    def test_extract_text_removes_styles(self):
-        crawler = WebCrawler()
-        html = "<html><body><style>.hidden { display: none; }</style><p>Visible</p></body></html>"
-        text = crawler._extract_text(html)
-        assert "display" not in text
-        assert "Visible" in text
+    def test_should_crawl_max_pages(self, crawler):
+        crawler.config.max_pages = 0
+        assert crawler._should_crawl("https://example.com") is False
 
-    def test_extract_links_absolute(self):
-        crawler = WebCrawler()
-        html = '<a href="https://example.com/page">Link</a>'
+    def test_should_crawl_blocked_extension(self, crawler):
+        assert crawler._should_crawl("https://example.com/image.jpg") is False
+        assert crawler._should_crawl("https://example.com/doc.pdf") is False
+
+    def test_should_crawl_allowed_domains(self, crawler):
+        crawler.config.allowed_domains = ["example.com"]
+        assert crawler._should_crawl("https://example.com/page") is True
+        assert crawler._should_crawl("https://other.com/page") is False
+
+    def test_should_crawl_invalid_scheme(self, crawler):
+        assert crawler._should_crawl("ftp://example.com") is False
+        assert crawler._should_crawl("file:///local") is False
+
+    @responses.activate
+    def test_fetch_success(self, crawler):
+        responses.add(
+            responses.GET,
+            "https://example.com",
+            body="<html><body>Hello</body></html>",
+            status=200,
+        )
+        resp = crawler._fetch("https://example.com")
+        assert resp is not None
+        assert resp.status_code == 200
+
+    @responses.activate
+    def test_fetch_404(self, crawler):
+        responses.add(
+            responses.GET,
+            "https://example.com/notfound",
+            status=404,
+        )
+        resp = crawler._fetch("https://example.com/notfound")
+        assert resp is None
+
+    @responses.activate
+    def test_fetch_timeout(self, crawler):
+        responses.add(
+            responses.GET,
+            "https://example.com/slow",
+            body="ok",
+            status=200,
+        )
+        # Simulate by removing the response
+        responses.replace(
+            responses.GET,
+            "https://example.com/slow",
+            body=Exception("timeout"),
+        )
+        # Just test that it doesn't crash
+        resp = crawler._fetch("https://example.com/slow")
+
+    def test_extract_links(self, crawler):
+        html = """
+        <html>
+        <body>
+            <a href="/page1">Page 1</a>
+            <a href="https://example.com/page2">Page 2</a>
+            <a href="relative/path">Relative</a>
+        </body>
+        </html>
+        """
         links = crawler._extract_links(html, "https://example.com")
-        assert "https://example.com/page" in links
+        assert len(links) >= 2
 
-    def test_extract_links_relative(self):
-        crawler = WebCrawler()
-        html = '<a href="/page">Link</a>'
-        links = crawler._extract_links(html, "https://example.com")
-        assert "https://example.com/page" in links
-
-    def test_extract_links_no_javascript(self):
-        crawler = WebCrawler()
-        html = '<a href="javascript:void(0)">JS Link</a>'
-        links = crawler._extract_links(html, "https://example.com")
-        assert len(links) == 0
-
-    def test_extract_links_no_mailto(self):
-        crawler = WebCrawler()
-        html = '<a href="mailto:test@example.com">Email</a>'
-        links = crawler._extract_links(html, "https://example.com")
-        assert len(links) == 0
-
-    def test_extract_links_no_hash(self):
-        crawler = WebCrawler()
-        html = '<a href="#section">Anchor</a>'
-        links = crawler._extract_links(html, "https://example.com")
-        assert len(links) == 0
-
-    def test_clean_text(self):
-        crawler = WebCrawler()
-        text = crawler._clean_text("  Hello   World  ")
-        assert text == "Hello World"
-
-    def test_parse_html(self):
-        crawler = WebCrawler()
+    def test_extract_content(self, crawler):
         html = """
         <html>
         <head><title>Test Page</title></head>
         <body>
             <p>Hello World</p>
-            <a href="https://example.com/link">Link</a>
+            <script>alert('xss')</script>
         </body>
         </html>
         """
-        title, content, links = crawler._parse_html(html, "https://example.com")
-        assert title == "Test Page"
-        assert "Hello World" in content
-        assert "https://example.com/link" in links
+        page = crawler._extract_content(html, "https://example.com")
+        assert page.title == "Test Page"
+        assert "Hello World" in page.content
+        assert "alert" not in page.content
 
-    def test_extract_text_html_entities(self):
-        crawler = WebCrawler()
-        html = "<p>Hello &amp; World &lt;test&gt;</p>"
-        text = crawler._extract_text(html)
-        assert "&" in text
-        assert "<" in text
-
-    def test_extract_links_mixed(self):
-        crawler = WebCrawler()
+    def test_extract_content_meta_description(self, crawler):
         html = """
-        <a href="https://other.com/page">Absolute</a>
-        <a href="/relative">Relative</a>
-        <a href="javascript:void(0)">JS</a>
-        <a href="#anchor">Anchor</a>
+        <html>
+        <head>
+            <meta name="description" content="A test description">
+        </head>
+        <body><p>Content</p></body>
+        </html>
         """
-        links = crawler._extract_links(html, "https://example.com")
-        assert "https://other.com/page" in links
-        assert "https://example.com/relative" in links
-        assert len(links) == 2
+        page = crawler._extract_content(html, "https://example.com")
+        assert page.meta_description == "A test description"
 
-    def test_reset_visited(self):
-        crawler = WebCrawler()
-        crawler._visited.add("https://example.com")
-        crawler.reset_visited()
-        assert len(crawler._visited) == 0
+    def test_filter_by_interests_no_store(self, crawler):
+        page = crawler._extract_content("<p>test</p>", "https://example.com")
+        assert crawler._filter_by_interests(page) is True
+
+    def test_filter_by_interests_match(self, crawler):
+        store = InterestStore(storage_path="/tmp/test_interests_ci.json")
+        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+        crawler.interest_store = store
+
+        page = crawler._extract_content(
+            "<p>Python programming</p>",
+            "https://example.com",
+        )
+        assert crawler._filter_by_interests(page) is True
+        assert "Py" in page.matched_interests
+
+    def test_filter_by_interests_no_match(self, crawler):
+        store = InterestStore(storage_path="/tmp/test_interests_ci2.json")
+        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+        crawler.interest_store = store
+
+        page = crawler._extract_content(
+            "<p>Java programming</p>",
+            "https://example.com",
+        )
+        assert crawler._filter_by_interests(page) is False
+
+    def test_pages_crawled_property(self, crawler):
+        assert crawler.pages_crawled == 0
+
+    def test_results_property(self, crawler):
+        assert crawler.results == []
