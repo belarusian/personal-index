@@ -1,6 +1,7 @@
 """Tests for personal_index.logging_config."""
 
 import logging
+from pathlib import Path
 import pytest
 
 from personal_index.logging_config import get_logger, setup_logging
