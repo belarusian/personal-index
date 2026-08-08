@@ -1,125 +1,128 @@
-"""Data models for personal-index."""
+"""Core data models for Personal Index."""
 
 from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 
-class InterestType(Enum):
-    """Types of interests that can be tracked."""
-    TOPIC = "topic"
-    KEYWORD = "keyword"
-    URL_PATTERN = "url_pattern"
+class PageStatus(Enum):
+    """Status of a crawled page."""
+
+    PENDING = "pending"
+    CRAWLED = "crawled"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+    BLOCKED = "blocked"
 
 
 @dataclass
-class Interest:
-    """Represents a user-defined interest to track."""
+class URL:
+    """Represents a URL to crawl or that has been crawled."""
 
-    topic: str
-    keywords: list[str] = field(default_factory=list)
-    url_patterns: list[str] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    enabled: bool = True
+    url: str
+    depth: int = 0
+    status: PageStatus = PageStatus.PENDING
+    domain: str = ""
+    parent_url: Optional[str] = None
+    crawled_at: Optional[datetime] = None
+    error: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if not self.domain:
+            self.domain = self._extract_domain()
+
+    @staticmethod
+    def _extract_domain(url: str) -> str:
+        """Extract domain from URL."""
+        url = url.split("://", 1)[-1] if "://" in url else url
+        return url.split("/")[0].split(":")[0].split("@")[-1]
 
     @property
     def id(self) -> str:
-        """Generate a unique ID from the topic."""
-        return hashlib.sha256(self.topic.encode()).hexdigest()[:16]
+        """Generate unique ID for this URL."""
+        return hashlib.sha256(self.url.encode()).hexdigest()[:16]
 
-    def matches_text(self, text: str) -> bool:
-        """Check if text matches any of the interest keywords."""
-        if not self.keywords:
-            return False
-        text_lower = text.lower()
-        for keyword in self.keywords:
-            if keyword.lower() in text_lower:
-                return True
-        return False
+    def to_dict(self) -> dict:
+        return {
+            "url": self.url,
+            "depth": self.depth,
+            "status": self.status.value,
+            "domain": self.domain,
+            "parent_url": self.parent_url,
+            "crawled_at": self.crawled_at.isoformat() if self.crawled_at else None,
+            "error": self.error,
+        }
 
-    def matches_url(self, url: str) -> bool:
-        """Check if URL matches any of the interest URL patterns."""
-        url_lower = url.lower()
-        for pattern in self.url_patterns:
-            if pattern.lower() in url_lower:
-                return True
-        return False
+    @classmethod
+    def from_dict(cls, data: dict) -> URL:
+        crawled_at = None
+        if data.get("crawled_at"):
+            crawled_at = datetime.fromisoformat(data["crawled_at"])
+        return cls(
+            url=data["url"],
+            depth=data.get("depth", 0),
+            status=PageStatus(data.get("status", "pending")),
+            domain=data.get("domain", ""),
+            parent_url=data.get("parent_url"),
+            crawled_at=crawled_at,
+            error=data.get("error"),
+        )
 
 
 @dataclass
-class CrawledPage:
-    """Represents a crawled web page."""
+class Page:
+    """Represents a crawled page with its content."""
 
     url: str
     title: str = ""
     content: str = ""
     meta_description: str = ""
-    headers: dict = field(default_factory=dict)
-    status_code: int = 0
-    crawled_at: datetime = field(default_factory=datetime.utcnow)
-    depth: int = 0
-    parent_url: Optional[str] = None
+    links: list[str] = field(default_factory=list)
+    crawled_at: Optional[datetime] = None
+    status_code: int = 200
+    content_type: str = "text/html"
+    content_length: int = 0
     matched_interests: list[str] = field(default_factory=list)
-    word_count: int = 0
+    relevance_score: float = 0.0
 
     @property
     def id(self) -> str:
-        """Generate a unique ID from the URL."""
         return hashlib.sha256(self.url.encode()).hexdigest()[:16]
 
-    @property
-    def searchable_text(self) -> str:
-        """Get text suitable for indexing."""
-        parts = [self.title, self.meta_description, self.content]
-        return " ".join(p for p in parts if p)
+    def to_dict(self) -> dict:
+        return {
+            "url": self.url,
+            "title": self.title,
+            "content": self.content,
+            "meta_description": self.meta_description,
+            "links": self.links,
+            "crawled_at": self.crawled_at.isoformat() if self.crawled_at else None,
+            "status_code": self.status_code,
+            "content_type": self.content_type,
+            "content_length": self.content_length,
+            "matched_interests": self.matched_interests,
+            "relevance_score": self.relevance_score,
+        }
 
-
-@dataclass
-class SearchResult:
-    """Represents a search result."""
-
-    page: CrawledPage
-    score: float = 0.0
-    highlights: list[str] = field(default_factory=list)
-    matched_interest: Optional[str] = None
-
-
-@dataclass
-class CrawlConfig:
-    """Configuration for the web crawler."""
-
-    max_depth: int = 2
-    max_pages: int = 100
-    rate_limit: float = 1.0  # seconds between requests
-    politeness_delay: float = 0.5  # minimum delay between requests to same host
-    timeout: int = 10  # request timeout in seconds
-    user_agent: str = "personal-index/0.1.0"
-    respect_robots: bool = True
-    allowed_domains: list[str] = field(default_factory=list)
-    blocked_domains: list[str] = field(default_factory=list)
-    max_content_length: int = 1_000_000  # 1MB max page content
-
-
-@dataclass
-class CrawlStats:
-    """Statistics about a crawl run."""
-
-    pages_crawled: int = 0
-    pages_filtered: int = 0
-    pages_stored: int = 0
-    errors: int = 0
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    urls_queued: int = 0
-
-    @property
-    def duration(self) -> Optional[float]:
-        """Duration of crawl in seconds."""
-        if self.start_time and self.end_time:
-            return (self.end_time - self.start_time).total_seconds()
-        return None
+    @classmethod
+    def from_dict(cls, data: dict) -> Page:
+        crawled_at = None
+        if data.get("crawled_at"):
+            crawled_at = datetime.fromisoformat(data["crawled_at"])
+        return cls(
+            url=data["url"],
+            title=data.get("title", ""),
+            content=data.get("content", ""),
+            meta_description=data.get("meta_description", ""),
+            links=data.get("links", []),
+            crawled_at=crawled_at,
+            status_code=data.get("status_code", 200),
+            content_type=data.get("content_type", "text/html"),
+            content_length=data.get("content_length", 0),
+            matched_interests=data.get("matched_interests", []),
+            relevance_score=data.get("relevance_score", 0.0),
+        )
