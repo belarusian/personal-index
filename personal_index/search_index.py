@@ -3,150 +3,144 @@
 from __future__ import annotations
 
 import json
-import math
+import os
 import re
-from collections import Counter
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 from personal_index.models import CrawledPage
 
 
+@dataclass
 class SearchIndex:
-    """In-memory and persistent full-text search index."""
+    """In-memory search index with JSON persistence."""
 
-    def __init__(self, index_path: str = "~/.personal-index/index.json"):
-        self._path = Path(index_path).expanduser()
-        self._documents: dict[str, CrawledPage] = {}
-        self._term_doc_freq: dict[str, int] = {}
-        self._doc_lengths: dict[str, int] = {}
+    index_path: str
+    _pages: Dict[str, CrawledPage] = field(default_factory=dict, repr=False)
+    _word_index: Dict[str, List[str]] = field(default_factory=dict, repr=False)
+
+    def __post_init__(self):
         self._load()
 
-    def _load(self) -> None:
-        """Load index from disk."""
-        if self._path.exists():
-            try:
-                data = json.loads(self._path.read_text())
-                for doc_data in data.get("documents", []):
-                    page = CrawledPage(
-                        url=doc_data["url"],
-                        title=doc_data.get("title", ""),
-                        content=doc_data.get("content", ""),
-                        meta_description=doc_data.get("meta_description", ""),
-                        status_code=doc_data.get("status_code", 0),
-                        matched_interests=doc_data.get("matched_interests", []),
-                        relevance_score=doc_data.get("relevance_score", 0.0),
-                    )
-                    self._documents[page.url] = page
-                    self._update_term_freq(page)
-            except (json.JSONDecodeError, KeyError):
-                self._documents.clear()
-                self._term_doc_freq.clear()
-                self._doc_lengths.clear()
-
-    def _save(self) -> None:
-        """Save index to disk."""
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        data = {
-            "documents": [
-                {
-                    "url": p.url,
-                    "title": p.title,
-                    "content": p.content,
-                    "meta_description": p.meta_description,
-                    "status_code": p.status_code,
-                    "matched_interests": p.matched_interests,
-                    "relevance_score": p.relevance_score,
-                }
-                for p in self._documents.values()
-            ]
-        }
-        self._path.write_text(json.dumps(data, indent=2))
-
     @staticmethod
-    def _tokenize(text: str) -> list[str]:
-        """Tokenize text into lowercase words."""
+    def _tokenize(text: str) -> List[str]:
+        """Tokenize text into lowercase words, removing punctuation."""
         if not text:
             return []
-        return re.findall(r'\b[a-z0-9]+\b', text.lower())
+        return re.findall(r"[a-z0-9]+", text.lower())
 
-    def _update_term_freq(self, page: CrawledPage) -> None:
-        """Update term frequency for a document."""
-        combined = f"{page.title} {page.content} {page.meta_description}"
-        tokens = self._tokenize(combined)
-        self._doc_lengths[page.url] = len(tokens)
-        term_freq = Counter(tokens)
-        for term in term_freq:
-            self._term_doc_freq[term] = self._term_doc_freq.get(term, 0) + 1
+    def _load(self) -> None:
+        """Load index from file."""
+        if not os.path.exists(self.index_path):
+            self._pages = {}
+            self._word_index = {}
+            return
+        try:
+            with open(self.index_path, "r") as f:
+                data = json.load(f)
+            self._pages = {}
+            for url, page_data in data.get("pages", {}).items():
+                page = CrawledPage(**page_data)
+                self._pages[url] = page
+            self._word_index = data.get("word_index", {})
+        except (json.JSONDecodeError, KeyError):
+            self._pages = {}
+            self._word_index = {}
+
+    def _save(self) -> None:
+        """Save index to file."""
+        parent = Path(self.index_path).parent
+        parent.mkdir(parents=True, exist_ok=True)
+        pages_data = {}
+        for url, page in self._pages.items():
+            pages_data[url] = {
+                "url": page.url,
+                "title": page.title,
+                "content": page.content,
+                "meta_description": page.meta_description,
+                "status_code": page.status_code,
+                "depth": page.depth,
+                "parent_url": page.parent_url,
+                "headers": page.headers,
+                "matched_interests": page.matched_interests,
+                "relevance_score": page.relevance_score,
+                "crawled_at": page.crawled_at.isoformat(),
+            }
+        data = {"pages": pages_data, "word_index": self._word_index}
+        with open(self.index_path, "w") as f:
+            json.dump(data, f, indent=2)
 
     def add(self, page: CrawledPage) -> None:
         """Add a page to the index."""
-        self._documents[page.url] = page
-        self._update_term_freq(page)
+        self._pages[page.url] = page
+        # Build word index
+        text = f"{page.title} {page.content}".lower()
+        tokens = self._tokenize(text)
+        for token in set(tokens):
+            if token not in self._word_index:
+                self._word_index[token] = []
+            if page.url not in self._word_index[token]:
+                self._word_index[token].append(page.url)
         self._save()
 
     def remove(self, url: str) -> bool:
         """Remove a page from the index."""
-        if url in self._documents:
-            del self._documents[url]
-            self._rebuild_term_freq()
-            self._save()
-            return True
-        return False
-
-    def _rebuild_term_freq(self) -> None:
-        """Rebuild term frequency from all documents."""
-        self._term_doc_freq.clear()
-        self._doc_lengths.clear()
-        for page in self._documents.values():
-            self._update_term_freq(page)
-
-    def search(self, query: str, limit: int = 20) -> list[tuple[str, float]]:
-        """Search the index and return (url, score) pairs sorted by relevance."""
-        query_tokens = self._tokenize(query)
-        if not query_tokens:
-            return []
-
-        scores: dict[str, float] = {}
-        num_docs = max(len(self._documents), 1)
-
-        for token in query_tokens:
-            idf = math.log(num_docs / (1 + self._term_doc_freq.get(token, 0)))
-            for url, page in self._documents.items():
-                combined = f"{page.title} {page.content} {page.meta_description}"
-                tokens = self._tokenize(combined)
-                tf = tokens.count(token)
-                if tf > 0:
-                    doc_len = max(self._doc_lengths.get(url, 1), 1)
-                    tf_norm = tf / doc_len
-                    score = tf_norm * idf
-                    # Boost title matches
-                    title_tokens = self._tokenize(page.title)
-                    if token in title_tokens:
-                        score *= 2.0
-                    # Boost by interest relevance
-                    score += page.relevance_score * 0.1
-                    scores[url] = scores.get(url, 0.0) + score
-
-        # Sort by score descending
-        results = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        return results[:limit]
+        if url not in self._pages:
+            return False
+        page = self._pages.pop(url)
+        # Remove from word index
+        text = f"{page.title} {page.content}".lower()
+        tokens = set(self._tokenize(text))
+        for token in self._word_index:
+            if url in self._word_index[token]:
+                self._word_index[token].remove(url)
+                if not self._word_index[token]:
+                    del self._word_index[token]
+        self._save()
+        return True
 
     def get(self, url: str) -> Optional[CrawledPage]:
         """Get a page by URL."""
-        return self._documents.get(url)
+        return self._pages.get(url)
 
     def count(self) -> int:
         """Return number of indexed pages."""
-        return len(self._documents)
+        return len(self._pages)
 
     def clear(self) -> None:
         """Clear the entire index."""
-        self._documents.clear()
-        self._term_doc_freq.clear()
-        self._doc_lengths.clear()
+        self._pages = {}
+        self._word_index = {}
         self._save()
 
-    def urls(self) -> list[str]:
-        """Return all indexed URLs."""
-        return list(self._documents.keys())
+    def urls(self) -> List[str]:
+        """Return list of all indexed URLs."""
+        return list(self._pages.keys())
+
+    def search(self, query: str, limit: int = 10) -> List[Tuple[str, float]]:
+        """Search the index and return (url, score) tuples sorted by relevance."""
+        if not query:
+            return []
+        tokens = self._tokenize(query)
+        if not tokens:
+            return []
+
+        scores: Dict[str, float] = {}
+        for token in tokens:
+            if token in self._word_index:
+                for url in self._word_index[token]:
+                    if url not in scores:
+                        scores[url] = 0.0
+                    # Count occurrences in title (boosted) and content
+                    page = self._pages.get(url)
+                    if page:
+                        title_count = page.title.lower().count(token)
+                        content_count = page.content.lower().count(token)
+                        scores[url] += title_count * 3.0 + content_count * 1.0
+                        # Boost by interest relevance score
+                        scores[url] += page.relevance_score * 0.5
+
+        results = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        return results[:limit]
