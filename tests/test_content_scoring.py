@@ -1,150 +1,140 @@
 """Tests for content scoring module."""
 
 import pytest
-from personal_index.content_scoring import (
-    ContentScore,
-    ContentScorer,
-    ScoreFactors,
-)
+from personal_index.content_scoring import ContentScorer, ScoreBreakdown
 
 
-class TestScoreFactors:
+class TestScoreBreakdown:
     def test_default_values(self):
-        f = ScoreFactors()
-        assert f.text_length == 0
-        assert f.keyword_density == 0.0
-        assert f.domain_reputation == 0.5
-
-    def test_custom_values(self):
-        f = ScoreFactors(text_length=500, keyword_density=0.15, bookmark_count=3)
-        assert f.text_length == 500
-        assert f.keyword_density == 0.15
-        assert f.bookmark_count == 3
-
-
-class TestContentScore:
-    def test_default_score(self):
-        s = ContentScore()
-        assert s.total_score == 0.0
-
-    def test_to_dict(self):
-        s = ContentScore(total_score=0.75, text_quality=0.8)
-        d = s.to_dict()
-        assert d["total_score"] == 0.75
-        assert d["text_quality"] == 0.8
+        b = ScoreBreakdown()
+        assert b.total_score == 0.0
+        assert b.content_length_score == 0.0
 
 
 class TestContentScorer:
-    def test_scorer_default_weights(self):
-        s = ContentScorer()
-        assert s.WEIGHT_TEXT_QUALITY == 0.25
-        assert s.WEIGHT_ENGAGEMENT == 0.25
+    def _make_content(self, text="", keywords=None, headings=None,
+                      links=None, images=None):
+        return {
+            "text": text,
+            "keywords": keywords or [],
+            "headings": headings or [],
+            "links": links or [],
+            "images": images or [],
+        }
 
-    def test_scorer_custom_weights(self):
-        s = ContentScorer(weights={"text_quality": 0.4, "engagement": 0.1})
-        assert s.WEIGHT_TEXT_QUALITY == 0.4
-        assert s.WEIGHT_ENGAGEMENT == 0.1
+    def test_score_returns_breakdown(self):
+        scorer = ContentScorer()
+        score, breakdown = scorer.score(self._make_content(text="hello world"))
+        assert isinstance(score, float)
+        assert isinstance(breakdown, ScoreBreakdown)
 
-    def test_score_empty_factors(self):
-        s = ContentScorer()
-        result = s.score(ScoreFactors())
-        assert result.total_score >= 0
-        assert result.text_quality == 0.0
+    def test_content_length_short(self):
+        scorer = ContentScorer()
+        _, breakdown = scorer.score(self._make_content(text="short"))
+        assert breakdown.content_length_score < 0.5
 
-    def test_score_good_content(self):
-        s = ContentScorer()
-        factors = ScoreFactors(
-            text_length=1500,
-            keyword_density=0.12,
-            tag_count=5,
-            bookmark_count=3,
-            visit_count=10,
-            freshness_days=5,
-            domain_reputation=0.9,
-            content_type_score=0.8,
-            link_count=15,
-            image_count=3,
-            has_summary=True,
-            has_tags=True,
+    def test_content_length_optimal(self):
+        text = "word " * 500  # 500 words
+        scorer = ContentScorer()
+        _, breakdown = scorer.score(self._make_content(text=text))
+        assert breakdown.content_length_score == 1.0
+
+    def test_content_length_very_long(self):
+        text = "word " * 5000  # 5000 words
+        scorer = ContentScorer()
+        _, breakdown = scorer.score(self._make_content(text=text))
+        assert breakdown.content_length_score < 1.0
+
+    def test_keyword_density_match(self):
+        scorer = ContentScorer()
+        content = self._make_content(
+            text="Python programming language is great",
+            keywords=["python", "programming"],
         )
-        result = s.score(factors)
-        assert result.total_score > 0.3
-        assert result.text_quality > 0.5
-        assert result.engagement > 0.3
+        _, breakdown = scorer.score(content)
+        assert breakdown.keyword_density_score > 0.5
 
-    def test_score_fresh_vs_old(self):
-        s = ContentScorer()
-        fresh = s.score(ScoreFactors(freshness_days=1))
-        old = s.score(ScoreFactors(freshness_days=365))
-        assert fresh.freshness > old.freshness
+    def test_keyword_density_no_match(self):
+        scorer = ContentScorer()
+        content = self._make_content(
+            text="Hello world",
+            keywords=["python", "programming"],
+        )
+        _, breakdown = scorer.score(content)
+        assert breakdown.keyword_density_score == 0.0
 
-    def test_score_engagement_scaling(self):
-        s = ContentScorer()
-        low = s.score(ScoreFactors(bookmark_count=0, visit_count=0, tag_count=0))
-        high = s.score(ScoreFactors(bookmark_count=10, visit_count=100, tag_count=20))
-        assert high.engagement > low.engagement
+    def test_keyword_density_no_keywords(self):
+        scorer = ContentScorer()
+        content = self._make_content(text="Hello world", keywords=[])
+        _, breakdown = scorer.score(content)
+        assert breakdown.keyword_density_score == 0.5
 
-    def test_score_authority(self):
-        s = ContentScorer()
-        low_auth = s.score(ScoreFactors(domain_reputation=0.1, content_type_score=0.1))
-        high_auth = s.score(ScoreFactors(domain_reputation=0.95, content_type_score=0.95))
-        assert high_auth.authority > low_auth.authority
+    def test_heading_score_with_h1(self):
+        scorer = ContentScorer()
+        content = self._make_content(headings=["h1: Title", "h2: Sub"])
+        _, breakdown = scorer.score(content)
+        assert breakdown.heading_score > 0.0
 
-    def test_score_completeness(self):
-        s = ContentScorer()
-        incomplete = s.score(ScoreFactors(has_summary=False, has_tags=False, link_count=0, image_count=0))
-        complete = s.score(ScoreFactors(has_summary=True, has_tags=True, link_count=30, image_count=15))
-        assert complete.completeness > incomplete.completeness
+    def test_heading_score_no_headings(self):
+        scorer = ContentScorer()
+        content = self._make_content(headings=[])
+        _, breakdown = scorer.score(content)
+        assert breakdown.heading_score == 0.0
 
-    def test_score_batch(self):
-        s = ContentScorer()
-        factors = [ScoreFactors(text_length=100), ScoreFactors(text_length=2000)]
-        results = s.score_batch(factors)
-        assert len(results) == 2
-        assert results[1].total_score > results[0].total_score
+    def test_link_score_moderate(self):
+        scorer = ContentScorer()
+        links = [{"url": f"http://example.com/{i}"} for i in range(10)]
+        content = self._make_content(links=links)
+        _, breakdown = scorer.score(content)
+        assert 0.3 < breakdown.link_score <= 1.0
 
-    def test_rank_descending(self):
-        s = ContentScorer()
-        factors = [
-            ScoreFactors(text_length=100),
-            ScoreFactors(text_length=2000),
-            ScoreFactors(text_length=500),
+    def test_link_score_too_many(self):
+        scorer = ContentScorer()
+        links = [{"url": f"http://example.com/{i}"} for i in range(150)]
+        content = self._make_content(links=links)
+        _, breakdown = scorer.score(content)
+        assert breakdown.link_score == 0.2
+
+    def test_link_score_none(self):
+        scorer = ContentScorer()
+        content = self._make_content(links=[])
+        _, breakdown = scorer.score(content)
+        assert breakdown.link_score == 0.3
+
+    def test_image_score_with_alt(self):
+        scorer = ContentScorer()
+        images = [{"src": "img.png", "alt": "Description"}]
+        content = self._make_content(images=images)
+        _, breakdown = scorer.score(content)
+        assert breakdown.image_score == 1.0
+
+    def test_image_score_no_alt(self):
+        scorer = ContentScorer()
+        images = [{"src": "img.png", "alt": ""}]
+        content = self._make_content(images=images)
+        _, breakdown = scorer.score(content)
+        assert breakdown.image_score == 0.0
+
+    def test_readability_optimal(self):
+        # Words of 4-7 chars
+        text = "The quick brown fox jumps over the lazy dog"
+        scorer = ContentScorer()
+        _, breakdown = scorer.score(self._make_content(text=text))
+        assert breakdown.readability_score >= 0.7
+
+    def test_rank_items(self):
+        scorer = ContentScorer()
+        items = [
+            self._make_content(text="word " * 500, keywords=["word"]),
+            self._make_content(text="short"),
         ]
-        scores = s.score_batch(factors)
-        ranked = s.rank(scores)
-        assert ranked[0][1].total_score >= ranked[1][1].total_score
+        ranked = scorer.rank(items)
+        assert len(ranked) == 2
+        assert ranked[0][1] >= ranked[1][1]
 
-    def test_rank_ascending(self):
-        s = ContentScorer()
-        factors = [
-            ScoreFactors(text_length=2000),
-            ScoreFactors(text_length=100),
-        ]
-        scores = s.score_batch(factors)
-        ranked = s.rank(scores, descending=False)
-        assert ranked[0][1].total_score <= ranked[1][1].total_score
-
-    def test_sigmoid_length_zero(self):
-        s = ContentScorer()
-        assert s._sigmoid_length(0) == 0.0
-        assert s._sigmoid_length(-10) == 0.0
-
-    def test_sigmoid_length_optimal(self):
-        s = ContentScorer()
-        score = s._sigmoid_length(s.OPTIMAL_LENGTH)
-        assert abs(score - 0.5) < 0.01
-
-    def test_sigmoid_length_very_long(self):
-        s = ContentScorer()
-        score = s._sigmoid_length(100000)
-        assert score > 0.9
-
-    def test_freshness_half_life(self):
-        s = ContentScorer()
-        score_30 = s._score_freshness(ScoreFactors(freshness_days=30))
-        assert 0.45 < score_30 < 0.55
-
-    def test_freshness_zero_days(self):
-        s = ContentScorer()
-        score = s._score_freshness(ScoreFactors(freshness_days=0))
-        assert score == 1.0
+    def test_custom_weights(self):
+        weights = {"content_length": 1.0, "keyword_density": 0, "headings": 0,
+                   "links": 0, "images": 0, "readability": 0, "freshness": 0}
+        scorer = ContentScorer(weights=weights)
+        score, breakdown = scorer.score(self._make_content(text="word " * 500))
+        assert breakdown.total_score == breakdown.content_length_score
