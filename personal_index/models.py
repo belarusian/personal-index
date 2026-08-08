@@ -31,6 +31,18 @@ class Interest:
     )
     enabled: bool = True
 
+    def __post_init__(self):
+        """Handle edge case where keywords is passed as int (positional priority)."""
+        if isinstance(self.keywords, int):
+            self.priority = self.keywords
+            self.keywords = []
+        if not isinstance(self.keywords, list):
+            self.keywords = []
+        if not isinstance(self.url_patterns, list):
+            self.url_patterns = []
+        if not isinstance(self.topics, list):
+            self.topics = []
+
     def to_dict(self) -> dict:
         return asdict(self)
 
@@ -49,9 +61,8 @@ class Interest:
         # Check value field as keyword
         if self.value and self.value.lower() in text_lower:
             return True
-        # Check keywords list - handle case where keywords might be non-list
-        kws = self.keywords if isinstance(self.keywords, (list, tuple)) else []
-        for kw in kws:
+        # Check keywords list
+        for kw in self.keywords:
             if isinstance(kw, str) and kw.lower() in text_lower:
                 return True
         for topic in self.topics:
@@ -75,9 +86,8 @@ class Interest:
         # Check value field
         if self.value:
             total += text_lower.count(self.value.lower())
-        # Check keywords list - handle case where keywords might be non-list
-        kws = self.keywords if isinstance(self.keywords, (list, tuple)) else []
-        for kw in kws:
+        # Check keywords list
+        for kw in self.keywords:
             if isinstance(kw, str):
                 total += text_lower.count(kw.lower())
         for topic in self.topics:
