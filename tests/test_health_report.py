@@ -1,106 +1,165 @@
-"""Tests for health report generation."""
+"""Tests for health report module."""
+
+from __future__ import annotations
+
+import sys
+from unittest.mock import patch, MagicMock
 
 import pytest
 from personal_index.health_report import (
-    HealthReporter, HealthReport, HealthCheckResult, HealthStatus,
+    HealthCheckResult,
+    HealthReport,
+    HealthReporter,
 )
 
 
 class TestHealthCheckResult:
-    def test_creation(self):
-        r = HealthCheckResult(name="disk", status=HealthStatus.HEALTHY, message="OK")
-        assert r.name == "disk"
-        assert r.status == HealthStatus.HEALTHY
+    def test_default_values(self):
+        r = HealthCheckResult(name="test", status="healthy")
+        assert r.message == ""
+        assert r.details == {}
 
-    def test_to_dict(self):
-        r = HealthCheckResult(name="cpu", status=HealthStatus.HEALTHY, duration_ms=5.5)
-        d = r.to_dict()
-        assert d["name"] == "cpu"
-        assert d["status"] == "healthy"
+    def test_custom_details(self):
+        r = HealthCheckResult(
+            name="test",
+            status="healthy",
+            message="ok",
+            details={"key": "value"},
+        )
+        assert r.details["key"] == "value"
 
 
 class TestHealthReport:
-    def test_default_values(self):
-        r = HealthReport()
-        assert r.overall_status == HealthStatus.HEALTHY
-        assert r.check_count == 0
+    def test_is_healthy_all_healthy(self):
+        report = HealthReport(
+            checks=[
+                HealthCheckResult(name="a", status="healthy"),
+                HealthCheckResult(name="b", status="healthy"),
+            ]
+        )
+        assert report.is_healthy is True
 
-    def test_counts(self):
-        r = HealthReport()
-        r.checks.append(HealthCheckResult(name="a", status=HealthStatus.HEALTHY))
-        r.checks.append(HealthCheckResult(name="b", status=HealthStatus.DEGRADED))
-        r.checks.append(HealthCheckResult(name="c", status=HealthStatus.UNHEALTHY))
-        assert r.healthy_count == 1
-        assert r.degraded_count == 1
-        assert r.unhealthy_count == 1
+    def test_is_healthy_with_degraded(self):
+        report = HealthReport(
+            checks=[
+                HealthCheckResult(name="a", status="healthy"),
+                HealthCheckResult(name="b", status="degraded"),
+            ]
+        )
+        assert report.is_healthy is False
 
-    def test_is_healthy(self):
-        r = HealthReport(overall_status=HealthStatus.HEALTHY)
-        assert r.is_healthy() is True
-        r2 = HealthReport(overall_status=HealthStatus.UNHEALTHY)
-        assert r2.is_healthy() is False
+    def test_is_healthy_with_unhealthy(self):
+        report = HealthReport(
+            checks=[
+                HealthCheckResult(name="a", status="healthy"),
+                HealthCheckResult(name="b", status="unhealthy"),
+            ]
+        )
+        assert report.is_healthy is False
+
+    def test_is_degraded(self):
+        report = HealthReport(
+            checks=[
+                HealthCheckResult(name="a", status="healthy"),
+                HealthCheckResult(name="b", status="degraded"),
+            ]
+        )
+        assert report.is_degraded is True
+
+    def test_is_degraded_not_when_unhealthy(self):
+        report = HealthReport(
+            checks=[
+                HealthCheckResult(name="a", status="healthy"),
+                HealthCheckResult(name="b", status="unhealthy"),
+            ]
+        )
+        assert report.is_degraded is False
 
     def test_to_dict(self):
-        r = HealthReport()
-        r.checks.append(HealthCheckResult(name="test", status=HealthStatus.HEALTHY))
-        d = r.to_dict()
-        assert d["check_count"] == 1
-        assert "checks" in d
+        report = HealthReport(
+            timestamp="2024-01-01",
+            version="1.0",
+            checks=[HealthCheckResult(name="a", status="healthy")],
+            summary="1 healthy",
+        )
+        d = report.to_dict()
+        assert d["timestamp"] == "2024-01-01"
+        assert d["version"] == "1.0"
+        assert d["is_healthy"] is True
+        assert len(d["checks"]) == 1
 
-    def test_to_summary(self):
-        r = HealthReport()
-        r.checks.append(HealthCheckResult(name="test", status=HealthStatus.HEALTHY, message="OK"))
-        summary = r.to_summary()
-        assert "HEALTHY" in summary
-        assert "test" in summary
-
-    def test_total_duration(self):
-        r = HealthReport()
-        r.checks.append(HealthCheckResult(name="a", status=HealthStatus.HEALTHY, duration_ms=10.0))
-        r.checks.append(HealthCheckResult(name="b", status=HealthStatus.HEALTHY, duration_ms=20.0))
-        assert r.total_duration_ms == 30.0
+    def test_empty_report(self):
+        report = HealthReport()
+        assert report.is_healthy is True
+        assert report.checks == []
 
 
 class TestHealthReporter:
-    def test_register_check(self):
-        reporter = HealthReporter()
-        reporter.register_check("test", lambda: (HealthStatus.HEALTHY, "OK"))
-        report = reporter.generate_report()
-        assert report.check_count == 1
-
-    def test_generate_report_healthy(self):
-        reporter = HealthReporter()
-        reporter.register_check("check1", lambda: HealthCheckResult(
-            name="check1", status=HealthStatus.HEALTHY,
-        ))
-        report = reporter.generate_report()
-        assert report.overall_status == HealthStatus.HEALTHY
-
-    def test_generate_report_unhealthy(self):
-        reporter = HealthReporter()
-        reporter.register_check("bad", lambda: (HealthStatus.UNHEALTHY, "Failed"))
-        report = reporter.generate_report()
-        assert report.overall_status == HealthStatus.UNHEALTHY
-
-    def test_generate_report_degraded(self):
-        reporter = HealthReporter()
-        reporter.register_check("slow", lambda: (HealthStatus.DEGRADED, "Slow"))
-        report = reporter.generate_report()
-        assert report.overall_status == HealthStatus.DEGRADED
-
-    def test_check_exception(self):
-        reporter = HealthReporter()
-        reporter.register_check("crash", lambda: 1 / 0)
-        report = reporter.generate_report()
-        assert report.overall_status == HealthStatus.UNHEALTHY
-        assert report.checks[0].status == HealthStatus.UNHEALTHY
-
-    def test_empty_report(self):
-        reporter = HealthReporter()
-        report = reporter.generate_report()
-        assert report.overall_status == HealthStatus.UNKNOWN
-
-    def test_version(self):
+    def test_generate_report_returns_report(self):
         reporter = HealthReporter(version="1.0.0")
         report = reporter.generate_report()
+        assert isinstance(report, HealthReport)
         assert report.version == "1.0.0"
+        assert len(report.checks) >= 5
+
+    def test_generate_report_with_extra_checks(self):
+        def custom_check():
+            return HealthCheckResult(name="custom", status="healthy", message="ok")
+
+        reporter = HealthReporter()
+        report = reporter.generate_report(extra_checks=[custom_check])
+        names = [c.name for c in report.checks]
+        assert "custom" in names
+
+    def test_generate_report_extra_check_raises(self):
+        def bad_check():
+            raise ValueError("boom")
+
+        reporter = HealthReporter()
+        report = reporter.generate_report(extra_checks=[bad_check])
+        bad = [c for c in report.checks if c.name == "bad_check"]
+        assert len(bad) == 1
+        assert bad[0].status == "unhealthy"
+        assert "boom" in bad[0].message
+
+    def test_python_version_check(self):
+        reporter = HealthReporter()
+        result = reporter._check_python_version()
+        assert result.name == "python_version"
+        assert result.status in ("healthy", "degraded")
+
+    def test_disk_space_check(self):
+        reporter = HealthReporter()
+        result = reporter._check_disk_space()
+        assert result.name == "disk_space"
+        assert "pct_free" in result.details
+
+    def test_timezone_check(self):
+        reporter = HealthReporter()
+        result = reporter._check_timezone()
+        assert result.name == "timezone"
+        assert result.status == "healthy"
+
+    def test_writable_home_check(self):
+        reporter = HealthReporter()
+        result = reporter._check_writable_home()
+        assert result.name == "writable_home"
+        assert result.status == "healthy"
+
+    def test_memory_check_without_psutil(self):
+        reporter = HealthReporter()
+        with patch.dict(sys.modules, {"psutil": None}):
+            # Force ImportError
+            import importlib
+            mod = sys.modules.get("psutil")
+            if mod is not None:
+                del sys.modules["psutil"]
+            result = reporter._check_memory()
+            assert result.name == "memory"
+            assert result.status == "healthy"
+
+    def test_summary_counts(self):
+        reporter = HealthReporter()
+        report = reporter.generate_report()
+        parts = report.summary.split(", ")
+        assert len(parts) == 3
