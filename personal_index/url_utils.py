@@ -1,19 +1,26 @@
-"""URL utilities for validation, normalization, and extraction."""
+"""URL utility functions for the personal index."""
 
 from __future__ import annotations
 
 import re
-from urllib.parse import (
-    parse_qs,
-    quote,
-    unquote,
-    urlparse,
-    urlunparse,
-)
+from urllib.parse import ParseResult, urlparse, urljoin, urlunparse
+
+# Common file extensions to exclude from crawling
+EXCLUDED_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".ico",
+    ".css", ".js", ".pdf", ".zip", ".tar", ".gz", ".rar",
+    ".mp3", ".mp4", ".avi", ".mov", ".wmv", ".flv",
+    ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".exe", ".bin", ".dmg", ".iso",
+}
+
+EXCLUDED_SCHEMES = {"javascript", "mailto", "data", "tel", "ftp"}
 
 
 def is_valid_url(url: str) -> bool:
-    """Check if a string is a valid URL."""
+    """Check if a URL is valid and has an http/https scheme."""
+    if not url:
+        return False
     try:
         parsed = urlparse(url)
         return parsed.scheme in ("http", "https") and bool(parsed.netloc)
@@ -22,31 +29,34 @@ def is_valid_url(url: str) -> bool:
 
 
 def normalize_url(url: str) -> str:
-    """Normalize a URL by removing fragments, normalizing case, etc."""
+    """Normalize a URL by lowercasing scheme/domain, removing fragments and default ports."""
+    if not url:
+        return url
     try:
         parsed = urlparse(url)
         # Lowercase scheme and netloc
         scheme = parsed.scheme.lower()
         netloc = parsed.netloc.lower()
-        # Normalize path
+        # Remove default ports
+        if (scheme == "http" and netloc.endswith(":80")):
+            netloc = netloc[:-3]
+        elif (scheme == "https" and netloc.endswith(":443")):
+            netloc = netloc[:-4]
+        # Remove fragment
         path = parsed.path
-        # Remove trailing slash (except for root)
+        # Remove trailing slash except for root
         if path != "/" and path.endswith("/"):
             path = path.rstrip("/")
-        # Remove default ports
-        if ":" in netloc:
-            host, port = netloc.rsplit(":", 1)
-            if (scheme == "http" and port == "80") or \
-               (scheme == "https" and port == "443"):
-                netloc = host
-        # Remove fragment
-        return urlunparse((scheme, netloc, path, parsed.params, parsed.query, ""))
+        normalized = urlunparse((scheme, netloc, path, parsed.params, parsed.query, ""))
+        return normalized
     except Exception:
         return url
 
 
 def extract_domain(url: str) -> str:
-    """Extract the domain from a URL."""
+    """Extract domain from URL."""
+    if not url:
+        return ""
     try:
         parsed = urlparse(url)
         return parsed.netloc.lower()
@@ -54,87 +64,108 @@ def extract_domain(url: str) -> str:
         return ""
 
 
-def is_same_domain(url1: str, url2: str) -> bool:
-    """Check if two URLs are from the same domain."""
-    return extract_domain(url1) == extract_domain(url2)
-
-
 def extract_subdomain(url: str) -> str:
-    """Extract the subdomain from a URL."""
+    """Extract subdomain from URL."""
     domain = extract_domain(url)
+    if not domain:
+        return ""
     parts = domain.split(".")
-    if len(parts) > 2:
-        return ".".join(parts[:-2])
-    return ""
+    if len(parts) <= 2:
+        return ""
+    return ".".join(parts[:-2])
 
 
 def get_tld(url: str) -> str:
-    """Get the top-level domain from a URL."""
+    """Extract top-level domain from URL."""
     domain = extract_domain(url)
+    if not domain:
+        return ""
     parts = domain.split(".")
-    if parts:
-        return parts[-1]
-    return ""
+    return parts[-1] if parts else ""
+
+
+def is_same_domain(url1: str, url2: str) -> bool:
+    """Check if two URLs are on the same domain."""
+    return extract_domain(url1) == extract_domain(url2)
 
 
 def is_internal_link(url: str, base_url: str) -> bool:
-    """Check if a URL is an internal link relative to a base URL."""
+    """Check if URL is an internal link relative to base URL."""
     return is_same_domain(url, base_url)
 
 
-def remove_query_params(url: str, params: list[str] | None = None) -> str:
-    """Remove specific query parameters from a URL."""
-    parsed = urlparse(url)
-    query = parse_qs(parsed.query, keep_blank_values=True)
-    if params:
-        for param in params:
-            query.pop(param, None)
-    # Rebuild query string
-    new_query = "&".join(
-        f"{k}={v[0]}" for k, v in sorted(query.items())
-    )
-    return urlunparse((
-        parsed.scheme,
-        parsed.netloc,
-        parsed.path,
-        parsed.params,
-        new_query,
-        parsed.fragment,
-    ))
+def remove_query_params(url: str, params: list = None) -> str:
+    """Remove specific query parameters from URL."""
+    if not params:
+        return url
+    try:
+        parsed = urlparse(url)
+        query_parts = parsed.query.split("&")
+        filtered = [p for p in query_parts if not any(p.startswith(f"{param}=") for param in params)]
+        new_query = "&".join(filtered)
+        return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+    except Exception:
+        return url
 
 
 def url_to_path(url: str) -> str:
-    """Convert a URL to a safe filesystem path."""
+    """Convert URL to a filesystem-safe path."""
+    if not url:
+        return ""
     parsed = urlparse(url)
-    # Replace special characters
-    safe_path = re.sub(r'[<>:"/\\|?*]', '_', parsed.path)
-    # Ensure non-empty
-    if not safe_path or safe_path == "_":
-        safe_path = "index"
-    return f"{parsed.netloc}{safe_path}"
+    path = parsed.path.strip("/")
+    if not path:
+        path = "index"
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", path)
+    return f"{parsed.netloc}_{safe}"
 
 
 def join_urls(base: str, relative: str) -> str:
     """Join a base URL with a relative URL."""
-    from urllib.parse import urljoin
     return urljoin(base, relative)
 
 
-def extract_all_urls(text: str) -> list[str]:
-    """Extract all URLs from text."""
-    url_pattern = r'https?://[^\s<>"\')\]]+'
-    urls = re.findall(url_pattern, text)
-    return [normalize_url(u) for u in urls if is_valid_url(u)]
+def extract_all_urls(html: str, base_url: str) -> list:
+    """Extract all URLs from HTML content."""
+    from bs4 import BeautifulSoup
+    urls = []
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for a in soup.find_all("a", href=True):
+            href = a["href"].strip()
+            if href.startswith("#") or href.startswith("javascript:"):
+                continue
+            full_url = urljoin(base_url, href)
+            normalized = normalize_url(full_url)
+            if is_valid_url(normalized):
+                urls.append(normalized)
+    except Exception:
+        pass
+    return urls
 
 
 def is_robotstxt(url: str) -> bool:
-    """Check if URL points to a robots.txt file."""
+    """Check if URL is a robots.txt file."""
     parsed = urlparse(url)
-    return parsed.path.lower() == "/robots.txt"
+    return parsed.path.rstrip("/") == "/robots.txt"
 
 
 def is_sitemap(url: str) -> bool:
-    """Check if URL points to a sitemap."""
+    """Check if URL is a sitemap file."""
     parsed = urlparse(url)
-    path_lower = parsed.path.lower()
-    return "sitemap" in path_lower or path_lower.endswith(".xml")
+    path = parsed.path.lower()
+    return "sitemap" in path
+
+
+def is_excluded_url(url: str) -> bool:
+    """Check if URL should be excluded from crawling."""
+    if not url:
+        return True
+    parsed = urlparse(url)
+    if parsed.scheme in EXCLUDED_SCHEMES:
+        return True
+    path = parsed.path.lower()
+    for ext in EXCLUDED_EXTENSIONS:
+        if path.endswith(ext):
+            return True
+    return False
