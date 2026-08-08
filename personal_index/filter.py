@@ -1,122 +1,112 @@
-"""
-Content filtering for personal-index.
+"""Content filtering module.
 
-Filters crawled content based on user-defined interests,
-keywords, topics, and URL patterns.
+Filters crawled content based on user-defined interests, keywords, and URL patterns.
 """
 
 import re
 from dataclasses import dataclass
 from typing import Optional
-from personal_index.interests import InterestStore
+
+from .config import Interest
 
 
 @dataclass
 class FilterResult:
     """Result of filtering content against interests."""
-    matched: bool
-    matching_interests: list[str] = None
-    score: float = 0.0
-    matched_keywords: list[str] = None
-    matched_patterns: list[str] = None
 
-    def __post_init__(self):
-        if self.matching_interests is None:
-            self.matching_interests = []
-        if self.matched_keywords is None:
-            self.matched_keywords = []
-        if self.matched_patterns is None:
-            self.matched_patterns = []
+    matched: bool
+    matching_interests: list[str]
+    score: float
+    matched_keywords: list[str]
 
 
 class ContentFilter:
     """Filters content based on user interests."""
 
-    def __init__(self, interest_store: InterestStore):
-        self._store = interest_store
-        self._keyword_cache: Optional[set] = None
-        self._pattern_cache: Optional[list] = None
-        self._topic_cache: Optional[set] = None
-
-    def _refresh_cache(self) -> None:
-        """Refresh cached interest data."""
-        self._keyword_cache = self._store.get_all_keywords()
-        self._pattern_cache = self._store.get_all_url_patterns()
-        self._topic_cache = self._store.get_all_topics()
+    def __init__(self, interests: list[Interest]):
+        self.interests = [i for i in interests if i.enabled]
+        self._compiled_patterns: list[tuple[str, re.Pattern]] = []
+        for interest in self.interests:
+            for pattern in interest.url_patterns:
+                try:
+                    self._compiled_patterns.append((interest.topic, re.compile(pattern)))
+                except re.error:
+                    continue
 
     def filter_url(self, url: str) -> FilterResult:
         """Check if a URL matches any interest patterns."""
-        if not self._pattern_cache:
-            self._refresh_cache()
-
-        matched_patterns = []
-        for pattern in self._pattern_cache:
+        matched_topics = []
+        for topic, pattern in self._compiled_patterns:
             if pattern.search(url):
-                matched_patterns.append(pattern.pattern)
-
-        if matched_patterns:
-            return FilterResult(
-                matched=True,
-                matched_patterns=matched_patterns,
-                score=len(matched_patterns) * 0.5,
-            )
-        return FilterResult(matched=False)
-
-    def filter_content(self, text: str, url: str = "") -> FilterResult:
-        """Check if content matches any interest keywords or topics."""
-        if not self._keyword_cache:
-            self._refresh_cache()
-
-        text_lower = text.lower()
-        matched_keywords = []
-        matching_interests = []
-
-        for interest in self._store.get_enabled():
-            interest_match = False
-            for keyword in interest.keywords:
-                if keyword.lower() in text_lower:
-                    matched_keywords.append(keyword)
-                    interest_match = True
-            for topic in interest.topics:
-                if topic.lower() in text_lower:
-                    interest_match = True
-            if interest_match:
-                matching_interests.append(interest.name)
-
-        score = len(matched_keywords) * 0.3
-        if matching_interests:
-            score += len(matching_interests) * 0.2
-
+                matched_topics.append(topic)
         return FilterResult(
-            matched=bool(matched_keywords or matching_interests),
-            matching_interests=matching_interests,
+            matched=bool(matched_topics),
+            matching_interests=matched_topics,
+            score=len(matched_topics),
+            matched_keywords=[],
+        )
+
+    def filter_content(self, text: str, title: str = "") -> FilterResult:
+        """Check if content text matches any interest keywords."""
+        matched_topics = []
+        matched_keywords = []
+        text_lower = text.lower()
+        title_lower = title.lower()
+        combined = f"{title_lower} {text_lower}"
+
+        for interest in self.interests:
+            topic_matched = False
+            for keyword in interest.keywords:
+                keyword_lower = keyword.lower()
+                if keyword_lower in combined:
+                    topic_matched = True
+                    matched_keywords.append(keyword)
+            if topic_matched:
+                matched_topics.append(interest.topic)
+
+        score = len(matched_keywords) / max(len(self._all_keywords()), 1)
+        return FilterResult(
+            matched=bool(matched_topics),
+            matching_interests=matched_topics,
             score=score,
             matched_keywords=matched_keywords,
         )
 
-    def should_index(self, url: str, title: str = "", content: str = "") -> FilterResult:
-        """
-        Determine if a page should be indexed based on URL patterns,
-        title, and content.
-        """
+    def filter_page(self, url: str, text: str, title: str = "") -> FilterResult:
+        """Filter a page by checking both URL patterns and content."""
         url_result = self.filter_url(url)
-        content_text = f"{title} {content}"
-        content_result = self.filter_content(content_text, url)
+        content_result = self.filter_content(text, title)
 
-        if url_result.matched or content_result.matched:
-            combined_interests = list(set(
-                url_result.matching_interests + content_result.matching_interests
-            ))
-            return FilterResult(
-                matched=True,
-                matching_interests=combined_interests,
-                score=url_result.score + content_result.score,
-                matched_keywords=content_result.matched_keywords,
-                matched_patterns=url_result.matched_patterns,
-            )
-        return FilterResult(matched=False)
+        all_topics = list(set(url_result.matching_interests + content_result.matching_interests))
+        all_keywords = list(set(url_result.matched_keywords + content_result.matched_keywords))
+        combined_score = (url_result.score + content_result.score) / 2
 
-    def get_score(self, text: str) -> float:
-        """Get a relevance score for text against all interests."""
-        result = self.filter_content(text)
-        return result.score
+        return FilterResult(
+            matched=bool(all_topics),
+            matching_interests=all_topics,
+            score=combined_score,
+            matched_keywords=all_keywords,
+        )
+
+    def _all_keywords(self) -> list[str]:
+        """Get all keywords from all interests."""
+        keywords = []
+        for interest in self.interests:
+            keywords.extend(interest.keywords)
+        return keywords
+
+    def should_crawl(self, url: str) -> bool:
+        """Determine if a URL should be crawled based on interest patterns."""
+        if not self._compiled_patterns:
+            return True
+        return self.filter_url(url).matched
+
+    def extract_relevant_text(self, text: str, max_length: int = 5000) -> str:
+        """Extract relevant text, trimming to max length."""
+        if len(text) <= max_length:
+            return text
+        truncated = text[:max_length]
+        last_space = truncated.rfind(" ")
+        if last_space > 0:
+            return truncated[:last_space]
+        return truncated
