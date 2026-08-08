@@ -1,20 +1,15 @@
-"""Content scoring and ranking utilities."""
+"""Content scoring module for ranking indexed content by quality."""
 
 from __future__ import annotations
 
-import logging
-import math
 import re
-from collections import Counter
 from dataclasses import dataclass, field
-from typing import Optional
-
-logger = logging.getLogger(__name__)
+from typing import Any
 
 
 @dataclass
 class ScoreBreakdown:
-    """Detailed breakdown of a content score."""
+    """Detailed breakdown of content quality scores."""
 
     total_score: float = 0.0
     content_length_score: float = 0.0
@@ -27,21 +22,40 @@ class ScoreBreakdown:
 
 
 class ContentScorer:
-    """Scores and ranks content based on multiple factors."""
+    """Multi-factor content quality scorer.
 
-    def __init__(self, weights: Optional[dict[str, float]] = None):
-        self.weights = weights or {
-            "content_length": 0.25,
-            "keyword_density": 0.20,
-            "headings": 0.15,
-            "links": 0.10,
-            "images": 0.10,
-            "readability": 0.15,
-            "freshness": 0.05,
-        }
+    Evaluates content based on length, keyword density, heading structure,
+    link quality, image presence, readability, and freshness.
+    """
 
-    def score(self, content: dict) -> tuple[float, ScoreBreakdown]:
-        """Score a content item based on multiple factors."""
+    DEFAULT_WEIGHTS = {
+        "content_length": 0.25,
+        "keyword_density": 0.20,
+        "headings": 0.15,
+        "links": 0.10,
+        "images": 0.10,
+        "readability": 0.15,
+        "freshness": 0.05,
+    }
+
+    def __init__(self, weights: dict[str, float] | None = None) -> None:
+        """Initialize scorer with optional custom weights.
+
+        Args:
+            weights: Override default scoring weights. Must sum to ~1.0.
+        """
+        self.weights = dict(weights) if weights else dict(self.DEFAULT_WEIGHTS)
+
+    def score(self, content: dict[str, Any]) -> tuple[float, ScoreBreakdown]:
+        """Score a content item based on multiple factors.
+
+        Args:
+            content: Dict with keys like 'text', 'keywords', 'headings',
+                     'links', 'images', 'freshness_score'.
+
+        Returns:
+            Tuple of (total_score, ScoreBreakdown).
+        """
         breakdown = ScoreBreakdown()
 
         breakdown.content_length_score = self._score_content_length(content)
@@ -52,7 +66,6 @@ class ContentScorer:
         breakdown.readability_score = self._score_readability(content)
         breakdown.freshness_score = self._score_freshness(content)
 
-        # Weighted sum
         breakdown.total_score = (
             breakdown.content_length_score * self.weights["content_length"]
             + breakdown.keyword_density_score * self.weights["keyword_density"]
@@ -65,11 +78,13 @@ class ContentScorer:
 
         return breakdown.total_score, breakdown
 
-    def _score_content_length(self, content: dict) -> float:
-        """Score based on content length (0-1)."""
+    def _score_content_length(self, content: dict[str, Any]) -> float:
+        """Score based on content length (0-1).
+
+        Optimal range: 300-2000 words. Penalizes very short and very long content.
+        """
         text = content.get("text", "") or content.get("content", "")
         word_count = len(text.split()) if text else 0
-        # Optimal: 300-2000 words
         if word_count < 100:
             return min(word_count / 100, 0.5)
         elif word_count < 300:
@@ -79,11 +94,14 @@ class ContentScorer:
         else:
             return max(0.5, 1.0 - (word_count - 2000) / 5000)
 
-    def _score_keyword_density(self, content: dict) -> float:
-        """Score based on keyword density (0-1)."""
+    def _score_keyword_density(self, content: dict[str, Any]) -> float:
+        """Score based on keyword density (0-1).
+
+        Higher score when more provided keywords appear in the text.
+        """
         keywords = content.get("keywords", [])
         if not keywords:
-            return 0.5  # Neutral score
+            return 0.5
         text = (content.get("text", "") or content.get("content", "")).lower()
         if not text:
             return 0.0
@@ -93,49 +111,56 @@ class ContentScorer:
         matches = sum(1 for kw in keywords if kw.lower() in text)
         return min(matches / max(len(keywords), 1), 1.0)
 
-    def _score_headings(self, content: dict) -> float:
-        """Score based on heading structure (0-1)."""
+    def _score_headings(self, content: dict[str, Any]) -> float:
+        """Score based on heading structure (0-1).
+
+        Rewards well-structured content with heading hierarchy.
+        """
         headings = content.get("headings", [])
         if not headings:
             return 0.0
-        # Score based on number and hierarchy of headings
         score = min(len(headings) / 5, 1.0)
-        # Bonus for having h1
         has_h1 = any(h.startswith("h1") for h in headings)
         if has_h1:
             score = min(score + 0.2, 1.0)
         return score
 
-    def _score_links(self, content: dict) -> float:
-        """Score based on link quality (0-1)."""
+    def _score_links(self, content: dict[str, Any]) -> float:
+        """Score based on link quality (0-1).
+
+        Penalizes pages with too many links (potential spam).
+        """
         links = content.get("links", [])
         if not links:
-            return 0.3  # Some content doesn't need links
-        # Penalize too many links (spam indicator)
+            return 0.3
         if len(links) > 100:
             return 0.2
-        # Reward moderate number of links
         return min(len(links) / 20, 1.0)
 
-    def _score_images(self, content: dict) -> float:
-        """Score based on image presence and alt text (0-1)."""
+    def _score_images(self, content: dict[str, Any]) -> float:
+        """Score based on image presence and alt text (0-1).
+
+        Rewards images with descriptive alt text.
+        """
         images = content.get("images", [])
         if not images:
             return 0.3
         with_alt = sum(1 for img in images if img.get("alt", "").strip())
         return min(with_alt / max(len(images), 1), 1.0)
 
-    def _score_readability(self, content: dict) -> float:
-        """Score based on text readability (0-1)."""
+    def _score_readability(self, content: dict[str, Any]) -> float:
+        """Score based on text readability (0-1).
+
+        Uses average word length as a proxy. Optimal: 4-7 chars per word.
+        Short texts (< 5 words) get a neutral score.
+        """
         text = content.get("text", "") or content.get("content", "")
         if not text:
             return 0.0
         words = text.split()
-        if len(words) < 10:
+        if len(words) < 5:
             return 0.5
-        # Average word length
         avg_word_len = sum(len(w) for w in words) / len(words)
-        # Optimal word length: 4-7 characters
         if 4 <= avg_word_len <= 7:
             return 1.0
         elif avg_word_len < 4:
@@ -143,13 +168,24 @@ class ContentScorer:
         else:
             return max(0.3, 1.0 - (avg_word_len - 7) / 5)
 
-    def _score_freshness(self, content: dict) -> float:
-        """Score based on content freshness (0-1)."""
-        # Placeholder - would use actual date in real implementation
+    def _score_freshness(self, content: dict[str, Any]) -> float:
+        """Score based on content freshness (0-1).
+
+        Currently reads from content dict; can be extended with date logic.
+        """
         return content.get("freshness_score", 0.5)
 
-    def rank(self, items: list[dict]) -> list[tuple[int, float, ScoreBreakdown]]:
-        """Rank a list of content items by score."""
+    def rank(
+        self, items: list[dict[str, Any]]
+    ) -> list[tuple[int, float, ScoreBreakdown]]:
+        """Rank a list of content items by score (highest first).
+
+        Args:
+            items: List of content dicts to score and rank.
+
+        Returns:
+            List of (original_index, score, breakdown) sorted by score desc.
+        """
         scored = []
         for i, item in enumerate(items):
             score, breakdown = self.score(item)
