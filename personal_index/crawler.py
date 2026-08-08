@@ -1,171 +1,247 @@
-"""Web crawler module with configurable depth, politeness, and rate limiting."""
+"""Web crawler with configurable depth, politeness, and rate limiting."""
 
-import asyncio
 import time
+import logging
+from collections import deque
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Set
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
+import requests
+from requests.exceptions import RequestException
 
-@dataclass
-class CrawlConfig:
-    """Configuration for the web crawler."""
-    max_depth: int = 3
-    politeness_delay: float = 1.0  # seconds between requests to same host
-    rate_limit: int = 10  # max requests per minute per host
-    timeout: int = 30  # request timeout in seconds
-    max_pages: int = 1000  # maximum pages to crawl
-    user_agent: str = "PersonalIndex/0.1.0"
-    allowed_domains: List[str] = field(default_factory=list)
-    blocked_paths: List[str] = field(default_factory=list)
+from personal_index.config import CrawlerConfig, Interest
+from personal_index.content import ExtractedContent, extract_content
+from personal_index.url_utils import (
+    is_valid_url,
+    normalize_url,
+    extract_links,
+    get_domain,
+    is_same_domain,
+    get_url_depth,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class CrawlResult:
-    """Result of crawling a single page."""
+    """Result of crawling a single URL."""
+
     url: str
-    title: str = ""
-    content: str = ""
-    links: List[str] = field(default_factory=list)
-    status_code: int = 0
-    error: Optional[str] = None
+    success: bool
+    content: Optional[ExtractedContent] = None
+    error: str = ""
     depth: int = 0
-    crawled_at: float = field(default_factory=time.time)
+    links_found: int = 0
+    crawled_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
 
 class RateLimiter:
-    """Token bucket rate limiter per host."""
+    """Rate limiter for controlling request frequency."""
 
-    def __init__(self, rate: int = 10):
-        self.rate = rate  # requests per minute
-        self.tokens: Dict[str, float] = {}
-        self.last_refill: Dict[str, float] = {}
+    def __init__(self, rate: float = 1.0):
+        self.rate = rate
+        self.last_request: Dict[str, float] = {}
 
-    def _refill(self, host: str) -> None:
+    def wait(self, domain: str) -> None:
+        """Wait if needed to respect rate limit for a domain."""
         now = time.time()
-        if host not in self.tokens:
-            self.tokens[host] = self.rate
-            self.last_refill[host] = now
-            return
-        elapsed = now - self.last_refill[host]
-        new_tokens = elapsed * (self.rate / 60.0)
-        self.tokens[host] = min(self.rate, self.tokens[host] + new_tokens)
-        self.last_refill[host] = now
-
-    def acquire(self, host: str) -> bool:
-        """Try to acquire a token for the given host. Returns True if allowed."""
-        self._refill(host)
-        if self.tokens.get(host, 0) >= 1:
-            self.tokens[host] -= 1
-            return True
-        return False
-
-    def wait_time(self, host: str) -> float:
-        """Return seconds to wait before next request."""
-        self._refill(host)
-        if self.tokens.get(host, 0) >= 1:
-            return 0.0
-        deficit = 1 - self.tokens[host]
-        return deficit * (60.0 / self.rate)
+        last = self.last_request.get(domain, 0)
+        delay = 1.0 / self.rate
+        elapsed = now - last
+        if elapsed < delay:
+            time.sleep(delay - elapsed)
+        self.last_request[domain] = time.time()
 
 
-class WebCrawler:
-    """Configurable web crawler with politeness and rate limiting."""
+class Crawler:
+    """Web crawler with configurable depth, politeness, and rate limiting."""
 
-    def __init__(self, config: Optional[CrawlConfig] = None):
-        self.config = config or CrawlConfig()
-        self.rate_limiter = RateLimiter(self.config.rate_limit)
-        self.crawled_urls: Set[str] = set()
+    def __init__(self, config: Optional[CrawlerConfig] = None):
+        self.config = config or CrawlerConfig()
+        self.rate_limiter = RateLimiter(rate=self.config.rate_limit)
+        self.visited: Set[str] = set()
+        self.domain_counts: Dict[str, int] = {}
         self.results: List[CrawlResult] = []
-        self.host_delay: Dict[str, float] = {}
-
-    def _get_host(self, url: str) -> str:
-        """Extract hostname from URL."""
-        return urlparse(url).hostname or ""
-
-    def _is_allowed(self, url: str) -> bool:
-        """Check if URL is allowed by configuration."""
-        parsed = urlparse(url)
-        host = parsed.hostname or ""
-
-        # Check allowed domains
-        if self.config.allowed_domains:
-            if host not in self.config.allowed_domains:
-                return False
-
-        # Check blocked paths
-        for blocked in self.config.blocked_paths:
-            if blocked in parsed.path:
-                return False
-
-        return True
-
-    def _apply_politeness(self, url: str) -> None:
-        """Apply politeness delay between requests to same host."""
-        host = self._get_host(url)
-        now = time.time()
-        last = self.host_delay.get(host, 0)
-        wait = self.config.politeness_delay - (now - last)
-        if wait > 0:
-            time.sleep(wait)
-        self.host_delay[host] = time.time()
-
-    def _resolve_links(self, base_url: str, raw_links: List[str]) -> List[str]:
-        """Resolve relative links to absolute URLs."""
-        resolved = []
-        for link in raw_links:
-            try:
-                absolute = urljoin(base_url, link.strip())
-                if self._is_allowed(absolute) and absolute not in self.crawled_urls:
-                    resolved.append(absolute)
-            except Exception:
-                continue
-        return resolved
-
-    def crawl(self, start_url: str, depth: int = 0) -> List[CrawlResult]:
-        """Crawl starting from a URL up to max_depth.
-
-        Returns all accumulated results (self.results).
-        """
-        if depth > self.config.max_depth:
-            return self.results
-
-        if start_url in self.crawled_urls:
-            return self.results
-
-        if len(self.crawled_urls) >= self.config.max_pages:
-            return self.results
-
-        if not self._is_allowed(start_url):
-            return self.results
-
-        host = self._get_host(start_url)
-        if not self.rate_limiter.acquire(host):
-            wait = self.rate_limiter.wait_time(host)
-            time.sleep(min(wait, 5))
-
-        self._apply_politeness(start_url)
-        self.crawled_urls.add(start_url)
-
-        # Simulate crawl result (in production, this would make HTTP requests)
-        result = CrawlResult(
-            url=start_url,
-            depth=depth,
-            status_code=200,
+        self.session = requests.Session()
+        self.session.headers.update(
+            {"User-Agent": self.config.user_agent}
         )
-        self.results.append(result)
 
-        # Recurse into links if available
-        if depth < self.config.max_depth:
-            for link in result.links:
-                self.crawl(link, depth + 1)
+    def crawl(
+        self,
+        seed_urls: List[str],
+        interests: List[Interest] = None,
+        on_progress=None,
+    ) -> List[CrawlResult]:
+        """Crawl starting from seed URLs."""
+        if interests is None:
+            interests = []
+
+        queue = deque()
+        for url in seed_urls:
+            normalized = normalize_url(url)
+            if is_valid_url(normalized) and normalized not in self.visited:
+                queue.append((normalized, 0))
+                self.visited.add(normalized)
+
+        while queue:
+            url, depth = queue.popleft()
+
+            if depth > self.config.max_depth:
+                continue
+
+            # Check domain limit
+            domain = get_domain(url)
+            if self.domain_counts.get(domain, 0) >= self.config.max_pages_per_domain:
+                continue
+
+            # Crawl the URL
+            result = self._fetch_and_process(url, depth, interests)
+            self.results.append(result)
+            self.domain_counts[domain] = self.domain_counts.get(domain, 0) + 1
+
+            # Report progress
+            if on_progress:
+                on_progress(url, depth, result.success)
+
+            # Queue new links if successful
+            if result.success and result.content and depth < self.config.max_depth:
+                new_links = self._get_next_links(
+                    result.content, url, interests
+                )
+                for link in new_links:
+                    normalized = normalize_url(link)
+                    if (
+                        normalized not in self.visited
+                        and is_valid_url(normalized)
+                    ):
+                        self.visited.add(normalized)
+                        link_domain = get_domain(normalized)
+                        if self.domain_counts.get(link_domain, 0) < self.config.max_pages_per_domain:
+                            queue.append((normalized, depth + 1))
 
         return self.results
 
-    def get_stats(self) -> Dict:
-        """Return crawl statistics."""
+    def _fetch_and_process(
+        self, url: str, depth: int, interests: List[Interest]
+    ) -> CrawlResult:
+        """Fetch a URL and process its content."""
+        domain = get_domain(url)
+        self.rate_limiter.wait(domain)
+
+        try:
+            response = self.session.get(
+                url,
+                timeout=self.config.timeout,
+                allow_redirects=True,
+            )
+
+            if response.status_code != 200:
+                return CrawlResult(
+                    url=url,
+                    success=False,
+                    error=f"HTTP {response.status_code}",
+                    depth=depth,
+                )
+
+            # Check content length
+            if len(response.content) > self.config.max_content_length:
+                return CrawlResult(
+                    url=url,
+                    success=False,
+                    error="Content too large",
+                    depth=depth,
+                )
+
+            # Check content type
+            content_type = response.headers.get("Content-Type", "")
+            if "text/html" not in content_type and "application/xhtml" not in content_type:
+                return CrawlResult(
+                    url=url,
+                    success=False,
+                    error=f"Unsupported content type: {content_type}",
+                    depth=depth,
+                )
+
+            # Check if content matches interests
+            if interests and not self._matches_interests(response.text, interests):
+                return CrawlResult(
+                    url=url,
+                    success=False,
+                    error="No interest match",
+                    depth=depth,
+                )
+
+            # Extract content
+            content = extract_content(
+                response.text, url, status_code=response.status_code
+            )
+            links = extract_links(response.text, url)
+
+            return CrawlResult(
+                url=url,
+                success=True,
+                content=content,
+                depth=depth,
+                links_found=len(links),
+            )
+
+        except RequestException as e:
+            return CrawlResult(
+                url=url,
+                success=False,
+                error=str(e),
+                depth=depth,
+            )
+        except Exception as e:
+            return CrawlResult(
+                url=url,
+                success=False,
+                error=f"Unexpected error: {str(e)}",
+                depth=depth,
+            )
+
+    def _matches_interests(self, text: str, interests: List[Interest]) -> bool:
+        """Check if text matches any of the given interests."""
+        if not interests:
+            return True
+        return any(interest.matches(text) for interest in interests)
+
+    def _get_next_links(
+        self,
+        content: ExtractedContent,
+        current_url: str,
+        interests: List[Interest],
+    ) -> List[str]:
+        """Get next links to crawl from content."""
+        links = extract_links(content.text if content.text else "", current_url)
+        # Also check the original content links
+        for link in content.links:
+            from urllib.parse import urljoin
+            absolute = urljoin(current_url, link)
+            if is_valid_url(absolute):
+                links.append(normalize_url(absolute))
+        return list(set(links))
+
+    def get_stats(self) -> dict:
+        """Get crawl statistics."""
+        successful = sum(1 for r in self.results if r.success)
+        failed = sum(1 for r in self.results if not r.success)
         return {
-            "total_crawled": len(self.crawled_urls),
-            "total_results": len(self.results),
-            "unique_hosts": len(set(self._get_host(r.url) for r in self.results)),
+            "total_crawled": len(self.results),
+            "successful": successful,
+            "failed": failed,
+            "unique_domains": len(self.domain_counts),
+            "visited_urls": len(self.visited),
         }
+
+    def reset(self) -> None:
+        """Reset crawler state."""
+        self.visited = set()
+        self.domain_counts = {}
+        self.results = []
