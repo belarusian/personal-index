@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -53,16 +54,17 @@ class JWTManager:
         Args:
             subject: User identifier.
             roles: List of role names.
-            ttl: Token time-to-live in seconds.
+            ttl: Token time-to-live in seconds. Use 0 for immediately expired.
             metadata: Additional metadata to embed.
 
         Returns:
             Encoded JWT token string.
         """
+        effective_ttl = self._default_ttl if ttl is None else ttl
         payload = TokenPayload(
             sub=subject,
             roles=roles or [],
-            exp=time.time() + (ttl or self._default_ttl),
+            exp=time.time() + effective_ttl,
             metadata=metadata or {},
         )
         return self._encode(payload.to_dict())
@@ -131,7 +133,7 @@ class JWTManager:
             data.encode("utf-8"),
             hashlib.sha256,
         ).digest()
-        return self._base64url_encode(sig).decode("utf-8")
+        return self._base64url_encode(sig)
 
     def _verify_signature(self, data: str, signature: str) -> bool:
         """Verify HMAC-SHA256 signature."""
@@ -139,15 +141,13 @@ class JWTManager:
         return hmac.compare_digest(expected, signature)
 
     @staticmethod
-    def _base64url_encode(data: bytes) -> bytes:
-        """Base64url encode without padding."""
-        import base64
-        return base64.urlsafe_b64encode(data).rstrip(b"=")
+    def _base64url_encode(data: bytes) -> str:
+        """Base64url encode without padding, returning a string."""
+        return base64.urlsafe_b64encode(data).rstrip(b"=").decode("utf-8")
 
     @staticmethod
     def _base64url_decode(data: str) -> bytes:
         """Base64url decode with padding restoration."""
-        import base64
         padding = 4 - len(data) % 4
         if padding != 4:
             data += "=" * padding
