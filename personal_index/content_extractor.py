@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -15,38 +15,24 @@ class ExtractedContent:
     title: str = ""
     text: str = ""
     meta_description: str = ""
-    meta_keywords: list[str] = field(default_factory=list)
-    headings: list[str] = field(default_factory=list)
-    links: list[tuple[str, str]] = field(default_factory=list)
-    images: list[tuple[str, str]] = field(default_factory=list)
-    canonical_url: Optional[str] = None
-    language: Optional[str] = None
-    author: Optional[str] = None
-    published_date: Optional[str] = None
+    meta_keywords: List[str] = field(default_factory=list)
+    headings: List[str] = field(default_factory=list)
+    links: List[Tuple[str, str]] = field(default_factory=list)
+    images: List[Tuple[str, str]] = field(default_factory=list)
+    canonical_url: str = ""
+    language: str = ""
+    author: str = ""
     word_count: int = 0
 
 
 class ContentExtractor:
-    """Extract structured content from HTML."""
-
-    # Tags to remove during extraction
-    REMOVE_TAGS = {
-        "script", "style", "nav", "footer", "header",
-        "noscript", "iframe", "svg", "button", "form",
-    }
-
-    # Tags that contain meaningful content
-    CONTENT_TAGS = {
-        "article", "section", "main", "p", "div", "td",
-        "li", "span", "h1", "h2", "h3", "h4", "h5", "h6",
-        "blockquote", "pre", "code", "table",
-    }
+    """Extracts meaningful content from HTML pages."""
 
     def __init__(self, max_text_length: int = 100000):
         self.max_text_length = max_text_length
 
-    def extract(self, html: str, base_url: str = "") -> ExtractedContent:
-        """Extract content from HTML."""
+    def extract(self, html: str) -> ExtractedContent:
+        """Extract content from HTML string."""
         if not html:
             return ExtractedContent()
 
@@ -57,73 +43,71 @@ class ContentExtractor:
         content.title = self._extract_title(soup)
 
         # Extract meta tags
-        self._extract_meta(soup, content, base_url)
+        content.meta_description = self._extract_meta(soup, "description")
+        content.meta_keywords = self._extract_meta_keywords(soup)
+        content.author = self._extract_meta(soup, "author")
+        content.canonical_url = self._extract_canonical(soup)
+        content.language = self._extract_language(soup)
+
+        # Remove script and style tags
+        for tag in soup(["script", "style", "noscript"]):
+            tag.decompose()
 
         # Extract headings
         content.headings = self._extract_headings(soup)
 
         # Extract links
-        content.links = self._extract_links(soup, base_url)
+        content.links = self._extract_links(soup)
 
         # Extract images
-        content.images = self._extract_images(soup, base_url)
+        content.images = self._extract_images(soup)
 
-        # Extract main text content
+        # Extract text
         content.text = self._extract_text(soup)
         content.word_count = len(content.text.split())
 
         return content
 
     def _extract_title(self, soup: BeautifulSoup) -> str:
-        """Extract page title."""
-        if soup.title and soup.title.string:
-            return soup.title.string.strip()
-        # Try og:title
+        """Extract page title, preferring og:title."""
         og_title = soup.find("meta", property="og:title")
         if og_title and og_title.get("content"):
             return og_title["content"].strip()
+        title_tag = soup.find("title")
+        if title_tag and title_tag.string:
+            return title_tag.string.strip()
         return ""
 
-    def _extract_meta(self, soup: BeautifulSoup, content: ExtractedContent, base_url: str) -> None:
-        """Extract meta information."""
-        # Description
-        desc = soup.find("meta", attrs={"name": "description"})
-        if not desc:
-            desc = soup.find("meta", property="og:description")
-        if desc and desc.get("content"):
-            content.meta_description = desc["content"].strip()
+    def _extract_meta(self, soup: BeautifulSoup, name: str) -> str:
+        """Extract meta tag content."""
+        meta = soup.find("meta", attrs={"name": name})
+        if meta and meta.get("content"):
+            return meta["content"].strip()
+        return ""
 
-        # Keywords
-        keywords = soup.find("meta", attrs={"name": "keywords"})
-        if keywords and keywords.get("content"):
-            content.meta_keywords = [
-                k.strip() for k in keywords["content"].split(",")
-            ]
+    def _extract_meta_keywords(self, soup: BeautifulSoup) -> List[str]:
+        """Extract meta keywords."""
+        meta = soup.find("meta", attrs={"name": "keywords"})
+        if meta and meta.get("content"):
+            return [k.strip() for k in meta["content"].split(",") if k.strip()]
+        return []
 
-        # Canonical URL
-        canonical = soup.find("link", rel="canonical")
-        if canonical and canonical.get("href"):
-            content.canonical_url = canonical["href"]
+    def _extract_canonical(self, soup: BeautifulSoup) -> str:
+        """Extract canonical URL."""
+        link = soup.find("link", rel="canonical")
+        if link and link.get("href"):
+            return link["href"].strip()
+        return ""
 
-        # Language
+    def _extract_language(self, soup: BeautifulSoup) -> str:
+        """Extract page language."""
         html_tag = soup.find("html")
         if html_tag and html_tag.get("lang"):
-            content.language = html_tag["lang"]
+            return html_tag["lang"].strip()
+        return ""
 
-        # Author
-        author = soup.find("meta", attrs={"name": "author"})
-        if author and author.get("content"):
-            content.author = author["content"].strip()
-
-        # Published date
-        for prop in ["article:published_time", "og:published_time"]:
-            pub = soup.find("meta", property=prop)
-            if pub and pub.get("content"):
-                content.published_date = pub["content"]
-                break
-
-    def _extract_headings(self, soup: BeautifulSoup) -> list[str]:
-        """Extract all headings."""
+    def _extract_headings(self, soup: BeautifulSoup) -> List[str]:
+        """Extract all heading text."""
         headings = []
         for tag in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
             text = tag.get_text(strip=True)
@@ -131,80 +115,50 @@ class ContentExtractor:
                 headings.append(text)
         return headings
 
-    def _extract_links(self, soup: BeautifulSoup, base_url: str) -> list[tuple[str, str]]:
-        """Extract all links as (text, url) pairs."""
+    def _extract_links(self, soup: BeautifulSoup) -> List[Tuple[str, str]]:
+        """Extract all links as (text, url) tuples."""
         links = []
         for a in soup.find_all("a", href=True):
             text = a.get_text(strip=True)
-            href = a["href"]
-            if text and href:
+            href = a["href"].strip()
+            if href:
                 links.append((text, href))
-        return links[:100]  # Limit links
+        return links
 
-    def _extract_images(self, soup: BeautifulSoup, base_url: str) -> list[tuple[str, str]]:
-        """Extract images as (alt_text, src) pairs."""
+    def _extract_images(self, soup: BeautifulSoup) -> List[Tuple[str, str]]:
+        """Extract all images as (alt, src) tuples."""
         images = []
         for img in soup.find_all("img"):
-            src = img.get("src", "")
-            alt = img.get("alt", "")
+            alt = img.get("alt", "").strip()
+            src = img.get("src", "").strip()
             if src:
                 images.append((alt, src))
-        return images[:50]  # Limit images
+        return images
 
     def _extract_text(self, soup: BeautifulSoup) -> str:
-        """Extract main text content."""
-        # Remove unwanted tags
-        for tag in self.REMOVE_TAGS:
-            for element in soup.find_all(tag):
-                element.decompose()
-
-        # Try to find main content area
-        main = soup.find("main") or soup.find("article") or soup.find("body")
-        if not main:
-            main = soup
-
-        # Get text
-        text = main.get_text(separator=" ", strip=True)
-
-        # Clean up whitespace
-        import re
-        text = re.sub(r'\s+', ' ', text).strip()
-
-        # Limit length
+        """Extract visible text content."""
+        text = soup.get_text(separator=" ", strip=True)
+        # Normalize whitespace
+        text = " ".join(text.split())
         if len(text) > self.max_text_length:
-            text = text[:self.max_text_length]
-
+            text = text[: self.max_text_length]
         return text
 
     def extract_readability_score(self, content: ExtractedContent) -> float:
-        """Calculate a readability score for the content."""
+        """Calculate a readability score for extracted content."""
         if not content.text:
             return 0.0
 
         words = content.text.split()
-        word_count = len(words)
-
-        if word_count < 10:
+        if len(words) < 50:
             return 0.0
 
-        # Simple readability heuristic
-        avg_word_length = sum(len(w) for w in words) / word_count
-        sentences = content.text.count(".") + content.text.count("!") + content.text.count("?")
-        avg_sentence_length = word_count / max(sentences, 1)
-
-        # Score based on content quality indicators
         score = 0.0
-        if word_count > 100:
-            score += 0.3
-        if word_count > 500:
-            score += 0.2
-        if avg_word_length > 3 and avg_word_length < 8:
-            score += 0.2
-        if avg_sentence_length > 5 and avg_sentence_length < 30:
-            score += 0.15
-        if content.headings:
-            score += 0.1
+        # Length score (up to 0.4)
+        score += min(len(words) / 500, 0.4)
+        # Headings score (up to 0.3)
+        score += min(len(content.headings) * 0.1, 0.3)
+        # Description score (up to 0.3)
         if content.meta_description:
-            score += 0.05
-
+            score += 0.3
         return min(score, 1.0)
