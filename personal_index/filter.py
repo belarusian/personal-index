@@ -1,162 +1,155 @@
-"""Content filtering module for matching pages against user interests."""
+"""Content filtering for personal-index.
+
+Filters crawled content based on user-defined interests,
+ensuring only relevant content is stored and indexed.
+"""
+
+from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
-from personal_index.config import Interest
-from personal_index.content import ExtractedContent, tokenize
+from personal_index.models import CrawledPage, Interest
 
 
 @dataclass
 class FilterResult:
-    """Result of filtering content against interests."""
+    """Result of filtering a page against interests."""
 
-    url: str
+    page: CrawledPage
     passed: bool
-    matched_interests: List[str] = field(default_factory=list)
-    matched_keywords: List[str] = field(default_factory=list)
-    relevance_score: float = 0.0
-    reasons: List[str] = field(default_factory=list)
+    matched_interests: list[str] = field(default_factory=list)
+    match_scores: dict[str, float] = field(default_factory=dict)
+    reason: str = ""
 
 
 class ContentFilter:
-    """Filters web content based on user-defined interests."""
+    """Filters crawled pages based on user interests."""
 
-    def __init__(self, interests: List[Interest] = None):
-        self.interests = interests or []
-        self._keyword_index: Dict[str, List[str]] = {}
-        self._build_keyword_index()
+    def __init__(self, interests: list[Interest]):
+        self.interests = [i for i in interests if i.enabled]
+        self._compiled_patterns: dict[str, list[re.Pattern]] = {}
+        self._compile_patterns()
 
-    def _build_keyword_index(self) -> None:
-        """Build an inverted index of keywords to interest topics."""
-        self._keyword_index = {}
+    def _compile_patterns(self) -> None:
+        """Pre-compile regex patterns for URL matching."""
         for interest in self.interests:
-            if not interest.enabled:
-                continue
-            for keyword in interest.keywords:
-                kw_lower = keyword.lower()
-                if kw_lower not in self._keyword_index:
-                    self._keyword_index[kw_lower] = []
-                self._keyword_index[kw_lower].append(interest.topic)
-            # Also index the topic itself
-            topic_lower = interest.topic.lower()
-            if topic_lower not in self._keyword_index:
-                self._keyword_index[topic_lower] = []
-            self._keyword_index[topic_lower].append(interest.topic)
+            patterns = []
+            for url_pattern in interest.url_patterns:
+                try:
+                    # Convert simple patterns to regex
+                    regex_pattern = url_pattern.replace(".", r"\.")
+                    regex_pattern = regex_pattern.replace("*", ".*")
+                    patterns.append(re.compile(regex_pattern, re.IGNORECASE))
+                except re.error:
+                    # If pattern is invalid regex, use simple substring match
+                    patterns.append(re.compile(re.escape(url_pattern), re.IGNORECASE))
+            self._compiled_patterns[interest.topic] = patterns
 
-    def add_interest(self, interest: Interest) -> None:
-        """Add an interest to the filter."""
-        self.interests.append(interest)
-        self._build_keyword_index()
+    def filter_page(self, page: CrawledPage) -> FilterResult:
+        """Filter a single page against all interests.
 
-    def remove_interest(self, topic: str) -> bool:
-        """Remove an interest by topic name."""
-        for i, interest in enumerate(self.interests):
-            if interest.topic == topic:
-                self.interests.pop(i)
-                self._build_keyword_index()
+        Returns a FilterResult indicating whether the page should be stored.
+        """
+        matched_interests = []
+        match_scores = {}
+
+        for interest in self.interests:
+            score = self._score_page_against_interest(page, interest)
+            if score > 0:
+                matched_interests.append(interest.topic)
+                match_scores[interest.topic] = score
+
+        passed = len(matched_interests) > 0
+        reason = self._build_reason(passed, matched_interests, match_scores)
+
+        if passed:
+            page.matched_interests = matched_interests
+
+        return FilterResult(
+            page=page,
+            passed=passed,
+            matched_interests=matched_interests,
+            match_scores=match_scores,
+            reason=reason,
+        )
+
+    def _score_page_against_interest(
+        self, page: CrawledPage, interest: Interest
+    ) -> float:
+        """Score how well a page matches an interest.
+
+        Returns a score between 0.0 and 1.0.
+        """
+        score = 0.0
+        max_score = 0.0
+
+        # URL pattern matching (highest weight)
+        if interest.url_patterns:
+            max_score += 0.4
+            if self._url_matches(page.url, interest):
+                score += 0.4
+
+        # Title keyword matching (high weight)
+        if interest.keywords:
+            max_score += 0.3
+            title_matches = sum(
+                1 for kw in interest.keywords
+                if kw.lower() in page.title.lower()
+            )
+            if title_matches > 0:
+                score += min(0.3, title_matches * 0.15)
+
+        # Content keyword matching (medium weight)
+        if interest.keywords:
+            max_score += 0.3
+            content_lower = page.content.lower()
+            content_matches = sum(
+                1 for kw in interest.keywords
+                if kw.lower() in content_lower
+            )
+            if content_matches > 0:
+                score += min(0.3, content_matches * 0.1)
+
+        return score
+
+    def _url_matches(self, url: str, interest: Interest) -> bool:
+        """Check if URL matches any of the interest's URL patterns."""
+        patterns = self._compiled_patterns.get(interest.topic, [])
+        for pattern in patterns:
+            if pattern.search(url):
                 return True
         return False
 
-    def filter_content(self, content: ExtractedContent) -> FilterResult:
-        """Filter a single piece of content against all interests."""
-        result = FilterResult(url=content.url, passed=False)
-
-        searchable_text = content.get_searchable_text().lower()
-        tokens = set(tokenize(searchable_text))
-
-        matched_topics = set()
-        matched_kws = set()
-
-        for interest in self.interests:
-            if not interest.enabled:
-                continue
-
-            # Check keyword matches
-            for keyword in interest.keywords:
-                kw_lower = keyword.lower()
-                if kw_lower in searchable_text or kw_lower in tokens:
-                    matched_topics.add(interest.topic)
-                    matched_kws.add(keyword)
-
-            # Check topic match
-            if interest.topic.lower() in searchable_text:
-                matched_topics.add(interest.topic)
-
-            # Check URL pattern matches
-            for pattern in interest.url_patterns:
-                if self._url_matches_pattern(content.url, pattern):
-                    matched_topics.add(interest.topic)
-
-        result.matched_interests = list(matched_topics)
-        result.matched_keywords = list(matched_kws)
-        result.passed = len(matched_topics) > 0
-
-        # Calculate relevance score
-        result.relevance_score = self._calculate_relevance(
-            matched_topics, matched_kws, interest
-        )
-
-        # Build reasons
-        if result.passed:
-            result.reasons = [
-                f"Matched interests: {', '.join(result.matched_interests)}",
-                f"Matched keywords: {', '.join(result.matched_keywords)}",
-            ]
-        else:
-            result.reasons = ["No matching interests found"]
-
-        return result
-
-    def filter_batch(self, contents: List[ExtractedContent]) -> List[FilterResult]:
-        """Filter multiple content items."""
-        return [self.filter_content(c) for c in contents]
-
-    def get_matching_interests(self, text: str) -> List[Interest]:
-        """Get all interests that match a given text."""
-        text_lower = text.lower()
-        tokens = set(tokenize(text_lower))
-        matching = []
-        for interest in self.interests:
-            if not interest.enabled:
-                continue
-            if interest.matches(text):
-                matching.append(interest)
-        return matching
-
-    def _url_matches_pattern(self, url: str, pattern: str) -> bool:
-        """Check if URL matches a pattern with wildcards."""
-        regex_pattern = "^" + re.escape(pattern).replace(r"\*", ".*").replace(r"\?", ".") + "$"
-        return bool(re.match(regex_pattern, url, re.IGNORECASE))
-
-    def _calculate_relevance(
+    def _build_reason(
         self,
-        matched_topics: Set[str],
-        matched_keywords: Set[str],
-        interest: Optional[Interest] = None,
-    ) -> float:
-        """Calculate relevance score for matched content."""
-        score = 0.0
+        passed: bool,
+        matched_interests: list[str],
+        match_scores: dict[str, float],
+    ) -> str:
+        """Build a human-readable reason for the filter result."""
+        if not passed:
+            return "No matching interests found"
+        parts = []
+        for topic in matched_interests:
+            score = match_scores.get(topic, 0)
+            parts.append(f"{topic} (score: {score:.2f})")
+        return "Matched: " + ", ".join(parts)
 
-        # Base score from number of matched interests
-        score += len(matched_topics) * 10
+    def should_crawl_url(self, url: str) -> tuple[bool, list[str]]:
+        """Pre-filter: should we even crawl this URL?
 
-        # Bonus for keyword matches
-        score += len(matched_keywords) * 5
-
-        # Priority boost from matched interests
-        for topic in matched_topics:
-            for interest in self.interests:
-                if interest.topic == topic:
-                    score += interest.priority
-
-        return round(score, 2)
-
-    def get_stats(self) -> dict:
-        """Get filter statistics."""
-        return {
-            "total_interests": len(self.interests),
-            "enabled_interests": sum(1 for i in self.interests if i.enabled),
-            "indexed_keywords": len(self._keyword_index),
-        }
+        Returns (should_crawl, matching_interests).
+        """
+        matched = []
+        for interest in self.interests:
+            if interest.url_patterns:
+                if self._url_matches(url, interest):
+                    matched.append(interest.topic)
+            # Also check if URL contains keywords
+            for keyword in interest.keywords:
+                if keyword.lower() in url.lower():
+                    matched.append(interest.topic)
+                    break
+        return len(matched) > 0, list(set(matched))
