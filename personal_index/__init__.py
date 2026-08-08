@@ -1,3 +1,3 @@
-"""personal-index: A personal web search engine."""
+"""Personal Index - A personal web search engine."""
 
 __version__ = "0.1.0"
