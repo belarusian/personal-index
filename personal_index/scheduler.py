@@ -1,323 +1,257 @@
-"""Scheduled crawling for personal-index.
+"""
+Scheduled crawling for personal-index.
 
-Handles periodic re-scanning of tracked topics with configurable
-schedules and crawl management.
+Manages periodic re-scanning of tracked topics using a background scheduler.
 """
 
-from __future__ import annotations
-
-import json
-import logging
+import asyncio
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Optional, Callable
 from pathlib import Path
-from typing import Callable, Optional
 
-from personal_index.models import CrawlConfig, CrawlStats, Interest
-
-logger = logging.getLogger(__name__)
+from personal_index.config import ScheduleConfig
+from personal_index.crawler import WebCrawler
 
 
 @dataclass
-class CrawlSchedule:
-    """Defines when and how often to crawl."""
-
-    topic: str
-    interval_hours: float = 24.0
-    last_run: Optional[datetime] = None
-    next_run: Optional[datetime] = None
+class ScheduledJob:
+    """A scheduled crawling job."""
+    name: str
+    seed_urls: list[str]
+    interval_hours: int
+    last_run: Optional[str] = None
+    next_run: Optional[str] = None
     enabled: bool = True
-    config: Optional[CrawlConfig] = None
-
-    def is_due(self) -> bool:
-        """Check if this schedule is due for execution."""
-        if not self.enabled:
-            return False
-        if self.next_run is None:
-            return True
-        return datetime.utcnow() >= self.next_run
-
-    def mark_run(self) -> None:
-        """Mark this schedule as having just run."""
-        self.last_run = datetime.utcnow()
-        self.next_run = self._calculate_next_run()
-
-    def _calculate_next_run(self) -> datetime:
-        """Calculate when the next run should happen."""
-        return self.last_run + timedelta(hours=self.interval_hours)
+    run_count: int = 0
+    status: str = "pending"  # pending, running, completed, failed
+    error: Optional[str] = None
 
 
 @dataclass
-class CrawlJob:
-    """Represents a single crawl job."""
-
-    job_id: str
-    topic: str
-    status: str = "pending"  # pending, running, completed, failed
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    pages_crawled: int = 0
-    pages_stored: int = 0
-    errors: int = 0
-    error_message: Optional[str] = None
+class SchedulerStats:
+    """Statistics for the scheduler."""
+    total_runs: int = 0
+    total_pages_crawled: int = 0
+    total_errors: int = 0
+    last_run_time: Optional[str] = None
 
 
-class CrawlScheduler:
-    """Manages scheduled crawling of tracked topics."""
+class Scheduler:
+    """Manages scheduled crawling jobs."""
 
-    def __init__(self, data_dir: str = "~/.personal-index"):
-        self.data_dir = Path(data_dir).expanduser()
-        self.schedules_file = self.data_dir / "schedules.json"
-        self.jobs_file = self.data_dir / "jobs.json"
-        self._schedules: dict[str, CrawlSchedule] = {}
-        self._jobs: dict[str, CrawlJob] = {}
+    def __init__(
+        self,
+        config: Optional[ScheduleConfig] = None,
+        crawler: Optional[WebCrawler] = None,
+        jobs_file: Optional[str] = None,
+    ):
+        self.config = config or ScheduleConfig()
+        self.crawler = crawler
+        self._jobs: dict[str, ScheduledJob] = {}
+        self._stats = SchedulerStats()
         self._running = False
         self._thread: Optional[threading.Thread] = None
         self._lock = threading.Lock()
-        self._crawl_callback: Optional[Callable] = None
-        self._load_state()
+        self._jobs_file = jobs_file
+        self._callbacks: list[Callable] = []
+        self._load_jobs()
 
-    def _load_state(self) -> None:
-        """Load schedules and jobs from disk."""
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        if self.schedules_file.exists():
-            try:
-                with open(self.schedules_file, "r") as f:
-                    data = json.load(f)
-                for key, sched_data in data.get("schedules", {}).items():
-                    config = None
-                    if sched_data.get("config"):
-                        config = CrawlConfig(**sched_data["config"])
-                    sched = CrawlSchedule(
-                        topic=sched_data["topic"],
-                        interval_hours=sched_data.get("interval_hours", 24.0),
-                        last_run=sched_data.get("last_run"),
-                        next_run=sched_data.get("next_run"),
-                        enabled=sched_data.get("enabled", True),
-                        config=config,
-                    )
-                    self._schedules[key] = sched
-            except (json.JSONDecodeError, KeyError):
-                logger.warning("Failed to load schedules, starting fresh")
+    @property
+    def stats(self) -> SchedulerStats:
+        return self._stats
 
-        if self.jobs_file.exists():
-            try:
-                with open(self.jobs_file, "r") as f:
-                    data = json.load(f)
-                for key, job_data in data.get("jobs", {}).items():
-                    job = CrawlJob(
-                        job_id=key,
-                        topic=job_data["topic"],
-                        status=job_data.get("status", "pending"),
-                        started_at=job_data.get("started_at"),
-                        completed_at=job_data.get("completed_at"),
-                        pages_crawled=job_data.get("pages_crawled", 0),
-                        pages_stored=job_data.get("pages_stored", 0),
-                        errors=job_data.get("errors", 0),
-                        error_message=job_data.get("error_message"),
-                    )
-                    self._jobs[key] = job
-            except (json.JSONDecodeError, KeyError):
-                logger.warning("Failed to load jobs, starting fresh")
+    def add_callback(self, callback: Callable) -> None:
+        """Add a callback to be called after each scheduled run."""
+        self._callbacks.append(callback)
 
-    def _save_state(self) -> None:
-        """Save schedules and jobs to disk."""
-        schedules_data = {}
-        for key, sched in self._schedules.items():
-            sched_dict = {
-                "topic": sched.topic,
-                "interval_hours": sched.interval_hours,
-                "last_run": sched.last_run.isoformat() if sched.last_run else None,
-                "next_run": sched.next_run.isoformat() if sched.next_run else None,
-                "enabled": sched.enabled,
-            }
-            if sched.config:
-                sched_dict["config"] = {
-                    "max_depth": sched.config.max_depth,
-                    "max_pages": sched.config.max_pages,
-                    "rate_limit": sched.config.rate_limit,
-                    "politeness_delay": sched.config.politeness_delay,
-                    "timeout": sched.config.timeout,
-                    "user_agent": sched.config.user_agent,
-                    "respect_robots": sched.config.respect_robots,
-                    "allowed_domains": sched.config.allowed_domains,
-                    "blocked_domains": sched.config.blocked_domains,
-                    "max_content_length": sched.config.max_content_length,
-                }
-            schedules_data[key] = sched_dict
+    def add_job(self, job: ScheduledJob) -> None:
+        """Add a scheduled job."""
+        with self._lock:
+            self._jobs[job.name] = job
+            self._save_jobs()
 
-        jobs_data = {}
-        for key, job in self._jobs.items():
-            jobs_data[key] = {
-                "job_id": job.job_id,
-                "topic": job.topic,
-                "status": job.status,
-                "started_at": job.started_at.isoformat() if job.started_at else None,
-                "completed_at": job.completed_at.isoformat() if job.completed_at else None,
-                "pages_crawled": job.pages_crawled,
-                "pages_stored": job.pages_stored,
-                "errors": job.errors,
-                "error_message": job.error_message,
-            }
+    def remove_job(self, name: str) -> bool:
+        """Remove a scheduled job by name."""
+        with self._lock:
+            if name in self._jobs:
+                del self._jobs[name]
+                self._save_jobs()
+                return True
+            return False
 
-        with open(self.schedules_file, "w") as f:
-            json.dump({"schedules": schedules_data}, f, indent=2)
-        with open(self.jobs_file, "w") as f:
-            json.dump({"jobs": jobs_data}, f, indent=2)
+    def get_job(self, name: str) -> Optional[ScheduledJob]:
+        """Get a job by name."""
+        return self._jobs.get(name)
 
-    def add_schedule(
-        self,
-        topic: str,
-        interval_hours: float = 24.0,
-        config: Optional[CrawlConfig] = None,
-    ) -> CrawlSchedule:
-        """Add a new crawl schedule for a topic."""
-        schedule = CrawlSchedule(
-            topic=topic,
-            interval_hours=interval_hours,
-            config=config,
-        )
-        self._schedules[topic] = schedule
-        self._save_state()
-        logger.info(f"Added schedule for '{topic}' every {interval_hours}h")
-        return schedule
+    def list_jobs(self) -> list[ScheduledJob]:
+        """List all scheduled jobs."""
+        return list(self._jobs.values())
 
-    def remove_schedule(self, topic: str) -> bool:
-        """Remove a crawl schedule."""
-        if topic in self._schedules:
-            del self._schedules[topic]
-            self._save_state()
+    def enable_job(self, name: str) -> bool:
+        """Enable a job."""
+        job = self._jobs.get(name)
+        if job:
+            job.enabled = True
+            self._save_jobs()
             return True
         return False
 
-    def list_schedules(self) -> list[CrawlSchedule]:
-        """List all crawl schedules."""
-        return list(self._schedules.values())
+    def disable_job(self, name: str) -> bool:
+        """Disable a job."""
+        job = self._jobs.get(name)
+        if job:
+            job.enabled = False
+            self._save_jobs()
+            return True
+        return False
 
-    def get_schedule(self, topic: str) -> Optional[CrawlSchedule]:
-        """Get a schedule by topic."""
-        return self._schedules.get(topic)
+    async def run_job(self, name: str) -> dict:
+        """Run a specific job immediately."""
+        job = self._jobs.get(name)
+        if not job:
+            return {"error": f"Job '{name}' not found"}
 
-    def toggle_schedule(self, topic: str) -> Optional[CrawlSchedule]:
-        """Toggle a schedule's enabled status."""
-        schedule = self._schedules.get(topic)
-        if schedule:
-            schedule.enabled = not schedule.enabled
-            self._save_state()
-        return schedule
+        if not self.crawler:
+            return {"error": "No crawler configured"}
 
-    def set_crawl_callback(self, callback: Callable) -> None:
-        """Set the callback function to execute when a crawl is due.
+        job.status = "running"
+        job.last_run = datetime.utcnow().isoformat()
 
-        The callback should accept a CrawlSchedule and return CrawlStats.
-        """
-        self._crawl_callback = callback
+        try:
+            pages = await self.crawler.crawl(job.seed_urls)
+            job.status = "completed"
+            job.run_count += 1
+            job.next_run = self._calculate_next_run(job.interval_hours)
+            self._stats.total_runs += 1
+            self._stats.total_pages_crawled += len(pages)
+            self._stats.last_run_time = job.last_run
+
+            for callback in self._callbacks:
+                try:
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(job, pages)
+                    else:
+                        callback(job, pages)
+                except Exception:
+                    pass
+
+            self._save_jobs()
+            return {
+                "status": "completed",
+                "pages_crawled": len(pages),
+                "job_stats": self.crawler.stats,
+            }
+        except Exception as e:
+            job.status = "failed"
+            job.error = str(e)
+            self._stats.total_errors += 1
+            self._save_jobs()
+            return {"status": "failed", "error": str(e)}
 
     def start(self) -> None:
-        """Start the scheduler loop."""
+        """Start the scheduler in a background thread."""
         if self._running:
-            logger.warning("Scheduler is already running")
             return
-
         self._running = True
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
-        logger.info("Scheduler started")
 
     def stop(self) -> None:
-        """Stop the scheduler loop."""
+        """Stop the scheduler."""
         self._running = False
         if self._thread:
-            self._thread.join(timeout=5.0)
-        logger.info("Scheduler stopped")
+            self._thread.join(timeout=5)
+            self._thread = None
 
     def _run_loop(self) -> None:
         """Main scheduler loop."""
         while self._running:
-            with self._lock:
-                due_schedules = [s for s in self._schedules.values() if s.is_due()]
+            if self.config.enabled:
+                now = time.monotonic()
+                jobs_to_run = []
+                with self._lock:
+                    for job in self._jobs.values():
+                        if job.enabled and self._is_due(job):
+                            jobs_to_run.append(job.name)
 
-            for schedule in due_schedules:
-                self._execute_schedule(schedule)
+                for job_name in jobs_to_run:
+                    try:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        result = loop.run_until_complete(self.run_job(job_name))
+                        loop.close()
+                    except Exception:
+                        pass
 
             time.sleep(60)  # Check every minute
 
-    def _execute_schedule(self, schedule: CrawlSchedule) -> None:
-        """Execute a due schedule."""
-        if not self._crawl_callback:
-            logger.warning(f"No crawl callback set, skipping '{schedule.topic}'")
-            return
-
-        job = CrawlJob(
-            job_id=f"{schedule.topic}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
-            topic=schedule.topic,
-            status="running",
-            started_at=datetime.utcnow(),
-        )
-        self._jobs[job.job_id] = job
-        self._save_state()
-
+    def _is_due(self, job: ScheduledJob) -> bool:
+        """Check if a job is due to run."""
+        if not job.next_run:
+            return True
         try:
-            logger.info(f"Running scheduled crawl for '{schedule.topic}'")
-            stats = self._crawl_callback(schedule)
-            job.status = "completed"
-            job.pages_crawled = stats.pages_crawled
-            job.pages_stored = stats.pages_stored
-            job.errors = stats.errors
-        except Exception as e:
-            job.status = "failed"
-            job.error_message = str(e)
-            logger.error(f"Crawl failed for '{schedule.topic}': {e}")
-        finally:
-            job.completed_at = datetime.utcnow()
-            schedule.mark_run()
-            self._save_state()
+            next_run = datetime.fromisoformat(job.next_run)
+            return datetime.utcnow() >= next_run
+        except (ValueError, TypeError):
+            return True
 
-    def run_now(self, topic: str) -> Optional[CrawlJob]:
-        """Manually trigger a crawl for a topic."""
-        schedule = self._schedules.get(topic)
-        if not schedule:
-            logger.warning(f"No schedule found for '{topic}'")
-            return None
+    def _calculate_next_run(self, interval_hours: int) -> str:
+        """Calculate the next run time."""
+        from datetime import timedelta
+        next_run = datetime.utcnow() + timedelta(hours=interval_hours)
+        return next_run.isoformat()
 
-        if not self._crawl_callback:
-            logger.warning("No crawl callback set")
-            return None
+    def _get_jobs_file_path(self) -> str:
+        """Get the path to the jobs file."""
+        if self._jobs_file:
+            return self._jobs_file
+        config_dir = Path.home() / ".config" / "personal-index"
+        return str(config_dir / "jobs.json")
 
-        job = CrawlJob(
-            job_id=f"{topic}-manual-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
-            topic=topic,
-            status="running",
-            started_at=datetime.utcnow(),
-        )
-        self._jobs[job.job_id] = job
+    def _load_jobs(self) -> None:
+        """Load jobs from file."""
+        import json
+        path = Path(self._get_jobs_file_path())
+        if path.exists():
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+                for name, job_data in data.items():
+                    job = ScheduledJob(
+                        name=job_data.get("name", name),
+                        seed_urls=job_data.get("seed_urls", []),
+                        interval_hours=job_data.get("interval_hours", 24),
+                        last_run=job_data.get("last_run"),
+                        next_run=job_data.get("next_run"),
+                        enabled=job_data.get("enabled", True),
+                        run_count=job_data.get("run_count", 0),
+                        status=job_data.get("status", "pending"),
+                        error=job_data.get("error"),
+                    )
+                    self._jobs[name] = job
+            except (json.JSONDecodeError, KeyError):
+                pass
 
-        try:
-            stats = self._crawl_callback(schedule)
-            job.status = "completed"
-            job.pages_crawled = stats.pages_crawled
-            job.pages_stored = stats.pages_stored
-            job.errors = stats.errors
-        except Exception as e:
-            job.status = "failed"
-            job.error_message = str(e)
-        finally:
-            job.completed_at = datetime.utcnow()
-            self._save_state()
-
-        return job
-
-    def list_jobs(self, limit: int = 20) -> list[CrawlJob]:
-        """List recent crawl jobs."""
-        jobs = sorted(
-            self._jobs.values(),
-            key=lambda j: j.started_at or datetime.min,
-            reverse=True,
-        )
-        return jobs[:limit]
-
-    def get_job(self, job_id: str) -> Optional[CrawlJob]:
-        """Get a job by ID."""
-        return self._jobs.get(job_id)
+    def _save_jobs(self) -> None:
+        """Save jobs to file."""
+        import json
+        path = Path(self._get_jobs_file_path())
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            data = {}
+            for name, job in self._jobs.items():
+                data[name] = {
+                    "name": job.name,
+                    "seed_urls": job.seed_urls,
+                    "interval_hours": job.interval_hours,
+                    "last_run": job.last_run,
+                    "next_run": job.next_run,
+                    "enabled": job.enabled,
+                    "run_count": job.run_count,
+                    "status": job.status,
+                    "error": job.error,
+                }
+            json.dump(data, f, indent=2)

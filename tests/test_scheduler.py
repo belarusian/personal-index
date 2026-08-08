@@ -1,176 +1,172 @@
-"""Tests for crawl scheduler module."""
+"""Tests for the scheduler module."""
 
+import json
 import pytest
-from datetime import datetime, timezone, timedelta
-from personal_index.config import SchedulerConfig
-from personal_index.scheduler import CrawlScheduler
-from personal_index.scheduler.crawl_scheduler import ScheduledTask
+from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime
+
+from personal_index.scheduler import Scheduler, ScheduledJob, SchedulerStats
+from personal_index.config import ScheduleConfig
 
 
-class TestScheduledTask:
-    def test_create_task(self):
-        task = ScheduledTask(
-            task_id="test",
-            name="Test Task",
-            seed_urls=["https://example.com"],
+class TestScheduledJob:
+    def test_create_job(self):
+        job = ScheduledJob(
+            name="daily-news",
+            seed_urls=["https://news.example.com"],
+            interval_hours=24,
         )
-        assert task.task_id == "test"
-        assert task.enabled is True
-        assert task.interval_seconds == 86400
+        assert job.name == "daily-news"
+        assert job.enabled is True
+        assert job.status == "pending"
+        assert job.run_count == 0
+
+    def test_job_with_custom_values(self):
+        job = ScheduledJob(
+            name="tech",
+            seed_urls=["https://tech.example.com"],
+            interval_hours=6,
+            enabled=False,
+        )
+        assert job.enabled is False
+        assert job.interval_hours == 6
+
+
+class TestSchedulerStats:
+    def test_default_stats(self):
+        stats = SchedulerStats()
+        assert stats.total_runs == 0
+        assert stats.total_pages_crawled == 0
+        assert stats.total_errors == 0
+
+
+class TestScheduler:
+    def test_create_scheduler(self):
+        scheduler = Scheduler()
+        assert len(scheduler.list_jobs()) == 0
+        assert scheduler.stats.total_runs == 0
+
+    def test_add_job(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        job = ScheduledJob(
+            name="test-job",
+            seed_urls=["https://example.com"],
+            interval_hours=12,
+        )
+        scheduler.add_job(job)
+        assert len(scheduler.list_jobs()) == 1
+        assert scheduler.get_job("test-job") is not None
+
+    def test_remove_job(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        scheduler.add_job(ScheduledJob(
+            name="test-job",
+            seed_urls=["https://example.com"],
+            interval_hours=12,
+        ))
+        assert scheduler.remove_job("test-job") is True
+        assert len(scheduler.list_jobs()) == 0
+
+    def test_remove_nonexistent_job(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        assert scheduler.remove_job("nonexistent") is False
+
+    def test_enable_job(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        scheduler.add_job(ScheduledJob(
+            name="test-job",
+            seed_urls=["https://example.com"],
+            interval_hours=12,
+            enabled=False,
+        ))
+        assert scheduler.enable_job("test-job") is True
+        assert scheduler.get_job("test-job").enabled is True
+
+    def test_disable_job(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        scheduler.add_job(ScheduledJob(
+            name="test-job",
+            seed_urls=["https://example.com"],
+            interval_hours=12,
+            enabled=True,
+        ))
+        assert scheduler.disable_job("test-job") is True
+        assert scheduler.get_job("test-job").enabled is False
+
+    def test_job_persistence(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        scheduler.add_job(ScheduledJob(
+            name="persistent-job",
+            seed_urls=["https://example.com"],
+            interval_hours=6,
+        ))
+
+        scheduler2 = Scheduler(jobs_file=jobs_file)
+        assert len(scheduler2.list_jobs()) == 1
+        assert scheduler2.get_job("persistent-job").interval_hours == 6
+
+    def test_run_job_no_crawler(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        scheduler.add_job(ScheduledJob(
+            name="test-job",
+            seed_urls=["https://example.com"],
+            interval_hours=12,
+        ))
+        import asyncio
+        result = asyncio.run(scheduler.run_job("test-job"))
+        assert "error" in result
+
+    def test_run_nonexistent_job(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        import asyncio
+        result = asyncio.run(scheduler.run_job("nonexistent"))
+        assert "error" in result
+
+    def test_calculate_next_run(self):
+        scheduler = Scheduler()
+        next_run = scheduler._calculate_next_run(24)
+        assert next_run is not None
+        assert len(next_run) > 0
 
     def test_is_due_no_next_run(self):
-        task = ScheduledTask(
-            task_id="test",
-            name="Test",
-            seed_urls=["https://example.com"],
-            next_run=None,
+        scheduler = Scheduler()
+        job = ScheduledJob(name="test", seed_urls=[], interval_hours=1)
+        assert scheduler._is_due(job) is True
+
+    def test_is_due_with_past_next_run(self):
+        scheduler = Scheduler()
+        job = ScheduledJob(
+            name="test",
+            seed_urls=[],
+            interval_hours=1,
+            next_run="2020-01-01T00:00:00",
         )
-        assert task.is_due is True
+        assert scheduler._is_due(job) is True
 
-    def test_is_due_enabled(self):
-        task = ScheduledTask(
-            task_id="test",
-            name="Test",
-            seed_urls=["https://example.com"],
-            next_run=datetime.now(timezone.utc) - timedelta(hours=1),
-        )
-        assert task.is_due is True
+    def test_add_callback(self):
+        scheduler = Scheduler()
+        callback_called = []
+        def my_callback(job, pages):
+            callback_called.append(True)
+        scheduler.add_callback(my_callback)
+        assert len(scheduler._callbacks) == 1
 
-    def test_is_due_not_yet(self):
-        task = ScheduledTask(
-            task_id="test",
-            name="Test",
-            seed_urls=["https://example.com"],
-            next_run=datetime.now(timezone.utc) + timedelta(hours=1),
-        )
-        assert task.is_due is False
+    def test_list_jobs_empty(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        assert scheduler.list_jobs() == []
 
-    def test_is_due_disabled(self):
-        task = ScheduledTask(
-            task_id="test",
-            name="Test",
-            seed_urls=["https://example.com"],
-            enabled=False,
-            next_run=None,
-        )
-        assert task.is_due is False
-
-    def test_mark_completed(self):
-        task = ScheduledTask(
-            task_id="test",
-            name="Test",
-            seed_urls=["https://example.com"],
-        )
-        task.mark_completed()
-        assert task.last_run is not None
-        assert task.next_run is not None
-        assert task.error is None
-
-    def test_mark_failed(self):
-        task = ScheduledTask(
-            task_id="test",
-            name="Test",
-            seed_urls=["https://example.com"],
-        )
-        task.mark_failed("Connection error")
-        assert task.error == "Connection error"
-        assert task.last_run is not None
-
-
-class TestCrawlScheduler:
-    def test_default_config(self):
-        scheduler = CrawlScheduler()
-        assert scheduler.config.enabled is False
-        assert scheduler.config.interval_hours == 24
-
-    def test_add_task(self):
-        scheduler = CrawlScheduler()
-        task = scheduler.add_task("Test", ["https://example.com"])
-        assert task.task_id == "test"
-        assert len(scheduler.tasks) == 1
-
-    def test_add_task_custom_interval(self):
-        scheduler = CrawlScheduler()
-        task = scheduler.add_task("Test", ["https://example.com"], interval_hours=12)
-        assert task.interval_seconds == 12 * 3600
-
-    def test_remove_task(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_task("Test", ["https://example.com"])
-        removed = scheduler.remove_task("test")
-        assert removed is True
-        assert len(scheduler.tasks) == 0
-
-    def test_remove_nonexistent_task(self):
-        scheduler = CrawlScheduler()
-        removed = scheduler.remove_task("nonexistent")
-        assert removed is False
-
-    def test_get_task(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_task("Test", ["https://example.com"])
-        task = scheduler.get_task("test")
-        assert task is not None
-        assert task.name == "Test"
-
-    def test_get_nonexistent_task(self):
-        scheduler = CrawlScheduler()
-        assert scheduler.get_task("nonexistent") is None
-
-    def test_get_due_tasks(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_task("Test", ["https://example.com"])
-        due = scheduler.get_due_tasks()
-        assert len(due) == 1
-
-    def test_run_due_tasks(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_task("Test", ["https://example.com"])
-
-        results = []
-
-        def mock_crawl(task):
-            results.append(task.task_id)
-
-        executed = scheduler.run_due_tasks(mock_crawl)
-        assert "test" in executed
-        assert "test" in results
-
-    def test_run_due_tasks_handles_error(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_task("Test", ["https://example.com"])
-
-        def failing_crawl(task):
-            raise Exception("Crawl failed")
-
-        executed = scheduler.run_due_tasks(failing_crawl)
-        assert "test" not in executed
-        task = scheduler.get_task("test")
-        assert task.error == "Crawl failed"
-
-    def test_callbacks(self):
-        scheduler = CrawlScheduler()
-        scheduler.add_task("Test", ["https://example.com"])
-
-        completed_tasks = []
-        error_tasks = []
-
-        scheduler.on_task_complete(lambda t: completed_tasks.append(t.task_id))
-        scheduler.on_task_error(lambda t, e: error_tasks.append(t.task_id))
-
-        scheduler.run_due_tasks(lambda t: None)
-        assert "test" in completed_tasks
-        assert len(error_tasks) == 0
-
-    def test_start_stop(self):
-        scheduler = CrawlScheduler()
-        scheduler.start(lambda t: None)
-        assert scheduler.is_running is True
-        scheduler.stop()
-        assert scheduler.is_running is False
-
-    def test_start_already_running(self):
-        scheduler = CrawlScheduler()
-        scheduler.start(lambda t: None)
-        scheduler.start(lambda t: None)
-        scheduler.stop()
+    def test_multiple_jobs(self, tmp_path):
+        jobs_file = str(tmp_path / "jobs.json")
+        scheduler = Scheduler(jobs_file=jobs_file)
+        scheduler.add_job(ScheduledJob(name="job1", seed_urls=["https://a.com"], interval_hours=12))
+        scheduler.add_job(ScheduledJob(name="job2", seed_urls=["https://b.com"], interval_hours=6))
+        assert len(scheduler.list_jobs()) == 2
