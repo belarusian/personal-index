@@ -189,3 +189,34 @@ class ContentCache:
         """
         raw = f"{operation}:{args}:{sorted(kwargs.items())}"
         return hashlib.md5(raw.encode()).hexdigest()
+
+
+class CacheDecorator:
+    """Decorator that wraps a function with content caching.
+
+    Usage:
+        @CacheDecorator(ttl=300)
+        def expensive_extract(url):
+            return extract_content(url)
+    """
+
+    def __init__(self, ttl: float = 3600.0, max_size: int = 1000) -> None:
+        self.ttl = ttl
+        self.max_size = max_size
+        self._cache: ContentCache | None = None
+
+    def __call__(self, func):
+        if self._cache is None:
+            self._cache = ContentCache(max_size=self.max_size, default_ttl=self.ttl)
+
+        def wrapper(*args, **kwargs):
+            key = self._cache.generate_key(func.__name__, *args, **kwargs)
+            return self._cache.get_or_compute(key, lambda: func(*args, **kwargs), operation=func.__name__)
+
+        wrapper.cache = self._cache
+        wrapper.__wrapped__ = func
+        return wrapper
+
+    @property
+    def cache(self) -> ContentCache | None:
+        return self._cache
