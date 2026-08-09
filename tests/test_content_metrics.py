@@ -4,8 +4,6 @@ import pytest
 from personal_index.content_metrics import (
     ContentMetrics,
     ContentMetricsTracker,
-    ContentMetricsSummary,
-    MetricsTimeRange,
 )
 
 
