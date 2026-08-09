@@ -223,3 +223,60 @@ class TestSitemapGenerator:
         gen.add_url("https://example.com/page", lastmod=now)
         xml = gen.generate(SitemapFormat.XML)
         assert "<lastmod>" in xml
+
+
+class TestSitemapGeneratorEdgeCases:
+    """Edge case tests for SitemapGenerator."""
+
+    def test_add_url_with_special_chars(self):
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page?q=hello&lang=en")
+        assert gen.entry_count == 1
+
+    def test_add_url_with_unicode(self):
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/über-seite")
+        assert gen.entry_count == 1
+
+    def test_generate_json_empty(self):
+        gen = SitemapGenerator()
+        import json
+        data = gen.generate(SitemapFormat.JSON)
+        parsed = json.loads(data)
+        assert parsed["total"] == 0
+        assert parsed["urls"] == []
+
+    def test_generate_text_empty(self):
+        gen = SitemapGenerator()
+        text = gen.generate(SitemapFormat.TEXT)
+        assert text == ""
+
+    def test_invalid_changefreq_defaults(self):
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page", changefreq="invalid")
+        assert gen._entries[0].changefreq == "monthly"
+
+    def test_bulk_add_with_duplicates(self):
+        gen = SitemapGenerator()
+        urls = [
+            ("https://example.com/1", "Page 1"),
+            ("https://example.com/1", "Page 1 Duplicate"),
+            ("https://example.com/2", "Page 2"),
+        ]
+        gen.bulk_add_urls(urls)
+        assert gen.entry_count == 2
+
+    def test_generate_index_empty(self):
+        gen = SitemapGenerator()
+        index_xml = gen.generate_index(base_url="https://example.com")
+        assert "<sitemapindex" in index_xml
+
+    def test_priority_zero(self):
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page", priority=0.0)
+        assert gen._entries[0].priority == 0.0
+
+    def test_priority_one(self):
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page", priority=1.0)
+        assert gen._entries[0].priority == 1.0
