@@ -177,3 +177,41 @@ class ContentMetricsTracker:
             key=lambda m: m.reading_time_seconds,
             reverse=descending,
         )
+
+
+def compute_text_metrics(
+    text: str,
+    url: str,
+    title: str = "",
+    reading_speed_wpm: float = 200.0,
+) -> ContentMetrics:
+    """Compute metrics from raw text content."""
+    if not text:
+        return ContentMetrics(url=url, title=title)
+
+    words = text.split()
+    word_count = len(words)
+    char_count = len(text)
+    sentences = [s.strip() for s in text.replace("\n", " ").split(".") if s.strip()]
+    sentence_count = len(sentences)
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    paragraph_count = len(paragraphs)
+
+    # Average word length
+    avg_word_length = sum(len(w) for w in words) / word_count if word_count else 0.0
+
+    # Unique word ratio
+    unique_words = set(w.lower().strip(".,!?;:\"'()[]{}") for w in words)
+    unique_word_ratio = len(unique_words) / word_count if word_count else 0.0
+
+    return ContentMetrics(
+        url=url,
+        title=title,
+        word_count=word_count,
+        char_count=char_count,
+        sentence_count=sentence_count,
+        paragraph_count=paragraph_count,
+        avg_word_length=round(avg_word_length, 2),
+        unique_word_ratio=round(unique_word_ratio, 4),
+        reading_speed_wpm=reading_speed_wpm,
+    )
