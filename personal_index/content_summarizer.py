@@ -262,22 +262,6 @@ class ContentSummarizer:
         if len(words) < 2:
             return []
 
-        # Count bigrams
-        bigrams: Counter = Counter()
-        for i in range(len(words) - 1):
-            bigrams[f"{words[i]} {words[i + 1]}"] += 1
-
-        # Count trigrams
-        trigrams: Counter = Counter()
-        for i in range(len(words) - 2):
-            trigrams[f"{words[i]} {words[i + 1]} {words[i + 2]}"] += 1
-
-        # Combine and rank
-        all_phrases: Counter = Counter()
-        all_phrases.update(bigrams)
-        all_phrases.update(trigrams)
-
-        # Filter out stopword-heavy phrases
         stopwords = {
             "the", "a", "an", "is", "are", "was", "were", "be", "been",
             "being", "have", "has", "had", "do", "does", "did", "will",
@@ -291,13 +275,31 @@ class ContentSummarizer:
             "too", "very", "just", "about", "this", "that", "these", "those",
         }
 
-        filtered = []
-        for phrase, count in all_phrases.most_common(max_phrases * 2):
-            words_in_phrase = phrase.split()
-            content_words = [w for w in words_in_phrase if w not in stopwords]
-            if content_words and count > 1:
-                filtered.append(phrase)
-            if len(filtered) >= max_phrases:
-                break
+        # Count bigrams
+        bigrams: Counter = Counter()
+        for i in range(len(words) - 1):
+            bigrams[f"{words[i]} {words[i + 1]}"] += 1
 
-        return filtered
+        # Count trigrams
+        trigrams: Counter = Counter()
+        for i in range(len(words) - 2):
+            trigrams[f"{words[i]} {words[i + 1]} {words[i + 2]}"] += 1
+
+        # Combine and rank by frequency
+        all_phrases: Counter = Counter()
+        all_phrases.update(bigrams)
+        all_phrases.update(trigrams)
+
+        # Score phrases: prefer those with content words and higher frequency
+        scored_phrases: list[tuple[float, str]] = []
+        for phrase, count in all_phrases.items():
+            phrase_words = phrase.split()
+            content_words = [w for w in phrase_words if w not in stopwords]
+            if content_words:
+                # Score based on content word ratio and frequency
+                content_ratio = len(content_words) / len(phrase_words)
+                score = content_ratio * (1 + count)
+                scored_phrases.append((score, phrase))
+
+        scored_phrases.sort(key=lambda x: -x[0])
+        return [p[1] for p in scored_phrases[:max_phrases]]
