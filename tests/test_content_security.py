@@ -232,3 +232,45 @@ class TestSecurityMiddleware:
         middleware = SecurityMiddleware(blocked_paths=["/admin"])
         allowed, headers, params = middleware.process_request("/admin", {})
         assert allowed is False
+
+
+class TestCSPNonceManager:
+    """Tests for CSPNonceManager class."""
+
+    def test_generate_nonce(self):
+        from personal_index.content_security import CSPNonceManager
+        manager = CSPNonceManager()
+        nonce = manager.generate_nonce("script-main")
+        assert len(nonce) > 0
+        assert isinstance(nonce, str)
+
+    def test_nonce_uniqueness(self):
+        from personal_index.content_security import CSPNonceManager
+        manager = CSPNonceManager()
+        n1 = manager.generate_nonce("script-1")
+        n2 = manager.generate_nonce("script-2")
+        assert n1 != n2
+
+    def test_get_nonce(self):
+        from personal_index.content_security import CSPNonceManager
+        manager = CSPNonceManager()
+        nonce = manager.generate_nonce("script-main")
+        assert manager.get_nonce("script-main") == nonce
+        assert manager.get_nonce("missing") is None
+
+    def test_build_nonce_directive(self):
+        from personal_index.content_security import CSPNonceManager
+        manager = CSPNonceManager()
+        manager.generate_nonce("script-1")
+        manager.generate_nonce("script-2")
+        directive = manager.build_nonce_directive()
+        assert "script-src" in directive
+        assert "'self'" in directive
+        assert "nonce-" in directive
+
+    def test_reset(self):
+        from personal_index.content_security import CSPNonceManager
+        manager = CSPNonceManager()
+        manager.generate_nonce("script-1")
+        manager.reset()
+        assert len(manager.nonces) == 0
