@@ -259,9 +259,6 @@ class TestDashboardWidgetsAdvanced:
     def test_dashboard_with_analytics_integration(self):
         """Test dashboard integrates with analytics data."""
         from personal_index.content_analytics import ContentAnalytics
-        from personal_index.content_dashboard import (
-            ContentDashboard, DashboardWidget, DashboardWidgetType,
-        )
 
         analytics = ContentAnalytics()
         analytics.add_item({
@@ -284,9 +281,8 @@ class TestDashboardWidgetsAdvanced:
 
     def test_dashboard_with_metrics_integration(self):
         """Test dashboard integrates with metrics data."""
-        from personal_index.content_metrics import ContentMetricsTracker
-        from personal_index.content_dashboard import (
-            ContentDashboard, DashboardWidget, DashboardWidgetType,
+        from personal_index.content_metrics import (
+            ContentMetrics, ContentMetricsTracker,
         )
 
         tracker = ContentMetricsTracker()
@@ -308,9 +304,6 @@ class TestDashboardWidgetsAdvanced:
     def test_dashboard_with_report_integration(self):
         """Test dashboard integrates with report data."""
         from personal_index.content_report import ContentReportGenerator
-        from personal_index.content_dashboard import (
-            ContentDashboard, DashboardWidget, DashboardWidgetType,
-        )
 
         gen = ContentReportGenerator()
         gen.add_items([
