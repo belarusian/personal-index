@@ -397,3 +397,56 @@ class TestContentCrawlerIntegration:
             assert stats.successful == 1
             assert task.results[0].title == ""
             assert task.results[0].content == ""
+
+
+class TestCrawlQueueAdvanced:
+    """Advanced tests for CrawlQueue."""
+
+    def test_get_task(self):
+        queue = CrawlQueue()
+        task = CrawlTask(source_url="https://example.com")
+        queue.add_task(task)
+        retrieved = queue.get_task(task.task_id)
+        assert retrieved is not None
+        assert retrieved.task_id == task.task_id
+
+    def test_get_task_not_found(self):
+        queue = CrawlQueue()
+        assert queue.get_task("nonexistent") is None
+
+    def test_all_tasks(self):
+        queue = CrawlQueue()
+        queue.add_task(CrawlTask(source_url="https://a.com"))
+        queue.add_task(CrawlTask(source_url="https://b.com"))
+        assert len(queue.all_tasks) == 2
+
+    def test_failed_count(self):
+        queue = CrawlQueue()
+        task = CrawlTask(source_url="https://a.com")
+        queue.add_task(task)
+        queue.fail_task(task.task_id, "error")
+        assert queue.failed_count == 1
+
+    def test_queue_fifo_order(self):
+        queue = CrawlQueue()
+        t1 = CrawlTask(source_url="https://first.com")
+        t2 = CrawlTask(source_url="https://second.com")
+        queue.add_task(t1)
+        queue.add_task(t2)
+        next_task = queue.get_next_pending()
+        assert next_task.source_url == "https://first.com"
+
+    def test_complete_task_not_found(self):
+        queue = CrawlQueue()
+        result = queue.complete_task("nonexistent")
+        assert result is None
+
+    def test_fail_task_not_found(self):
+        queue = CrawlQueue()
+        result = queue.fail_task("nonexistent", "error")
+        assert result is None
+
+    def test_cancel_task_not_found(self):
+        queue = CrawlQueue()
+        result = queue.cancel_task("nonexistent")
+        assert result is None
