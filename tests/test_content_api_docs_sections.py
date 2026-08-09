@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from personal_index.content_api_docs import DocSection, DocumentationBuilder
+from personal_index.content_api_docs import DocSection, DocumentationBuilder, EndpointDoc
 
 
 class TestDocSection:
@@ -22,7 +22,6 @@ class TestDocSection:
 class TestDocumentationBuilder:
     def test_fluent_add_endpoint(self):
         builder = DocumentationBuilder()
-        from personal_index.content_api_docs import EndpointDoc
         result = builder.add_endpoint(
             EndpointDoc(path="/test", method="GET", summary="Test")
         )
