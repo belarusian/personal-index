@@ -239,3 +239,79 @@ class TestContentReportGenerator:
                 break
         assert top_section is not None
         assert len(top_section.data) == 10  # Top 10
+
+
+class TestReportAdvanced:
+    def test_report_with_multiple_sections(self):
+        report = ContentReport(title="Multi Section")
+        for i in range(5):
+            report.add_section(ReportSection(
+                title=f"Section {i}",
+                content=f"Content {i}",
+                data={"index": i},
+            ))
+        assert len(report.sections) == 5
+        text = report.to_text()
+        for i in range(5):
+            assert f"## Section {i}" in text
+
+    def test_report_metadata(self):
+        report = ContentReport(
+            title="Test",
+            metadata={"author": "test", "version": "1.0"},
+        )
+        d = report.to_dict()
+        assert d["metadata"]["author"] == "test"
+
+    def test_report_generator_multiple_categories(self):
+        gen = ContentReportGenerator()
+        categories = ["Tech", "Science", "Sports", "News", "Finance"]
+        for cat in categories:
+            for i in range(3):
+                gen.add_items([{
+                    "url": f"https://{cat}{i}.com",
+                    "title": f"{cat} {i}",
+                    "word_count": 100,
+                    "category": cat,
+                    "engagement_score": float(i),
+                }])
+        report = gen.generate_summary_report()
+        cat_section = None
+        for s in report.sections:
+            if "Category" in s.title:
+                cat_section = s
+                break
+        assert cat_section is not None
+        assert len(cat_section.data) == 5
+
+    def test_report_generator_filter_by_engagement(self):
+        gen = ContentReportGenerator()
+        gen.add_items([
+            {"url": "https://a.com", "title": "A", "word_count": 100,
+             "category": "Tech", "engagement_score": 1.0},
+            {"url": "https://b.com", "title": "B", "word_count": 200,
+             "category": "Tech", "engagement_score": 25.0},
+            {"url": "https://c.com", "title": "C", "word_count": 150,
+             "category": "Tech", "engagement_score": 50.0},
+        ])
+        report = gen.generate_summary_report(
+            filter=ReportFilter(min_engagement=10.0)
+        )
+        overview = report.sections[0]
+        assert overview.data["total_items"] == 2
+
+    def test_report_generator_filter_by_word_count_range(self):
+        gen = ContentReportGenerator()
+        gen.add_items([
+            {"url": "https://a.com", "title": "A", "word_count": 50,
+             "category": "Tech", "engagement_score": 10.0},
+            {"url": "https://b.com", "title": "B", "word_count": 200,
+             "category": "Tech", "engagement_score": 10.0},
+            {"url": "https://c.com", "title": "C", "word_count": 1000,
+             "category": "Tech", "engagement_score": 10.0},
+        ])
+        report = gen.generate_summary_report(
+            filter=ReportFilter(min_word_count=100, max_word_count=500)
+        )
+        overview = report.sections[0]
+        assert overview.data["total_items"] == 1
