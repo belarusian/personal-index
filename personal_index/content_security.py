@@ -233,3 +233,70 @@ class InputValidator:
         """
         allowed_set = set(allowed)
         return all(c in allowed_set for c in text)
+
+
+@dataclass
+class SecurityAudit:
+    """Security audit scanner for checking headers and configurations."""
+
+    REQUIRED_HEADERS: list[str] = field(default_factory=lambda: [
+        "X-Frame-Options",
+        "X-Content-Type-Options",
+        "X-XSS-Protection",
+        "Content-Security-Policy",
+        "Referrer-Policy",
+    ])
+
+    def scan_headers(self, headers: dict[str, str]) -> list[str]:
+        """Scan headers for security issues.
+
+        Args:
+            headers: Dictionary of HTTP headers to audit.
+
+        Returns:
+            List of issue descriptions. Empty if no issues found.
+        """
+        issues: list[str] = []
+        header_keys = {k.lower() for k in headers}
+
+        for required in self.REQUIRED_HEADERS:
+            if required.lower() not in header_keys:
+                issues.append(f"Missing required header: {required}")
+
+        # Check for weak CSP
+        csp_value = headers.get("Content-Security-Policy", "")
+        if csp_value and "*" in csp_value:
+            issues.append("CSP contains wildcard (*) which is insecure")
+
+        # Check for unsafe-inline in CSP
+        if csp_value and "'unsafe-inline'" in csp_value:
+            issues.append("CSP contains 'unsafe-inline' which weakens protection")
+
+        # Check X-Frame-Options value
+        xfo = headers.get("X-Frame-Options", "")
+        if xfo and xfo not in ("DENY", "SAMEORIGIN"):
+            issues.append(f"Invalid X-Frame-Options value: {xfo}")
+
+        return issues
+
+    def generate_report(self, headers: dict[str, str]) -> dict:
+        """Generate a full security audit report.
+
+        Args:
+            headers: Dictionary of HTTP headers to audit.
+
+        Returns:
+            Report dictionary with issues list and score.
+        """
+        issues = self.scan_headers(headers)
+        total_checks = len(self.REQUIRED_HEADERS) + 2  # +2 for CSP checks
+        passed = total_checks - len(issues)
+        score = max(0, int((passed / total_checks) * 100))
+
+        return {
+            "issues": issues,
+            "score": score,
+            "total_checks": total_checks,
+            "passed": passed,
+            "failed": len(issues),
+        }
