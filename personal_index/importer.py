@@ -136,24 +136,44 @@ class Importer:
     def _import_html(self, content: str, source: str = "") -> ImportResult:
         """Import from HTML bookmark format (Netscape/Neko)."""
         result = ImportResult(source=source, format="html")
-        try:
-            tree = ET.fromstring(content)
-        except ET.ParseError as e:
-            result.errors.append(f"Invalid HTML/XML: {e}")
+
+        # Basic validation: content must look like HTML
+        stripped = content.strip()
+        if not stripped.startswith("<") or ">" not in stripped:
+            result.errors.append("Invalid HTML: content does not appear to be HTML")
             return result
 
-        self._parse_html_element(tree, result, [])
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(content, "html.parser")
+        except ImportError:
+            try:
+                tree = ET.fromstring(content)
+            except ET.ParseError as e:
+                result.errors.append(f"Invalid HTML/XML: {e}")
+                return result
+            self._parse_html_element(tree, result, [])
+            return result
+
+        for a_tag in soup.find_all("a", href=True):
+            href = a_tag["href"]
+            title = a_tag.get("title", a_tag.get_text(strip=True) or "")
+            bookmark = Bookmark(
+                url=href,
+                title=title,
+                category="imported",
+            )
+            self._manager.add(bookmark)
+            result.total_imported += 1
 
         return result
 
     def _parse_html_element(self, element, result: ImportResult, path: List[str]):
-        """Recursively parse HTML bookmark elements."""
+        """Recursively parse HTML bookmark elements (ElementTree fallback)."""
         tag = element.tag.lower()
 
         if tag == "a":
             href = element.get("href", "")
-            title = element.get("add_date", element.get("icon", element.text or ""))
-            # Try to get title from attributes
             title = element.get("title", element.text or "")
             if href:
                 bookmark = Bookmark(

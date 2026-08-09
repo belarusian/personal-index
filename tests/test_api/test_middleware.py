@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import pytest
 
 from personal_index.api.middleware import (
@@ -33,6 +34,7 @@ class TestRequestLoggingMiddleware:
 
     def test_logs_request(self, caplog):
         """Test that middleware logs requests."""
+        caplog.set_level(logging.INFO, logger="personal_index.api.middleware")
         app = FakeApp()
         middleware = RequestLoggingMiddleware(app)
 

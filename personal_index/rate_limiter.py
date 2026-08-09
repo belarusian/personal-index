@@ -38,7 +38,7 @@ class TokenBucket:
         self._refill_rate = config.max_requests / config.window_seconds
         self._tokens = float(self._burst_size)
         self._last_refill = time.monotonic()
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     def _refill(self):
         """Refill tokens based on elapsed time."""
