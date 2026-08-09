@@ -166,3 +166,46 @@ class TestContentAnalytics:
         report = analytics.generate_report()
         assert report.engagement_distribution["low"] >= 1
         assert report.engagement_distribution["high"] >= 1
+
+
+class TestAnalyticsTrends:
+    def test_trend_daily(self):
+        from personal_index.content_analytics import TrendAnalyzer
+        analyzer = TrendAnalyzer()
+        analyzer.add_data_point("2024-01-01", 10)
+        analyzer.add_data_point("2024-01-02", 20)
+        analyzer.add_data_point("2024-01-03", 15)
+        trend = analyzer.get_trend()
+        assert trend["direction"] in ["up", "down", "stable"]
+        assert "data_points" in trend
+
+    def test_trend_empty(self):
+        from personal_index.content_analytics import TrendAnalyzer
+        analyzer = TrendAnalyzer()
+        trend = analyzer.get_trend()
+        assert trend["direction"] == "stable"
+        assert trend["data_points"] == 0
+
+    def test_trend_upward(self):
+        from personal_index.content_analytics import TrendAnalyzer
+        analyzer = TrendAnalyzer()
+        for i in range(10):
+            analyzer.add_data_point(f"2024-01-{i+1:02d}", i * 10)
+        trend = analyzer.get_trend()
+        assert trend["direction"] == "up"
+
+    def test_trend_downward(self):
+        from personal_index.content_analytics import TrendAnalyzer
+        analyzer = TrendAnalyzer()
+        for i in range(10):
+            analyzer.add_data_point(f"2024-01-{i+1:02d}", (10 - i) * 10)
+        trend = analyzer.get_trend()
+        assert trend["direction"] == "down"
+
+    def test_trend_flat(self):
+        from personal_index.content_analytics import TrendAnalyzer
+        analyzer = TrendAnalyzer()
+        for i in range(10):
+            analyzer.add_data_point(f"2024-01-{i+1:02d}", 50)
+        trend = analyzer.get_trend()
+        assert trend["direction"] == "stable"
