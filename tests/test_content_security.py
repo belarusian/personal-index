@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 from personal_index.content_security import (
     ContentSecurityPolicy,
+    InputValidator,
+    SecurityAudit,
     SecurityHeaders,
     XssSanitizer,
 )
@@ -114,33 +116,67 @@ class TestInputValidator:
     """Tests for InputValidator class."""
 
     def test_valid_email(self):
-        from personal_index.content_security import InputValidator
         assert InputValidator.is_valid_email("user@example.com")
 
     def test_invalid_email_no_at(self):
-        from personal_index.content_security import InputValidator
         assert not InputValidator.is_valid_email("userexample.com")
 
     def test_valid_url(self):
-        from personal_index.content_security import InputValidator
         assert InputValidator.is_valid_url("https://example.com/path")
 
     def test_invalid_url_no_scheme(self):
-        from personal_index.content_security import InputValidator
         assert not InputValidator.is_valid_url("example.com")
 
     def test_max_length_valid(self):
-        from personal_index.content_security import InputValidator
         assert InputValidator.check_max_length("short", 100)
 
     def test_max_length_exceeded(self):
-        from personal_index.content_security import InputValidator
         assert not InputValidator.check_max_length("a" * 201, 200)
 
     def test_allowed_characters(self):
-        from personal_index.content_security import InputValidator
         assert InputValidator.check_allowed_chars("hello123", "abcdefghijklmnopqrstuvwxyz0123456789")
 
     def test_disallowed_characters(self):
-        from personal_index.content_security import InputValidator
         assert not InputValidator.check_allowed_chars("hello<script>", "abcdefghijklmnopqrstuvwxyz")
+
+
+class TestSecurityAudit:
+    """Tests for SecurityAudit class."""
+
+    def test_audit_scan_all_headers_present(self):
+        audit = SecurityAudit()
+        headers = {
+            "X-Frame-Options": "DENY",
+            "X-Content-Type-Options": "nosniff",
+            "X-XSS-Protection": "1; mode=block",
+            "Content-Security-Policy": "default-src 'self'",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+        }
+        issues = audit.scan_headers(headers)
+        assert len(issues) == 0
+
+    def test_audit_scan_missing_headers(self):
+        audit = SecurityAudit()
+        headers = {}
+        issues = audit.scan_headers(headers)
+        assert len(issues) > 0
+
+    def test_audit_scan_weak_csp(self):
+        audit = SecurityAudit()
+        headers = {"Content-Security-Policy": "default-src *"}
+        issues = audit.scan_headers(headers)
+        assert any("wildcard" in i.lower() or "*" in i for i in issues)
+
+    def test_audit_report(self):
+        audit = SecurityAudit()
+        headers = {
+            "X-Frame-Options": "DENY",
+            "X-Content-Type-Options": "nosniff",
+            "X-XSS-Protection": "1; mode=block",
+            "Content-Security-Policy": "default-src 'self'",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+        }
+        report = audit.generate_report(headers)
+        assert "issues" in report
+        assert "score" in report
+        assert report["score"] > 0
