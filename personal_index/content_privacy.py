@@ -315,3 +315,59 @@ class ConsentManager:
         if user_id:
             return [r for r in self._records if r.user_id == user_id]
         return list(self._records)
+
+
+class IPAnonymizer:
+    """Anonymizes IP addresses for privacy compliance."""
+
+    @staticmethod
+    def anonymize_ipv4(ip: str, mask_bits: int = 24) -> str:
+        """Anonymize an IPv4 address by zeroing out last bits.
+
+        Args:
+            ip: IPv4 address string.
+            mask_bits: Number of bits to preserve (default 24 = /24).
+
+        Returns:
+            Anonymized IP address string.
+        """
+        parts = ip.split(".")
+        if len(parts) != 4:
+            return ip
+        octets = [int(p) for p in parts]
+        bytes_to_zero = 4 - (mask_bits // 8)
+        for i in range(bytes_to_zero):
+            octets[-(i + 1)] = 0
+        return ".".join(str(o) for o in octets)
+
+    @staticmethod
+    def anonymize_ipv6(ip: str, mask_bits: int = 56) -> str:
+        """Anonymize an IPv6 address by zeroing out last bits.
+
+        Args:
+            ip: IPv6 address string.
+            mask_bits: Number of bits to preserve (default 56 = /56).
+
+        Returns:
+            Anonymized IPv6 address string.
+        """
+        # Simple approach: zero out last groups
+        groups = ip.split(":")
+        groups_to_zero = 8 - (mask_bits // 16)
+        for i in range(groups_to_zero):
+            groups[-(i + 1)] = "0"
+        return ":".join(groups)
+
+    @staticmethod
+    def anonymize(ip: str) -> str:
+        """Anonymize an IP address (auto-detects IPv4/IPv6).
+
+        Args:
+            ip: IP address string.
+
+        Returns:
+            Anonymized IP address string.
+        """
+        if "." in ip and ":" not in ip:
+            return IPAnonymizer.anonymize_ipv4(ip)
+        return IPAnonymizer.anonymize_ipv6(ip)
