@@ -99,10 +99,10 @@ class PDFContentItem:
         }
 
     def truncate_content(self, max_length: int = 500) -> str:
-        """Truncate content to max_length characters."""
+        """Truncate content to max_length characters (including ellipsis)."""
         if len(self.content) <= max_length:
             return self.content
-        return self.content[:max_length] + "..."
+        return self.content[: max_length - 3] + "..."
 
     def format_for_pdf(self, config: PDFExportConfig) -> str:
         """Format item as text for PDF inclusion."""
