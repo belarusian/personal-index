@@ -264,7 +264,6 @@ class ContentCrawler:
 
         # Start with the source URL
         to_crawl = [(task.source_url, 0)]
-        self._visited.add(task.source_url)
 
         while to_crawl and stats.total_pages < task.max_pages:
             url, depth = to_crawl.pop(0)
@@ -276,6 +275,9 @@ class ContentCrawler:
             if not self._should_crawl(url, task):
                 stats.skipped += 1
                 continue
+
+            # Mark as visited before fetching
+            self._visited.add(url)
 
             stats.total_pages += 1
             resp = self._fetch_page(url, task.timeout)

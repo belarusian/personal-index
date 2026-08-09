@@ -127,3 +127,157 @@ class TestCrawlQueue:
         queue.add_task(task)
         queue.complete_task(task.task_id)
         assert queue.completed_count == 1
+
+
+class TestCrawlResult:
+    """Tests for CrawlResult."""
+
+    def test_create_result(self):
+        result = CrawlResult(url="https://example.com")
+        assert result.url == "https://example.com"
+        assert result.status_code == 0
+        assert result.error == ""
+
+    def test_result_to_dict(self):
+        result = CrawlResult(
+            url="https://example.com",
+            title="Test Page",
+            status_code=200,
+        )
+        d = result.to_dict()
+        assert d["url"] == "https://example.com"
+        assert d["title"] == "Test Page"
+        assert d["status_code"] == 200
+
+
+class TestCrawlStats:
+    """Tests for CrawlStats."""
+
+    def test_default_stats(self):
+        stats = CrawlStats()
+        assert stats.total_pages == 0
+        assert stats.successful == 0
+        assert stats.failed == 0
+
+    def test_stats_to_dict(self):
+        stats = CrawlStats(total_pages=10, successful=8, failed=2)
+        d = stats.to_dict()
+        assert d["total_pages"] == 10
+        assert d["successful"] == 8
+        assert d["failed"] == 2
+
+
+class TestContentCrawler:
+    """Tests for ContentCrawler class."""
+
+    def test_init(self):
+        crawler = ContentCrawler()
+        assert crawler.session is not None
+
+    def test_get_domain(self):
+        crawler = ContentCrawler()
+        assert crawler._get_domain("https://example.com/page") == "example.com"
+        assert crawler._get_domain("http://sub.domain.org/path?q=1") == "sub.domain.org"
+
+    def test_should_crawl_valid_url(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(source_url="https://example.com")
+        assert crawler._should_crawl("https://example.com/page", task) is True
+
+    def test_should_crawl_already_visited(self):
+        crawler = ContentCrawler()
+        crawler._visited.add("https://example.com/page")
+        task = CrawlTask(source_url="https://example.com")
+        assert crawler._should_crawl("https://example.com/page", task) is False
+
+    def test_should_crawl_blocked_extension(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(source_url="https://example.com")
+        assert crawler._should_crawl("https://example.com/image.jpg", task) is False
+
+    def test_should_crawl_blocked_domain(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            blocked_domains=["spam.com"],
+        )
+        assert crawler._should_crawl("https://spam.com/page", task) is False
+
+    def test_should_crawl_allowed_domains(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            allowed_domains=["example.com"],
+        )
+        assert crawler._should_crawl("https://example.com/page", task) is True
+        assert crawler._should_crawl("https://other.com/page", task) is False
+
+    def test_should_crawl_invalid_scheme(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(source_url="https://example.com")
+        assert crawler._should_crawl("ftp://example.com/page", task) is False
+
+    def test_should_crawl_empty_url(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(source_url="https://example.com")
+        assert crawler._should_crawl("", task) is False
+
+    def test_extract_links(self):
+        crawler = ContentCrawler()
+        html = """
+        <html><body>
+        <a href="/page1">Link 1</a>
+        <a href="https://example.com/page2">Link 2</a>
+        <a href="javascript:void(0)">JS Link</a>
+        <a href="mailto:test@example.com">Email</a>
+        <a href="#section">Anchor</a>
+        </body></html>
+        """
+        links = crawler._extract_links(html, "https://example.com")
+        assert "https://example.com/page1" in links
+        assert "https://example.com/page2" in links
+        assert len([l for l in links if "javascript" in l]) == 0
+        assert len([l for l in links if "mailto" in l]) == 0
+        assert len([l for l in links if "#section" in l]) == 0
+
+    def test_extract_content(self):
+        crawler = ContentCrawler()
+        html = """
+        <html><head>
+        <title>Test Page</title>
+        <meta name="description" content="A test page">
+        </head><body>
+        <p>Hello world</p>
+        <script>alert('xss')</script>
+        </body></html>
+        """
+        title, content, meta_desc = crawler._extract_content(html, "https://example.com")
+        assert title == "Test Page"
+        assert meta_desc == "A test page"
+        assert "Hello world" in content
+        assert "xss" not in content
+
+    def test_crawl_respects_max_pages(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(source_url="https://example.com", max_pages=1)
+        with patch.object(crawler, "_fetch_page", return_value=None):
+            stats = crawler.crawl(task)
+            assert stats.total_pages == 1
+            assert stats.failed == 1
+
+    def test_crawl_marks_completed(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(source_url="https://example.com", max_pages=1, delay=0)
+        with patch.object(crawler, "_fetch_page", return_value=None):
+            stats = crawler.crawl(task)
+            assert task.status == CrawlTaskStatus.COMPLETED
+            assert task.stats is not None
+            assert task.completed_at is not None
+
+    def test_crawl_from_saved_item(self):
+        crawler = ContentCrawler()
+        with patch.object(crawler, "crawl") as mock_crawl:
+            mock_crawl.return_value = CrawlStats(total_pages=5)
+            stats = crawler.crawl_from_saved_item("https://example.com", max_depth=2)
+            assert stats.total_pages == 5
+            mock_crawl.assert_called_once()
