@@ -48,6 +48,11 @@ class OfflineContentItem:
     )
     error: Optional[str] = None
 
+    def __post_init__(self) -> None:
+        """Set content_length from content if provided."""
+        if self.content is not None and self.content_length == 0:
+            self.content_length = len(self.content)
+
     def mark_available(self, content: str) -> None:
         """Mark the item as available with content."""
         self.status = OfflineStatus.AVAILABLE
@@ -110,7 +115,7 @@ class OfflineContentItem:
             return ""
         text = self.content
         if len(text) > max_length:
-            return text[:max_length] + "..."
+            return text[:max_length]
         return text
 
     def update_content(self, content: str) -> None:
@@ -195,14 +200,13 @@ class OfflineStore:
     max_storage_bytes: int = 104857600  # 100MB default
 
     def add_item(self, item: OfflineContentItem) -> None:
-        """Add an item, replacing if URL already exists."""
+        """Add an item, keeping first if URL already exists."""
         existing = self.get_item_by_url(item.url)
         if existing:
-            idx = self.items.index(existing)
-            self.items[idx] = item
-        else:
-            self.items.append(item)
-            self._enforce_limits()
+            # Keep the first item, don't replace
+            return
+        self.items.append(item)
+        self._enforce_limits()
 
     def remove_item(self, item_id: str) -> None:
         """Remove an item by ID."""
