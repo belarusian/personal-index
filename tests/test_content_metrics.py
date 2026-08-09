@@ -174,3 +174,45 @@ class TestContentMetricsSummary:
         tracker.record(ContentMetrics(url="https://b.com", word_count=300))
         summary = tracker.summary()
         assert summary.median_word_count == 200.0
+
+
+class TestMetricsTimeRange:
+    def test_time_range_filter(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=100, timestamp=1000.0))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=200, timestamp=2000.0))
+        tracker.record(ContentMetrics(url="https://c.com", word_count=300, timestamp=3000.0))
+        result = tracker.filter_by_time_range(1500.0, 2500.0)
+        assert len(result) == 1
+        assert result[0].url == "https://b.com"
+
+    def test_time_range_filter_empty(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=100, timestamp=1000.0))
+        result = tracker.filter_by_time_range(5000.0, 6000.0)
+        assert len(result) == 0
+
+    def test_time_range_filter_all(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=100, timestamp=1000.0))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=200, timestamp=2000.0))
+        result = tracker.filter_by_time_range(0.0, 9999.0)
+        assert len(result) == 2
+
+    def test_sort_by_word_count(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=300))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=100))
+        tracker.record(ContentMetrics(url="https://c.com", word_count=200))
+        result = tracker.sort_by_word_count()
+        assert result[0].word_count == 100
+        assert result[1].word_count == 200
+        assert result[2].word_count == 300
+
+    def test_sort_by_reading_time(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=300))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=100))
+        result = tracker.sort_by_reading_time()
+        assert result[0].url == "https://b.com"
+        assert result[1].url == "https://a.com"
