@@ -152,3 +152,28 @@ class ContentMetricsTracker:
             total_images=sum(m.image_count for m in metrics_list),
             avg_readability_score=statistics.mean(readability_scores) if readability_scores else 0.0,
         )
+
+    def filter_by_time_range(
+        self, start_time: float, end_time: float
+    ) -> list[ContentMetrics]:
+        """Filter metrics within a time range."""
+        return [
+            m for m in self._metrics.values()
+            if start_time <= m.timestamp <= end_time
+        ]
+
+    def sort_by_word_count(self, descending: bool = False) -> list[ContentMetrics]:
+        """Sort all metrics by word count."""
+        return sorted(
+            self._metrics.values(),
+            key=lambda m: m.word_count,
+            reverse=descending,
+        )
+
+    def sort_by_reading_time(self, descending: bool = False) -> list[ContentMetrics]:
+        """Sort all metrics by reading time."""
+        return sorted(
+            self._metrics.values(),
+            key=lambda m: m.reading_time_seconds,
+            reverse=descending,
+        )
