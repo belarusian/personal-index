@@ -366,3 +366,50 @@ class SecurityMiddleware:
         headers = self.apply_headers()
         sanitized = self.sanitize_request(params)
         return True, headers, sanitized
+
+
+@dataclass
+class CSPNonceManager:
+    """Manages CSP nonces for script/style tags."""
+
+    nonces: dict[str, str] = field(default_factory=dict)
+
+    def generate_nonce(self, tag_id: str) -> str:
+        """Generate a unique nonce for a tag.
+
+        Args:
+            tag_id: Identifier for the tag (e.g., 'script-main').
+
+        Returns:
+            Base64-encoded nonce string.
+        """
+        import base64
+        nonce = base64.b64encode(__import__("os").urandom(16)).decode("ascii")
+        self.nonces[tag_id] = nonce
+        return nonce
+
+    def get_nonce(self, tag_id: str) -> Optional[str]:
+        """Get a previously generated nonce.
+
+        Args:
+            tag_id: Tag identifier.
+
+        Returns:
+            Nonce string if exists, None otherwise.
+        """
+        return self.nonces.get(tag_id)
+
+    def build_nonce_directive(self) -> str:
+        """Build a CSP directive with all nonces.
+
+        Returns:
+            CSP script-src directive with all nonces.
+        """
+        nonce_parts = ["'self'"]
+        for nonce in self.nonces.values():
+            nonce_parts.append(f"'nonce-{nonce}'")
+        return "script-src " + " ".join(nonce_parts)
+
+    def reset(self) -> None:
+        """Clear all nonces (for new request cycle)."""
+        self.nonces.clear()
