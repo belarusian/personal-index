@@ -108,3 +108,39 @@ class TestXssSanitizer:
         text = 'He said "hello"'
         result = XssSanitizer.sanitize_input(text)
         assert "&quot;" in result
+
+
+class TestInputValidator:
+    """Tests for InputValidator class."""
+
+    def test_valid_email(self):
+        from personal_index.content_security import InputValidator
+        assert InputValidator.is_valid_email("user@example.com")
+
+    def test_invalid_email_no_at(self):
+        from personal_index.content_security import InputValidator
+        assert not InputValidator.is_valid_email("userexample.com")
+
+    def test_valid_url(self):
+        from personal_index.content_security import InputValidator
+        assert InputValidator.is_valid_url("https://example.com/path")
+
+    def test_invalid_url_no_scheme(self):
+        from personal_index.content_security import InputValidator
+        assert not InputValidator.is_valid_url("example.com")
+
+    def test_max_length_valid(self):
+        from personal_index.content_security import InputValidator
+        assert InputValidator.check_max_length("short", 100)
+
+    def test_max_length_exceeded(self):
+        from personal_index.content_security import InputValidator
+        assert not InputValidator.check_max_length("a" * 201, 200)
+
+    def test_allowed_characters(self):
+        from personal_index.content_security import InputValidator
+        assert InputValidator.check_allowed_chars("hello123", "abcdefghijklmnopqrstuvwxyz0123456789")
+
+    def test_disallowed_characters(self):
+        from personal_index.content_security import InputValidator
+        assert not InputValidator.check_allowed_chars("hello<script>", "abcdefghijklmnopqrstuvwxyz")
