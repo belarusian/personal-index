@@ -88,3 +88,154 @@ class TestReportFilter:
         assert f.matches_all(100, "Tech", 10.0) is True
         assert f.matches_all(100, "Sports", 10.0) is False
         assert f.matches_all(10, "Tech", 10.0) is False
+
+
+class TestContentReport:
+    def test_create_report(self):
+        report = ContentReport(title="Test Report")
+        assert report.title == "Test Report"
+        assert report.format == "text"
+        assert len(report.sections) == 0
+        assert "generated_at" in report.to_dict()
+
+    def test_add_section(self):
+        report = ContentReport(title="Test")
+        report.add_section(ReportSection(title="S1", content="C1"))
+        assert len(report.sections) == 1
+
+    def test_to_text(self):
+        report = ContentReport(title="Test Report")
+        report.add_section(ReportSection(
+            title="Overview",
+            content="Some content",
+            data={"items": 10},
+        ))
+        text = report.to_text()
+        assert "# Test Report" in text
+        assert "## Overview" in text
+        assert "items: 10" in text
+
+    def test_to_markdown(self):
+        report = ContentReport(title="Test Report", format=ReportFormat.MARKDOWN.value)
+        report.add_section(ReportSection(
+            title="Stats",
+            content="Statistics",
+            data={"total": 100},
+        ))
+        md = report.to_markdown()
+        assert "# Test Report" in md
+        assert "| Key | Value |" in md
+        assert "| total | 100 |" in md
+
+    def test_to_html(self):
+        report = ContentReport(title="Test Report", format=ReportFormat.HTML.value)
+        report.add_section(ReportSection(
+            title="Overview",
+            content="Content",
+            data={"count": 5},
+        ))
+        html = report.to_html()
+        assert "<!DOCTYPE html>" in html
+        assert "<h1>Test Report</h1>" in html
+        assert "<h2>Overview</h2>" in html
+        assert "<td>count</td><td>5</td>" in html
+
+    def test_render_default_text(self):
+        report = ContentReport(title="Test")
+        report.add_section(ReportSection(title="S1", content="C1"))
+        text = report.render()
+        assert "# Test" in text
+
+    def test_render_markdown(self):
+        report = ContentReport(title="Test", format=ReportFormat.MARKDOWN.value)
+        report.add_section(ReportSection(title="S1", content="C1"))
+        md = report.render()
+        assert "# Test" in md
+
+    def test_render_html(self):
+        report = ContentReport(title="Test", format=ReportFormat.HTML.value)
+        report.add_section(ReportSection(title="S1", content="C1"))
+        html = report.render()
+        assert "<!DOCTYPE html>" in html
+
+    def test_render_json(self):
+        report = ContentReport(title="Test", format=ReportFormat.JSON.value)
+        report.add_section(ReportSection(title="S1", content="C1"))
+        import json
+        data = json.loads(report.render())
+        assert data["title"] == "Test"
+        assert len(data["sections"]) == 1
+
+    def test_to_dict(self):
+        report = ContentReport(title="Test")
+        report.add_section(ReportSection(title="S1", content="C1", data={"x": 1}))
+        d = report.to_dict()
+        assert d["title"] == "Test"
+        assert len(d["sections"]) == 1
+        assert d["sections"][0]["data"]["x"] == 1
+
+
+class TestContentReportGenerator:
+    def test_add_items(self):
+        gen = ContentReportGenerator()
+        gen.add_items([{"url": "https://a.com", "title": "A"}])
+        assert len(gen._items) == 1
+
+    def test_generate_summary_report(self):
+        gen = ContentReportGenerator()
+        gen.add_items([
+            {"url": "https://a.com", "title": "A", "word_count": 100, "category": "Tech", "engagement_score": 10.0},
+            {"url": "https://b.com", "title": "B", "word_count": 200, "category": "Science", "engagement_score": 20.0},
+        ])
+        report = gen.generate_summary_report()
+        assert report.title == "Content Summary Report"
+        assert len(report.sections) >= 2
+
+    def test_generate_report_with_filter(self):
+        gen = ContentReportGenerator()
+        gen.add_items([
+            {"url": "https://a.com", "title": "A", "word_count": 100, "category": "Tech", "engagement_score": 10.0},
+            {"url": "https://b.com", "title": "B", "word_count": 200, "category": "Sports", "engagement_score": 5.0},
+        ])
+        report = gen.generate_summary_report(
+            filter=ReportFilter(categories=["Tech"])
+        )
+        # Only Tech items should be in the report
+        overview = report.sections[0]
+        assert overview.data["total_items"] == 1
+
+    def test_generate_report_empty(self):
+        gen = ContentReportGenerator()
+        report = gen.generate_summary_report()
+        assert report.title == "Content Summary Report"
+        assert len(report.sections) >= 1
+
+    def test_generate_report_custom_format(self):
+        gen = ContentReportGenerator()
+        gen.add_items([
+            {"url": "https://a.com", "title": "A", "word_count": 100, "category": "Tech"},
+        ])
+        report = gen.generate_summary_report(fmt=ReportFormat.MARKDOWN)
+        assert report.format == "markdown"
+        md = report.render()
+        assert "# Content Summary Report" in md
+
+    def test_generate_report_top_items(self):
+        gen = ContentReportGenerator()
+        for i in range(15):
+            gen.add_items([{
+                "url": f"https://{i}.com",
+                "title": f"Page {i}",
+                "word_count": 100,
+                "category": "Tech",
+                "engagement_score": float(i * 10),
+            }])
+        report = gen.generate_summary_report()
+        # Should have a "Top Engaged Content" section
+        top_section = None
+        for s in report.sections:
+            if "Top" in s.title:
+                top_section = s
+                break
+        assert top_section is not None
+        assert len(top_section.data) == 10  # Top 10
