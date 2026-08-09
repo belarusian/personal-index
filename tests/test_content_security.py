@@ -180,3 +180,19 @@ class TestSecurityAudit:
         assert "issues" in report
         assert "score" in report
         assert report["score"] > 0
+
+
+class TestSecurityHeadersIntegration:
+    """Integration tests for security headers."""
+
+    def test_full_security_stack(self):
+        csp = ContentSecurityPolicy()
+        csp.add_directive("script-src", "'self'")
+        csp.add_directive("style-src", "'self'")
+        csp.add_directive("img-src", "'self' data: https:")
+        headers = SecurityHeaders(csp=csp)
+        result = headers.get_headers()
+        assert len(result) >= 5
+        assert "Content-Security-Policy" in result
+        assert "X-Frame-Options" in result
+        assert "X-Content-Type-Options" in result
