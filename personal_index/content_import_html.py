@@ -104,6 +104,11 @@ class HTMLImporter:
 
         self._seen_urls.clear()
 
+        # Check if HTML contains any bookmark data (must have <dl>)
+        if not soup.find("dl"):
+            result.errors.append("No bookmark data found in HTML")
+            return result
+
         # Process all <dl> elements
         for dl in soup.find_all("dl"):
             self._process_dl(dl, result, folder_path="")
@@ -155,6 +160,45 @@ class HTMLImporter:
                     else:
                         current_folder = folder_name
             elif child.name == "dt":
+                # Check for <a> link directly in this dt
+                a_tag = child.find("a", href=True)
+                if a_tag:
+                    href = a_tag["href"]
+                    if href in self._seen_urls:
+                        result.total_skipped += 1
+                    else:
+                        self._seen_urls.add(href)
+
+                        title = a_tag.get_text(strip=True) or a_tag.get("title", "")
+                        tags_str = a_tag.get("tags", "")
+                        tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else []
+                        add_date = a_tag.get("add_date", "")
+                        last_modified = a_tag.get("last_modified", "")
+                        icon = a_tag.get("icon", "")
+
+                        if icon and icon.startswith("data:"):
+                            icon = ""
+
+                        # Look for <dd> description
+                        description = ""
+                        dd = child.find("dd")
+                        if dd:
+                            description = dd.get_text(strip=True)
+
+                        bm = HTMLBookmark(
+                            url=href,
+                            title=title,
+                            description=description,
+                            tags=tags,
+                            folder=current_folder,
+                            add_date=add_date,
+                            last_modified=last_modified,
+                            icon=icon,
+                        )
+                        result.bookmarks.append(bm)
+                        result.total_imported += 1
+
+                # Process children (for nested structures like h3, dl)
                 self._process_element(child, result, current_folder)
             elif child.name == "dl":
                 self._process_dl(child, result, current_folder)
@@ -172,8 +216,26 @@ class HTMLImporter:
                     folder_path = folder_name
 
         if element.name == "dt":
-            # Check for <a> link in this dt
-            a_tag = element.find("a", href=True)
+            # First process any nested h3 elements to determine the current folder
+            current_folder = folder_path
+            for child in element.children:
+                if child.name == "h3":
+                    folder_name = child.get_text(strip=True)
+                    if folder_name:
+                        # A dt with its own h3 extends the folder path hierarchically
+                        if current_folder:
+                            current_folder = f"{current_folder}/{folder_name}"
+                        else:
+                            current_folder = folder_name
+            
+            # Check for <a> link that is a DIRECT child of this dt (not nested)
+            # Use recursive=False to only find direct children
+            a_tag = None
+            for child in element.children:
+                if child.name == "a" and child.get("href"):
+                    a_tag = child
+                    break
+            
             if a_tag:
                 href = a_tag["href"]
                 if href in self._seen_urls:
@@ -202,29 +264,35 @@ class HTMLImporter:
                         title=title,
                         description=description,
                         tags=tags,
-                        folder=folder_path,
+                        folder=current_folder,
                         add_date=add_date,
                         last_modified=last_modified,
                         icon=icon,
                     )
                     result.bookmarks.append(bm)
                     result.total_imported += 1
-
-            # Recursively process children of this dt
-            # (BeautifulSoup nests subsequent <dt> elements inside previous ones)
+            
+            # Process the dt's children with potentially updated folder
             for child in element.children:
                 if child.name is None:
                     continue
-                elif child.name in ("a", "dd", "hr", "p"):
-                    # Skip elements we've already handled
+                elif child.name == "a":
+                    # Already processed above
                     continue
+                elif child.name == "dd":
+                    # Skip <dd> - description, handled separately
+                    continue
+                elif child.name == "hr":
+                    continue
+                elif child.name == "p":
+                    for p_child in child.children:
+                        if p_child.name == "dt":
+                            # P-wrapped dt is a sibling at same level, don't inherit folder
+                            self._process_element(p_child, result, "")
                 elif child.name == "dt":
-                    # Nested dt - process it at the same folder level
-                    self._process_element(child, result, folder_path)
-                elif child.name == "h3":
-                    self._process_element(child, result, folder_path)
+                    self._process_element(child, result, current_folder)
                 elif child.name == "dl":
-                    self._process_dl(child, result, folder_path)
+                    self._process_dl(child, result, current_folder)
 
         elif element.name == "dl":
             self._process_dl(element, result, folder_path)
