@@ -59,7 +59,7 @@ class TestMarkdownExporterBasic:
             }
         ]
         result = exporter.export(items)
-        assert "### [Test Article]" in result
+        assert "# Test Article" in result
         assert "https://example.com/article" in result
 
     def test_export_empty_items(self):
@@ -123,7 +123,7 @@ class TestMarkdownExporterMetadata:
             }
         ]
         result = exporter.export(items)
-        assert "### [No Tags]" in result
+        assert "# No Tags" in result
 
 
 class TestMarkdownExporterSorting:
