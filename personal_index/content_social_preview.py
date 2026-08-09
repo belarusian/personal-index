@@ -41,14 +41,34 @@ class SocialPlatform:
 
 
 # Platform instances
-TWITTER = SocialPlatform("twitter", max_title_length=70, max_description_length=200, image_width=1200, image_height=628)
-FACEBOOK = SocialPlatform("facebook", max_title_length=60, max_description_length=110, image_width=1200, image_height=630)
-LINKEDIN = SocialPlatform("linkedin", max_title_length=200, max_description_length=300, image_width=1200, image_height=627)
-SLACK = SocialPlatform("slack", max_title_length=80, max_description_length=250, image_width=800, image_height=400)
-DISCORD = SocialPlatform("discord", max_title_length=80, max_description_length=250, image_width=800, image_height=400)
-TELEGRAM = SocialPlatform("telegram", max_title_length=64, max_description_length=256, image_width=1280, image_height=640)
-WHATSAPP = SocialPlatform("whatsapp", max_title_length=100, max_description_length=200, image_width=1200, image_height=630)
-GENERIC = SocialPlatform("generic", max_title_length=70, max_description_length=200, image_width=1200, image_height=630)
+_TWITTER = SocialPlatform("twitter", max_title_length=70, max_description_length=200, image_width=1200, image_height=628)
+_FACEBOOK = SocialPlatform("facebook", max_title_length=60, max_description_length=110, image_width=1200, image_height=630)
+_LINKEDIN = SocialPlatform("linkedin", max_title_length=200, max_description_length=300, image_width=1200, image_height=627)
+_SLACK = SocialPlatform("slack", max_title_length=80, max_description_length=250, image_width=800, image_height=400)
+_DISCORD = SocialPlatform("discord", max_title_length=80, max_description_length=250, image_width=800, image_height=400)
+_TELEGRAM = SocialPlatform("telegram", max_title_length=64, max_description_length=256, image_width=1280, image_height=640)
+_WHATSAPP = SocialPlatform("whatsapp", max_title_length=100, max_description_length=200, image_width=1200, image_height=630)
+_GENERIC = SocialPlatform("generic", max_title_length=70, max_description_length=200, image_width=1200, image_height=630)
+
+# Add as class attributes
+SocialPlatform.TWITTER = _TWITTER
+SocialPlatform.FACEBOOK = _FACEBOOK
+SocialPlatform.LINKEDIN = _LINKEDIN
+SocialPlatform.SLACK = _SLACK
+SocialPlatform.DISCORD = _DISCORD
+SocialPlatform.TELEGRAM = _TELEGRAM
+SocialPlatform.WHATSAPP = _WHATSAPP
+SocialPlatform.GENERIC = _GENERIC
+
+# Keep module-level aliases for backward compatibility
+TWITTER = SocialPlatform.TWITTER
+FACEBOOK = SocialPlatform.FACEBOOK
+LINKEDIN = SocialPlatform.LINKEDIN
+SLACK = SocialPlatform.SLACK
+DISCORD = SocialPlatform.DISCORD
+TELEGRAM = SocialPlatform.TELEGRAM
+WHATSAPP = SocialPlatform.WHATSAPP
+GENERIC = SocialPlatform.GENERIC
 
 
 class PreviewCardType(str, Enum):
@@ -62,12 +82,6 @@ class PreviewCardType(str, Enum):
 
 class PreviewCardSize:
     """Size configuration for preview cards."""
-
-    TWITTER_SMALL = "twitter_small"
-    TWITTER_LARGE = "twitter_large"
-    FACEBOOK = "facebook"
-    LINKEDIN = "linkedin"
-    SQUARE = "square"
 
     _PRESETS = {
         "twitter_small": (280, 150),
@@ -94,6 +108,14 @@ class PreviewCardSize:
 
     def __hash__(self) -> int:
         return hash((self.width, self.height))
+
+
+# Class-level preset instances
+PreviewCardSize.TWITTER_SMALL = PreviewCardSize(280, 150)
+PreviewCardSize.TWITTER_LARGE = PreviewCardSize(1200, 628)
+PreviewCardSize.FACEBOOK = PreviewCardSize(1200, 630)
+PreviewCardSize.LINKEDIN = PreviewCardSize(1200, 627)
+PreviewCardSize.SQUARE = PreviewCardSize(1200, 1200)
 
 
 class PreviewCardStyle(str, Enum):
@@ -504,6 +526,9 @@ class PreviewCardGenerator:
 
         # Favicon
         if cfg.include_favicon and favicon_url:
+            svg_parts.append(
+                f'<image x="{padding + 4}" y="{text_y_start + 4}" width="24" height="24" href="{favicon_url}"/>'
+            )
             svg_parts.append(
                 f'<circle cx="{padding + 16}" cy="{text_y_start + 16}" r="12" fill="#dddddd"/>'
             )

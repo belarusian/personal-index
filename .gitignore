@@ -12,5 +12,3 @@ build/
 .coverage
 htmlcov/
 *.db
-trajectories/
-trajectories/

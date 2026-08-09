@@ -104,11 +104,6 @@ class HTMLImporter:
 
         self._seen_urls.clear()
 
-        # Check if HTML contains any bookmark data (must have <dl>)
-        if not soup.find("dl"):
-            result.errors.append("No bookmark data found in HTML")
-            return result
-
         # Process all <dl> elements
         for dl in soup.find_all("dl"):
             self._process_dl(dl, result, folder_path="")
@@ -216,26 +211,8 @@ class HTMLImporter:
                     folder_path = folder_name
 
         if element.name == "dt":
-            # First process any nested h3 elements to determine the current folder
-            current_folder = folder_path
-            for child in element.children:
-                if child.name == "h3":
-                    folder_name = child.get_text(strip=True)
-                    if folder_name:
-                        # A dt with its own h3 extends the folder path hierarchically
-                        if current_folder:
-                            current_folder = f"{current_folder}/{folder_name}"
-                        else:
-                            current_folder = folder_name
-            
-            # Check for <a> link that is a DIRECT child of this dt (not nested)
-            # Use recursive=False to only find direct children
-            a_tag = None
-            for child in element.children:
-                if child.name == "a" and child.get("href"):
-                    a_tag = child
-                    break
-            
+            # Check for <a> link directly in this dt
+            a_tag = element.find("a", href=True)
             if a_tag:
                 href = a_tag["href"]
                 if href in self._seen_urls:
@@ -264,7 +241,7 @@ class HTMLImporter:
                         title=title,
                         description=description,
                         tags=tags,
-                        folder=current_folder,
+                        folder=folder_path,
                         add_date=add_date,
                         last_modified=last_modified,
                         icon=icon,
@@ -272,7 +249,18 @@ class HTMLImporter:
                     result.bookmarks.append(bm)
                     result.total_imported += 1
             
-            # Process the dt's children with potentially updated folder
+            # Process any nested h3 elements to track folder changes
+            current_folder = folder_path
+            for child in element.children:
+                if child.name == "h3":
+                    folder_name = child.get_text(strip=True)
+                    if folder_name:
+                        if current_folder:
+                            current_folder = f"{current_folder}/{folder_name}"
+                        else:
+                            current_folder = folder_name
+            
+            # Now process the dt's children with potentially updated folder
             for child in element.children:
                 if child.name is None:
                     continue
@@ -287,8 +275,7 @@ class HTMLImporter:
                 elif child.name == "p":
                     for p_child in child.children:
                         if p_child.name == "dt":
-                            # P-wrapped dt is a sibling at same level, don't inherit folder
-                            self._process_element(p_child, result, "")
+                            self._process_element(p_child, result, current_folder)
                 elif child.name == "dt":
                     self._process_element(child, result, current_folder)
                 elif child.name == "dl":
