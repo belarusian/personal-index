@@ -9,6 +9,7 @@ from personal_index.content_dedup import (
     DedupResult,
     DuplicateGroup,
     SimilarityMethod,
+    AddItemResult,
 )
 
 
@@ -103,11 +104,15 @@ class TestDedupResult:
 class TestContentDeduplicatorHashMethod:
     """Test hash-based deduplication."""
 
+    def _make_item(self, url: str, title: str, content: str) -> dict:
+        return {"url": url, "title": title, "content": content}
+
     def test_exact_duplicate_detection(self):
         dedup = ContentDeduplicator()
+        content = "This is the exact same content that appears on multiple different pages across the web"
         items = [
-            {"url": "https://a.com", "title": "Same Title", "content": "Same content here"},
-            {"url": "https://b.com", "title": "Same Title", "content": "Same content here"},
+            self._make_item("https://a.com", "Same Title", content),
+            self._make_item("https://b.com", "Same Title", content),
         ]
         result = dedup.find_duplicates(items)
         assert len(result.groups) == 1
@@ -116,15 +121,15 @@ class TestContentDeduplicatorHashMethod:
     def test_no_duplicates(self):
         dedup = ContentDeduplicator()
         items = [
-            {"url": "https://a.com", "title": "Title A", "content": "Content A is unique"},
-            {"url": "https://b.com", "title": "Title B", "content": "Content B is different"},
+            self._make_item("https://a.com", "Title A", "Content A is completely unique and different from everything else"),
+            self._make_item("https://b.com", "Title B", "Content B is entirely different and has no relation to content A"),
         ]
         result = dedup.find_duplicates(items)
         assert result.duplicate_groups == 0
 
     def test_single_item(self):
         dedup = ContentDeduplicator()
-        items = [{"url": "https://a.com", "title": "Only", "content": "Just one item"}]
+        items = [self._make_item("https://a.com", "Only", "Just one item with enough content length here")]
         result = dedup.find_duplicates(items)
         assert result.duplicate_groups == 0
         assert result.unique_items == 1
@@ -143,8 +148,8 @@ class TestContentDeduplicatorJaccardMethod:
         config = DedupConfig(method="jaccard", similarity_threshold=0.7)
         dedup = ContentDeduplicator(config=config)
         items = [
-            {"url": "https://a.com", "title": "Article", "content": "Machine learning is great for data analysis"},
-            {"url": "https://b.com", "title": "Article Copy", "content": "Machine learning is very great for data analysis"},
+            {"url": "https://a.com", "title": "Article", "content": "Machine learning is great for data analysis and prediction tasks"},
+            {"url": "https://b.com", "title": "Article Copy", "content": "Machine learning is very great for data analysis and prediction tasks"},
         ]
         result = dedup.find_duplicates(items)
         assert len(result.groups) >= 0  # Should detect similarity
@@ -153,8 +158,8 @@ class TestContentDeduplicatorJaccardMethod:
         config = DedupConfig(method="jaccard", similarity_threshold=0.7)
         dedup = ContentDeduplicator(config=config)
         items = [
-            {"url": "https://a.com", "title": "A", "content": "Cats are wonderful pets"},
-            {"url": "https://b.com", "title": "B", "content": "Quantum physics is complex"},
+            {"url": "https://a.com", "title": "A", "content": "Cats are wonderful pets that enjoy playing with yarn and sleeping all day long"},
+            {"url": "https://b.com", "title": "B", "content": "Quantum physics is complex and involves subatomic particles and wave functions"},
         ]
         result = dedup.find_duplicates(items)
         assert result.duplicate_groups == 0
@@ -167,8 +172,8 @@ class TestContentDeduplicatorTfidfMethod:
         config = DedupConfig(method="tfidf", similarity_threshold=0.5)
         dedup = ContentDeduplicator(config=config)
         items = [
-            {"url": "https://a.com", "title": "A", "content": "Python programming language is popular"},
-            {"url": "https://b.com", "title": "B", "content": "Python programming is very popular language"},
+            {"url": "https://a.com", "title": "A", "content": "Python programming language is popular for web development and data science"},
+            {"url": "https://b.com", "title": "B", "content": "Python programming is very popular language for web development and data science"},
         ]
         result = dedup.find_duplicates(items)
         assert len(result.groups) >= 0
@@ -177,8 +182,8 @@ class TestContentDeduplicatorTfidfMethod:
         config = DedupConfig(method="tfidf", similarity_threshold=0.5)
         dedup = ContentDeduplicator(config=config)
         items = [
-            {"url": "https://a.com", "title": "A", "content": "Cooking recipes for dinner"},
-            {"url": "https://b.com", "title": "B", "content": "Stock market analysis report"},
+            {"url": "https://a.com", "title": "A", "content": "Cooking recipes for dinner include pasta salad and grilled vegetables"},
+            {"url": "https://b.com", "title": "B", "content": "Stock market analysis report shows declining trends in technology sector"},
         ]
         result = dedup.find_duplicates(items)
         assert result.duplicate_groups == 0
@@ -189,12 +194,13 @@ class TestContentDeduplicatorIntegration:
 
     def test_mixed_duplicates(self):
         dedup = ContentDeduplicator()
+        dup_content = "This is duplicate content that appears on multiple pages and should be detected"
         items = [
-            {"url": "https://a.com", "title": "A", "content": "Unique content alpha"},
-            {"url": "https://b.com", "title": "B", "content": "Duplicate content beta"},
-            {"url": "https://c.com", "title": "C", "content": "Duplicate content beta"},
-            {"url": "https://d.com", "title": "D", "content": "Another unique piece"},
-            {"url": "https://e.com", "title": "E", "content": "Duplicate content beta"},
+            {"url": "https://a.com", "title": "A", "content": "Unique content alpha that is completely different from all other items"},
+            {"url": "https://b.com", "title": "B", "content": dup_content},
+            {"url": "https://c.com", "title": "C", "content": dup_content},
+            {"url": "https://d.com", "title": "D", "content": "Another unique piece of content that stands on its own"},
+            {"url": "https://e.com", "title": "E", "content": dup_content},
         ]
         result = dedup.find_duplicates(items)
         assert result.total_items == 5
@@ -202,10 +208,11 @@ class TestContentDeduplicatorIntegration:
 
     def test_get_unique_items(self):
         dedup = ContentDeduplicator()
+        dup_content = "This is duplicate content that appears on multiple pages and should be detected"
         items = [
-            {"url": "https://a.com", "title": "A", "content": "Unique one"},
-            {"url": "https://b.com", "title": "B", "content": "Duplicate here"},
-            {"url": "https://c.com", "title": "C", "content": "Duplicate here"},
+            {"url": "https://a.com", "title": "A", "content": "Unique one that is different"},
+            {"url": "https://b.com", "title": "B", "content": dup_content},
+            {"url": "https://c.com", "title": "C", "content": dup_content},
         ]
         result = dedup.find_duplicates(items)
         unique = dedup.get_unique_items(items)
@@ -213,15 +220,17 @@ class TestContentDeduplicatorIntegration:
 
     def test_incremental_dedup(self):
         dedup = ContentDeduplicator()
-        batch1 = [{"url": "https://a.com", "title": "A", "content": "First batch content"}]
+        content = "First batch content that is long enough to pass the minimum content length check"
+        batch1 = [{"url": "https://a.com", "title": "A", "content": content}]
         dedup.add_items(batch1)
-        batch2 = [{"url": "https://b.com", "title": "B", "content": "First batch content"}]
+        batch2 = [{"url": "https://b.com", "title": "B", "content": content}]
         result = dedup.add_items(batch2)
         assert result.is_duplicate
 
     def test_clear_state(self):
         dedup = ContentDeduplicator()
-        items = [{"url": "https://a.com", "title": "A", "content": "Some content"}]
+        content = "Some content that is long enough to be processed by the deduplication engine"
+        items = [{"url": "https://a.com", "title": "A", "content": content}]
         dedup.add_items(items)
         dedup.clear()
         result = dedup.find_duplicates(items)
@@ -236,3 +245,10 @@ class TestContentDeduplicatorIntegration:
         ]
         result = dedup.find_duplicates(items)
         assert result.duplicate_groups == 0
+
+    def test_add_item_result_type(self):
+        dedup = ContentDeduplicator()
+        content = "This is a test content string that is long enough to pass the minimum threshold"
+        result = dedup.add_items([{"url": "https://a.com", "title": "A", "content": content}])
+        assert isinstance(result, AddItemResult)
+        assert not result.is_duplicate
