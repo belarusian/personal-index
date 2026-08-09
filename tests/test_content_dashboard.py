@@ -253,3 +253,80 @@ class TestContentDashboard:
         assert len(widgets) == 2
         assert widgets[0].position == 0
         assert widgets[1].position == 1
+
+
+class TestDashboardWidgetsAdvanced:
+    def test_dashboard_with_analytics_integration(self):
+        """Test dashboard integrates with analytics data."""
+        from personal_index.content_analytics import ContentAnalytics
+        from personal_index.content_dashboard import (
+            ContentDashboard, DashboardWidget, DashboardWidgetType,
+        )
+
+        analytics = ContentAnalytics()
+        analytics.add_item({
+            "url": "https://a.com", "title": "A",
+            "view_count": 100, "bookmark_count": 10,
+            "share_count": 5, "category": "Tech",
+        })
+        report = analytics.generate_report()
+
+        dashboard = ContentDashboard()
+        dashboard.add_widget(DashboardWidget(
+            widget_id="analytics",
+            widget_type=DashboardWidgetType.SUMMARY,
+            title="Analytics Summary",
+            data=report.to_dict(),
+        ))
+
+        rendered = dashboard.render()
+        assert rendered["widgets"][0]["data"]["total_items"] == 1
+
+    def test_dashboard_with_metrics_integration(self):
+        """Test dashboard integrates with metrics data."""
+        from personal_index.content_metrics import ContentMetricsTracker
+        from personal_index.content_dashboard import (
+            ContentDashboard, DashboardWidget, DashboardWidgetType,
+        )
+
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=100))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=200))
+        summary = tracker.summary()
+
+        dashboard = ContentDashboard()
+        dashboard.add_widget(DashboardWidget(
+            widget_id="metrics",
+            widget_type=DashboardWidgetType.STAT,
+            title="Content Metrics",
+            data=summary.to_dict(),
+        ))
+
+        stats = dashboard.get_stats()
+        assert stats.total_items == 2
+
+    def test_dashboard_with_report_integration(self):
+        """Test dashboard integrates with report data."""
+        from personal_index.content_report import ContentReportGenerator
+        from personal_index.content_dashboard import (
+            ContentDashboard, DashboardWidget, DashboardWidgetType,
+        )
+
+        gen = ContentReportGenerator()
+        gen.add_items([
+            {"url": "https://a.com", "title": "A", "word_count": 100,
+             "category": "Tech", "engagement_score": 10.0},
+        ])
+        report = gen.generate_summary_report()
+
+        dashboard = ContentDashboard()
+        dashboard.add_widget(DashboardWidget(
+            widget_id="report",
+            widget_type=DashboardWidgetType.TABLE,
+            title="Content Report",
+            data={"sections_count": len(report.sections)},
+        ))
+
+        widgets = dashboard.get_widgets()
+        assert len(widgets) == 1
+        assert widgets[0].data["sections_count"] >= 1
