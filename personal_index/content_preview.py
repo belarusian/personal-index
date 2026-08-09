@@ -56,7 +56,7 @@ class Preview:
             return ""
         if len(self.description) <= max_length:
             return self.description
-        return self.description[:max_length] + "..."
+        return self.description[: max_length - 3] + "..."
 
     def get_favicon_url(self) -> str:
         """Generate a favicon URL from the page URL."""
