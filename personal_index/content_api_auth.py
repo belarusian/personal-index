@@ -53,22 +53,6 @@ class TokenManager:
         self._user_tokens: dict[str, list[str]] = {}
         self._max_tokens = max_tokens_per_user
         self._token_expiry = token_expiry
-
-    def generate_token(self, user_id: str, permissions: list[str]) -> Optional[str]:
-        """Generate a new authentication token.
-
-        Args:
-            user_id: The user identifier.
-            permissions: List of permission strings.
-
-        Returns:
-            Token string or None if max tokens reached.
-        """
-        current_count = len(self._user_tokens.get(user_id, []))
-        if current_count >= self._max_tokens:
-            return None
-
-        payload = TokenPayload(user_id=user_id, permissions=permissions, expires_in=self._token_expiry)
         payload_dict = payload.to_dict()
         encoded = base64.urlsafe_b64encode(
             json.dumps(payload_dict).encode()
