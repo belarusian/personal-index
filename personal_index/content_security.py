@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -102,7 +103,7 @@ class XssSanitizer:
             html: Raw HTML string.
 
         Returns:
-            Plain text with all tags removed.
+            Plain text with all tags removed, whitespace collapsed.
         """
         result = []
         in_tag = False
@@ -114,7 +115,9 @@ class XssSanitizer:
                 result.append(" ")
             elif not in_tag:
                 result.append(char)
-        return "".join(result).strip()
+        text = "".join(result)
+        # Collapse multiple spaces into one
+        return re.sub(r"\s+", " ", text).strip()
 
     @classmethod
     def remove_dangerous_tags(cls, html: str) -> str:
