@@ -92,7 +92,7 @@ class TestSnapshot:
         assert d["url"] == "https://example.com/page"
         assert d["title"] == "Test"
         assert d["format"] == "text"
-        assert d["content_length"] == 9
+        assert d["content_length"] == 11
 
     def test_snapshot_from_dict(self):
         data = {
@@ -146,7 +146,7 @@ class TestSnapshot:
         snap = Snapshot(url="https://example.com/page")
         snap.update_content("<p>new content</p>")
         assert snap.content == "<p>new content</p>"
-        assert snap.content_length == 17
+        assert snap.content_length == 18
 
     def test_snapshot_add_metadata(self):
         snap = Snapshot(url="https://example.com/page")
@@ -322,8 +322,8 @@ class TestSnapshotManager:
         s2 = mgr.create_snapshot("https://example.com/page", content="<p>v2</p>")
         diff = mgr.compare_snapshots(s1, s2)
         assert diff is not None
-        assert diff["old_content_length"] == 7
-        assert diff["new_content_length"] == 7
+        assert diff["old_content_length"] == 9
+        assert diff["new_content_length"] == 9
         assert diff["content_changed"] is True
 
     def test_compare_snapshots_same(self):
