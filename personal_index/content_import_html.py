@@ -108,16 +108,6 @@ class HTMLImporter:
         for dl in soup.find_all("dl"):
             self._process_dl(dl, result, folder_path="")
 
-        # Also handle top-level links not in dl
-        for a in soup.find_all("a", href=True):
-            href = a["href"]
-            if href not in self._seen_urls:
-                self._seen_urls.add(href)
-                title = a.get_text(strip=True) or a.get("title", "")
-                bm = HTMLBookmark(url=href, title=title)
-                result.bookmarks.append(bm)
-                result.total_imported += 1
-
         # Add to manager if provided
         if self._manager is not None:
             from personal_index.bookmarks import Bookmark
@@ -136,54 +126,105 @@ class HTMLImporter:
 
     def _process_dl(
         self,
-        dl: "BeautifulSoup",  # noqa: F821
+        dl,
         result: HTMLImportResult,
         folder_path: str,
     ) -> None:
-        """Process a <dl> element and its children."""
+        """Process a <dl> element and its children recursively."""
         current_folder = folder_path
-        pending_link: Optional[HTMLBookmark] = None
 
-        for child in dl.children:
-            if child.name == "dt":
-                # Check for <h3> folder header
-                h3 = child.find("h3", recursive=False)
-                if h3:
-                    folder_name = h3.get_text(strip=True)
+        # Get direct children of dl
+        children = list(dl.children)
+
+        i = 0
+        while i < len(children):
+            child = children[i]
+
+            # Skip NavigableString (whitespace) and <p> separators
+            if child.name is None or child.name == "p":
+                i += 1
+                continue
+
+            if child.name == "h3" or (child.name == "dt" and child.find("h3")):
+                # Folder header
+                if child.name == "h3":
+                    folder_name = child.get_text(strip=True)
+                else:
+                    h3 = child.find("h3")
+                    folder_name = h3.get_text(strip=True) if h3 else ""
+
+                if folder_name:
                     if folder_path:
                         current_folder = f"{folder_path}/{folder_name}"
                     else:
                         current_folder = folder_name
-                    pending_link = None
-                    continue
 
-                # Check for <a> link
-                a_tag = child.find("a", href=True, recursive=False)
+                # Look for nested <dl> after this header
+                next_child = children[i + 1] if i + 1 < len(children) else None
+                if next_child and next_child.name == "dl":
+                    self._process_dl(next_child, result, current_folder)
+
+                i += 1
+                continue
+
+            if child.name == "dl":
+                # Nested dl at same level (shouldn't normally happen but handle it)
+                self._process_dl(child, result, current_folder)
+                i += 1
+                continue
+
+            if child.name == "dt":
+                # Check for <a> link inside <dt>
+                a_tag = child.find("a", href=True)
                 if a_tag:
                     href = a_tag["href"]
                     if href in self._seen_urls:
                         result.total_skipped += 1
-                        pending_link = None
+                        i += 1
                         continue
                     self._seen_urls.add(href)
 
                     title = a_tag.get_text(strip=True) or a_tag.get("title", "")
-                    description = ""
-                    tags = []
+                    tags_str = a_tag.get("tags", "")
+                    tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else []
                     add_date = a_tag.get("add_date", "")
                     last_modified = a_tag.get("last_modified", "")
                     icon = a_tag.get("icon", "")
-
-                    # Parse tags attribute
-                    tags_str = a_tag.get("tags", "")
-                    if tags_str:
-                        tags = [t.strip() for t in tags_str.split(",") if t.strip()]
 
                     # Filter out data: icons
                     if icon and icon.startswith("data:"):
                         icon = ""
 
-                    pending_link = HTMLBookmark(
+                    # Look for <dd> description - it may be inside <dt> or as next sibling
+                    description = ""
+
+                    # Check for dd inside dt (BeautifulSoup nests dd inside dt)
+                    dd_inside = child.find("dd")
+                    if dd_inside:
+                        description = dd_inside.get_text(strip=True)
+
+                    # Also check next siblings for dd
+                    j = i + 1
+                    while j < len(children):
+                        next_c = children[j]
+                        if next_c.name == "dd":
+                            desc_text = next_c.get_text(strip=True)
+                            if desc_text:
+                                if description:
+                                    description += " " + desc_text
+                                else:
+                                    description = desc_text
+                            j += 1
+                        elif next_c.name == "dt":
+                            break
+                        elif next_c.name == "dl":
+                            break
+                        elif next_c.name == "hr":
+                            break
+                        else:
+                            j += 1
+
+                    bm = HTMLBookmark(
                         url=href,
                         title=title,
                         description=description,
@@ -193,32 +234,19 @@ class HTMLImporter:
                         last_modified=last_modified,
                         icon=icon,
                     )
-                    continue
+                    result.bookmarks.append(bm)
+                    result.total_imported += 1
 
-                # <hr> separator - just skip
-                pending_link = None
+                # Check for nested dl inside dt (folder with links)
+                nested_dl = child.find("dl")
+                if nested_dl:
+                    self._process_dl(nested_dl, result, current_folder)
 
-            elif child.name == "dd":
-                # Description follows a <dt> link
-                if pending_link:
-                    desc_text = child.get_text(strip=True)
-                    if desc_text:
-                        if pending_link.description:
-                            pending_link.description += " " + desc_text
-                        else:
-                            pending_link.description = desc_text
+                i += 1
+                continue
 
-            elif child.name == "dl":
-                # Nested list - process recursively
-                self._process_dl(child, result, current_folder)
-                pending_link = None
+            if child.name == "hr":
+                i += 1
+                continue
 
-            elif child.name == "p":
-                # <p> is just a separator in Netscape format
-                pass
-
-            # Finalize pending link
-            if pending_link:
-                result.bookmarks.append(pending_link)
-                result.total_imported += 1
-                pending_link = None
+            i += 1
