@@ -55,9 +55,9 @@ class TestPriorityLevel:
         assert PriorityLevel.LOW in levels
 
     def test_level_ordering(self):
-        assert PriorityLevel.CRITICAL.value > PriorityLevel.HIGH.value
-        assert PriorityLevel.HIGH.value > PriorityLevel.MEDIUM.value
-        assert PriorityLevel.MEDIUM.value > PriorityLevel.LOW.value
+        assert PriorityLevel.CRITICAL > PriorityLevel.HIGH
+        assert PriorityLevel.HIGH > PriorityLevel.MEDIUM
+        assert PriorityLevel.MEDIUM > PriorityLevel.LOW
 
     def test_from_score(self):
         assert PriorityLevel.from_score(0.9) == PriorityLevel.CRITICAL
@@ -71,14 +71,14 @@ class TestPriorityScore:
 
     def test_create_score(self):
         score = PriorityScore(
-            total=0.85,
+            total=0.75,
             relevance=0.9,
             freshness=0.8,
             authority=0.85,
             engagement=0.8,
             topical=0.9,
         )
-        assert score.total == 0.85
+        assert score.total == 0.75
         assert score.level == PriorityLevel.HIGH
 
     def test_score_level_mapping(self):
