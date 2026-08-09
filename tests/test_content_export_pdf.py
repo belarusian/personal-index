@@ -290,3 +290,114 @@ class TestPDFExporter:
         )]
         result = exporter.export(items)
         assert "Saved:" not in result.output
+
+
+class TestPDFExporterAdvanced:
+    def test_export_legal_layout(self):
+        config = PDFExportConfig(page_layout=PDFPageLayout.LEGAL)
+        exporter = PDFExporter(config=config)
+        items = [PDFContentItem(url="https://a.com", title="A")]
+        result = exporter.export(items)
+        assert "LEGAL" in result.output
+
+    def test_export_letter_layout(self):
+        config = PDFExportConfig(page_layout=PDFPageLayout.LETTER)
+        exporter = PDFExporter(config=config)
+        items = [PDFContentItem(url="https://a.com", title="A")]
+        result = exporter.export(items)
+        assert "LETTER" in result.output
+
+    def test_export_sorted_by_category(self):
+        config = PDFExportConfig(sort_by="category", sort_reverse=False)
+        exporter = PDFExporter(config=config)
+        items = [
+            PDFContentItem(url="https://c.com", title="C", category="Zebra"),
+            PDFContentItem(url="https://a.com", title="A", category="Alpha"),
+            PDFContentItem(url="https://b.com", title="B", category="Beta"),
+        ]
+        result = exporter.export(items)
+        alpha_pos = result.output.index("## A")
+        beta_pos = result.output.index("## B")
+        zebra_pos = result.output.index("## C")
+        assert alpha_pos < beta_pos < zebra_pos
+
+    def test_export_sorted_by_engagement(self):
+        config = PDFExportConfig(sort_by="engagement_score", sort_reverse=True)
+        exporter = PDFExporter(config=config)
+        items = [
+            PDFContentItem(url="https://a.com", title="A", engagement_score=5.0),
+            PDFContentItem(url="https://b.com", title="B", engagement_score=50.0),
+            PDFContentItem(url="https://c.com", title="C", engagement_score=25.0),
+        ]
+        result = exporter.export(items)
+        b_pos = result.output.index("## B")
+        c_pos = result.output.index("## C")
+        a_pos = result.output.index("## A")
+        assert b_pos < c_pos < a_pos
+
+    def test_export_from_dicts_with_all_fields(self):
+        exporter = PDFExporter()
+        items = [{
+            "url": "https://a.com",
+            "title": "Full Item",
+            "content": "Some content here",
+            "word_count": 4,
+            "category": "Tech",
+            "tags": ["python", "web"],
+            "created_at": "2024-01-01T00:00:00Z",
+            "engagement_score": 15.0,
+        }]
+        result = exporter.export_from_dicts(items)
+        assert result.success is True
+        assert "Full Item" in result.output
+        assert "Category: Tech" in result.output
+        assert "Tags: python, web" in result.output
+        assert "Saved: 2024-01-01T00:00:00Z" in result.output
+        assert "Engagement score: 15.0" in result.output
+
+    def test_export_empty_dicts(self):
+        exporter = PDFExporter()
+        result = exporter.export_from_dicts([])
+        assert result.success is True
+        assert result.items_exported == 0
+
+    def test_export_result_to_dict(self):
+        exporter = PDFExporter()
+        items = [PDFContentItem(url="https://a.com", title="A")]
+        result = exporter.export(items)
+        d = result.to_dict()
+        assert d["success"] is True
+        assert d["items_exported"] == 1
+        assert "exported_at" in d
+        assert d["errors"] == []
+
+    def test_export_with_custom_title(self):
+        config = PDFExportConfig(title="My Custom Report")
+        exporter = PDFExporter(config=config)
+        items = [PDFContentItem(url="https://a.com", title="A")]
+        result = exporter.export(items)
+        assert "My Custom Report" in result.output
+
+    def test_export_with_custom_author(self):
+        config = PDFExportConfig(author="Jane Doe")
+        exporter = PDFExporter(config=config)
+        items = [PDFContentItem(url="https://a.com", title="A")]
+        result = exporter.export(items)
+        assert "Jane Doe" in result.output
+
+    def test_export_pagination_boundaries(self):
+        """Test exact page boundaries."""
+        config = PDFExportConfig(items_per_page=5)
+        exporter = PDFExporter(config=config)
+        # Exactly 10 items = 2 pages
+        items = [
+            PDFContentItem(url=f"https://{i}.com", title=f"P{i}")
+            for i in range(10)
+        ]
+        result = exporter.export(items)
+        assert result.total_pages == 2
+
+        # 11 items = 3 pages
+        items.append(PDFContentItem(url="https://11.com", title="P11"))
+        result = exporter.export(items)
+        assert result.total_pages == 3
