@@ -1,0 +1,17 @@
+{
+  "outcome": "exit:task_complete",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an autonomous PR review and merge agent.\n\nCORE PRINCIPLE: Read each PR, verify the code works, merge if good.\n\nRULES:\n- Output ONE bash command per step in a code block.\n- The system executes it and shows you the result.\n- If the command fails, you will see the error \u2014 fix it and try again.\n- Work in the current directory only. NEVER use cd to change directories.\n\nREVIEW APPROACH:\n1. List open PRs: gh pr list --state open\n2. For each PR:\n   a. Read details: gh pr view <NUM> --json title,body,commits,files\n   b. Checkout the PR branch: gh pr checkout <NUM>\n   c. Run tests: python -m pytest tests/ -v --tb=short -q 2>&1 | tail -20\n   d. If tests pass: gh pr merge <NUM> --squash --delete-branch\n   e. If tests fail: gh pr comment <NUM> --body \"Tests failed: ...\"\n   f. Return to main: git checkout main\n3. Track which PRs have been processed\n4. If a PR has no tests or trivial changes, approve and merge directly\n\nEXAMPLE COMMANDS:\n- gh pr list --state open: List open PRs\n- gh pr view <NUM> --json title,body,commits,files: Read PR details\n- gh pr checkout <NUM>: Checkout PR branch\n- python -m pytest tests/ -v --tb=short -q: Run tests\n- gh pr merge <NUM> --squash --delete-branch: Merge PR with squash\n- gh pr comment <NUM> --body \"...\": Comment on PR\n- git checkout main: Return to main\n\nIMPORTANT: Be thorough but efficient. Run the full test suite for each PR.\nOnly merge if tests pass. Comment with specific failures if they don't.\n\nWhen done, output: DONE\n"
+    },
+    {
+      "role": "user",
+      "content": "Review all open PRs (#2-#14). For each PR: checkout the branch, find the test files for the changed modules, run only those tests. If they pass, merge. If they fail, comment with failures. Be efficient \u2014 run targeted tests, not the full suite."
+    },
+    {
+      "role": "assistant",
+      "content": "<code>\ngh pr list --state open\n</code>"
+    }
+  ]
+}
