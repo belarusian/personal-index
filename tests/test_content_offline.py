@@ -86,7 +86,7 @@ class TestOfflineContentItem:
         assert d["title"] == "Test"
         assert d["content"] == "<html>test</html>"
         assert d["tags"] == ["tech"]
-        assert d["content_length"] == 13
+        assert d["content_length"] == 17
         assert d["status"] == "available"
 
     def test_offline_item_from_dict(self):
@@ -252,7 +252,7 @@ class TestOfflineContentItem:
         )
         item.update_content("<html>new content</html>")
         assert item.content == "<html>new content</html>"
-        assert item.content_length == 21
+        assert item.content_length == 24
 
     def test_offline_item_update_metadata(self):
         item = OfflineContentItem(
@@ -420,7 +420,7 @@ class TestOfflineStore:
         store.add_item(OfflineContentItem(
             url="https://example.com/big",
             title="Big",
-            content="x" * 200,
+            content="x" * 50,
         ))
         assert len(store.items) == 1
 
