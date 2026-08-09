@@ -104,7 +104,7 @@ class HTMLImporter:
 
         self._seen_urls.clear()
 
-        # Find all <dl> elements and process them
+        # Process all <dl> elements
         for dl in soup.find_all("dl"):
             self._process_dl(dl, result, folder_path="")
 
@@ -130,118 +130,61 @@ class HTMLImporter:
         result: HTMLImportResult,
         folder_path: str,
     ) -> None:
-        """Process a <dl> element and its children recursively."""
+        """Process a <dl> element and its children recursively.
+
+        Netscape HTML bookmarks use <dl>/<dt>/<dd>/<h3> structure.
+        BeautifulSoup nests <dt> elements inside each other and wraps
+        them in <p> tags, so we need to handle this carefully.
+        """
         current_folder = folder_path
 
-        # Get direct children of dl
+        # Get all direct children of the dl element
         children = list(dl.children)
 
         i = 0
         while i < len(children):
             child = children[i]
 
-            # Skip NavigableString (whitespace) and <p> separators
+            # Skip whitespace text nodes and <p> separators
             if child.name is None or child.name == "p":
+                # But check if <p> contains meaningful children
+                if child.name == "p":
+                    p_children = list(child.children)
+                    # Process children of <p> as if they were direct children
+                    for p_child in p_children:
+                        if p_child.name == "dt":
+                            self._process_dt(p_child, result, current_folder)
+                        elif p_child.name == "dl":
+                            self._process_dl(p_child, result, current_folder)
+                        elif p_child.name == "h3":
+                            folder_name = p_child.get_text(strip=True)
+                            if folder_name:
+                                if folder_path:
+                                    current_folder = f"{folder_path}/{folder_name}"
+                                else:
+                                    current_folder = folder_name
                 i += 1
                 continue
 
-            if child.name == "h3" or (child.name == "dt" and child.find("h3")):
+            if child.name == "h3":
                 # Folder header
-                if child.name == "h3":
-                    folder_name = child.get_text(strip=True)
-                else:
-                    h3 = child.find("h3")
-                    folder_name = h3.get_text(strip=True) if h3 else ""
-
+                folder_name = child.get_text(strip=True)
                 if folder_name:
                     if folder_path:
                         current_folder = f"{folder_path}/{folder_name}"
                     else:
                         current_folder = folder_name
-
-                # Look for nested <dl> after this header
-                next_child = children[i + 1] if i + 1 < len(children) else None
-                if next_child and next_child.name == "dl":
-                    self._process_dl(next_child, result, current_folder)
-
-                i += 1
-                continue
-
-            if child.name == "dl":
-                # Nested dl at same level (shouldn't normally happen but handle it)
-                self._process_dl(child, result, current_folder)
                 i += 1
                 continue
 
             if child.name == "dt":
-                # Check for <a> link inside <dt>
-                a_tag = child.find("a", href=True)
-                if a_tag:
-                    href = a_tag["href"]
-                    if href in self._seen_urls:
-                        result.total_skipped += 1
-                        i += 1
-                        continue
-                    self._seen_urls.add(href)
+                self._process_dt(child, result, current_folder)
+                i += 1
+                continue
 
-                    title = a_tag.get_text(strip=True) or a_tag.get("title", "")
-                    tags_str = a_tag.get("tags", "")
-                    tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else []
-                    add_date = a_tag.get("add_date", "")
-                    last_modified = a_tag.get("last_modified", "")
-                    icon = a_tag.get("icon", "")
-
-                    # Filter out data: icons
-                    if icon and icon.startswith("data:"):
-                        icon = ""
-
-                    # Look for <dd> description - it may be inside <dt> or as next sibling
-                    description = ""
-
-                    # Check for dd inside dt (BeautifulSoup nests dd inside dt)
-                    dd_inside = child.find("dd")
-                    if dd_inside:
-                        description = dd_inside.get_text(strip=True)
-
-                    # Also check next siblings for dd
-                    j = i + 1
-                    while j < len(children):
-                        next_c = children[j]
-                        if next_c.name == "dd":
-                            desc_text = next_c.get_text(strip=True)
-                            if desc_text:
-                                if description:
-                                    description += " " + desc_text
-                                else:
-                                    description = desc_text
-                            j += 1
-                        elif next_c.name == "dt":
-                            break
-                        elif next_c.name == "dl":
-                            break
-                        elif next_c.name == "hr":
-                            break
-                        else:
-                            j += 1
-
-                    bm = HTMLBookmark(
-                        url=href,
-                        title=title,
-                        description=description,
-                        tags=tags,
-                        folder=current_folder,
-                        add_date=add_date,
-                        last_modified=last_modified,
-                        icon=icon,
-                    )
-                    result.bookmarks.append(bm)
-                    result.total_imported += 1
-
-                # Check for nested dl inside dt (folder with links)
-                nested_dl = child.find("dl")
-                if nested_dl:
-                    self._process_dl(nested_dl, result, current_folder)
-
+            if child.name == "dl":
+                # Nested dl
+                self._process_dl(child, result, current_folder)
                 i += 1
                 continue
 
@@ -250,3 +193,60 @@ class HTMLImporter:
                 continue
 
             i += 1
+
+    def _process_dt(self, dt, result: HTMLImportResult, folder_path: str) -> None:
+        """Process a <dt> element which may contain a link or nested content."""
+        # Check for <a> link
+        a_tag = dt.find("a", href=True)
+        if a_tag:
+            href = a_tag["href"]
+            if href in self._seen_urls:
+                result.total_skipped += 1
+                return
+            self._seen_urls.add(href)
+
+            title = a_tag.get_text(strip=True) or a_tag.get("title", "")
+            tags_str = a_tag.get("tags", "")
+            tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else []
+            add_date = a_tag.get("add_date", "")
+            last_modified = a_tag.get("last_modified", "")
+            icon = a_tag.get("icon", "")
+
+            # Filter out data: icons
+            if icon and icon.startswith("data:"):
+                icon = ""
+
+            # Look for <dd> description
+            description = ""
+            dd = dt.find("dd")
+            if dd:
+                description = dd.get_text(strip=True)
+
+            bm = HTMLBookmark(
+                url=href,
+                title=title,
+                description=description,
+                tags=tags,
+                folder=folder_path,
+                add_date=add_date,
+                last_modified=last_modified,
+                icon=icon,
+            )
+            result.bookmarks.append(bm)
+            result.total_imported += 1
+
+        # Check for nested <dl> (folder with sub-items)
+        nested_dl = dt.find("dl")
+        if nested_dl:
+            self._process_dl(nested_dl, result, folder_path)
+
+        # Check for nested <h3> (folder header inside dt)
+        h3 = dt.find("h3")
+        if h3:
+            folder_name = h3.get_text(strip=True)
+            if folder_name:
+                new_folder = f"{folder_path}/{folder_name}" if folder_path else folder_name
+                # Look for dl after h3 within this dt
+                nested_dl = dt.find("dl")
+                if nested_dl:
+                    self._process_dl(nested_dl, result, new_folder)
