@@ -47,7 +47,7 @@ class TestSchemaExecution:
 
     def test_execute_search_query(self):
         schema = GraphQLSchema()
-        result = schema.execute("query { search(query: "test") { results } }")
+        result = schema.execute('query { search(query: "test") { results } }')
         assert "data" in result
 
     def test_execute_typename_query(self):
