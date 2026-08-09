@@ -167,3 +167,69 @@ class XssSanitizer:
         for char, replacement in replacements.items():
             result = result.replace(char, replacement)
         return result
+
+
+class InputValidator:
+    """Utility for validating user input against common attack vectors."""
+
+    EMAIL_PATTERN = re.compile(
+        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    )
+    URL_PATTERN = re.compile(
+        r"^https?://[a-zA-Z0-9.-]+(:\d+)?(/[a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]*)?$"
+    )
+
+    @classmethod
+    def is_valid_email(cls, email: str) -> bool:
+        """Validate email format.
+
+        Args:
+            email: Email address to validate.
+
+        Returns:
+            True if the email format is valid.
+        """
+        if not email or len(email) > 254:
+            return False
+        return bool(cls.EMAIL_PATTERN.match(email))
+
+    @classmethod
+    def is_valid_url(cls, url: str) -> bool:
+        """Validate URL format (requires http/https scheme).
+
+        Args:
+            url: URL to validate.
+
+        Returns:
+            True if the URL format is valid.
+        """
+        if not url or len(url) > 2048:
+            return False
+        return bool(cls.URL_PATTERN.match(url))
+
+    @classmethod
+    def check_max_length(cls, text: str, max_length: int) -> bool:
+        """Check if text length is within allowed maximum.
+
+        Args:
+            text: Text to check.
+            max_length: Maximum allowed length.
+
+        Returns:
+            True if text length is within limit.
+        """
+        return len(text) <= max_length
+
+    @classmethod
+    def check_allowed_chars(cls, text: str, allowed: str) -> bool:
+        """Check if text contains only allowed characters.
+
+        Args:
+            text: Text to check.
+            allowed: String of all allowed characters.
+
+        Returns:
+            True if all characters in text are in allowed set.
+        """
+        allowed_set = set(allowed)
+        return all(c in allowed_set for c in text)
