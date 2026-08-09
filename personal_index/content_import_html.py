@@ -172,7 +172,7 @@ class HTMLImporter:
                     folder_path = folder_name
 
         if element.name == "dt":
-            # Check for <a> link in this dt
+            # Check for <a> link directly in this dt
             a_tag = element.find("a", href=True)
             if a_tag:
                 href = a_tag["href"]
@@ -209,15 +209,34 @@ class HTMLImporter:
                     )
                     result.bookmarks.append(bm)
                     result.total_imported += 1
-
-            # Recursively process children of this dt
-            # (BeautifulSoup nests subsequent <dt> elements inside previous ones)
+            
+            # Process any nested h3 elements to track folder changes
+            current_folder = folder_path
+            for child in element.children:
+                if child.name == "h3":
+                    folder_name = child.get_text(strip=True)
+                    if folder_name:
+                        if current_folder:
+                            current_folder = f"{current_folder}/{folder_name}"
+                        else:
+                            current_folder = folder_name
+            
+            # Now process the dt's children with potentially updated folder
             for child in element.children:
                 if child.name is None:
                     continue
                 elif child.name in ("a", "dd", "hr", "p"):
                     # Skip elements we've already handled
                     continue
+                elif child.name == "dd":
+                    # Skip <dd> - description, handled separately
+                    continue
+                elif child.name == "hr":
+                    continue
+                elif child.name == "p":
+                    for p_child in child.children:
+                        if p_child.name == "dt":
+                            self._process_element(p_child, result, current_folder)
                 elif child.name == "dt":
                     # Nested dt - process it at the same folder level
                     self._process_element(child, result, folder_path)
