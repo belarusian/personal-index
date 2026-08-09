@@ -79,24 +79,26 @@ class PriorityScore:
         return self.total <= other.total
 
 
-@dataclass(order=True)
+@dataclass
 class ContentPriority:
     """A content item with its priority score."""
 
-    _sort_key: float = field(init=False, repr=False)
     score: PriorityScore
     url: str = ""
     title: str = ""
     metadata: dict = field(default_factory=dict, compare=False)
-
-    def __post_init__(self) -> None:
-        self._sort_key = self.score.total
 
     def __gt__(self, other: "ContentPriority") -> bool:
         return self.score.total > other.score.total
 
     def __lt__(self, other: "ContentPriority") -> bool:
         return self.score.total < other.score.total
+
+    def __ge__(self, other: "ContentPriority") -> bool:
+        return self.score.total >= other.score.total
+
+    def __le__(self, other: "ContentPriority") -> bool:
+        return self.score.total <= other.score.total
 
 
 @dataclass
