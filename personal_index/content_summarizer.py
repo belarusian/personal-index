@@ -303,3 +303,65 @@ class ContentSummarizer:
 
         scored_phrases.sort(key=lambda x: -x[0])
         return [p[1] for p in scored_phrases[:max_phrases]]
+
+
+class ArticleSummarizer:
+    """High-level API for summarizing articles with metadata."""
+
+    def __init__(self, config: Optional[SummaryConfig] = None) -> None:
+        self.summarizer = ContentSummarizer(config)
+
+    def summarize_article(
+        self,
+        title: str,
+        content: str,
+        author: Optional[str] = None,
+        published_date: Optional[str] = None,
+    ) -> dict:
+        """Summarize an article with full metadata.
+
+        Args:
+            title: Article title.
+            content: Article body text.
+            author: Optional author name.
+            published_date: Optional publication date.
+
+        Returns:
+            Dict with summary, key points, and metadata.
+        """
+        result = self.summarizer.summarize(content)
+        return {
+            "title": title,
+            "author": author,
+            "published_date": published_date,
+            "summary": result.summary,
+            "key_points": [
+                {"text": kp.text, "score": kp.score, "category": kp.category}
+                for kp in result.key_points
+            ],
+            "key_phrases": result.key_phrases,
+            "compression_ratio": result.compression_ratio,
+            "original_length": result.original_length,
+            "summary_length": result.summary_length,
+        }
+
+    def summarize_articles(
+        self, articles: list[dict]
+    ) -> list[dict]:
+        """Summarize multiple articles.
+
+        Args:
+            articles: List of article dicts with 'title' and 'content' keys.
+
+        Returns:
+            List of summarized article dicts.
+        """
+        return [
+            self.summarize_article(
+                title=a.get("title", ""),
+                content=a.get("content", ""),
+                author=a.get("author"),
+                published_date=a.get("published_date"),
+            )
+            for a in articles
+        ]
