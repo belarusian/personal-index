@@ -50,6 +50,8 @@ class SyncEntry:
     )
     synced_at: Optional[str] = None
     error: Optional[str] = None
+    remote_hash: Optional[str] = None
+    remote_created_at: Optional[str] = None
 
     def mark_synced(self) -> None:
         """Mark the entry as synced."""
@@ -103,6 +105,8 @@ class SyncEntry:
             "created_at": self.created_at,
             "synced_at": self.synced_at,
             "error": self.error,
+            "remote_hash": self.remote_hash,
+            "remote_created_at": self.remote_created_at,
         }
 
     @classmethod
@@ -136,6 +140,8 @@ class SyncEntry:
             created_at=created_at,
             synced_at=data.get("synced_at"),
             error=data.get("error"),
+            remote_hash=data.get("remote_hash"),
+            remote_created_at=data.get("remote_created_at"),
         )
 
 
@@ -230,10 +236,12 @@ class SyncManifest:
         for remote_entry in remote.entries:
             local_entry = merged.get_entry_by_url(remote_entry.url)
             if local_entry and local_entry.content_hash != remote_entry.content_hash:
-                # Conflict detected
+                # Conflict detected - store remote info
                 local_entry.mark_conflict(
                     f"Remote has different hash: {remote_entry.content_hash}"
                 )
+                local_entry.remote_hash = remote_entry.content_hash
+                local_entry.remote_created_at = remote_entry.created_at
             elif not local_entry:
                 merged.add_entry(SyncEntry.from_dict(remote_entry.to_dict()))
         return merged
@@ -345,6 +353,8 @@ class SyncEngine:
                 local_entry.mark_conflict(
                     f"Remote has different hash: {remote_entry.content_hash}"
                 )
+                local_entry.remote_hash = remote_entry.content_hash
+                local_entry.remote_created_at = remote_entry.created_at
             elif not local_entry:
                 self.manifest.add_entry(
                     SyncEntry.from_dict(remote_entry.to_dict())
@@ -357,7 +367,29 @@ class SyncEngine:
         entry = self.manifest.get_entry_by_url(url)
         if not entry or entry.status != SyncStatus.CONFLICT:
             return
-        entry.mark_synced()
+
+        if resolution == ConflictResolution.LOCAL_WINS:
+            # Keep local hash
+            entry.remote_hash = None
+            entry.remote_created_at = None
+            entry.mark_synced()
+        elif resolution == ConflictResolution.REMOTE_WINS:
+            # Use remote hash
+            if entry.remote_hash:
+                entry.content_hash = entry.remote_hash
+            entry.remote_hash = None
+            entry.remote_created_at = None
+            entry.mark_synced()
+        elif resolution == ConflictResolution.NEWEST_WINS:
+            # Compare created_at timestamps
+            local_time = entry.created_at
+            remote_time = entry.remote_created_at or ""
+            if remote_time > local_time:
+                if entry.remote_hash:
+                    entry.content_hash = entry.remote_hash
+            entry.remote_hash = None
+            entry.remote_created_at = None
+            entry.mark_synced()
 
     def get_conflicts(self) -> list[SyncConflict]:
         """Get all current conflicts."""
@@ -369,7 +401,7 @@ class SyncEngine:
                     local=entry,
                     remote=SyncEntry(
                         url=entry.url,
-                        content_hash=entry.content_hash,
+                        content_hash=entry.remote_hash or "",
                     ),
                 )
             )
