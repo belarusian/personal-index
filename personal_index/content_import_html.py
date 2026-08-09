@@ -210,21 +210,40 @@ class HTMLImporter:
                     result.bookmarks.append(bm)
                     result.total_imported += 1
 
+            # Track folder updates from nested h3 elements
+            current_folder = folder_path
+            
             # Recursively process children of this dt
             # (BeautifulSoup nests subsequent <dt> elements inside previous ones)
             for child in element.children:
                 if child.name is None:
                     continue
-                elif child.name in ("a", "dd", "hr", "p"):
-                    # Skip elements we've already handled
+                elif child.name == "a":
+                    # Skip <a> - already processed when checking href in parent dt
                     continue
+                elif child.name == "dd":
+                    # Skip <dd> - description, handled separately
+                    continue
+                elif child.name == "hr":
+                    continue
+                elif child.name == "p":
+                    # <p> may wrap nested dt elements (like sibling headers)
+                    for p_child in child.children:
+                        if p_child.name == "dt":
+                            self._process_element(p_child, result, current_folder)
                 elif child.name == "dt":
                     # Nested dt - process it at the same folder level
-                    self._process_element(child, result, folder_path)
+                    self._process_element(child, result, current_folder)
                 elif child.name == "h3":
-                    self._process_element(child, result, folder_path)
+                    # h3 sets a new folder path for subsequent children
+                    folder_name = child.get_text(strip=True)
+                    if folder_name:
+                        if current_folder:
+                            current_folder = f"{current_folder}/{folder_name}"
+                        else:
+                            current_folder = folder_name
                 elif child.name == "dl":
-                    self._process_dl(child, result, folder_path)
+                    self._process_dl(child, result, current_folder)
 
         elif element.name == "dl":
             self._process_dl(element, result, folder_path)
