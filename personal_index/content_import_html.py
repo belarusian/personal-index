@@ -155,6 +155,45 @@ class HTMLImporter:
                     else:
                         current_folder = folder_name
             elif child.name == "dt":
+                # Check for <a> link directly in this dt
+                a_tag = child.find("a", href=True)
+                if a_tag:
+                    href = a_tag["href"]
+                    if href in self._seen_urls:
+                        result.total_skipped += 1
+                    else:
+                        self._seen_urls.add(href)
+
+                        title = a_tag.get_text(strip=True) or a_tag.get("title", "")
+                        tags_str = a_tag.get("tags", "")
+                        tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else []
+                        add_date = a_tag.get("add_date", "")
+                        last_modified = a_tag.get("last_modified", "")
+                        icon = a_tag.get("icon", "")
+
+                        if icon and icon.startswith("data:"):
+                            icon = ""
+
+                        # Look for <dd> description
+                        description = ""
+                        dd = child.find("dd")
+                        if dd:
+                            description = dd.get_text(strip=True)
+
+                        bm = HTMLBookmark(
+                            url=href,
+                            title=title,
+                            description=description,
+                            tags=tags,
+                            folder=current_folder,
+                            add_date=add_date,
+                            last_modified=last_modified,
+                            icon=icon,
+                        )
+                        result.bookmarks.append(bm)
+                        result.total_imported += 1
+
+                # Process children (for nested structures like h3, dl)
                 self._process_element(child, result, current_folder)
             elif child.name == "dl":
                 self._process_dl(child, result, current_folder)
@@ -172,7 +211,45 @@ class HTMLImporter:
                     folder_path = folder_name
 
         if element.name == "dt":
-            # First process any h3 in this dt to set the current folder
+            # Check for <a> link directly in this dt
+            a_tag = element.find("a", href=True)
+            if a_tag:
+                href = a_tag["href"]
+                if href in self._seen_urls:
+                    result.total_skipped += 1
+                else:
+                    self._seen_urls.add(href)
+
+                    title = a_tag.get_text(strip=True) or a_tag.get("title", "")
+                    tags_str = a_tag.get("tags", "")
+                    tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else []
+                    add_date = a_tag.get("add_date", "")
+                    last_modified = a_tag.get("last_modified", "")
+                    icon = a_tag.get("icon", "")
+
+                    if icon and icon.startswith("data:"):
+                        icon = ""
+
+                    # Look for <dd> description
+                    description = ""
+                    dd = element.find("dd")
+                    if dd:
+                        description = dd.get_text(strip=True)
+
+                    bm = HTMLBookmark(
+                        url=href,
+                        title=title,
+                        description=description,
+                        tags=tags,
+                        folder=folder_path,
+                        add_date=add_date,
+                        last_modified=last_modified,
+                        icon=icon,
+                    )
+                    result.bookmarks.append(bm)
+                    result.total_imported += 1
+            
+            # Process any nested h3 elements to track folder changes
             current_folder = folder_path
             for child in element.children:
                 if child.name == "h3":
@@ -183,12 +260,12 @@ class HTMLImporter:
                         else:
                             current_folder = folder_name
             
-            # Now process the dt's children with the updated folder
+            # Now process the dt's children with potentially updated folder
             for child in element.children:
                 if child.name is None:
                     continue
                 elif child.name == "a":
-                    # Skip <a> - handled via parent dl processing
+                    # Already processed above
                     continue
                 elif child.name == "dd":
                     # Skip <dd> - description, handled separately
@@ -201,9 +278,6 @@ class HTMLImporter:
                             self._process_element(p_child, result, current_folder)
                 elif child.name == "dt":
                     self._process_element(child, result, current_folder)
-                elif child.name == "h3":
-                    # Already processed above
-                    continue
                 elif child.name == "dl":
                     self._process_dl(child, result, current_folder)
 
