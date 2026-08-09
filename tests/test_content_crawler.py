@@ -281,3 +281,119 @@ class TestContentCrawler:
             stats = crawler.crawl_from_saved_item("https://example.com", max_depth=2)
             assert stats.total_pages == 5
             mock_crawl.assert_called_once()
+
+
+class TestContentCrawlerIntegration:
+    """Integration tests for ContentCrawler with saved items."""
+
+    def test_crawl_depth_limit(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            max_depth=1,
+            max_pages=10,
+            delay=0,
+        )
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = """
+        <html><head><title>Home</title></head><body>
+        <a href="/page1">Page 1</a>
+        <a href="/page2">Page 2</a>
+        </body></html>
+        """
+        with patch.object(crawler, "_fetch_page", return_value=mock_resp):
+            stats = crawler.crawl(task)
+            # Source + 2 links at depth 1 = 3 pages max
+            assert stats.total_pages <= 3
+
+    def test_crawl_with_successful_fetch(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            max_pages=1,
+            delay=0,
+        )
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = "<html><head><title>Test</title></head><body><p>Content</p></body></html>"
+        with patch.object(crawler, "_fetch_page", return_value=mock_resp):
+            stats = crawler.crawl(task)
+            assert stats.successful == 1
+            assert len(task.results) == 1
+            assert task.results[0].title == "Test"
+
+    def test_crawl_stats_tracking(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            max_pages=3,
+            delay=0,
+        )
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = "<html><head><title>Home</title></head><body><a href='/p1'>P1</a></body></html>"
+        with patch.object(crawler, "_fetch_page", return_value=mock_resp):
+            stats = crawler.crawl(task)
+            assert stats.total_pages >= 1
+            assert stats.duration_seconds >= 0
+
+    def test_crawl_blocked_extension_filtering(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            max_pages=1,
+            delay=0,
+        )
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = """
+        <html><body>
+        <a href="/page.html">HTML</a>
+        <a href="/image.jpg">Image</a>
+        <a href="/style.css">CSS</a>
+        </body></html>
+        """
+        with patch.object(crawler, "_fetch_page", return_value=mock_resp):
+            stats = crawler.crawl(task)
+            # Only HTML page should be crawled, not jpg or css
+            results = task.results
+            urls = [r.url for r in results]
+            assert not any(".jpg" in u for u in urls)
+            assert not any(".css" in u for u in urls)
+
+    def test_crawl_result_links_extraction(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            max_pages=1,
+            delay=0,
+        )
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = """
+        <html><body>
+        <a href="/link1">Link 1</a>
+        <a href="/link2">Link 2</a>
+        </body></html>
+        """
+        with patch.object(crawler, "_fetch_page", return_value=mock_resp):
+            crawler.crawl(task)
+            assert len(task.results) == 1
+            assert len(task.results[0].links) == 2
+
+    def test_crawl_empty_page(self):
+        crawler = ContentCrawler()
+        task = CrawlTask(
+            source_url="https://example.com",
+            max_pages=1,
+            delay=0,
+        )
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = "<html><head></head><body></body></html>"
+        with patch.object(crawler, "_fetch_page", return_value=mock_resp):
+            stats = crawler.crawl(task)
+            assert stats.successful == 1
+            assert task.results[0].title == ""
+            assert task.results[0].content == ""
