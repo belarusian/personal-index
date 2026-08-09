@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
@@ -19,6 +20,22 @@ class PriorityLevel(str, Enum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
+
+    @property
+    def numeric_value(self) -> int:
+        """Numeric value for ordering."""
+        return {
+            "critical": 4,
+            "high": 3,
+            "medium": 2,
+            "low": 1,
+        }.get(self.value, 0)
+
+    def __gt__(self, other: "PriorityLevel") -> bool:
+        return self.numeric_value > other.numeric_value
+
+    def __lt__(self, other: "PriorityLevel") -> bool:
+        return self.numeric_value < other.numeric_value
 
     @classmethod
     def from_score(cls, score: float) -> "PriorityLevel":
@@ -49,15 +66,37 @@ class PriorityScore:
         """Get the priority level for this score."""
         return PriorityLevel.from_score(self.total)
 
+    def __gt__(self, other: "PriorityScore") -> bool:
+        return self.total > other.total
+
+    def __lt__(self, other: "PriorityScore") -> bool:
+        return self.total < other.total
+
+    def __ge__(self, other: "PriorityScore") -> bool:
+        return self.total >= other.total
+
+    def __le__(self, other: "PriorityScore") -> bool:
+        return self.total <= other.total
+
 
 @dataclass(order=True)
 class ContentPriority:
     """A content item with its priority score."""
 
+    _sort_key: float = field(init=False, repr=False)
     score: PriorityScore
     url: str = ""
     title: str = ""
     metadata: dict = field(default_factory=dict, compare=False)
+
+    def __post_init__(self) -> None:
+        self._sort_key = self.score.total
+
+    def __gt__(self, other: "ContentPriority") -> bool:
+        return self.score.total > other.score.total
+
+    def __lt__(self, other: "ContentPriority") -> bool:
+        return self.score.total < other.score.total
 
 
 @dataclass
@@ -246,8 +285,6 @@ class PriorityScorer:
             return 0.1  # Default for no engagement data
 
         # Normalize: log scale to handle wide ranges
-        import math
-
         view_score = min(math.log1p(views) / math.log1p(10000), 1.0)
         like_score = min(math.log1p(likes) / math.log1p(1000), 1.0)
         share_score = min(math.log1p(shares) / math.log1p(500), 1.0)
