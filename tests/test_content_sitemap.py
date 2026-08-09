@@ -280,3 +280,49 @@ class TestSitemapGeneratorEdgeCases:
         gen = SitemapGenerator()
         gen.add_url("https://example.com/page", priority=1.0)
         assert gen._entries[0].priority == 1.0
+
+
+class TestSitemapXMLValidation:
+    """Tests for sitemap XML structure validation."""
+
+    def test_xml_has_namespace(self):
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page")
+        xml = gen.generate(SitemapFormat.XML)
+        assert 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' in xml
+
+    def test_xml_well_formed(self):
+        import xml.etree.ElementTree as ET
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page")
+        xml = gen.generate(SitemapFormat.XML)
+        # Remove XML declaration for parsing
+        xml_body = xml.split("\n", 1)[1] if "\n" in xml else xml
+        root = ET.fromstring(xml_body)
+        assert root.tag.endswith("urlset")
+
+    def test_xml_multiple_entries(self):
+        import xml.etree.ElementTree as ET
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page1")
+        gen.add_url("https://example.com/page2")
+        xml = gen.generate(SitemapFormat.XML)
+        xml_body = xml.split("\n", 1)[1] if "\n" in xml else xml
+        root = ET.fromstring(xml_body)
+        url_elements = root.findall(".//{*}url")
+        assert len(url_elements) == 2
+
+    def test_index_xml_has_namespace(self):
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page")
+        index_xml = gen.generate_index(base_url="https://example.com")
+        assert 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' in index_xml
+
+    def test_json_has_generated_at(self):
+        import json
+        gen = SitemapGenerator()
+        gen.add_url("https://example.com/page")
+        data = gen.generate(SitemapFormat.JSON)
+        parsed = json.loads(data)
+        assert "generated_at" in parsed
+        assert "T" in parsed["generated_at"]  # ISO format
