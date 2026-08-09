@@ -237,3 +237,39 @@ class TestContentSummarizerIntegration:
         text = "Short. Medium length sentence. Longer sentence with more words."
         result = summarizer.summarize(text)
         assert len(result.key_points) <= 2
+
+
+class TestContentSummarizerEdgeCases:
+    """Test edge cases and boundary conditions."""
+
+    def test_single_sentence(self):
+        summarizer = ContentSummarizer()
+        result = summarizer.summarize("This is a single sentence with enough words to pass the minimum length.")
+        assert len(result.key_points) == 1
+        assert result.key_points[0].text == "This is a single sentence with enough words to pass the minimum length."
+
+    def test_unicode_text(self):
+        text = "Máquina de aprendizaje es importante. La inteligencia artificial transforma industrias."
+        summarizer = ContentSummarizer()
+        result = summarizer.summarize(text)
+        assert result.original_length == len(text)
+
+    def test_repeated_sentences(self):
+        text = "Important point. Important point. Important point. Another point. Another point."
+        summarizer = ContentSummarizer()
+        result = summarizer.summarize(text)
+        assert len(result.key_points) > 0
+
+    def test_sentences_below_min_length(self):
+        config = SummaryConfig(min_sentence_length=100)
+        summarizer = ContentSummarizer(config=config)
+        text = "Short. Also short. Still short."
+        result = summarizer.summarize(text)
+        assert result.key_points == []
+
+    def test_all_methods_valid(self):
+        for method in ["frequency", "hybrid", "first_n", "last_n", "middle"]:
+            summarizer = ContentSummarizer()
+            text = "First sentence here. Second sentence here. Third sentence here."
+            result = summarizer.summarize(text, method=method)
+            assert result.method == method
