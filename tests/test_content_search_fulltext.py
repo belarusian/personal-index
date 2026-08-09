@@ -7,6 +7,7 @@ from personal_index.content_search_fulltext import (
     SearchIndex,
     SearchResult,
     SearchQuery,
+    SearchResults,
     Tokenizer,
     BM25Ranker,
 )
@@ -23,7 +24,7 @@ class TestTokenizer:
         tokens = Tokenizer.tokenize("Hello, world! How are you?")
         assert "hello" in tokens
         assert "world" in tokens
-        assert "how" in tokens
+        assert "are" not in tokens  # stopword
 
     def test_tokenize_removes_stopwords(self):
         tokens = Tokenizer.tokenize("The quick brown fox")
@@ -74,6 +75,58 @@ class TestSearchResult:
         r1 = SearchResult(content_id="c1", score=0.9)
         r2 = SearchResult(content_id="c2", score=0.3)
         assert r1.score > r2.score
+
+
+class TestSearchResults:
+    """Tests for SearchResults."""
+
+    def test_empty_results(self):
+        r = SearchResults()
+        assert len(r) == 0
+        assert r.total_count == 0
+        assert r.has_next is False
+
+    def test_results_with_items(self):
+        r = SearchResults(
+            results=[
+                SearchResult(content_id="c1", score=0.9),
+                SearchResult(content_id="c2", score=0.5),
+            ],
+            total_count=2,
+        )
+        assert len(r) == 2
+        assert r.total_count == 2
+
+    def test_results_to_dict(self):
+        r = SearchResults(
+            results=[SearchResult(content_id="c1", score=0.9, title="T")],
+            total_count=1,
+            query="test",
+        )
+        d = r.to_dict()
+        assert "results" in d
+        assert d["total_count"] == 1
+
+    def test_results_has_next(self):
+        r = SearchResults(
+            results=[],
+            total_count=100,
+            limit=10,
+            offset=0,
+            has_next=True,
+        )
+        assert r.has_next is True
+
+    def test_results_iteration(self):
+        r = SearchResults(
+            results=[
+                SearchResult(content_id="c1", score=0.9),
+                SearchResult(content_id="c2", score=0.5),
+            ],
+            total_count=2,
+        )
+        ids = [item.content_id for item in r]
+        assert ids == ["c1", "c2"]
 
 
 class TestSearchQuery:
