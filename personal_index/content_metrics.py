@@ -5,6 +5,7 @@ Tracks word counts, reading times, and other content statistics.
 
 from __future__ import annotations
 
+import statistics
 import time
 from dataclasses import dataclass, field
 from typing import Optional
@@ -62,6 +63,41 @@ class ContentMetrics:
         }
 
 
+@dataclass
+class ContentMetricsSummary:
+    """Aggregated summary of content metrics."""
+
+    total_items: int = 0
+    total_word_count: int = 0
+    total_char_count: int = 0
+    total_reading_time_seconds: int = 0
+    avg_word_count: float = 0.0
+    median_word_count: float = 0.0
+    max_word_count: int = 0
+    min_word_count: int = 0
+    avg_reading_time_seconds: float = 0.0
+    total_links: int = 0
+    total_images: int = 0
+    avg_readability_score: float = 0.0
+
+    def to_dict(self) -> dict:
+        """Convert summary to dictionary."""
+        return {
+            "total_items": self.total_items,
+            "total_word_count": self.total_word_count,
+            "total_char_count": self.total_char_count,
+            "total_reading_time_seconds": self.total_reading_time_seconds,
+            "avg_word_count": round(self.avg_word_count, 2),
+            "median_word_count": round(self.median_word_count, 2),
+            "max_word_count": self.max_word_count,
+            "min_word_count": self.min_word_count,
+            "avg_reading_time_seconds": round(self.avg_reading_time_seconds, 2),
+            "total_links": self.total_links,
+            "total_images": self.total_images,
+            "avg_readability_score": round(self.avg_readability_score, 2),
+        }
+
+
 class ContentMetricsTracker:
     """Tracks content metrics across multiple items."""
 
@@ -91,3 +127,28 @@ class ContentMetricsTracker:
     def count(self) -> int:
         """Return the number of tracked items."""
         return len(self._metrics)
+
+    def summary(self) -> ContentMetricsSummary:
+        """Generate an aggregated summary of all tracked metrics."""
+        metrics_list = self.all()
+        if not metrics_list:
+            return ContentMetricsSummary()
+
+        word_counts = [m.word_count for m in metrics_list]
+        reading_times = [m.reading_time_seconds for m in metrics_list]
+        readability_scores = [m.readability_score for m in metrics_list if m.readability_score > 0]
+
+        return ContentMetricsSummary(
+            total_items=len(metrics_list),
+            total_word_count=sum(word_counts),
+            total_char_count=sum(m.char_count for m in metrics_list),
+            total_reading_time_seconds=sum(reading_times),
+            avg_word_count=statistics.mean(word_counts),
+            median_word_count=statistics.median(word_counts),
+            max_word_count=max(word_counts),
+            min_word_count=min(word_counts),
+            avg_reading_time_seconds=statistics.mean(reading_times),
+            total_links=sum(m.link_count for m in metrics_list),
+            total_images=sum(m.image_count for m in metrics_list),
+            avg_readability_score=statistics.mean(readability_scores) if readability_scores else 0.0,
+        )
