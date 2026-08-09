@@ -345,3 +345,51 @@ class DataPortability:
             values = [str(row.get(h, "")) for h in headers]
             lines.append(",".join(values))
         return "\n".join(lines)
+
+
+@dataclass
+class DataRetentionPolicy:
+    """Policy for automatic data retention and deletion."""
+
+    name: str
+    max_retention_days: int
+    data_categories: list[str] = field(default_factory=list)
+    review_interval_days: int = 30
+    auto_delete: bool = True
+    notification_days_before: int = 14
+
+    def is_expired(self, data_age_days: int) -> bool:
+        """Check if data has exceeded retention period.
+
+        Args:
+            data_age_days: Age of the data in days.
+
+        Returns:
+            True if data should be deleted.
+        """
+        return data_age_days > self.max_retention_days
+
+    def should_notify(self, data_age_days: int) -> bool:
+        """Check if notification should be sent before deletion.
+
+        Args:
+            data_age_days: Age of the data in days.
+
+        Returns:
+            True if notification is due.
+        """
+        days_remaining = self.max_retention_days - data_age_days
+        return 0 < days_remaining <= self.notification_days_before
+
+    def matches_category(self, category: str) -> bool:
+        """Check if this policy applies to a data category.
+
+        Args:
+            category: Data category to check.
+
+        Returns:
+            True if the policy applies.
+        """
+        if not self.data_categories:
+            return True
+        return category in self.data_categories

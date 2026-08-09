@@ -205,3 +205,30 @@ class TestDataPortability:
         portability = DataPortability()
         result = portability.export_as_csv([])
         assert result == ""
+
+
+class TestDataRetentionPolicy:
+    """Tests for DataRetentionPolicy class."""
+
+    def test_expired_data(self):
+        from personal_index.content_gdpr import DataRetentionPolicy
+        policy = DataRetentionPolicy(name="logs", max_retention_days=90)
+        assert policy.is_expired(91)
+        assert not policy.is_expired(89)
+
+    def test_notification_due(self):
+        from personal_index.content_gdpr import DataRetentionPolicy
+        policy = DataRetentionPolicy(name="logs", max_retention_days=90, notification_days_before=14)
+        assert policy.should_notify(80)  # 10 days remaining
+        assert not policy.should_notify(70)  # 20 days remaining
+
+    def test_category_match(self):
+        from personal_index.content_gdpr import DataRetentionPolicy
+        policy = DataRetentionPolicy(name="logs", max_retention_days=90, data_categories=["logs", "analytics"])
+        assert policy.matches_category("logs")
+        assert not policy.matches_category("user_data")
+
+    def test_no_category_filter(self):
+        from personal_index.content_gdpr import DataRetentionPolicy
+        policy = DataRetentionPolicy(name="all", max_retention_days=90)
+        assert policy.matches_category("anything")
