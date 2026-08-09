@@ -300,3 +300,69 @@ class SecurityAudit:
             "passed": passed,
             "failed": len(issues),
         }
+
+
+@dataclass
+class SecurityMiddleware:
+    """Middleware that applies security headers and input sanitization."""
+
+    security_headers: Optional[SecurityHeaders] = None
+    sanitize_inputs: bool = True
+    blocked_paths: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        """Initialize default security headers if not provided."""
+        if self.security_headers is None:
+            csp = ContentSecurityPolicy()
+            csp.add_directive("script-src", "'self'")
+            self.security_headers = SecurityHeaders(csp=csp)
+
+    def apply_headers(self) -> dict[str, str]:
+        """Apply security headers to a response.
+
+        Returns:
+            Dictionary of security headers to apply.
+        """
+        return self.security_headers.get_headers()
+
+    def sanitize_request(self, params: dict[str, str]) -> dict[str, str]:
+        """Sanitize request parameters.
+
+        Args:
+            params: Request parameters to sanitize.
+
+        Returns:
+            Sanitized parameters dictionary.
+        """
+        if not self.sanitize_inputs:
+            return params
+        return {k: XssSanitizer.sanitize_input(v) for k, v in params.items()}
+
+    def is_path_blocked(self, path: str) -> bool:
+        """Check if a request path is blocked.
+
+        Args:
+            path: Request path to check.
+
+        Returns:
+            True if the path is blocked.
+        """
+        return path in self.blocked_paths
+
+    def process_request(
+        self, path: str, params: dict[str, str]
+    ) -> tuple[bool, dict[str, str], dict[str, str]]:
+        """Process a request through the security middleware.
+
+        Args:
+            path: Request path.
+            params: Request parameters.
+
+        Returns:
+            Tuple of (allowed, headers, sanitized_params).
+        """
+        if self.is_path_blocked(path):
+            return False, {}, {}
+        headers = self.apply_headers()
+        sanitized = self.sanitize_request(params)
+        return True, headers, sanitized
