@@ -225,3 +225,73 @@ class TestAPIKeyStore:
         key2 = store.create_key(name="key2", owner="user1")
         store.revoke_key(key2.key_id)
         assert store.active_key_count == 1
+
+
+class TestAPIKeyStoreEdgeCases:
+    """Edge case tests for APIKeyStore."""
+
+    def test_create_key_with_all_scopes(self):
+        store = APIKeyStore()
+        key = store.create_key(
+            name="full-access",
+            owner="admin",
+            scopes=list(APIKeyScope),
+        )
+        assert len(key.scopes) == len(APIKeyScope)
+
+    def test_create_key_with_no_scopes(self):
+        store = APIKeyStore()
+        key = store.create_key(
+            name="no-scopes",
+            owner="user1",
+            scopes=[],
+        )
+        assert key.scopes == []
+
+    def test_validate_nonexistent_key(self):
+        store = APIKeyStore()
+        result = store.validate_key("nonexistent", APIKeyScope.READ)
+        assert result.is_valid is False
+        assert "not found" in result.error.lower()
+
+    def test_delete_nonexistent_key(self):
+        store = APIKeyStore()
+        assert store.delete_key("nonexistent") is False
+
+    def test_revoke_nonexistent_key(self):
+        store = APIKeyStore()
+        assert store.revoke_key("nonexistent") is False
+
+    def test_list_keys_by_status(self):
+        store = APIKeyStore()
+        store.create_key(name="active", owner="user1")
+        key2 = store.create_key(name="revoked", owner="user1")
+        store.revoke_key(key2.key_id)
+        active_keys = store.list_keys(status=APIKeyStatus.ACTIVE)
+        assert len(active_keys) == 1
+
+    def test_record_usage_nonexistent(self):
+        store = APIKeyStore()
+        result = store.record_usage("nonexistent", "/api/test")
+        assert result is None
+
+    def test_get_usage_history_nonexistent(self):
+        store = APIKeyStore()
+        assert store.get_usage_history("nonexistent") == []
+
+    def test_key_metadata(self):
+        store = APIKeyStore()
+        key = store.create_key(
+            name="test",
+            owner="user1",
+            metadata={"environment": "production", "team": "backend"},
+        )
+        assert key.metadata["environment"] == "production"
+
+    def test_suspend_and_activate(self):
+        store = APIKeyStore()
+        key = store.create_key(name="test", owner="user1")
+        store.get_key(key.key_id).suspend()
+        assert store.get_key(key.key_id).status == APIKeyStatus.SUSPENDED
+        store.get_key(key.key_id).activate()
+        assert store.get_key(key.key_id).status == APIKeyStatus.ACTIVE
