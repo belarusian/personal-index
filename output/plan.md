@@ -1,24 +1,26 @@
-# bookmark_export Implementation Plan
+# Implementation Plan: Content Categorizer
 
-## Batch 1: Tests + Module Skeleton
-- Create `tests/test_bookmark_export.py` with all tests
-- Create `personal_index/bookmark_export.py` with minimal implementation
-- Tests should fail initially (TDD)
+## Batch 1: Core data structures and topic definitions
+- Create `TopicCategory` dataclass (name, keywords, description, weight)
+- Create `CategorizationResult` dataclass (primary_topic, topics with scores, confidence, reasons)
+- Define built-in topic dictionaries (technology, science, health, finance, etc.)
+- Commit: "feat: add content_categorizer module with topic definitions and data structures"
 
-## Batch 2: JSON Exporter
-- Implement `export_json()` method
-- Run tests, verify JSON tests pass
+## Batch 2: Categorization engine
+- Create `ContentCategorizer` class with:
+  - `categorize(text, title="", url="", meta_description="")` method
+  - Keyword matching against topic dictionaries
+  - Title/heading boosting
+  - URL path hint analysis
+  - Confidence scoring
+  - Support for custom topics
+- Commit: "feat: implement content categorization engine with multi-signal analysis"
 
-## Batch 3: HTML Exporter  
-- Implement `export_html()` method with Netscape format
-- Run tests, verify HTML tests pass
-
-## Batch 4: OPML Exporter
-- Implement `export_opml()` method with OPML 2.0 format
-- Run tests, verify OPML tests pass
-
-## Batch 5: Export dispatch + file writing
-- Implement `export()` method with format dispatch and file writing
-- Implement `BookmarkExportResult` dataclass
-- Run all tests, verify everything passes
-- Commit and signal PR_GATE
+## Batch 3: Tests
+- Test data structures
+- Test categorization with known content samples
+- Test edge cases (empty text, no match, multiple topics)
+- Test custom topic addition
+- Test batch categorization
+- Test URL hint analysis
+- Commit: "test: add comprehensive tests for content_categorizer module"
