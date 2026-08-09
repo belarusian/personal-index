@@ -145,3 +145,27 @@ class TestConsentManager:
         records = manager.get_records("user1")
         assert len(records) == 1
         assert records[0].user_id == "user1"
+
+
+class TestIPAnonymizer:
+    """Tests for IPAnonymizer class."""
+
+    def test_anonymize_ipv4_default(self):
+        from personal_index.content_privacy import IPAnonymizer
+        result = IPAnonymizer.anonymize_ipv4("192.168.1.100")
+        assert result == "192.168.1.0"
+
+    def test_anonymize_ipv4_custom_mask(self):
+        from personal_index.content_privacy import IPAnonymizer
+        result = IPAnonymizer.anonymize_ipv4("192.168.1.100", mask_bits=16)
+        assert result == "192.168.0.0"
+
+    def test_anonymize_auto_detect(self):
+        from personal_index.content_privacy import IPAnonymizer
+        result = IPAnonymizer.anonymize("10.0.0.1")
+        assert result == "10.0.0.0"
+
+    def test_anonymize_invalid_ip(self):
+        from personal_index.content_privacy import IPAnonymizer
+        result = IPAnonymizer.anonymize_ipv4("not-an-ip")
+        assert result == "not-an-ip"
