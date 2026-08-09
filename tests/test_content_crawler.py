@@ -450,3 +450,36 @@ class TestCrawlQueueAdvanced:
         queue = CrawlQueue()
         result = queue.cancel_task("nonexistent")
         assert result is None
+
+
+class TestCrawlURLNormalizer:
+    """Tests for CrawlURLNormalizer."""
+
+    def test_normalize_lowercase_scheme(self):
+        from personal_index.content_crawler import CrawlURLNormalizer
+        result = CrawlURLNormalizer.normalize("HTTPS://Example.COM/page")
+        assert result.startswith("https://")
+
+    def test_normalize_remove_fragment(self):
+        from personal_index.content_crawler import CrawlURLNormalizer
+        result = CrawlURLNormalizer.normalize("https://example.com/page#section")
+        assert "#" not in result
+
+    def test_normalize_trailing_slash(self):
+        from personal_index.content_crawler import CrawlURLNormalizer
+        result = CrawlURLNormalizer.normalize("https://example.com/page/")
+        assert result == "https://example.com/page"
+
+    def test_is_same_page(self):
+        from personal_index.content_crawler import CrawlURLNormalizer
+        assert CrawlURLNormalizer.is_same_page(
+            "https://example.com/page#top",
+            "https://example.com/page",
+        ) is True
+
+    def test_is_same_page_different(self):
+        from personal_index.content_crawler import CrawlURLNormalizer
+        assert CrawlURLNormalizer.is_same_page(
+            "https://example.com/page1",
+            "https://example.com/page2",
+        ) is False

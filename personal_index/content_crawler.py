@@ -330,3 +330,36 @@ class ContentCrawler:
             max_pages=max_pages,
         )
         return self.crawl(task)
+
+
+class CrawlURLNormalizer:
+    """Normalizes URLs for deduplication during crawling."""
+
+    @staticmethod
+    def normalize(url: str) -> str:
+        """Normalize a URL for comparison."""
+        parsed = urlparse(url)
+        # Remove trailing slash from path (except root)
+        path = parsed.path.rstrip("/") or "/"
+        # Remove fragment
+        # Sort query params for consistent comparison
+        query = parsed.query
+        return urlunparse((
+            parsed.scheme.lower(),
+            parsed.netloc.lower(),
+            path,
+            parsed.params,
+            query,
+            "",  # Remove fragment
+        ))
+
+    @staticmethod
+    def is_same_page(url1: str, url2: str) -> bool:
+        """Check if two URLs point to the same page."""
+        return CrawlURLNormalizer.normalize(url1) == CrawlURLNormalizer.normalize(url2)
+
+
+def urlunparse(components):
+    """Reconstruct URL from components."""
+    from urllib.parse import urlunparse as _urlunparse
+    return _urlunparse(components)
