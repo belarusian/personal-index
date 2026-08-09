@@ -172,54 +172,23 @@ class HTMLImporter:
                     folder_path = folder_name
 
         if element.name == "dt":
-            # Check for <a> link in this dt
-            a_tag = element.find("a", href=True)
-            if a_tag:
-                href = a_tag["href"]
-                if href in self._seen_urls:
-                    result.total_skipped += 1
-                else:
-                    self._seen_urls.add(href)
-
-                    title = a_tag.get_text(strip=True) or a_tag.get("title", "")
-                    tags_str = a_tag.get("tags", "")
-                    tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else []
-                    add_date = a_tag.get("add_date", "")
-                    last_modified = a_tag.get("last_modified", "")
-                    icon = a_tag.get("icon", "")
-
-                    if icon and icon.startswith("data:"):
-                        icon = ""
-
-                    # Look for <dd> description
-                    description = ""
-                    dd = element.find("dd")
-                    if dd:
-                        description = dd.get_text(strip=True)
-
-                    bm = HTMLBookmark(
-                        url=href,
-                        title=title,
-                        description=description,
-                        tags=tags,
-                        folder=folder_path,
-                        add_date=add_date,
-                        last_modified=last_modified,
-                        icon=icon,
-                    )
-                    result.bookmarks.append(bm)
-                    result.total_imported += 1
-
-            # Track folder updates from nested h3 elements
+            # First process any h3 in this dt to set the current folder
             current_folder = folder_path
+            for child in element.children:
+                if child.name == "h3":
+                    folder_name = child.get_text(strip=True)
+                    if folder_name:
+                        if current_folder:
+                            current_folder = f"{current_folder}/{folder_name}"
+                        else:
+                            current_folder = folder_name
             
-            # Recursively process children of this dt
-            # (BeautifulSoup nests subsequent <dt> elements inside previous ones)
+            # Now process the dt's children with the updated folder
             for child in element.children:
                 if child.name is None:
                     continue
                 elif child.name == "a":
-                    # Skip <a> - already processed when checking href in parent dt
+                    # Skip <a> - handled via parent dl processing
                     continue
                 elif child.name == "dd":
                     # Skip <dd> - description, handled separately
@@ -227,21 +196,14 @@ class HTMLImporter:
                 elif child.name == "hr":
                     continue
                 elif child.name == "p":
-                    # <p> may wrap nested dt elements (like sibling headers)
                     for p_child in child.children:
                         if p_child.name == "dt":
                             self._process_element(p_child, result, current_folder)
                 elif child.name == "dt":
-                    # Nested dt - process it at the same folder level
                     self._process_element(child, result, current_folder)
                 elif child.name == "h3":
-                    # h3 sets a new folder path for subsequent children
-                    folder_name = child.get_text(strip=True)
-                    if folder_name:
-                        if current_folder:
-                            current_folder = f"{current_folder}/{folder_name}"
-                        else:
-                            current_folder = folder_name
+                    # Already processed above
+                    continue
                 elif child.name == "dl":
                     self._process_dl(child, result, current_folder)
 
