@@ -436,3 +436,45 @@ class ContentDeduplicator:
             return 0.0
 
         return dot_product / (mag_a * mag_b)
+
+
+class BatchDedupReport:
+    """Generate a report of deduplication results."""
+
+    def __init__(self, result: DedupResult) -> None:
+        self.result = result
+
+    def to_dict(self) -> dict:
+        """Convert report to dictionary."""
+        return {
+            "total_items": self.result.total_items,
+            "unique_items": self.result.unique_items,
+            "duplicate_groups": self.result.duplicate_groups,
+            "duplicate_ratio": self.result.duplicate_ratio,
+            "groups": [
+                {
+                    "representative": g.representative,
+                    "duplicates": g.duplicates,
+                    "similarity_score": g.similarity_score,
+                    "total_count": g.total_count,
+                }
+                for g in self.result.groups
+            ],
+        }
+
+    def to_summary_string(self) -> str:
+        """Generate a human-readable summary."""
+        lines = [
+            f"Total items: {self.result.total_items}",
+            f"Unique items: {self.result.unique_items}",
+            f"Duplicate groups: {self.result.duplicate_groups}",
+            f"Duplicate ratio: {self.result.duplicate_ratio:.1%}",
+        ]
+        for i, group in enumerate(self.result.groups, 1):
+            lines.append(f"\nGroup {i}:")
+            lines.append(f"  Representative: {group.representative}")
+            lines.append(f"  Similarity: {group.similarity_score:.1%}")
+            lines.append(f"  Duplicates ({len(group.duplicates)}):")
+            for dup in group.duplicates:
+                lines.append(f"    - {dup}")
+        return "\n".join(lines)
