@@ -46,12 +46,13 @@ class AuthConfig:
 class TokenManager:
     """Manages authentication tokens with generation, validation, and revocation."""
 
-    def __init__(self, secret_key: Optional[str] = None, max_tokens_per_user: int = 10):
+    def __init__(self, secret_key: Optional[str] = None, max_tokens_per_user: int = 10, token_expiry: int = 3600):
         self._secret = secret_key or secrets.token_hex(32)
         self._tokens: dict[str, TokenPayload] = {}
         self._revoked: set[str] = set()
         self._user_tokens: dict[str, list[str]] = {}
         self._max_tokens = max_tokens_per_user
+        self._token_expiry = token_expiry
 
     def generate_token(self, user_id: str, permissions: list[str]) -> Optional[str]:
         """Generate a new authentication token.
@@ -67,7 +68,7 @@ class TokenManager:
         if current_count >= self._max_tokens:
             return None
 
-        payload = TokenPayload(user_id=user_id, permissions=permissions)
+        payload = TokenPayload(user_id=user_id, permissions=permissions, expires_in=self._token_expiry)
         payload_dict = payload.to_dict()
         encoded = base64.urlsafe_b64encode(
             json.dumps(payload_dict).encode()
@@ -279,6 +280,7 @@ class APIAuth:
         self.token_manager = TokenManager(
             secret_key=self.config.secret_key,
             max_tokens_per_user=self.config.max_tokens_per_user,
+            token_expiry=self.config.token_expiry,
         )
         self.permission_checker = PermissionChecker()
         self.rbac = RoleBasedAccess()

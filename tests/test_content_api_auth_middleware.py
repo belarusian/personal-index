@@ -33,7 +33,7 @@ class TestAuthMiddleware:
         config = AuthConfig(token_expiry=0)
         auth = mw.auth
         auth.config = config
-        auth.token_manager = TokenManager(secret_key=config.secret_key)
+        auth.token_manager = TokenManager(secret_key=config.secret_key, token_expiry=config.token_expiry)
         mw.token_manager = auth.token_manager
         token = auth.generate_token("user1", ["read"])
         result = mw.process_request({"headers": {"Authorization": f"Bearer {token}"}})
