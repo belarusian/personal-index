@@ -1,50 +1,22 @@
-# Analysis: Content Categorizer Module
+# Analysis: Link Preview Module
 
-## Existing Codebase Context
+## Existing Codebase
+- `personal_index/` package with many modules (scraper, content_extractor, etc.)
+- Tests live in `tests/` directory, using pytest
+- Uses `dataclass` patterns, `BeautifulSoup` for HTML parsing
+- `scraper.py` already extracts OG tags as fallback for title/description
+- `content_extractor.py` also extracts og:title
 
-The personal-index project is a personal web search engine with modules for:
-- **Content extraction** (`content.py`, `content_extractor.py`) — extracts text, headings, meta from HTML
-- **Keyword extraction** (`keyword_extractor.py`) — frequency-based keyword extraction with scoring
-- **Text utilities** (`text_utils.py`) — tokenization, stopwords, slugify, truncate, etc.
-- **Tags** (`tags.py`) — manual tagging system with persistence
-- **URL classification** (`url_classifier.py`) — classifies URLs by type (API, media, document, etc.)
-- **Interests** (`interests.py`) — user-defined interests with keywords, topics, URL patterns
-- **Content scoring** (`content_scoring.py`) — multi-factor quality scoring
-- **TF-IDF** (`tfidf.py`) — term frequency-inverse document frequency
+## What's Needed
+A `link_preview` module that:
+1. Parses HTML to extract Open Graph (og:*) meta tags
+2. Parses Twitter Card meta tags
+3. Generates structured preview cards with title, description, image, type, site_name
+4. Falls back to standard meta tags when OG tags are missing
+5. Provides a clean dataclass for the preview card
 
-## What's Needed: Content Categorizer
-
-A module that **automatically classifies saved items by topic** based on their content. This bridges the gap between:
-1. Raw extracted content (text, keywords, headings)
-2. Manual tags (user-assigned)
-3. URL-level classification (format-based, not topic-based)
-
-## Design Approach
-
-The `content_categorizer.py` module will:
-
-1. **Define a set of topic categories** with associated keywords/signals (e.g., "technology", "science", "health", "finance", etc.)
-2. **Analyze content** using multiple signals:
-   - Keyword matching against topic dictionaries
-   - Title/heading analysis
-   - URL path hints
-   - Meta description analysis
-3. **Produce a `CategorizationResult`** with:
-   - Primary topic (highest confidence)
-   - Secondary topics (with confidence scores)
-   - Reasons for classification
-4. **Support custom topic definitions** so users can add their own categories
-5. **Support batch categorization** for efficiency
-
-## Code Patterns to Follow
-
-- Dataclasses for data structures (matching `tags.py`, `keyword_extractor.py`)
-- Class-based API with clear public methods (matching `URLClassifier`, `ContentScorer`)
-- Type hints throughout
-- No external ML dependencies — rule-based keyword matching
-- Tests following existing patterns (pytest, `setup_method`, descriptive test names)
-
-## Files to Create
-
-1. `personal_index/content_categorizer.py` — main module
-2. `tests/test_content_categorizer.py` — comprehensive tests
+## Design
+- `LinkPreview` dataclass: holds title, description, image_url, site_name, type, url, twitter_card
+- `LinkPreviewGenerator` class: takes HTML + base_url, extracts OG/Twitter tags, returns LinkPreview
+- Fallback chain: og:title > title tag > empty; og:description > meta description > empty; etc.
+- Tests first, then implementation, then integration with scraper
