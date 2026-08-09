@@ -216,3 +216,39 @@ class TestMetricsTimeRange:
         result = tracker.sort_by_reading_time()
         assert result[0].url == "https://b.com"
         assert result[1].url == "https://a.com"
+
+
+class TestMetricsIntegration:
+    def test_metrics_from_content_text(self):
+        """Test computing metrics from raw text content."""
+        from personal_index.content_metrics import compute_text_metrics
+        text = "Hello world. This is a test. It has three sentences."
+        metrics = compute_text_metrics(text, url="https://example.com")
+        assert metrics.word_count > 0
+        assert metrics.sentence_count >= 3
+        assert metrics.char_count == len(text)
+
+    def test_compute_text_metrics_empty(self):
+        from personal_index.content_metrics import compute_text_metrics
+        metrics = compute_text_metrics("", url="https://example.com")
+        assert metrics.word_count == 0
+        assert metrics.sentence_count == 0
+
+    def test_compute_text_metrics_paragraphs(self):
+        from personal_index.content_metrics import compute_text_metrics
+        text = "Paragraph one.\n\nParagraph two.\n\nParagraph three."
+        metrics = compute_text_metrics(text, url="https://example.com")
+        assert metrics.paragraph_count >= 3
+
+    def test_compute_text_metrics_avg_word_length(self):
+        from personal_index.content_metrics import compute_text_metrics
+        text = "Hi there"
+        metrics = compute_text_metrics(text, url="https://example.com")
+        assert metrics.avg_word_length > 0
+
+    def test_compute_text_metrics_unique_ratio(self):
+        from personal_index.content_metrics import compute_text_metrics
+        text = "the the the cat cat cat"
+        metrics = compute_text_metrics(text, url="https://example.com")
+        assert metrics.unique_word_ratio > 0
+        assert metrics.unique_word_ratio <= 1.0
