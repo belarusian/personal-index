@@ -195,3 +195,64 @@ class TestContentCacheKeyGeneration:
         key1 = cache.generate_key("extract", "url1")
         key2 = cache.generate_key("extract", "url2")
         assert key1 != key2
+
+
+class TestCacheDecorator:
+    def test_decorator_caches_result(self):
+        from personal_index.content_cache import CacheDecorator
+        call_count = [0]
+
+        @CacheDecorator(ttl=60.0)
+        def expensive_op(x):
+            call_count[0] += 1
+            return x * 2
+
+        assert expensive_op(5) == 10
+        assert expensive_op(5) == 10
+        assert call_count[0] == 1
+
+    def test_decorator_different_args(self):
+        from personal_index.content_cache import CacheDecorator
+        call_count = [0]
+
+        @CacheDecorator(ttl=60.0)
+        def expensive_op(x):
+            call_count[0] += 1
+            return x * 2
+
+        assert expensive_op(5) == 10
+        assert expensive_op(3) == 6
+        assert call_count[0] == 2
+
+    def test_decorator_ttl_expiration(self):
+        from personal_index.content_cache import CacheDecorator
+        call_count = [0]
+
+        @CacheDecorator(ttl=0.05)
+        def expensive_op(x):
+            call_count[0] += 1
+            return x * 2
+
+        assert expensive_op(5) == 10
+        time.sleep(0.1)
+        assert expensive_op(5) == 10
+        assert call_count[0] == 2
+
+    def test_decorator_cache_property(self):
+        from personal_index.content_cache import CacheDecorator
+
+        @CacheDecorator(ttl=60.0)
+        def my_func(x):
+            return x
+
+        assert my_func.cache is not None
+        assert isinstance(my_func.cache, ContentCache)
+
+    def test_decorator_wrapped_attribute(self):
+        from personal_index.content_cache import CacheDecorator
+
+        @CacheDecorator(ttl=60.0)
+        def my_func(x):
+            return x
+
+        assert hasattr(my_func, '__wrapped__')
