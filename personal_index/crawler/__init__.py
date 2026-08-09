@@ -117,7 +117,9 @@ class Crawler:
         links = []
         for a_tag in soup.find_all("a", href=True):
             href = a_tag["href"]
-            if href.startswith(("javascript:", "mailto:", "data:", "tel:")):
+            if isinstance(href, list):
+                href = href[0] if href else ""
+            if not isinstance(href, str) or href.startswith(("javascript:", "mailto:", "data:", "tel:")):
                 continue
             from personal_index.utils.url_utils import resolve_relative_url
             resolved = resolve_relative_url(base_url, href)
@@ -143,7 +145,8 @@ class Crawler:
         meta_desc = ""
         meta_tag = soup.find("meta", attrs={"name": "description"})
         if meta_tag and meta_tag.get("content"):
-            meta_desc = meta_tag["content"].strip()
+            content = meta_tag["content"]
+            meta_desc = content[0].strip() if isinstance(content, list) else content.strip()
 
         # Extract text
         text = soup.get_text(separator=" ")
@@ -216,7 +219,7 @@ class WebCrawler:
         self.config = config
         self.content_filter = content_filter
         # Pass config to Crawler if it's a CrawlerConfig, otherwise use default
-        from personal_index.crawler.__init__ import CrawlerConfig as _CC
+        from personal_index.crawler import CrawlerConfig as _CC
         crawler_config = None
         if config is not None:
             if isinstance(config, _CC):
