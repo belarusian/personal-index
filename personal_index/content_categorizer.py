@@ -387,9 +387,6 @@ class ContentCategorizer:
                 title_tokens=title_tokens,
                 meta_tokens=meta_tokens,
                 url_hints=url_hints,
-                text=text,
-                title=title,
-                meta_description=meta_description,
             )
             if score >= self.min_score:
                 topic_scores.append(TopicScore(
@@ -452,9 +449,6 @@ class ContentCategorizer:
         title_tokens: set,
         meta_tokens: set,
         url_hints: set,
-        text: str = "",
-        title: str = "",
-        meta_description: str = "",
     ) -> Tuple[float, List[str], List[str]]:
         """Score a single topic against content signals.
 
@@ -465,62 +459,33 @@ class ContentCategorizer:
         matched_keywords: List[str] = []
         signal_sources: List[str] = []
 
-        # 1. Text keyword matching - first check full keywords (including multi-word)
-        import re
-        text_lower = text.lower()
-        full_matches = []
-        for kw in topic.keywords:
-            # Match as whole words only
-            pattern = r'\b' + re.escape(kw.lower()) + r'\b'
-            if re.search(pattern, text_lower):
-                full_matches.append(kw)
-        
-        # Also check token-based matching
+        # 1. Text keyword matching
         text_matches = [kw for kw in topic.keywords if kw in text_tokens]
-        
-        # Combine both, avoiding duplicates
-        matched_keywords = list(set(full_matches + text_matches))
-        
-        if matched_keywords:
+        if text_matches:
             # Normalize by topic keyword count to avoid bias toward large topics
-            text_ratio = len(matched_keywords) / max(len(topic.keywords), 1)
+            text_ratio = len(text_matches) / max(len(topic.keywords), 1)
             # Logarithmic scaling to prevent dominance
-            text_score = min(len(matched_keywords) * 0.15, 1.0)
+            text_score = min(len(text_matches) * 0.15, 1.0)
             score += text_score * topic.weight
+            matched_keywords.extend(text_matches)
             signal_sources.append("text")
 
-        # 1. Title keyword matching (boosted)  
-        import re
-        title_lower = title.lower()
-        title_full_matches = []
-        for kw in topic.keywords:
-            pattern = r'\b' + re.escape(kw.lower()) + r'\b'
-            if re.search(pattern, title_lower):
-                title_full_matches.append(kw)
-        title_text_matches = [kw for kw in topic.keywords if kw in title_tokens]
-        title_matched = list(set(title_full_matches + title_text_matches))
-        if title_matched:
-            title_score = min(len(title_matched) * 0.3 * self.TITLE_BOOST, 1.0)
+        # 2. Title keyword matching (boosted)
+        title_matches = [kw for kw in topic.keywords if kw in title_tokens]
+        if title_matches:
+            title_score = min(len(title_matches) * 0.3 * self.TITLE_BOOST, 1.0)
             score += title_score * topic.weight
-            for kw in title_matched:
+            for kw in title_matches:
                 if kw not in matched_keywords:
                     matched_keywords.append(kw)
             signal_sources.append("title")
 
-        # 2. Meta description matching (boosted)
-        import re
-        meta_lower = meta_description.lower()
-        meta_full_matches = []
-        for kw in topic.keywords:
-            pattern = r'\b' + re.escape(kw.lower()) + r'\b'
-            if re.search(pattern, meta_lower):
-                meta_full_matches.append(kw)
-        meta_text_matches = [kw for kw in topic.keywords if kw in meta_tokens]
-        meta_matched = list(set(meta_full_matches + meta_text_matches))
-        if meta_matched:
-            meta_score = min(len(meta_matched) * 0.2 * self.META_DESC_BOOST, 1.0)
+        # 3. Meta description matching (boosted)
+        meta_matches = [kw for kw in topic.keywords if kw in meta_tokens]
+        if meta_matches:
+            meta_score = min(len(meta_matches) * 0.2 * self.META_DESC_BOOST, 1.0)
             score += meta_score * topic.weight
-            for kw in meta_matched:
+            for kw in meta_matches:
                 if kw not in matched_keywords:
                     matched_keywords.append(kw)
             signal_sources.append("meta_description")

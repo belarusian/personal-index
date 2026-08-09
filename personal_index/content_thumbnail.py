@@ -14,11 +14,6 @@ from urllib.parse import urlparse
 class ThumbnailSize:
     """Thumbnail size configuration."""
 
-    SMALL: ThumbnailSize
-    MEDIUM: ThumbnailSize
-    LARGE: ThumbnailSize
-    XLARGE: ThumbnailSize
-
     _PRESETS = {
         "small": (64, 64),
         "medium": (128, 128),
@@ -43,6 +38,7 @@ class ThumbnailSize:
         return hash((self.width, self.height))
 
 
+# Class-level preset instances
 ThumbnailSize.SMALL = ThumbnailSize(64, 64)
 ThumbnailSize.MEDIUM = ThumbnailSize(128, 128)
 ThumbnailSize.LARGE = ThumbnailSize(256, 256)

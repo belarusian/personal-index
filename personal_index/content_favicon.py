@@ -248,7 +248,7 @@ class FaviconExtractor:
 
     def get_google_favicon_url(self, domain: str, size: int = 32) -> str:
         """Get favicon URL via Google's favicon service."""
-        return f"https://www.google.com/s2/favicons?domain={domain}&sz={size}"
+        return f"https://www.google.com/s2/favicons?domain={domain}&s={size}"
 
     def _detect_format(self, url: str, type_hint: str = "") -> FaviconFormat:
         """Detect favicon format from URL or type hint."""
