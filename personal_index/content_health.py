@@ -2,15 +2,26 @@
 
 Provides a lightweight health check for the content subsystem,
 returning status, timestamp, and a numeric score.
+
+Also provides URL accessibility checking for saved content URLs.
 """
 
 from __future__ import annotations
 
 import os
 import time
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
+
+import requests
+
+
+# ---------------------------------------------------------------------------
+# Original filesystem health check (unchanged)
+# ---------------------------------------------------------------------------
 
 
 def check_health(data_dir: Optional[str] = None) -> Dict[str, Any]:
@@ -81,3 +92,138 @@ def check_health(data_dir: Optional[str] = None) -> Dict[str, Any]:
         "last_check": last_check,
         "score": score,
     }
+
+
+# ---------------------------------------------------------------------------
+# URL accessibility health check (new)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class UrlHealthResult:
+    """Result of checking a single URL's accessibility."""
+
+    url: str
+    status_code: Optional[int]
+    is_accessible: bool
+    error: Optional[str]
+    checked_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to a plain dict."""
+        return {
+            "url": self.url,
+            "status_code": self.status_code,
+            "is_accessible": self.is_accessible,
+            "error": self.error,
+            "checked_at": self.checked_at,
+        }
+
+
+def _is_valid_http_url(url: str) -> bool:
+    """Check if a URL looks like a valid HTTP(S) URL."""
+    if not url or not isinstance(url, str):
+        return False
+    try:
+        parsed = urlparse(url)
+        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+    except Exception:
+        return False
+
+
+def check_url_accessibility(
+    url: str,
+    timeout: int = 5,
+) -> UrlHealthResult:
+    """Check whether a single URL is still accessible.
+
+    Uses HEAD first, falling back to GET if the server returns 405.
+
+    Args:
+        url: The URL to check.
+        timeout: Request timeout in seconds.
+
+    Returns:
+        A UrlHealthResult describing the outcome.
+    """
+    if not _is_valid_http_url(url):
+        return UrlHealthResult(
+            url=url,
+            status_code=None,
+            is_accessible=False,
+            error="Invalid URL",
+        )
+
+    try:
+        # Try HEAD first (lighter weight)
+        resp = requests.head(url, timeout=timeout, allow_redirects=True)
+
+        # If server doesn't support HEAD, fall back to GET
+        if resp.status_code == 405:
+            resp = requests.get(url, timeout=timeout, allow_redirects=True)
+
+        is_accessible = resp.status_code < 400
+        error = None if is_accessible else f"HTTP {resp.status_code}"
+
+        return UrlHealthResult(
+            url=url,
+            status_code=resp.status_code,
+            is_accessible=is_accessible,
+            error=error,
+        )
+
+    except requests.Timeout:
+        return UrlHealthResult(
+            url=url,
+            status_code=None,
+            is_accessible=False,
+            error="Request timed out",
+        )
+    except requests.ConnectionError as exc:
+        return UrlHealthResult(
+            url=url,
+            status_code=None,
+            is_accessible=False,
+            error=f"Connection error: {exc}",
+        )
+    except requests.RequestException as exc:
+        return UrlHealthResult(
+            url=url,
+            status_code=None,
+            is_accessible=False,
+            error=f"Request failed: {exc}",
+        )
+    except Exception as exc:
+        return UrlHealthResult(
+            url=url,
+            status_code=None,
+            is_accessible=False,
+            error=f"Unexpected error: {exc}",
+        )
+
+
+def check_content_urls(
+    storage: Any,
+    timeout: int = 5,
+) -> List[UrlHealthResult]:
+    """Check accessibility of all saved content URLs.
+
+    Iterates over every IndexedPage in the storage and checks whether
+    its URL is still reachable.
+
+    Args:
+        storage: A storage object with a ``get_pages()`` method that
+            returns a list of IndexedPage instances.
+        timeout: Request timeout in seconds per URL.
+
+    Returns:
+        A list of UrlHealthResult, one per saved URL.
+    """
+    pages = storage.get_pages()
+    results: List[UrlHealthResult] = []
+    for page in pages:
+        result = check_url_accessibility(page.url, timeout=timeout)
+        results.append(result)
+    return results
