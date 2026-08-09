@@ -130,3 +130,47 @@ class TestContentMetricsTracker:
     def test_count_empty(self):
         tracker = ContentMetricsTracker()
         assert tracker.count() == 0
+
+
+class TestContentMetricsSummary:
+    def test_summary_empty(self):
+        tracker = ContentMetricsTracker()
+        summary = tracker.summary()
+        assert summary.total_items == 0
+        assert summary.total_word_count == 0
+        assert summary.avg_word_count == 0.0
+        assert summary.total_reading_time_seconds == 0
+
+    def test_summary_with_items(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=100))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=300))
+        summary = tracker.summary()
+        assert summary.total_items == 2
+        assert summary.total_word_count == 400
+        assert summary.avg_word_count == 200.0
+        assert summary.total_reading_time_seconds == 120
+
+    def test_summary_max_min_word_count(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=50))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=500))
+        tracker.record(ContentMetrics(url="https://c.com", word_count=250))
+        summary = tracker.summary()
+        assert summary.max_word_count == 500
+        assert summary.min_word_count == 50
+
+    def test_summary_median_word_count(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=100))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=200))
+        tracker.record(ContentMetrics(url="https://c.com", word_count=300))
+        summary = tracker.summary()
+        assert summary.median_word_count == 200.0
+
+    def test_summary_median_even_count(self):
+        tracker = ContentMetricsTracker()
+        tracker.record(ContentMetrics(url="https://a.com", word_count=100))
+        tracker.record(ContentMetrics(url="https://b.com", word_count=300))
+        summary = tracker.summary()
+        assert summary.median_word_count == 200.0
