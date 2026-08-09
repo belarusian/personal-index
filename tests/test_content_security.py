@@ -196,3 +196,39 @@ class TestSecurityHeadersIntegration:
         assert "Content-Security-Policy" in result
         assert "X-Frame-Options" in result
         assert "X-Content-Type-Options" in result
+
+
+class TestSecurityMiddleware:
+    """Tests for SecurityMiddleware class."""
+
+    def test_default_headers(self):
+        from personal_index.content_security import SecurityMiddleware
+        middleware = SecurityMiddleware()
+        headers = middleware.apply_headers()
+        assert "Content-Security-Policy" in headers
+
+    def test_sanitize_request(self):
+        from personal_index.content_security import SecurityMiddleware
+        middleware = SecurityMiddleware()
+        params = {"name": "<script>alert(1)</script>", "email": "test@test.com"}
+        result = middleware.sanitize_request(params)
+        assert "<script>" not in result["name"]
+
+    def test_blocked_path(self):
+        from personal_index.content_security import SecurityMiddleware
+        middleware = SecurityMiddleware(blocked_paths=["/admin"])
+        assert middleware.is_path_blocked("/admin")
+        assert not middleware.is_path_blocked("/public")
+
+    def test_process_request_allowed(self):
+        from personal_index.content_security import SecurityMiddleware
+        middleware = SecurityMiddleware()
+        allowed, headers, params = middleware.process_request("/page", {"q": "test"})
+        assert allowed is True
+        assert headers
+
+    def test_process_request_blocked(self):
+        from personal_index.content_security import SecurityMiddleware
+        middleware = SecurityMiddleware(blocked_paths=["/admin"])
+        allowed, headers, params = middleware.process_request("/admin", {})
+        assert allowed is False
