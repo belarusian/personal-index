@@ -36,7 +36,7 @@ class TestBackupEntry:
         )
         assert entry.content == "<html>test</html>"
         assert entry.title == "Test Article"
-        assert entry.content_length == 14
+        assert entry.content_length == 17
 
     def test_create_backup_entry_with_metadata(self):
         entry = BackupEntry(
@@ -62,7 +62,7 @@ class TestBackupEntry:
         assert d["content_hash"] == "abc123"
         assert d["title"] == "Test"
         assert d["content"] == "<html>test</html>"
-        assert d["content_length"] == 14
+        assert d["content_length"] == 17
 
     def test_backup_entry_from_dict(self):
         data = {
@@ -125,7 +125,7 @@ class TestBackupEntry:
         entry = BackupEntry(url="https://example.com/a", content_hash="h1")
         entry.set_content("<html>content</html>")
         assert entry.content == "<html>content</html>"
-        assert entry.content_length == 19
+        assert entry.content_length == 20
 
 
 class TestBackupArchive:
