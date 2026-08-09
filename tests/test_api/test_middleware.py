@@ -49,9 +49,7 @@ class TestRequestLoggingMiddleware:
             sent_messages.append(message)
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
 
         assert len(sent_messages) == 2
         assert "Request GET /test" in caplog.text
@@ -70,9 +68,7 @@ class TestRequestLoggingMiddleware:
             pass
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
         assert len(app.calls) == 1
 
 
@@ -94,9 +90,7 @@ class TestCORSHeadersMiddleware:
             sent_messages.append(message)
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
 
         headers = dict(
             (k.decode(), v.decode())
@@ -119,9 +113,7 @@ class TestCORSHeadersMiddleware:
             sent_messages.append(message)
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
 
         assert sent_messages[0]["status"] == 204
 
@@ -154,9 +146,7 @@ class TestRequestIdMiddleware:
             sent_messages.append(message)
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
 
         headers = dict(
             (k.decode(), v.decode())
@@ -179,9 +169,7 @@ class TestRequestIdMiddleware:
             pass
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
         assert "request_id" in scope
 
 

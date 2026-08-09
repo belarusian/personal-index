@@ -173,16 +173,12 @@ class TestRateLimitMiddleware:
 
         import asyncio
         # First request should pass
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
         assert sent[-1]["body"] == b"ok"
 
         # Second request should be blocked
         sent.clear()
-        asyncio.get_event_loop().run_until_complete(
-            middleware(scope, receive, send)
-        )
+        asyncio.run(middleware(scope, receive, send))
         assert sent[0]["status"] == 429
 
     def test_middleware_skips_non_http(self):
@@ -202,6 +198,4 @@ class TestRateLimitMiddleware:
             pass
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            middleware({"type": "websocket"}, receive, send)
-        )
+        asyncio.run(middleware({"type": "websocket"}, receive, send))
