@@ -171,3 +171,78 @@ class ContentAnalytics:
             top_engaged=top_engaged,
             engagement_distribution=distribution,
         )
+
+
+class TrendAnalyzer:
+    """Analyzes trends in content data over time."""
+
+    def __init__(self) -> None:
+        self._data_points: list[tuple[str, float]] = []
+
+    def add_data_point(self, date: str, value: float) -> None:
+        """Add a data point with date and value."""
+        self._data_points.append((date, value))
+
+    def get_trend(self) -> dict:
+        """Analyze trend direction from data points."""
+        if len(self._data_points) < 2:
+            return {
+                "direction": "stable",
+                "data_points": len(self._data_points),
+                "change_percent": 0.0,
+                "avg_value": 0.0,
+            }
+
+        values = [v for _, v in self._data_points]
+        n = len(values)
+
+        # Simple linear regression slope
+        x_mean = (n - 1) / 2
+        y_mean = sum(values) / n
+        numerator = sum((i - x_mean) * (v - y_mean) for i, v in enumerate(values))
+        denominator = sum((i - x_mean) ** 2 for i in range(n))
+
+        slope = numerator / denominator if denominator else 0
+
+        # Determine direction
+        if abs(slope) < 0.01 * y_mean:
+            direction = "stable"
+        elif slope > 0:
+            direction = "up"
+        else:
+            direction = "down"
+
+        # Calculate change percentage
+        first_val = values[0] if values else 0
+        last_val = values[-1] if values else 0
+        change_percent = 0.0
+        if first_val != 0:
+            change_percent = ((last_val - first_val) / abs(first_val)) * 100
+
+        return {
+            "direction": direction,
+            "data_points": n,
+            "change_percent": round(change_percent, 2),
+            "avg_value": round(y_mean, 2),
+            "slope": round(slope, 4),
+        }
+
+    def get_top_values(self, n: int = 5) -> list[dict]:
+        """Get top N data points by value."""
+        sorted_points = sorted(
+            self._data_points, key=lambda x: x[1], reverse=True
+        )
+        return [
+            {"date": date, "value": value}
+            for date, value in sorted_points[:n]
+        ]
+
+    def get_bottom_values(self, n: int = 5) -> list[dict]:
+        """Get bottom N data points by value."""
+        sorted_points = sorted(
+            self._data_points, key=lambda x: x[1]
+        )
+        return [
+            {"date": date, "value": value}
+            for date, value in sorted_points[:n]
+        ]
