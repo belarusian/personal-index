@@ -328,3 +328,66 @@ class PriorityScorer:
 
         max_possible = len(interests_lower) * 2
         return min(matches / max(max_possible, 1), 1.0)
+
+
+class PriorityFilter:
+    """Filter and sort content by priority level."""
+
+    def __init__(self, scorer: Optional[PriorityScorer] = None) -> None:
+        self.scorer = scorer or PriorityScorer()
+
+    def filter_by_level(
+        self,
+        items: list[dict[str, Any]],
+        min_level: PriorityLevel,
+    ) -> list[ContentPriority]:
+        """Filter items to only those meeting minimum priority level.
+
+        Args:
+            items: List of content dicts.
+            min_level: Minimum priority level to include.
+
+        Returns:
+            List of ContentPriority items meeting the threshold.
+        """
+        ranked = self.scorer.rank(items)
+        return [
+            p for p in ranked
+            if p.score.level.numeric_value >= min_level.numeric_value
+        ]
+
+    def get_top_n(
+        self,
+        items: list[dict[str, Any]],
+        n: int = 10,
+    ) -> list[ContentPriority]:
+        """Get the top N highest-priority items.
+
+        Args:
+            items: List of content dicts.
+            n: Number of top items to return.
+
+        Returns:
+            List of top N ContentPriority items.
+        """
+        ranked = self.scorer.rank(items)
+        return ranked[:n]
+
+    def group_by_level(
+        self, items: list[dict[str, Any]]
+    ) -> dict[PriorityLevel, list[ContentPriority]]:
+        """Group items by their priority level.
+
+        Args:
+            items: List of content dicts.
+
+        Returns:
+            Dict mapping PriorityLevel to list of ContentPriority items.
+        """
+        ranked = self.scorer.rank(items)
+        groups: dict[PriorityLevel, list[ContentPriority]] = {
+            level: [] for level in PriorityLevel
+        }
+        for item in ranked:
+            groups[item.score.level].append(item)
+        return groups
