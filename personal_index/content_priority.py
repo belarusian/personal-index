@@ -1,6 +1,7 @@
 """Content priority scoring - score content importance."""
 
 from __future__ import annotations
+from contextlib import suppress
 
 import logging
 import math
