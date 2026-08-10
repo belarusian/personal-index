@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from personal_index.config.loader import load_config
 from personal_index.config.models import AppConfig
