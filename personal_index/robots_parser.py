@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from contextlib import suppress
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
@@ -111,10 +112,8 @@ def parse_robots_txt(text: str, base_url: str) -> RobotsPolicy:
                     pattern=pattern,
                 ))
         elif line.lower().startswith("crawl-delay:"):
-            try:
+            with suppress(ValueError):
                 policy.crawl_delay = float(line.split(":", 1)[1].strip())
-            except ValueError:
-                pass
         elif line.lower().startswith("sitemap:"):
             sitemap_url = line.split(":", 1)[1].strip()
             if sitemap_url:

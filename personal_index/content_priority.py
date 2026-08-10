@@ -278,10 +278,8 @@ class PriorityScorer:
         }
 
         domain = ""
-        try:
+        with suppress(IndexError):
             domain = url.split("//")[-1].split("/")[0].split(":")[0]
-        except IndexError:
-            pass
 
         if domain in known_high_authority:
             return 85

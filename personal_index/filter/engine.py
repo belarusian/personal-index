@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import List, Set
 
@@ -38,10 +39,8 @@ class ContentFilter:
             if not interest.enabled:
                 continue
             for pattern in interest.url_patterns:
-                try:
+                with suppress(re.error):
                     patterns.append((interest.name, re.compile(pattern)))
-                except re.error:
-                    pass
         return patterns
 
     def filter_url(self, url: str) -> FilterResult:

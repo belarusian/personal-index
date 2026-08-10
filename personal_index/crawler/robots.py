@@ -103,10 +103,8 @@ def parse_robots_txt(text: str, base_url: str = "") -> RobotsPolicy:
                 )
             )
         elif key == "crawl-delay":
-            try:
+            with suppress(ValueError):
                 policy.crawl_delay = float(value)
-            except ValueError:
-                pass
         elif key == "sitemap":
             policy.sitemap_urls.append(value)
 
