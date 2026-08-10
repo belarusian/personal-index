@@ -97,21 +97,30 @@ class LinkPreviewGenerator:
         """Extract an Open Graph meta tag value."""
         tag = soup.find("meta", attrs={"property": property_name})
         if tag and tag.get("content"):
-            return tag["content"].strip()
+            content = tag["content"]
+            if isinstance(content, str):
+                return content.strip()
+            return str(content).strip()
         return ""
 
     def _extract_twitter_tag(self, soup: BeautifulSoup, name: str) -> str:
         """Extract a Twitter Card meta tag value."""
         tag = soup.find("meta", attrs={"name": name})
         if tag and tag.get("content"):
-            return tag["content"].strip()
+            content = tag["content"]
+            if isinstance(content, str):
+                return content.strip()
+            return str(content).strip()
         return ""
 
     def _extract_meta(self, soup: BeautifulSoup, name: str) -> str:
         """Extract a standard meta tag value."""
         tag = soup.find("meta", attrs={"name": name})
         if tag and tag.get("content"):
-            return tag["content"].strip()
+            content = tag["content"]
+            if isinstance(content, str):
+                return content.strip()
+            return str(content).strip()
         return ""
 
     def _extract_title_tag(self, soup: BeautifulSoup) -> str:

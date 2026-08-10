@@ -170,7 +170,8 @@ class ContentScorer:
 
         Currently reads from content dict; can be extended with date logic.
         """
-        return content.get("freshness_score", 0.5)
+        score = content.get("freshness_score", 0.5)
+        return float(score)
 
     def rank(
         self, items: list[dict[str, Any]]

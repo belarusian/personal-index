@@ -54,7 +54,8 @@ class Serializer:
     def from_json(self, json_str: str) -> dict:
         """Deserialize JSON string to dict."""
         try:
-            return json.loads(json_str)
+            result = json.loads(json_str)
+            return result  # type: ignore[no-any-return]
         except json.JSONDecodeError as e:
             raise DeserializationError(f"Failed to deserialize JSON: {e}") from e
 
@@ -81,7 +82,7 @@ class Serializer:
         if hasattr(obj, "__dataclass_fields__"):
             return self._dataclass_to_dict(obj)
         if hasattr(obj, "__dict__"):
-            return obj.__dict__
+            return obj.__dict__  # type: ignore[no-any-return]
         if isinstance(obj, dict):
             return obj
         raise SerializationError(f"Cannot serialize type: {type(obj)}")
@@ -121,5 +122,5 @@ class Serializer:
         if hasattr(obj, "__dataclass_fields__"):
             return self._dataclass_to_dict(obj)
         if hasattr(obj, "__dict__"):
-            return obj.__dict__
+            return obj.__dict__  # type: ignore[no-any-return]
         return str(obj)

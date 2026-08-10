@@ -32,7 +32,7 @@ class Storage:
             if filepath.name in ("interests.json", "pages.json"):
                 return []
             return {}
-        return json.loads(content)
+        return json.loads(content)  # type: ignore[no-any-return]
 
     def _write_json(self, filepath: Path, data):
         filepath.write_text(json.dumps(data, indent=2, default=str))

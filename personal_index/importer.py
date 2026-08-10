@@ -163,8 +163,8 @@ class Importer:
             href = a_tag["href"]
             title = a_tag.get("title", a_tag.get_text(strip=True) or "")
             bookmark = Bookmark(
-                url=href,
-                title=title,
+                url=str(href),
+                title=str(title) if title else "",
                 category="imported",
             )
             self._manager.add(bookmark)

@@ -49,7 +49,7 @@ class MetricStats:
         mean = self.mean
         variance = (self.sum_sq / self.count) - (mean ** 2)
         # Clamp to avoid floating point issues
-        return max(0.0, variance) ** 0.5
+        return float(max(0.0, variance) ** 0.5)
 
     @property
     def p50(self) -> float:

@@ -68,7 +68,7 @@ class Crawler:
 
         for url in seed_urls:
             normalized = normalize_url(url)
-            if self._should_crawl(normalized):
+            if normalized and self._should_crawl(normalized):
                 self._crawl_url(normalized, depth=0, max_depth=depth)
 
         return self._results
@@ -97,7 +97,7 @@ class Crawler:
             links = self._extract_links(resp.text, url)
             for link in links:
                 normalized = normalize_url(link)
-                if self._should_crawl(normalized):
+                if normalized and self._should_crawl(normalized):
                     self._crawl_url(normalized, depth + 1, max_depth)
 
     def _should_crawl(self, url: str) -> bool:
@@ -166,7 +166,8 @@ class Crawler:
 
     def _get_domain(self, url: str) -> str:
         """Extract domain from URL."""
-        return extract_domain(url)
+        domain = extract_domain(url)
+        return domain if domain else ""
 
     def close(self) -> None:
         """Close the crawler session."""

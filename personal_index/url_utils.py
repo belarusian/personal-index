@@ -341,7 +341,7 @@ def extract_all_urls(html: str, base_url: str = "") -> list:
                 continue
             full_url = urljoin(base_url, href) if base_url else href
             normalized = normalize_url(full_url)
-            if is_valid_url(normalized):
+            if normalized and is_valid_url(normalized):
                 urls.append(normalized)
     except (ValueError, AttributeError, TypeError):
         pass
@@ -353,7 +353,7 @@ def extract_all_urls(html: str, base_url: str = "") -> list:
         )
         for url in regex_urls:
             normalized = normalize_url(url)
-            if is_valid_url(normalized) and normalized not in urls:
+            if normalized and is_valid_url(normalized) and normalized not in urls:
                 urls.append(normalized)
 
     return urls

@@ -143,7 +143,7 @@ class DashboardAggregator:
     def _get_pages(self, index_instance) -> list:
         """Get pages from index instance."""
         if hasattr(index_instance, "get_all_pages"):
-            return index_instance.get_all_pages()
+            return index_instance.get_all_pages()  # type: ignore[no-any-return]
         if hasattr(index_instance, "pages"):
             return list(index_instance.pages)
         return []

@@ -51,7 +51,7 @@ class VersionTracker:
     def generate_version_id(url: str, hash_value: str) -> str:
         """Generate a unique version ID from URL and content hash."""
         combined = f"{url}:{hash_value}"
-        return hashlib.md5(combined.encode()).hexdigest()[:12]
+        return hashlib.sha256(combined.encode()).hexdigest()[:12]
 
     def record_version(self, url: str, content: str, title: str = "",
                        metadata: dict | None = None) -> ContentVersion:

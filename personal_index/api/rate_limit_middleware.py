@@ -176,7 +176,7 @@ class RateLimitMiddleware:
         """Extract client identifier from ASGI scope."""
         client = scope.get("client")
         if client:
-            return client[0]  # IP address
+            return client[0]  # type: ignore[no-any-return]  # IP address
         return "unknown"
 
     async def __call__(self, scope, receive, send):
