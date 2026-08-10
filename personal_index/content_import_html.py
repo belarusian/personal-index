@@ -27,6 +27,7 @@ class HTMLBookmark:
     icon: str = ""
 
     def __repr__(self) -> str:
+        """Return a string representation of the bookmark."""
         return f"HTMLBookmark(url={self.url!r}, title={self.title!r})"
 
     def to_dict(self) -> dict:
@@ -93,6 +94,11 @@ class HTMLImporter:
     """Import bookmarks from Netscape HTML bookmark format."""
 
     def __init__(self, manager=None) -> None:
+        """Initialize the HTML importer.
+
+        Args:
+            manager: Optional BookmarkManager to add imported bookmarks to.
+        """
         self._manager = manager
         self._seen_urls: Set[str] = set()
 
