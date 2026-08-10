@@ -135,11 +135,10 @@ class TopicDetector:
                 count = len(re.findall(re.escape(kw_lower), text_lower))
                 match_count += count
 
-            if match_count > 0:
-                if topic.name not in seen:
-                    seen.add(topic.name)
-                    confidence = min(0.5 + (match_count * 0.1), 1.0)
-                    results.append(Tag(name=topic.name, confidence=round(confidence, 2)))
+            if match_count > 0 and topic.name not in seen:
+                seen.add(topic.name)
+                confidence = min(0.5 + (match_count * 0.1), 1.0)
+                results.append(Tag(name=topic.name, confidence=round(confidence, 2)))
 
         results.sort(key=lambda t: t.confidence, reverse=True)
         return results

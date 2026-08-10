@@ -165,9 +165,8 @@ class SessionStore:
         """
         count = 0
         for session in self._sessions.values():
-            if not session.is_expired():
-                if user_id is None or session.user_id == user_id:
-                    count += 1
+            if not session.is_expired() and (user_id is None or session.user_id == user_id):
+                count += 1
         return count
 
     def _maybe_cleanup(self) -> None:
