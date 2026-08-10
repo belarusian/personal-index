@@ -73,6 +73,7 @@ class DedupConfig:
     _VALID_METHODS = {"hash", "tfidf", "jaccard"}
 
     def __post_init__(self) -> None:
+        """Initialize post-processing for DedupConfig."""
         if self.method not in self._VALID_METHODS:
             raise ValueError(
                 f"Invalid method '{self.method}'. Must be one of: {self._VALID_METHODS}"
@@ -87,6 +88,11 @@ class ContentDeduplicator:
     """
 
     def __init__(self, config: Optional[DedupConfig] = None) -> None:
+        """Initialize ContentDeduplicator with optional config.
+
+        Args:
+            config: Deduplication configuration.
+        """
         self.config = config or DedupConfig()
         self._content_hashes: dict[str, str] = {}  # hash -> first url
         self._content_tokens: dict[str, set[str]] = {}  # url -> token set
@@ -442,6 +448,11 @@ class BatchDedupReport:
     """Generate a report of deduplication results."""
 
     def __init__(self, result: DedupResult) -> None:
+        """Initialize from DedupResult.
+
+        Args:
+            result: Deduplication result to wrap.
+        """
         self.result = result
 
     def to_dict(self) -> dict:

@@ -25,6 +25,14 @@ import requests
 
 
 def check_health(data_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Check overall content health status.
+
+    Args:
+        data_dir: Path to data directory.
+
+    Returns:
+        Dict with health status, score, and details.
+    """
     """Run a health check on the content subsystem.
 
     Args:
@@ -101,6 +109,13 @@ def check_health(data_dir: Optional[str] = None) -> Dict[str, Any]:
 
 @dataclass
 class UrlHealthResult:
+    """Result of URL health check.
+
+    Attributes:
+        url: The checked URL.
+        status: HTTP status code.
+        accessible: Whether URL is reachable.
+    """
     """Result of checking a single URL's accessibility."""
 
     url: str
@@ -123,6 +138,14 @@ class UrlHealthResult:
 
 
 def _is_valid_http_url(url: str) -> bool:
+    """Validate if URL is a proper HTTP/HTTPS URL.
+
+    Args:
+        url: URL string to validate.
+
+    Returns:
+        True if valid HTTP URL.
+    """
     """Check if a URL looks like a valid HTTP(S) URL."""
     if not url or not isinstance(url, str):
         return False
@@ -137,6 +160,15 @@ def check_url_accessibility(
     url: str,
     timeout: int = 5,
 ) -> UrlHealthResult:
+    """Check if a URL is accessible.
+
+    Args:
+        url: URL to check.
+        timeout: Request timeout in seconds.
+
+    Returns:
+        UrlHealthResult with status info.
+    """
     """Check whether a single URL is still accessible.
 
     Uses HEAD first, falling back to GET if the server returns 405.
@@ -208,6 +240,15 @@ def check_content_urls(
     storage: Any,
     timeout: int = 5,
 ) -> List[UrlHealthResult]:
+    """Check accessibility of multiple content URLs.
+
+    Args:
+        urls: List of URLs to check.
+        timeout: Request timeout.
+
+    Returns:
+        List of UrlHealthResult objects.
+    """
     """Check accessibility of all saved content URLs.
 
     Iterates over every IndexedPage in the storage and checks whether

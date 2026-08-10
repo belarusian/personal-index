@@ -32,9 +32,11 @@ class PriorityLevel(str, Enum):
         }.get(self.value, 0)
 
     def __gt__(self, other: "PriorityLevel") -> bool:
+        """Compare priority levels (greater than)."""
         return self.numeric_value > other.numeric_value
 
     def __lt__(self, other: "PriorityLevel") -> bool:
+        """Compare priority levels (less than)."""
         return self.numeric_value < other.numeric_value
 
     @classmethod
@@ -67,15 +69,19 @@ class PriorityScore:
         return PriorityLevel.from_score(self.total)
 
     def __gt__(self, other: "PriorityScore") -> bool:
+        """Compare priority levels (greater than)."""
         return self.total > other.total
 
     def __lt__(self, other: "PriorityScore") -> bool:
+        """Compare priority levels (less than)."""
         return self.total < other.total
 
     def __ge__(self, other: "PriorityScore") -> bool:
+        """Compare priority scores (greater or equal)."""
         return self.total >= other.total
 
     def __le__(self, other: "PriorityScore") -> bool:
+        """Compare priority scores (less or equal)."""
         return self.total <= other.total
 
 
@@ -89,15 +95,19 @@ class ContentPriority:
     metadata: dict = field(default_factory=dict, compare=False)
 
     def __gt__(self, other: "ContentPriority") -> bool:
+        """Compare priority levels (greater than)."""
         return self.score.total > other.score.total
 
     def __lt__(self, other: "ContentPriority") -> bool:
+        """Compare priority levels (less than)."""
         return self.score.total < other.score.total
 
     def __ge__(self, other: "ContentPriority") -> bool:
+        """Compare priority scores (greater or equal)."""
         return self.score.total >= other.score.total
 
     def __le__(self, other: "ContentPriority") -> bool:
+        """Compare priority scores (less or equal)."""
         return self.score.total <= other.score.total
 
 
@@ -122,6 +132,11 @@ class PriorityScorer:
     """
 
     def __init__(self, config: Optional[PriorityConfig] = None) -> None:
+        """Initialize PriorityScorer with optional config.
+
+        Args:
+            config: Priority scoring configuration.
+        """
         self.config = config or PriorityConfig()
 
     def score(self, content: dict[str, Any]) -> PriorityScore:
@@ -334,9 +349,23 @@ class PriorityFilter:
     """Filter and sort content by priority level."""
 
     def __init__(self, scorer: Optional[PriorityScorer] = None) -> None:
+        """Initialize PriorityScorer with optional config.
+
+        Args:
+            config: Priority scoring configuration.
+        """
         self.scorer = scorer or PriorityScorer()
 
     def filter_by_level(
+        """Filter content by priority level.
+
+        Args:
+            content_list: List of content items.
+            min_level: Minimum priority level.
+
+        Returns:
+            Filtered list of content items.
+        """
         self,
         items: list[dict[str, Any]],
         min_level: PriorityLevel,
@@ -357,6 +386,15 @@ class PriorityFilter:
         ]
 
     def get_top_n(
+        """Get top N highest priority content items.
+
+        Args:
+            content_list: List of content items.
+            n: Number of items to return.
+
+        Returns:
+            List of top N content items.
+        """
         self,
         items: list[dict[str, Any]],
         n: int = 10,
