@@ -62,13 +62,6 @@ def extract_text_content(html: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
-def tokenize(text: str) -> list[str]:
-    """Tokenize text into lowercase words."""
-    if not text:
-        return []
-    return re.findall(r'[a-z0-9]+(?:-[a-z0-9]+)*', text.lower())
-
-
 def compute_relevance_score(
     text: str,
     keywords: list[str],
@@ -104,7 +97,6 @@ __all__ = [
     "extract_title",
     "extract_meta_description",
     "extract_text_content",
-    "tokenize",
     "compute_relevance_score",
     "EXCLUDED_EXTENSIONS",
     "EXCLUDED_SCHEMES",
