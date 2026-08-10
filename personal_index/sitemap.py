@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-"""Sitemap parser for discovering URLs on websites."""
-
 from typing import ClassVar
 
 
 from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET_ParseError
+from xml.etree.ElementTree import Element as ET_Element
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from urllib.parse import urljoin
 
+"""Sitemap parser for discovering URLs on websites."""
 
 @dataclass
 class SitemapEntry:
@@ -113,7 +113,7 @@ class SitemapParser:
         return sitemap
 
     def _parse_url_element(
-        self, url_elem: ET.Element, base_url: str = ""
+        self, url_elem: ET_Element, base_url: str = ""
     ) -> SitemapEntry | None:
         """Parse a single <url> element."""
         loc_elem = url_elem.find("ns:loc", self.NAMESPACES)

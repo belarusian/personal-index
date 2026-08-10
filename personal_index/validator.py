@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-"""URL and content validation utilities."""
-
 from typing import ClassVar
 
 
 import logging
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
+
+"""URL and content validation utilities."""
 
 logger = logging.getLogger(__name__)
 
@@ -109,10 +109,7 @@ class URLValidator:
 
     def _is_blocked_path(self, path: str) -> bool:
         path = path.lower()
-        for blocked in self.blocked_paths:
-            if path.startswith(blocked.lower()):
-                return True
-        return False
+        return any(path.startswith(blocked.lower()) for blocked in self.blocked_paths)
 
     def validate_batch(self, urls: list[str]) -> list[tuple[str, ValidationResult]]:
         """Validate multiple URLs."""

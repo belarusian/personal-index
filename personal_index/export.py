@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-"""Export bookmarks and indexed content to various formats."""
-
 from typing import ClassVar
 
 
@@ -15,6 +13,9 @@ from pathlib import Path
 from .bookmarks import BookmarkManager
 
 # Map file extensions to format names
+
+"""Export bookmarks and indexed content to various formats."""
+
 EXTENSION_MAP = {
     "json": "json",
     "csv": "csv",

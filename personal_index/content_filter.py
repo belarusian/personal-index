@@ -103,18 +103,12 @@ class ContentFilter:
     def _matches_blocked_patterns(self, page: CrawledPage) -> bool:
         """Check if page content matches any blocked patterns."""
         text = f"{page.title} {page.content}"
-        for pattern in self._compiled_blocked:
-            if pattern.search(text):
-                return True
-        return False
+        return any(pattern.search(text) for pattern in self._compiled_blocked)
 
     def _matches_required_patterns(self, page: CrawledPage) -> bool:
         """Check if page content matches any required patterns."""
         text = f"{page.title} {page.content}"
-        for pattern in self._compiled_required:
-            if pattern.search(text):
-                return True
-        return False
+        return any(pattern.search(text) for pattern in self._compiled_required)
 
     def _matches_interests(self, page: CrawledPage) -> bool:
         """Check if page matches any interests."""

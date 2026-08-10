@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET_ParseError
+from xml.etree.ElementTree import Element as ET_Element
 from dataclasses import dataclass, field
 
 
@@ -84,7 +85,7 @@ class RSSParser:
         feed.feed_url = feed_url
         return feed
 
-    def _parse_rss(self, root: ET.Element, feed_url: str) -> Feed:
+    def _parse_rss(self, root: ET_Element, feed_url: str) -> Feed:
         """Parse RSS 2.0 feed."""
         feed = Feed(feed_url=feed_url)
         channel = root.find("channel")
@@ -111,7 +112,7 @@ class RSSParser:
 
         return feed
 
-    def _parse_rss_item(self, item: ET.Element) -> FeedEntry:
+    def _parse_rss_item(self, item: ET_Element) -> FeedEntry:
         """Parse a single RSS item."""
         entry = FeedEntry()
 
@@ -146,7 +147,7 @@ class RSSParser:
 
         return entry
 
-    def _parse_atom(self, root: ET.Element, feed_url: str) -> Feed:
+    def _parse_atom(self, root: ET_Element, feed_url: str) -> Feed:
         """Parse Atom feed."""
         ns = {"atom": self.ATOM_NS}
         feed = Feed(feed_url=feed_url)
@@ -160,7 +161,7 @@ class RSSParser:
         if link_elem is None:
             links = root.findall("atom:link", ns)
             for link in links:
-                if link.get("rel") == "alternate" or l.get("rel") is None:
+                if link.get("rel") == "alternate" or link.get("rel") is None:
                     link_elem = link
                     break
         feed.link = link_elem.get("href", "") if link_elem is not None else ""
@@ -185,7 +186,7 @@ class RSSParser:
 
         return feed
 
-    def _parse_atom_entry(self, entry_elem: ET.Element, ns: dict) -> FeedEntry:
+    def _parse_atom_entry(self, entry_elem: ET_Element, ns: dict) -> FeedEntry:
         """Parse a single Atom entry."""
         entry = FeedEntry()
 
@@ -198,7 +199,7 @@ class RSSParser:
         if link_elem is None:
             links = entry_elem.findall("atom:link", ns)
             for link in links:
-                if link.get("rel") == "alternate" or l.get("rel") is None:
+                if link.get("rel") == "alternate" or link.get("rel") is None:
                     link_elem = link
                     break
         entry.link = link_elem.get("href", "") if link_elem is not None else ""
@@ -254,7 +255,4 @@ class RSSParser:
             r"xmlns.*atom",
             r"xmlns.*rss",
         ]
-        for pattern in patterns:
-            if re.search(pattern, xml_content[:500], re.IGNORECASE):
-                return True
-        return False
+        return any(re.search(pattern, xml_content[:500], re.IGNORECASE) for pattern in patterns)

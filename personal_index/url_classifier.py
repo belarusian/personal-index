@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-"""URL classification for categorizing crawled URLs."""
-
 from typing import ClassVar
 
 
@@ -10,6 +8,8 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from urllib.parse import urlparse
+
+"""URL classification for categorizing crawled URLs."""
 
 logger = logging.getLogger(__name__)
 

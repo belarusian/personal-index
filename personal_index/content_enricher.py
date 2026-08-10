@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-"""Content enrichment module for enhancing indexed content with metadata."""
-
-from typing import ClassVar
-
-
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import ClassVar
 
 from personal_index.text_utils import (
     count_words,
@@ -15,6 +11,8 @@ from personal_index.text_utils import (
     read_time_minutes,
     tokenize,
 )
+
+"""Content enrichment module for enhancing indexed content with metadata."""
 
 
 @dataclass
@@ -124,10 +122,7 @@ class ContentEnricher:
             r"<code[^>]*>.*?</code>",
             r"<script[^>]*>.*?</script>",
         ]
-        for pattern in code_patterns:
-            if re.search(pattern, html, re.DOTALL | re.IGNORECASE):
-                return True
-        return False
+        return any(re.search(pattern, html, re.DOTALL | re.IGNORECASE) for pattern in code_patterns)
 
     def _detect_links(self, html: str) -> bool:
         """Detect if HTML contains anchor links."""

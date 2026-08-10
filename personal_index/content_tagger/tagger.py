@@ -9,7 +9,7 @@ from personal_index.content_tagger.detector import TopicDetector
 from personal_index.content_tagger.tag import Tag
 
 if TYPE_CHECKING:
-    from personal_index.content_tagger.tagger import TagResult as _TagResult
+    pass
 
 
 @dataclass
