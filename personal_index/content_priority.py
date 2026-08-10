@@ -357,17 +357,19 @@ class PriorityFilter:
         self.scorer = scorer or PriorityScorer()
 
     def filter_by_level(
-        """Filter content by priority level.
-
-        Args:
-            content_list: List of content items.
-            min_level: Minimum priority level.
-
-        Returns:
-            Filtered list of content items.
-        """
         self,
         items: list[dict[str, Any]],
+        min_level: PriorityLevel,
+    ) -> list[ContentPriority]:
+        """Filter items to only those meeting minimum priority level.
+
+        Args:
+            items: List of content dicts.
+            min_level: Minimum priority level to include.
+
+        Returns:
+            List of ContentPriority items meeting the threshold.
+        """
         min_level: PriorityLevel,
     ) -> list[ContentPriority]:
         """Filter items to only those meeting minimum priority level.
@@ -386,18 +388,19 @@ class PriorityFilter:
         ]
 
     def get_top_n(
-        """Get top N highest priority content items.
-
-        Args:
-            content_list: List of content items.
-            n: Number of items to return.
-
-        Returns:
-            List of top N content items.
-        """
         self,
         items: list[dict[str, Any]],
         n: int = 10,
+    ) -> list[ContentPriority]:
+        """Get top N highest priority content items.
+
+        Args:
+            items: List of content dicts.
+            n: Number of items to return.
+
+        Returns:
+            List of top N ContentPriority items.
+        """
     ) -> list[ContentPriority]:
         """Get the top N highest-priority items.
 
