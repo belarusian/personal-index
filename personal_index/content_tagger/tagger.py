@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from personal_index.content_tagger.detector import TopicDetector
 from personal_index.content_tagger.tag import Tag
