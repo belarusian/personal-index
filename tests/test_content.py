@@ -4,10 +4,10 @@ import pytest
 from personal_index.content import (
     ExtractedContent,
     extract_content,
-    tokenize,
     remove_stopwords,
     compute_tf,
 )
+from personal_index.text_utils import tokenize
 
 
 SAMPLE_HTML = """
