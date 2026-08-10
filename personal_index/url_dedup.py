@@ -57,8 +57,7 @@ class URLDeduplicator:
 
         # Remove www. prefix
         parsed = urlparse(normalized)
-        if parsed.netloc.startswith("www."):
-            normalized = parsed._replace(netloc=parsed.netloc[4:]).geturl()
+        normalized = parsed._replace(netloc=parsed.netloc.removeprefix("www.")).geturl()
 
         # Remove common tracking parameters
         tracking_params = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"}
