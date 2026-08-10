@@ -50,10 +50,10 @@ def hash_password(
     Returns:
         Hashed password string.
     """
-    cfg = config or PasswordConfig()
-    salt = _generate_salt(cfg.salt_length)
-    password_hash = _hash_with_salt(password, salt, cfg.iterations)
-    return f"{cfg.algorithm}${cfg.iterations}${salt}${password_hash}"
+    actual_config = config or PasswordConfig()
+    salt = _generate_salt(actual_config.salt_length)
+    password_hash = _hash_with_salt(password, salt, actual_config.iterations)
+    return f"{actual_config.algorithm}${actual_config.iterations}${salt}${password_hash}"
 
 
 def verify_password(
@@ -71,7 +71,6 @@ def verify_password(
     Returns:
         True if the password matches.
     """
-    cfg = config or PasswordConfig()
     try:
         parts = hashed_password.split("$")
         if len(parts) != 4:

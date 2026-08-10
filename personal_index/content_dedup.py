@@ -104,7 +104,7 @@ class DeduplicationEngine:
     def _compute_similarity(self, text1: str, doc_hash: DocumentHash) -> float:
         """Compute similarity between text and a stored document."""
         # Use token-based Jaccard similarity
-        tokens1 = set(re.findall(r"[a-z0-9]+", text1.lower()))
+        # tokens1 = set(re.findall(r"[a-z0-9]+", text1.lower()))
         # We need the original content for comparison
         # For simplicity, use hash-based approach
         return 0.0
@@ -118,8 +118,7 @@ class DeduplicationEngine:
             return False, None, 0.0
 
         best_score = 0.0
-        best_url = None
-
+        # best_url = None
         for stored_url, stored_hash in self._document_hashes.items():
             if stored_url == url:
                 continue

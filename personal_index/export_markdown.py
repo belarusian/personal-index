@@ -284,7 +284,6 @@ def export_to_md(data: dict) -> str:
     Returns:
         Markdown string.
     """
-    from pathlib import Path
     
     exporter = MarkdownExporter()
     

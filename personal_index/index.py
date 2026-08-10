@@ -137,9 +137,9 @@ class SearchIndex:
         """Remove a page from the index."""
         if url not in self._pages:
             return False
-        page = self._pages.pop(url)
-        text = f"{page.title} {page.content}"
-        tokens = set(self._tokenize(text))
+        # page = self._pages.pop(url)
+        # text = f"{page.title} {page.content}"
+        # tokens = set(self._tokenize(text))
         # Iterate over a copy of keys to avoid RuntimeError
         for token in list(self._word_index.keys()):
             if url in self._word_index[token]:
