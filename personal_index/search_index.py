@@ -41,7 +41,7 @@ class SearchIndex:
                 data = json.load(f)
             self._pages = {}
             for url, page_data in data.get("pages", {}).items():
-                page = CrawledPage(**page_data)
+                page = CrawledPage.from_dict(page_data)
                 self._pages[url] = page
             self._word_index = data.get("word_index", {})
         except (json.JSONDecodeError, KeyError):
