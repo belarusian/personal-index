@@ -43,12 +43,11 @@ class PriorityLevel(str, Enum):
         """Convert a numeric score to a priority level."""
         if score >= 0.8:
             return cls.CRITICAL
-        elif score >= 0.6:
+        if score >= 0.6:
             return cls.HIGH
-        elif score >= 0.3:
+        if score >= 0.3:
             return cls.MEDIUM
-        else:
-            return cls.LOW
+        return cls.LOW
 
 
 @dataclass
@@ -283,9 +282,9 @@ class PriorityScorer:
 
         if domain in known_high_authority:
             return 85
-        elif domain in known_medium:
+        if domain in known_medium:
             return 60
-        elif domain:
+        if domain:
             return 30  # Default for unknown domains
         return 10
 

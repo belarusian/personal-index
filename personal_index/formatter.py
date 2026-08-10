@@ -133,22 +133,20 @@ def format_duration(seconds: float) -> str:
     """Format duration in seconds to human-readable string."""
     if seconds < 60:
         return f"{seconds:.1f}s"
-    elif seconds < 3600:
+    if seconds < 3600:
         return f"{seconds / 60:.1f}m"
-    else:
-        return f"{seconds / 3600:.1f}h"
+    return f"{seconds / 3600:.1f}h"
 
 
 def format_file_size(size: int) -> str:
     """Format file size in bytes to human-readable string."""
     if size < 1024:
         return f"{size}B"
-    elif size < 1024 * 1024:
+    if size < 1024 * 1024:
         return f"{size / 1024:.1f}KB"
-    elif size < 1024 * 1024 * 1024:
+    if size < 1024 * 1024 * 1024:
         return f"{size / (1024 * 1024):.1f}MB"
-    else:
-        return f"{size / (1024 * 1024 * 1024):.1f}GB"
+    return f"{size / (1024 * 1024 * 1024):.1f}GB"
 
 
 def format_timestamp(timestamp: str | None) -> str:

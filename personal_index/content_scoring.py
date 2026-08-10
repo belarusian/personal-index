@@ -86,12 +86,11 @@ class ContentScorer:
         word_count = len(text.split()) if text else 0
         if word_count < 100:
             return min(word_count / 100, 0.5)
-        elif word_count < 300:
+        if word_count < 300:
             return 0.5 + (word_count - 100) / 400
-        elif word_count <= 2000:
+        if word_count <= 2000:
             return 1.0
-        else:
-            return max(0.5, 1.0 - (word_count - 2000) / 5000)
+        return max(0.5, 1.0 - (word_count - 2000) / 5000)
 
     def _score_keyword_density(self, content: dict[str, Any]) -> float:
         """Score based on keyword density (0-1).
@@ -162,10 +161,9 @@ class ContentScorer:
         avg_word_len = sum(len(w) for w in words) / len(words)
         if 4 <= avg_word_len <= 7:
             return 1.0
-        elif avg_word_len < 4:
+        if avg_word_len < 4:
             return 0.7
-        else:
-            return max(0.3, 1.0 - (avg_word_len - 7) / 5)
+        return max(0.3, 1.0 - (avg_word_len - 7) / 5)
 
     def _score_freshness(self, content: dict[str, Any]) -> float:
         """Score based on content freshness (0-1).

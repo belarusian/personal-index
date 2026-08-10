@@ -67,14 +67,13 @@ class Importer:
 
         if fmt == "json":
             return self._import_json(content, source)
-        elif fmt == "csv":
+        if fmt == "csv":
             return self._import_csv(content, source)
-        elif fmt in ("html", "necko", "netscape"):
+        if fmt in ("html", "necko", "netscape"):
             return self._import_html(content, source)
-        elif fmt == "xml":
+        if fmt == "xml":
             return self._import_xml(content, source)
-        else:
-            return ImportResult(errors=[f"Unsupported format: {fmt}"], source=source, format=fmt)
+        return ImportResult(errors=[f"Unsupported format: {fmt}"], source=source, format=fmt)
 
     def _import_json(self, content: str, source: str = "") -> ImportResult:
         """Import from JSON format."""

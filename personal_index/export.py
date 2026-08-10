@@ -79,15 +79,15 @@ class Exporter:
         fmt = fmt.lower()
         if fmt == "json":
             return self._export_json()
-        elif fmt == "csv":
+        if fmt == "csv":
             return self._export_csv()
-        elif fmt == "html":
+        if fmt == "html":
             return self._export_html()
-        elif fmt == "xml":
+        if fmt == "xml":
             return self._export_xml()
-        elif fmt == "markdown":
+        if fmt == "markdown":
             return self._export_markdown()
-        elif fmt == "opml":
+        if fmt == "opml":
             return self._export_opml()
         return None
 
