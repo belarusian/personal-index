@@ -86,8 +86,7 @@ class EncodingDetector:
 
     def normalize_whitespace(self, text: str) -> str:
         """Normalize whitespace in text."""
-        text = re.sub(r"\s+", " ", text)
-        return text.strip()
+        return re.sub(r"\s+", " ", text).strip()
 
     def remove_control_chars(self, text: str) -> str:
         """Remove control characters from text."""

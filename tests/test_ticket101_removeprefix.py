@@ -13,21 +13,21 @@ class TestRemoveprefixUsage(unittest.TestCase):
 
         # Check that the old pattern doesn't exist
         self.assertNotIn(
-            'if domain.startswith("www."):',
+            'if parsed.netloc.startswith("www."):',
             source,
             "Old startswith+slice pattern should be replaced with removeprefix"
         )
         self.assertNotIn(
-            "domain = domain[4:]",
+            "parsed.netloc[4:]",
             source,
-            "Old domain[4:] slice should be replaced with removeprefix"
+            "Old netloc[4:] slice should be replaced with removeprefix"
         )
 
         # Check that removeprefix is used
         self.assertIn(
-            'domain.removeprefix("www.")',
+            'parsed.netloc.removeprefix("www.")',
             source,
-            "Should use domain.removeprefix('www.') instead"
+            "Should use parsed.netloc.removeprefix('www.') instead"
         )
 
     def test_url_deduplicator_www_removal(self):
