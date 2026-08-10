@@ -39,23 +39,30 @@ def is_valid_url(url: str) -> bool:
 
 def normalize_url(
     url: str,
+    base_url: str = "",
     remove_fragment: bool = True,
     lowercase_path: bool = True,
     remove_default_port: bool = True,
     sort_query_params: bool = True,
-) -> str:
+) -> str | None:
     """Normalize a URL by applying standard transformations.
 
     Args:
         url: The URL to normalize.
+        base_url: Optional base URL to resolve relative URLs against.
         remove_fragment: Whether to remove the fragment.
         lowercase_path: Whether to lowercase the path.
         remove_default_port: Whether to remove default ports (80/443).
         sort_query_params: Whether to sort query parameters.
     """
     if not url:
-        return url
+        return None
     try:
+        # Resolve relative URLs against base_url
+        if base_url and not url.startswith(("http://", "https://")):
+            from urllib.parse import urljoin
+            url = urljoin(base_url, url)
+        
         parsed = urlparse(url)
 
         # Lowercase scheme and netloc
@@ -70,11 +77,10 @@ def normalize_url(
         path = parsed.path.lower() if lowercase_path else parsed.path
         # Normalize path: collapse slashes
         path = re.sub(r"/+", "/", path)
-        # Remove trailing slash entirely (urlunparse with empty path = no slash)
+        # Remove trailing slash except for root path
         if path.endswith("/") and path != "/":
             path = path.rstrip("/")
-        elif path == "/":
-            path = ""
+        # Keep root path as "/"
 
         # Sort query parameters
         query = parsed.query
@@ -86,9 +92,13 @@ def normalize_url(
         # Remove fragment
         fragment = "" if remove_fragment else parsed.fragment
 
+        # Validate scheme
+        if scheme not in ("http", "https"):
+            return None
+
         return urlunparse((scheme, netloc, path, "", query, fragment))
     except Exception:
-        return url
+        return None
 
 
 def _remove_default_port(netloc: str, scheme: str) -> str:
@@ -114,15 +124,21 @@ def is_canonical(url: str) -> bool:
     return normalize_url(url) == url
 
 
-def extract_domain(url: str) -> str:
-    """Extract domain from URL."""
+def extract_domain(url: str) -> str | None:
+    """Extract domain from URL, stripping port number."""
     if not url:
-        return ""
+        return None
     try:
         parsed = urlparse(url)
-        return parsed.netloc.lower()
+        if not parsed.netloc:
+            return None
+        netloc = parsed.netloc.lower()
+        # Strip port number
+        if ":" in netloc:
+            netloc = netloc.rsplit(":", 1)[0]
+        return netloc
     except Exception:
-        return ""
+        return None
 
 
 # Alias for compatibility
@@ -167,6 +183,20 @@ def get_tld(url: str) -> str:
     return parts[-1] if parts else ""
 
 
+def get_url_depth(url: str) -> int:
+    """Get the depth of a URL path."""
+    if not url:
+        return 0
+    try:
+        parsed = urlparse(url)
+        path = parsed.path.strip("/")
+        if not path:
+            return 0
+        return len(path.split("/"))
+    except Exception:
+        return 0
+
+
 def is_same_domain(url1: str, url2: str) -> bool:
     """Check if two URLs are on the same domain."""
     return extract_domain(url1) == extract_domain(url2)
@@ -199,7 +229,7 @@ def remove_query_params(url: str, params: list = None) -> str:
             parsed.params, new_query, parsed.fragment
         ))
     except Exception:
-        return url
+        return None
 
 
 def strip_tracking_params(url: str) -> str:
@@ -259,10 +289,14 @@ def join_urls(base: str, relative: str) -> str:
     ))
 
 
-def resolve_relative_url(base_url: str, relative_url: str) -> str:
+def resolve_relative_url(base_url: str, relative_url: str) -> str | None:
     """Resolve a relative URL against a base URL."""
     parsed_base = urlparse(base_url)
     parsed_rel = urlparse(relative_url)
+
+    # Reject javascript:, mailto:, etc.
+    if parsed_rel.scheme and parsed_rel.scheme not in ("http", "https"):
+        return None
 
     if parsed_rel.scheme:
         return relative_url
@@ -281,6 +315,10 @@ def resolve_relative_url(base_url: str, relative_url: str) -> str:
             path = base_path + relative_url
         else:
             path = base_path.rsplit("/", 1)[0] + "/" + relative_url
+
+    # Normalize path (resolve .. and .)
+    import posixpath
+    path = posixpath.normpath(path)
 
     return urlunparse((parsed_base.scheme, parsed_base.netloc,
                        path, parsed_rel.params,

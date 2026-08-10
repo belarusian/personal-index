@@ -27,7 +27,7 @@ def extract_links(html: str, base_url: str) -> list[str]:
         if href.startswith(("javascript:", "mailto:", "data:", "tel:")):
             continue
         # Resolve relative URLs
-        from personal_index.utils.url_utils import resolve_relative_url
+        from personal_index.url_utils import resolve_relative_url
         resolved = resolve_relative_url(base_url, href)
         if resolved:
             links.append(resolved)

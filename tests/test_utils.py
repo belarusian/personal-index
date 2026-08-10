@@ -1,6 +1,7 @@
 """Tests for utility functions."""
 
 import pytest
+# Re-export from root url_utils
 from personal_index.utils import (
     normalize_url,
     extract_domain,
