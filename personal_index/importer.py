@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 from xml.etree import ElementTree as ET
 
 from .bookmarks import Bookmark, BookmarkManager
