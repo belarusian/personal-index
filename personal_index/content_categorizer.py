@@ -568,12 +568,12 @@ class ContentCategorizer:
 
         return hints
 
-    def _build_reasons(self, topic_scores: List[TopicScore], text: str) -> List[str]:
+    def _build_reasons(self, topic_scores: List[TopicScore], _text: str) -> List[str]:
         """Build human-readable reasons for categorization.
 
         Args:
             topic_scores: Ranked list of topic scores.
-            text: Original text content.
+            _text: Original text content (unused).
 
         Returns:
             List of reason strings.
