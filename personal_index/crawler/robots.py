@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import Dict, List
 from urllib.parse import urlparse
