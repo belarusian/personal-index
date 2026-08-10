@@ -6,7 +6,6 @@ with confidence scores. Uses rule-based keyword matching with multiple signals.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse

@@ -6,7 +6,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
