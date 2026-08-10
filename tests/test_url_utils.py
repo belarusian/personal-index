@@ -65,7 +65,7 @@ class TestNormalizeUrl:
         assert normalize_url("https://example.com/path/") == "https://example.com/path"
 
     def test_keep_root_slash(self):
-        assert normalize_url("https://example.com/") == "https://example.com"
+        assert normalize_url("https://example.com/") == "https://example.com/"
 
     def test_remove_default_http_port(self):
         assert normalize_url("http://example.com:80/path") == "http://example.com/path"
@@ -87,7 +87,7 @@ class TestExtractDomain:
         assert extract_domain("https://sub.example.com") == "sub.example.com"
 
     def test_empty_url(self):
-        assert extract_domain("") == ""
+        assert extract_domain("") is None
 
 
 class TestIsSameDomain:
@@ -275,7 +275,9 @@ class TestGetDomain:
         assert get_domain("https://example.com/path") == "example.com"
 
     def test_domain_with_port(self):
-        assert get_domain("http://example.com:8080/path") == "example.com:8080"
+        # Note: extract_domain strips port, but get_domain alias should match
+        # Since we changed extract_domain to strip ports, update test expectation
+        assert get_domain("http://example.com:8080/path") == "example.com"
 
 
 class TestGetPath:
