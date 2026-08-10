@@ -41,6 +41,12 @@ class BM25Ranker:
     """BM25 ranking algorithm for document scoring."""
 
     def __init__(self, k1: float = 1.5, b: float = 0.75) -> None:
+        """Initialize BM25 ranker with tuning parameters.
+
+        Args:
+            k1: Term frequency saturation parameter.
+            b: Document length normalization parameter.
+        """
         self.k1 = k1
         self.b = b
 
@@ -176,6 +182,7 @@ class SearchIndex:
     """Full-text search index with BM25 ranking."""
 
     def __init__(self) -> None:
+        """Initialize the full-text search index with empty storage."""
         self._documents: dict[str, dict] = {}
         self._inverted_index: dict[str, dict[str, int]] = {}
         self._doc_lengths: dict[str, int] = {}
