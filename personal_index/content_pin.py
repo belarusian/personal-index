@@ -171,24 +171,3 @@ def unpin_content(item_id: str) -> bool:
         True if successfully unpinned (or was not pinned).
     """
     return _get_default_pinner().unpin(item_id)
-
-
-def is_content_pinned(item_id: str) -> bool:
-    """Check if a content item is pinned using the default pinner.
-
-    Args:
-        item_id: ID of the item to check.
-
-    Returns:
-        True if the item is pinned.
-    """
-    return _get_default_pinner().is_pinned(item_id)
-
-
-def get_pinned_content() -> List[PinnedItem]:
-    """Get all pinned content items using the default pinner.
-
-    Returns:
-        List of PinnedItem objects.
-    """
-    return _get_default_pinner().get_pinned_items()
