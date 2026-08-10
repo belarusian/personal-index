@@ -93,5 +93,4 @@ class EncodingDetector:
     def sanitize(self, text: str) -> str:
         """Sanitize text by removing control chars and normalizing whitespace."""
         text = self.remove_control_chars(text)
-        text = self.normalize_whitespace(text)
-        return text
+        return self.normalize_whitespace(text)

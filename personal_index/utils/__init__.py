@@ -59,8 +59,7 @@ def extract_text_content(html: str) -> str:
         tag.decompose()
     text = soup.get_text(separator=" ")
     # Normalize whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+    return re.sub(r'\s+', ' ', text).strip()
 
 
 def tokenize(text: str) -> list[str]:
