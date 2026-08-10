@@ -478,3 +478,42 @@ class BatchDedupReport:
             for dup in group.duplicates:
                 lines.append(f"    - {dup}")
         return "\n".join(lines)
+
+
+# Module-level convenience functions for backward compatibility
+
+def find_duplicates(items: list) -> list:
+    """Find duplicate items in a list.
+
+    Args:
+        items: List of items to check for duplicates.
+
+    Returns:
+        List of duplicate items (items that appear more than once).
+    """
+    seen = set()
+    duplicates = []
+    for item in items:
+        if item in seen:
+            duplicates.append(item)
+        else:
+            seen.add(item)
+    return duplicates
+
+
+def remove_duplicates(items: list) -> list:
+    """Remove duplicate items from a list, preserving order.
+
+    Args:
+        items: List of items that may contain duplicates.
+
+    Returns:
+        List with duplicates removed, preserving first occurrence order.
+    """
+    seen = set()
+    result = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result

@@ -391,3 +391,50 @@ class PriorityFilter:
         for item in ranked:
             groups[item.score.level].append(item)
         return groups
+
+
+# Module-level convenience functions for backward compatibility
+
+def calculate_priority(item: Any) -> float:
+    """Calculate a priority score for a content item.
+
+    Args:
+        item: A content item (dict, string, or other).
+
+    Returns:
+        A numeric priority score.
+    """
+    scorer = PriorityScorer()
+    if isinstance(item, dict):
+        score = scorer.score(item)
+        return score.total
+    else:
+        # For simple items (strings, etc.), return a default score
+        return 0.5
+
+
+def sort_by_priority(items: list) -> list:
+    """Sort items by their priority score, highest first.
+
+    Args:
+        items: List of content items (dicts or other).
+
+    Returns:
+        List of items sorted by priority (highest first).
+    """
+    scorer = PriorityScorer()
+    if not items:
+        return []
+
+    # Score all items
+    scored = []
+    for item in items:
+        if isinstance(item, dict):
+            score = scorer.score(item)
+            scored.append((score.total, item))
+        else:
+            scored.append((0.5, item))
+
+    # Sort by score descending
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [item for _, item in scored]
