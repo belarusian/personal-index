@@ -9,7 +9,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 from urllib.error import URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +120,7 @@ class WebhookSender:
                     headers={"Content-Type": "application/json", **config.headers},
                     method="POST",
                 )
-                with urlopen(req, timeout=config.timeout) as response:
+                with urllib.request.urlopen(req, timeout=config.timeout) as response:
                     return {
                         "url": config.url,
                         "status": response.status,
