@@ -150,7 +150,7 @@ class MigrationRegistry:
                         ):
                             self.register(attr)
                             logger.debug("Registered migration: %s (v%d)", attr_name, attr.version)
-            except Exception as e:
+            except (ImportError, AttributeError, OSError, RuntimeError) as e:
                 logger.error("Failed to load migration %s: %s", filepath.name, e)
 
 

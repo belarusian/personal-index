@@ -320,6 +320,6 @@ def save_markdown(data: dict, filepath: str) -> bool:
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
         Path(filepath).write_text(content)
         return True
-    except Exception as e:
+    except (OSError, IOError, ValueError) as e:
         logger.error("Failed to save markdown to %s: %s", filepath, e)
         return False

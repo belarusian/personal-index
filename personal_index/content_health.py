@@ -260,7 +260,7 @@ class HealthChecker:
                 status="error",
                 message=f"Database integrity check failed: {result}",
             )
-        except Exception as e:
+        except (sqlite3.Error, OSError, RuntimeError) as e:
             return HealthCheckResult(
                 check_name="database",
                 status="error",
@@ -517,7 +517,7 @@ def check_url_accessibility(
             is_accessible=False,
             error=f"Request failed: {exc}",
         )
-    except Exception as exc:
+    except (OSError, RuntimeError) as exc:
         return UrlHealthResult(
             url=url,
             status_code=None,

@@ -24,7 +24,7 @@ class PipelineStep:
             return data
         try:
             return self.handler(data)
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             logger.warning("Pipeline step '%s' failed: %s", self.name, e)
             if self.on_error == "stop":
                 raise
@@ -96,7 +96,7 @@ class ContentPipeline:
             try:
                 data = step.handler(data)
                 steps_executed += 1
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 logger.error("Pipeline step '%s' failed: %s", step.name, e)
                 steps_failed += 1
                 errors.append(f"Step '{step.name}': {e}")
