@@ -203,10 +203,12 @@ class FaviconHTMLParser(HTMLParser):
     """Parse HTML to extract favicon links."""
 
     def __init__(self) -> None:
+        """Initialize the favicon HTML parser."""
         super().__init__()
         self.favicon_links: list[dict] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+        """Handle start tags to find favicon links."""
         if tag.lower() == "link":
             attr_dict = dict(attrs)
             rel = attr_dict.get("rel", "")
@@ -226,6 +228,11 @@ class FaviconExtractor:
     """Extract favicons from URLs and HTML content."""
 
     def __init__(self, config: Optional[FaviconConfig] = None) -> None:
+        """Initialize the favicon extractor.
+
+        Args:
+            config: Optional favicon configuration.
+        """
         self.config = config or FaviconConfig()
 
     def extract_domain(self, url: str) -> str:
@@ -317,6 +324,7 @@ class FaviconStore:
     """Store and retrieve favicon results."""
 
     def __init__(self) -> None:
+        """Initialize the favicon store with empty storage."""
         self._store: dict[str, FaviconResult] = {}
 
     def store(self, domain: str, result: FaviconResult) -> None:
@@ -371,6 +379,12 @@ class FaviconManager:
         config: Optional[FaviconConfig] = None,
         fallback_to_google: bool = True,
     ) -> None:
+        """Initialize the favicon manager.
+
+        Args:
+            config: Optional favicon configuration.
+            fallback_to_google: Whether to use Google's favicon service as fallback.
+        """
         self.config = config or FaviconConfig()
         self.fallback_to_google = fallback_to_google
         self.extractor = FaviconExtractor(self.config)
