@@ -23,10 +23,12 @@ class SearchIndex:
 
     @property
     def num_documents(self) -> int:
+        """Number of documents in the index."""
         return len(self._documents)
 
     @property
     def num_terms(self) -> int:
+        """Number of unique terms in the inverted index."""
         return len(self._inverted_index)
 
     def _tokenize(self, text: str) -> list[str]:

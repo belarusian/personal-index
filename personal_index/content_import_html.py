@@ -30,6 +30,11 @@ class HTMLBookmark:
         return f"HTMLBookmark(url={self.url!r}, title={self.title!r})"
 
     def to_dict(self) -> dict:
+        """Serialize to a dictionary.
+
+        Returns:
+            Dictionary representation.
+        """
         return {
             "url": self.url,
             "title": self.title,
@@ -43,6 +48,11 @@ class HTMLBookmark:
 
     @classmethod
     def from_dict(cls, data: dict) -> "HTMLBookmark":
+        """Process from_dict.
+
+        Args:
+        data.
+        """
         return cls(
             url=data["url"],
             title=data.get("title", ""),
@@ -66,9 +76,11 @@ class HTMLImportResult:
 
     @property
     def is_success(self) -> bool:
+        """Is_success."""
         return len(self.errors) == 0
 
     def to_dict(self) -> dict:
+        """To_dict."""
         return {
             "total_imported": self.total_imported,
             "total_skipped": self.total_skipped,

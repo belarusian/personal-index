@@ -26,6 +26,7 @@ class HealthCheckResult:
     details: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """To_dict."""
         return {
             "check": self.check_name,
             "status": self.status,
@@ -56,6 +57,7 @@ class HealthReport:
             self.overall_status = "ok"
 
     def to_dict(self) -> Dict[str, Any]:
+        """To_dict."""
         return {
             "timestamp": self.timestamp,
             "overall_status": self.overall_status,
@@ -63,6 +65,7 @@ class HealthReport:
         }
 
     def summary(self) -> str:
+        """Summary."""
         lines = [f"Health Report: {self.overall_status.upper()}"]
         for c in self.checks:
             icon = {"ok": "✓", "warning": "⚠", "error": "✗"}.get(c.status, "?")

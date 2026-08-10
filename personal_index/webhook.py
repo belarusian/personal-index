@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class WebhookEvent(str, Enum):
+    """WebhookEvent."""
     CRAWL_COMPLETE = "crawl_complete"
     CRAWL_FAILED = "crawl_failed"
     INDEX_UPDATE = "index_update"
@@ -33,6 +34,7 @@ class WebhookPayload:
     source: str = "personal-index"
 
     def to_dict(self) -> dict[str, Any]:
+        """To_dict."""
         return {
             "event": self.event.value,
             "data": self.data,
@@ -41,6 +43,7 @@ class WebhookPayload:
         }
 
     def to_json(self) -> str:
+        """To_json."""
         return json.dumps(self.to_dict())
 
 
@@ -57,6 +60,11 @@ class WebhookConfig:
     enabled: bool = True
 
     def should_send(self, event: WebhookEvent) -> bool:
+        """Process should_send.
+
+        Args:
+        event.
+        """
         if not self.enabled:
             return False
         if not self.events:
@@ -71,9 +79,19 @@ class WebhookSender:
         self._configs: list[WebhookConfig] = []
 
     def add_endpoint(self, config: WebhookConfig) -> None:
+        """Process add_endpoint.
+
+        Args:
+        config.
+        """
         self._configs.append(config)
 
     def remove_endpoint(self, url: str) -> bool:
+        """Process remove_endpoint.
+
+        Args:
+        url.
+        """
         for i, config in enumerate(self._configs):
             if config.url == url:
                 self._configs.pop(i)
@@ -122,4 +140,5 @@ class WebhookSender:
 
     @property
     def endpoint_count(self) -> int:
+        """Endpoint_count."""
         return len(self._configs)

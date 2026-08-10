@@ -51,6 +51,7 @@ class Exporter:
 
     @property
     def manager(self) -> BookmarkManager:
+        """Manager."""
         return self._manager
 
     def export_to_file(self, filepath: str, fmt: Optional[str] = None) -> ExportResult:

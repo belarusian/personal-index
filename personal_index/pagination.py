@@ -21,10 +21,12 @@ class PageParams:
 
     @property
     def offset(self) -> int:
+        """Zero-based offset for database queries."""
         return (self.page - 1) * self.per_page
 
     @property
     def limit(self) -> int:
+        """Maximum number of items per page."""
         return self.per_page
 
 
@@ -39,33 +41,45 @@ class PageResult:
 
     @property
     def total_pages(self) -> int:
+        """Total number of pages."""
         return max(1, math.ceil(self.total / self.per_page))
 
     @property
     def has_next(self) -> bool:
+        """Whether there is a next page."""
         return self.page < self.total_pages
 
     @property
     def has_prev(self) -> bool:
+        """Whether there is a previous page."""
         return self.page > 1
 
     @property
     def next_page(self) -> Optional[int]:
+        """Page number of the next page, or None."""
         return self.page + 1 if self.has_next else None
 
     @property
     def prev_page(self) -> Optional[int]:
+        """Page number of the previous page, or None."""
         return self.page - 1 if self.has_prev else None
 
     @property
     def start_index(self) -> int:
+        """1-based index of the first item on this page."""
         return (self.page - 1) * self.per_page + 1
 
     @property
     def end_index(self) -> int:
+        """1-based index of the last item on this page."""
         return min(self.page * self.per_page, self.total)
 
     def to_dict(self) -> dict:
+        """Serialize the page result to a dictionary.
+
+        Returns:
+            Dictionary representation of the paginated result.
+        """
         return {
             "items": self.items,
             "total": self.total,
@@ -90,6 +104,15 @@ class Paginator:
         self._max_per_page = max_per_page
 
     def get_page(self, page: int = 1, per_page: Optional[int] = None) -> PageResult:
+        """Get a specific page of results.
+
+        Args:
+            page: 1-based page number.
+            per_page: Items per page (uses default if None).
+
+        Returns:
+            A PageResult for the requested page.
+        """
         params = PageParams(
             page=page,
             per_page=per_page or self._per_page,
@@ -107,10 +130,12 @@ class Paginator:
 
     @property
     def total_items(self) -> int:
+        """Total number of items in the collection."""
         return len(self._items)
 
     @property
     def total_pages(self) -> int:
+        """Total number of pages at the default per_page setting."""
         return max(1, math.ceil(len(self._items) / self._per_page))
 
     def iterate_pages(self, per_page: Optional[int] = None) -> list[PageResult]:

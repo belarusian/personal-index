@@ -22,6 +22,7 @@ class ThrottleRule:
 
     @property
     def rate_per_second(self) -> float:
+        """Rate_per_second."""
         return self.max_requests / self.window_seconds
 
 
@@ -44,12 +45,27 @@ class ThrottleManager:
         self._default_rule = default_rule or ThrottleRule()
 
     def set_rule(self, domain: str, rule: ThrottleRule) -> None:
+        """Process set_rule.
+
+        Args:
+        domain, rule.
+        """
         self._rules[domain] = rule
 
     def get_rule(self, domain: str) -> ThrottleRule:
+        """Process get_rule.
+
+        Args:
+        domain.
+        """
         return self._rules.get(domain, self._default_rule)
 
     def should_throttle(self, url: str) -> bool:
+        """Process should_throttle.
+
+        Args:
+        url.
+        """
         domain = self._extract_domain(url)
         rule = self.get_rule(domain)
         state = self._states.setdefault(domain, ThrottleState())
@@ -98,6 +114,11 @@ class ThrottleManager:
         return parsed.netloc or url
 
     def get_stats(self, domain: Optional[str] = None) -> dict:
+        """Process get_stats.
+
+        Args:
+        domain.
+        """
         if domain:
             state = self._states.get(domain)
             if state:
@@ -116,6 +137,11 @@ class ThrottleManager:
         }
 
     def reset(self, domain: Optional[str] = None) -> None:
+        """Reset throttle counters.
+
+        Args:
+            domain: Specific domain to reset, or None for all.
+        """
         if domain:
             self._states.pop(domain, None)
         else:

@@ -29,6 +29,7 @@ class URLDeduplicator:
 
     @property
     def seen_count(self) -> int:
+        """Seen_count."""
         return len(self._seen_urls)
 
     def normalize_url(self, url: str) -> str:

@@ -28,6 +28,11 @@ class SystemMetrics:
     uptime_seconds: float = 0.0
 
     def to_dict(self) -> dict:
+        """Serialize system metrics to a dictionary.
+
+        Returns:
+            Dictionary representation of the metrics.
+        """
         return {
             "timestamp": self.timestamp,
             "cpu_percent": self.cpu_percent,
@@ -53,17 +58,43 @@ class MetricsCollector:
         self._snapshots: list[SystemMetrics] = []
 
     def increment_counter(self, name: str, value: int = 1) -> None:
+        """Increment a named counter.
+
+        Args:
+            name: Counter name.
+            value: Amount to increment by.
+        """
         self._counters[name] = self._counters.get(name, 0) + value
 
     def set_gauge(self, name: str, value: float) -> None:
+        """Set a named gauge to a value.
+
+        Args:
+            name: Gauge name.
+            value: Current value.
+        """
         self._gauges[name] = value
 
     def record_histogram(self, name: str, value: float) -> None:
+        """Record a value in a named histogram.
+
+        Args:
+            name: Histogram name.
+            value: Value to record.
+        """
         if name not in self._histograms:
             self._histograms[name] = []
         self._histograms[name].append(value)
 
     def collect_system_metrics(self, target_path: str = "/") -> SystemMetrics:
+        """Collect current system metrics.
+
+        Args:
+            target_path: Filesystem path to check disk usage for.
+
+        Returns:
+            A SystemMetrics snapshot.
+        """
         metrics = SystemMetrics(uptime_seconds=time.time() - self._start_time)
 
         try:
@@ -85,6 +116,14 @@ class MetricsCollector:
         return metrics
 
     def get_histogram_stats(self, name: str) -> Optional[dict]:
+        """Get statistics for a named histogram.
+
+        Args:
+            name: Histogram name.
+
+        Returns:
+            Dictionary with count, min, max, mean, p50, p95, p99, or None.
+        """
         values = self._histograms.get(name)
         if not values:
             return None
@@ -101,6 +140,11 @@ class MetricsCollector:
         }
 
     def get_report(self) -> dict:
+        """Get a full metrics report.
+
+        Returns:
+            Dictionary with uptime, counters, gauges, histograms, and snapshot count.
+        """
         return {
             "uptime_seconds": round(time.time() - self._start_time, 2),
             "counters": dict(self._counters),
@@ -110,6 +154,7 @@ class MetricsCollector:
         }
 
     def reset(self) -> None:
+        """Clear all collected metrics."""
         self._counters.clear()
         self._gauges.clear()
         self._histograms.clear()

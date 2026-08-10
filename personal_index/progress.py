@@ -34,6 +34,11 @@ class ProgressStep:
     details: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize the progress step to a dictionary.
+
+        Returns:
+            Dictionary representation of the step.
+        """
         return {
             "step_id": self.step_id,
             "description": self.description,
@@ -148,6 +153,11 @@ class ProgressTracker:
         self.message = message
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize the progress tracker to a dictionary.
+
+        Returns:
+            Dictionary representation of the tracker.
+        """
         return {
             "operation_id": self.operation_id,
             "operation_name": self.operation_name,

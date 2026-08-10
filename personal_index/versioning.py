@@ -24,6 +24,7 @@ class ContentVersion:
     metadata: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
+        """To_dict."""
         return {
             "url": self.url,
             "version_id": self.version_id,

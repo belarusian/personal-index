@@ -113,17 +113,28 @@ class ContentPipeline:
 
     @property
     def step_count(self) -> int:
+        """Total number of steps in the pipeline."""
         return len(self._steps)
 
     @property
     def enabled_steps(self) -> list[str]:
+        """Names of currently enabled steps."""
         return [s.name for s in self._steps if s.enabled]
 
     def get_step(self, name: str) -> Optional[PipelineStep]:
+        """Get a step by name.
+
+        Args:
+            name: The step name.
+
+        Returns:
+            The PipelineStep, or None if not found.
+        """
         for step in self._steps:
             if step.name == name:
                 return step
         return None
 
     def clear(self) -> None:
+        """Remove all steps from the pipeline."""
         self._steps.clear()

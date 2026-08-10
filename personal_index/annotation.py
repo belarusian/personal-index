@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class AnnotationType(str, Enum):
+    """Types of annotations that can be applied to content."""
+
     HIGHLIGHT = "highlight"
     NOTE = "note"
     TAG = "tag"
@@ -35,6 +37,12 @@ class Annotation:
     author: str = ""
 
     def update(self, value: Any = None, metadata: Optional[dict] = None) -> None:
+        """Update the annotation value and/or metadata.
+
+        Args:
+            value: New value for the annotation.
+            metadata: Additional metadata to merge into existing metadata.
+        """
         if value is not None:
             self.value = value
         if metadata is not None:
@@ -42,6 +50,11 @@ class Annotation:
         self.updated_at = time.time()
 
     def to_dict(self) -> dict:
+        """Serialize the annotation to a dictionary.
+
+        Returns:
+            Dictionary representation of the annotation.
+        """
         return {
             "annotation_id": self.annotation_id,
             "url": self.url,
@@ -62,6 +75,11 @@ class AnnotationStore:
         self._by_url: dict[str, list[str]] = {}
 
     def add(self, annotation: Annotation) -> None:
+        """Add an annotation to the store.
+
+        Args:
+            annotation: The annotation to add.
+        """
         self._annotations[annotation.annotation_id] = annotation
         if annotation.url not in self._by_url:
             self._by_url[annotation.url] = []
@@ -69,16 +87,50 @@ class AnnotationStore:
             self._by_url[annotation.url].append(annotation.annotation_id)
 
     def get(self, annotation_id: str) -> Optional[Annotation]:
+        """Get an annotation by its ID.
+
+        Args:
+            annotation_id: The ID of the annotation.
+
+        Returns:
+            The annotation, or None if not found.
+        """
         return self._annotations.get(annotation_id)
 
     def get_by_url(self, url: str) -> list[Annotation]:
+        """Get all annotations for a given URL.
+
+        Args:
+            url: The URL to look up.
+
+        Returns:
+            List of annotations associated with the URL.
+        """
         ids = self._by_url.get(url, [])
         return [self._annotations[aid] for aid in ids if aid in self._annotations]
 
     def get_by_type(self, annotation_type: AnnotationType) -> list[Annotation]:
+        """Get all annotations of a given type.
+
+        Args:
+            annotation_type: The type to filter by.
+
+        Returns:
+            List of matching annotations.
+        """
         return [a for a in self._annotations.values() if a.annotation_type == annotation_type]
 
     def update(self, annotation_id: str, value: Any = None, metadata: Optional[dict] = None) -> bool:
+        """Update an existing annotation by ID.
+
+        Args:
+            annotation_id: The ID of the annotation to update.
+            value: New value for the annotation.
+            metadata: Additional metadata to merge.
+
+        Returns:
+            True if the annotation was found and updated, False otherwise.
+        """
         annotation = self._annotations.get(annotation_id)
         if annotation:
             annotation.update(value, metadata)
@@ -86,6 +138,14 @@ class AnnotationStore:
         return False
 
     def remove(self, annotation_id: str) -> bool:
+        """Remove an annotation by ID.
+
+        Args:
+            annotation_id: The ID of the annotation to remove.
+
+        Returns:
+            True if the annotation was found and removed, False otherwise.
+        """
         annotation = self._annotations.pop(annotation_id, None)
         if annotation:
             if annotation.url in self._by_url:
@@ -96,6 +156,14 @@ class AnnotationStore:
         return False
 
     def remove_by_url(self, url: str) -> int:
+        """Remove all annotations for a given URL.
+
+        Args:
+            url: The URL whose annotations should be removed.
+
+        Returns:
+            The number of annotations removed.
+        """
         ids = self._by_url.pop(url, [])
         count = 0
         for aid in ids:
@@ -117,9 +185,15 @@ class AnnotationStore:
 
     @property
     def count(self) -> int:
+        """Total number of annotations in the store."""
         return len(self._annotations)
 
     def get_stats(self) -> dict:
+        """Get statistics about the annotation store.
+
+        Returns:
+            Dictionary with total count, counts by type, and number of annotated URLs.
+        """
         type_counts = {}
         for annotation in self._annotations.values():
             t = annotation.annotation_type.value
