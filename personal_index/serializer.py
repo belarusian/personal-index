@@ -51,14 +51,14 @@ class Serializer:
                 default=self._default_handler if self.config.default_handler else None,
             )
         except (TypeError, ValueError) as e:
-            raise SerializationError(f"Failed to serialize to JSON: {e}")
+            raise SerializationError(f"Failed to serialize to JSON: {e}") from e
 
     def from_json(self, json_str: str) -> dict:
         """Deserialize JSON string to dict."""
         try:
             return json.loads(json_str)
         except json.JSONDecodeError as e:
-            raise DeserializationError(f"Failed to deserialize JSON: {e}")
+            raise DeserializationError(f"Failed to deserialize JSON: {e}") from e
 
     def to_csv(self, data: list[dict], include_header: bool = True) -> str:
         """Serialize list of dicts to CSV string."""

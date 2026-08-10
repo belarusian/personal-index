@@ -36,11 +36,11 @@ def create_app(
     """
     try:
         from fastapi import FastAPI
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "fastapi is required for the API server. "
             "Install with: pip install fastapi uvicorn"
-        )
+        ) from err
 
     app = FastAPI(
         title="Personal Index API",
