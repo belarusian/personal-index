@@ -21,6 +21,7 @@ class SystemMetrics:
     memory_total_mb: float = 0.0
     disk_used_mb: float = 0.0
     disk_total_mb: float = 0.0
+    disk_free_mb: float = 0.0
     python_version: str = field(default_factory=platform.python_version)
     platform_info: str = field(default_factory=platform.platform)
     process_pid: int = field(default_factory=os.getpid)
@@ -39,6 +40,7 @@ class SystemMetrics:
             "memory_total_mb": round(self.memory_total_mb, 2),
             "disk_used_mb": round(self.disk_used_mb, 2),
             "disk_total_mb": round(self.disk_total_mb, 2),
+            "disk_free_mb": round(self.disk_free_mb, 2),
             "python_version": self.python_version,
             "platform": self.platform_info,
             "pid": self.process_pid,
