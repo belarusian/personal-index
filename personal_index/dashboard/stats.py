@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from personal_index.stats import StatsCollector  # noqa: E402
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -35,4 +37,3 @@ class RealTimeStats:
 
 
 # Re-export StatsCollector for convenience
-from personal_index.stats import StatsCollector  # noqa: E402

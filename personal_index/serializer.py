@@ -6,7 +6,7 @@ import csv
 import io
 import json
 import logging
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass, fields
 from datetime import datetime
 from typing import Any, Optional, TypeVar
 

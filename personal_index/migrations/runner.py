@@ -7,7 +7,6 @@ import time
 from typing import List, Optional
 
 from personal_index.migrations.base import (
-    BaseMigration,
     MigrationRegistry,
     MigrationRecord,
     MigrationStatus,
