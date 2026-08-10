@@ -18,7 +18,7 @@ class APIResponse(Generic[T]):
     meta: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        result = {"success": self.success}
+        result: Dict[str, Any] = {"success": self.success}
         if self.data is not None:
             if hasattr(self.data, "to_dict"):
                 result["data"] = self.data.to_dict()
