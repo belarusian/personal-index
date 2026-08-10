@@ -74,7 +74,7 @@ class Serializer:
         if not csv_str.strip():
             return []
         reader = csv.DictReader(io.StringIO(csv_str))
-        return [row for row in reader]
+        return list(reader)
 
     def to_dict(self, obj: Any) -> dict:
         """Convert dataclass or object to dict."""

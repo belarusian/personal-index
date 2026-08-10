@@ -262,7 +262,6 @@ class AnalyticsTracker:
             return None
         try:
             # Simple domain extraction
-            domain = url.split("://")[1].split("/")[0] if "://" in url else url.split("/")[0]
-            return domain
+            return url.split("://")[1].split("/")[0] if "://" in url else url.split("/")[0]
         except (IndexError, AttributeError):
             return None

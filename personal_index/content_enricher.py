@@ -1,8 +1,4 @@
 from __future__ import annotations
-
-"""Content enrichment module for enhancing indexed content with metadata."""
-
-
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -187,3 +183,6 @@ class ContentEnricher:
             List of EnrichedContent objects.
         """
         return [self.enrich(title, text) for title, text in items]
+
+"""Content enrichment module for enhancing indexed content with metadata."""
+

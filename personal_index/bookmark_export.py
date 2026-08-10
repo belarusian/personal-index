@@ -1,16 +1,10 @@
 from __future__ import annotations
 
-"""Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
-
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import ClassVar
-
-from .bookmarks import Bookmark
-
-
 @dataclass
 class BookmarkExportResult:
     """Result of a bookmark export operation."""
@@ -206,3 +200,6 @@ class BookmarkExporter:
             bookmark_count=len(self.bookmarks),
             output_path=filepath,
         )
+
+"""Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
+

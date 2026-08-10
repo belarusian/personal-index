@@ -1,11 +1,4 @@
 from __future__ import annotations
-
-"""Content categorizer module for classifying saved items by topic.
-
-Analyzes content text, titles, URLs, and metadata to assign topic categories
-with confidence scores. Uses rule-based keyword matching with multiple signals.
-"""
-
 from dataclasses import dataclass, field
 from typing import ClassVar
 from urllib.parse import urlparse
@@ -594,3 +587,10 @@ class ContentCategorizer:
             )
 
         return reasons
+
+"""Content categorizer module for classifying saved items by topic.
+
+Analyzes content text, titles, URLs, and metadata to assign topic categories
+with confidence scores. Uses rule-based keyword matching with multiple signals.
+"""
+

@@ -11,8 +11,6 @@ from personal_index.content_tagger.tag import Tag
 
 @dataclass
 class _TopicDefinition:
-    """Internal topic definition with keywords."""
-
     name: str
     keywords: list[str]
     weight: float = 1.0
@@ -155,3 +153,6 @@ class TopicDetector:
     def get_all_topics(self) -> list[str]:
         """Return all registered topic names."""
         return list(self._topics.keys())
+
+    """Internal topic definition with keywords."""
+

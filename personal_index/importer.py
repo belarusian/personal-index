@@ -22,7 +22,6 @@ from .bookmarks import Bookmark, BookmarkManager
 
 @dataclass
 class ImportResult:
-    """Result of an import operation."""
     total_imported: int = 0
     total_skipped: int = 0
     errors: list[str] = field(default_factory=list)
@@ -245,3 +244,6 @@ class Importer:
                 result.total_imported += 1
 
         return result
+
+    """Result of an import operation."""
+

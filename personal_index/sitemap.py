@@ -19,7 +19,6 @@ from defusedxml.ElementTree import (
 
 @dataclass
 class SitemapEntry:
-    """A single entry from a sitemap."""
     loc: str
     lastmod: str | None = None
     changefreq: str = "monthly"
@@ -191,3 +190,6 @@ class SitemapParser:
                 except (ValueError, TypeError):
                     pass
         return entries
+
+    """A single entry from a sitemap."""
+

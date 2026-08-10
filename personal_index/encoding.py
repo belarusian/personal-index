@@ -1,8 +1,4 @@
 from __future__ import annotations
-
-"""Text encoding detection and conversion utilities."""
-
-
 import logging
 import re
 from dataclasses import dataclass
@@ -95,3 +91,6 @@ class EncodingDetector:
         """Sanitize text by removing control chars and normalizing whitespace."""
         text = self.remove_control_chars(text)
         return self.normalize_whitespace(text)
+
+"""Text encoding detection and conversion utilities."""
+

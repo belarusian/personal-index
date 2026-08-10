@@ -1,8 +1,4 @@
 from __future__ import annotations
-
-"""Export bookmarks and indexed content to various formats."""
-
-
 import csv
 import json
 from dataclasses import dataclass, field
@@ -230,3 +226,6 @@ class Exporter:
             temp_manager.add(b)
         temp_exporter = Exporter(manager=temp_manager)
         return temp_exporter.export_to_content(fmt)
+
+"""Export bookmarks and indexed content to various formats."""
+
