@@ -14,7 +14,6 @@ from personal_index.utils.url_utils import (
 
 import re
 from bs4 import BeautifulSoup
-from typing import Optional
 
 
 def extract_links(html: str, base_url: str) -> list[str]:

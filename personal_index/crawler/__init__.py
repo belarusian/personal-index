@@ -11,7 +11,11 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from personal_index.models import CrawledPage, Interest, InterestType
+from personal_index.models import CrawledPage
+
+# Re-export Interest and InterestType for backward compatibility
+from personal_index.models import Interest as Interest  # noqa: F401
+from personal_index.models import InterestType as InterestType  # noqa: F401
 from personal_index.interest_store import InterestStore
 
 

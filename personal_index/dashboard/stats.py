@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from personal_index.stats import StatsCollector  # noqa: E402
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
