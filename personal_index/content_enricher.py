@@ -72,6 +72,11 @@ class ContentEnricher:
     }
 
     def __init__(self, top_n_keywords: int = 10):
+        """Initialize the content enricher.
+
+        Args:
+            top_n_keywords: Number of top keywords to extract.
+        """
         self.top_n_keywords = top_n_keywords
 
     def enrich(self, title: str, text: str, html: str | None = None) -> EnrichedContent:
