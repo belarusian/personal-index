@@ -109,7 +109,7 @@ class CSVExporter:
 
     def _get_columns(self, items: list[dict]) -> list[str]:
         """Get all unique columns from items."""
-        columns = set()
+        columns: set[str] = set()
         for item in items:
             columns.update(item.keys())
         # Sort for consistent output, preferring default column order
@@ -212,7 +212,7 @@ class CSVExporter:
         """Get export statistics."""
         if not items:
             return {"total_items": 0, "columns": 0}
-        columns = set()
+        columns: set[str] = set()
         for item in items:
             columns.update(item.keys())
         return {

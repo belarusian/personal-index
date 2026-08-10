@@ -117,8 +117,8 @@ class AnalyticsTracker:
             data.top_queries = query_counter.most_common(top_n)
 
             # Hourly distribution
-            hourly = Counter()
-            daily = Counter()
+            hourly: Counter[str] = Counter()
+            daily: Counter[str] = Counter()
             for e in self._search_events:
                 try:
                     dt = datetime.fromisoformat(e.timestamp)
@@ -136,7 +136,7 @@ class AnalyticsTracker:
                 data.avg_crawl_duration_ms = sum(durations) / len(durations)
 
             # Top domains
-            domain_counter = Counter()
+            domain_counter: Counter[str] = Counter()
             for e in self._crawl_events:
                 domain = self._extract_domain(e.url)
                 if domain:
