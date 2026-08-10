@@ -162,33 +162,31 @@ class MarkdownExporter:
                 tags = item.get("tags", [])
                 date = item.get("published_date", "")
 
-                # Escape markdown special chars in title
-                safe_title = self._escape_markdown_title(title)
+                # Title as heading
+                lines.append(f"# {title}")
 
-                lines.append(f"### [{safe_title}]({url})")
-                lines.append("")
+                # Link
+                if url:
+                    lines.append(f"[{title}]({url})")
 
                 # Metadata
                 if self.config.include_metadata and date:
-                    lines.append(f"*Published: {date}*")
-                    lines.append("")
+                    lines.append(f"**Published:** {date}")
 
                 # Tags
                 if self.config.include_tags and tags:
-                    tag_str = ", ".join(f"`{t}`" for t in tags)
-                    lines.append(f"Tags: {tag_str}")
-                    lines.append("")
+                    tag_str = ", ".join(tags)
+                    lines.append(f"**Tags:** {tag_str}")
 
                 # Content/Summary
-                if self.config.include_summary and content:
-                    summary = self._truncate(content, 200)
-                    lines.append(summary)
+                if content:
                     lines.append("")
-                elif content:
-                    lines.append(content)
-                    lines.append("")
+                    if self.config.include_summary:
+                        summary = self._truncate(content, 200)
+                        lines.append(summary)
+                    else:
+                        lines.append(content)
 
-                lines.append("---")
                 lines.append("")
 
         return "\n".join(lines).strip()
@@ -267,16 +265,6 @@ class MarkdownExporter:
                 lines.append("")
 
         return "\n".join(lines).strip()
-
-    def _escape_markdown_title(self, title: str) -> str:
-        """Escape special characters in markdown titles."""
-        # Escape characters that could break markdown
-        title = title.replace("#", "\\#")
-        title = title.replace("*", "\\*")
-        title = title.replace("_", "\\_")
-        title = title.replace("[", "\\[")
-        title = title.replace("]", "\\]")
-        return title
 
     def _truncate(self, text: str, max_length: int) -> str:
         """Truncate text to max_length, adding ellipsis if needed."""
