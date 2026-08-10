@@ -231,3 +231,54 @@ class TestURLDeduplicatorFuzzyThreshold:
         dedup.add_url("http://a.com/page")
         result = dedup.check_duplicate("http://a.com/pagex")
         assert result.is_duplicate is False
+
+
+class TestRemoveprefixRefactoring:
+    """Tests verifying str.removeprefix() behavior replaces startswith+slice correctly."""
+
+    def setup_method(self):
+        self.dedup = URLDeduplicator()
+
+    def test_removeprefix_www_in_normalize(self):
+        """normalize_url uses removeprefix for www. removal."""
+        assert self.dedup.normalize_url("http://www.example.com/page") == "http://example.com/page"
+
+    def test_removeprefix_www_no_change_when_absent(self):
+        """removeprefix does nothing when www. is not present."""
+        assert self.dedup.normalize_url("http://example.com/page") == "http://example.com/page"
+
+    def test_removeprefix_www_in_check_duplicate(self):
+        """check_duplicate uses removeprefix for domain matching."""
+        self.dedup.add_url("http://example.com/page")
+        result = self.dedup.check_duplicate("http://www.example.com/page")
+        assert result.is_duplicate is True
+
+    def test_removeprefix_www_in_add_url(self):
+        """add_url uses removeprefix for domain grouping."""
+        self.dedup.add_url("http://www.example.com/page1")
+        self.dedup.add_url("http://example.com/page2")
+        assert "example.com" in self.dedup._url_groups
+        assert len(self.dedup._url_groups["example.com"]) == 2
+
+    def test_removeprefix_www_in_get_duplicates(self):
+        """get_duplicates uses removeprefix for domain lookup."""
+        self.dedup.add_url("http://www.example.com/page")
+        self.dedup.add_url("http://example.com/page/")
+        duplicates = self.dedup.get_duplicates()
+        # Both should be under same domain group
+        assert "example.com" in self.dedup._url_groups
+
+    def test_removeprefix_www_subdomain_preserved(self):
+        """removeprefix only strips leading www., not www. in subdomains."""
+        result = self.dedup.normalize_url("http://www.example.com/page")
+        assert "www." not in result
+
+    def test_removeprefix_non_www_domain(self):
+        """Domains without www. are unaffected."""
+        result = self.dedup.normalize_url("http://api.example.com/page")
+        assert result == "http://api.example.com/page"
+
+    def test_removeprefix_www_case_insensitive(self):
+        """www. removal works after lowercasing netloc."""
+        result = self.dedup.normalize_url("http://WWW.Example.COM/page")
+        assert result == "http://example.com/page"

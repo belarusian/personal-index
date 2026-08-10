@@ -58,8 +58,7 @@ class URLDeduplicator:
 
         # Remove www. prefix
         parsed = urlparse(normalized)
-        if parsed.netloc.startswith("www."):
-            normalized = parsed._replace(netloc=parsed.netloc[4:]).geturl()
+        normalized = parsed._replace(netloc=parsed.netloc.removeprefix("www.")).geturl()
 
         # Remove common tracking parameters
         tracking_params = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"}
@@ -98,9 +97,7 @@ class URLDeduplicator:
 
         # Fuzzy match within same domain (compare paths only)
         parsed = urlparse(url)
-        domain = parsed.netloc.lower()
-        if domain.startswith("www."):
-            domain = domain[4:]
+        domain = parsed.netloc.lower().removeprefix("www.")
 
         if domain in self._url_groups:
             path = self._get_path(normalized)
@@ -131,9 +128,7 @@ class URLDeduplicator:
 
             # Track by domain
             parsed = urlparse(url)
-            domain = parsed.netloc.lower()
-            if domain.startswith("www."):
-                domain = domain[4:]
+            domain = parsed.netloc.lower().removeprefix("www.")
             if domain not in self._url_groups:
                 self._url_groups[domain] = []
             self._url_groups[domain].append(url)
@@ -175,9 +170,7 @@ class URLDeduplicator:
         duplicates: Dict[str, List[str]] = {}
         for normalized, original in self._seen_urls.items():
             parsed = urlparse(original)
-            domain = parsed.netloc.lower()
-            if domain.startswith("www."):
-                domain = domain[4:]
+            domain = parsed.netloc.lower().removeprefix("www.")
             if domain in self._url_groups:
                 orig_path = self._get_path(original)
                 for url in self._url_groups[domain]:
