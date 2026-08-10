@@ -90,3 +90,33 @@ class TestMetricsCollector:
         mc.collect_system_metrics()
         report = mc.get_report()
         assert report["snapshot_count"] == 2
+
+
+class TestSystemMetricsDiskFreeMb:
+    """Tests for TICKET-33: SystemMetrics has disk_free_mb field."""
+
+    def test_disk_free_mb_exists(self):
+        """SystemMetrics should have disk_free_mb attribute."""
+        m = SystemMetrics()
+        assert hasattr(m, 'disk_free_mb')
+        assert m.disk_free_mb == 0.0
+
+    def test_disk_free_mb_settable(self):
+        """disk_free_mb should be settable."""
+        m = SystemMetrics()
+        m.disk_free_mb = 50000.0
+        assert m.disk_free_mb == 50000.0
+
+    def test_disk_free_mb_in_to_dict(self):
+        """to_dict should include disk_free_mb."""
+        m = SystemMetrics(disk_free_mb=42000.0)
+        d = m.to_dict()
+        assert 'disk_free_mb' in d
+        assert d['disk_free_mb'] == 42000.0
+
+    def test_collect_system_metrics_has_disk_free_mb(self):
+        """collect_system_metrics should set disk_free_mb without error."""
+        mc = MetricsCollector()
+        metrics = mc.collect_system_metrics()
+        assert hasattr(metrics, 'disk_free_mb')
+        assert metrics.disk_free_mb >= 0.0
