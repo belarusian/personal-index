@@ -177,9 +177,9 @@ class AnnotationStore:
         query_lower = query.lower()
         results = []
         for annotation in self._annotations.values():
-            if query_lower in annotation.url.lower():
-                results.append(annotation)
-            elif isinstance(annotation.value, str) and query_lower in annotation.value.lower():
+            if query_lower in annotation.url.lower() or (
+                isinstance(annotation.value, str) and query_lower in annotation.value.lower()
+            ):
                 results.append(annotation)
         return results
 
