@@ -102,7 +102,7 @@ class TextSummarizer:
         for i, sentence in enumerate(sentences):
             words = self._tokenize(sentence)
             if not words:
-                sentence_scores.append((0, i, sentence))
+                sentence_scores.append((0.0, i, sentence))
                 continue
             score = sum(word_freq.get(w, 0) for w in words) / len(words)
             sentence_scores.append((score, i, sentence))

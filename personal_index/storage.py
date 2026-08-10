@@ -55,6 +55,8 @@ class Storage:
     def get_interests(self) -> list[Interest]:
         """Get all interests."""
         data = self._read_json(self.interests_file)
+        if not isinstance(data, list):
+            return []
         return [Interest.from_dict(item) for item in data]
 
     def get_interest(self, name: str) -> Interest | None:
@@ -121,6 +123,8 @@ class Storage:
     def get_pages(self) -> list[IndexedPage]:
         """Get all indexed pages."""
         data = self._read_json(self.pages_file)
+        if not isinstance(data, list):
+            return []
         return [IndexedPage.from_dict(item) for item in data]
 
     def get_page(self, url: str) -> IndexedPage | None:
