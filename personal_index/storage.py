@@ -41,6 +41,8 @@ class Storage:
     def add_interest(self, interest: Interest) -> Interest:
         """Add a new interest."""
         interests = self._read_json(self.interests_file)
+        if not isinstance(interests, list):
+            interests = []
         for i, existing in enumerate(interests):
             if existing["name"] == interest.name:
                 interests[i] = interest.to_dict()
@@ -96,7 +98,7 @@ class Storage:
     def get_config(self) -> CrawlConfig:
         """Get crawl configuration."""
         data = self._read_json(self.config_file)
-        if not data:
+        if not data or not isinstance(data, dict):
             return CrawlConfig()
         return CrawlConfig.from_dict(data)
 
@@ -105,6 +107,8 @@ class Storage:
     def add_page(self, page: IndexedPage) -> IndexedPage:
         """Add or update an indexed page."""
         pages = self._read_json(self.pages_file)
+        if not isinstance(pages, list):
+            pages = []
         for i, existing in enumerate(pages):
             if existing["url"] == page.url:
                 pages[i] = page.to_dict()
