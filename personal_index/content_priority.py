@@ -324,7 +324,7 @@ class PriorityScorer:
         content_text = (content.get("content", "") or "").lower()
 
         interests_lower = [i.lower() for i in user_interests]
-        matches = 0
+        matches: float = 0.0
 
         for interest in interests_lower:
             # Check tags
