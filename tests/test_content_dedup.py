@@ -270,3 +270,25 @@ class TestSimilarityMethod:
 
     def test_jaccard_method(self):
         assert SimilarityMethod.JACCARD.value == "jaccard"
+
+
+class TestDocumentHashSecurity:
+    """Test that DocumentHash uses secure hashing."""
+
+    def test_compute_hash_uses_sha256(self):
+        """Verify compute_hash produces SHA-256 length output."""
+        from personal_index.content_dedup import DocumentHash
+        h = DocumentHash.compute_hash("test content")
+        assert len(h) == 64  # SHA-256 hex digest is 64 chars
+
+    def test_compute_fingerprint_uses_sha256(self):
+        """Verify compute_fingerprint produces SHA-256 based output."""
+        from personal_index.content_dedup import DocumentHash
+        f = DocumentHash.compute_fingerprint("test content")
+        assert len(f) == 16  # First 16 chars of SHA-256 hex
+        # Verify it is deterministic
+        f2 = DocumentHash.compute_fingerprint("test content")
+        assert f == f2
+        # Verify different content produces different fingerprint
+        f3 = DocumentHash.compute_fingerprint("different content")
+        assert f != f3
