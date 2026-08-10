@@ -33,7 +33,7 @@ def is_valid_url(url: str) -> bool:
     try:
         parsed = urlparse(url)
         return parsed.scheme in ("http", "https") and bool(parsed.netloc)
-    except Exception:
+    except (ValueError, AttributeError):
         return False
 
 
@@ -96,7 +96,7 @@ def normalize_url(
             return None
 
         return urlunparse((scheme, netloc, path, "", query, fragment))
-    except Exception:
+    except (ValueError, AttributeError):
         return url
 
 
@@ -136,7 +136,7 @@ def extract_domain(url: str) -> str | None:
         if ":" in netloc:
             netloc = netloc.rsplit(":", 1)[0]
         return netloc
-    except Exception:
+    except (ValueError, AttributeError):
         return None
 
 
@@ -192,7 +192,7 @@ def get_url_depth(url: str) -> int:
         if not path:
             return 0
         return len(path.split("/"))
-    except Exception:
+    except (ValueError, AttributeError):
         return 0
 
 
@@ -346,7 +346,7 @@ def extract_all_urls(html: str, base_url: str = "") -> list:
             normalized = normalize_url(full_url)
             if is_valid_url(normalized):
                 urls.append(normalized)
-    except Exception:
+    except (ValueError, AttributeError, TypeError):
         pass
 
     # Also extract URLs from plain text using regex
