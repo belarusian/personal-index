@@ -126,13 +126,6 @@ def extract_content(
     )
 
 
-def tokenize(text: str) -> list[str]:
-    """Tokenize text into lowercase words."""
-    if not text:
-        return []
-    return re.findall(r'[a-z0-9]+', text.lower())
-
-
 def remove_stopwords(
     tokens: list[str],
     stopwords: set[str] | None = None,
