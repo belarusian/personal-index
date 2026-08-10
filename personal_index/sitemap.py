@@ -1,6 +1,7 @@
 """Sitemap parser for discovering URLs on websites."""
 
 from __future__ import annotations
+from contextlib import suppress
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field

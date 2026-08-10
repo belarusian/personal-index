@@ -62,16 +62,26 @@ class AnalyticsTracker:
         self._search_events: List[SearchEvent] = []
         self._crawl_events: List[CrawlEvent] = []
 
-    def record_search(self, query: str, result_count: int = 0,
+    def record_search(self, query: str | SearchEvent, result_count: int = 0,
                       clicked_url: str | None = None,
                       duration_ms: float = 0.0) -> SearchEvent:
-        """Record a search event."""
-        event = SearchEvent(
-            query=query,
-            result_count=result_count,
-            clicked_url=clicked_url,
-            duration_ms=duration_ms,
-        )
+        """Record a search event.
+
+        Args:
+            query: Either a search query string or a SearchEvent object.
+            result_count: Number of results (ignored if SearchEvent is passed).
+            clicked_url: URL that was clicked (ignored if SearchEvent is passed).
+            duration_ms: Duration in ms (ignored if SearchEvent is passed).
+        """
+        if isinstance(query, SearchEvent):
+            event = query
+        else:
+            event = SearchEvent(
+                query=query,
+                result_count=result_count,
+                clicked_url=clicked_url,
+                duration_ms=duration_ms,
+            )
         self._search_events.append(event)
         return event
 
