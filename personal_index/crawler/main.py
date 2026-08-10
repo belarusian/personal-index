@@ -135,7 +135,7 @@ class Crawler:
             if resp.status_code == 200:
                 return resp
             return None
-        except requests.RequestException:
+        except Exception:
             return None
 
     def _extract_content(self, html: str, url: str) -> CrawledPage:
