@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.models import Interest, InterestType
 
 
@@ -17,7 +17,7 @@ def store_path(tmp_path: Path) -> str:
 
 @pytest.fixture
 def store(store_path: str) -> InterestStore:
-    return InterestStore(storage_path=store_path)
+    return InterestStore(store_path=store_path)
 
 
 class TestInterestStore:
@@ -64,8 +64,8 @@ class TestInterestStore:
     def test_list_enabled_only(self, store: InterestStore):
         store.add(Interest("A", InterestType.KEYWORD, "a", 5, enabled=True))
         store.add(Interest("B", InterestType.KEYWORD, "b", 5, enabled=False))
-        assert len(store.list_all(enabled_only=True)) == 1
-        assert len(store.list_all(enabled_only=False)) == 2
+        assert len(store.get_enabled()) == 1
+        assert len(store.list_all()) == 2
 
     def test_toggle_interest(self, store: InterestStore):
         store.add(Interest("A", InterestType.KEYWORD, "a", 5, enabled=True))
@@ -102,20 +102,20 @@ class TestInterestStore:
         assert score == 10.0
 
     def test_persistence(self, store_path: str):
-        store1 = InterestStore(storage_path=store_path)
+        store1 = InterestStore(store_path=store_path)
         store1.add(Interest("Py", InterestType.KEYWORD, "python", 7))
-        store2 = InterestStore(storage_path=store_path)
+        store2 = InterestStore(store_path=store_path)
         assert len(store2.list_all()) == 1
         assert store2.get("Py").priority == 7
 
     def test_load_corrupted_file(self, tmp_path: Path):
         path = str(tmp_path / "bad.json")
         Path(path).write_text("not json at all{{{")
-        store = InterestStore(storage_path=path)
+        store = InterestStore(store_path=path)
         assert store.list_all() == []
 
     def test_creates_parent_dirs(self, tmp_path: Path):
         path = str(tmp_path / "nested" / "dir" / "interests.json")
-        store = InterestStore(storage_path=path)
+        store = InterestStore(store_path=path)
         store.add(Interest("A", InterestType.KEYWORD, "a", 5))
         assert Path(path).exists()

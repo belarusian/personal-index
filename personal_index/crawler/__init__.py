@@ -15,7 +15,7 @@ from personal_index.models import CrawledPage
 # Re-export Interest and InterestType for backward compatibility
 from personal_index.models import Interest as Interest  # noqa: F401
 from personal_index.models import InterestType as InterestType  # noqa: F401
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 
 
 @dataclass
