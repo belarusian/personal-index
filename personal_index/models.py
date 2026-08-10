@@ -345,10 +345,12 @@ class SchedulerConfig:
     interval_hours: int = 24
 
     def to_dict(self) -> dict:
+        """Convert SchedulerConfig to a dictionary."""
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> "SchedulerConfig":
+        """Create a SchedulerConfig from a dictionary."""
         return cls(**{k: v for k, v in data.items()
                       if k in cls.__dataclass_fields__})
 
@@ -372,6 +374,7 @@ class AppConfig:
     scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
 
     def to_dict(self) -> dict:
+        """Convert SchedulerConfig to a dictionary."""
         """Serialize the app config to a dictionary.
 
         Returns:
