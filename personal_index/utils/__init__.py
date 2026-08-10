@@ -13,6 +13,8 @@ from personal_index.url_utils import (
     EXCLUDED_SCHEMES,
 )
 
+from personal_index.content import tokenize
+
 import re
 from bs4 import BeautifulSoup
 
@@ -98,6 +100,7 @@ __all__ = [
     "extract_meta_description",
     "extract_text_content",
     "compute_relevance_score",
+    "tokenize",
     "EXCLUDED_EXTENSIONS",
     "EXCLUDED_SCHEMES",
 ]

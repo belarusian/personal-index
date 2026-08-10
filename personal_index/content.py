@@ -126,6 +126,21 @@ def extract_content(
     )
 
 
+
+def tokenize(text: str) -> list[str]:
+    """Tokenize text into lowercase words, keeping hyphenated words together.
+
+    Args:
+        text: Input text to tokenize.
+
+    Returns:
+        List of lowercase token strings.
+    """
+    if not text:
+        return []
+    tokens = re.findall(r"[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*", text)
+    return [t.lower() for t in tokens]
+
 def remove_stopwords(
     tokens: list[str],
     stopwords: set[str] | None = None,
