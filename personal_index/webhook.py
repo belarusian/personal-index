@@ -8,6 +8,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
@@ -125,7 +126,7 @@ class WebhookSender:
                         "success": True,
                         "attempts": attempt + 1,
                     }
-            except Exception as e:
+            except (URLError, OSError, TimeoutError) as e:
                 last_error = str(e)
                 if attempt < config.retry_count:
                     time.sleep(config.retry_delay)
