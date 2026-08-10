@@ -224,9 +224,9 @@ class Exporter:
         if favorites_only:
             bookmarks = [b for b in bookmarks if b.is_favorite]
 
-        # Temporarily replace manager's bookmarks for export
-        original = self._manager._bookmarks
-        self._manager._bookmarks = {b.url: b for b in bookmarks}
-        content = self.export_to_content(fmt)
-        self._manager._bookmarks = original
-        return content
+        # Create a temporary Exporter with a filtered BookmarkManager
+        temp_manager = BookmarkManager()
+        for b in bookmarks:
+            temp_manager.add(b)
+        temp_exporter = Exporter(manager=temp_manager)
+        return temp_exporter.export_to_content(fmt)
