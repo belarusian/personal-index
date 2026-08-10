@@ -374,6 +374,11 @@ class ContentCategorizer:
         title_tokens = set(tokenize(title, lowercase=True, remove_stopwords=True))
         meta_tokens = set(tokenize(meta_description, lowercase=True, remove_stopwords=True))
 
+        # Raw lowercased text for multi-word keyword matching
+        text_lower = text.lower()
+        title_lower = title.lower()
+        meta_lower = meta_description.lower()
+
         # Extract URL hints
         url_hints = self._extract_url_hints(url)
 
@@ -385,6 +390,9 @@ class ContentCategorizer:
                 text_tokens=text_tokens,
                 title_tokens=title_tokens,
                 meta_tokens=meta_tokens,
+                text_lower=text_lower,
+                title_lower=title_lower,
+                meta_lower=meta_lower,
                 url_hints=url_hints,
             )
             if score >= self.min_score:
@@ -447,9 +455,14 @@ class ContentCategorizer:
         text_tokens: set,
         title_tokens: set,
         meta_tokens: set,
+        text_lower: str,
+        title_lower: str,
+        meta_lower: str,
         url_hints: set,
     ) -> Tuple[float, List[str], List[str]]:
         """Score a single topic against content signals.
+
+        Supports both single-word token matching and multi-word phrase matching.
 
         Returns:
             Tuple of (score, matched_keywords, signal_sources).
@@ -459,10 +472,8 @@ class ContentCategorizer:
         signal_sources: List[str] = []
 
         # 1. Text keyword matching
-        text_matches = [kw for kw in topic.keywords if kw in text_tokens]
+        text_matches = self._match_keywords(topic.keywords, text_tokens, text_lower)
         if text_matches:
-            # Normalize by topic keyword count to avoid bias toward large topics
-            text_ratio = len(text_matches) / max(len(topic.keywords), 1)
             # Logarithmic scaling to prevent dominance
             text_score = min(len(text_matches) * 0.15, 1.0)
             score += text_score * topic.weight
@@ -470,7 +481,7 @@ class ContentCategorizer:
             signal_sources.append("text")
 
         # 2. Title keyword matching (boosted)
-        title_matches = [kw for kw in topic.keywords if kw in title_tokens]
+        title_matches = self._match_keywords(topic.keywords, title_tokens, title_lower)
         if title_matches:
             title_score = min(len(title_matches) * 0.3 * self.TITLE_BOOST, 1.0)
             score += title_score * topic.weight
@@ -480,7 +491,7 @@ class ContentCategorizer:
             signal_sources.append("title")
 
         # 3. Meta description matching (boosted)
-        meta_matches = [kw for kw in topic.keywords if kw in meta_tokens]
+        meta_matches = self._match_keywords(topic.keywords, meta_tokens, meta_lower)
         if meta_matches:
             meta_score = min(len(meta_matches) * 0.2 * self.META_DESC_BOOST, 1.0)
             score += meta_score * topic.weight
@@ -495,6 +506,37 @@ class ContentCategorizer:
             signal_sources.append("url_hint")
 
         return score, matched_keywords, signal_sources
+
+    def _match_keywords(
+        self,
+        keywords: List[str],
+        tokens: set,
+        raw_text: str,
+    ) -> List[str]:
+        """Match keywords against both single-word tokens and multi-word phrases.
+
+        Single-word keywords are matched against the token set.
+        Multi-word keywords are matched as substrings in the raw text.
+
+        Args:
+            keywords: List of keyword strings (may be single or multi-word).
+            tokens: Set of single-word tokens from the text.
+            raw_text: Lowercased raw text for phrase matching.
+
+        Returns:
+            List of matched keywords.
+        """
+        matches: List[str] = []
+        for kw in keywords:
+            if " " in kw:
+                # Multi-word keyword: check as substring in raw text
+                if kw in raw_text:
+                    matches.append(kw)
+            else:
+                # Single-word keyword: check in token set
+                if kw in tokens:
+                    matches.append(kw)
+        return matches
 
     def _extract_url_hints(self, url: str) -> set:
         """Extract topic hints from URL path and domain.

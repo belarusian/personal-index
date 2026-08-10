@@ -551,6 +551,9 @@ class TestContentCategorizer:
             text_tokens=text_tokens,
             title_tokens=set(),
             meta_tokens=set(),
+            text_lower="",
+            title_lower="",
+            meta_lower="",
             url_hints=set(),
         )
         assert len(result) == 3
