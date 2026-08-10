@@ -22,6 +22,7 @@ class ScheduleFrequency(Enum):
 
     @property
     def interval_seconds(self) -> int:
+        """Return the interval in seconds for this frequency."""
         intervals = {
             ScheduleFrequency.HOURLY: 3600,
             ScheduleFrequency.DAILY: 86400,
@@ -48,6 +49,7 @@ class ScheduledTask:
     tags: List[str] = field(default_factory=list)
 
     def __post_init__(self):
+        """Set defaults for created_at and next_run after init."""
         if not self.created_at:
             self.created_at = datetime.now(timezone.utc).isoformat()
         if self.next_run is None:
@@ -93,6 +95,7 @@ class TaskResult:
     run_at: str = ""
 
     def __post_init__(self):
+        """Set default run_at after init."""
         if not self.run_at:
             self.run_at = datetime.now(timezone.utc).isoformat()
 
@@ -101,6 +104,7 @@ class ContentScheduler:
     """Schedule and manage periodic content re-indexing tasks."""
 
     def __init__(self):
+        """Initialize the content scheduler with empty task and result storage."""
         self._tasks: Dict[str, ScheduledTask] = {}
         self._results: List[TaskResult] = []
         self._running = False
@@ -110,10 +114,12 @@ class ContentScheduler:
 
     @property
     def tasks(self) -> Dict[str, ScheduledTask]:
+        """Return a copy of all scheduled tasks."""
         return dict(self._tasks)
 
     @property
     def results(self) -> List[TaskResult]:
+        """Return a copy of all task results."""
         return list(self._results)
 
     def add_task(
