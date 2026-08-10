@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 """Content enrichment module for enhancing indexed content with metadata."""
 
+from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
@@ -14,7 +13,6 @@ from personal_index.text_utils import (
     read_time_minutes,
     tokenize,
 )
-
 
 @dataclass
 class EnrichedContent:
@@ -48,7 +46,6 @@ class EnrichedContent:
             "complexity_score": self.complexity_score,
             "enriched_at": self.enriched_at.isoformat(),
         }
-
 
 class ContentEnricher:
     """Enrich content with computed metadata and analysis."""

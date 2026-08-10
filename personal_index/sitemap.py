@@ -9,13 +9,16 @@ from typing import ClassVar
 from urllib.parse import urljoin
 from xml.etree.ElementTree import Element as ET_Element
 
-from defusedxml.ElementTree import ParseError as ET_ParseError
-from defusedxml.ElementTree import fromstring as ET_fromstring
+from defusedxml.ElementTree import (
+    ParseError as ET_ParseError,
+)
+from defusedxml.ElementTree import (
+    fromstring as ET_fromstring,
+)
 
 
 @dataclass
 class SitemapEntry:
-    """A single entry from a sitemap."""
     loc: str
     lastmod: str | None = None
     changefreq: str = "monthly"
@@ -187,3 +190,6 @@ class SitemapParser:
                 except (ValueError, TypeError):
                     pass
         return entries
+
+    """A single entry from a sitemap."""
+

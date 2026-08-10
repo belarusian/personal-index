@@ -1,10 +1,10 @@
-from __future__ import annotations
-
 """Content categorizer module for classifying saved items by topic.
 
 Analyzes content text, titles, URLs, and metadata to assign topic categories
 with confidence scores. Uses rule-based keyword matching with multiple signals.
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import ClassVar
@@ -174,11 +174,9 @@ BUILTIN_TOPICS: dict[str, list[str]] = {
     ],
 }
 
-
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class TopicCategory:
@@ -192,7 +190,6 @@ class TopicCategory:
     def __post_init__(self):
         # Normalize keywords to lowercase
         self.keywords = [kw.lower() for kw in self.keywords]
-
 
 @dataclass
 class TopicScore:
@@ -208,7 +205,6 @@ class TopicScore:
 
     def __gt__(self, other: TopicScore) -> bool:
         return self.score > other.score
-
 
 @dataclass
 class CategorizationResult:
@@ -230,11 +226,9 @@ class CategorizationResult:
         """Return top N topics."""
         return self.topics[:n]
 
-
 # ---------------------------------------------------------------------------
 # Categorization engine
 # ---------------------------------------------------------------------------
-
 
 class ContentCategorizer:
     """Classifies content into topic categories using multi-signal analysis.
