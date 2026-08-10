@@ -2,7 +2,7 @@
 
 import pytest
 
-from personal_index.utils.url_utils import (
+from personal_index.url_utils import (
     is_valid_url,
     normalize_url,
     resolve_relative_url,
