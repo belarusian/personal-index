@@ -42,7 +42,7 @@ class DocumentHash:
     @staticmethod
     def compute_fingerprint(text: str) -> str:
         """Compute a shorter fingerprint for quick comparison."""
-        return hashlib.md5(text.encode("utf-8")).hexdigest()[:16]
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
     @classmethod
     def from_text(cls, url: str, title: str, content: str) -> DocumentHash:
