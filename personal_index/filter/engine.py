@@ -85,7 +85,7 @@ class ContentFilter:
         url_result = self.filter_url(url)
         content_result = self.filter_content(content, title)
 
-        result = FilterResult(
+        return FilterResult(
             matched=url_result.matched or content_result.matched,
             matching_interests=(
                 url_result.matching_interests
@@ -95,7 +95,6 @@ class ContentFilter:
             score=url_result.score + content_result.score,
             passed=url_result.matched or content_result.matched,
         )
-        return result
 
     def update_page(self, page, result: FilterResult) -> None:
         """Update a page object with filter results."""

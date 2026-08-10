@@ -62,11 +62,10 @@ class ContentMatcher:
         for kw in self.interest.keywords:
             total += text_lower.count(kw.lower())
         num_kw = max(len(self.interest.keywords), 1)
-        score = min(
+        return min(
             total * self.interest.priority / num_kw,
             self.interest.priority
         )
-        return score
 
 
 class InterestFilter:
