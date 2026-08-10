@@ -321,13 +321,13 @@ class ContentDeduplicator:
         return results[0] if results else AddItemResult()
 
     def _check_single_item(
-        self, url: str, title: str, content: str
+        self, url: str, _title: str, content: str
     ) -> AddItemResult:
         """Check a single item against stored content.
 
         Args:
             url: Item URL.
-            title: Item title.
+            _title: Item title (unused).
             content: Item content text.
 
         Returns:
