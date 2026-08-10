@@ -97,6 +97,7 @@ class ContentPipeline:
                 data = step.handler(data)
                 steps_executed += 1
             except Exception as e:
+                logger.error("Pipeline step '%s' failed: %s", step.name, e)
                 steps_failed += 1
                 errors.append(f"Step '{step.name}': {e}")
                 if step.on_error == "stop":

@@ -556,7 +556,7 @@ class ContentCategorizer:
             path_parts = [p.lower() for p in parsed.path.split("/") if p]
             domain_parts = [p.lower() for p in parsed.netloc.split(".") if p]
             url_parts = path_parts + domain_parts
-        except Exception:
+        except ValueError:
             url_parts = url.lower().split()
 
         for topic_name, hint_words in self.URL_TOPIC_HINTS.items():

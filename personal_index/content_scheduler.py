@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import threading
 import time
 from dataclasses import dataclass, field
@@ -9,6 +11,8 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List
 from collections.abc import Callable
+
+logger = logging.getLogger(__name__)
 
 
 class ScheduleFrequency(Enum):
@@ -178,6 +182,7 @@ class ContentScheduler:
             task.mark_run()
             result = TaskResult(task_name=name, success=True, duration_seconds=duration)
         except Exception as e:
+            logger.error("Task '%s' failed: %s", name, e)
             duration = time.monotonic() - start
             task.mark_error(str(e))
             result = TaskResult(task_name=name, success=False, duration_seconds=duration, error=str(e))

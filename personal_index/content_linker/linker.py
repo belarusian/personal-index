@@ -17,7 +17,7 @@ def _extract_domain(url: str) -> str:
         from urllib.parse import urlparse
         parsed = urlparse(url)
         return parsed.hostname or ""
-    except Exception:
+    except ValueError:
         return ""
 
 
