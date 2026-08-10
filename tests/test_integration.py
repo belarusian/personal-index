@@ -5,8 +5,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 from personal_index.config import AppConfig, Interest, CrawlerConfig
 from personal_index.filter import ContentFilter
-from personal_index.indexer import SearchIndex
-from personal_index.models import Page
+from personal_index.search_index import SearchIndex
+from personal_index.models import CrawledPage
 from personal_index.crawler import WebCrawler
 
 
@@ -24,21 +24,21 @@ class TestFullPipeline:
         content_filter = ContentFilter(config.interests, min_relevance_score=0.0)
 
         # Create search index
-        index = SearchIndex(index_dir=config.index_dir)
+        index = SearchIndex(index_path=str(tmp_path / "index.json"))
 
         # Simulate crawled pages
         pages = [
-            Page(
+            CrawledPage(
                 url="https://example.com/ai-article",
                 title="Introduction to AI",
                 content="Artificial intelligence and machine learning are transforming technology.",
             ),
-            Page(
+            CrawledPage(
                 url="https://example.com/recipe",
                 title="Baking Bread",
                 content="This recipe for baking bread is simple and delicious.",
             ),
-            Page(
+            CrawledPage(
                 url="https://example.com/ml-guide",
                 title="Machine Learning Guide",
                 content="A comprehensive guide to machine learning algorithms.",
@@ -58,13 +58,15 @@ class TestFullPipeline:
 
         # Index filtered pages
         for page in filtered_pages:
-            index.add_page(page)
+            index.add(page)
 
         # Search
         results = index.search("machine learning")
         assert len(results) == 2
-        for result in results:
-            assert "AI" in result.page.matched_interests
+        for url, score in results:
+            page = index.get(url)
+            assert page is not None
+            assert "AI" in page.matched_interests
 
     def test_crawl_with_mock_fetch(self, tmp_path: Path) -> None:
         """Test crawler with mocked HTTP fetch."""
@@ -90,27 +92,23 @@ class TestFullPipeline:
 
     def test_save_and_restore_index(self, tmp_path: Path) -> None:
         """Test that index can be saved and restored."""
-        index_dir = tmp_path / "index"
-        index = SearchIndex(index_dir=index_dir)
+        index_path = str(tmp_path / "index.json")
+        index = SearchIndex(index_path=index_path)
 
         # Add pages
         for i in range(5):
-            index.add_page(
-                Page(
+            index.add(
+                CrawledPage(
                     url=f"https://example.com/page{i}",
                     title=f"Page {i}",
                     content=f"Content for page {i} about testing.",
                 )
             )
 
-        # Save
-        index.save()
-
         # Load into new index
-        restored = SearchIndex(index_dir=index_dir)
-        restored.load()
+        restored = SearchIndex(index_path=index_path)
 
-        assert restored.num_documents == 5
+        assert restored.count() == 5
         results = restored.search("testing")
         assert len(results) == 5
 

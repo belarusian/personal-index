@@ -187,11 +187,9 @@ class CrawledPage:
                 crawled_at = datetime.now(timezone.utc)
         elif not isinstance(crawled_at, datetime):
             crawled_at = datetime.now(timezone.utc)
-        return cls(
-            **{k: v for k, v in data.items()
-               if k in cls.__dataclass_fields__},
-            crawled_at=crawled_at
-        )
+        filtered = {k: v for k, v in data.items()
+                    if k in cls.__dataclass_fields__ and k != "crawled_at"}
+        return cls(**filtered, crawled_at=crawled_at)
 
 
 @dataclass
