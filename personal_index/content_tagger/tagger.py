@@ -29,9 +29,8 @@ class TagResult:
 
 
 class ContentTagger:
+    TagResult = TagResult  # Expose for ContentTagger.TagResult access
     """High-level interface for tagging content by detected topics."""
-
-    TagResult = TagResult  # Expose as nested class for API convenience
 
     def __init__(self) -> None:
         self._detector = TopicDetector()

@@ -146,7 +146,7 @@ class MigrationRunner:
         Returns:
             List of validation errors (empty if all valid).
         """
-        errors = []
+        errors: list[str] = []
         pending = self.registry.get_pending(self.store.get_applied_versions())
         for migration_class in pending:
             migration = migration_class()

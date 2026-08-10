@@ -16,7 +16,7 @@ class Keyword:
     text: str
     frequency: int
     score: float
-    positions: List[int] = None  # positions in text
+    positions: List[int] | None = None  # positions in text
 
     def __post_init__(self):
         if self.positions is None:
@@ -46,19 +46,19 @@ class KeywordExtractor:
             return []
 
         freq = Counter(tokens)
-        freq = {k: v for k, v in freq.items() if v >= self.min_frequency}
+        filtered_freq = {k: v for k, v in freq.items() if v >= self.min_frequency}
 
         # Calculate positions for each keyword
         positions: Dict[str, List[int]] = {}
         for i, token in enumerate(tokens):
-            if token in freq:
+            if token in filtered_freq:
                 if token not in positions:
                     positions[token] = []
                 positions[token].append(i)
 
         # Score keywords: frequency * log(1 + frequency) for emphasis on repeats
         keywords = []
-        for word, count in freq.items():
+        for word, count in filtered_freq.items():
             score = count * math.log(1 + count)
             keywords.append(Keyword(
                 text=word,

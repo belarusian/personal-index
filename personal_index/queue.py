@@ -230,7 +230,7 @@ class TaskQueue:
             Dictionary with queue size, task counts, and status breakdown.
         """
         with self._lock:
-            status_counts = {}
+            status_counts: dict[str, int] = {}
             for task in self._tasks.values():
                 status_counts[task.status.value] = status_counts.get(task.status.value, 0) + 1
             return {

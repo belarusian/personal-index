@@ -53,17 +53,19 @@ class FeedItem:
     @classmethod
     def from_dict(cls, data: dict) -> "FeedItem":
         """Deserialize from dictionary."""
-        published = data.get("published")
-        if isinstance(published, str) and published:
+        published_raw = data.get("published")
+        published: datetime | None = None
+        if isinstance(published_raw, str) and published_raw:
             try:
-                published = datetime.fromisoformat(published)
+                published = datetime.fromisoformat(published_raw)
             except ValueError:
                 published = None
 
-        updated = data.get("updated")
-        if isinstance(updated, str) and updated:
+        updated_raw = data.get("updated")
+        updated: datetime | None = None
+        if isinstance(updated_raw, str) and updated_raw:
             try:
-                updated = datetime.fromisoformat(updated)
+                updated = datetime.fromisoformat(updated_raw)
             except ValueError:
                 updated = None
 

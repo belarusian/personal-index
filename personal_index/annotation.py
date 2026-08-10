@@ -194,7 +194,7 @@ class AnnotationStore:
         Returns:
             Dictionary with total count, counts by type, and number of annotated URLs.
         """
-        type_counts = {}
+        type_counts: dict[str, int] = {}
         for annotation in self._annotations.values():
             t = annotation.annotation_type.value
             type_counts[t] = type_counts.get(t, 0) + 1

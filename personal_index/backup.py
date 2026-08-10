@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Literal
 
 
 @dataclass
@@ -81,15 +81,15 @@ class BackupManager:
         # Create archive
         if compress:
             archive_name = f"backup_{manifest.backup_id}.tar.gz"
-            mode = "w:gz"
+            mode: Literal["w:gz", "w"] = "w:gz"
         else:
             archive_name = f"backup_{manifest.backup_id}.tar"
             mode = "w"
         archive_path = backup_path / archive_name
 
-        with tarfile.open(str(archive_path), mode) as tar:
-            for f in files:
-                tar.add(str(f), arcname=str(f.relative_to(source_path)))
+        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
+            for filepath in files:
+                tar.add(str(filepath), arcname=str(filepath.relative_to(source_path)))
 
         # Save manifest
         manifest_path = backup_path / f"backup_{manifest.backup_id}.json"
@@ -122,7 +122,7 @@ class BackupManager:
 
         return manifests
 
-    def restore_backup(self, backup_id: str, target_dir: str) -> Dict[str, int]:
+    def restore_backup(self, backup_id: str, target_dir: str) -> dict[str, object]:
         """Restore a backup to the target directory."""
         backup_path = Path(self._backup_dir)
         manifest_file = backup_path / f"backup_{backup_id}.json"
@@ -148,24 +148,25 @@ class BackupManager:
 
         # Determine mode
         is_gzip = str(archive_path).endswith(".tar.gz")
-        mode = "r:gz" if is_gzip else "r"
+        mode: Literal["r:gz", "r"] = "r:gz" if is_gzip else "r"
 
         # Extract
         target = Path(target_dir)
         target.mkdir(parents=True, exist_ok=True)
 
         restored_files = 0
-        with tarfile.open(str(archive_path), mode) as tar:
+        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
             members = tar.getnames()
             restored_files = len(members)
             tar.extractall(path=str(target), filter="data")
 
-        return {
+        result: dict[str, object] = {
             "backup_id": backup_id,
             "target_dir": str(target),
-            "files_restored": restored_files,
+            "files_restored": int(restored_files),
             "restored_at": datetime.now(timezone.utc).isoformat(),
         }
+        return result
 
     def delete_backup(self, backup_id: str) -> bool:
         """Delete a backup and its archive."""

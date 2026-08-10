@@ -123,7 +123,7 @@ class LinkAnalyzer:
         total_links = sum(r.stats.total_links for r in results)
         total_internal = sum(r.stats.internal_links for r in results)
         total_external = sum(r.stats.external_links for r in results)
-        all_domains = set()
+        all_domains: set[str] = set()
         for r in results:
             all_domains.update(r.stats.domain_distribution.keys())
 

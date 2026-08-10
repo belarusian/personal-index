@@ -72,7 +72,7 @@ class SitemapBuilder:
 
     def build(self) -> bytes:
         """Build the complete sitemap XML as bytes."""
-        root = Element("urlset", nsmap=NSMAP if NSMAP else {})
+        root = Element("urlset", nsmap=NSMAP if NSMAP else {})  # type: ignore[arg-type]
         for entry in self.entries:
             root.append(entry.to_element())
         xml_bytes = tostring(root, encoding="unicode", xml_declaration=False)
@@ -80,7 +80,7 @@ class SitemapBuilder:
 
     def build_sitemap_index(self, sitemap_urls: list[str]) -> bytes:
         """Build a sitemap index file referencing multiple sitemaps."""
-        root = Element("sitemapindex", nsmap=NSMAP if NSMAP else {})
+        root = Element("sitemapindex", nsmap=NSMAP if NSMAP else {})  # type: ignore[arg-type]
         for url in sitemap_urls:
             sitemap_elem = SubElement(root, "sitemap")
             SubElement(sitemap_elem, "loc").text = url

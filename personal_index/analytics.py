@@ -137,15 +137,15 @@ class AnalyticsTracker:
 
             # Top domains
             domain_counter: Counter[str] = Counter()
-            for e in self._crawl_events:
-                domain = self._extract_domain(e.url)
+            for crawl_event in self._crawl_events:
+                domain = self._extract_domain(crawl_event.url)
                 if domain:
                     domain_counter[domain] += 1
             data.top_domains = domain_counter.most_common(top_n)
 
             # Success/error counts
-            data.success_count = sum(1 for e in self._crawl_events if 200 <= e.status_code < 400)
-            data.error_count = sum(1 for e in self._crawl_events if e.status_code >= 400 or e.error)
+            data.success_count = sum(1 for ce in self._crawl_events if 200 <= ce.status_code < 400)
+            data.error_count = sum(1 for ce in self._crawl_events if ce.status_code >= 400 or ce.error)
 
         return data
 

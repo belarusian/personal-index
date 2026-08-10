@@ -138,9 +138,9 @@ class MigrationRegistry:
                     f"personal_index.migrations.{module_name}",
                     str(filepath),
                 )
-                if spec and spec.loader:
+                if spec and spec.loader:  # type: ignore[attr-defined]
                     module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(module)
+                    spec.loader.exec_module(module)  # type: ignore[attr-defined]
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
                         if (

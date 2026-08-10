@@ -48,7 +48,7 @@ class CSVExporter:
         items: list[dict],
         columns: list[str] | None = None,
         delimiter: str = ",",
-        quoting: int = csv.QUOTE_MINIMAL,
+        quoting: int = csv.QUOTE_MINIMAL,  # type: ignore[assignment]
         include_header: bool = True,
         column_names: dict[str, str] | None = None,
         filter_fn: Callable[[dict], bool] | None = None,
@@ -141,7 +141,7 @@ class CSVExporter:
         items: list[dict],
         columns: list[str],
         delimiter: str = ",",
-        quoting: int = csv.QUOTE_MINIMAL,
+        quoting: int = csv.QUOTE_MINIMAL,  # type: ignore[assignment]
         include_header: bool = True,
         column_names: dict[str, str] | None = None,
     ) -> str:

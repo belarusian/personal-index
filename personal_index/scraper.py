@@ -86,10 +86,10 @@ class HTMLScraper:
     def _extract_charset(self, soup: BeautifulSoup, result: ScrapedContent) -> None:
         meta_charset = soup.find("meta", attrs={"charset": True})
         if meta_charset:
-            result.charset = meta_charset.get("charset", "utf-8")
+            result.charset = meta_charset.get("charset", "utf-8")  # type: ignore[misc]
         meta_http = soup.find("meta", attrs={"http-equiv": "Content-Type"})
         if meta_http and meta_http.get("content"):
-            match = re.search(r"charset=([^\s;]+)", meta_http["content"])
+            match = re.search(r"charset=([^\s;]+)", str(meta_http["content"]))  # type: ignore[misc]
             if match:
                 result.charset = match.group(1)
 
@@ -101,23 +101,24 @@ class HTMLScraper:
     def _extract_meta_tags(self, soup: BeautifulSoup, result: ScrapedContent) -> None:
         title_tag = soup.find("title")
         if title_tag and title_tag.string:
-            result.title = title_tag.string.strip()
+            title_str = str(title_tag.string) if title_tag.string else ""
+            result.title = title_str.strip()  # type: ignore[misc]
 
         desc_tag = soup.find("meta", attrs={"name": "description"})
         if desc_tag and desc_tag.get("content"):
-            result.meta_description = desc_tag["content"].strip()
+            result.meta_description = str(desc_tag["content"]).strip()  # type: ignore[misc]
 
         keywords_tag = soup.find("meta", attrs={"name": "keywords"})
         if keywords_tag and keywords_tag.get("content"):
-            result.meta_keywords = keywords_tag["content"].strip()
+            result.meta_keywords = str(keywords_tag["content"]).strip()  # type: ignore[misc]
 
         og_title = soup.find("meta", attrs={"property": "og:title"})
         if og_title and og_title.get("content") and not result.title:
-            result.title = og_title["content"].strip()
+            result.title = str(og_title["content"]).strip()  # type: ignore[misc]
 
         og_desc = soup.find("meta", attrs={"property": "og:description"})
         if og_desc and og_desc.get("content") and not result.meta_description:
-            result.meta_description = og_desc["content"].strip()
+            result.meta_description = str(og_desc["content"]).strip()  # type: ignore[misc]
 
     def _extract_headings(self, soup: BeautifulSoup, result: ScrapedContent) -> None:
         for level in range(1, 7):
@@ -135,10 +136,10 @@ class HTMLScraper:
     def _extract_links(self, soup: BeautifulSoup, result: ScrapedContent, base_url: str) -> None:
         seen = set()
         for a in soup.find_all("a", href=True):
-            href = a["href"].strip()
+            href = str(a["href"]).strip()  # type: ignore[misc]
             if not href:
                 continue
-            absolute = urljoin(base_url, href)
+            absolute = urljoin(base_url, str(href))  # type: ignore[misc]
             if absolute in seen:
                 continue
             seen.add(absolute)
@@ -151,10 +152,10 @@ class HTMLScraper:
 
     def _extract_images(self, soup: BeautifulSoup, result: ScrapedContent, base_url: str) -> None:
         for img in soup.find_all("img"):
-            src = img.get("src", "")
+            src = str(img.get("src", ""))  # type: ignore[misc]
             if not src:
                 continue
-            absolute = urljoin(base_url, src)
+            absolute = urljoin(base_url, str(src))  # type: ignore[misc]
             result.images.append({
                 "src": absolute,
                 "alt": img.get("alt", ""),
