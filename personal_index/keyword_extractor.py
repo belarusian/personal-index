@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import math
-import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
-from personal_index.text_utils import STOPWORDS, tokenize
+from personal_index.text_utils import tokenize
 
 
 @dataclass
