@@ -142,3 +142,62 @@ class TestFuzzySearcher:
         results = self.searcher.search("hello", [long_text])
         assert len(results) == 1
         assert results[0].score == 0.9
+
+
+class TestFuzzyMatchTypeFix:
+    """Tests for TICKET-26: matched_indices type annotation fix."""
+
+    def test_matched_indices_is_list_not_none(self):
+        """matched_indices should always be a list, never None."""
+        m = FuzzyMatch(text="hello", score=0.9)
+        assert isinstance(m.matched_indices, list)
+        assert m.matched_indices == []
+
+    def test_matched_indices_with_explicit_none(self):
+        """Even when explicitly passed None, __post_init__ converts to list."""
+        m = FuzzyMatch(text="hello", score=0.9, matched_indices=None)
+        assert isinstance(m.matched_indices, list)
+        assert m.matched_indices == []
+
+    def test_matched_indices_annotation_is_list_int(self):
+        """The annotation should be list[int], not list[int] | None."""
+        import typing
+        hints = typing.get_type_hints(FuzzyMatch)
+        # The annotation should be list[int], not Optional[list[int]]
+        hint = hints.get("matched_indices", "")
+        # Should not contain "None" or "Union"
+        assert "None" not in str(hint) or "list[int]" in str(hint)
+
+    def test_highlight_never_receives_none(self):
+        """highlight() should never receive None for indices."""
+        searcher = FuzzySearcher()
+        m = FuzzyMatch(text="hello world", score=0.9)
+        # This should work without error since matched_indices is always a list
+        highlighted = searcher.highlight(m.text, m.matched_indices)
+        assert highlighted == "hello world"
+
+    def test_highlight_html_never_receives_none(self):
+        """highlight_html() should never receive None for indices."""
+        searcher = FuzzySearcher()
+        m = FuzzyMatch(text="hello world", score=0.9)
+        # This should work without error since matched_indices is always a list
+        highlighted = searcher.highlight_html(m.text, m.matched_indices)
+        assert highlighted == "hello world"
+
+    def test_search_with_highlight_no_none_indices(self):
+        """search_with_highlight should work without None indices."""
+        searcher = FuzzySearcher()
+        results = searcher.search_with_highlight("hello", ["hello world"])
+        assert len(results) == 1
+        match, highlighted = results[0]
+        assert isinstance(match.matched_indices, list)
+        assert "\033[1m" in highlighted
+
+    def test_search_with_highlight_html_no_none_indices(self):
+        """search_with_highlight with html=True should work without None indices."""
+        searcher = FuzzySearcher()
+        results = searcher.search_with_highlight("hello", ["hello world"], html=True)
+        assert len(results) == 1
+        match, highlighted = results[0]
+        assert isinstance(match.matched_indices, list)
+        assert "<mark>" in highlighted
