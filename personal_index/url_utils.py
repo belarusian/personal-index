@@ -227,7 +227,7 @@ def remove_query_params(url: str, params: list = None) -> str:
             parsed.scheme, parsed.netloc, parsed.path,
             parsed.params, new_query, parsed.fragment
         ))
-    except Exception:
+    except (ValueError, AttributeError, IndexError):
         return url
 
 
