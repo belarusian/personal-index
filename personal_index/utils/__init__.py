@@ -11,7 +11,7 @@ from personal_index.url_utils import (
     is_same_domain,
     EXCLUDED_EXTENSIONS,
     EXCLUDED_SCHEMES,
-)
+
 
 import re
 from bs4 import BeautifulSoup

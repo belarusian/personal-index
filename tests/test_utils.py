@@ -10,9 +10,9 @@ from personal_index.utils import (
     extract_title,
     extract_meta_description,
     extract_text_content,
-    tokenize,
     compute_relevance_score,
 )
+from personal_index.text_utils import tokenize
 
 
 class TestNormalizeUrl:
