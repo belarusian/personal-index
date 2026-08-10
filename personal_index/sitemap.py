@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 """Sitemap parser for discovering URLs on websites."""
 
+from __future__ import annotations
 
 from contextlib import suppress
 from dataclasses import dataclass, field
@@ -12,6 +11,7 @@ from xml.etree.ElementTree import Element as ET_Element
 
 from defusedxml.ElementTree import ParseError as ET_ParseError
 from defusedxml.ElementTree import fromstring as ET_fromstring
+
 
 @dataclass
 class SitemapEntry:

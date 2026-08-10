@@ -71,7 +71,7 @@ class ContentExtractor:
         """Extract page title, preferring og:title."""
         og_title = soup.find("meta", property="og:title")
         if og_title and og_title.get("content"):
-            return og_title["content"].strip()
+            return str(og_title["content"]).strip()
         title_tag = soup.find("title")
         if title_tag and title_tag.string:
             return title_tag.string.strip()
@@ -81,28 +81,28 @@ class ContentExtractor:
         """Extract meta tag content."""
         meta = soup.find("meta", attrs={"name": name})
         if meta and meta.get("content"):
-            return meta["content"].strip()
+            return str(meta["content"]).strip()
         return ""
 
     def _extract_meta_keywords(self, soup: BeautifulSoup) -> list[str]:
         """Extract meta keywords."""
         meta = soup.find("meta", attrs={"name": "keywords"})
         if meta and meta.get("content"):
-            return [k.strip() for k in meta["content"].split(",") if k.strip()]
+            return [k.strip() for k in str(meta["content"]).split(",") if k.strip()]
         return []
 
     def _extract_canonical(self, soup: BeautifulSoup) -> str:
         """Extract canonical URL."""
         link = soup.find("link", rel="canonical")
         if link and link.get("href"):
-            return link["href"].strip()
+            return str(link["href"]).strip()
         return ""
 
     def _extract_language(self, soup: BeautifulSoup) -> str:
         """Extract page language."""
         html_tag = soup.find("html")
         if html_tag and html_tag.get("lang"):
-            return html_tag["lang"].strip()
+            return str(html_tag["lang"]).strip()
         return ""
 
     def _extract_headings(self, soup: BeautifulSoup) -> list[str]:
@@ -119,7 +119,7 @@ class ContentExtractor:
         links = []
         for a in soup.find_all("a", href=True):
             text = a.get_text(strip=True)
-            href = a["href"].strip()
+            href = str(a["href"]).strip()
             if href:
                 links.append((text, href))
         return links
@@ -128,8 +128,8 @@ class ContentExtractor:
         """Extract all images as (alt, src) tuples."""
         images = []
         for img in soup.find_all("img"):
-            alt = img.get("alt", "").strip()
-            src = img.get("src", "").strip()
+            alt = str(img.get("alt", "")).strip()
+            src = str(img.get("src", "")).strip()
             if src:
                 images.append((alt, src))
         return images
