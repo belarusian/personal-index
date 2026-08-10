@@ -34,7 +34,7 @@ class TokenBucket:
 
     def __init__(self, config: RateLimitConfig):
         self._max_tokens = config.max_requests
-        self._burst_size = config.burst_size
+        self._burst_size: int = config.burst_size if config.burst_size is not None else config.max_requests
         self._refill_rate = config.max_requests / config.window_seconds
         self._tokens = float(self._burst_size)
         self._last_refill = time.monotonic()
