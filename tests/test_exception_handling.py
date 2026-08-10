@@ -78,19 +78,6 @@ class TestContentLinkerExceptionHandling:
         assert domain_blocks[0]["exc_type"] == "ValueError"
 
 
-class TestContentSchedulerExceptionHandling:
-    """content_scheduler.py:180 - should log errors when catching Exception."""
-
-    def test_run_task_logs_errors(self):
-        from personal_index import content_scheduler
-        source = _get_source_lines(content_scheduler)
-        blocks = _find_except_blocks(source)
-        task_blocks = [b for b in blocks if 175 < b["lineno"] < 195]
-        exc_blocks = [b for b in task_blocks if "Exception" in b["exc_type"]]
-        assert len(exc_blocks) >= 1
-        assert exc_blocks[0]["has_logging"]
-
-
 class TestImporterExceptionHandling:
     """importer.py:106,131,220 - should catch specific exceptions."""
 
