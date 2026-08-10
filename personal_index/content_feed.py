@@ -30,6 +30,7 @@ class FeedItem:
     updated: Optional[datetime] = None
 
     def __post_init__(self) -> None:
+        """Set defaults for id, published, and updated after init."""
         if not self.id:
             self.id = self.link
         if not self.published:
@@ -94,6 +95,7 @@ class FeedGenerator:
     feed_id: str = ""
 
     def __post_init__(self) -> None:
+        """Set default feed_id after init."""
         if not self.feed_id:
             self.feed_id = self.link
 
