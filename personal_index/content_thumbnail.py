@@ -22,6 +22,12 @@ class ThumbnailSize:
     }
 
     def __init__(self, width: int = 128, height: int = 128) -> None:
+        """Initialize thumbnail size.
+
+        Args:
+            width: Thumbnail width in pixels.
+            height: Thumbnail height in pixels.
+        """
         self.width = width
         self.height = height
 
@@ -30,11 +36,13 @@ class ThumbnailSize:
         return self.width * self.height
 
     def __eq__(self, other: object) -> bool:
+        """Check equality based on dimensions."""
         if isinstance(other, ThumbnailSize):
             return self.width == other.width and self.height == other.height
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Hash based on dimensions."""
         return hash((self.width, self.height))
 
 
@@ -274,6 +282,11 @@ class ThumbnailGenerator:
     """Generates thumbnail images for saved content."""
 
     def __init__(self, config: Optional[ThumbnailConfig] = None) -> None:
+        """Initialize the thumbnail generator.
+
+        Args:
+            config: Optional thumbnail configuration.
+        """
         self.config = config or ThumbnailConfig()
         self._cache: dict[str, ThumbnailResult] = {}
 
@@ -438,6 +451,11 @@ class ThumbnailProcessor:
     """Processes and manages thumbnail generation for multiple items."""
 
     def __init__(self, config: Optional[ThumbnailConfig] = None) -> None:
+        """Initialize the thumbnail processor.
+
+        Args:
+            config: Optional thumbnail configuration.
+        """
         self.config = config or ThumbnailConfig()
         self.generator = ThumbnailGenerator(self.config)
         self._results: dict[str, ThumbnailResult] = {}
@@ -550,6 +568,11 @@ class ThumbnailEngine:
     """High-level engine for thumbnail operations."""
 
     def __init__(self, config: Optional[ThumbnailConfig] = None) -> None:
+        """Initialize the thumbnail engine.
+
+        Args:
+            config: Optional thumbnail configuration.
+        """
         self.config = config or ThumbnailConfig()
         self.processor = ThumbnailProcessor(self.config)
         self.generator = ThumbnailGenerator(self.config)
