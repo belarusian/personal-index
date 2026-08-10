@@ -31,12 +31,16 @@ class PriorityLevel(str, Enum):
             "low": 1,
         }.get(self.value, 0)
 
-    def __gt__(self, other: "PriorityLevel") -> bool:
+    def __gt__(self, other: object) -> bool:  # type: ignore[override]
         """Compare priority levels (greater than)."""
+        if not isinstance(other, PriorityLevel):
+            return NotImplemented
         return self.numeric_value > other.numeric_value
 
-    def __lt__(self, other: "PriorityLevel") -> bool:
+    def __lt__(self, other: object) -> bool:  # type: ignore[override]
         """Compare priority levels (less than)."""
+        if not isinstance(other, PriorityLevel):
+            return NotImplemented
         return self.numeric_value < other.numeric_value
 
     @classmethod

@@ -89,7 +89,7 @@ class Serializer:
         raise SerializationError(f"Cannot serialize type: {type(obj)}")
 
     def _dataclass_to_dict(self, obj: Any) -> dict:
-        result = {}
+        result: dict[str, Any] = {}
         for f in fields(obj):
             value = getattr(obj, f.name)
             if value is None and not self.config.include_none:
