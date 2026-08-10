@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass, field
 from typing import List
 
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage
 
 

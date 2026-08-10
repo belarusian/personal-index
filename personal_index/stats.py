@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Tuple
 
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.search_index import SearchIndex
 from personal_index.url_utils import extract_domain
 

@@ -112,3 +112,24 @@ class InterestStore:
             for topic in interest.topics:
                 topics.add(topic.lower())
         return topics
+
+    def update_priority(self, name: str, priority: int) -> Interest | None:
+        """Update an interest's priority (clamped 1-10)."""
+        interest = self.get(name)
+        if interest is None:
+            return None
+        interest.priority = max(1, min(10, priority))
+        self._save()
+        return interest
+
+    def matches_any(self, text: str, url: str = "") -> List[Interest]:
+        """Find all interests that match the given text/url."""
+        matches = []
+        for interest in self._interests.values():
+            if interest.matches(text, url):
+                matches.append(interest)
+        return matches
+
+    def total_score(self, text: str) -> float:
+        """Calculate total relevance score across all interests."""
+        return sum(interest.score(text) for interest in self._interests.values())

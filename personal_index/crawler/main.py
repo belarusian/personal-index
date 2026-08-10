@@ -9,7 +9,7 @@ from typing import Dict, List, Set
 import requests
 
 from personal_index.content_extractor import ContentExtractor
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage
 from personal_index.url_utils import (
     extract_all_urls,

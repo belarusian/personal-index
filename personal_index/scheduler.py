@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List
 
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.search_index import SearchIndex
 
 
