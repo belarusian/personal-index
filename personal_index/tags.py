@@ -7,7 +7,6 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Set
 
 
 @dataclass
@@ -34,8 +33,8 @@ class TagStore:
     """Persistent storage for tags and their page associations."""
 
     store_path: str | None = None
-    _tags: Dict[str, Tag] = field(default_factory=dict, repr=False)
-    _page_tags: Dict[str, Set[str]] = field(default_factory=dict, repr=False)
+    _tags: dict[str, Tag] = field(default_factory=dict, repr=False)
+    _page_tags: dict[str, set[str]] = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         if self.store_path and os.path.exists(self.store_path):
@@ -97,7 +96,7 @@ class TagStore:
         """Get a tag by name."""
         return self._tags.get(name)
 
-    def list_tags(self) -> List[Tag]:
+    def list_tags(self) -> list[Tag]:
         """List all tags."""
         return list(self._tags.values())
 
@@ -129,18 +128,18 @@ class TagStore:
         self._save()
         return True
 
-    def get_tags_for_page(self, url: str) -> List[Tag]:
+    def get_tags_for_page(self, url: str) -> list[Tag]:
         """Get all tags for a page."""
         tag_names = self._page_tags.get(url, set())
         return [self._tags[name] for name in tag_names if name in self._tags]
 
-    def get_pages_for_tag(self, tag_name: str) -> List[str]:
+    def get_pages_for_tag(self, tag_name: str) -> list[str]:
         """Get all pages with a specific tag."""
         if tag_name not in self._tags:
             return []
         return [url for url, tags in self._page_tags.items() if tag_name in tags]
 
-    def search_by_tag(self, tag_name: str) -> List[str]:
+    def search_by_tag(self, tag_name: str) -> list[str]:
         """Search for pages by tag name (alias for get_pages_for_tag)."""
         return self.get_pages_for_tag(tag_name)
 

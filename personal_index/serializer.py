@@ -17,12 +17,10 @@ T = TypeVar("T")
 
 class SerializationError(Exception):
     """Raised when serialization fails."""
-    pass
 
 
 class DeserializationError(Exception):
     """Raised when deserialization fails."""
-    pass
 
 
 @dataclass

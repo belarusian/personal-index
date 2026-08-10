@@ -6,12 +6,11 @@ important or permanently stored.
 
 from __future__ import annotations
 
-import os
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -41,7 +40,7 @@ class ContentPinner:
         self.storage_path = storage_path or str(
             Path.home() / ".personal_index" / "pinned_items.json"
         )
-        self._pinned: Dict[str, PinnedItem] = {}
+        self._pinned: dict[str, PinnedItem] = {}
         self._load()
 
     def _load(self) -> None:
@@ -121,7 +120,7 @@ class ContentPinner:
         """
         return item_id in self._pinned
 
-    def get_pinned_items(self) -> List[PinnedItem]:
+    def get_pinned_items(self) -> list[PinnedItem]:
         """Get all pinned items.
 
         Returns:

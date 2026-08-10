@@ -7,7 +7,6 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 from personal_index.models import CrawledPage
 
@@ -17,14 +16,14 @@ class SearchIndex:
     """In-memory search index with JSON persistence."""
 
     index_path: str
-    _pages: Dict[str, CrawledPage] = field(default_factory=dict, repr=False)
-    _word_index: Dict[str, List[str]] = field(default_factory=dict, repr=False)
+    _pages: dict[str, CrawledPage] = field(default_factory=dict, repr=False)
+    _word_index: dict[str, list[str]] = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         self._load()
 
     @staticmethod
-    def _tokenize(text: str) -> List[str]:
+    def _tokenize(text: str) -> list[str]:
         """Tokenize text into lowercase words, removing punctuation."""
         if not text:
             return []
@@ -113,13 +112,13 @@ class SearchIndex:
         self._word_index = {}
         self._save()
 
-    def urls(self) -> List[str]:
+    def urls(self) -> list[str]:
         """Return list of all indexed URLs."""
         return list(self._pages.keys())
 
     def search(
         self, query: str, limit: int = 10
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Search and return (url, score) tuples by relevance."""
         if not query:
             return []
@@ -127,7 +126,7 @@ class SearchIndex:
         if not tokens:
             return []
 
-        scores: Dict[str, float] = {}
+        scores: dict[str, float] = {}
         for token in tokens:
             if token in self._word_index:
                 for url in self._word_index[token]:

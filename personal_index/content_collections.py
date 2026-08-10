@@ -54,7 +54,7 @@ class Collection:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Collection":
+    def from_dict(cls, data: dict) -> Collection:
         """Deserialize from dictionary."""
         created_at = data.get("created_at", datetime.now(timezone.utc).isoformat())
         if isinstance(created_at, datetime):

@@ -1,12 +1,14 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Sitemap parser for discovering URLs on websites."""
 
-from __future__ import annotations
-from contextlib import suppress
 
 import xml.etree.ElementTree as ET
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import List
 from urllib.parse import urljoin
 
 
@@ -26,8 +28,8 @@ class SitemapEntry:
 @dataclass
 class Sitemap:
     """Parsed sitemap data."""
-    entries: List[SitemapEntry] = field(default_factory=list)
-    sitemaps: List[str] = field(default_factory=list)  # nested sitemap URLs
+    entries: list[SitemapEntry] = field(default_factory=list)
+    sitemaps: list[str] = field(default_factory=list)  # nested sitemap URLs
     source_url: str = ""
 
     @property
@@ -40,7 +42,7 @@ class Sitemap:
         """Number of nested sitemaps."""
         return len(self.sitemaps)
 
-    def get_urls(self) -> List[str]:
+    def get_urls(self) -> list[str]:
         """Get all URLs from entries."""
         return [e.loc for e in self.entries if e.is_valid()]
 
@@ -48,7 +50,7 @@ class Sitemap:
 class SitemapParser:
     """Parse XML sitemaps and sitemap indexes."""
 
-    NAMESPACES = {
+    NAMESPACES: ClassVar[dict[str, str]] = {
         "ns": "http://www.sitemaps.org/schemas/sitemap/0.9",
     }
 
@@ -159,19 +161,19 @@ class SitemapParser:
 
         return sitemap
 
-    def filter_by_priority(self, sitemap: Sitemap, min_priority: float = 0.5) -> List[SitemapEntry]:
+    def filter_by_priority(self, sitemap: Sitemap, min_priority: float = 0.5) -> list[SitemapEntry]:
         """Filter sitemap entries by minimum priority."""
         return [e for e in sitemap.entries if e.priority >= min_priority]
 
     def filter_by_changefreq(
         self, sitemap: Sitemap, freq: str = "daily"
-    ) -> List[SitemapEntry]:
+    ) -> list[SitemapEntry]:
         """Filter sitemap entries by change frequency."""
         return [e for e in sitemap.entries if e.changefreq == freq]
 
     def get_recent_entries(
         self, sitemap: Sitemap, days: int = 30
-    ) -> List[SitemapEntry]:
+    ) -> list[SitemapEntry]:
         """Get entries modified within the last N days."""
         cutoff = datetime.now(timezone.utc)
         entries = []

@@ -5,11 +5,11 @@ from __future__ import annotations
 import csv
 import io
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
-from collections.abc import Callable
+from typing import Any, ClassVar
 
 
 class ExportFormat(str, Enum):
@@ -34,14 +34,13 @@ class ExportStats:
 class CSVExporter:
     """Exports content items as CSV and other formats."""
 
-    DEFAULT_COLUMNS = [
+    DEFAULT_COLUMNS: ClassVar[list[str]] = [
         "id", "title", "url", "content_type", "created_at",
         "description", "tags", "score", "is_favorite",
     ]
 
     def __init__(self) -> None:
         """Initialize the CSV exporter."""
-        pass
 
     def export(
         self,

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Export bookmarks and indexed content to various formats."""
 
-from __future__ import annotations
 
 import csv
 import json
@@ -8,10 +11,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
+
 from .bookmarks import BookmarkManager
-from typing import List
-
-
 
 # Map file extensions to format names
 EXTENSION_MAP = {
@@ -33,7 +34,7 @@ class ExportResult:
     output_path: str = ""
     format: str = ""
     exported_at: str = ""
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.exported_at:
@@ -43,7 +44,7 @@ class ExportResult:
 class Exporter:
     """Export bookmarks to various file formats."""
 
-    SUPPORTED_FORMATS = {"json", "csv", "html", "xml", "markdown", "opml"}
+    SUPPORTED_FORMATS: ClassVar[set[str]] = {"json", "csv", "html", "xml", "markdown", "opml"}
 
     def __init__(self, manager: BookmarkManager | None = None):
         self._manager = manager or BookmarkManager()

@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Type
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class MigrationRecord:
     duration_ms: float = 0.0
     checksum: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "version": self.version,
@@ -41,11 +41,11 @@ class MigrationStatus:
     """Current migration status."""
     current_version: int
     total_migrations: int
-    pending: List[str]
-    applied: List[str]
+    pending: list[str]
+    applied: list[str]
     is_up_to_date: bool
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "current_version": self.current_version,
             "total_migrations": self.total_migrations,
@@ -63,16 +63,16 @@ class BaseMigration(ABC):
     description: str = ""
 
     @abstractmethod
-    def upgrade(self) -> List[str]:
+    def upgrade(self) -> list[str]:
         """Apply the migration. Returns list of operations performed."""
         ...
 
     @abstractmethod
-    def downgrade(self) -> List[str]:
+    def downgrade(self) -> list[str]:
         """Rollback the migration. Returns list of operations performed."""
         ...
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validate the migration can be applied. Returns list of errors."""
         return []
 
@@ -87,24 +87,24 @@ class MigrationRegistry:
     """Registry that discovers and manages migration classes."""
 
     def __init__(self, migration_dir: str | None = None):
-        self._migrations: Dict[int, Type[BaseMigration]] = {}
+        self._migrations: dict[int, type[BaseMigration]] = {}
         self._migration_dir = migration_dir
         if migration_dir:
             self._discover_migrations(migration_dir)
 
-    def register(self, migration_class: Type[BaseMigration]) -> None:
+    def register(self, migration_class: type[BaseMigration]) -> None:
         """Register a migration class."""
         self._migrations[migration_class.version] = migration_class
 
-    def get_migration(self, version: int) -> Type[BaseMigration] | None:
+    def get_migration(self, version: int) -> type[BaseMigration] | None:
         """Get a migration class by version."""
         return self._migrations.get(version)
 
-    def get_all_versions(self) -> List[int]:
+    def get_all_versions(self) -> list[int]:
         """Get all registered migration versions in order."""
         return sorted(self._migrations.keys())
 
-    def get_pending(self, applied_versions: List[int]) -> List[Type[BaseMigration]]:
+    def get_pending(self, applied_versions: list[int]) -> list[type[BaseMigration]]:
         """Get migrations that haven't been applied yet."""
         pending = []
         for version in self.get_all_versions():
@@ -113,7 +113,7 @@ class MigrationRegistry:
                 pending.append(cls)
         return pending
 
-    def get_applied(self, applied_versions: List[int]) -> List[Type[BaseMigration]]:
+    def get_applied(self, applied_versions: list[int]) -> list[type[BaseMigration]]:
         """Get migrations that have been applied."""
         applied = []
         for version in self.get_all_versions():
@@ -150,7 +150,7 @@ class MigrationRegistry:
                         ):
                             self.register(attr)
                             logger.debug("Registered migration: %s (v%d)", attr_name, attr.version)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("Failed to load migration %s: %s", filepath.name, e)
 
 
@@ -158,7 +158,7 @@ class MigrationStore:
     """Stores migration history (in-memory or file-based)."""
 
     def __init__(self, store_path: str | None = None):
-        self._records: Dict[int, MigrationRecord] = {}
+        self._records: dict[int, MigrationRecord] = {}
         self._store_path = store_path
         if store_path and os.path.exists(store_path):
             self._load(store_path)
@@ -175,7 +175,7 @@ class MigrationStore:
             self._save(self._store_path)
         return record
 
-    def get_applied_versions(self) -> List[int]:
+    def get_applied_versions(self) -> list[int]:
         """Get list of applied migration versions."""
         return sorted(self._records.keys())
 

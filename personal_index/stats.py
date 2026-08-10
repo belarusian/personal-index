@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Tuple
 
 from personal_index.interests import InterestStore
 from personal_index.search_index import SearchIndex
@@ -20,8 +19,8 @@ class IndexStats:
     unique_domains: int = 0
     avg_content_length: float = 0.0
     pages_with_interests: int = 0
-    top_domains: List[Tuple[str, int]] = field(default_factory=list)
-    top_interests: List[Tuple[str, int]] = field(default_factory=list)
+    top_domains: list[tuple[str, int]] = field(default_factory=list)
+    top_interests: list[tuple[str, int]] = field(default_factory=list)
     oldest_page: datetime | None = None
     newest_page: datetime | None = None
 
@@ -52,8 +51,8 @@ class StatsCollector:
         pages = self.search_index.urls()
         stats.total_pages = len(pages)
 
-        domain_counts: Dict[str, int] = {}
-        interest_counts: Dict[str, int] = {}
+        domain_counts: dict[str, int] = {}
+        interest_counts: dict[str, int] = {}
         total_words = 0
         total_content_length = 0
         pages_with_interests = 0

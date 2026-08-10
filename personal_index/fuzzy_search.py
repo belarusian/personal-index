@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
-from typing import Dict, List, Tuple
 
 
 @dataclass
@@ -25,7 +24,7 @@ class FuzzySearcher:
     def __init__(self, min_score: float = 0.4):
         self.min_score = min_score
 
-    def search(self, query: str, texts: List[str]) -> List[FuzzyMatch]:
+    def search(self, query: str, texts: list[str]) -> list[FuzzyMatch]:
         """Search for query in a list of texts, returning fuzzy matches."""
         if not query or not texts:
             return []
@@ -46,7 +45,7 @@ class FuzzySearcher:
         results.sort(key=lambda r: r.score, reverse=True)
         return results
 
-    def search_in_dict(self, query: str, items: Dict[str, str]) -> List[FuzzyMatch]:
+    def search_in_dict(self, query: str, items: dict[str, str]) -> list[FuzzyMatch]:
         """Search in both keys and values of a dictionary."""
         all_texts = list(items.keys()) + list(items.values())
         seen = set()
@@ -120,7 +119,7 @@ class FuzzySearcher:
 
         return 0.0
 
-    def _find_match_indices(self, query: str, text: str) -> List[int]:
+    def _find_match_indices(self, query: str, text: str) -> list[int]:
         """Find indices in text that match the query."""
         indices = []
         if query in text:
@@ -140,7 +139,7 @@ class FuzzySearcher:
                 indices = list(range(best_start, best_start + len(query)))
         return indices
 
-    def highlight(self, text: str, indices: List[int]) -> str:
+    def highlight(self, text: str, indices: list[int]) -> str:
         """Create highlighted version of text with matched indices."""
         if not indices:
             return text
@@ -154,7 +153,7 @@ class FuzzySearcher:
                 result.append(char)
         return "".join(result)
 
-    def highlight_html(self, text: str, indices: List[int]) -> str:
+    def highlight_html(self, text: str, indices: list[int]) -> str:
         """Create HTML-highlighted version of text."""
         if not indices:
             return text
@@ -168,8 +167,8 @@ class FuzzySearcher:
                 result.append(char)
         return "".join(result)
 
-    def search_with_highlight(self, query: str, texts: List[str],
-                              html: bool = False) -> List[Tuple[FuzzyMatch, str]]:
+    def search_with_highlight(self, query: str, texts: list[str],
+                              html: bool = False) -> list[tuple[FuzzyMatch, str]]:
         """Search and return matches with highlighted text."""
         matches = self.search(query, texts)
         results = []

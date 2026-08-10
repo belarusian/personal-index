@@ -5,7 +5,6 @@ from __future__ import annotations
 import fnmatch
 from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import Dict, List
 from urllib.parse import urlparse
 
 
@@ -23,9 +22,9 @@ class RobotsPolicy:
     """Parsed robots.txt policy for a domain."""
 
     domain: str
-    rules: List[RobotsRule] = field(default_factory=list)
+    rules: list[RobotsRule] = field(default_factory=list)
     crawl_delay: float = 0.0
-    sitemap_urls: List[str] = field(default_factory=list)
+    sitemap_urls: list[str] = field(default_factory=list)
 
     def can_fetch(self, url: str, user_agent: str = "*") -> bool:
         """Check if a URL can be fetched."""
@@ -121,8 +120,8 @@ class RobotsParser:
     """Simple robots.txt parser."""
 
     def __init__(self):
-        self._rules: List[RobotsRule] = []
-        self._policies: Dict[str, RobotsPolicy] = {}
+        self._rules: list[RobotsRule] = []
+        self._policies: dict[str, RobotsPolicy] = {}
 
     def parse(self, text: str, base_url: str = "") -> None:
         """Parse robots.txt text."""

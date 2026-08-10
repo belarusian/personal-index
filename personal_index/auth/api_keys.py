@@ -7,7 +7,7 @@ import secrets
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -18,7 +18,7 @@ class APIKey:
     hashed_key: str = ""
     prefix: str = "pk_"
     owner: str = ""
-    permissions: List[str] = field(default_factory=list)
+    permissions: list[str] = field(default_factory=list)
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -27,7 +27,7 @@ class APIKey:
     usage_count: int = 0
     is_active: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "key_id": self.key_id,
             "name": self.name,
@@ -46,14 +46,14 @@ class APIKeyStore:
     """In-memory store for API keys with CRUD operations."""
 
     def __init__(self):
-        self._keys: Dict[str, APIKey] = {}
-        self._key_lookup: Dict[str, str] = {}  # hashed_key -> key_id
+        self._keys: dict[str, APIKey] = {}
+        self._key_lookup: dict[str, str] = {}  # hashed_key -> key_id
 
     def create_key(
         self,
         owner: str,
         name: str = "",
-        permissions: List[str] | None = None,
+        permissions: list[str] | None = None,
         expires_at: str | None = None,
         prefix: str = "pk_",
     ) -> tuple[str, APIKey]:
@@ -140,7 +140,7 @@ class APIKeyStore:
         """
         return self._keys.get(key_id)
 
-    def list_keys(self, owner: str | None = None) -> List[APIKey]:
+    def list_keys(self, owner: str | None = None) -> list[APIKey]:
         """List API keys, optionally filtered by owner.
 
         Args:

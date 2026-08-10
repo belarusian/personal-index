@@ -1,14 +1,14 @@
 """Content priority scoring - score content importance."""
 
 from __future__ import annotations
-from contextlib import suppress
 
 import logging
 import math
+from contextlib import suppress
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class PriorityLevel(str, Enum):
         return self.numeric_value < other.numeric_value
 
     @classmethod
-    def from_score(cls, score: float) -> "PriorityLevel":
+    def from_score(cls, score: float) -> PriorityLevel:
         """Convert a numeric score to a priority level."""
         if score >= 0.8:
             return cls.CRITICAL
@@ -71,19 +71,19 @@ class PriorityScore:
         """Get the priority level for this score."""
         return PriorityLevel.from_score(self.total)
 
-    def __gt__(self, other: "PriorityScore") -> bool:
+    def __gt__(self, other: PriorityScore) -> bool:
         """Compare priority levels (greater than)."""
         return self.total > other.total
 
-    def __lt__(self, other: "PriorityScore") -> bool:
+    def __lt__(self, other: PriorityScore) -> bool:
         """Compare priority levels (less than)."""
         return self.total < other.total
 
-    def __ge__(self, other: "PriorityScore") -> bool:
+    def __ge__(self, other: PriorityScore) -> bool:
         """Compare priority scores (greater or equal)."""
         return self.total >= other.total
 
-    def __le__(self, other: "PriorityScore") -> bool:
+    def __le__(self, other: PriorityScore) -> bool:
         """Compare priority scores (less or equal)."""
         return self.total <= other.total
 
@@ -97,19 +97,19 @@ class ContentPriority:
     title: str = ""
     metadata: dict = field(default_factory=dict, compare=False)
 
-    def __gt__(self, other: "ContentPriority") -> bool:
+    def __gt__(self, other: ContentPriority) -> bool:
         """Compare priority levels (greater than)."""
         return self.score.total > other.score.total
 
-    def __lt__(self, other: "ContentPriority") -> bool:
+    def __lt__(self, other: ContentPriority) -> bool:
         """Compare priority levels (less than)."""
         return self.score.total < other.score.total
 
-    def __ge__(self, other: "ContentPriority") -> bool:
+    def __ge__(self, other: ContentPriority) -> bool:
         """Compare priority scores (greater or equal)."""
         return self.score.total >= other.score.total
 
-    def __le__(self, other: "ContentPriority") -> bool:
+    def __le__(self, other: ContentPriority) -> bool:
         """Compare priority scores (less or equal)."""
         return self.score.total <= other.score.total
 
@@ -433,7 +433,7 @@ def calculate_priority(item_id: str, content_text: str | None = None) -> float:
     return score.total
 
 
-def sort_by_priority(items: List[str], scores: Dict[str, float] | None = None) -> List[str]:
+def sort_by_priority(items: list[str], scores: dict[str, float] | None = None) -> list[str]:
     """Sort items by priority score.
 
     Args:

@@ -6,7 +6,6 @@ import csv
 import io
 import json
 from dataclasses import dataclass, field
-from typing import List
 
 from personal_index.search_index import SearchIndex
 
@@ -20,7 +19,7 @@ class SearchResult:
     title: str = ""
     score: float = 0.0
     snippet: str = ""
-    matched_interests: List[str] = field(default_factory=list)
+    matched_interests: list[str] = field(default_factory=list)
     meta_description: str = ""
 
 
@@ -47,7 +46,7 @@ class ResultsFormatter:
             lines.append(f"    {result.meta_description}")
         return "\n".join(lines)
 
-    def format_results(self, results: List[SearchResult]) -> str:
+    def format_results(self, results: list[SearchResult]) -> str:
         """Format multiple search results."""
         if not results:
             return "No results found."
@@ -81,7 +80,7 @@ class ResultsExporter:
     """Export search results to various formats."""
 
     @staticmethod
-    def to_json(results: List[SearchResult]) -> str:
+    def to_json(results: list[SearchResult]) -> str:
         """Export results as JSON."""
         data = [
             {
@@ -97,7 +96,7 @@ class ResultsExporter:
         return json.dumps(data, indent=2)
 
     @staticmethod
-    def to_csv(results: List[SearchResult]) -> str:
+    def to_csv(results: list[SearchResult]) -> str:
         """Export results as CSV."""
         output = io.StringIO()
         writer = csv.writer(output)
@@ -112,7 +111,7 @@ class ResultsExporter:
         return output.getvalue()
 
     @staticmethod
-    def to_markdown(results: List[SearchResult]) -> str:
+    def to_markdown(results: list[SearchResult]) -> str:
         """Export results as Markdown."""
         lines = []
         for r in results:
@@ -134,7 +133,7 @@ def search_and_format(
     query: str,
     limit: int = 10,
     show_snippets: bool = False,
-) -> List[SearchResult]:
+) -> list[SearchResult]:
     """Search index and format results."""
     raw_results = index.search(query, limit=limit)
     formatter = ResultsFormatter()

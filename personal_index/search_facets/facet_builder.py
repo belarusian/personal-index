@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from personal_index.search_facets.facet import Facet, FacetType
 
@@ -10,7 +10,7 @@ from personal_index.search_facets.facet import Facet, FacetType
 class FacetBuilder:
     """Builds facet dimensions from a collection of documents."""
 
-    DEFAULT_FACET_TYPES: dict[str, FacetType] = {
+    DEFAULT_FACET_TYPES: ClassVar[dict[str, FacetType]] = {
         "tags": FacetType.TAG,
         "category": FacetType.CATEGORY,
         "date": FacetType.DATE,

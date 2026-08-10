@@ -14,7 +14,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class DocumentHash:
         return hashlib.md5(text.encode("utf-8")).hexdigest()[:16]
 
     @classmethod
-    def from_text(cls, url: str, title: str, content: str) -> "DocumentHash":
+    def from_text(cls, url: str, title: str, content: str) -> DocumentHash:
         """Create a DocumentHash from page data."""
         return cls(
             url=url,
@@ -68,12 +68,12 @@ class DeduplicationEngine:
         Args:
             similarity_threshold: Minimum similarity score to flag as duplicate.
         """
-        self._seen_hashes: Dict[str, str] = {}  # hash -> first url
-        self._seen_fingerprints: Dict[str, str] = {}  # fingerprint -> first url
+        self._seen_hashes: dict[str, str] = {}  # hash -> first url
+        self._seen_fingerprints: dict[str, str] = {}  # fingerprint -> first url
         self._similarity_threshold = similarity_threshold
-        self._document_hashes: Dict[str, DocumentHash] = {}
+        self._document_hashes: dict[str, DocumentHash] = {}
 
-    def is_duplicate(self, url: str, title: str, content: str) -> Tuple[bool, str | None]:
+    def is_duplicate(self, url: str, title: str, content: str) -> tuple[bool, str | None]:
         """Check if content is a duplicate. Returns (is_dup, original_url)."""
         doc_hash = DocumentHash.from_text(url, title, content)
         self._document_hashes[url] = doc_hash
@@ -111,7 +111,7 @@ class DeduplicationEngine:
 
     def is_near_duplicate(
         self, url: str, title: str, content: str
-    ) -> Tuple[bool, str | None, float]:
+    ) -> tuple[bool, str | None, float]:
         """Check for near-duplicates using token overlap. Returns (is_dup, url, score)."""
         tokens = set(re.findall(r"[a-z0-9]+", content.lower()))
         if not tokens:
@@ -132,7 +132,6 @@ class DeduplicationEngine:
                 continue
             # We need to store tokens for proper comparison
             # For now, use hash-based check
-            pass
 
         return False, None, best_score
 
@@ -225,7 +224,7 @@ class DedupConfig:
     method: str = "hash"
     min_content_length: int = 50
 
-    _VALID_METHODS = {"hash", "tfidf", "jaccard"}
+    _VALID_METHODS: ClassVar[set[str]] = {"hash", "tfidf", "jaccard"}
 
     def __post_init__(self) -> None:
         """Initialize post-processing for DedupConfig."""
@@ -608,7 +607,7 @@ class BatchDedupReport:
 # ---------------------------------------------------------------------------
 
 
-def find_duplicates(items: List[str]) -> List[str]:
+def find_duplicates(items: list[str]) -> list[str]:
     """Find duplicate strings in a list.
 
     Args:
@@ -626,7 +625,7 @@ def find_duplicates(items: List[str]) -> List[str]:
     return duplicates
 
 
-def remove_duplicates(items: List[str]) -> List[str]:
+def remove_duplicates(items: list[str]) -> list[str]:
     """Remove duplicate strings from a list, preserving order.
 
     Args:

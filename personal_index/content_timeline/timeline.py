@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from personal_index.content_timeline.timeline_entry import TimelineEntry, TimelineEventType

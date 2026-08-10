@@ -6,7 +6,7 @@ import html
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class DashboardStat:
     trend: str | None = None
     icon: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "label": self.label,
             "value": self.value,
@@ -34,11 +34,11 @@ class DashboardSection:
     """A section of the dashboard."""
 
     title: str
-    stats: List[DashboardStat] = field(default_factory=list)
-    table_data: List[Dict[str, Any]] | None = None
-    chart_data: Dict[str, Any] | None = None
+    stats: list[DashboardStat] = field(default_factory=list)
+    table_data: list[dict[str, Any]] | None = None
+    chart_data: dict[str, Any] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "stats": [s.to_dict() for s in self.stats],
@@ -55,10 +55,10 @@ class DashboardData:
     generated_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
-    sections: List[DashboardSection] = field(default_factory=list)
+    sections: list[DashboardSection] = field(default_factory=list)
     version: str = "0.1.0"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "generated_at": self.generated_at,
@@ -205,7 +205,7 @@ def build_dashboard(
     # Domain distribution section
     if index_instance:
         pages = index_instance.get_all_pages() if hasattr(index_instance, "get_all_pages") else []
-        domain_counts: Dict[str, int] = {}
+        domain_counts: dict[str, int] = {}
         for p in pages:
             if p.domain:
                 domain_counts[p.domain] = domain_counts.get(p.domain, 0) + 1

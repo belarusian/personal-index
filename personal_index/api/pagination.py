@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Generic, List, TypeVar
 from collections.abc import Sequence
+from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -43,7 +43,7 @@ class PageInfo:
 @dataclass
 class PaginatedResult(Generic[T]):
     """A paginated result set."""
-    items: List[T]
+    items: list[T]
     page_info: PageInfo
 
     def to_dict(self) -> dict:

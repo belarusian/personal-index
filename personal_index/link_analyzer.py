@@ -106,9 +106,7 @@ class LinkAnalyzer:
         if anchor.lower().strip() in generic:
             return True
         # Very long URLs (possible tracking/spam)
-        if len(url) > 500:
-            return True
-        return False
+        return len(url) > 500
 
     def analyze_batch(self, pages: list[dict]) -> list[LinkAnalysisResult]:
         """Analyze links across multiple pages."""

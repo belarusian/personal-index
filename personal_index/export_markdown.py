@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ class ExportConfig:
     sort_by: str = "date"
     group_by: str | None = None
 
-    _VALID_SORT = {"date", "title", "priority", "relevance"}
-    _VALID_GROUP = {"tags", "date", "category", None}
+    _VALID_SORT: ClassVar[set[str | None]] = {"date", "title", "priority", "relevance"}
+    _VALID_GROUP: ClassVar[set[str | None]] = {"tags", "date", "category", None}
 
     def __post_init__(self) -> None:
         if self.sort_by not in self._VALID_SORT:
@@ -320,6 +320,6 @@ def save_markdown(data: dict, filepath: str) -> bool:
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
         Path(filepath).write_text(content)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("Failed to save markdown to %s: %s", filepath, e)
         return False

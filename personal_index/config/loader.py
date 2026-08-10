@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -27,7 +27,7 @@ def _parse_match_mode(value: str) -> MatchMode:
         return MatchMode.ANY
 
 
-def _parse_interest(data: Dict[str, Any]) -> Interest:
+def _parse_interest(data: dict[str, Any]) -> Interest:
     """Parse interest from dictionary."""
     return Interest(
         name=data["name"],

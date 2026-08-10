@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import difflib
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 from urllib.parse import parse_qs, urlparse
 
 
@@ -22,9 +21,9 @@ class URLDeduplicator:
     """Deduplicate URLs using normalization and fuzzy matching."""
 
     def __init__(self, fuzzy_threshold: float = 0.95):
-        self._seen_urls: Dict[str, str] = {}  # normalized -> original
+        self._seen_urls: dict[str, str] = {}  # normalized -> original
         self._fuzzy_threshold = fuzzy_threshold
-        self._url_groups: Dict[str, List[str]] = {}  # domain -> [urls]
+        self._url_groups: dict[str, list[str]] = {}  # domain -> [urls]
 
     @property
     def seen_count(self) -> int:
@@ -138,7 +137,7 @@ class URLDeduplicator:
 
         return result
 
-    def deduplicate_urls(self, urls: List[str]) -> Tuple[List[str], List[DedupResult]]:
+    def deduplicate_urls(self, urls: list[str]) -> tuple[list[str], list[DedupResult]]:
         """Deduplicate a list of URLs, returning unique URLs and results."""
         unique_urls = []
         results = []
@@ -151,7 +150,7 @@ class URLDeduplicator:
 
         return unique_urls, results
 
-    def _find_fuzzy_match(self, path: str, candidates: List[str]) -> Tuple[str, float] | None:
+    def _find_fuzzy_match(self, path: str, candidates: list[str]) -> tuple[str, float] | None:
         """Find the best fuzzy match among candidates (path comparison)."""
         best_match = None
         best_score = 0.0
@@ -168,10 +167,10 @@ class URLDeduplicator:
             return (best_match, best_score)
         return None
 
-    def get_duplicates(self) -> Dict[str, List[str]]:
+    def get_duplicates(self) -> dict[str, list[str]]:
         """Get all detected duplicates grouped by canonical URL."""
-        duplicates: Dict[str, List[str]] = {}
-        for normalized, original in self._seen_urls.items():
+        duplicates: dict[str, list[str]] = {}
+        for original in self._seen_urls.values():
             parsed = urlparse(original)
             domain = parsed.netloc.lower()
             domain = domain.removeprefix("www.")
@@ -187,7 +186,7 @@ class URLDeduplicator:
                             duplicates[original].append(url)
         return duplicates
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """Get deduplication statistics."""
         return {
             "total_seen": self.seen_count,
@@ -205,7 +204,7 @@ class URLDeduplicator:
         normalized = self.normalize_url(url)
         return self._seen_urls.get(normalized)
 
-    def get_domain_urls(self, domain: str) -> List[str]:
+    def get_domain_urls(self, domain: str) -> list[str]:
         """Get all URLs for a specific domain."""
         clean_domain = domain.lower().removeprefix("www.")
         return self._url_groups.get(clean_domain, [])

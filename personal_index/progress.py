@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class ProgressState(Enum):
@@ -30,9 +30,9 @@ class ProgressStep:
     completed: bool = False
     started_at: str | None = None
     finished_at: str | None = None
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the progress step to a dictionary.
 
         Returns:
@@ -56,11 +56,11 @@ class ProgressTracker:
     state: str = "pending"
     total_steps: int = 0
     current_step: int = 0
-    steps: List[Dict[str, Any]] = field(default_factory=list)
+    steps: list[dict[str, Any]] = field(default_factory=list)
     started_at: str | None = None
     completed_at: str | None = None
     message: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.operation_id:
@@ -128,7 +128,7 @@ class ProgressTracker:
         self.completed_at = datetime.now(timezone.utc).isoformat()
 
     def advance(self, step_description: str = "",
-                step_details: Dict[str, Any] | None = None) -> None:
+                step_details: dict[str, Any] | None = None) -> None:
         """Advance to the next step."""
         if self.state != ProgressState.RUNNING.value:
             return
@@ -151,7 +151,7 @@ class ProgressTracker:
         """Set a status message."""
         self.message = message
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the progress tracker to a dictionary.
 
         Returns:
@@ -174,7 +174,7 @@ class ProgressTracker:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> ProgressTracker:
+    def from_dict(cls, data: dict[str, Any]) -> ProgressTracker:
         """Create a ProgressTracker from a dictionary, ignoring extra keys."""
         valid_keys = {
             "operation_id", "operation_name", "state", "total_steps",
@@ -195,11 +195,11 @@ class ProgressStore:
     """Store and retrieve progress trackers."""
 
     def __init__(self, storage_path: str | None = None):
-        self._trackers: Dict[str, ProgressTracker] = {}
+        self._trackers: dict[str, ProgressTracker] = {}
         self._storage_path = storage_path
 
     def create(self, operation_name: str, total_steps: int = 0,
-               metadata: Dict[str, Any] | None = None) -> ProgressTracker:
+               metadata: dict[str, Any] | None = None) -> ProgressTracker:
         """Create a new progress tracker."""
         tracker = ProgressTracker(
             operation_name=operation_name,
@@ -213,14 +213,14 @@ class ProgressStore:
         """Get a tracker by ID."""
         return self._trackers.get(operation_id)
 
-    def list_active(self) -> List[ProgressTracker]:
+    def list_active(self) -> list[ProgressTracker]:
         """List all active (running/paused) trackers."""
         return [
             t for t in self._trackers.values()
             if t.state in (ProgressState.RUNNING.value, ProgressState.PAUSED.value)
         ]
 
-    def list_completed(self, limit: int = 20) -> List[ProgressTracker]:
+    def list_completed(self, limit: int = 20) -> list[ProgressTracker]:
         """List completed trackers, most recent first."""
         completed = [
             t for t in self._trackers.values()

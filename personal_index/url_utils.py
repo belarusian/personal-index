@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import re
 from urllib.parse import (
-    urlparse,
-    urljoin,
-    urlunparse,
     parse_qs,
     urlencode,
+    urljoin,
+    urlparse,
+    urlunparse,
 )
 
 # Common file extensions to exclude from crawling
@@ -211,7 +211,7 @@ def urls_are_equivalent(url1: str, url2: str) -> bool:
     return normalize_url(url1) == normalize_url(url2)
 
 
-def remove_query_params(url: str, params: list = None) -> str:
+def remove_query_params(url: str, params: list | None = None) -> str:
     """Remove specific query parameters from URL."""
     if not params:
         return url
@@ -337,7 +337,7 @@ def extract_all_urls(html: str, base_url: str = "") -> list:
         soup = BeautifulSoup(html, "html.parser")
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
-            if href.startswith("#") or href.startswith("javascript:"):
+            if href.startswith(("#", "javascript:")):
                 continue
             if base_url:
                 full_url = urljoin(base_url, href)

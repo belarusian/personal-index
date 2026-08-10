@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple
 from collections.abc import Callable
+from dataclasses import dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,22 +20,20 @@ class RateLimitRule:
     window_seconds: float
     key: str = "ip"  # ip, user, api_key
     path_pattern: str | None = None
-    methods: List[str] | None = None
+    methods: list[str] | None = None
 
     def matches(self, method: str, path: str) -> bool:
         """Check if this rule matches the request."""
         if self.methods and method not in self.methods:
             return False
-        if self.path_pattern and not path.startswith(self.path_pattern):
-            return False
-        return True
+        return not (self.path_pattern and not path.startswith(self.path_pattern))
 
 
 @dataclass
 class RateLimitEntry:
     """Tracks request timestamps for rate limiting."""
 
-    timestamps: List[float] = field(default_factory=list)
+    timestamps: list[float] = field(default_factory=list)
     window_start: float = field(default_factory=time.monotonic)
 
     def cleanup(self, current_time: float, window: float):
@@ -56,14 +54,14 @@ class RateLimitEntry:
 class SlidingWindowRateLimiter:
     """Sliding window rate limiter for API requests."""
 
-    def __init__(self, rules: List[RateLimitRule] | None = None):
+    def __init__(self, rules: list[RateLimitRule] | None = None):
         self.rules = rules or [
             RateLimitRule(max_requests=100, window_seconds=60.0, key="ip"),
         ]
-        self._buckets: Dict[str, Dict[str, RateLimitEntry]] = defaultdict(dict)
+        self._buckets: dict[str, dict[str, RateLimitEntry]] = defaultdict(dict)
         self._global_limit: int = 1000
         self._global_window: float = 60.0
-        self._global_timestamps: List[float] = []
+        self._global_timestamps: list[float] = []
 
     def _get_key(self, identifier: str, rule: RateLimitRule) -> str:
         """Generate a rate limit key."""
@@ -74,7 +72,7 @@ class SlidingWindowRateLimiter:
         identifier: str,
         method: str,
         path: str,
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """Check if a request is allowed under rate limits.
 
         Args:
@@ -127,7 +125,7 @@ class SlidingWindowRateLimiter:
         self._global_timestamps.append(now)
         return True, headers
 
-    def get_status(self, identifier: str) -> Dict[str, Any]:
+    def get_status(self, identifier: str) -> dict[str, Any]:
         """Get rate limit status for an identifier."""
         now = time.monotonic()
         status = {"identifier": identifier, "rules": []}
@@ -174,7 +172,7 @@ class RateLimitMiddleware:
         self.key_extractor = key_extractor or self._default_key_extractor
 
     @staticmethod
-    def _default_key_extractor(scope: Dict[str, Any]) -> str:
+    def _default_key_extractor(scope: dict[str, Any]) -> str:
         """Extract client identifier from ASGI scope."""
         client = scope.get("client")
         if client:

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Topic detection engine for content tagging."""
 
-from __future__ import annotations
 
 import re
 from dataclasses import dataclass
@@ -20,7 +23,7 @@ class _TopicDefinition:
 class TopicDetector:
     """Detects topics in text content using keyword matching."""
 
-    DEFAULT_TOPICS: dict[str, list[str]] = {
+    DEFAULT_TOPICS: ClassVar[dict[str, list[str]]] = {
         "programming": [
             "programming", "code", "developer", "software", "algorithm",
             "function", "variable", "class", "object", "debug",

@@ -6,7 +6,6 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 from personal_index.models import IndexedPage, SearchResult
 
@@ -28,7 +27,7 @@ STOP_WORDS = frozenset({
 
 
 # Re-export for backward compatibility
-__all__ = ["IndexedPage", "SearchResult", "SearchIndex"]
+__all__ = ["IndexedPage", "SearchIndex", "SearchResult"]
 
 
 @dataclass
@@ -36,8 +35,8 @@ class SearchIndex:
     """Search index with JSON persistence."""
 
     db_path: str | None = None
-    _pages: Dict[str, IndexedPage] = field(default_factory=dict, repr=False)
-    _word_index: Dict[str, List[str]] = field(default_factory=dict, repr=False)
+    _pages: dict[str, IndexedPage] = field(default_factory=dict, repr=False)
+    _word_index: dict[str, list[str]] = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         if self.db_path and os.path.exists(self.db_path):
@@ -69,7 +68,7 @@ class SearchIndex:
             json.dump(data, f, indent=2)
 
     @staticmethod
-    def _tokenize(text: str) -> List[str]:
+    def _tokenize(text: str) -> list[str]:
         """Tokenize text into lowercase words, filtering stop words."""
         if not text:
             return []
@@ -110,7 +109,7 @@ class SearchIndex:
         """Get number of indexed pages."""
         return len(self._pages)
 
-    def list_pages(self) -> List[IndexedPage]:
+    def list_pages(self) -> list[IndexedPage]:
         """List all pages sorted by score."""
         return sorted(self._pages.values(), key=lambda p: p.score, reverse=True)
 
@@ -120,7 +119,7 @@ class SearchIndex:
         self._word_index = {}
         self._save()
 
-    def search(self, query: str, limit: int = 10) -> List[SearchResult]:
+    def search(self, query: str, limit: int = 10) -> list[SearchResult]:
         """Search the index."""
         if not query:
             return []
@@ -128,7 +127,7 @@ class SearchIndex:
         if not tokens:
             return []
 
-        scores: Dict[str, float] = {}
+        scores: dict[str, float] = {}
         for token in tokens:
             if token in self._word_index:
                 for url in self._word_index[token]:

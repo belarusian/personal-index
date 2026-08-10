@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from collections.abc import Callable
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ class ContentPipeline:
             try:
                 data = step.handler(data)
                 steps_executed += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("Pipeline step '%s' failed: %s", step.name, e)
                 steps_failed += 1
                 errors.append(f"Step '{step.name}': {e}")

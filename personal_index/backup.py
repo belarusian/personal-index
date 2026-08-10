@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Literal
+from typing import Literal
 
 
 @dataclass
@@ -18,10 +18,10 @@ class BackupManifest:
     backup_id: str = ""
     created_at: str = ""
     source_dir: str = ""
-    files: List[str] = field(default_factory=list)
+    files: list[str] = field(default_factory=list)
     total_size: int = 0
     file_count: int = 0
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.created_at:
@@ -31,7 +31,7 @@ class BackupManifest:
             short_uuid = uuid.uuid4().hex[:6]
             self.backup_id = f"{ts}_{short_uuid}"
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
             "backup_id": self.backup_id,
@@ -44,7 +44,7 @@ class BackupManifest:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> BackupManifest:
+    def from_dict(cls, data: dict) -> BackupManifest:
         """Create from dictionary."""
         return cls(**data)
 
@@ -56,8 +56,8 @@ class BackupManager:
         self._backup_dir = backup_dir or str(Path.home() / ".personal_index" / "backups")
 
     def create_backup(self, source_dir: str,
-                      include_patterns: List[str] | None = None,
-                      exclude_patterns: List[str] | None = None,
+                      include_patterns: list[str] | None = None,
+                      exclude_patterns: list[str] | None = None,
                       compress: bool = True) -> BackupManifest:
         """Create a backup of the source directory."""
         source_path = Path(source_dir)
@@ -105,7 +105,7 @@ class BackupManager:
 
         return manifest
 
-    def list_backups(self) -> List[BackupManifest]:
+    def list_backups(self) -> list[BackupManifest]:
         """List all available backups."""
         backup_path = Path(self._backup_dir)
         if not backup_path.exists():
@@ -208,7 +208,7 @@ class BackupManager:
             total += archive.stat().st_size
         return total
 
-    def cleanup_old_backups(self, keep: int = 5) -> List[str]:
+    def cleanup_old_backups(self, keep: int = 5) -> list[str]:
         """Keep only the N most recent backups. Returns deleted backup IDs."""
         backups = self.list_backups()
         deleted = []
@@ -222,8 +222,8 @@ class BackupManager:
         return deleted
 
     def _collect_files(self, source: Path,
-                       include: List[str] | None = None,
-                       exclude: List[str] | None = None) -> List[Path]:
+                       include: list[str] | None = None,
+                       exclude: list[str] | None = None) -> list[Path]:
         """Collect files from source directory with filtering."""
         files = []
         exclude = exclude or []

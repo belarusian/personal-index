@@ -10,7 +10,6 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -41,7 +40,7 @@ class ContentVersioning:
         self.storage_path = storage_path or str(
             Path.home() / ".personal_index" / "versions.json"
         )
-        self._versions: Dict[str, List[ContentVersion]] = {}
+        self._versions: dict[str, list[ContentVersion]] = {}
         self._load()
 
     def _load(self) -> None:
@@ -114,7 +113,7 @@ class ContentVersioning:
         self._save()
         return version
 
-    def get_versions(self, item_id: str) -> List[ContentVersion]:
+    def get_versions(self, item_id: str) -> list[ContentVersion]:
         """Get all versions of an item.
 
         Args:
@@ -204,7 +203,7 @@ def create_version(item_id: str, content: str, author: str = "", message: str = 
     return _get_default_versioning().create_version(item_id, content, author, message)
 
 
-def get_versions(item_id: str) -> List[ContentVersion]:
+def get_versions(item_id: str) -> list[ContentVersion]:
     """Get all versions of an item using the default versioning instance.
 
     Args:

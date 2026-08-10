@@ -8,8 +8,8 @@ import hmac
 import json
 import time
 import uuid
-from dataclasses import dataclass, field, asdict
-from typing import Any, Dict
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -20,16 +20,16 @@ class TokenPayload:
     exp: float | None = None  # expiration
     jti: str = field(default_factory=lambda: uuid.uuid4().hex)  # unique token ID
     roles: list = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         if self.exp is None:
             del data["exp"]
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TokenPayload":
+    def from_dict(cls, data: dict[str, Any]) -> TokenPayload:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
@@ -47,7 +47,7 @@ class JWTManager:
         subject: str,
         roles: list | None = None,
         ttl: int | None = None,
-        metadata: Dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Create a new JWT token.
 
@@ -102,7 +102,7 @@ class JWTManager:
         self._blacklist.add(token)
         return True
 
-    def _encode(self, payload: Dict[str, Any]) -> str:
+    def _encode(self, payload: dict[str, Any]) -> str:
         """Encode payload into a JWT-like token using HMAC-SHA256."""
         header = {"alg": self._algorithm, "typ": "JWT"}
         header_b64 = self._base64url_encode(json.dumps(header, separators=(",", ":")).encode())
@@ -111,7 +111,7 @@ class JWTManager:
         signature = self._sign(signing_input)
         return f"{signing_input}.{signature}"
 
-    def _decode(self, token: str) -> Dict[str, Any] | None:
+    def _decode(self, token: str) -> dict[str, Any] | None:
         """Decode and verify a JWT-like token."""
         parts = token.split(".")
         if len(parts) != 3:

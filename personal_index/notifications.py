@@ -7,12 +7,12 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, asdict
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List
-from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class Notification:
     title: str = ""
     message: str = ""
     timestamp: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     read: bool = False
 
     def __post_init__(self):
@@ -57,7 +57,7 @@ class Notification:
         if not self.notification_id:
             self.notification_id = f"notif_{int(time.time() * 1000)}_{id(self) % 10000}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the notification to a dictionary.
 
         Returns:
@@ -66,7 +66,7 @@ class Notification:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> Notification:
+    def from_dict(cls, data: dict[str, Any]) -> Notification:
         """Create a Notification from a dictionary.
 
         Args:
@@ -84,12 +84,10 @@ class NotificationHandler(ABC):
     @abstractmethod
     def handle(self, notification: Notification) -> bool:
         """Handle a notification. Return True if handled successfully."""
-        pass
 
     @abstractmethod
     def close(self) -> None:
         """Clean up resources."""
-        pass
 
 
 class ConsoleHandler(NotificationHandler):
@@ -119,7 +117,6 @@ class ConsoleHandler(NotificationHandler):
 
     def close(self) -> None:
         """No cleanup needed for console handler."""
-        pass
 
 
 class FileHandler(NotificationHandler):
@@ -148,7 +145,6 @@ class FileHandler(NotificationHandler):
 
     def close(self) -> None:
         """No cleanup needed for file handler."""
-        pass
 
 
 class InMemoryHandler(NotificationHandler):
@@ -156,7 +152,7 @@ class InMemoryHandler(NotificationHandler):
 
     def __init__(self, max_size: int = 1000):
         self.max_size = max_size
-        self._notifications: List[Notification] = []
+        self._notifications: list[Notification] = []
 
     def handle(self, notification: Notification) -> bool:
         """Store the notification in memory.
@@ -172,7 +168,7 @@ class InMemoryHandler(NotificationHandler):
             self._notifications = self._notifications[-self.max_size:]
         return True
 
-    def get_all(self) -> List[Notification]:
+    def get_all(self) -> list[Notification]:
         """Get all stored notifications.
 
         Returns:
@@ -180,7 +176,7 @@ class InMemoryHandler(NotificationHandler):
         """
         return list(self._notifications)
 
-    def get_unread(self) -> List[Notification]:
+    def get_unread(self) -> list[Notification]:
         """Get all unread notifications.
 
         Returns:
@@ -220,8 +216,8 @@ class NotificationManager:
     """Central notification manager that dispatches to handlers."""
 
     def __init__(self):
-        self._handlers: List[NotificationHandler] = []
-        self._filters: List[Callable[[Notification], bool]] = []
+        self._handlers: list[NotificationHandler] = []
+        self._filters: list[Callable[[Notification], bool]] = []
 
     def add_handler(self, handler: NotificationHandler) -> None:
         """Add a notification handler."""
@@ -247,7 +243,7 @@ class NotificationManager:
             try:
                 if handler.handle(notification):
                     success_count += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Handler {handler.__class__.__name__} failed: {e}")
         return success_count
 
@@ -271,7 +267,7 @@ class NotificationManager:
             metadata={"url": url, "error": error},
         ))
 
-    def notify_new_content(self, url: str, title: str, matched_interests: List[str]) -> None:
+    def notify_new_content(self, url: str, title: str, matched_interests: list[str]) -> None:
         """Send a new content notification."""
         self.notify(Notification(
             notification_type=NotificationType.NEW_CONTENT.value,

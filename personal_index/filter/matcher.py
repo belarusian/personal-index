@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, List
 
 from personal_index.config.models import Interest, MatchMode
 
@@ -71,7 +70,7 @@ class ContentMatcher:
 class InterestFilter:
     """Filters content against multiple interests."""
 
-    def __init__(self, interests: List[Interest]):
+    def __init__(self, interests: list[Interest]):
         self._matchers = [
             ContentMatcher(i) for i in interests if i.enabled
         ]
@@ -95,7 +94,7 @@ class InterestFilter:
 
     def get_matching_interests(
         self, text: str, url: str = ""
-    ) -> List[Interest]:
+    ) -> list[Interest]:
         """Get all matching interests sorted by score."""
         results = []
         for matcher in self._matchers:
@@ -108,7 +107,7 @@ class InterestFilter:
         """Check if content should be indexed."""
         return self.matches(text, url) is not None
 
-    def filter_content(self, text: str, url: str = "") -> Dict | None:
+    def filter_content(self, text: str, url: str = "") -> dict | None:
         """Filter content and return details if matched."""
         match = self.matches(text, url)
         if match is None:

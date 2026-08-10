@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import List
 
 from personal_index.migrations.base import (
-    MigrationRegistry,
     MigrationRecord,
+    MigrationRegistry,
     MigrationStatus,
     MigrationStore,
 )
@@ -27,7 +26,7 @@ class MigrationRunner:
         self.registry = registry or MigrationRegistry()
         self.store = store or MigrationStore()
 
-    def run_pending(self, dry_run: bool = False) -> List[MigrationRecord]:
+    def run_pending(self, dry_run: bool = False) -> list[MigrationRecord]:
         """Run all pending migrations.
 
         Args:
@@ -72,7 +71,7 @@ class MigrationRunner:
 
         return results
 
-    def rollback(self, steps: int = 1, dry_run: bool = False) -> List[MigrationRecord]:
+    def rollback(self, steps: int = 1, dry_run: bool = False) -> list[MigrationRecord]:
         """Rollback applied migrations.
 
         Args:
@@ -140,7 +139,7 @@ class MigrationRunner:
             is_up_to_date=len(pending_versions) == 0,
         )
 
-    def validate_all(self) -> List[str]:
+    def validate_all(self) -> list[str]:
         """Validate all pending migrations without applying.
 
         Returns:
@@ -160,4 +159,3 @@ class MigrationRunner:
 
 class MigrationError(Exception):
     """Error during migration execution."""
-    pass

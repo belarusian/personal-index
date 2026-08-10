@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """URL classification for categorizing crawled URLs."""
 
-from __future__ import annotations
 
 import logging
 import re
@@ -38,7 +41,7 @@ class ClassificationResult:
 class URLClassifier:
     """Classifies URLs into categories based on patterns."""
 
-    API_PATTERNS = [
+    API_PATTERNS: ClassVar[list[str]] = [
         r"/api/",
         r"/v\d+/",
         r"\.json$",
@@ -48,7 +51,7 @@ class URLClassifier:
         r"/rest/",
     ]
 
-    MEDIA_PATTERNS = [
+    MEDIA_PATTERNS: ClassVar[list[str]] = [
         r"\.(jpg|jpeg|png|gif|webp|svg|ico|bmp)$",
         r"\.(mp3|wav|ogg|flac|m4a)$",
         r"\.(mp4|avi|mov|wmv|webm|mkv)$",
@@ -58,7 +61,7 @@ class URLClassifier:
         r"/assets/",
     ]
 
-    DOCUMENT_PATTERNS = [
+    DOCUMENT_PATTERNS: ClassVar[list[str]] = [
         r"\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|rtf|odt)$",
         r"/docs/",
         r"/documents/",
@@ -66,7 +69,7 @@ class URLClassifier:
         r"/downloads/",
     ]
 
-    FEED_PATTERNS = [
+    FEED_PATTERNS: ClassVar[list[str]] = [
         r"\.rss$",
         r"\.atom$",
         r"/feed",
@@ -75,7 +78,7 @@ class URLClassifier:
         r"/sitemap",
     ]
 
-    STATIC_PATTERNS = [
+    STATIC_PATTERNS: ClassVar[list[str]] = [
         r"\.(css|js|map)$",
         r"/static/",
         r"/assets/",
@@ -83,7 +86,7 @@ class URLClassifier:
         r"/node_modules/",
     ]
 
-    REDIRECT_PATTERNS = [
+    REDIRECT_PATTERNS: ClassVar[list[str]] = [
         r"/redirect",
         r"/goto",
         r"/redirect",

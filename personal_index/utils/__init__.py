@@ -1,20 +1,21 @@
 """Utilities package."""
 
 # Re-export from root url_utils for backward compatibility
+import re
+
+from bs4 import BeautifulSoup
+
 from personal_index.url_utils import (
+    EXCLUDED_EXTENSIONS,
+    EXCLUDED_SCHEMES,
+    extract_domain,
+    get_url_depth,
+    is_excluded_url,
+    is_same_domain,
     is_valid_url,
     normalize_url,
     resolve_relative_url,
-    extract_domain,
-    is_excluded_url,
-    get_url_depth,
-    is_same_domain,
-    EXCLUDED_EXTENSIONS,
-    EXCLUDED_SCHEMES,
 )
-
-import re
-from bs4 import BeautifulSoup
 
 
 def extract_links(html: str, base_url: str) -> list[str]:
@@ -86,18 +87,18 @@ def compute_relevance_score(
 
 
 __all__ = [
+    "EXCLUDED_EXTENSIONS",
+    "EXCLUDED_SCHEMES",
+    "compute_relevance_score",
+    "extract_domain",
+    "extract_links",
+    "extract_meta_description",
+    "extract_text_content",
+    "extract_title",
+    "get_url_depth",
+    "is_excluded_url",
+    "is_same_domain",
     "is_valid_url",
     "normalize_url",
     "resolve_relative_url",
-    "extract_domain",
-    "is_excluded_url",
-    "get_url_depth",
-    "is_same_domain",
-    "extract_links",
-    "extract_title",
-    "extract_meta_description",
-    "extract_text_content",
-    "compute_relevance_score",
-    "EXCLUDED_EXTENSIONS",
-    "EXCLUDED_SCHEMES",
 ]

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 
@@ -67,7 +67,7 @@ class Interest:
         return d
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Interest":
+    def from_dict(cls, data: dict) -> Interest:
         """Create an Interest from a dictionary.
 
         Args:
@@ -161,7 +161,7 @@ class CrawlConfig:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CrawlConfig":
+    def from_dict(cls, data: dict) -> CrawlConfig:
         """Create a CrawlConfig from a dictionary.
 
         Args:
@@ -202,7 +202,7 @@ class CrawledPage:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CrawledPage":
+    def from_dict(cls, data: dict) -> CrawledPage:
         """Create a CrawledPage from a dictionary.
 
         Args:
@@ -253,7 +253,7 @@ class IndexedPage:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "IndexedPage":
+    def from_dict(cls, data: dict) -> IndexedPage:
         """Create an IndexedPage from a dictionary.
 
         Args:
@@ -292,7 +292,7 @@ class SearchResult:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SearchResult":
+    def from_dict(cls, data: dict) -> SearchResult:
         """Create a SearchResult from a dictionary."""
         return cls(**{k: v for k, v in data.items()
                       if k in cls.__dataclass_fields__})
@@ -325,7 +325,7 @@ class Page:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Page":
+    def from_dict(cls, data: dict) -> Page:
         """Create a Page from a dictionary.
 
         Args:
@@ -349,7 +349,7 @@ class SchedulerConfig:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SchedulerConfig":
+    def from_dict(cls, data: dict) -> SchedulerConfig:
         """Create a SchedulerConfig from a dictionary."""
         return cls(**{k: v for k, v in data.items()
                       if k in cls.__dataclass_fields__})
@@ -389,7 +389,7 @@ class AppConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AppConfig":
+    def from_dict(cls, data: dict) -> AppConfig:
         """Create an AppConfig from a dictionary.
 
         Args:

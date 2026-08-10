@@ -7,6 +7,8 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 
+from typing_extensions import Self
+
 logger = logging.getLogger(__name__)
 
 
@@ -122,7 +124,7 @@ class TimerContext:
         self._name = name
         self._start: float | None = None
 
-    def __enter__(self) -> TimerContext:
+    def __enter__(self) -> Self:
         self._start = time.time()
         return self
 

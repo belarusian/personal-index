@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from personal_index.models import Interest, CrawlConfig
+from personal_index.models import CrawlConfig, Interest
 
 # Alias for backward compatibility
 CrawlerConfig = CrawlConfig
@@ -22,7 +22,7 @@ class SchedulerConfig:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SchedulerConfig":
+    def from_dict(cls, data: dict) -> SchedulerConfig:
         return cls(**{k: v for k, v in data.items()
                       if k in cls.__dataclass_fields__})
 
@@ -50,7 +50,7 @@ class AppConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AppConfig":
+    def from_dict(cls, data: dict) -> AppConfig:
         interests = [Interest.from_dict(d) for d in data.get("interests", [])]
         crawl = CrawlConfig.from_dict(data.get("crawl", {}))
         schedule = SchedulerConfig.from_dict(data.get("schedule", {}))
@@ -65,7 +65,7 @@ class AppConfig:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, config_path: Path) -> "AppConfig":
+    def load(cls, config_path: Path) -> AppConfig:
         """Load config from disk."""
         if config_path.exists():
             with open(config_path) as f:

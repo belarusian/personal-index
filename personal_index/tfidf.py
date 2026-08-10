@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from typing import Dict, List, Tuple
 
 from personal_index.text_utils import tokenize
 
@@ -13,9 +12,9 @@ class TfidfScorer:
     """Compute TF-IDF scores for documents and queries."""
 
     def __init__(self):
-        self._doc_freq: Dict[str, int] = {}
+        self._doc_freq: dict[str, int] = {}
         self._doc_count: int = 0
-        self._doc_terms: Dict[int, Counter] = {}
+        self._doc_terms: dict[int, Counter] = {}
         self._next_id: int = 0
 
     def add_document(self, text: str) -> int:
@@ -43,7 +42,7 @@ class TfidfScorer:
                 del self._doc_freq[token]
         return True
 
-    def compute_tfidf(self, doc_id: int) -> Dict[str, float]:
+    def compute_tfidf(self, doc_id: int) -> dict[str, float]:
         """Compute TF-IDF scores for a document."""
         if doc_id not in self._doc_terms:
             return {}
@@ -53,7 +52,7 @@ class TfidfScorer:
         total_terms = sum(terms.values())
         if total_terms == 0:
             return {}
-        scores: Dict[str, float] = {}
+        scores: dict[str, float] = {}
         for term, count in terms.items():
             tf = count / total_terms
             idf = math.log((1 + self._doc_count) / (1 + self._doc_freq.get(term, 0))) + 1
@@ -77,9 +76,9 @@ class TfidfScorer:
                 score += query_tf * doc_tfidf[term]
         return score
 
-    def rank_documents(self, query: str, limit: int = 10) -> List[Tuple[int, float]]:
+    def rank_documents(self, query: str, limit: int = 10) -> list[tuple[int, float]]:
         """Rank all documents by relevance to query."""
-        scores: List[Tuple[int, float]] = []
+        scores: list[tuple[int, float]] = []
         for doc_id in self._doc_terms:
             score = self.score_query(query, doc_id)
             if score > 0:
@@ -97,7 +96,7 @@ class TfidfScorer:
         """Return size of vocabulary."""
         return len(self._doc_freq)
 
-    def get_top_terms(self, doc_id: int, n: int = 10) -> List[Tuple[str, float]]:
+    def get_top_terms(self, doc_id: int, n: int = 10) -> list[tuple[str, float]]:
         """Get top N terms by TF-IDF score for a document."""
         scores = self.compute_tfidf(doc_id)
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:n]
