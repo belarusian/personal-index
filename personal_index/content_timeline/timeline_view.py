@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone, timedelta
 from enum import Enum
 from typing import Any
 
 from personal_index.content_timeline.timeline import Timeline
-from personal_index.content_timeline.timeline_entry import TimelineEntry, TimelineEventType
+from personal_index.content_timeline.timeline_entry import TimelineEventType
 
 
 class ViewMode(Enum):
