@@ -1,3 +1,5 @@
+"""Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
+
 from __future__ import annotations
 
 import json
@@ -5,7 +7,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import ClassVar
-
 
 @dataclass
 class BookmarkExportResult:
@@ -20,7 +21,6 @@ class BookmarkExportResult:
         if not self.exported_at:
             self.exported_at = datetime.now(timezone.utc).isoformat()
 
-
 # Map file extensions to format names
 _EXTENSION_MAP = {
     "json": "json",
@@ -28,7 +28,6 @@ _EXTENSION_MAP = {
     "htm": "html",
     "opml": "opml",
 }
-
 
 class BookmarkExporter:
     """Export bookmarks to HTML, JSON, and OPML formats.
@@ -202,6 +201,3 @@ class BookmarkExporter:
             bookmark_count=len(self.bookmarks),
             output_path=filepath,
         )
-
-"""Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
-

@@ -1,3 +1,5 @@
+"""Text encoding detection and conversion utilities."""
+
 from __future__ import annotations
 
 import logging
@@ -7,7 +9,6 @@ from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class EncodingResult:
     """Result of encoding detection."""
@@ -15,7 +16,6 @@ class EncodingResult:
     encoding: str
     confidence: float
     language: str | None = None
-
 
 class EncodingDetector:
     """Detects text encoding and performs conversions."""
@@ -92,6 +92,3 @@ class EncodingDetector:
         """Sanitize text by removing control chars and normalizing whitespace."""
         text = self.remove_control_chars(text)
         return self.normalize_whitespace(text)
-
-"""Text encoding detection and conversion utilities."""
-
