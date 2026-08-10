@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import List
 
@@ -42,10 +43,8 @@ class ContentFilter:
         """Compile regex patterns, ignoring invalid ones."""
         compiled = []
         for pattern in patterns:
-            try:
+            with suppress(re.error):
                 compiled.append(re.compile(pattern, re.IGNORECASE))
-            except re.error:
-                pass
         return compiled
 
     def should_include(self, page: CrawledPage) -> bool:

@@ -130,10 +130,8 @@ class SitemapParser:
         priority_elem = url_elem.find("ns:priority", self.NAMESPACES)
         priority = 0.5
         if priority_elem is not None and priority_elem.text:
-            try:
+            with suppress(ValueError):
                 priority = float(priority_elem.text.strip())
-            except ValueError:
-                pass
 
         return SitemapEntry(
             loc=loc,

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import Dict, List, Set
 
@@ -102,10 +103,8 @@ class InterestStore:
         patterns = []
         for interest in self._interests.values():
             for pattern_str in interest.url_patterns:
-                try:
+                with suppress(re.error):
                     patterns.append(re.compile(pattern_str))
-                except re.error:
-                    pass
         return patterns
 
     def get_all_topics(self) -> Set[str]:
