@@ -99,6 +99,7 @@ class AnnotationManager:
     """Manages user annotations on saved content items."""
 
     def __init__(self) -> None:
+        """Initialize the annotation manager with empty storage."""
         self._annotations: dict[str, Annotation] = {}
         self._by_content: dict[str, list[str]] = {}
         self._by_author: dict[str, list[str]] = {}
