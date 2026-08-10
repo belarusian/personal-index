@@ -95,7 +95,7 @@ class ContentTypeDetector:
             return self.detect_from_extension(ext)
 
         # Try mimetypes
-        mime_type, encoding = mimetypes.guess_type(url)
+        mime_type, _ = mimetypes.guess_type(url)
         if mime_type:
             return self._make_info(mime_type, ext or "")
 
@@ -121,7 +121,7 @@ class ContentTypeDetector:
         if ext:
             return self.detect_from_extension(ext)
 
-        mime_type, encoding = mimetypes.guess_type(filename)
+        mime_type, _ = mimetypes.guess_type(filename)
         if mime_type:
             return self._make_info(mime_type, ext or "")
 
@@ -187,7 +187,7 @@ class ContentTypeDetector:
                 is_document=False,
             )
         else:
-            mime_type, encoding = mimetypes.guess_type(f"file{ext}")
+            mime_type, _ = mimetypes.guess_type(f"file{ext}")
             info = self._make_info(mime_type or "application/octet-stream", ext)
 
         self._mime_cache[cache_key] = info
