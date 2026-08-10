@@ -4,10 +4,10 @@ import pytest
 from personal_index.content import (
     ExtractedContent,
     extract_content,
-    tokenize,
     remove_stopwords,
     compute_tf,
 )
+from personal_index.text_utils import tokenize
 
 
 SAMPLE_HTML = """
@@ -115,8 +115,9 @@ class TestExtractContent:
 
 class TestTokenize:
     def test_basic_tokenize(self):
+        # text_utils.tokenize requires 2+ char tokens, so "a" is excluded
         tokens = tokenize("Hello World, this is a test!")
-        assert tokens == ["hello", "world", "this", "is", "a", "test"]
+        assert tokens == ["hello", "world", "this", "is", "test"]
 
     def test_empty_string(self):
         tokens = tokenize("")
@@ -125,9 +126,15 @@ class TestTokenize:
     def test_numbers(self):
         tokens = tokenize("Version 2.0 has 100 items")
         assert "version" in tokens
-        assert "2" in tokens
-        assert "0" in tokens
         assert "100" in tokens
+
+    def test_lowercase(self):
+        tokens = tokenize("Hello World", lowercase=True)
+        assert tokens == ["hello", "world"]
+
+    def test_no_lowercase(self):
+        tokens = tokenize("Hello World", lowercase=False)
+        assert tokens == ["Hello", "World"]
 
 
 class TestRemoveStopwords:
