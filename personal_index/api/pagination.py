@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Generic, List, Optional, Sequence, TypeVar
+from typing import Generic, List, Sequence, TypeVar
 
 T = TypeVar("T")
 
