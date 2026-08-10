@@ -239,3 +239,31 @@ class TestImporterContent:
         result = importer.import_from_content("data", "xyz")
         assert result.total_imported == 0
         assert len(result.errors) > 0
+
+
+def test_importer_uses_defusedxml():
+    """Verify importer.py uses defusedxml for safe XML parsing (TICKET-62)."""
+    import os
+    importer_path = os.path.join(os.path.dirname(__file__), "..", "personal_index", "importer.py")
+    with open(importer_path) as f:
+        source = f.read()
+    assert "defusedxml" in source, "importer.py should use defusedxml for safe XML parsing"
+    assert "ET.fromstring" not in source, "importer.py should not use ET.fromstring directly"
+
+
+def test_rss_uses_defusedxml():
+    """Verify rss.py uses defusedxml for safe XML parsing (TICKET-62)."""
+    import os
+    rss_path = os.path.join(os.path.dirname(__file__), "..", "personal_index", "rss.py")
+    with open(rss_path) as f:
+        source = f.read()
+    assert "defusedxml" in source, "rss.py should use defusedxml for safe XML parsing"
+
+
+def test_sitemap_uses_defusedxml():
+    """Verify sitemap.py uses defusedxml for safe XML parsing (TICKET-62)."""
+    import os
+    sitemap_path = os.path.join(os.path.dirname(__file__), "..", "personal_index", "sitemap.py")
+    with open(sitemap_path) as f:
+        source = f.read()
+    assert "defusedxml" in source, "sitemap.py should use defusedxml for safe XML parsing"

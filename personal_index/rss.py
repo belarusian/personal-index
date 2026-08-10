@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-import xml.etree.ElementTree as ET
+from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET_ParseError
 from dataclasses import dataclass, field
 
 
@@ -66,8 +66,8 @@ class RSSParser:
             return Feed(feed_url=feed_url)
 
         try:
-            root = ET.fromstring(xml_content)
-        except ET.ParseError:
+            root = ET_fromstring(xml_content)
+        except ET_ParseError:
             return Feed(feed_url=feed_url)
 
         root_tag = root.tag
