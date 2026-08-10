@@ -158,7 +158,7 @@ class BackupManager:
         with tarfile.open(str(archive_path), mode) as tar:
             members = tar.getnames()
             restored_files = len(members)
-            tar.extractall(path=str(target))
+            tar.extractall(path=str(target), filter="data")
 
         return {
             "backup_id": backup_id,
