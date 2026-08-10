@@ -14,9 +14,7 @@ from personal_index.models import Interest, InterestType
 
 def _serialize_interest(interest: Interest) -> dict:
     """Serialize an Interest to a JSON-safe dict."""
-    d = asdict(interest)
-    if isinstance(d.get("interest_type"), InterestType):
-        d["interest_type"] = d["interest_type"].value
+    d = interest.to_dict()
     if isinstance(d.get("created_at"), datetime):
         d["created_at"] = d["created_at"].isoformat()
     return d

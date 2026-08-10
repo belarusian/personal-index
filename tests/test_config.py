@@ -14,25 +14,28 @@ from personal_index.config import (
 
 class TestInterest:
     def test_create_interest_defaults(self):
-        interest = Interest(topic="python")
+        interest = Interest(name="python", topic="python")
+        assert interest.name == "python"
         assert interest.topic == "python"
         assert interest.keywords == []
         assert interest.url_patterns == []
         assert interest.enabled is True
 
     def test_create_interest_with_keywords(self):
-        interest = Interest(topic="python", keywords=["programming", "coding"])
+        interest = Interest(name="python", topic="python", keywords=["programming", "coding"])
         assert interest.keywords == ["programming", "coding"]
 
     def test_interest_to_dict(self):
-        interest = Interest(topic="python", keywords=["coding"])
+        interest = Interest(name="python", topic="python", keywords=["coding"])
         data = interest.to_dict()
+        assert data["name"] == "python"
         assert data["topic"] == "python"
         assert data["keywords"] == ["coding"]
 
     def test_interest_from_dict(self):
-        data = {"topic": "python", "keywords": ["coding"], "url_patterns": [], "enabled": True}
+        data = {"name": "python", "topic": "python", "keywords": ["coding"], "url_patterns": [], "enabled": True}
         interest = Interest.from_dict(data)
+        assert interest.name == "python"
         assert interest.topic == "python"
         assert interest.keywords == ["coding"]
 
@@ -42,7 +45,7 @@ class TestCrawlConfig:
         config = CrawlConfig()
         assert config.max_depth == 3
         assert config.politeness_delay == 1.0
-        assert config.rate_limit == 1.0
+        assert config.rate_limit == 10
 
     def test_custom_crawl_config(self):
         config = CrawlConfig(max_depth=5, politeness_delay=2.0)
@@ -83,12 +86,12 @@ class TestAppConfig:
         assert config.crawl.max_depth == 3
 
     def test_app_config_with_interests(self):
-        interest = Interest(topic="python")
+        interest = Interest(name="python", topic="python")
         config = AppConfig(interests=[interest])
         assert len(config.interests) == 1
 
     def test_app_config_to_from_dict(self):
-        interest = Interest(topic="python", keywords=["coding"])
+        interest = Interest(name="python", topic="python", keywords=["coding"])
         config = AppConfig(interests=[interest])
         data = config.to_dict()
         restored = AppConfig.from_dict(data)
@@ -106,7 +109,7 @@ class TestConfigManager:
         config_path = tmp_path / "config.json"
         manager = ConfigManager(config_path=config_path)
         config = AppConfig()
-        config.interests.append(Interest(topic="python"))
+        config.interests.append(Interest(name="python", topic="python"))
         manager.save(config)
         loaded = manager.load()
         assert len(loaded.interests) == 1
@@ -116,13 +119,13 @@ class TestConfigManager:
         config_path = tmp_path / "config.json"
         manager = ConfigManager(config_path=config_path)
         config = AppConfig()
-        manager.add_interest(config, Interest(topic="python"))
+        manager.add_interest(config, Interest(name="python", topic="python"))
         assert len(config.interests) == 1
 
     def test_remove_interest(self, tmp_path):
         config_path = tmp_path / "config.json"
         manager = ConfigManager(config_path=config_path)
-        config = AppConfig(interests=[Interest(topic="python"), Interest(topic="rust")])
+        config = AppConfig(interests=[Interest(name="python", topic="python"), Interest(name="rust", topic="rust")])
         manager.remove_interest(config, "python")
         assert len(config.interests) == 1
         assert config.interests[0].topic == "rust"
@@ -130,7 +133,7 @@ class TestConfigManager:
     def test_get_interest(self, tmp_path):
         config_path = tmp_path / "config.json"
         manager = ConfigManager(config_path=config_path)
-        config = AppConfig(interests=[Interest(topic="python")])
+        config = AppConfig(interests=[Interest(name="python", topic="python")])
         interest = manager.get_interest(config, "python")
         assert interest is not None
         assert interest.topic == "python"

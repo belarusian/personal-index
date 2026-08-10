@@ -6,66 +6,9 @@ import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
+from personal_index.models import Interest, CrawlConfig
 
-@dataclass
-class Interest:
-    """An interest to track."""
-    topic: str = ""
-    name: str = ""
-    keywords: list[str] = field(default_factory=list)
-    url_patterns: list[str] = field(default_factory=list)
-    priority: int = 5
-    enabled: bool = True
-
-    def __post_init__(self):
-        # Default name to topic if not set
-        if not self.name and self.topic:
-            self.name = self.topic
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "Interest":
-        return cls(**{k: v for k, v in data.items()
-                      if k in cls.__dataclass_fields__})
-
-
-@dataclass
-class CrawlConfig:
-    """Crawler configuration."""
-    max_depth: int = 3
-    politeness_delay: float = 1.0
-    delay: float = 1.0
-    rate_limit: float = 1.0
-    max_pages: int = 100
-    max_pages_per_domain: int = 100
-    allowed_domains: list[str] = field(default_factory=list)
-    blocked_extensions: list[str] = field(
-        default_factory=lambda: [
-            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".ico",
-            ".css", ".js", ".pdf", ".zip", ".tar", ".gz", ".rar",
-            ".mp3", ".mp4", ".avi", ".mov", ".wmv", ".flv",
-            ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
-            ".exe", ".bin", ".dmg", ".iso",
-        ]
-    )
-    user_agent: str = "personal-index/0.1.0"
-    respect_robots_txt: bool = True
-    timeout: int = 30
-    max_concurrent_requests: int = 5
-    request_timeout: int = 30
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "CrawlConfig":
-        return cls(**{k: v for k, v in data.items()
-                      if k in cls.__dataclass_fields__})
-
-
-# Alias for compatibility
+# Alias for backward compatibility
 CrawlerConfig = CrawlConfig
 
 
