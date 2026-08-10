@@ -34,10 +34,12 @@ class MetricStats:
 
     @property
     def mean(self) -> float:
+        """Arithmetic mean of recorded values."""
         return self.total / self.count if self.count > 0 else 0.0
 
     @property
     def stddev(self) -> float:
+        """Population standard deviation of recorded values."""
         if self.count < 2:
             return 0.0
         # Use population variance formula: E[X^2] - (E[X])^2
@@ -50,14 +52,17 @@ class MetricStats:
 
     @property
     def p50(self) -> float:
+        """Approximate 50th percentile (mean)."""
         return self.mean  # Approximation
 
     @property
     def p95(self) -> float:
+        """Approximate 95th percentile (mean * 1.5)."""
         return self.mean * 1.5  # Approximation
 
     @property
     def p99(self) -> float:
+        """Approximate 99th percentile (mean * 2.0)."""
         return self.mean * 2.0  # Approximation
 
 
@@ -129,6 +134,7 @@ class TimerContext:
 
     @property
     def elapsed(self) -> float:
+        """Seconds elapsed since the timer started."""
         if self._start is None:
             return 0.0
         return time.time() - self._start

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class URLCategory(str, Enum):
+    """URLCategory."""
     PAGE = "page"
     API = "api"
     MEDIA = "media"
@@ -174,20 +175,25 @@ class URLClassifier:
 
     @property
     def api_re(self):
+        """Api_re."""
         return self._api_re
 
     @property
     def media_re(self):
+        """Media_re."""
         return self._media_re
 
     @property
     def feed_re(self):
+        """Feed_re."""
         return self._feed_re
 
     @property
     def static_re(self):
+        """Static_re."""
         return self._static_re
 
     @property
     def redirect_re(self):
+        """Redirect_re."""
         return self._redirect_re

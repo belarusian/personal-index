@@ -18,6 +18,7 @@ class Suggestion:
     category: str = ""
 
     def to_dict(self) -> dict[str, Any]:
+        """To_dict."""
         return {
             "text": self.text,
             "score": round(self.score, 4),

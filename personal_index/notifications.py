@@ -57,10 +57,23 @@ class Notification:
             self.notification_id = f"notif_{int(time.time() * 1000)}_{id(self) % 10000}"
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize the notification to a dictionary.
+
+        Returns:
+            Dictionary representation of the notification.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Notification:
+        """Create a Notification from a dictionary.
+
+        Args:
+            data: Dictionary with notification fields.
+
+        Returns:
+            A new Notification instance.
+        """
         return cls(**data)
 
 
@@ -85,6 +98,14 @@ class ConsoleHandler(NotificationHandler):
         self.colors = colors
 
     def handle(self, notification: Notification) -> bool:
+        """Print the notification to console.
+
+        Args:
+            notification: The notification to display.
+
+        Returns:
+            True if handled successfully.
+        """
         prefix = {
             NotificationLevel.INFO: "[INFO]",
             NotificationLevel.WARNING: "[WARN]",
@@ -96,6 +117,7 @@ class ConsoleHandler(NotificationHandler):
         return True
 
     def close(self) -> None:
+        """No cleanup needed for console handler."""
         pass
 
 
@@ -107,6 +129,14 @@ class FileHandler(NotificationHandler):
         Path(self.filepath).parent.mkdir(parents=True, exist_ok=True)
 
     def handle(self, notification: Notification) -> bool:
+        """Append the notification as JSON to the log file.
+
+        Args:
+            notification: The notification to write.
+
+        Returns:
+            True if written successfully.
+        """
         try:
             with open(self.filepath, "a") as f:
                 f.write(json.dumps(notification.to_dict()) + "\n")
@@ -116,6 +146,7 @@ class FileHandler(NotificationHandler):
             return False
 
     def close(self) -> None:
+        """No cleanup needed for file handler."""
         pass
 
 
@@ -127,18 +158,41 @@ class InMemoryHandler(NotificationHandler):
         self._notifications: List[Notification] = []
 
     def handle(self, notification: Notification) -> bool:
+        """Store the notification in memory.
+
+        Args:
+            notification: The notification to store.
+
+        Returns:
+            True if handled successfully.
+        """
         self._notifications.append(notification)
         if len(self._notifications) > self.max_size:
             self._notifications = self._notifications[-self.max_size:]
         return True
 
     def get_all(self) -> List[Notification]:
+        """Get all stored notifications.
+
+        Returns:
+            List of all notifications.
+        """
         return list(self._notifications)
 
     def get_unread(self) -> List[Notification]:
+        """Get all unread notifications.
+
+        Returns:
+            List of unread notifications.
+        """
         return [n for n in self._notifications if not n.read]
 
     def mark_all_read(self) -> int:
+        """Mark all notifications as read.
+
+        Returns:
+            Number of notifications marked as read.
+        """
         count = 0
         for n in self._notifications:
             if not n.read:
@@ -147,11 +201,17 @@ class InMemoryHandler(NotificationHandler):
         return count
 
     def clear(self) -> int:
+        """Clear all stored notifications.
+
+        Returns:
+            Number of notifications cleared.
+        """
         count = len(self._notifications)
         self._notifications.clear()
         return count
 
     def close(self) -> None:
+        """Clear all stored notifications."""
         self._notifications.clear()
 
 

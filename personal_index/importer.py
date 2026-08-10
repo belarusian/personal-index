@@ -40,6 +40,7 @@ class Importer:
 
     @property
     def manager(self) -> BookmarkManager:
+        """Manager."""
         return self._manager
 
     def import_from_file(self, filepath: str) -> ImportResult:

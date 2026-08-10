@@ -20,10 +20,20 @@ class ValidationResult:
     warnings: list[str] = field(default_factory=list)
 
     def add_error(self, message: str) -> None:
+        """Process add_error.
+
+        Args:
+        message.
+        """
         self.valid = False
         self.errors.append(message)
 
     def add_warning(self, message: str) -> None:
+        """Process add_warning.
+
+        Args:
+        message.
+        """
         self.warnings.append(message)
 
 
@@ -47,6 +57,11 @@ class URLValidator:
         self.max_url_length = max_url_length
 
     def validate(self, url: str) -> ValidationResult:
+        """Process validate.
+
+        Args:
+        url.
+        """
         result = ValidationResult(valid=True)
 
         if not url or not url.strip():
@@ -121,6 +136,11 @@ class ContentValidator:
         self.min_words = min_words
 
     def validate(self, content: str) -> ValidationResult:
+        """Process validate.
+
+        Args:
+        content.
+        """
         result = ValidationResult(valid=True)
 
         if not content:

@@ -24,9 +24,25 @@ class RobotsCacheEntry:
     raw_content: str = ""
 
     def is_expired(self, ttl: float) -> bool:
+        """Check if this cache entry has exceeded its TTL.
+
+        Args:
+            ttl: Time-to-live in seconds.
+
+        Returns:
+            True if the entry is expired.
+        """
         return (time.time() - self.fetched_at) > ttl
 
     def allows_agent(self, user_agent: str) -> bool:
+        """Check if a user agent is allowed based on cached robots.txt rules.
+
+        Args:
+            user_agent: The user agent string to check.
+
+        Returns:
+            True if allowed (default allow if not explicitly listed).
+        """
         if user_agent in self.allowed:
             return True
         if user_agent in self.disallowed:
@@ -43,6 +59,14 @@ class RobotsCache:
         self._max_entries = max_entries
 
     def get(self, domain: str) -> Optional[RobotsCacheEntry]:
+        """Get a cached robots.txt entry for a domain.
+
+        Args:
+            domain: The domain to look up.
+
+        Returns:
+            The cache entry, or None if not found or expired.
+        """
         entry = self._cache.get(domain)
         if entry is None:
             return None
@@ -53,17 +77,31 @@ class RobotsCache:
         return entry
 
     def put(self, entry: RobotsCacheEntry) -> None:
+        """Store a robots.txt cache entry.
+
+        Args:
+            entry: The cache entry to store.
+        """
         if len(self._cache) >= self._max_entries:
             self._evict_oldest()
         self._cache[entry.domain] = entry
 
     def invalidate(self, domain: str) -> bool:
+        """Remove a domain from the cache.
+
+        Args:
+            domain: The domain to invalidate.
+
+        Returns:
+            True if the entry was found and removed.
+        """
         if domain in self._cache:
             del self._cache[domain]
             return True
         return False
 
     def invalidate_all(self) -> None:
+        """Clear all cached entries."""
         self._cache.clear()
 
     def _evict_oldest(self) -> None:
@@ -75,13 +113,20 @@ class RobotsCache:
 
     @property
     def size(self) -> int:
+        """Number of entries in the cache."""
         return len(self._cache)
 
     @property
     def domains(self) -> list[str]:
+        """List of all cached domains."""
         return list(self._cache.keys())
 
     def get_stats(self) -> dict:
+        """Get cache statistics.
+
+        Returns:
+            Dictionary with cache size, TTL, max entries, and domains.
+        """
         return {
             "size": self.size,
             "ttl": self._ttl,

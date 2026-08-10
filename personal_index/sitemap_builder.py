@@ -30,6 +30,7 @@ class SitemapEntry:
         self.priority = max(0.0, min(1.0, priority))
 
     def to_element(self) -> Element:
+        """To_element."""
         url_elem = Element("url")
         SubElement(url_elem, "loc").text = self.url
         SubElement(url_elem, "lastmod").text = self.last_modified.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -49,6 +50,11 @@ class SitemapBuilder:
         self.entries: list[SitemapEntry] = []
 
     def add_entry(
+        """Process add_entry.
+
+        Args:
+        url, last_modified, change_frequency, priority.
+        """
         self,
         url: str,
         last_modified: Optional[datetime] = None,
@@ -58,6 +64,11 @@ class SitemapBuilder:
         self.entries.append(SitemapEntry(url, last_modified, change_frequency, priority))
 
     def add_entries(self, entries: list[SitemapEntry]) -> None:
+        """Process add_entries.
+
+        Args:
+        entries.
+        """
         self.entries.extend(entries)
 
     def build(self) -> bytes:
@@ -85,8 +96,10 @@ class SitemapBuilder:
         return chunks
 
     def clear(self) -> None:
+        """Clear."""
         self.entries.clear()
 
     @property
     def url_count(self) -> int:
+        """Url_count."""
         return len(self.entries)

@@ -41,6 +41,11 @@ class IndexedPage:
     word_count: int = 0
 
     def to_dict(self) -> dict:
+        """Serialize the index entry to a dictionary.
+
+        Returns:
+            Dictionary representation.
+        """
         return {
             "url": self.url,
             "title": self.title,
@@ -54,6 +59,11 @@ class IndexedPage:
 
     @classmethod
     def from_dict(cls, data: dict) -> "IndexedPage":
+        """Process from_dict.
+
+        Args:
+        data.
+        """
         return cls(**data)
 
 

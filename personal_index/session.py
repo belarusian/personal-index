@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class SessionStatus(str, Enum):
+    """Possible statuses for a crawl session."""
+
     ACTIVE = "active"
     PAUSED = "paused"
     COMPLETED = "completed"
@@ -35,14 +37,21 @@ class SessionStats:
 
     @property
     def success_rate(self) -> float:
+        """Ratio of successfully crawled URLs to total attempted."""
         total = self.urls_crawled + self.urls_failed
         return self.urls_crawled / total if total > 0 else 0.0
 
     @property
     def total_processed(self) -> int:
+        """Total number of URLs processed (crawled + failed + skipped)."""
         return self.urls_crawled + self.urls_failed + self.urls_skipped
 
     def to_dict(self) -> dict:
+        """Serialize session stats to a dictionary.
+
+        Returns:
+            Dictionary representation of the stats.
+        """
         return {
             "urls_crawled": self.urls_crawled,
             "urls_failed": self.urls_failed,
@@ -71,31 +80,43 @@ class CrawlSession:
 
     @property
     def duration(self) -> Optional[float]:
+        """Elapsed time in seconds since the session started."""
         end = self.completed_at or time.time()
         return end - self.started_at
 
     def pause(self) -> None:
+        """Pause the session if currently active."""
         if self.status == SessionStatus.ACTIVE:
             self.status = SessionStatus.PAUSED
 
     def resume(self) -> None:
+        """Resume the session if currently paused."""
         if self.status == SessionStatus.PAUSED:
             self.status = SessionStatus.ACTIVE
 
     def complete(self) -> None:
+        """Mark the session as completed."""
         self.status = SessionStatus.COMPLETED
         self.completed_at = time.time()
 
     def fail(self, error: str) -> None:
+        """Mark the session as failed with an error message."""
         self.status = SessionStatus.FAILED
         self.completed_at = time.time()
         self.stats.errors.append(error)
 
     def stop(self) -> None:
+        """Stop the session (user-initiated halt)."""
         self.status = SessionStatus.STOPPED
         self.completed_at = time.time()
 
     def record_url_crawled(self, url: str, size: int = 0) -> None:
+        """Record a successfully crawled URL.
+
+        Args:
+            url: The URL that was crawled.
+            size: Number of bytes downloaded.
+        """
         from urllib.parse import urlparse
         self.stats.urls_crawled += 1
         self.stats.bytes_downloaded += size
@@ -103,17 +124,34 @@ class CrawlSession:
         self.stats.domains_seen.add(parsed.netloc)
 
     def record_url_failed(self, url: str, error: str = "") -> None:
+        """Record a failed URL crawl.
+
+        Args:
+            url: The URL that failed.
+            error: Optional error message.
+        """
         self.stats.urls_failed += 1
         if error:
             self.stats.errors.append(f"{url}: {error}")
 
     def record_url_skipped(self, url: str) -> None:
+        """Record a skipped URL.
+
+        Args:
+            url: The URL that was skipped.
+        """
         self.stats.urls_skipped += 1
 
     def record_page_indexed(self) -> None:
+        """Record that a page was indexed."""
         self.stats.pages_indexed += 1
 
     def to_dict(self) -> dict:
+        """Serialize the crawl session to a dictionary.
+
+        Returns:
+            Dictionary representation of the session.
+        """
         return {
             "session_id": self.session_id,
             "name": self.name,
@@ -137,6 +175,16 @@ class SessionManager:
 
     def create_session(self, session_id: str, name: str = "",
                        config: Optional[dict] = None) -> CrawlSession:
+        """Create a new crawl session.
+
+        Args:
+            session_id: Unique session identifier.
+            name: Human-readable session name.
+            config: Optional configuration dictionary.
+
+        Returns:
+            The created CrawlSession.
+        """
         session = CrawlSession(
             session_id=session_id,
             name=name,
@@ -148,26 +196,65 @@ class SessionManager:
         return session
 
     def get_session(self, session_id: str) -> Optional[CrawlSession]:
+        """Get a session by ID.
+
+        Args:
+            session_id: The session identifier.
+
+        Returns:
+            The CrawlSession, or None if not found.
+        """
         return self._sessions.get(session_id)
 
     def get_active_session(self) -> Optional[CrawlSession]:
+        """Get the currently active session.
+
+        Returns:
+            The active CrawlSession, or None.
+        """
         if self._active_session:
             return self._sessions.get(self._active_session)
         return None
 
     def set_active(self, session_id: str) -> bool:
+        """Set a session as the active one.
+
+        Args:
+            session_id: The session to activate.
+
+        Returns:
+            True if the session was found and activated.
+        """
         if session_id in self._sessions:
             self._active_session = session_id
             return True
         return False
 
     def list_sessions(self) -> list[CrawlSession]:
+        """List all sessions.
+
+        Returns:
+            List of all CrawlSession objects.
+        """
         return list(self._sessions.values())
 
     def list_active(self) -> list[CrawlSession]:
+        """List all active sessions.
+
+        Returns:
+            List of active CrawlSession objects.
+        """
         return [s for s in self._sessions.values() if s.status == SessionStatus.ACTIVE]
 
     def remove_session(self, session_id: str) -> bool:
+        """Remove a session.
+
+        Args:
+            session_id: The session to remove.
+
+        Returns:
+            True if the session was found and removed.
+        """
         if session_id in self._sessions:
             del self._sessions[session_id]
             if self._active_session == session_id:
@@ -176,6 +263,14 @@ class SessionManager:
         return False
 
     def save_session(self, session_id: str) -> Optional[str]:
+        """Save a session to disk.
+
+        Args:
+            session_id: The session to save.
+
+        Returns:
+            Path to the saved file, or None if not saved.
+        """
         session = self._sessions.get(session_id)
         if not session or not self._storage_path:
             return None
@@ -186,6 +281,14 @@ class SessionManager:
         return str(path)
 
     def load_session(self, filepath: str) -> Optional[CrawlSession]:
+        """Load a session from disk.
+
+        Args:
+            filepath: Path to the session JSON file.
+
+        Returns:
+            The loaded CrawlSession, or None if not found.
+        """
         path = Path(filepath)
         if not path.exists():
             return None
@@ -213,4 +316,5 @@ class SessionManager:
 
     @property
     def session_count(self) -> int:
+        """Number of sessions managed."""
         return len(self._sessions)

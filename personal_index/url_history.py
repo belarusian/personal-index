@@ -28,6 +28,7 @@ class URLVisit:
             self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> Dict[str, Any]:
+        """To_dict."""
         return {
             "url": self.url,
             "timestamp": self.timestamp,
@@ -41,6 +42,11 @@ class URLVisit:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> URLVisit:
+        """Process from_dict.
+
+        Args:
+        data.
+        """
         return cls(**data)
 
 

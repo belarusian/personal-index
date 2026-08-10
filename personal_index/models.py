@@ -44,10 +44,23 @@ class Interest:
             self.topics = []
 
     def to_dict(self) -> dict:
+        """Serialize the interest to a dictionary.
+
+        Returns:
+            Dictionary representation of the interest.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Interest":
+        """Create an Interest from a dictionary.
+
+        Args:
+            data: Dictionary with interest fields.
+
+        Returns:
+            A new Interest instance.
+        """
         return cls(
             **{k: v for k, v in data.items()
                if k in cls.__dataclass_fields__}
@@ -109,10 +122,23 @@ class CrawlConfig:
     blocked_domains: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
+        """Serialize the crawl config to a dictionary.
+
+        Returns:
+            Dictionary representation of the config.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> "CrawlConfig":
+        """Create a CrawlConfig from a dictionary.
+
+        Args:
+            data: Dictionary with config fields.
+
+        Returns:
+            A new CrawlConfig instance.
+        """
         return cls(
             **{k: v for k, v in data.items()
                if k in cls.__dataclass_fields__}
@@ -137,10 +163,23 @@ class CrawledPage:
     )
 
     def to_dict(self) -> dict:
+        """Serialize the crawled page to a dictionary.
+
+        Returns:
+            Dictionary representation of the page.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> "CrawledPage":
+        """Create a CrawledPage from a dictionary.
+
+        Args:
+            data: Dictionary with page fields.
+
+        Returns:
+            A new CrawledPage instance.
+        """
         crawled_at = data.get("crawled_at", "")
         if isinstance(crawled_at, str) and crawled_at:
             try:
@@ -173,10 +212,23 @@ class IndexedPage:
     language: str = "en"
 
     def to_dict(self) -> dict:
+        """Serialize the indexed page to a dictionary.
+
+        Returns:
+            Dictionary representation of the page.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> "IndexedPage":
+        """Create an IndexedPage from a dictionary.
+
+        Args:
+            data: Dictionary with page fields.
+
+        Returns:
+            A new IndexedPage instance.
+        """
         return cls(
             **{k: v for k, v in data.items()
                if k in cls.__dataclass_fields__}
@@ -192,6 +244,11 @@ class SearchResult:
     snippet: str = ""
 
     def to_dict(self) -> dict:
+        """Serialize the search result to a dictionary.
+
+        Returns:
+            Dictionary representation of the search result.
+        """
         return {
             "page": self.page.to_dict(),
             "score": self.score,
@@ -219,10 +276,23 @@ class Page:
     keywords: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
+        """Serialize the page to a dictionary.
+
+        Returns:
+            Dictionary representation of the page.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Page":
+        """Create a Page from a dictionary.
+
+        Args:
+            data: Dictionary with page fields.
+
+        Returns:
+            A new Page instance.
+        """
         return cls(
             **{k: v for k, v in data.items()
                if k in cls.__dataclass_fields__}
