@@ -95,6 +95,8 @@ class ContentFilter:
         from personal_index.url_utils import extract_domain
 
         domain = extract_domain(url)
+        if domain is None:
+            return False
         for blocked in self.config.blocked_domains:
             if domain == blocked or domain.endswith("." + blocked):
                 return True

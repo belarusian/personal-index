@@ -122,7 +122,7 @@ class JWTManager:
             return None
         try:
             payload_json = self._base64url_decode(payload_b64)
-            return json.loads(payload_json)
+            return json.loads(payload_json)  # type: ignore[no-any-return]
         except (json.JSONDecodeError, ValueError):
             return None
 

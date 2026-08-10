@@ -14,6 +14,7 @@ from personal_index.text_utils import (
     tokenize,
 )
 
+
 @dataclass
 class EnrichedContent:
     """Content with enriched metadata."""

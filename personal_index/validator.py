@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""URL and content validation utilities."""
+
 import logging
 from dataclasses import dataclass, field
 from typing import ClassVar
@@ -169,6 +171,3 @@ class ContentValidator:
             return True
         whitespace_ratio = content.count(" ") / len(content) if content else 0
         return whitespace_ratio > 0.95
-
-"""URL and content validation utilities."""
-
