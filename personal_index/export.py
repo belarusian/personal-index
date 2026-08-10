@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """Export bookmarks and indexed content to various formats."""
+
+from typing import ClassVar
 
 
 import csv

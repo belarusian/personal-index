@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """URL classification for categorizing crawled URLs."""
+
+from typing import ClassVar
 
 
 import logging

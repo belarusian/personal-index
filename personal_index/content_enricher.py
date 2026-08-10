@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """Content enrichment module for enhancing indexed content with metadata."""
+
+from typing import ClassVar
 
 
 import re

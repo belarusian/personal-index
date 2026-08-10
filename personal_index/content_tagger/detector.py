@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """Topic detection engine for content tagging."""
+
+from typing import ClassVar
 
 
 import re

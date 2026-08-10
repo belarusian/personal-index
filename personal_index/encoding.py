@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """Text encoding detection and conversion utilities."""
+
+from typing import ClassVar
 
 
 import logging
