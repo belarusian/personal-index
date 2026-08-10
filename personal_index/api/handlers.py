@@ -38,7 +38,7 @@ class ErrorHandler:
             )
             await self._send_error(send, error_response)
         except Exception as exc:
-            logger.exception("Unhandled exception: %s", exc)
+            logger.exception("Unhandled exception")
             error_response = ErrorResponse(
                 error="internal_error",
                 message="An unexpected error occurred" if not self.debug else str(exc),
