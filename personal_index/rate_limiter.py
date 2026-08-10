@@ -5,7 +5,6 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass
-from typing import Dict
 
 
 @dataclass
@@ -86,8 +85,8 @@ class RateLimiter:
 
     def __init__(self, default_config: RateLimitConfig | None = None):
         self._default_config = default_config or RateLimitConfig()
-        self._buckets: Dict[str, TokenBucket] = {}
-        self._configs: Dict[str, RateLimitConfig] = {}
+        self._buckets: dict[str, TokenBucket] = {}
+        self._configs: dict[str, RateLimitConfig] = {}
         self._lock = threading.Lock()
 
     def set_domain_config(self, domain: str, config: RateLimitConfig):
@@ -146,7 +145,7 @@ class RateLimiter:
             for domain in default_domains:
                 self._buckets[domain] = TokenBucket(self._default_config)
 
-    def get_all_statuses(self) -> Dict[str, RateLimitStatus]:
+    def get_all_statuses(self) -> dict[str, RateLimitStatus]:
         """Get rate limit status for all tracked domains."""
         return {
             domain: bucket.status()

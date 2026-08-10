@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Set
 
 import requests
 
@@ -29,7 +28,7 @@ class CrawlerConfig:
     delay: float = 1.0
     timeout: int = 10
     respect_robots: bool = True
-    allowed_domains: List[str] = field(default_factory=list)
+    allowed_domains: list[str] = field(default_factory=list)
     user_agent: str = "PersonalIndex/0.1.0"
 
 
@@ -43,10 +42,10 @@ class Crawler:
     ):
         self.config = config or CrawlerConfig()
         self.interest_store = interest_store
-        self._visited: Set[str] = set()
+        self._visited: set[str] = set()
         self._pages_crawled: int = 0
-        self._results: List[CrawledPage] = []
-        self._domain_delay: Dict[str, float] = {}
+        self._results: list[CrawledPage] = []
+        self._domain_delay: dict[str, float] = {}
         self._extractor = ContentExtractor()
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": self.config.user_agent})
@@ -56,10 +55,10 @@ class Crawler:
         return self._pages_crawled
 
     @property
-    def results(self) -> List[CrawledPage]:
+    def results(self) -> list[CrawledPage]:
         return list(self._results)
 
-    def crawl(self, seed_urls: List[str], max_depth: int = None) -> List[CrawledPage]:
+    def crawl(self, seed_urls: list[str], max_depth: int | None = None) -> list[CrawledPage]:
         """Start crawling from seed URLs."""
         depth = max_depth if max_depth is not None else self.config.max_depth
         self._visited = set()
@@ -136,7 +135,7 @@ class Crawler:
             if resp.status_code == 200:
                 return resp
             return None
-        except (requests.RequestException, Exception):
+        except requests.RequestException:
             return None
 
     def _extract_content(self, html: str, url: str) -> CrawledPage:
@@ -149,7 +148,7 @@ class Crawler:
             meta_description=extracted.meta_description,
         )
 
-    def _extract_links(self, html: str, base_url: str) -> List[str]:
+    def _extract_links(self, html: str, base_url: str) -> list[str]:
         """Extract links from HTML."""
         return extract_all_urls(html, base_url)
 

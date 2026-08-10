@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Any
 
 
 @dataclass
@@ -16,12 +16,12 @@ class Session:
     created_at: float = field(default_factory=time.time)
     last_accessed: float = field(default_factory=time.time)
     expires_at: float | None = None
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     ip_address: str = ""
     user_agent: str = ""
     is_active: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "session_id": self.session_id,
             "user_id": self.user_id,
@@ -38,16 +38,14 @@ class Session:
         """Check if the session has expired."""
         if not self.is_active:
             return True
-        if self.expires_at and time.time() > self.expires_at:
-            return True
-        return False
+        return bool(self.expires_at and time.time() > self.expires_at)
 
 
 class SessionStore:
     """In-memory session store with expiration support."""
 
     def __init__(self, default_ttl: int = 86400, cleanup_interval: int = 3600):
-        self._sessions: Dict[str, Session] = {}
+        self._sessions: dict[str, Session] = {}
         self._default_ttl = default_ttl
         self._cleanup_interval = cleanup_interval
         self._last_cleanup = time.time()
@@ -58,7 +56,7 @@ class SessionStore:
         ttl: int | None = None,
         ip_address: str = "",
         user_agent: str = "",
-        data: Dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
     ) -> Session:
         """Create a new session for a user.
 
@@ -104,7 +102,7 @@ class SessionStore:
     def update_session(
         self,
         session_id: str,
-        data: Dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
         extend_ttl: int | None = None,
     ) -> bool:
         """Update session data and optionally extend TTL.

@@ -75,7 +75,7 @@ class FacetedSearch:
         for key, value in sample.items():
             if key == "id":
                 continue
-            if isinstance(value, list) or isinstance(value, (str, int, float, bool)):
+            if isinstance(value, (list, str, int, float, bool)):
                 facets.add(key)
         return sorted(facets)
 

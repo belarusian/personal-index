@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 
 @dataclass
@@ -18,10 +17,10 @@ class FeedEntry:
     author: str = ""
     published: str | None = None
     updated: str | None = None
-    categories: List[str] = field(default_factory=list)
+    categories: list[str] = field(default_factory=list)
     guid: str = ""
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
             "title": self.title,
@@ -43,7 +42,7 @@ class Feed:
     link: str = ""
     description: str = ""
     author: str = ""
-    entries: List[FeedEntry] = field(default_factory=list)
+    entries: list[FeedEntry] = field(default_factory=list)
     feed_url: str = ""
 
     @property
@@ -51,7 +50,7 @@ class Feed:
         """Number of entries in this feed."""
         return len(self.entries)
 
-    def get_recent_entries(self, count: int = 10) -> List[FeedEntry]:
+    def get_recent_entries(self, count: int = 10) -> list[FeedEntry]:
         """Get the most recent entries."""
         return self.entries[:count]
 
@@ -186,7 +185,7 @@ class RSSParser:
 
         return feed
 
-    def _parse_atom_entry(self, entry_elem: ET.Element, ns: Dict) -> FeedEntry:
+    def _parse_atom_entry(self, entry_elem: ET.Element, ns: dict) -> FeedEntry:
         """Parse a single Atom entry."""
         entry = FeedEntry()
 

@@ -76,7 +76,7 @@ class SitemapBuilder:
         for entry in self.entries:
             root.append(entry.to_element())
         xml_bytes = tostring(root, encoding="unicode", xml_declaration=False)
-        return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_bytes}'.encode("utf-8")
+        return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_bytes}'.encode()
 
     def build_sitemap_index(self, sitemap_urls: list[str]) -> bytes:
         """Build a sitemap index file referencing multiple sitemaps."""
@@ -85,7 +85,7 @@ class SitemapBuilder:
             sitemap_elem = SubElement(root, "sitemap")
             SubElement(sitemap_elem, "loc").text = url
         xml_str = tostring(root, encoding="unicode", xml_declaration=False)
-        return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode("utf-8")
+        return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def split_into_chunks(self, chunk_size: int = MAX_URLS_PER_SITEMAP) -> list[list[SitemapEntry]]:
         """Split entries into chunks for multiple sitemap files."""

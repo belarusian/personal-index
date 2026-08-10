@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Text encoding detection and conversion utilities."""
 
-from __future__ import annotations
 
 import logging
 import re
@@ -21,7 +24,7 @@ class EncodingResult:
 class EncodingDetector:
     """Detects text encoding and performs conversions."""
 
-    COMMON_ENCODINGS = ["utf-8", "ascii", "iso-8859-1", "windows-1252", "utf-16", "utf-16-le", "utf-16-be"]
+    COMMON_ENCODINGS: ClassVar[list[str]] = ["utf-8", "ascii", "iso-8859-1", "windows-1252", "utf-16", "utf-16-le", "utf-16-be"]
 
     def detect(self, data: bytes) -> EncodingResult:
         """Detect the encoding of byte data."""

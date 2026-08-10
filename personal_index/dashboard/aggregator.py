@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -14,7 +14,7 @@ class TimeSeriesPoint:
     value: float
     label: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp,
             "value": self.value,
@@ -32,12 +32,12 @@ class AggregatedStats:
     avg_relevance_score: float = 0.0
     pages_per_day: float = 0.0
     crawl_success_rate: float = 100.0
-    top_domains: List[Dict[str, Any]] = field(default_factory=list)
-    recent_activity: List[TimeSeriesPoint] = field(default_factory=list)
-    status_breakdown: Dict[str, int] = field(default_factory=dict)
-    content_type_breakdown: Dict[str, int] = field(default_factory=dict)
+    top_domains: list[dict[str, Any]] = field(default_factory=list)
+    recent_activity: list[TimeSeriesPoint] = field(default_factory=list)
+    status_breakdown: dict[str, int] = field(default_factory=dict)
+    content_type_breakdown: dict[str, int] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total_pages": self.total_pages,
             "total_domains": self.total_domains,
@@ -148,9 +148,9 @@ class DashboardAggregator:
             return list(index_instance.pages)
         return []
 
-    def _compute_top_domains(self, pages: list, limit: int = 10) -> List[Dict[str, Any]]:
+    def _compute_top_domains(self, pages: list, limit: int = 10) -> list[dict[str, Any]]:
         """Compute top domains by page count."""
-        domain_counts: Dict[str, int] = {}
+        domain_counts: dict[str, int] = {}
         for p in pages:
             domain = getattr(p, "domain", None)
             if domain:
@@ -161,28 +161,28 @@ class DashboardAggregator:
             for d, c in sorted_domains[:limit]
         ]
 
-    def _compute_status_breakdown(self, pages: list) -> Dict[str, int]:
+    def _compute_status_breakdown(self, pages: list) -> dict[str, int]:
         """Compute HTTP status code breakdown."""
-        breakdown: Dict[str, int] = {}
+        breakdown: dict[str, int] = {}
         for p in pages:
             code = getattr(p, "status_code", 0)
             category = f"{code // 100}xx" if code else "unknown"
             breakdown[category] = breakdown.get(category, 0) + 1
         return breakdown
 
-    def _compute_content_types(self, pages: list) -> Dict[str, int]:
+    def _compute_content_types(self, pages: list) -> dict[str, int]:
         """Compute content type breakdown."""
-        breakdown: Dict[str, int] = {}
+        breakdown: dict[str, int] = {}
         for p in pages:
             content_type = getattr(p, "content_type", None) or "unknown"
             breakdown[content_type] = breakdown.get(content_type, 0) + 1
         return breakdown
 
-    def _compute_recent_activity(self, pages: list, limit: int = 24) -> List[TimeSeriesPoint]:
+    def _compute_recent_activity(self, pages: list, limit: int = 24) -> list[TimeSeriesPoint]:
         """Compute recent crawl activity as time series."""
         if not pages:
             return []
-        dates: Dict[str, int] = {}
+        dates: dict[str, int] = {}
         for p in pages:
             crawled_at = getattr(p, "crawled_at", None)
             if crawled_at:

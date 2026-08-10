@@ -2,7 +2,8 @@
 
 import json
 from pathlib import Path
-from personal_index.models import Interest, CrawlConfig, IndexedPage
+
+from personal_index.models import CrawlConfig, IndexedPage, Interest
 
 
 class Storage:

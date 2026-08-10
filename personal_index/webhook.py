@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import logging
 import time
+import urllib.request
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 from urllib.error import URLError
 from urllib.request import Request
-import urllib.request
 
 logger = logging.getLogger(__name__)
 

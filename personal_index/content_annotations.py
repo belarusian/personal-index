@@ -68,7 +68,7 @@ class Annotation:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Annotation":
+    def from_dict(cls, data: dict) -> Annotation:
         """Deserialize from dictionary."""
         atype = data.get("annotation_type", "note")
         if isinstance(atype, str):

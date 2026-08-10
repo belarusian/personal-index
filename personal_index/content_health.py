@@ -17,11 +17,10 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 from urllib.parse import urlparse
 
 import requests
-
 
 # ---------------------------------------------------------------------------
 # HealthCheckResult / HealthReport / HealthChecker from health.py (merged in)
@@ -35,9 +34,9 @@ class HealthCheckResult:
     check_name: str
     status: str  # "ok", "warning", "error"
     message: str = ""
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "check": self.check_name,
@@ -52,7 +51,7 @@ class HealthReport:
     """Complete health report."""
 
     timestamp: str = ""
-    checks: List[HealthCheckResult] = field(default_factory=list)
+    checks: list[HealthCheckResult] = field(default_factory=list)
     overall_status: str = "ok"
 
     def __post_init__(self) -> None:
@@ -71,7 +70,7 @@ class HealthReport:
         else:
             self.overall_status = "ok"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "timestamp": self.timestamp,
@@ -260,7 +259,7 @@ class HealthChecker:
                 status="error",
                 message=f"Database integrity check failed: {result}",
             )
-        except Exception as e:
+        except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
             return HealthCheckResult(
                 check_name="database",
                 status="error",
@@ -331,7 +330,7 @@ class HealthChecker:
 # ---------------------------------------------------------------------------
 
 
-def check_health(data_dir: str | None = None) -> Dict[str, Any]:
+def check_health(data_dir: str | None = None) -> dict[str, Any]:
     """Check overall content health status.
 
     Args:
@@ -397,7 +396,7 @@ def check_health(data_dir: str | None = None) -> Dict[str, Any]:
     }
 
 
-def get_health_report(data_dir: str | None = None) -> Dict[str, Any]:
+def get_health_report(data_dir: str | None = None) -> dict[str, Any]:
     """Get a comprehensive health report as a dictionary.
 
     Args:
@@ -428,7 +427,7 @@ class UrlHealthResult:
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a plain dict."""
         return {
             "url": self.url,
@@ -517,7 +516,7 @@ def check_url_accessibility(
             is_accessible=False,
             error=f"Request failed: {exc}",
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return UrlHealthResult(
             url=url,
             status_code=None,
@@ -529,7 +528,7 @@ def check_url_accessibility(
 def check_content_urls(
     storage: Any,
     timeout: int = 5,
-) -> List[UrlHealthResult]:
+) -> list[UrlHealthResult]:
     """Check accessibility of multiple content URLs.
 
     Args:
@@ -540,7 +539,7 @@ def check_content_urls(
         List of UrlHealthResult objects.
     """
     pages = storage.get_pages()
-    results: List[UrlHealthResult] = []
+    results: list[UrlHealthResult] = []
     for page in pages:
         result = check_url_accessibility(page.url, timeout=timeout)
         results.append(result)

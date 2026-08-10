@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -19,9 +18,9 @@ class RealTimeStats:
     memory_usage_mb: float = 0.0
     uptime_seconds: float = 0.0
     last_crawl_at: str | None = None
-    recent_errors: List[Dict[str, Any]] = field(default_factory=list)
+    recent_errors: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "active_crawls": self.active_crawls,
             "queue_depth": self.queue_depth,

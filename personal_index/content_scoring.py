@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 
 
 @dataclass
@@ -27,7 +27,7 @@ class ContentScorer:
     link quality, image presence, readability, and freshness.
     """
 
-    DEFAULT_WEIGHTS = {
+    DEFAULT_WEIGHTS: ClassVar[dict[str, float]] = {
         "content_length": 0.25,
         "keyword_density": 0.20,
         "headings": 0.15,

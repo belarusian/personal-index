@@ -6,7 +6,6 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -16,7 +15,7 @@ class Bookmark:
     title: str = ""
     description: str = ""
     category: str = "uncategorized"
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""
     is_favorite: bool = False
@@ -27,7 +26,7 @@ class Bookmark:
         if not self.updated_at:
             self.updated_at = self.created_at
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
             "url": self.url,
@@ -41,7 +40,7 @@ class Bookmark:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> Bookmark:
+    def from_dict(cls, data: dict) -> Bookmark:
         """Create from dictionary."""
         return cls(
             url=data["url"],
@@ -59,7 +58,7 @@ class BookmarkManager:
     """Manage bookmarks for the personal index."""
 
     def __init__(self, storage_path: str | None = None):
-        self._bookmarks: Dict[str, Bookmark] = {}
+        self._bookmarks: dict[str, Bookmark] = {}
         self._storage_path = storage_path
 
     def add(self, bookmark: Bookmark) -> Bookmark:
@@ -83,19 +82,19 @@ class BookmarkManager:
             return True
         return False
 
-    def list_all(self) -> List[Bookmark]:
+    def list_all(self) -> list[Bookmark]:
         """List all bookmarks."""
         return list(self._bookmarks.values())
 
-    def list_by_category(self, category: str) -> List[Bookmark]:
+    def list_by_category(self, category: str) -> list[Bookmark]:
         """List bookmarks in a category."""
         return [b for b in self._bookmarks.values() if b.category == category]
 
-    def list_by_tag(self, tag: str) -> List[Bookmark]:
+    def list_by_tag(self, tag: str) -> list[Bookmark]:
         """List bookmarks with a specific tag."""
         return [b for b in self._bookmarks.values() if tag in b.tags]
 
-    def list_favorites(self) -> List[Bookmark]:
+    def list_favorites(self) -> list[Bookmark]:
         """List favorite bookmarks."""
         return [b for b in self._bookmarks.values() if b.is_favorite]
 
@@ -107,7 +106,7 @@ class BookmarkManager:
             bookmark.updated_at = datetime.now(timezone.utc).isoformat()
         return bookmark
 
-    def search(self, query: str) -> List[Bookmark]:
+    def search(self, query: str) -> list[Bookmark]:
         """Search bookmarks by title, description, or URL."""
         query_lower = query.lower()
         results = []
@@ -118,14 +117,14 @@ class BookmarkManager:
                 results.append(b)
         return results
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         """Get all unique categories."""
         categories = set()
         for b in self._bookmarks.values():
             categories.add(b.category)
         return sorted(categories)
 
-    def get_all_tags(self) -> List[str]:
+    def get_all_tags(self) -> list[str]:
         """Get all unique tags."""
         tags = set()
         for b in self._bookmarks.values():

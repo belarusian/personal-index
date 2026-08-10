@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 from urllib.parse import urlparse
 
 
@@ -26,7 +26,7 @@ class URLVisit:
         if not self.timestamp:
             self.timestamp = datetime.now(timezone.utc).isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """To_dict."""
         return {
             "url": self.url,
@@ -40,7 +40,7 @@ class URLVisit:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> URLVisit:
+    def from_dict(cls, data: dict[str, Any]) -> URLVisit:
         """Process from_dict.
 
         Args:
@@ -54,7 +54,7 @@ class URLHistory:
 
     def __init__(self, max_entries: int = 10000):
         self.max_entries = max_entries
-        self._history: List[URLVisit] = []
+        self._history: list[URLVisit] = []
 
     def record(self, url: str, status_code: int = 200,
                content_length: int = 0, title: str = "",
@@ -76,7 +76,7 @@ class URLHistory:
 
     def get_visits(self, url: str | None = None,
                    since: str | None = None,
-                   limit: int = 100) -> List[URLVisit]:
+                   limit: int = 100) -> list[URLVisit]:
         """Get visit records, optionally filtered by URL and time."""
         results = self._history
         if url:
@@ -85,7 +85,7 @@ class URLHistory:
             results = [v for v in results if v.timestamp >= since]
         return results[-limit:]
 
-    def get_unique_urls(self) -> List[str]:
+    def get_unique_urls(self) -> list[str]:
         """Get list of unique URLs visited."""
         seen = set()
         urls = []
@@ -95,7 +95,7 @@ class URLHistory:
                 urls.append(v.url)
         return urls
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get statistics about URL history."""
         if not self._history:
             return {
@@ -121,9 +121,9 @@ class URLHistory:
             "success_count": successes,
         }
 
-    def get_domain_stats(self) -> Dict[str, Dict[str, int]]:
+    def get_domain_stats(self) -> dict[str, dict[str, int]]:
         """Get visit counts grouped by domain."""
-        domains: Dict[str, Dict[str, int]] = {}
+        domains: dict[str, dict[str, int]] = {}
         for v in self._history:
             try:
                 domain = urlparse(v.url).netloc or "unknown"

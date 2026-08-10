@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 
 @dataclass
@@ -47,10 +47,10 @@ class AnalyticsData:
     total_pages_indexed: int = 0
     avg_search_duration_ms: float = 0.0
     avg_crawl_duration_ms: float = 0.0
-    top_queries: List[Tuple[str, int]] = field(default_factory=list)
-    top_domains: List[Tuple[str, int]] = field(default_factory=list)
-    hourly_searches: Dict[str, int] = field(default_factory=dict)
-    daily_searches: Dict[str, int] = field(default_factory=dict)
+    top_queries: list[tuple[str, int]] = field(default_factory=list)
+    top_domains: list[tuple[str, int]] = field(default_factory=list)
+    hourly_searches: dict[str, int] = field(default_factory=dict)
+    daily_searches: dict[str, int] = field(default_factory=dict)
     error_count: int = 0
     success_count: int = 0
 
@@ -59,8 +59,8 @@ class AnalyticsTracker:
     """Track and analyze personal index usage."""
 
     def __init__(self):
-        self._search_events: List[SearchEvent] = []
-        self._crawl_events: List[CrawlEvent] = []
+        self._search_events: list[SearchEvent] = []
+        self._crawl_events: list[CrawlEvent] = []
 
     def record_search(self, query: str | SearchEvent, result_count: int = 0,
                       clicked_url: str | None = None,
@@ -149,21 +149,21 @@ class AnalyticsTracker:
 
         return data
 
-    def get_search_events(self, limit: int | None = None) -> List[SearchEvent]:
+    def get_search_events(self, limit: int | None = None) -> list[SearchEvent]:
         """Get search events, optionally limited."""
         events = self._search_events
         if limit:
             events = events[-limit:]
         return events
 
-    def get_crawl_events(self, limit: int | None = None) -> List[CrawlEvent]:
+    def get_crawl_events(self, limit: int | None = None) -> list[CrawlEvent]:
         """Get crawl events, optionally limited."""
         events = self._crawl_events
         if limit:
             events = events[-limit:]
         return events
 
-    def get_search_stats(self) -> Dict[str, Any]:
+    def get_search_stats(self) -> dict[str, Any]:
         """Get detailed search statistics."""
         if not self._search_events:
             return {"total": 0}
@@ -183,7 +183,7 @@ class AnalyticsTracker:
             "unique_queries": len({e.query for e in self._search_events}),
         }
 
-    def get_crawl_stats(self) -> Dict[str, Any]:
+    def get_crawl_stats(self) -> dict[str, Any]:
         """Get detailed crawl statistics."""
         if not self._crawl_events:
             return {"total": 0}

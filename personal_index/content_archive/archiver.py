@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from personal_index.content_archive.archive_entry import ArchiveEntry, ArchiveStatus
-from personal_index.content_archive.compressor import Compressor, CompressionFormat
+from personal_index.content_archive.compressor import CompressionFormat, Compressor
 
 
 @dataclass

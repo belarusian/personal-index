@@ -7,7 +7,6 @@ import os
 import re
 from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import Dict, List, Set
 
 from personal_index.models import Interest
 
@@ -17,7 +16,7 @@ class InterestStore:
     """Persistent storage for interests (CLI-facing)."""
 
     store_path: str | None = None
-    _interests: Dict[str, Interest] = field(
+    _interests: dict[str, Interest] = field(
         default_factory=dict, repr=False
     )
 
@@ -73,11 +72,11 @@ class InterestStore:
         """Get an interest by name."""
         return self._interests.get(name)
 
-    def list_all(self) -> List[Interest]:
+    def list_all(self) -> list[Interest]:
         """List all interests."""
         return list(self._interests.values())
 
-    def get_enabled(self) -> List[Interest]:
+    def get_enabled(self) -> list[Interest]:
         """List enabled interests."""
         return [i for i in self._interests.values() if i.enabled]
 
@@ -90,7 +89,7 @@ class InterestStore:
         self._save()
         return interest
 
-    def get_all_keywords(self) -> Set[str]:
+    def get_all_keywords(self) -> set[str]:
         """Get all keywords from all interests (lowercase)."""
         keywords = set()
         for interest in self._interests.values():
@@ -98,7 +97,7 @@ class InterestStore:
                 keywords.add(kw.lower())
         return keywords
 
-    def get_all_url_patterns(self) -> List[re.Pattern]:
+    def get_all_url_patterns(self) -> list[re.Pattern]:
         """Get all compiled URL patterns."""
         patterns = []
         for interest in self._interests.values():
@@ -107,7 +106,7 @@ class InterestStore:
                     patterns.append(re.compile(pattern_str))
         return patterns
 
-    def get_all_topics(self) -> Set[str]:
+    def get_all_topics(self) -> set[str]:
         """Get all topics from all interests (lowercase)."""
         topics = set()
         for interest in self._interests.values():
@@ -124,7 +123,7 @@ class InterestStore:
         self._save()
         return interest
 
-    def matches_any(self, text: str, url: str = "") -> List[Interest]:
+    def matches_any(self, text: str, url: str = "") -> list[Interest]:
         """Find all interests that match the given text/url."""
         matches = []
         for interest in self._interests.values():

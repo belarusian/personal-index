@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 
 @dataclass
@@ -33,7 +32,7 @@ class DomainRule:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "DomainRule":
+    def from_dict(cls, data: dict) -> DomainRule:
         """Create a DomainRule from a dictionary.
 
         Args:
@@ -50,8 +49,8 @@ class DomainManager:
     """Manages domain allow/block rules."""
 
     rules_file: str | None = None
-    _rules: Dict[str, DomainRule] = field(default_factory=dict, repr=False)
-    _page_counts: Dict[str, int] = field(default_factory=dict, repr=False)
+    _rules: dict[str, DomainRule] = field(default_factory=dict, repr=False)
+    _page_counts: dict[str, int] = field(default_factory=dict, repr=False)
     _has_whitelist: bool = False
 
     def __post_init__(self):
@@ -125,12 +124,8 @@ class DomainManager:
             rule = self._rules[domain]
             if not rule.allowed:
                 return False
-            if self._page_counts.get(domain, 0) >= rule.max_pages:
-                return False
-            return True
-        if self._has_whitelist:
-            return False
-        return True
+            return not self._page_counts.get(domain, 0) >= rule.max_pages
+        return not self._has_whitelist
 
     def is_blocked(self, domain: str) -> bool:
         """Check if a domain is explicitly blocked.
@@ -179,7 +174,7 @@ class DomainManager:
             return True
         return False
 
-    def list_rules(self) -> List[DomainRule]:
+    def list_rules(self) -> list[DomainRule]:
         """List all domain rules.
 
         Returns:

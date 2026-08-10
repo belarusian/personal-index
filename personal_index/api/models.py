@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, List, TypeVar
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -15,10 +15,10 @@ class APIResponse(Generic[T]):
     data: T | None = None
     error: str | None = None
     message: str | None = None
-    meta: Dict[str, Any] = field(default_factory=dict)
+    meta: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        result: Dict[str, Any] = {"success": self.success}
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"success": self.success}
         if self.data is not None:
             if hasattr(self.data, "to_dict"):
                 result["data"] = self.data.to_dict()
@@ -35,18 +35,18 @@ class APIResponse(Generic[T]):
         return result
 
     @classmethod
-    def ok(cls, data: T, message: str = "Success") -> "APIResponse[T]":
+    def ok(cls, data: T, message: str = "Success") -> APIResponse[T]:
         return cls(success=True, data=data, message=message)
 
     @classmethod
-    def error_response(cls, message: str, error_code: str | None = None) -> "APIResponse[T]":
+    def error_response(cls, message: str, error_code: str | None = None) -> APIResponse[T]:
         return cls(success=False, error=error_code or "error", message=message)
 
 
 @dataclass
 class PaginatedResponse(Generic[T]):
     """Paginated response with metadata."""
-    items: List[T]
+    items: list[T]
     total: int
     page: int
     page_size: int
@@ -59,7 +59,7 @@ class PaginatedResponse(Generic[T]):
             return 0
         return (self.total + self.page_size - 1) // self.page_size
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         items_data = []
         for item in self.items:
             if hasattr(item, "to_dict"):
@@ -85,11 +85,11 @@ class SearchRequest:
     q: str
     limit: int = 20
     offset: int = 0
-    filters: Dict[str, str] = field(default_factory=dict)
+    filters: dict[str, str] = field(default_factory=dict)
     sort_by: str | None = None
     sort_order: str = "desc"
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         errors = []
         if not self.q or not self.q.strip():
             errors.append("Query cannot be empty")
@@ -106,13 +106,13 @@ class SearchRequest:
 class SearchResponse:
     """Search response with results."""
     query: str
-    results: List[Dict[str, Any]]
+    results: list[dict[str, Any]]
     total: int
     limit: int
     offset: int
     execution_time_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "query": self.query,
             "results": self.results,
@@ -129,9 +129,9 @@ class ErrorResponse:
     error: str
     message: str
     status_code: int = 400
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         result = {
             "error": self.error,
             "message": self.message,
@@ -149,7 +149,7 @@ class APIError(Exception):
         message: str,
         status_code: int = 400,
         error_code: str = "bad_request",
-        details: Dict[str, Any] | None = None,
+        details: dict[str, Any] | None = None,
     ):
         self.message = message
         self.status_code = status_code

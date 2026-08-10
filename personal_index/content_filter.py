@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import List
 
 from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage
@@ -19,9 +18,9 @@ class FilterConfig:
     max_content_length: int = 100000
     min_title_length: int = 3
     require_interest_match: bool = True
-    blocked_domains: List[str] = field(default_factory=list)
-    blocked_patterns: List[str] = field(default_factory=list)
-    required_patterns: List[str] = field(default_factory=list)
+    blocked_domains: list[str] = field(default_factory=list)
+    blocked_patterns: list[str] = field(default_factory=list)
+    required_patterns: list[str] = field(default_factory=list)
     min_relevance_score: float = 0.0
 
 
@@ -39,7 +38,7 @@ class ContentFilter:
         self._compiled_required = self._compile_patterns(self.config.required_patterns)
 
     @staticmethod
-    def _compile_patterns(patterns: List[str]) -> List[re.Pattern]:
+    def _compile_patterns(patterns: list[str]) -> list[re.Pattern]:
         """Compile regex patterns, ignoring invalid ones."""
         compiled = []
         for pattern in patterns:
@@ -52,7 +51,7 @@ class ContentFilter:
         reasons = self.get_filter_reasons(page)
         return len(reasons) == 0
 
-    def get_filter_reasons(self, page: CrawledPage) -> List[str]:
+    def get_filter_reasons(self, page: CrawledPage) -> list[str]:
         """Get list of reasons why a page was filtered out."""
         reasons = []
 
@@ -80,9 +79,8 @@ class ContentFilter:
             reasons.append("content does not match required pattern")
 
         # Check interest match
-        if self.config.require_interest_match and self.interest_store:
-            if not self._matches_interests(page):
-                reasons.append("no matching interests")
+        if self.config.require_interest_match and self.interest_store and not self._matches_interests(page):
+            reasons.append("no matching interests")
 
         # Check minimum relevance score
         if self.interest_store and self.config.min_relevance_score > 0:
@@ -130,6 +128,6 @@ class ContentFilter:
             return True
         return False
 
-    def filter_pages(self, pages: List[CrawledPage]) -> List[CrawledPage]:
+    def filter_pages(self, pages: list[CrawledPage]) -> list[CrawledPage]:
         """Filter a list of pages, returning only included ones."""
         return [page for page in pages if self.should_include(page)]

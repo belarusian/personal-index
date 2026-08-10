@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Content enrichment module for enhancing indexed content with metadata."""
 
-from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
@@ -52,7 +55,7 @@ class ContentEnricher:
     """Enrich content with computed metadata and analysis."""
 
     # Simple positive/negative word lists for basic sentiment
-    POSITIVE_WORDS = {
+    POSITIVE_WORDS: ClassVar[set[str]] = {
         "good", "great", "excellent", "amazing", "wonderful", "fantastic",
         "awesome", "best", "love", "like", "beautiful", "perfect", "happy",
         "success", "win", "positive", "brilliant", "outstanding", "superb",
@@ -60,7 +63,7 @@ class ContentEnricher:
         "satisfied", "recommend", "benefit", "advantage", "improve",
     }
 
-    NEGATIVE_WORDS = {
+    NEGATIVE_WORDS: ClassVar[set[str]] = {
         "bad", "terrible", "awful", "horrible", "worst", "hate", "poor",
         "fail", "failure", "negative", "ugly", "broken", "error", "bug",
         "problem", "issue", "difficult", "hard", "slow", "wrong",

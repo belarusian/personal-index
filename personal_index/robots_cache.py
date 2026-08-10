@@ -43,9 +43,7 @@ class RobotsCacheEntry:
         """
         if user_agent in self.allowed:
             return True
-        if user_agent in self.disallowed:
-            return False
-        return True  # Default allow
+        return user_agent not in self.disallowed
 
 
 class RobotsCache:

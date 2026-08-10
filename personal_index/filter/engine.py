@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import List, Set
 
 from personal_index.config.models import Interest
 
@@ -15,24 +14,24 @@ class FilterResult:
     """Result of content filtering."""
 
     matched: bool = False
-    matching_interests: Set[str] = field(default_factory=set)
-    matched_keywords: Set[str] = field(default_factory=set)
+    matching_interests: set[str] = field(default_factory=set)
+    matched_keywords: set[str] = field(default_factory=set)
     score: float = 0.0
     passed: bool = True
-    reasons: List[str] = field(default_factory=list)
+    reasons: list[str] = field(default_factory=list)
 
 
 class ContentFilter:
     """Filters content based on user interests."""
 
     def __init__(
-        self, interests: List[Interest], min_relevance_score: float = 0.0
+        self, interests: list[Interest], min_relevance_score: float = 0.0
     ):
         self.interests = interests
         self.min_relevance_score = min_relevance_score
         self._compiled_patterns = self._compile_url_patterns()
 
-    def _compile_url_patterns(self) -> List[tuple]:
+    def _compile_url_patterns(self) -> list[tuple]:
         """Compile URL patterns with their interest names."""
         patterns = []
         for interest in self.interests:

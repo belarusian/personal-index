@@ -6,9 +6,9 @@ from personal_index.search_facets.faceted_search import FacetedSearch, SearchRes
 
 __all__ = [
     "Facet",
+    "FacetBuilder",
     "FacetType",
     "FacetValue",
-    "FacetBuilder",
     "FacetedSearch",
     "SearchResults",
 ]

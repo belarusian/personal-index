@@ -2,26 +2,23 @@
 
 from __future__ import annotations
 
-
 import click
 
-from personal_index.interests import InterestStore
 from personal_index.index import SearchIndex
-from personal_index.scheduler import Scheduler
+from personal_index.interests import InterestStore
 from personal_index.models import Interest
+from personal_index.scheduler import Scheduler
 
 
 @click.group()
 @click.version_option(version="0.1.0")
 def main():
     """personal-index - Track and index content matching your interests."""
-    pass
 
 
 @main.group()
 def interests():
     """Manage tracked interests."""
-    pass
 
 
 @interests.command("add")
@@ -117,7 +114,6 @@ def crawl(url, depth):
 @main.group()
 def index():
     """Manage the search index."""
-    pass
 
 
 @index.command("count")
@@ -152,7 +148,6 @@ def index_clear():
 @main.group()
 def schedule():
     """Manage scheduled crawling jobs."""
-    pass
 
 
 @schedule.command("add")
@@ -194,7 +189,6 @@ def remove_schedule(name):
 @main.group()
 def config():
     """Manage configuration."""
-    pass
 
 
 @config.command("show")
@@ -284,7 +278,6 @@ class _ConfigManager:
 
     def save(self):
         """Save configuration to file."""
-        pass
 
 
 def get_config_manager():

@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 from collections import Counter
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 from personal_index.text_utils import tokenize
 
@@ -16,7 +15,7 @@ class Keyword:
     text: str
     frequency: int
     score: float
-    positions: List[int] | None = None  # positions in text
+    positions: list[int] | None = None  # positions in text
 
     def __post_init__(self):
         if self.positions is None:
@@ -36,7 +35,7 @@ class KeywordExtractor:
         self.max_keywords = max_keywords
         self.min_frequency = min_frequency
 
-    def extract(self, text: str) -> List[Keyword]:
+    def extract(self, text: str) -> list[Keyword]:
         """Extract keywords from text."""
         if not text:
             return []
@@ -49,7 +48,7 @@ class KeywordExtractor:
         filtered_freq = {k: v for k, v in freq.items() if v >= self.min_frequency}
 
         # Calculate positions for each keyword
-        positions: Dict[str, List[int]] = {}
+        positions: dict[str, list[int]] = {}
         for i, token in enumerate(tokens):
             if token in filtered_freq:
                 if token not in positions:
@@ -71,7 +70,7 @@ class KeywordExtractor:
         keywords.sort(key=lambda k: k.score, reverse=True)
         return keywords[: self.max_keywords]
 
-    def extract_phrases(self, text: str, n: int = 2) -> List[Tuple[str, int]]:
+    def extract_phrases(self, text: str, n: int = 2) -> list[tuple[str, int]]:
         """Extract n-gram phrases from text."""
         if not text:
             return []
@@ -88,12 +87,12 @@ class KeywordExtractor:
         freq = Counter(phrases)
         return freq.most_common(self.max_keywords)
 
-    def extract_top_n(self, text: str, n: int = 10) -> List[str]:
+    def extract_top_n(self, text: str, n: int = 10) -> list[str]:
         """Extract top N keywords as plain strings."""
         keywords = self.extract(text)
         return [kw.text for kw in keywords[:n]]
 
-    def compute_term_frequency(self, text: str) -> Dict[str, float]:
+    def compute_term_frequency(self, text: str) -> dict[str, float]:
         """Compute term frequency for each token in text."""
         tokens = tokenize(text, remove_stopwords=True)
         tokens = [t for t in tokens if len(t) >= self.min_length]
@@ -103,7 +102,7 @@ class KeywordExtractor:
         total = len(tokens)
         return {word: count / total for word, count in freq.items()}
 
-    def compare_keywords(self, text1: str, text2: str) -> Dict[str, float]:
+    def compare_keywords(self, text1: str, text2: str) -> dict[str, float]:
         """Compare keywords between two texts, returning shared keywords with scores."""
         kw1 = {kw.text: kw.score for kw in self.extract(text1)}
         kw2 = {kw.text: kw.score for kw in self.extract(text2)}

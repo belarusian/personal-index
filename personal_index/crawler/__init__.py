@@ -10,12 +10,12 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
+from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage
 
 # Re-export Interest and InterestType for backward compatibility
-from personal_index.models import Interest as Interest  # noqa: F401
-from personal_index.models import InterestType as InterestType  # noqa: F401
-from personal_index.interests import InterestStore
+from personal_index.models import Interest as Interest
+from personal_index.models import InterestType as InterestType
 
 
 @dataclass
@@ -42,7 +42,7 @@ class CrawlerConfig:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CrawlerConfig":
+    def from_dict(cls, data: dict) -> CrawlerConfig:
         return cls(**{k: v for k, v in data.items()
                       if k in cls.__dataclass_fields__})
 
@@ -111,7 +111,7 @@ class Crawler:
             if resp.status_code == 200:
                 return resp
             return None
-        except (requests.RequestException, Exception):
+        except requests.RequestException:
             return None
 
     def _extract_links(self, html: str, base_url: str) -> list[str]:

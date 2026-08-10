@@ -1,23 +1,24 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Content categorizer module for classifying saved items by topic.
 
 Analyzes content text, titles, URLs, and metadata to assign topic categories
 with confidence scores. Uses rule-based keyword matching with multiple signals.
 """
 
-from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
 from urllib.parse import urlparse
 
 from personal_index.text_utils import tokenize
-
 
 # ---------------------------------------------------------------------------
 # Built-in topic definitions
 # ---------------------------------------------------------------------------
 
-BUILTIN_TOPICS: Dict[str, List[str]] = {
+BUILTIN_TOPICS: dict[str, list[str]] = {
     "technology": [
         "software", "programming", "developer", "api", "framework", "library",
         "algorithm", "database", "server", "cloud", "devops", "docker", "kubernetes",
@@ -186,7 +187,7 @@ class TopicCategory:
     """A topic category with associated keywords and metadata."""
 
     name: str
-    keywords: List[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
     description: str = ""
     weight: float = 1.0
 
@@ -201,13 +202,13 @@ class TopicScore:
 
     topic: str
     score: float
-    matched_keywords: List[str] = field(default_factory=list)
-    signal_sources: List[str] = field(default_factory=list)
+    matched_keywords: list[str] = field(default_factory=list)
+    signal_sources: list[str] = field(default_factory=list)
 
-    def __lt__(self, other: "TopicScore") -> bool:
+    def __lt__(self, other: TopicScore) -> bool:
         return self.score < other.score
 
-    def __gt__(self, other: "TopicScore") -> bool:
+    def __gt__(self, other: TopicScore) -> bool:
         return self.score > other.score
 
 
@@ -216,18 +217,18 @@ class CategorizationResult:
     """Result of content categorization."""
 
     primary_topic: str
-    topics: List[TopicScore] = field(default_factory=list)
+    topics: list[TopicScore] = field(default_factory=list)
     confidence: float = 0.0
-    reasons: List[str] = field(default_factory=list)
+    reasons: list[str] = field(default_factory=list)
     text_length: int = 0
     keyword_count: int = 0
 
     @property
-    def secondary_topics(self) -> List[TopicScore]:
+    def secondary_topics(self) -> list[TopicScore]:
         """Return topics after the primary one."""
         return self.topics[1:] if len(self.topics) > 1 else []
 
-    def top_n(self, n: int = 3) -> List[TopicScore]:
+    def top_n(self, n: int = 3) -> list[TopicScore]:
         """Return top N topics."""
         return self.topics[:n]
 
@@ -250,7 +251,7 @@ class ContentCategorizer:
     """
 
     # URL path patterns that hint at topics
-    URL_TOPIC_HINTS: Dict[str, List[str]] = {
+    URL_TOPIC_HINTS: ClassVar[dict[str, list[str]]] = {
         "technology": ["tech", "dev", "api", "code", "software", "programming", "blog"],
         "science": ["science", "research", "lab", "study", "journal"],
         "health": ["health", "medical", "wellness", "fitness", "clinic"],
@@ -275,7 +276,7 @@ class ContentCategorizer:
 
     def __init__(
         self,
-        custom_topics: Dict[str, List[str]] | None = None,
+        custom_topics: dict[str, list[str]] | None = None,
         min_score: float = 0.1,
         max_topics: int = 5,
     ):
@@ -286,7 +287,7 @@ class ContentCategorizer:
             min_score: Minimum score threshold to include a topic.
             max_topics: Maximum number of topics to return.
         """
-        self._topics: Dict[str, TopicCategory] = {}
+        self._topics: dict[str, TopicCategory] = {}
         self._max_topics = max_topics
         self.min_score = min_score
 
@@ -299,7 +300,7 @@ class ContentCategorizer:
             for name, keywords in custom_topics.items():
                 self.add_topic(name, keywords)
 
-    def add_topic(self, name: str, keywords: List[str], description: str = "", weight: float = 1.0) -> TopicCategory:
+    def add_topic(self, name: str, keywords: list[str], description: str = "", weight: float = 1.0) -> TopicCategory:
         """Add or update a topic category.
 
         Args:
@@ -335,7 +336,7 @@ class ContentCategorizer:
             return True
         return False
 
-    def get_topics(self) -> List[str]:
+    def get_topics(self) -> list[str]:
         """Get list of all available topic names."""
         return sorted(self._topics.keys())
 
@@ -383,7 +384,7 @@ class ContentCategorizer:
         url_hints = self._extract_url_hints(url)
 
         # Score each topic
-        topic_scores: List[TopicScore] = []
+        topic_scores: list[TopicScore] = []
         for topic_name, topic in self._topics.items():
             score, matched, sources = self._score_topic(
                 topic=topic,
@@ -429,8 +430,8 @@ class ContentCategorizer:
 
     def categorize_batch(
         self,
-        items: List[Dict[str, str]],
-    ) -> List[CategorizationResult]:
+        items: list[dict[str, str]],
+    ) -> list[CategorizationResult]:
         """Categorize multiple content items.
 
         Args:
@@ -459,7 +460,7 @@ class ContentCategorizer:
         title_lower: str,
         meta_lower: str,
         url_hints: set,
-    ) -> Tuple[float, List[str], List[str]]:
+    ) -> tuple[float, list[str], list[str]]:
         """Score a single topic against content signals.
 
         Supports both single-word token matching and multi-word phrase matching.
@@ -468,8 +469,8 @@ class ContentCategorizer:
             Tuple of (score, matched_keywords, signal_sources).
         """
         score = 0.0
-        matched_keywords: List[str] = []
-        signal_sources: List[str] = []
+        matched_keywords: list[str] = []
+        signal_sources: list[str] = []
 
         # 1. Text keyword matching
         text_matches = self._match_keywords(topic.keywords, text_tokens, text_lower)
@@ -509,10 +510,10 @@ class ContentCategorizer:
 
     def _match_keywords(
         self,
-        keywords: List[str],
+        keywords: list[str],
         tokens: set,
         raw_text: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Match keywords against both single-word tokens and multi-word phrases.
 
         Single-word keywords are matched against the token set.
@@ -526,7 +527,7 @@ class ContentCategorizer:
         Returns:
             List of matched keywords.
         """
-        matches: List[str] = []
+        matches: list[str] = []
         for kw in keywords:
             if " " in kw:
                 # Multi-word keyword: check as substring in raw text
@@ -568,7 +569,7 @@ class ContentCategorizer:
 
         return hints
 
-    def _build_reasons(self, topic_scores: List[TopicScore], _text: str) -> List[str]:
+    def _build_reasons(self, topic_scores: list[TopicScore], _text: str) -> list[str]:
         """Build human-readable reasons for categorization.
 
         Args:
@@ -578,7 +579,7 @@ class ContentCategorizer:
         Returns:
             List of reason strings.
         """
-        reasons: List[str] = []
+        reasons: list[str] = []
 
         if not topic_scores:
             reasons.append("no matching topics found in content")

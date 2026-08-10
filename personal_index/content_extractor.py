@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -15,10 +14,10 @@ class ExtractedContent:
     title: str = ""
     text: str = ""
     meta_description: str = ""
-    meta_keywords: List[str] = field(default_factory=list)
-    headings: List[str] = field(default_factory=list)
-    links: List[Tuple[str, str]] = field(default_factory=list)
-    images: List[Tuple[str, str]] = field(default_factory=list)
+    meta_keywords: list[str] = field(default_factory=list)
+    headings: list[str] = field(default_factory=list)
+    links: list[tuple[str, str]] = field(default_factory=list)
+    images: list[tuple[str, str]] = field(default_factory=list)
     canonical_url: str = ""
     language: str = ""
     author: str = ""
@@ -85,7 +84,7 @@ class ContentExtractor:
             return meta["content"].strip()
         return ""
 
-    def _extract_meta_keywords(self, soup: BeautifulSoup) -> List[str]:
+    def _extract_meta_keywords(self, soup: BeautifulSoup) -> list[str]:
         """Extract meta keywords."""
         meta = soup.find("meta", attrs={"name": "keywords"})
         if meta and meta.get("content"):
@@ -106,7 +105,7 @@ class ContentExtractor:
             return html_tag["lang"].strip()
         return ""
 
-    def _extract_headings(self, soup: BeautifulSoup) -> List[str]:
+    def _extract_headings(self, soup: BeautifulSoup) -> list[str]:
         """Extract all heading text."""
         headings = []
         for tag in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
@@ -115,7 +114,7 @@ class ContentExtractor:
                 headings.append(text)
         return headings
 
-    def _extract_links(self, soup: BeautifulSoup) -> List[Tuple[str, str]]:
+    def _extract_links(self, soup: BeautifulSoup) -> list[tuple[str, str]]:
         """Extract all links as (text, url) tuples."""
         links = []
         for a in soup.find_all("a", href=True):
@@ -125,7 +124,7 @@ class ContentExtractor:
                 links.append((text, href))
         return links
 
-    def _extract_images(self, soup: BeautifulSoup) -> List[Tuple[str, str]]:
+    def _extract_images(self, soup: BeautifulSoup) -> list[tuple[str, str]]:
         """Extract all images as (alt, src) tuples."""
         images = []
         for img in soup.find_all("img"):

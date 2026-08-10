@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Import bookmarks and content from various formats."""
 
-from __future__ import annotations
 
 import csv
 import json
@@ -8,7 +11,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from typing import List
 from xml.etree import ElementTree as ET
 
 from .bookmarks import Bookmark, BookmarkManager
@@ -19,7 +21,7 @@ class ImportResult:
     """Result of an import operation."""
     total_imported: int = 0
     total_skipped: int = 0
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     source: str = ""
     format: str = ""
     imported_at: str = ""
@@ -32,7 +34,7 @@ class ImportResult:
 class Importer:
     """Import bookmarks from various file formats."""
 
-    SUPPORTED_FORMATS = {"json", "csv", "html", "xml", "necko", "netscape"}
+    SUPPORTED_FORMATS: ClassVar[set[str]] = {"json", "csv", "html", "xml", "necko", "netscape"}
 
     def __init__(self, manager: BookmarkManager | None = None):
         self._manager = manager or BookmarkManager()
@@ -167,7 +169,7 @@ class Importer:
 
         return result
 
-    def _parse_html_element(self, element, result: ImportResult, path: List[str]):
+    def _parse_html_element(self, element, result: ImportResult, path: list[str]):
         """Recursively parse HTML bookmark elements (ElementTree fallback)."""
         tag = element.tag.lower()
 

@@ -51,7 +51,7 @@ class FeedItem:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "FeedItem":
+    def from_dict(cls, data: dict) -> FeedItem:
         """Deserialize from dictionary."""
         published_raw = data.get("published")
         published: datetime | None = None
@@ -230,7 +230,7 @@ class FeedGenerator:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "FeedGenerator":
+    def from_dict(cls, data: dict) -> FeedGenerator:
         """Deserialize from dictionary."""
         items = [FeedItem.from_dict(d) for d in data.get("items", [])]
         gen = cls(

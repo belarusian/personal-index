@@ -74,7 +74,7 @@ def verify_password(
         parts = hashed_password.split("$")
         if len(parts) != 4:
             return False
-        algorithm, iterations_str, salt, stored_hash = parts
+        _algorithm, iterations_str, salt, stored_hash = parts
         iterations = int(iterations_str)
         computed_hash = _hash_with_salt(password, salt, iterations)
         return secrets.compare_digest(computed_hash, stored_hash)

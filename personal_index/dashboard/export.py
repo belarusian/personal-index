@@ -5,10 +5,10 @@ from __future__ import annotations
 import csv
 import io
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class ExportFormat(Enum):
@@ -29,7 +29,7 @@ class ExportResult:
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "format": self.format,
             "filename": self.filename,
@@ -43,7 +43,7 @@ class DashboardExporter:
     """Exports dashboard data in various formats."""
 
     def __init__(self):
-        self._headers: List[str] = []
+        self._headers: list[str] = []
 
     def export_stats(
         self,
@@ -84,10 +84,10 @@ class DashboardExporter:
 
     def export_pages(
         self,
-        pages: List[Any],
+        pages: list[Any],
         fmt: ExportFormat = ExportFormat.CSV,
         filename: str | None = None,
-        fields: List[str] | None = None,
+        fields: list[str] | None = None,
     ) -> ExportResult:
         """Export pages list to a format.
 
@@ -133,7 +133,7 @@ class DashboardExporter:
 
     def export_time_series(
         self,
-        series: List[Any],
+        series: list[Any],
         fmt: ExportFormat = ExportFormat.CSV,
         filename: str | None = None,
     ) -> ExportResult:
@@ -176,7 +176,7 @@ class DashboardExporter:
         )
 
     @staticmethod
-    def _dict_to_csv(rows: List[Dict[str, Any]]) -> str:
+    def _dict_to_csv(rows: list[dict[str, Any]]) -> str:
         """Convert list of dicts to CSV string."""
         if not rows:
             return ""
@@ -199,7 +199,7 @@ class DashboardExporter:
         return output.getvalue()
 
     @staticmethod
-    def _dict_to_tsv(rows: List[Dict[str, Any]]) -> str:
+    def _dict_to_tsv(rows: list[dict[str, Any]]) -> str:
         """Convert list of dicts to TSV string."""
         if not rows:
             return ""

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Set
 
 
 class Permission(Enum):
@@ -30,7 +29,7 @@ class Role(Enum):
 
 
 # Default permission mappings for roles
-ROLE_PERMISSIONS: Dict[Role, Set[Permission]] = {
+ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
     Role.ADMIN: set(Permission),
     Role.EDITOR: {
         Permission.READ_INDEX,
@@ -58,13 +57,13 @@ class User:
     """Represents a user with roles and permissions."""
     user_id: str
     username: str
-    roles: List[Role] = field(default_factory=list)
-    extra_permissions: List[Permission] = field(default_factory=list)
+    roles: list[Role] = field(default_factory=list)
+    extra_permissions: list[Permission] = field(default_factory=list)
     is_active: bool = True
 
-    def get_permissions(self) -> Set[Permission]:
+    def get_permissions(self) -> set[Permission]:
         """Get all permissions for this user."""
-        perms: Set[Permission] = set()
+        perms: set[Permission] = set()
         for role in self.roles:
             perms.update(ROLE_PERMISSIONS.get(role, set()))
         perms.update(self.extra_permissions)
@@ -74,7 +73,7 @@ class User:
 class PermissionChecker:
     """Checks if a user has specific permissions."""
 
-    def __init__(self, custom_role_permissions: Dict[Role, Set[Permission]] | None = None):
+    def __init__(self, custom_role_permissions: dict[Role, set[Permission]] | None = None):
         self._role_permissions = custom_role_permissions or ROLE_PERMISSIONS.copy()
 
     def check(self, user: User, permission: Permission) -> bool:
@@ -121,7 +120,7 @@ class PermissionChecker:
         user_perms = user.get_permissions()
         return set(permissions).issubset(user_perms)
 
-    def add_role_permissions(self, role: Role, permissions: Set[Permission]) -> None:
+    def add_role_permissions(self, role: Role, permissions: set[Permission]) -> None:
         """Add custom permissions to a role.
 
         Args:
@@ -132,7 +131,7 @@ class PermissionChecker:
             self._role_permissions[role] = set()
         self._role_permissions[role].update(permissions)
 
-    def get_role_permissions(self, role: Role) -> Set[Permission]:
+    def get_role_permissions(self, role: Role) -> set[Permission]:
         """Get permissions for a role.
 
         Args:

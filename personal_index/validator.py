@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """URL and content validation utilities."""
 
-from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
@@ -38,7 +41,7 @@ class ValidationResult:
 class URLValidator:
     """Validates URLs for crawling."""
 
-    SCHEMES = {"http", "https", "ftp", "ftps"}
+    SCHEMES: ClassVar[set[str]] = {"http", "https", "ftp", "ftps"}
     MAX_URL_LENGTH = 2048
     MAX_DOMAIN_LENGTH = 253
 

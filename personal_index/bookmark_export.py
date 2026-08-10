@@ -1,12 +1,14 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 """Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
 
-from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List
 
 
 @dataclass
@@ -16,7 +18,7 @@ class BookmarkExportResult:
     bookmark_count: int = 0
     output_path: str = ""
     exported_at: str = ""
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.exported_at:
@@ -42,9 +44,9 @@ class BookmarkExporter:
     - **OPML**: OPML 2.0 outline format (used by feed readers and bookmark tools).
     """
 
-    SUPPORTED_FORMATS = {"json", "html", "opml"}
+    SUPPORTED_FORMATS: ClassVar[set[str]] = {"json", "html", "opml"}
 
-    def __init__(self, bookmarks: List):
+    def __init__(self, bookmarks: list):
         self.bookmarks = bookmarks
 
     # ------------------------------------------------------------------

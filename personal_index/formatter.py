@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from personal_index.index import IndexedPage, SearchResult
 from personal_index.interests import Interest
@@ -10,7 +10,7 @@ from personal_index.scheduler import ScheduledJob
 
 
 def format_search_results(
-    results: List[SearchResult], limit: int = 10
+    results: list[SearchResult], limit: int = 10
 ) -> str:
     """Format search results for display."""
     if not results:
@@ -43,7 +43,7 @@ def format_interest(interest: Interest) -> str:
     return "\n".join(lines)
 
 
-def format_crawl_stats(stats: Dict[str, Any]) -> str:
+def format_crawl_stats(stats: dict[str, Any]) -> str:
     """Format crawl statistics."""
     lines = [
         f"  Pages crawled: {stats.get('pages_crawled', 0)}",
@@ -68,7 +68,7 @@ def format_index_page(page: IndexedPage) -> str:
     return "\n".join(lines)
 
 
-def format_schedule_job(job: Union[Dict[str, Any], ScheduledJob]) -> str:
+def format_schedule_job(job: dict[str, Any] | ScheduledJob) -> str:
     """Format a scheduled job for display."""
     if isinstance(job, ScheduledJob):
         name = job.name
@@ -101,7 +101,7 @@ def format_schedule_job(job: Union[Dict[str, Any], ScheduledJob]) -> str:
 
 
 def format_table(
-    headers: List[str], rows: List[List[str]]
+    headers: list[str], rows: list[list[str]]
 ) -> str:
     """Format data as a text table."""
     if not headers or not rows:
@@ -168,7 +168,7 @@ def truncate(text: str, max_length: int = 100) -> str:
     return text[: max_length - 3] + "..."
 
 
-def highlight(text: str, terms: List[str]) -> str:
+def highlight(text: str, terms: list[str]) -> str:
     """Highlight search terms in text with ** markers."""
     if not terms:
         return text

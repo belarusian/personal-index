@@ -7,7 +7,6 @@ import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List
 
 from personal_index.interests import InterestStore
 from personal_index.search_index import SearchIndex
@@ -19,7 +18,7 @@ class ScheduleConfig:
 
     interval_hours: int = 24
     enabled: bool = True
-    seed_urls: List[str] = field(default_factory=list)
+    seed_urls: list[str] = field(default_factory=list)
     max_pages_per_run: int = 50
     crawl_depth: int = 2
     delay: float = 1.0
@@ -42,7 +41,7 @@ class ScheduleStore:
     """Persistent storage for schedule entries."""
 
     path: str
-    _entries: Dict[str, ScheduleEntry] = field(
+    _entries: dict[str, ScheduleEntry] = field(
         default_factory=dict, repr=False
     )
 
@@ -128,7 +127,7 @@ class ScheduleStore:
         self._entries[entry.name] = entry
         self._save()
 
-    def list_all(self) -> List[ScheduleEntry]:
+    def list_all(self) -> list[ScheduleEntry]:
         """List all schedule entries."""
         return list(self._entries.values())
 
@@ -144,7 +143,7 @@ class Scheduler:
     def add_schedule(
         self,
         name: str,
-        seed_urls: List[str],
+        seed_urls: list[str],
         interval_hours: int = 24,
         max_pages_per_run: int = 50,
         crawl_depth: int = 2,
@@ -166,7 +165,7 @@ class Scheduler:
     def add_job(
         self,
         name: str,
-        seed_urls: List[str] | None = None,
+        seed_urls: list[str] | None = None,
         interval_hours: int = 24,
         **kwargs,
     ) -> ScheduleEntry:
@@ -197,7 +196,7 @@ class Scheduler:
         self.schedule_store.update(entry)
         return entry
 
-    def get_due_schedules(self) -> List[ScheduleEntry]:
+    def get_due_schedules(self) -> list[ScheduleEntry]:
         """Get all schedules that are due to run."""
         now = datetime.now(timezone.utc)
         due = []
@@ -249,7 +248,7 @@ class Scheduler:
 
         return len(pages)
 
-    def list_jobs(self) -> List[ScheduleEntry]:
+    def list_jobs(self) -> list[ScheduleEntry]:
         """List all scheduled jobs."""
         return self.schedule_store.list_all()
 
@@ -259,7 +258,7 @@ class ScheduledJob:
     """A scheduled crawl job (CLI-facing)."""
 
     name: str
-    seed_urls: List[str] = field(default_factory=list)
+    seed_urls: list[str] = field(default_factory=list)
     interval_hours: int = 24
     run_count: int = 0
     last_run: str | None = None
