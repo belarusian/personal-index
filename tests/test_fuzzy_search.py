@@ -117,7 +117,7 @@ class TestFuzzySearcher:
     def test_search_with_highlight(self):
         results = self.searcher.search_with_highlight("hello", ["hello world"])
         assert len(results) == 1
-        match, highlighted = results[0]
+        _match, highlighted = results[0]
         assert "\033[1m" in highlighted
 
     def test_search_with_highlight_html(self):

@@ -136,5 +136,5 @@ class TestContentScorer:
         weights = {"content_length": 1.0, "keyword_density": 0, "headings": 0,
                    "links": 0, "images": 0, "readability": 0, "freshness": 0}
         scorer = ContentScorer(weights=weights)
-        score, breakdown = scorer.score(self._make_content(text="word " * 500))
+        _score, breakdown = scorer.score(self._make_content(text="word " * 500))
         assert breakdown.total_score == breakdown.content_length_score

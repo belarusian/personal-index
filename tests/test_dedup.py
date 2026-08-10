@@ -60,7 +60,7 @@ class TestDeduplicationEngine:
 
     def test_is_duplicate_different_content(self):
         self.engine.is_duplicate("http://example.com/page1", "Title", "Content A")
-        is_dup, original = self.engine.is_duplicate(
+        is_dup, _original = self.engine.is_duplicate(
             "http://example.com/page2", "Title", "Content B"
         )
         assert is_dup is False
@@ -107,13 +107,13 @@ class TestDeduplicationEngine:
 
     def test_is_near_duplicate_no_duplicates(self):
         self.engine.is_duplicate("http://a.com", "T", "Content A")
-        is_dup, url, score = self.engine.is_near_duplicate(
+        is_dup, _url, _score = self.engine.is_near_duplicate(
             "http://b.com", "T", "Content B"
         )
         assert is_dup is False
 
     def test_is_near_duplicate_empty_content(self):
-        is_dup, url, score = self.engine.is_near_duplicate(
+        is_dup, _url, score = self.engine.is_near_duplicate(
             "http://a.com", "T", ""
         )
         assert is_dup is False

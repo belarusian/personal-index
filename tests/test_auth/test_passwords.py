@@ -27,7 +27,7 @@ class TestHashPassword:
     def test_hash_is_deterministic_with_salt(self):
         h = hash_password("mysecretpassword")
         parts = h.split("$")
-        algorithm, iterations, salt, password_hash = parts
+        _algorithm, iterations, salt, password_hash = parts
         # Same password + same salt = same hash
         from personal_index.auth.passwords import _hash_with_salt
         h2 = _hash_with_salt("mysecretpassword", salt, int(iterations))
@@ -113,5 +113,5 @@ class TestIsValidPassword:
         assert len(errors) >= 3
 
     def test_custom_min_length(self):
-        valid, errors = is_valid_password("Ab1!", min_length=10)
+        valid, _errors = is_valid_password("Ab1!", min_length=10)
         assert valid is False
