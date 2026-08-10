@@ -13,7 +13,7 @@ from personal_index.url_utils import (
     EXCLUDED_SCHEMES,
 )
 
-from personal_index.content import tokenize
+from personal_index.text_utils import tokenize
 
 import re
 from bs4 import BeautifulSoup
