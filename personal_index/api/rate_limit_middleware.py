@@ -26,9 +26,8 @@ class RateLimitRule:
         """Check if this rule matches the request."""
         if self.methods and method not in self.methods:
             return False
-        if self.path_pattern:
-            if not path.startswith(self.path_pattern):
-                return False
+        if self.path_pattern and not path.startswith(self.path_pattern):
+            return False
         return True
 
 

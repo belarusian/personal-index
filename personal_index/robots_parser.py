@@ -49,10 +49,9 @@ class RobotsPolicy:
         best_match_len = -1
         for rule in applicable_rules:
             pattern = rule.pattern.rstrip("/")
-            if self._path_matches(path, pattern):
-                if len(pattern) > best_match_len:
-                    best_match = rule
-                    best_match_len = len(pattern)
+            if self._path_matches(path, pattern) and len(pattern) > best_match_len:
+                best_match = rule
+                best_match_len = len(pattern)
 
         if best_match is None:
             return True
