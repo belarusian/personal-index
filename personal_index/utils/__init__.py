@@ -1,6 +1,7 @@
 """Utilities package."""
 
-from personal_index.utils.url_utils import (
+# Re-export from root url_utils for backward compatibility
+from personal_index.url_utils import (
     is_valid_url,
     normalize_url,
     resolve_relative_url,
