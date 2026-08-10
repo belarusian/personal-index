@@ -5,15 +5,12 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 from personal_index.text_utils import (
-    STOPWORDS,
     count_words,
     extract_keywords,
     read_time_minutes,
     tokenize,
-    word_frequency,
 )
 
 

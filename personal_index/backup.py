@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import gzip
 import json
 import os
-import shutil
 import tarfile
-import tempfile
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone

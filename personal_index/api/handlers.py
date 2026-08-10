@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from personal_index.api.models import (
     APIError,

@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 import unicodedata
 from collections import Counter
-from typing import Any
 
 
 def normalize_whitespace(text: str) -> str:

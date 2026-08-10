@@ -6,7 +6,6 @@ import logging
 import time
 from dataclasses import dataclass, field
 from typing import Optional
-from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 

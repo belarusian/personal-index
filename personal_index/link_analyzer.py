@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from typing import Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)

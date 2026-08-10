@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set
 
 import requests
-from bs4 import BeautifulSoup
 
 from personal_index.content_extractor import ContentExtractor
 from personal_index.interest_store import InterestStore
