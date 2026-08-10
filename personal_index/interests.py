@@ -45,6 +45,9 @@ class InterestStore:
         os.makedirs(
             os.path.dirname(self.store_path) or ".", exist_ok=True
         )
+        os.makedirs(
+            os.path.dirname(self.store_path) or ".", exist_ok=True
+        )
         data = {
             name: interest.to_dict()
             for name, interest in self._interests.items()

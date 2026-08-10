@@ -12,7 +12,7 @@ class FuzzyMatch:
     """Result of a fuzzy search match."""
     text: str
     score: float
-    matched_indices: List[int] = None
+    matched_indices: List[int] | None = None
 
     def __post_init__(self):
         if self.matched_indices is None:
@@ -129,7 +129,7 @@ class FuzzySearcher:
         else:
             # Find best matching substring
             best_start = 0
-            best_len = 0
+            best_len: float = 0.0
             for i in range(len(text) - len(query) + 1):
                 substring = text[i:i + len(query)]
                 ratio = SequenceMatcher(None, query, substring).ratio()
