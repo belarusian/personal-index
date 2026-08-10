@@ -14,7 +14,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class DeduplicationEngine:
         self._similarity_threshold = similarity_threshold
         self._document_hashes: Dict[str, DocumentHash] = {}
 
-    def is_duplicate(self, url: str, title: str, content: str) -> Tuple[bool, Optional[str]]:
+    def is_duplicate(self, url: str, title: str, content: str) -> Tuple[bool, str | None]:
         """Check if content is a duplicate. Returns (is_dup, original_url)."""
         doc_hash = DocumentHash.from_text(url, title, content)
         self._document_hashes[url] = doc_hash
@@ -111,7 +111,7 @@ class DeduplicationEngine:
 
     def is_near_duplicate(
         self, url: str, title: str, content: str
-    ) -> Tuple[bool, Optional[str], float]:
+    ) -> Tuple[bool, str | None, float]:
         """Check for near-duplicates using token overlap. Returns (is_dup, url, score)."""
         tokens = set(re.findall(r"[a-z0-9]+", content.lower()))
         if not tokens:
@@ -152,7 +152,7 @@ class DeduplicationEngine:
         self._seen_fingerprints.clear()
         self._document_hashes.clear()
 
-    def get_original_url(self, url: str) -> Optional[str]:
+    def get_original_url(self, url: str) -> str | None:
         """Get the original URL for a duplicate."""
         doc_hash = self._document_hashes.get(url)
         if not doc_hash:
@@ -213,7 +213,7 @@ class AddItemResult:
     """Result of adding an item to the deduplicator."""
 
     is_duplicate: bool = False
-    original_url: Optional[str] = None
+    original_url: str | None = None
     similarity_score: float = 0.0
 
 
@@ -242,7 +242,7 @@ class ContentDeduplicator:
     cosine similarity for flexible duplicate detection.
     """
 
-    def __init__(self, config: Optional[DedupConfig] = None) -> None:
+    def __init__(self, config: DedupConfig | None = None) -> None:
         """Initialize ContentDeduplicator with optional config.
 
         Args:

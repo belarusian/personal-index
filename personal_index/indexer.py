@@ -6,7 +6,6 @@ import json
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 from personal_index.models import Page, SearchResult
 
@@ -14,7 +13,7 @@ from personal_index.models import Page, SearchResult
 class SearchIndex:
     """Full-text search index with TF-IDF-like scoring."""
 
-    def __init__(self, index_dir: Optional[str | Path] = None):
+    def __init__(self, index_dir: str | Path | None = None):
         self.index_dir = Path(index_dir) if index_dir else None
         self._documents: dict[str, Page] = {}
         self._inverted_index: dict[str, set[str]] = defaultdict(set)
@@ -70,7 +69,7 @@ class SearchIndex:
         query: str,
         limit: int = 10,
         min_score: float = 0.0,
-        interest_filter: Optional[list[str]] = None,
+        interest_filter: list[str] | None = None,
     ) -> list[SearchResult]:
         """Search the index for a query."""
         if not query.strip():
@@ -149,7 +148,7 @@ class SearchIndex:
         # Fallback: first 150 chars
         return text[:150] + ("..." if len(text) > 150 else "")
 
-    def get_page(self, page_id: str) -> Optional[Page]:
+    def get_page(self, page_id: str) -> Page | None:
         """Get a page by ID."""
         return self._documents.get(page_id)
 

@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 
@@ -74,8 +74,8 @@ class URLHistory:
         self._trim()
         return visit
 
-    def get_visits(self, url: Optional[str] = None,
-                   since: Optional[str] = None,
+    def get_visits(self, url: str | None = None,
+                   since: str | None = None,
                    limit: int = 100) -> List[URLVisit]:
         """Get visit records, optionally filtered by URL and time."""
         results = self._history

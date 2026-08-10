@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 # Common English stopwords
@@ -86,7 +85,7 @@ class SearchResult:
     content_id: str
     score: float
     title: str = ""
-    snippet: Optional[str] = None
+    snippet: str | None = None
     content_type: str = ""
     url: str = ""
     date: str = ""
@@ -146,10 +145,10 @@ class SearchQuery:
     query: str
     limit: int = 20
     offset: int = 0
-    content_type: Optional[str] = None
-    date_from: Optional[str] = None
-    date_to: Optional[str] = None
-    url_pattern: Optional[str] = None
+    content_type: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+    url_pattern: str | None = None
 
     def to_dict(self) -> dict:
         """Serialize to dictionary."""
@@ -196,7 +195,7 @@ class SearchIndex:
         content_type: str = "",
         url: str = "",
         date: str = "",
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Add or update a document in the index."""
         # Store document
@@ -236,7 +235,7 @@ class SearchIndex:
         content_type: str = "",
         url: str = "",
         date: str = "",
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> bool:
         """Update an existing document."""
         if content_id not in self._documents:
@@ -265,10 +264,10 @@ class SearchIndex:
         query: str,
         limit: int = 20,
         offset: int = 0,
-        content_type: Optional[str] = None,
-        date_from: Optional[str] = None,
-        date_to: Optional[str] = None,
-        url_pattern: Optional[str] = None,
+        content_type: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        url_pattern: str | None = None,
         boost_title: float = 1.0,
     ) -> SearchResults:
         """Search the index and return ranked results."""
@@ -379,7 +378,7 @@ class SearchIndex:
 
     def _generate_snippet(
         self, content: str, tokens: list[str], max_length: int = 150
-    ) -> Optional[str]:
+    ) -> str | None:
         """Generate a snippet highlighting search terms."""
         if not content or not tokens:
             return None
@@ -403,7 +402,7 @@ class SearchIndex:
             snippet = snippet + "..."
         return snippet
 
-    def get_document(self, content_id: str) -> Optional[dict]:
+    def get_document(self, content_id: str) -> dict | None:
         """Get a document by ID."""
         return self._documents.get(content_id)
 

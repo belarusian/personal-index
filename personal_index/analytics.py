@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 @dataclass
@@ -16,7 +16,7 @@ class SearchEvent:
     query: str
     timestamp: str = ""
     result_count: int = 0
-    clicked_url: Optional[str] = None
+    clicked_url: str | None = None
     duration_ms: float = 0.0
 
     def __post_init__(self):
@@ -32,7 +32,7 @@ class CrawlEvent:
     status_code: int = 0
     content_size: int = 0
     duration_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
     def __post_init__(self):
         if not self.timestamp:
@@ -63,7 +63,7 @@ class AnalyticsTracker:
         self._crawl_events: List[CrawlEvent] = []
 
     def record_search(self, query: str, result_count: int = 0,
-                      clicked_url: Optional[str] = None,
+                      clicked_url: str | None = None,
                       duration_ms: float = 0.0) -> SearchEvent:
         """Record a search event."""
         event = SearchEvent(
@@ -77,7 +77,7 @@ class AnalyticsTracker:
 
     def record_crawl(self, url: str, status_code: int = 200,
                      content_size: int = 0, duration_ms: float = 0.0,
-                     error: Optional[str] = None) -> CrawlEvent:
+                     error: str | None = None) -> CrawlEvent:
         """Record a crawl event."""
         event = CrawlEvent(
             url=url,
@@ -139,14 +139,14 @@ class AnalyticsTracker:
 
         return data
 
-    def get_search_events(self, limit: Optional[int] = None) -> List[SearchEvent]:
+    def get_search_events(self, limit: int | None = None) -> List[SearchEvent]:
         """Get search events, optionally limited."""
         events = self._search_events
         if limit:
             events = events[-limit:]
         return events
 
-    def get_crawl_events(self, limit: Optional[int] = None) -> List[CrawlEvent]:
+    def get_crawl_events(self, limit: int | None = None) -> List[CrawlEvent]:
         """Get crawl events, optionally limited."""
         events = self._crawl_events
         if limit:
@@ -246,7 +246,7 @@ class AnalyticsTracker:
         self._crawl_events.clear()
 
     @staticmethod
-    def _extract_domain(url: str) -> Optional[str]:
+    def _extract_domain(url: str) -> str | None:
         """Extract domain from URL."""
         if not url:
             return None

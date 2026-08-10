@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 
 def setup_logging(
     level: str = "INFO",
     verbose: bool = False,
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
 ):
     """Configure logging for the personal_index package."""
     if verbose:

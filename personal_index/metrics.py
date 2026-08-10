@@ -7,7 +7,6 @@ import os
 import platform
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ class SystemMetrics:
 class MetricsCollector:
     """Collects and reports system and application metrics."""
 
-    def __init__(self, start_time: Optional[float] = None):
+    def __init__(self, start_time: float | None = None):
         self._start_time = start_time or time.time()
         self._counters: dict[str, int] = {}
         self._gauges: dict[str, float] = {}
@@ -115,7 +114,7 @@ class MetricsCollector:
         self._snapshots.append(metrics)
         return metrics
 
-    def get_histogram_stats(self, name: str) -> Optional[dict]:
+    def get_histogram_stats(self, name: str) -> dict | None:
         """Get statistics for a named histogram.
 
         Args:

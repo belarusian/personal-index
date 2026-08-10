@@ -8,7 +8,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,9 @@ class Task:
     data: dict[str, Any] = field(compare=False, default_factory=dict)
     status: TaskStatus = field(compare=False, default=TaskStatus.PENDING)
     created_at: float = field(compare=False, default_factory=time.time)
-    started_at: Optional[float] = field(compare=False, default=None)
-    completed_at: Optional[float] = field(compare=False, default=None)
-    error: Optional[str] = field(compare=False, default=None)
+    started_at: float | None = field(compare=False, default=None)
+    completed_at: float | None = field(compare=False, default=None)
+    error: str | None = field(compare=False, default=None)
     result: Any = field(compare=False, default=None)
 
     def start(self) -> None:
@@ -72,7 +72,7 @@ class Task:
         self.completed_at = time.time()
 
     @property
-    def duration(self) -> Optional[float]:
+    def duration(self) -> float | None:
         """Elapsed time in seconds between start and completion, or None."""
         if self.started_at and self.completed_at:
             return self.completed_at - self.started_at
@@ -91,7 +91,7 @@ class TaskQueue:
         self._completed: list[Task] = []
 
     def enqueue(self, task_id: str, name: str = "", priority: TaskPriority = TaskPriority.NORMAL,
-                data: Optional[dict] = None) -> Task:
+                data: dict | None = None) -> Task:
         """Add a task to the queue.
 
         Args:
@@ -120,7 +120,7 @@ class TaskQueue:
             self._tasks[task_id] = task
             return task
 
-    def dequeue(self) -> Optional[Task]:
+    def dequeue(self) -> Task | None:
         """Remove and return the highest-priority pending task.
 
         Returns:
@@ -134,7 +134,7 @@ class TaskQueue:
                     return task
             return None
 
-    def get_task(self, task_id: str) -> Optional[Task]:
+    def get_task(self, task_id: str) -> Task | None:
         """Look up a task by ID.
 
         Args:

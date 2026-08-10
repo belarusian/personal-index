@@ -7,7 +7,7 @@ import math
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class PriorityScorer:
     (user interest alignment).
     """
 
-    def __init__(self, config: Optional[PriorityConfig] = None) -> None:
+    def __init__(self, config: PriorityConfig | None = None) -> None:
         """Initialize PriorityScorer with optional config.
 
         Args:
@@ -347,7 +347,7 @@ class PriorityScorer:
 class PriorityFilter:
     """Filter and sort content by priority level."""
 
-    def __init__(self, scorer: Optional[PriorityScorer] = None) -> None:
+    def __init__(self, scorer: PriorityScorer | None = None) -> None:
         """Initialize PriorityScorer with optional config.
 
         Args:
@@ -413,7 +413,7 @@ class PriorityFilter:
 # Convenience functions for backward compatibility
 
 
-def calculate_priority(item_id: str, content_text: Optional[str] = None) -> float:
+def calculate_priority(item_id: str, content_text: str | None = None) -> float:
     """Calculate priority score for an item.
 
     Args:
@@ -431,7 +431,7 @@ def calculate_priority(item_id: str, content_text: Optional[str] = None) -> floa
     return score.total
 
 
-def sort_by_priority(items: List[str], scores: Optional[Dict[str, float]] = None) -> List[str]:
+def sort_by_priority(items: List[str], scores: Dict[str, float] | None = None) -> List[str]:
     """Sort items by priority score.
 
     Args:

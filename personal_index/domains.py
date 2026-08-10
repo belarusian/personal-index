@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -49,7 +49,7 @@ class DomainRule:
 class DomainManager:
     """Manages domain allow/block rules."""
 
-    rules_file: Optional[str] = None
+    rules_file: str | None = None
     _rules: Dict[str, DomainRule] = field(default_factory=dict, repr=False)
     _page_counts: Dict[str, int] = field(default_factory=dict, repr=False)
     _has_whitelist: bool = False

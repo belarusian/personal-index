@@ -7,7 +7,7 @@ with confidence scores. Uses rule-based keyword matching with multiple signals.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from urllib.parse import urlparse
 
 from personal_index.text_utils import tokenize
@@ -275,7 +275,7 @@ class ContentCategorizer:
 
     def __init__(
         self,
-        custom_topics: Optional[Dict[str, List[str]]] = None,
+        custom_topics: Dict[str, List[str]] | None = None,
         min_score: float = 0.1,
         max_topics: int = 5,
     ):
@@ -339,7 +339,7 @@ class ContentCategorizer:
         """Get list of all available topic names."""
         return sorted(self._topics.keys())
 
-    def get_topic(self, name: str) -> Optional[TopicCategory]:
+    def get_topic(self, name: str) -> TopicCategory | None:
         """Get a topic category by name."""
         return self._topics.get(name.lower())
 

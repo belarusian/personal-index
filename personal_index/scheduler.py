@@ -7,7 +7,7 @@ import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from personal_index.interest_store import InterestStore
 from personal_index.search_index import SearchIndex
@@ -33,8 +33,8 @@ class ScheduleEntry:
     config: ScheduleConfig
     run_count: int = 0
     total_pages_indexed: int = 0
-    last_run: Optional[datetime] = None
-    next_run: Optional[datetime] = None
+    last_run: datetime | None = None
+    next_run: datetime | None = None
 
 
 @dataclass
@@ -111,7 +111,7 @@ class ScheduleStore:
         self._entries[entry.name] = entry
         self._save()
 
-    def get(self, name: str) -> Optional[ScheduleEntry]:
+    def get(self, name: str) -> ScheduleEntry | None:
         """Get a schedule entry by name."""
         return self._entries.get(name)
 
@@ -188,7 +188,7 @@ class Scheduler:
         """Remove a scheduled job (alias for remove_schedule, CLI-compatible)."""
         return self.remove_schedule(name)
 
-    def toggle_schedule(self, name: str) -> Optional[ScheduleEntry]:
+    def toggle_schedule(self, name: str) -> ScheduleEntry | None:
         """Toggle a schedule's enabled status."""
         entry = self.schedule_store.get(name)
         if entry is None:
@@ -262,6 +262,6 @@ class ScheduledJob:
     seed_urls: List[str] = field(default_factory=list)
     interval_hours: int = 24
     run_count: int = 0
-    last_run: Optional[str] = None
-    next_run: Optional[str] = None
+    last_run: str | None = None
+    next_run: str | None = None
     enabled: bool = True

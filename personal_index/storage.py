@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Optional
 from personal_index.models import Interest, CrawlConfig, IndexedPage
 
 
@@ -56,7 +55,7 @@ class Storage:
         data = self._read_json(self.interests_file)
         return [Interest.from_dict(item) for item in data]
 
-    def get_interest(self, name: str) -> Optional[Interest]:
+    def get_interest(self, name: str) -> Interest | None:
         """Get a single interest by name."""
         for interest in self.get_interests():
             if interest.name == name:
@@ -120,7 +119,7 @@ class Storage:
         data = self._read_json(self.pages_file)
         return [IndexedPage.from_dict(item) for item in data]
 
-    def get_page(self, url: str) -> Optional[IndexedPage]:
+    def get_page(self, url: str) -> IndexedPage | None:
         """Get a single page by URL."""
         for page in self.get_pages():
             if page.url == url:

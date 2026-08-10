@@ -17,7 +17,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 import requests
@@ -91,7 +91,7 @@ class HealthReport:
 class HealthChecker:
     """Run health checks on the personal index system."""
 
-    def __init__(self, data_dir: Optional[str] = None) -> None:
+    def __init__(self, data_dir: str | None = None) -> None:
         """Initialize HealthChecker.
 
         Args:
@@ -333,7 +333,7 @@ class HealthChecker:
 # ---------------------------------------------------------------------------
 
 
-def check_health(data_dir: Optional[str] = None) -> Dict[str, Any]:
+def check_health(data_dir: str | None = None) -> Dict[str, Any]:
     """Check overall content health status.
 
     Args:
@@ -399,7 +399,7 @@ def check_health(data_dir: Optional[str] = None) -> Dict[str, Any]:
     }
 
 
-def get_health_report(data_dir: Optional[str] = None) -> Dict[str, Any]:
+def get_health_report(data_dir: str | None = None) -> Dict[str, Any]:
     """Get a comprehensive health report as a dictionary.
 
     Args:
@@ -423,9 +423,9 @@ class UrlHealthResult:
     """Result of URL health check."""
 
     url: str
-    status_code: Optional[int]
+    status_code: int | None
     is_accessible: bool
-    error: Optional[str]
+    error: str | None
     checked_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )

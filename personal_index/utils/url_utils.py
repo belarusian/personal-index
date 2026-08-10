@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from urllib.parse import urlparse, urljoin
-from typing import Optional
 
 EXCLUDED_EXTENSIONS = {
     ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".ico",
@@ -27,7 +26,7 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-def normalize_url(url: str, base_url: str = "") -> Optional[str]:
+def normalize_url(url: str, base_url: str = "") -> str | None:
     """Normalize URL: lowercase domain, remove fragments, default ports.
 
     Args:
@@ -70,7 +69,7 @@ def normalize_url(url: str, base_url: str = "") -> Optional[str]:
         return None
 
 
-def resolve_relative_url(base_url: str, relative_url: str) -> Optional[str]:
+def resolve_relative_url(base_url: str, relative_url: str) -> str | None:
     """Resolve a relative URL against a base URL."""
     try:
         resolved = urljoin(base_url, relative_url)
@@ -82,7 +81,7 @@ def resolve_relative_url(base_url: str, relative_url: str) -> Optional[str]:
         return None
 
 
-def extract_domain(url: str) -> Optional[str]:
+def extract_domain(url: str) -> str | None:
     """Extract domain from URL, stripping port number."""
     if not url:
         return None

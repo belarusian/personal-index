@@ -7,7 +7,8 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List
+from collections.abc import Callable
 
 
 class ScheduleFrequency(Enum):
@@ -38,12 +39,12 @@ class ScheduledTask:
     frequency: ScheduleFrequency
     callback: Callable
     enabled: bool = True
-    last_run: Optional[str] = None
-    next_run: Optional[str] = None
+    last_run: str | None = None
+    next_run: str | None = None
     run_count: int = 0
     created_at: str = ""
     error_count: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
     tags: List[str] = field(default_factory=list)
 
     def __post_init__(self):
@@ -89,7 +90,7 @@ class TaskResult:
     task_name: str
     success: bool
     duration_seconds: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
     run_at: str = ""
 
     def __post_init__(self):
@@ -107,7 +108,7 @@ class ContentScheduler:
         self._results: List[TaskResult] = []
         self._running = False
         self._lock = threading.Lock()
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._max_results = 1000
 
     @property
@@ -125,7 +126,7 @@ class ContentScheduler:
         name: str,
         frequency: ScheduleFrequency,
         callback: Callable,
-        tags: Optional[List[str]] = None,
+        tags: List[str] | None = None,
     ) -> ScheduledTask:
         """Add a new scheduled task."""
         task = ScheduledTask(
@@ -144,7 +145,7 @@ class ContentScheduler:
             return True
         return False
 
-    def get_task(self, name: str) -> Optional[ScheduledTask]:
+    def get_task(self, name: str) -> ScheduledTask | None:
         """Get a task by name."""
         return self._tasks.get(name)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 
 class Permission(Enum):
@@ -74,7 +74,7 @@ class User:
 class PermissionChecker:
     """Checks if a user has specific permissions."""
 
-    def __init__(self, custom_role_permissions: Optional[Dict[Role, Set[Permission]]] = None):
+    def __init__(self, custom_role_permissions: Dict[Role, Set[Permission]] | None = None):
         self._role_permissions = custom_role_permissions or ROLE_PERMISSIONS.copy()
 
     def check(self, user: User, permission: Permission) -> bool:

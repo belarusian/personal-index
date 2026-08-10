@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -48,7 +47,7 @@ class ScrapedContent:
 class HTMLScraper:
     """Scraps HTML content and extracts structured data."""
 
-    def __init__(self, config: Optional[ScraperConfig] = None):
+    def __init__(self, config: ScraperConfig | None = None):
         self.config = config or ScraperConfig()
 
     def scrape(self, html: str, base_url: str = "") -> ScrapedContent:

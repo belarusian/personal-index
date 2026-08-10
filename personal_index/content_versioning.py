@@ -10,7 +10,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -32,7 +32,7 @@ class ContentVersion:
 class ContentVersioning:
     """Manage versions of content items."""
 
-    def __init__(self, storage_path: Optional[str] = None) -> None:
+    def __init__(self, storage_path: str | None = None) -> None:
         """Initialize the content versioning system.
 
         Args:
@@ -125,7 +125,7 @@ class ContentVersioning:
         """
         return self._versions.get(item_id, [])
 
-    def get_version(self, item_id: str, version_id: str) -> Optional[ContentVersion]:
+    def get_version(self, item_id: str, version_id: str) -> ContentVersion | None:
         """Get a specific version of an item.
 
         Args:
@@ -178,7 +178,7 @@ class ContentVersioning:
 
 
 # Module-level instance for convenience
-_default_versioning: Optional[ContentVersioning] = None
+_default_versioning: ContentVersioning | None = None
 
 
 def _get_default_versioning() -> ContentVersioning:

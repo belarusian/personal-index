@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 from bs4 import BeautifulSoup
 
 
@@ -136,7 +135,7 @@ def tokenize(text: str) -> list[str]:
 
 def remove_stopwords(
     tokens: list[str],
-    stopwords: Optional[set[str]] = None,
+    stopwords: set[str] | None = None,
 ) -> list[str]:
     """Remove stopwords from token list."""
     if not tokens:

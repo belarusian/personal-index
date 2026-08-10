@@ -7,7 +7,7 @@ import secrets
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -22,8 +22,8 @@ class APIKey:
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
-    expires_at: Optional[str] = None
-    last_used_at: Optional[str] = None
+    expires_at: str | None = None
+    last_used_at: str | None = None
     usage_count: int = 0
     is_active: bool = True
 
@@ -53,8 +53,8 @@ class APIKeyStore:
         self,
         owner: str,
         name: str = "",
-        permissions: Optional[List[str]] = None,
-        expires_at: Optional[str] = None,
+        permissions: List[str] | None = None,
+        expires_at: str | None = None,
         prefix: str = "pk_",
     ) -> tuple[str, APIKey]:
         """Create a new API key.
@@ -83,7 +83,7 @@ class APIKeyStore:
         self._key_lookup[hashed] = api_key.key_id
         return raw_key, api_key
 
-    def validate_key(self, raw_key: str) -> Optional[APIKey]:
+    def validate_key(self, raw_key: str) -> APIKey | None:
         """Validate an API key and return its metadata if valid.
 
         Args:
@@ -129,7 +129,7 @@ class APIKeyStore:
         self._key_lookup.pop(api_key.hashed_key, None)
         return True
 
-    def get_key(self, key_id: str) -> Optional[APIKey]:
+    def get_key(self, key_id: str) -> APIKey | None:
         """Get API key metadata by ID.
 
         Args:
@@ -140,7 +140,7 @@ class APIKeyStore:
         """
         return self._keys.get(key_id)
 
-    def list_keys(self, owner: Optional[str] = None) -> List[APIKey]:
+    def list_keys(self, owner: str | None = None) -> List[APIKey]:
         """List API keys, optionally filtered by owner.
 
         Args:
@@ -174,7 +174,7 @@ class APIKeyStore:
         return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
 
 
-def validate_api_key(store: APIKeyStore, raw_key: str) -> Optional[APIKey]:
+def validate_api_key(store: APIKeyStore, raw_key: str) -> APIKey | None:
     """Convenience function to validate an API key.
 
     Args:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -18,7 +18,7 @@ class RealTimeStats:
     avg_response_time_ms: float = 0.0
     memory_usage_mb: float = 0.0
     uptime_seconds: float = 0.0
-    last_crawl_at: Optional[str] = None
+    last_crawl_at: str | None = None
     recent_errors: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:

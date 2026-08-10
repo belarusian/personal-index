@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ class EncodingResult:
 
     encoding: str
     confidence: float
-    language: Optional[str] = None
+    language: str | None = None
 
 
 class EncodingDetector:
@@ -40,7 +39,7 @@ class EncodingDetector:
 
         return EncodingResult(encoding="iso-8859-1", confidence=0.5)
 
-    def decode(self, data: bytes, encoding: Optional[str] = None) -> str:
+    def decode(self, data: bytes, encoding: str | None = None) -> str:
         """Decode bytes to string, auto-detecting if needed."""
         if encoding is None:
             result = self.detect(data)

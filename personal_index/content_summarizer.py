@@ -6,7 +6,6 @@ import logging
 import re
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +56,11 @@ class SummaryConfig:
 class ContentSummarizer:
     """Extract key points from saved articles using extractive summarization."""
 
-    def __init__(self, config: Optional[SummaryConfig] = None) -> None:
+    def __init__(self, config: SummaryConfig | None = None) -> None:
         self.config = config or SummaryConfig()
 
     def summarize(
-        self, text: str, method: Optional[str] = None
+        self, text: str, method: str | None = None
     ) -> SummaryResult:
         """Generate a summary with key points from the text.
 
@@ -308,15 +307,15 @@ class ContentSummarizer:
 class ArticleSummarizer:
     """High-level API for summarizing articles with metadata."""
 
-    def __init__(self, config: Optional[SummaryConfig] = None) -> None:
+    def __init__(self, config: SummaryConfig | None = None) -> None:
         self.summarizer = ContentSummarizer(config)
 
     def summarize_article(
         self,
         title: str,
         content: str,
-        author: Optional[str] = None,
-        published_date: Optional[str] = None,
+        author: str | None = None,
+        published_date: str | None = None,
     ) -> dict:
         """Summarize an article with full metadata.
 

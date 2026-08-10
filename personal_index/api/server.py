@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, Optional
+from typing import Any
 
 from personal_index.config.loader import load_config
 from personal_index.config.models import AppConfig
@@ -22,8 +22,8 @@ async def lifespan(app):
 
 
 def create_app(
-    config: Optional[AppConfig] = None,
-    middleware: Optional[list] = None,
+    config: AppConfig | None = None,
+    middleware: list | None = None,
 ) -> Any:
     """Create and configure the FastAPI application.
 

@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class ExportFormat(Enum):
@@ -49,7 +49,7 @@ class DashboardExporter:
         self,
         stats: Any,
         fmt: ExportFormat = ExportFormat.JSON,
-        filename: Optional[str] = None,
+        filename: str | None = None,
     ) -> ExportResult:
         """Export aggregated stats to a format.
 
@@ -86,8 +86,8 @@ class DashboardExporter:
         self,
         pages: List[Any],
         fmt: ExportFormat = ExportFormat.CSV,
-        filename: Optional[str] = None,
-        fields: Optional[List[str]] = None,
+        filename: str | None = None,
+        fields: List[str] | None = None,
     ) -> ExportResult:
         """Export pages list to a format.
 
@@ -135,7 +135,7 @@ class DashboardExporter:
         self,
         series: List[Any],
         fmt: ExportFormat = ExportFormat.CSV,
-        filename: Optional[str] = None,
+        filename: str | None = None,
     ) -> ExportResult:
         """Export time series data.
 

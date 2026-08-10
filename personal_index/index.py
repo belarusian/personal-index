@@ -6,7 +6,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 # Common stop words to exclude from indexing
@@ -80,7 +80,7 @@ class SearchResult:
 class SearchIndex:
     """Search index with SQLite-like persistence via JSON."""
 
-    db_path: Optional[str] = None
+    db_path: str | None = None
     _pages: Dict[str, IndexedPage] = field(default_factory=dict, repr=False)
     _word_index: Dict[str, List[str]] = field(default_factory=dict, repr=False)
 
@@ -149,7 +149,7 @@ class SearchIndex:
         self._save()
         return True
 
-    def get_page(self, url: str) -> Optional[IndexedPage]:
+    def get_page(self, url: str) -> IndexedPage | None:
         """Get a page by URL."""
         return self._pages.get(url)
 

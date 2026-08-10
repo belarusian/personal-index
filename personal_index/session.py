@@ -8,7 +8,6 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +72,13 @@ class CrawlSession:
     name: str = ""
     status: SessionStatus = SessionStatus.ACTIVE
     started_at: float = field(default_factory=time.time)
-    completed_at: Optional[float] = None
+    completed_at: float | None = None
     stats: SessionStats = field(default_factory=SessionStats)
     config: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
 
     @property
-    def duration(self) -> Optional[float]:
+    def duration(self) -> float | None:
         """Elapsed time in seconds since the session started."""
         end = self.completed_at or time.time()
         return end - self.started_at
@@ -168,13 +167,13 @@ class CrawlSession:
 class SessionManager:
     """Manages crawl sessions with persistence."""
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         self._sessions: dict[str, CrawlSession] = {}
-        self._active_session: Optional[str] = None
+        self._active_session: str | None = None
         self._storage_path = storage_path
 
     def create_session(self, session_id: str, name: str = "",
-                       config: Optional[dict] = None) -> CrawlSession:
+                       config: dict | None = None) -> CrawlSession:
         """Create a new crawl session.
 
         Args:
@@ -195,7 +194,7 @@ class SessionManager:
             self._active_session = session_id
         return session
 
-    def get_session(self, session_id: str) -> Optional[CrawlSession]:
+    def get_session(self, session_id: str) -> CrawlSession | None:
         """Get a session by ID.
 
         Args:
@@ -206,7 +205,7 @@ class SessionManager:
         """
         return self._sessions.get(session_id)
 
-    def get_active_session(self) -> Optional[CrawlSession]:
+    def get_active_session(self) -> CrawlSession | None:
         """Get the currently active session.
 
         Returns:
@@ -262,7 +261,7 @@ class SessionManager:
             return True
         return False
 
-    def save_session(self, session_id: str) -> Optional[str]:
+    def save_session(self, session_id: str) -> str | None:
         """Save a session to disk.
 
         Args:
@@ -280,7 +279,7 @@ class SessionManager:
             json.dump(session.to_dict(), f, indent=2, default=str)
         return str(path)
 
-    def load_session(self, filepath: str) -> Optional[CrawlSession]:
+    def load_session(self, filepath: str) -> CrawlSession | None:
         """Load a session from disk.
 
         Args:

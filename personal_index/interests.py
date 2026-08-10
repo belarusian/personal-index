@@ -6,7 +6,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 
 @dataclass
@@ -48,7 +48,7 @@ class Interest:
 class InterestStore:
     """Persistent storage for interests (CLI-facing)."""
 
-    store_path: Optional[str] = None
+    store_path: str | None = None
     _interests: Dict[str, Interest] = field(
         default_factory=dict, repr=False
     )
@@ -96,7 +96,7 @@ class InterestStore:
             return True
         return False
 
-    def get(self, name: str) -> Optional[Interest]:
+    def get(self, name: str) -> Interest | None:
         """Get an interest by name."""
         return self._interests.get(name)
 
@@ -108,7 +108,7 @@ class InterestStore:
         """List enabled interests."""
         return [i for i in self._interests.values() if i.enabled]
 
-    def toggle(self, name: str) -> Optional[Interest]:
+    def toggle(self, name: str) -> Interest | None:
         """Toggle an interest's enabled status."""
         interest = self._interests.get(name)
         if interest is None:

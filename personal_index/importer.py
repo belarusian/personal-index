@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 from xml.etree import ElementTree as ET
 
 from .bookmarks import Bookmark, BookmarkManager
@@ -34,7 +34,7 @@ class Importer:
 
     SUPPORTED_FORMATS = {"json", "csv", "html", "xml", "necko", "netscape"}
 
-    def __init__(self, manager: Optional[BookmarkManager] = None):
+    def __init__(self, manager: BookmarkManager | None = None):
         self._manager = manager or BookmarkManager()
 
     @property

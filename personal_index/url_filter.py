@@ -5,7 +5,6 @@ from __future__ import annotations
 import fnmatch
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -106,7 +105,7 @@ class UrlFilter:
         """
         return [url for url in urls if self.is_blocked(url)]
 
-    def get_matching_rule(self, url: str) -> Optional[UrlFilterRule]:
+    def get_matching_rule(self, url: str) -> UrlFilterRule | None:
         """Get the first matching rule for a URL, or None.
 
         Args:

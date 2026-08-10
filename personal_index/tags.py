@@ -7,7 +7,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 
 @dataclass
@@ -33,7 +33,7 @@ class Tag:
 class TagStore:
     """Persistent storage for tags and their page associations."""
 
-    store_path: Optional[str] = None
+    store_path: str | None = None
     _tags: Dict[str, Tag] = field(default_factory=dict, repr=False)
     _page_tags: Dict[str, Set[str]] = field(default_factory=dict, repr=False)
 
@@ -91,7 +91,7 @@ class TagStore:
         self._save()
         return tag
 
-    def get_tag(self, name: str) -> Optional[Tag]:
+    def get_tag(self, name: str) -> Tag | None:
         """Get a tag by name."""
         return self._tags.get(name)
 

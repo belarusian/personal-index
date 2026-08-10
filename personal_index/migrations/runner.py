@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import List, Optional
+from typing import List
 
 from personal_index.migrations.base import (
     MigrationRegistry,
@@ -21,8 +21,8 @@ class MigrationRunner:
 
     def __init__(
         self,
-        registry: Optional[MigrationRegistry] = None,
-        store: Optional[MigrationStore] = None,
+        registry: MigrationRegistry | None = None,
+        store: MigrationStore | None = None,
     ):
         self.registry = registry or MigrationRegistry()
         self.store = store or MigrationStore()

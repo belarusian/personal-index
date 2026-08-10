@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 
 @dataclass
@@ -147,7 +147,7 @@ class BookmarkExporter:
     # Dispatch & File I/O
     # ------------------------------------------------------------------
 
-    def export(self, fmt: str) -> Optional[str]:
+    def export(self, fmt: str) -> str | None:
         """Export bookmarks in the specified format.
 
         Args:
@@ -166,8 +166,8 @@ class BookmarkExporter:
         return None
 
     def export_to_file(
-        self, filepath: str, fmt: Optional[str] = None
-    ) -> Optional[BookmarkExportResult]:
+        self, filepath: str, fmt: str | None = None
+    ) -> BookmarkExportResult | None:
         """Export bookmarks to a file.
 
         Args:

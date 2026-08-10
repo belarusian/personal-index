@@ -6,7 +6,6 @@ import html
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
 
 
 class FeedFormat(str, Enum):
@@ -26,8 +25,8 @@ class FeedItem:
     description: str = ""
     author: str = ""
     categories: list[str] = field(default_factory=list)
-    published: Optional[datetime] = None
-    updated: Optional[datetime] = None
+    published: datetime | None = None
+    updated: datetime | None = None
 
     def __post_init__(self) -> None:
         """Set defaults for id, published, and updated after init."""
@@ -127,13 +126,13 @@ class FeedGenerator:
         """Escape HTML entities."""
         return html.escape(text, quote=True)
 
-    def _format_rss_date(self, dt: Optional[datetime]) -> str:
+    def _format_rss_date(self, dt: datetime | None) -> str:
         """Format datetime for RSS."""
         if dt is None:
             return datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
         return dt.strftime("%a, %d %b %Y %H:%M:%S %z")
 
-    def _format_atom_date(self, dt: Optional[datetime]) -> str:
+    def _format_atom_date(self, dt: datetime | None) -> str:
         """Format datetime for Atom."""
         if dt is None:
             return datetime.now(timezone.utc).isoformat()

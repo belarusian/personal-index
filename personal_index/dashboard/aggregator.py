@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -57,7 +57,7 @@ class DashboardAggregator:
     """Aggregates data from index instances for dashboard display."""
 
     def __init__(self):
-        self._cached_stats: Optional[AggregatedStats] = None
+        self._cached_stats: AggregatedStats | None = None
         self._cache_time: float = 0.0
         self._cache_ttl: float = 30.0  # 30 second cache
 

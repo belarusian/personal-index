@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,7 @@ class SitemapEntry:
     def __init__(
         self,
         url: str,
-        last_modified: Optional[datetime] = None,
+        last_modified: datetime | None = None,
         change_frequency: str = "monthly",
         priority: float = 0.5,
     ):
@@ -52,7 +51,7 @@ class SitemapBuilder:
     def add_entry(
         self,
         url: str,
-        last_modified: Optional[datetime] = None,
+        last_modified: datetime | None = None,
         change_frequency: str = "monthly",
         priority: float = 0.5,
     ) -> None:

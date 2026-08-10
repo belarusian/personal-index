@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, TypeVar
 
 T = TypeVar("T")
 
@@ -12,9 +12,9 @@ T = TypeVar("T")
 class APIResponse(Generic[T]):
     """Standard API response wrapper."""
     success: bool
-    data: Optional[T] = None
-    error: Optional[str] = None
-    message: Optional[str] = None
+    data: T | None = None
+    error: str | None = None
+    message: str | None = None
     meta: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -39,7 +39,7 @@ class APIResponse(Generic[T]):
         return cls(success=True, data=data, message=message)
 
     @classmethod
-    def error(cls, message: str, error_code: Optional[str] = None) -> "APIResponse[T]":
+    def error(cls, message: str, error_code: str | None = None) -> "APIResponse[T]":
         return cls(success=False, error=error_code or "error", message=message)
 
 
@@ -86,7 +86,7 @@ class SearchRequest:
     limit: int = 20
     offset: int = 0
     filters: Dict[str, str] = field(default_factory=dict)
-    sort_by: Optional[str] = None
+    sort_by: str | None = None
     sort_order: str = "desc"
 
     def validate(self) -> List[str]:
@@ -149,7 +149,7 @@ class APIError(Exception):
         message: str,
         status_code: int = 400,
         error_code: str = "bad_request",
-        details: Optional[Dict[str, Any]] = None,
+        details: Dict[str, Any] | None = None,
     ):
         self.message = message
         self.status_code = status_code
