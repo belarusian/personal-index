@@ -256,11 +256,13 @@ class CacheDecorator:
         else:
             cache = LRUCache(max_size=self.lru_size)
 
+        _MISSING = object()
+
         def wrapper(*args, **kwargs):
             """Cache wrapper that stores and retrieves function results."""
             key = f"{func.__name__}:{args}:{sorted(kwargs.items())}"
-            result = cache.get(key)
-            if result is not None:
+            result = cache.get(key, default=_MISSING)
+            if result is not _MISSING:
                 return result
             result = func(*args, **kwargs)
             cache.put(key, result)
