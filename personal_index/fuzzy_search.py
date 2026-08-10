@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from typing import Dict, List, Tuple
 
@@ -12,7 +12,7 @@ class FuzzyMatch:
     """Result of a fuzzy search match."""
     text: str
     score: float
-    matched_indices: List[int] | None = None
+    matched_indices: list[int] = field(default_factory=list)
 
     def __post_init__(self):
         if self.matched_indices is None:
