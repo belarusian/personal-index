@@ -12,3 +12,9 @@ A personal web search engine that scans, filters, and indexes the web based on y
 - **Scheduled Crawling**: Periodic re-scanning of tracked topics
 
 ## Installation
+
+## Documentation
+- [Architecture](docs/ARCHITECTURE.md)
+- [API Reference](docs/API.md)
+- [Modules](docs/MODULES.md)
+- [Changelog](docs/CHANGELOG.md)
