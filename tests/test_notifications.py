@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import pytest
 from pathlib import Path
@@ -143,12 +144,12 @@ class TestFileHandler:
 class TestConsoleHandler:
     """Tests for ConsoleHandler."""
 
-    def test_handle_returns_true(self, capsys):
+    def test_handle_returns_true(self, caplog):
+        caplog.set_level(logging.INFO)
         handler = ConsoleHandler(colors=False)
         n = Notification(title="Test", message="Msg")
         assert handler.handle(n) is True
-        captured = capsys.readouterr()
-        assert "Test" in captured.out
+        assert "Test" in caplog.text
 
     def test_close(self):
         handler = ConsoleHandler()
@@ -202,7 +203,7 @@ class TestNotificationManager:
         manager.add_handler(handler)
         manager.add_filter(lambda n: n.level == "info")
         manager.notify(Notification(title="Test", level="error"))
-        assert len(handler.get_all()) == 0
+        assert len(handler.get_unread()) == 0
 
     def test_notify_crawl_complete(self):
         manager = NotificationManager()
