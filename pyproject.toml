@@ -16,6 +16,7 @@ dependencies = [
     "schedule>=1.2.0",
     "whoosh>=2.7.4",
     "pyyaml>=6.0",
+    "defusedxml>=0.7.1",
 ]
 
 [project.scripts]
