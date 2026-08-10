@@ -11,7 +11,7 @@ from personal_index.scheduler import (
     ScheduleStore,
     Scheduler,
 )
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.models import Interest, InterestType
 from personal_index.search_index import SearchIndex
 
@@ -28,7 +28,7 @@ def store(schedule_store_path):
 
 @pytest.fixture
 def interest_store(tmp_path):
-    s = InterestStore(storage_path=str(tmp_path / "interests.json"))
+    s = InterestStore(store_path=str(tmp_path / "interests.json"))
     s.add(Interest("Py", InterestType.KEYWORD, "python", 5))
     return s
 

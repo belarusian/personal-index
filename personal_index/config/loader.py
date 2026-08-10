@@ -75,7 +75,7 @@ def load_config(config_path: str) -> AppConfig:
     return AppConfig(
         data_dir=data.get("data_dir", ".personal_index"),
         interests=interests,
-        crawler=crawler,
+        crawl=crawler,
         scheduler=scheduler,
         index=index,
     )

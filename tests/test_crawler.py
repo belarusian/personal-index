@@ -4,7 +4,7 @@ import pytest
 import responses
 
 from personal_index.crawler import Crawler, CrawlerConfig
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.models import Interest, InterestType
 
 
@@ -167,8 +167,8 @@ class TestCrawler:
         assert crawler._filter_by_interests(page) is True
 
     def test_filter_by_interests_match(self, crawler):
-        store = InterestStore(storage_path="/tmp/test_interests_ci.json")
-        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+        store = InterestStore(store_path="/tmp/test_interests_ci.json")
+        store.add(Interest(name="Py", interest_type=InterestType.KEYWORD, value="python", priority=5))
         crawler.interest_store = store
 
         page = crawler._extract_content(
@@ -179,8 +179,8 @@ class TestCrawler:
         assert "Py" in page.matched_interests
 
     def test_filter_by_interests_no_match(self, crawler):
-        store = InterestStore(storage_path="/tmp/test_interests_ci2.json")
-        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+        store = InterestStore(store_path="/tmp/test_interests_ci2.json")
+        store.add(Interest(name="Py", interest_type=InterestType.KEYWORD, value="python", priority=5))
         crawler.interest_store = store
 
         page = crawler._extract_content(

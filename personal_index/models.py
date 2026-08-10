@@ -41,6 +41,8 @@ class Interest:
 
     def __post_init__(self):
         """Handle edge case where keywords is passed as int (positional priority)."""
+        # Clamp priority to 1-10
+        self.priority = max(1, min(10, self.priority))
         if isinstance(self.keywords, int):
             self.priority = self.keywords
             self.keywords = []
@@ -336,3 +338,89 @@ class Page:
             **{k: v for k, v in data.items()
                if k in cls.__dataclass_fields__}
         )
+@dataclass
+class SchedulerConfig:
+    """Scheduler configuration."""
+    enabled: bool = False
+    interval_hours: int = 24
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "SchedulerConfig":
+        return cls(**{k: v for k, v in data.items()
+                      if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class IndexConfig:
+    """Index configuration."""
+    index_path: str = ".personal_index"
+    enable_stemming: bool = True
+
+
+@dataclass
+class AppConfig:
+    """Application configuration."""
+    interests: list[Interest] = field(default_factory=list)
+    crawl: CrawlConfig = field(default_factory=CrawlConfig)
+    config_dir: str | None = None
+    index_dir: str | None = None
+    data_dir: str = ".personal_index"
+    index: IndexConfig = field(default_factory=IndexConfig)
+    scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
+
+    def to_dict(self) -> dict:
+        """Serialize the app config to a dictionary.
+
+        Returns:
+            Dictionary representation of the config.
+        """
+        return {
+            "interests": [i.to_dict() for i in self.interests],
+            "crawl": self.crawl.to_dict(),
+            "data_dir": self.data_dir,
+            "index": self.index.to_dict() if hasattr(self.index, 'to_dict') else {},
+            "scheduler": self.scheduler.to_dict() if hasattr(self.scheduler, 'to_dict') else {},
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AppConfig":
+        """Create an AppConfig from a dictionary.
+
+        Args:
+            data: Dictionary with config fields.
+
+        Returns:
+            A new AppConfig instance.
+        """
+        interests = [Interest.from_dict(d) for d in data.get("interests", [])]
+        crawl = CrawlConfig.from_dict(data.get("crawl", {}))
+        index_data = data.get("index", {})
+        index = IndexConfig(
+            index_path=index_data.get("index_path", ".personal_index"),
+            enable_stemming=index_data.get("enable_stemming", True),
+        )
+        scheduler_data = data.get("scheduler", {})
+        scheduler = SchedulerConfig(
+            enabled=scheduler_data.get("enabled", False),
+            interval_hours=scheduler_data.get("interval_hours", 24),
+        )
+        return cls(
+            interests=interests,
+            crawl=crawl,
+            data_dir=data.get("data_dir", ".personal_index"),
+            index=index,
+            scheduler=scheduler,
+        )
+
+    @property
+    def crawler(self) -> CrawlConfig:
+        """Alias for crawl property."""
+        return self.crawl
+
+    @crawler.setter
+    def crawler(self, value: CrawlConfig):
+        """Alias for crawl setter."""
+        self.crawl = value

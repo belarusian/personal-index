@@ -99,14 +99,14 @@ class TestIndexedPage:
 class TestSearchResult:
     def test_create_result(self):
         page = IndexedPage(url="https://example.com", title="Test")
-        result = SearchResult(page=page, score=0.95)
-        assert result.score == 0.95
-        assert result.page.url == "https://example.com"
+        result = SearchResult(url=page.url, title=page.title, relevance_score=0.95)
+        assert result.relevance_score == 0.95
+        assert result.url == "https://example.com"
 
     def test_result_to_dict(self):
         page = IndexedPage(url="https://example.com")
-        result = SearchResult(page=page, score=0.5, matched_terms=["test"])
+        result = SearchResult(url=page.url, title=page.title, relevance_score=0.5, matched_terms=["test"])
         d = result.to_dict()
-        assert d["score"] == 0.5
+        assert d["relevance_score"] == 0.5
         assert d["matched_terms"] == ["test"]
-        assert d["page"]["url"] == "https://example.com"
+        assert d["url"] == "https://example.com"

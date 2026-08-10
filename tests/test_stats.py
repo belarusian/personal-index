@@ -5,14 +5,14 @@ from datetime import datetime
 import pytest
 
 from personal_index.stats import IndexStats, CrawlStats, StatsCollector
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.search_index import SearchIndex
 from personal_index.models import CrawledPage, Interest, InterestType
 
 
 @pytest.fixture
 def interest_store(tmp_path):
-    store = InterestStore(storage_path=str(tmp_path / "interests.json"))
+    store = InterestStore(store_path=str(tmp_path / "interests.json"))
     store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
     return store
 
