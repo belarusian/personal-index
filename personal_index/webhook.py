@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 from urllib.request import Request, urlopen
-from urllib.error import URLError
 
 logger = logging.getLogger(__name__)
 
