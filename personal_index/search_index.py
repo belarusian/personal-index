@@ -88,9 +88,8 @@ class SearchIndex:
         if url not in self._pages:
             return False
         # Pop the page to remove it
-        page = self._pages.pop(url)  # noqa: F841
-        # text = f"{page.title} {page.content}".lower()
-        # tokens = set(self._tokenize(text))
+        self._pages.pop(url)
+        # Note: page content is removed from word_index below
         # Iterate over a copy of keys to avoid RuntimeError
         for token in list(self._word_index.keys()):
             if url in self._word_index[token]:
