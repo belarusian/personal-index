@@ -39,7 +39,7 @@ class APIResponse(Generic[T]):
         return cls(success=True, data=data, message=message)
 
     @classmethod
-    def error(cls, message: str, error_code: str | None = None) -> "APIResponse[T]":
+    def error_response(cls, message: str, error_code: str | None = None) -> "APIResponse[T]":
         return cls(success=False, error=error_code or "error", message=message)
 
 

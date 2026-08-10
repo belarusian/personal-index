@@ -126,11 +126,11 @@ def handle_api_error(exc: Exception) -> APIResponse:
         APIResponse with error details.
     """
     if isinstance(exc, APIError):
-        return APIResponse.error(
+        return APIResponse.error_response(
             message=exc.message,
             error_code=exc.error_code,
         )
-    return APIResponse.error(
+    return APIResponse.error_response(
         message="An unexpected error occurred",
         error_code="internal_error",
     )

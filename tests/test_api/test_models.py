@@ -25,7 +25,7 @@ class TestAPIResponse:
         assert resp.data == {"key": "value"}
 
     def test_error_response(self):
-        resp = APIResponse.error(message="Something failed", error_code="fail")
+        resp = APIResponse.error_response(message="Something failed", error_code="fail")
         assert resp.success is False
         assert resp.error == "fail"
         assert resp.message == "Something failed"
@@ -37,7 +37,7 @@ class TestAPIResponse:
         assert data["data"] == {"name": "test"}
 
     def test_to_dict_with_error(self):
-        resp = APIResponse.error(message="Not found", error_code="not_found")
+        resp = APIResponse.error_response(message="Not found", error_code="not_found")
         data = resp.to_dict()
         assert data["success"] is False
         assert data["error"] == "not_found"
@@ -59,7 +59,7 @@ class TestAPIResponse:
         assert resp.message == "All good"
 
     def test_error_without_code(self):
-        resp = APIResponse.error(message="Generic error")
+        resp = APIResponse.error_response(message="Generic error")
         assert resp.error == "error"
 
 
@@ -176,3 +176,31 @@ class TestAPIErrors:
     def test_forbidden_error(self):
         exc = ForbiddenError("No access")
         assert exc.status_code == 403
+
+class TestAPIResponseNoNamingConflict:
+    """TICKET-19: Verify error field and error_response classmethod coexist."""
+
+    def test_error_field_and_error_response_method_coexist(self):
+        """The error field and error_response classmethod should not conflict."""
+        # error_response classmethod should work
+        resp = APIResponse.error_response(message="fail", error_code="code123")
+        assert resp.success is False
+        assert resp.error == "code123"
+        assert resp.message == "fail"
+
+    def test_error_field_is_accessible_on_instance(self):
+        """The error dataclass field should be directly accessible."""
+        resp = APIResponse(success=False, error="my_error", message="oops")
+        assert resp.error == "my_error"
+
+    def test_error_field_can_be_set_independently(self):
+        """The error field should be settable without calling error_response."""
+        resp = APIResponse(success=True, data="ok", error="partial_error")
+        assert resp.success is True
+        assert resp.error == "partial_error"
+
+    def test_error_response_returns_correct_type(self):
+        """error_response should return an APIResponse instance."""
+        resp = APIResponse.error_response(message="test")
+        assert isinstance(resp, APIResponse)
+        assert resp.success is False
