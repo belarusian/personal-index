@@ -107,7 +107,7 @@ class Timeline:
         return {
             "total_events": len(self.entries),
             "by_type": type_counts,
-            "unique_items": len(set(e.item_id for e in self.entries)),
+            "unique_items": len({e.item_id for e in self.entries}),
         }
 
     def to_dict(self) -> dict[str, Any]:

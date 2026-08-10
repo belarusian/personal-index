@@ -170,7 +170,7 @@ class AnalyticsTracker:
             "avg_duration_ms": sum(durations) / len(durations) if durations else 0,
             "max_duration_ms": max(durations) if durations else 0,
             "click_through_rate": clicked / len(self._search_events) if self._search_events else 0,
-            "unique_queries": len(set(e.query for e in self._search_events)),
+            "unique_queries": len({e.query for e in self._search_events}),
         }
 
     def get_crawl_stats(self) -> Dict[str, Any]:

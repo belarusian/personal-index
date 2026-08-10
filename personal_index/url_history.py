@@ -107,7 +107,7 @@ class URLHistory:
             }
 
         total = len(self._history)
-        unique = len(set(v.url for v in self._history))
+        unique = len({v.url for v in self._history})
         errors = sum(1 for v in self._history if v.status_code >= 400 or v.error)
         successes = total - errors
         response_times = [v.response_time_ms for v in self._history if v.response_time_ms > 0]

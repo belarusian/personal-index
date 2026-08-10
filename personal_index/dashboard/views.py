@@ -180,7 +180,7 @@ def build_dashboard(
     if index_instance:
         pages = index_instance.get_all_pages() if hasattr(index_instance, "get_all_pages") else []
         overview_stats.append(DashboardStat(label="Total Pages", value=len(pages)))
-        domains = set(p.domain for p in pages if p.domain)
+        domains = {p.domain for p in pages if p.domain}
         overview_stats.append(DashboardStat(label="Unique Domains", value=len(domains)))
         interests = getattr(index_instance, "interests", [])
         overview_stats.append(DashboardStat(label="Active Interests", value=len(interests)))
