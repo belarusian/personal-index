@@ -216,10 +216,9 @@ class WebCrawler:
         self.config = config
         self.content_filter = content_filter
         # Pass config to Crawler if it's a CrawlerConfig, otherwise use default
-        from personal_index.crawler.__init__ import CrawlerConfig as _CC
         crawler_config = None
         if config is not None:
-            if isinstance(config, _CC):
+            if isinstance(config, CrawlerConfig):
                 crawler_config = config
             elif hasattr(config, 'crawler'):
                 # AppConfig has a .crawler attribute
