@@ -63,7 +63,7 @@ class ContentEnricher:
     NEGATIVE_WORDS = {
         "bad", "terrible", "awful", "horrible", "worst", "hate", "poor",
         "fail", "failure", "negative", "ugly", "broken", "error", "bug",
-        "problem", "issue", "difficult", "hard", "slow", "wrong", "wrong",
+        "problem", "issue", "difficult", "hard", "slow", "wrong",
         "disappointing", "frustrating", "annoying", "useless", "waste",
         "dangerous", "risky", "flaw", "limitation", "drawback",
     }
