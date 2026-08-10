@@ -43,6 +43,8 @@ class TagStore:
 
     def _load(self) -> None:
         """Load tags from file."""
+        if not self.store_path:
+            return
         try:
             with open(self.store_path, "r") as f:
                 data = json.load(f)

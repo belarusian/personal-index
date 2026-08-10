@@ -136,3 +136,26 @@ class TestSearchIndex:
         with SearchIndex(db_path=db_path) as idx:
             idx.add_page(_make_page("https://example.com/1", "Test", "Content"))
             assert idx.get_page_count() == 1
+
+
+class TestSearchIndexLoadNonePath:
+    """Tests for TICKET-28: _load() guards against None path."""
+
+    def test_load_with_none_path_does_not_crash(self):
+        """_load() should return early when db_path is None."""
+        idx = SearchIndex(db_path=None)
+        # Explicitly call _load() - should not raise TypeError
+        idx._load()
+        assert idx._pages == {}
+
+    def test_load_with_none_path_after_init(self):
+        """_load() called manually after init with None path should be safe."""
+        idx = SearchIndex()
+        idx._load()
+        assert idx._pages == {}
+
+    def test_save_with_none_path_does_not_crash(self):
+        """_save() should return early when db_path is None."""
+        idx = SearchIndex(db_path=None)
+        idx._save()
+        # Should not raise any error

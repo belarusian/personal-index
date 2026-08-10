@@ -103,3 +103,26 @@ class TestDomainManager:
     def test_empty_rules(self, tmp_path):
         dm = DomainManager(rules_file=str(tmp_path / "domains.json"))
         assert dm.list_rules() == []
+
+
+class TestDomainManagerLoadNonePath:
+    """Tests for TICKET-28: _load() guards against None path."""
+
+    def test_load_with_none_path_does_not_crash(self):
+        """_load() should return early when rules_file is None."""
+        mgr = DomainManager(rules_file=None)
+        # Explicitly call _load() - should not raise TypeError
+        mgr._load()
+        assert mgr._rules == {}
+
+    def test_load_with_none_path_after_init(self):
+        """_load() called manually after init with None path should be safe."""
+        mgr = DomainManager()
+        mgr._load()
+        assert mgr._rules == {}
+
+    def test_save_with_none_path_does_not_crash(self):
+        """_save() should return early when rules_file is None."""
+        mgr = DomainManager(rules_file=None)
+        mgr._save()
+        # Should not raise any error

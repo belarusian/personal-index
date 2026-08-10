@@ -59,6 +59,8 @@ class DomainManager:
             self._load()
 
     def _load(self) -> None:
+        if not self.rules_file:
+            return
         try:
             with open(self.rules_file, "r") as f:
                 data = json.load(f)

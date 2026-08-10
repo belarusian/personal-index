@@ -155,3 +155,26 @@ class TestTagStore:
         self.store.add_tag_to_page("http://example.com", "tag3")
         tags = self.store.get_tags_for_page("http://example.com")
         assert len(tags) == 3
+
+
+class TestTagStoreLoadNonePath:
+    """Tests for TICKET-28: _load() guards against None path."""
+
+    def test_load_with_none_path_does_not_crash(self):
+        """_load() should return early when store_path is None."""
+        store = TagStore(store_path=None)
+        # Explicitly call _load() - should not raise TypeError
+        store._load()
+        assert store._tags == {}
+
+    def test_load_with_none_path_after_init(self):
+        """_load() called manually after init with None path should be safe."""
+        store = TagStore()
+        store._load()
+        assert store._tags == {}
+
+    def test_save_with_none_path_does_not_crash(self):
+        """_save() should return early when store_path is None."""
+        store = TagStore(store_path=None)
+        store._save()
+        # Should not raise any error

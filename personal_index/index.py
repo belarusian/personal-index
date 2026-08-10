@@ -45,6 +45,8 @@ class SearchIndex:
 
     def _load(self) -> None:
         """Load index from file."""
+        if not self.db_path:
+            return
         try:
             with open(self.db_path, "r") as f:
                 data = json.load(f)
