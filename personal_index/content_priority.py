@@ -370,17 +370,6 @@ class PriorityFilter:
         Returns:
             List of ContentPriority items meeting the threshold.
         """
-        min_level: PriorityLevel,
-    ) -> list[ContentPriority]:
-        """Filter items to only those meeting minimum priority level.
-
-        Args:
-            items: List of content dicts.
-            min_level: Minimum priority level to include.
-
-        Returns:
-            List of ContentPriority items meeting the threshold.
-        """
         ranked = self.scorer.rank(items)
         return [
             p for p in ranked
@@ -397,16 +386,6 @@ class PriorityFilter:
         Args:
             items: List of content dicts.
             n: Number of items to return.
-
-        Returns:
-            List of top N ContentPriority items.
-        """
-    ) -> list[ContentPriority]:
-        """Get the top N highest-priority items.
-
-        Args:
-            items: List of content dicts.
-            n: Number of top items to return.
 
         Returns:
             List of top N ContentPriority items.
