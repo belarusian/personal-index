@@ -255,12 +255,11 @@ class HealthChecker:
                     status="ok",
                     message="Database integrity check passed",
                 )
-            else:
-                return HealthCheckResult(
-                    check_name="database",
-                    status="error",
-                    message=f"Database integrity check failed: {result}",
-                )
+            return HealthCheckResult(
+                check_name="database",
+                status="error",
+                message=f"Database integrity check failed: {result}",
+            )
         except Exception as e:
             return HealthCheckResult(
                 check_name="database",
@@ -288,20 +287,19 @@ class HealthChecker:
                 message="Data directory is readable and writable",
                 details={"readable": readable, "writable": writable},
             )
-        elif readable:
+        if readable:
             return HealthCheckResult(
                 check_name="permissions",
                 status="warning",
                 message="Data directory is read-only",
                 details={"readable": readable, "writable": writable},
             )
-        else:
-            return HealthCheckResult(
-                check_name="permissions",
-                status="error",
-                message="Data directory is not accessible",
-                details={"readable": readable, "writable": writable},
-            )
+        return HealthCheckResult(
+            check_name="permissions",
+            status="error",
+            message="Data directory is not accessible",
+            details={"readable": readable, "writable": writable},
+        )
 
     def check_dependencies(self) -> HealthCheckResult:
         """Check that required dependencies are installed."""

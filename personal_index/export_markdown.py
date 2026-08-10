@@ -76,12 +76,11 @@ class MarkdownExporter:
 
         if use_format == ExportFormat.MARKDOWN:
             return self._export_markdown(sorted_items)
-        elif use_format == ExportFormat.HTML:
+        if use_format == ExportFormat.HTML:
             return self._export_html(sorted_items)
-        elif use_format == ExportFormat.PLAIN_TEXT:
+        if use_format == ExportFormat.PLAIN_TEXT:
             return self._export_plain_text(sorted_items)
-        else:
-            return self._export_markdown(sorted_items)
+        return self._export_markdown(sorted_items)
 
     def _sort_items(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Sort items based on configuration."""
@@ -91,15 +90,15 @@ class MarkdownExporter:
                 key=lambda x: x.get("published_date", "") or x.get("created_at", ""),
                 reverse=True,
             )
-        elif self.config.sort_by == "title":
+        if self.config.sort_by == "title":
             return sorted(items, key=lambda x: x.get("title", "").lower())
-        elif self.config.sort_by == "priority":
+        if self.config.sort_by == "priority":
             return sorted(
                 items,
                 key=lambda x: x.get("priority_score", 0),
                 reverse=True,
             )
-        elif self.config.sort_by == "relevance":
+        if self.config.sort_by == "relevance":
             return sorted(
                 items,
                 key=lambda x: x.get("relevance_score", 0),

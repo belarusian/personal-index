@@ -159,9 +159,9 @@ class BookmarkExporter:
         fmt = fmt.lower()
         if fmt == "json":
             return self.export_json()
-        elif fmt == "html":
+        if fmt == "html":
             return self.export_html()
-        elif fmt == "opml":
+        if fmt == "opml":
             return self.export_opml()
         return None
 

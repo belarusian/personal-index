@@ -22,7 +22,7 @@ class Compressor:
         """Compress raw bytes data."""
         if fmt == CompressionFormat.GZIP:
             return gzip.compress(data)
-        elif fmt == CompressionFormat.ZLIB:
+        if fmt == CompressionFormat.ZLIB:
             return zlib.compress(data)
         raise ValueError(f"Unsupported format: {fmt}")
 
@@ -30,7 +30,7 @@ class Compressor:
         """Decompress raw bytes data."""
         if fmt == CompressionFormat.GZIP:
             return gzip.decompress(data)
-        elif fmt == CompressionFormat.ZLIB:
+        if fmt == CompressionFormat.ZLIB:
             return zlib.decompress(data)
         raise ValueError(f"Unsupported format: {fmt}")
 

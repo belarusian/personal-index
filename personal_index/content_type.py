@@ -270,11 +270,11 @@ class ContentTypeDetector:
         major = content_type.split("/")[0] if "/" in content_type else ""
         if major == "text":
             return "text"
-        elif major == "image":
+        if major == "image":
             return "image"
-        elif major == "video":
+        if major == "video":
             return "video"
-        elif major == "audio":
+        if major == "audio":
             return "audio"
 
         return "unknown"

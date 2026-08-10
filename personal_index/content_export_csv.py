@@ -91,22 +91,21 @@ class CSVExporter:
                 quoting=quoting, include_header=include_header,
                 column_names=col_map,
             )
-        elif export_format == ExportFormat.TSV:
+        if export_format == ExportFormat.TSV:
             return self._export_csv(
                 filtered, columns, delimiter="\t",
                 quoting=quoting, include_header=include_header,
                 column_names=col_map,
             )
-        elif export_format == ExportFormat.JSON:
+        if export_format == ExportFormat.JSON:
             return self._export_json(filtered, columns, col_map)
-        elif export_format == ExportFormat.JSON_LINES:
+        if export_format == ExportFormat.JSON_LINES:
             return self._export_json_lines(filtered, columns, col_map)
-        else:
-            return self._export_csv(
-                filtered, columns, delimiter=delimiter,
-                quoting=quoting, include_header=include_header,
-                column_names=col_map,
-            )
+        return self._export_csv(
+            filtered, columns, delimiter=delimiter,
+            quoting=quoting, include_header=include_header,
+            column_names=col_map,
+        )
 
     def _get_columns(self, items: list[dict]) -> list[str]:
         """Get all unique columns from items."""

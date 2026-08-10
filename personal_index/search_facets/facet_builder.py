@@ -107,6 +107,6 @@ class FacetBuilder:
 
         if isinstance(current, list):
             return current
-        elif current is not None:
+        if current is not None:
             return [current]
         return []

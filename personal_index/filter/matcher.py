@@ -27,11 +27,11 @@ class ContentMatcher:
             return any(
                 kw.lower() in text_lower for kw in self.interest.keywords
             )
-        elif self.interest.match_mode == MatchMode.ALL:
+        if self.interest.match_mode == MatchMode.ALL:
             return all(
                 kw.lower() in text_lower for kw in self.interest.keywords
             )
-        elif self.interest.match_mode == MatchMode.REGEX:
+        if self.interest.match_mode == MatchMode.REGEX:
             for kw in self.interest.keywords:
                 try:
                     if re.search(kw, text, re.IGNORECASE):
