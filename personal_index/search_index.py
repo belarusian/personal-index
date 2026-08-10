@@ -87,7 +87,8 @@ class SearchIndex:
         """Remove a page from the index."""
         if url not in self._pages:
             return False
-        # page = self._pages.pop(url)
+        # Pop the page to remove it
+        page = self._pages.pop(url)
         # text = f"{page.title} {page.content}".lower()
         # tokens = set(self._tokenize(text))
         # Iterate over a copy of keys to avoid RuntimeError
