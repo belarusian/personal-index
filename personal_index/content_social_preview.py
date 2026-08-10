@@ -22,6 +22,15 @@ class SocialPlatform:
         image_width: int = 1200,
         image_height: int = 630,
     ) -> None:
+        """Initialize social platform configuration.
+
+        Args:
+            value: Platform identifier.
+            max_title_length: Maximum title length for this platform.
+            max_description_length: Maximum description length.
+            image_width: Recommended image width.
+            image_height: Recommended image height.
+        """
         self.value = value
         self.max_title_length = max_title_length
         self.max_description_length = max_description_length
@@ -29,14 +38,17 @@ class SocialPlatform:
         self.image_height = image_height
 
     def __eq__(self, other: object) -> bool:
+        """Check equality based on platform value."""
         if isinstance(other, SocialPlatform):
             return self.value == other.value
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Hash based on platform value."""
         return hash(self.value)
 
     def __repr__(self) -> str:
+        """Return string representation."""
         return f"SocialPlatform.{self.value.upper()}"
 
 
@@ -92,6 +104,12 @@ class PreviewCardSize:
     }
 
     def __init__(self, width: int = 1200, height: int = 630) -> None:
+        """Initialize preview card size.
+
+        Args:
+            width: Card width in pixels.
+            height: Card height in pixels.
+        """
         self.width = width
         self.height = height
 
@@ -102,11 +120,13 @@ class PreviewCardSize:
         return self.width / self.height
 
     def __eq__(self, other: object) -> bool:
+        """Check equality based on dimensions."""
         if isinstance(other, PreviewCardSize):
             return self.width == other.width and self.height == other.height
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Hash based on dimensions."""
         return hash((self.width, self.height))
 
 
@@ -446,6 +466,11 @@ class PreviewCardGenerator:
     """Generate SVG preview cards."""
 
     def __init__(self, config: Optional[PreviewCardConfig] = None) -> None:
+        """Initialize the preview card generator.
+
+        Args:
+            config: Optional card configuration.
+        """
         self.config = config or PreviewCardConfig()
         self._cache: dict[str, PreviewCardResult] = {}
 
@@ -582,6 +607,11 @@ class PreviewCardManager:
     """Manage preview card generation and storage."""
 
     def __init__(self, config: Optional[PreviewCardConfig] = None) -> None:
+        """Initialize the preview card manager.
+
+        Args:
+            config: Optional card configuration.
+        """
         self.config = config or PreviewCardConfig()
         self.generator = PreviewCardGenerator(self.config)
         self._cards: dict[str, PreviewCardResult] = {}
@@ -667,6 +697,11 @@ class SocialPreviewEngine:
     """High-level engine for social preview generation."""
 
     def __init__(self, config: Optional[SocialPreviewConfig] = None) -> None:
+        """Initialize the social preview engine.
+
+        Args:
+            config: Optional social preview configuration.
+        """
         self.config = config or SocialPreviewConfig()
         self.card_manager = PreviewCardManager()
         self._previews: dict[str, SocialPreviewResult] = {}
