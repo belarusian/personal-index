@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import difflib
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
 

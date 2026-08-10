@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from personal_index.text_utils import tokenize
 

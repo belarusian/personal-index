@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
-from personal_index.text_utils import tokenize, STOPWORDS
+from personal_index.text_utils import tokenize
 
 
 # ---------------------------------------------------------------------------
