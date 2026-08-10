@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import threading
 from collections import OrderedDict
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
