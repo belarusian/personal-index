@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -91,9 +90,9 @@ class AppConfig:
     interests: list[Interest] = field(default_factory=list)
     crawl: CrawlConfig = field(default_factory=CrawlConfig)
     schedule: SchedulerConfig = field(default_factory=SchedulerConfig)
-    config_dir: Optional[str] = None
-    index_dir: Optional[str] = None
-    crawler: Optional[CrawlConfig] = None
+    config_dir: str | None = None
+    index_dir: str | None = None
+    crawler: CrawlConfig | None = None
 
     def __post_init__(self):
         # Default crawler to crawl if not set
@@ -160,7 +159,7 @@ class ConfigManager:
         """Remove an interest by topic."""
         config.interests = [i for i in config.interests if i.topic != topic]
 
-    def get_interest(self, config: AppConfig, topic: str) -> Optional[Interest]:
+    def get_interest(self, config: AppConfig, topic: str) -> Interest | None:
         """Get an interest by topic."""
         for interest in config.interests:
             if interest.topic == topic:

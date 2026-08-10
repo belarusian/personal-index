@@ -6,7 +6,8 @@ import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +19,8 @@ class RateLimitRule:
     max_requests: int
     window_seconds: float
     key: str = "ip"  # ip, user, api_key
-    path_pattern: Optional[str] = None
-    methods: Optional[List[str]] = None
+    path_pattern: str | None = None
+    methods: List[str] | None = None
 
     def matches(self, method: str, path: str) -> bool:
         """Check if this rule matches the request."""
@@ -56,7 +57,7 @@ class RateLimitEntry:
 class SlidingWindowRateLimiter:
     """Sliding window rate limiter for API requests."""
 
-    def __init__(self, rules: Optional[List[RateLimitRule]] = None):
+    def __init__(self, rules: List[RateLimitRule] | None = None):
         self.rules = rules or [
             RateLimitRule(max_requests=100, window_seconds=60.0, key="ip"),
         ]
@@ -147,7 +148,7 @@ class SlidingWindowRateLimiter:
 
         return status
 
-    def reset(self, identifier: Optional[str] = None):
+    def reset(self, identifier: str | None = None):
         """Reset rate limits.
 
         Args:
@@ -166,8 +167,8 @@ class RateLimitMiddleware:
     def __init__(
         self,
         app: Any,
-        limiter: Optional[SlidingWindowRateLimiter] = None,
-        key_extractor: Optional[Callable] = None,
+        limiter: SlidingWindowRateLimiter | None = None,
+        key_extractor: Callable | None = None,
     ):
         self.app = app
         self.limiter = limiter or SlidingWindowRateLimiter()

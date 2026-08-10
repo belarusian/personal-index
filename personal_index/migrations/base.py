@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Type
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class BaseMigration(ABC):
 class MigrationRegistry:
     """Registry that discovers and manages migration classes."""
 
-    def __init__(self, migration_dir: Optional[str] = None):
+    def __init__(self, migration_dir: str | None = None):
         self._migrations: Dict[int, Type[BaseMigration]] = {}
         self._migration_dir = migration_dir
         if migration_dir:
@@ -96,7 +96,7 @@ class MigrationRegistry:
         """Register a migration class."""
         self._migrations[migration_class.version] = migration_class
 
-    def get_migration(self, version: int) -> Optional[Type[BaseMigration]]:
+    def get_migration(self, version: int) -> Type[BaseMigration] | None:
         """Get a migration class by version."""
         return self._migrations.get(version)
 
@@ -157,7 +157,7 @@ class MigrationRegistry:
 class MigrationStore:
     """Stores migration history (in-memory or file-based)."""
 
-    def __init__(self, store_path: Optional[str] = None):
+    def __init__(self, store_path: str | None = None):
         self._records: Dict[int, MigrationRecord] = {}
         self._store_path = store_path
         if store_path and os.path.exists(store_path):
@@ -179,7 +179,7 @@ class MigrationStore:
         """Get list of applied migration versions."""
         return sorted(self._records.keys())
 
-    def get_record(self, version: int) -> Optional[MigrationRecord]:
+    def get_record(self, version: int) -> MigrationRecord | None:
         """Get migration record by version."""
         return self._records.get(version)
 

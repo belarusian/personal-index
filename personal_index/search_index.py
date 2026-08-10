@@ -7,7 +7,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from personal_index.models import CrawledPage
 
@@ -99,7 +99,7 @@ class SearchIndex:
         self._save()
         return True
 
-    def get(self, url: str) -> Optional[CrawledPage]:
+    def get(self, url: str) -> CrawledPage | None:
         """Get a page by URL."""
         return self._pages.get(url)
 

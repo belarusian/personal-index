@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -52,12 +52,12 @@ class BackupManifest:
 class BackupManager:
     """Manage backups of personal index data."""
 
-    def __init__(self, backup_dir: Optional[str] = None):
+    def __init__(self, backup_dir: str | None = None):
         self._backup_dir = backup_dir or str(Path.home() / ".personal_index" / "backups")
 
     def create_backup(self, source_dir: str,
-                      include_patterns: Optional[List[str]] = None,
-                      exclude_patterns: Optional[List[str]] = None,
+                      include_patterns: List[str] | None = None,
+                      exclude_patterns: List[str] | None = None,
                       compress: bool = True) -> BackupManifest:
         """Create a backup of the source directory."""
         source_path = Path(source_dir)
@@ -185,7 +185,7 @@ class BackupManager:
         manifest_file.unlink()
         return True
 
-    def get_backup_info(self, backup_id: str) -> Optional[BackupManifest]:
+    def get_backup_info(self, backup_id: str) -> BackupManifest | None:
         """Get info about a specific backup."""
         backup_path = Path(self._backup_dir)
         manifest_file = backup_path / f"backup_{backup_id}.json"
@@ -221,8 +221,8 @@ class BackupManager:
         return deleted
 
     def _collect_files(self, source: Path,
-                       include: Optional[List[str]] = None,
-                       exclude: Optional[List[str]] = None) -> List[Path]:
+                       include: List[str] | None = None,
+                       exclude: List[str] | None = None) -> List[Path]:
         """Collect files from source directory with filtering."""
         files = []
         exclude = exclude or []

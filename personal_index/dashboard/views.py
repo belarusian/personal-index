@@ -6,7 +6,7 @@ import html
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class DashboardStat:
 
     label: str
     value: Any
-    trend: Optional[str] = None
+    trend: str | None = None
     icon: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
@@ -35,8 +35,8 @@ class DashboardSection:
 
     title: str
     stats: List[DashboardStat] = field(default_factory=list)
-    table_data: Optional[List[Dict[str, Any]]] = None
-    chart_data: Optional[Dict[str, Any]] = None
+    table_data: List[Dict[str, Any]] | None = None
+    chart_data: Dict[str, Any] | None = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {

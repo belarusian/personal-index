@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 from urllib.parse import urlparse
 
 import requests
@@ -51,12 +50,12 @@ class CrawlerConfig:
 class Crawler:
     """Web crawler with depth control and politeness."""
 
-    def __init__(self, config: Optional[CrawlerConfig] = None):
+    def __init__(self, config: CrawlerConfig | None = None):
         self.config = config or CrawlerConfig()
         self._visited: set[str] = set()
         self._pages_crawled: int = 0
         self._results: list[CrawledPage] = []
-        self.interest_store: Optional[InterestStore] = None
+        self.interest_store: InterestStore | None = None
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "personal-index/0.1.0",
@@ -101,7 +100,7 @@ class Crawler:
                 return False
         return True
 
-    def _fetch(self, url: str) -> Optional[requests.Response]:
+    def _fetch(self, url: str) -> requests.Response | None:
         """Fetch a URL and return the response."""
         try:
             resp = self.session.get(
@@ -172,7 +171,7 @@ class Crawler:
         page.matched_interests = matched
         return len(matched) > 0
 
-    def crawl(self, seed_urls: list[str], max_depth: Optional[int] = None) -> list[CrawledPage]:
+    def crawl(self, seed_urls: list[str], max_depth: int | None = None) -> list[CrawledPage]:
         """Crawl starting from seed URLs."""
         depth_limit = max_depth if max_depth is not None else self.config.max_depth
         to_crawl = [(url, 0) for url in seed_urls]

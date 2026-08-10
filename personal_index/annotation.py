@@ -6,7 +6,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +33,10 @@ class Annotation:
     value: Any = None
     metadata: dict = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
-    updated_at: Optional[float] = None
+    updated_at: float | None = None
     author: str = ""
 
-    def update(self, value: Any = None, metadata: Optional[dict] = None) -> None:
+    def update(self, value: Any = None, metadata: dict | None = None) -> None:
         """Update the annotation value and/or metadata.
 
         Args:
@@ -86,7 +86,7 @@ class AnnotationStore:
         if annotation.annotation_id not in self._by_url[annotation.url]:
             self._by_url[annotation.url].append(annotation.annotation_id)
 
-    def get(self, annotation_id: str) -> Optional[Annotation]:
+    def get(self, annotation_id: str) -> Annotation | None:
         """Get an annotation by its ID.
 
         Args:
@@ -120,7 +120,7 @@ class AnnotationStore:
         """
         return [a for a in self._annotations.values() if a.annotation_type == annotation_type]
 
-    def update(self, annotation_id: str, value: Any = None, metadata: Optional[dict] = None) -> bool:
+    def update(self, annotation_id: str, value: Any = None, metadata: dict | None = None) -> bool:
         """Update an existing annotation by ID.
 
         Args:

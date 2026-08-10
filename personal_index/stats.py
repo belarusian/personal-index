@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from personal_index.interest_store import InterestStore
 from personal_index.search_index import SearchIndex
@@ -22,8 +22,8 @@ class IndexStats:
     pages_with_interests: int = 0
     top_domains: List[Tuple[str, int]] = field(default_factory=list)
     top_interests: List[Tuple[str, int]] = field(default_factory=list)
-    oldest_page: Optional[datetime] = None
-    newest_page: Optional[datetime] = None
+    oldest_page: datetime | None = None
+    newest_page: datetime | None = None
 
 
 @dataclass
@@ -40,8 +40,8 @@ class CrawlStats:
 class StatsCollector:
     """Collects and reports statistics."""
 
-    interest_store: Optional[InterestStore] = None
-    search_index: Optional[SearchIndex] = None
+    interest_store: InterestStore | None = None
+    search_index: SearchIndex | None = None
 
     def get_index_stats(self) -> IndexStats:
         """Calculate current index statistics."""

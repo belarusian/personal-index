@@ -6,7 +6,6 @@ import hashlib
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class VersionTracker:
         return hashlib.md5(combined.encode()).hexdigest()[:12]
 
     def record_version(self, url: str, content: str, title: str = "",
-                       metadata: Optional[dict] = None) -> ContentVersion:
+                       metadata: dict | None = None) -> ContentVersion:
         """Record a new version of content for a URL."""
         content_hash = self.compute_hash(content)
         version_id = self.generate_version_id(url, content_hash)
@@ -88,7 +87,7 @@ class VersionTracker:
         """Get all versions for a URL."""
         return self._versions.get(url, [])
 
-    def get_latest(self, url: str) -> Optional[ContentVersion]:
+    def get_latest(self, url: str) -> ContentVersion | None:
         """Get the latest version for a URL."""
         versions = self._versions.get(url, [])
         return versions[-1] if versions else None
@@ -109,7 +108,7 @@ class VersionTracker:
         """Get all tracked URLs."""
         return list(self._versions.keys())
 
-    def clear(self, url: Optional[str] = None) -> None:
+    def clear(self, url: str | None = None) -> None:
         """Clear versions for a URL or all URLs."""
         if url:
             self._versions.pop(url, None)

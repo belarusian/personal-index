@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 from personal_index.index import IndexedPage, SearchResult
 from personal_index.interests import Interest
@@ -151,7 +151,7 @@ def format_file_size(size: int) -> str:
         return f"{size / (1024 * 1024 * 1024):.1f}GB"
 
 
-def format_timestamp(timestamp: Optional[str]) -> str:
+def format_timestamp(timestamp: str | None) -> str:
     """Format a timestamp string for display."""
     if not timestamp:
         return "N/A"

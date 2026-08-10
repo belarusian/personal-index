@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import secrets
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -36,7 +35,7 @@ def _hash_with_salt(password: str, salt: str, iterations: int = 100_000) -> str:
 
 def hash_password(
     password: str,
-    config: Optional[PasswordConfig] = None,
+    config: PasswordConfig | None = None,
 ) -> str:
     """Hash a password with a random salt.
 
@@ -59,7 +58,7 @@ def hash_password(
 def verify_password(
     password: str,
     hashed_password: str,
-    config: Optional[PasswordConfig] = None,
+    config: PasswordConfig | None = None,
 ) -> bool:
     """Verify a password against a hashed password.
 

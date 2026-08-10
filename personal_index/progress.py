@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class ProgressState(Enum):
@@ -28,8 +28,8 @@ class ProgressStep:
     step_id: str
     description: str
     completed: bool = False
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    started_at: str | None = None
+    finished_at: str | None = None
     details: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -57,8 +57,8 @@ class ProgressTracker:
     total_steps: int = 0
     current_step: int = 0
     steps: List[Dict[str, Any]] = field(default_factory=list)
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
     message: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -128,7 +128,7 @@ class ProgressTracker:
         self.completed_at = datetime.now(timezone.utc).isoformat()
 
     def advance(self, step_description: str = "",
-                step_details: Optional[Dict[str, Any]] = None) -> None:
+                step_details: Dict[str, Any] | None = None) -> None:
         """Advance to the next step."""
         if self.state != ProgressState.RUNNING.value:
             return
@@ -194,12 +194,12 @@ class ProgressTracker:
 class ProgressStore:
     """Store and retrieve progress trackers."""
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         self._trackers: Dict[str, ProgressTracker] = {}
         self._storage_path = storage_path
 
     def create(self, operation_name: str, total_steps: int = 0,
-               metadata: Optional[Dict[str, Any]] = None) -> ProgressTracker:
+               metadata: Dict[str, Any] | None = None) -> ProgressTracker:
         """Create a new progress tracker."""
         tracker = ProgressTracker(
             operation_name=operation_name,
@@ -209,7 +209,7 @@ class ProgressStore:
         self._trackers[tracker.operation_id] = tracker
         return tracker
 
-    def get(self, operation_id: str) -> Optional[ProgressTracker]:
+    def get(self, operation_id: str) -> ProgressTracker | None:
         """Get a tracker by ID."""
         return self._trackers.get(operation_id)
 

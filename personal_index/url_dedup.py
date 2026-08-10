@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import difflib
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from urllib.parse import parse_qs, urlparse
 
 
@@ -13,7 +13,7 @@ class DedupResult:
     """Result of deduplication check."""
     is_duplicate: bool
     original_url: str
-    matched_url: Optional[str] = None
+    matched_url: str | None = None
     similarity_score: float = 0.0
     reason: str = ""
 
@@ -153,7 +153,7 @@ class URLDeduplicator:
 
         return unique_urls, results
 
-    def _find_fuzzy_match(self, path: str, candidates: List[str]) -> Optional[Tuple[str, float]]:
+    def _find_fuzzy_match(self, path: str, candidates: List[str]) -> Tuple[str, float] | None:
         """Find the best fuzzy match among candidates (path comparison)."""
         best_match = None
         best_score = 0.0
@@ -203,7 +203,7 @@ class URLDeduplicator:
         self._seen_urls.clear()
         self._url_groups.clear()
 
-    def get_canonical_url(self, url: str) -> Optional[str]:
+    def get_canonical_url(self, url: str) -> str | None:
         """Get the canonical (first seen) URL for a given URL."""
         normalized = self.normalize_url(url)
         return self._seen_urls.get(normalized)

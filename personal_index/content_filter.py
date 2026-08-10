@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 from personal_index.interest_store import InterestStore
 from personal_index.models import CrawledPage
@@ -29,8 +29,8 @@ class ContentFilter:
 
     def __init__(
         self,
-        config: Optional[FilterConfig] = None,
-        interest_store: Optional[InterestStore] = None,
+        config: FilterConfig | None = None,
+        interest_store: InterestStore | None = None,
     ):
         self.config = config or FilterConfig()
         self.interest_store = interest_store

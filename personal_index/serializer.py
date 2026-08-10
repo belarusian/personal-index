@@ -8,7 +8,7 @@ import json
 import logging
 from dataclasses import dataclass, fields
 from datetime import datetime
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class SerializationConfig:
 class Serializer:
     """Handles serialization of data to various formats."""
 
-    def __init__(self, config: Optional[SerializationConfig] = None):
+    def __init__(self, config: SerializationConfig | None = None):
         self.config = config or SerializationConfig()
 
     def to_json(self, data: Any) -> str:

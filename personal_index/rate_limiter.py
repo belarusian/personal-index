@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict
 
 
 @dataclass
@@ -13,7 +13,7 @@ class RateLimitConfig:
     """Configuration for rate limiting."""
     max_requests: int = 10
     window_seconds: float = 60.0
-    burst_size: Optional[int] = None
+    burst_size: int | None = None
 
     def __post_init__(self):
         if self.burst_size is None:
@@ -84,7 +84,7 @@ class TokenBucket:
 class RateLimiter:
     """Rate limiter that manages limits per domain."""
 
-    def __init__(self, default_config: Optional[RateLimitConfig] = None):
+    def __init__(self, default_config: RateLimitConfig | None = None):
         self._default_config = default_config or RateLimitConfig()
         self._buckets: Dict[str, TokenBucket] = {}
         self._configs: Dict[str, RateLimitConfig] = {}

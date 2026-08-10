@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -55,12 +55,12 @@ class PageResult:
         return self.page > 1
 
     @property
-    def next_page(self) -> Optional[int]:
+    def next_page(self) -> int | None:
         """Page number of the next page, or None."""
         return self.page + 1 if self.has_next else None
 
     @property
-    def prev_page(self) -> Optional[int]:
+    def prev_page(self) -> int | None:
         """Page number of the previous page, or None."""
         return self.page - 1 if self.has_prev else None
 
@@ -103,7 +103,7 @@ class Paginator:
         self._per_page = per_page
         self._max_per_page = max_per_page
 
-    def get_page(self, page: int = 1, per_page: Optional[int] = None) -> PageResult:
+    def get_page(self, page: int = 1, per_page: int | None = None) -> PageResult:
         """Get a specific page of results.
 
         Args:
@@ -138,7 +138,7 @@ class Paginator:
         """Total number of pages at the default per_page setting."""
         return max(1, math.ceil(len(self._items) / self._per_page))
 
-    def iterate_pages(self, per_page: Optional[int] = None) -> list[PageResult]:
+    def iterate_pages(self, per_page: int | None = None) -> list[PageResult]:
         """Get all pages as a list."""
         pages = []
         page_num = 1

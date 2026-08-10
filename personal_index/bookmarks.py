@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -58,7 +58,7 @@ class Bookmark:
 class BookmarkManager:
     """Manage bookmarks for the personal index."""
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         self._bookmarks: Dict[str, Bookmark] = {}
         self._storage_path = storage_path
 
@@ -72,7 +72,7 @@ class BookmarkManager:
         self._bookmarks[bookmark.url] = bookmark
         return bookmark
 
-    def get(self, url: str) -> Optional[Bookmark]:
+    def get(self, url: str) -> Bookmark | None:
         """Get a bookmark by URL."""
         return self._bookmarks.get(url)
 
@@ -99,7 +99,7 @@ class BookmarkManager:
         """List favorite bookmarks."""
         return [b for b in self._bookmarks.values() if b.is_favorite]
 
-    def toggle_favorite(self, url: str) -> Optional[Bookmark]:
+    def toggle_favorite(self, url: str) -> Bookmark | None:
         """Toggle favorite status of a bookmark."""
         bookmark = self._bookmarks.get(url)
         if bookmark:
@@ -136,7 +136,7 @@ class BookmarkManager:
         """Count total bookmarks."""
         return len(self._bookmarks)
 
-    def save(self, path: Optional[str] = None) -> str:
+    def save(self, path: str | None = None) -> str:
         """Save bookmarks to JSON file."""
         save_path = path or self._storage_path
         if not save_path:
@@ -146,7 +146,7 @@ class BookmarkManager:
             json.dump(data, f, indent=2)
         return save_path
 
-    def load(self, path: Optional[str] = None) -> int:
+    def load(self, path: str | None = None) -> int:
         """Load bookmarks from JSON file. Returns count loaded."""
         load_path = path or self._storage_path
         if not load_path:

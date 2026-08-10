@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 @dataclass
@@ -15,7 +15,7 @@ class Session:
     user_id: str = ""
     created_at: float = field(default_factory=time.time)
     last_accessed: float = field(default_factory=time.time)
-    expires_at: Optional[float] = None
+    expires_at: float | None = None
     data: Dict[str, Any] = field(default_factory=dict)
     ip_address: str = ""
     user_agent: str = ""
@@ -55,10 +55,10 @@ class SessionStore:
     def create_session(
         self,
         user_id: str,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
         ip_address: str = "",
         user_agent: str = "",
-        data: Optional[Dict[str, Any]] = None,
+        data: Dict[str, Any] | None = None,
     ) -> Session:
         """Create a new session for a user.
 
@@ -83,7 +83,7 @@ class SessionStore:
         self._maybe_cleanup()
         return session
 
-    def get_session(self, session_id: str) -> Optional[Session]:
+    def get_session(self, session_id: str) -> Session | None:
         """Get a session by ID, updating last accessed time.
 
         Args:
@@ -104,8 +104,8 @@ class SessionStore:
     def update_session(
         self,
         session_id: str,
-        data: Optional[Dict[str, Any]] = None,
-        extend_ttl: Optional[int] = None,
+        data: Dict[str, Any] | None = None,
+        extend_ttl: int | None = None,
     ) -> bool:
         """Update session data and optionally extend TTL.
 
@@ -154,7 +154,7 @@ class SessionStore:
             del self._sessions[sid]
         return len(to_remove)
 
-    def get_active_count(self, user_id: Optional[str] = None) -> int:
+    def get_active_count(self, user_id: str | None = None) -> int:
         """Get count of active sessions.
 
         Args:

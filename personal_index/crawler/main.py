@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 import requests
 
@@ -38,8 +38,8 @@ class Crawler:
 
     def __init__(
         self,
-        config: Optional[CrawlerConfig] = None,
-        interest_store: Optional[InterestStore] = None,
+        config: CrawlerConfig | None = None,
+        interest_store: InterestStore | None = None,
     ):
         self.config = config or CrawlerConfig()
         self.interest_store = interest_store
@@ -129,7 +129,7 @@ class Crawler:
             time.sleep(wait)
         self._domain_delay[domain] = time.time()
 
-    def _fetch(self, url: str) -> Optional[requests.Response]:
+    def _fetch(self, url: str) -> requests.Response | None:
         """Fetch a URL and return response."""
         try:
             resp = self.session.get(url, timeout=self.config.timeout)

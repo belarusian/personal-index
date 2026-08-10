@@ -9,7 +9,7 @@ import json
 import time
 import uuid
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 @dataclass
@@ -17,7 +17,7 @@ class TokenPayload:
     """Payload data embedded in a JWT token."""
     sub: str  # subject (user identifier)
     iat: float = field(default_factory=time.time)  # issued at
-    exp: Optional[float] = None  # expiration
+    exp: float | None = None  # expiration
     jti: str = field(default_factory=lambda: uuid.uuid4().hex)  # unique token ID
     roles: list = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -45,9 +45,9 @@ class JWTManager:
     def create_token(
         self,
         subject: str,
-        roles: Optional[list] = None,
-        ttl: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        roles: list | None = None,
+        ttl: int | None = None,
+        metadata: Dict[str, Any] | None = None,
     ) -> str:
         """Create a new JWT token.
 
@@ -69,7 +69,7 @@ class JWTManager:
         )
         return self._encode(payload.to_dict())
 
-    def verify_token(self, token: str) -> Optional[TokenPayload]:
+    def verify_token(self, token: str) -> TokenPayload | None:
         """Verify and decode a JWT token.
 
         Args:
@@ -111,7 +111,7 @@ class JWTManager:
         signature = self._sign(signing_input)
         return f"{signing_input}.{signature}"
 
-    def _decode(self, token: str) -> Optional[Dict[str, Any]]:
+    def _decode(self, token: str) -> Dict[str, Any] | None:
         """Decode and verify a JWT-like token."""
         parts = token.split(".")
         if len(parts) != 3:
@@ -158,7 +158,7 @@ def generate_token(
     secret: str,
     subject: str,
     ttl: int = 3600,
-    roles: Optional[list] = None,
+    roles: list | None = None,
 ) -> str:
     """Convenience function to generate a JWT token.
 
@@ -175,7 +175,7 @@ def generate_token(
     return manager.create_token(subject, roles=roles)
 
 
-def verify_token(token: str, secret: str) -> Optional[TokenPayload]:
+def verify_token(token: str, secret: str) -> TokenPayload | None:
     """Convenience function to verify a JWT token.
 
     Args:

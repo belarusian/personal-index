@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,9 @@ class CORSHeadersMiddleware:
     def __init__(
         self,
         app,
-        allowed_origins: Optional[list] = None,
-        allowed_methods: Optional[list] = None,
-        allowed_headers: Optional[list] = None,
+        allowed_origins: list | None = None,
+        allowed_methods: list | None = None,
+        allowed_headers: list | None = None,
     ):
         self.app = app
         self.allowed_origins = allowed_origins or ["*"]
@@ -133,7 +133,7 @@ def create_middleware_stack(
     enable_logging: bool = True,
     enable_cors: bool = True,
     enable_request_id: bool = True,
-    cors_origins: Optional[list] = None,
+    cors_origins: list | None = None,
 ) -> Any:
     """Create a stack of middleware for the application.
 

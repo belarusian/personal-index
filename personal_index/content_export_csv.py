@@ -8,7 +8,8 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
+from collections.abc import Callable
 
 
 class ExportFormat(str, Enum):
@@ -45,14 +46,14 @@ class CSVExporter:
     def export(
         self,
         items: list[dict],
-        columns: Optional[list[str]] = None,
+        columns: list[str] | None = None,
         delimiter: str = ",",
         quoting: int = csv.QUOTE_MINIMAL,
         include_header: bool = True,
-        column_names: Optional[dict[str, str]] = None,
-        filter_fn: Optional[Callable[[dict], bool]] = None,
-        sort_key: Optional[Callable[[dict], Any]] = None,
-        limit: Optional[int] = None,
+        column_names: dict[str, str] | None = None,
+        filter_fn: Callable[[dict], bool] | None = None,
+        sort_key: Callable[[dict], Any] | None = None,
+        limit: int | None = None,
         offset: int = 0,
         format: ExportFormat = ExportFormat.CSV,
         encoding: str = "utf-8",
@@ -143,7 +144,7 @@ class CSVExporter:
         delimiter: str = ",",
         quoting: int = csv.QUOTE_MINIMAL,
         include_header: bool = True,
-        column_names: Optional[dict[str, str]] = None,
+        column_names: dict[str, str] | None = None,
     ) -> str:
         """Export items as CSV string."""
         col_map = column_names or {}
@@ -167,7 +168,7 @@ class CSVExporter:
         self,
         items: list[dict],
         columns: list[str],
-        column_names: Optional[dict[str, str]] = None,
+        column_names: dict[str, str] | None = None,
     ) -> str:
         """Export items as JSON array."""
         col_map = column_names or {}
@@ -184,7 +185,7 @@ class CSVExporter:
         self,
         items: list[dict],
         columns: list[str],
-        column_names: Optional[dict[str, str]] = None,
+        column_names: dict[str, str] | None = None,
     ) -> str:
         """Export items as JSON Lines (one JSON object per line)."""
         col_map = column_names or {}

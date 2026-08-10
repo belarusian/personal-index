@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -30,7 +29,7 @@ class ThrottleState:
     """Tracks throttle state for a domain."""
 
     request_times: list[float] = field(default_factory=list)
-    last_request: Optional[float] = None
+    last_request: float | None = None
     total_requests: int = 0
     total_wait_time: float = 0.0
 
@@ -38,7 +37,7 @@ class ThrottleState:
 class ThrottleManager:
     """Manages request throttling across multiple domains."""
 
-    def __init__(self, default_rule: Optional[ThrottleRule] = None):
+    def __init__(self, default_rule: ThrottleRule | None = None):
         self._rules: dict[str, ThrottleRule] = {}
         self._states: dict[str, ThrottleState] = {}
         self._default_rule = default_rule or ThrottleRule()
@@ -112,7 +111,7 @@ class ThrottleManager:
         parsed = urlparse(url)
         return parsed.netloc or url
 
-    def get_stats(self, domain: Optional[str] = None) -> dict:
+    def get_stats(self, domain: str | None = None) -> dict:
         """Process get_stats.
 
         Args:
@@ -135,7 +134,7 @@ class ThrottleManager:
             "total_wait_time": sum(s.total_wait_time for s in self._states.values()),
         }
 
-    def reset(self, domain: Optional[str] = None) -> None:
+    def reset(self, domain: str | None = None) -> None:
         """Reset throttle counters.
 
         Args:

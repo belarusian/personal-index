@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Optional
 
 
 @dataclass
@@ -20,7 +19,7 @@ class Collection:
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
-    updated_at: Optional[str] = None
+    updated_at: str | None = None
 
     def add_item(self, item_id: str) -> None:
         """Add an item to this collection."""
@@ -90,7 +89,7 @@ class CollectionManager:
         self._collections[c.collection_id] = c
         return c.collection_id
 
-    def get(self, collection_id: str) -> Optional[Collection]:
+    def get(self, collection_id: str) -> Collection | None:
         """Get a collection by ID."""
         return self._collections.get(collection_id)
 

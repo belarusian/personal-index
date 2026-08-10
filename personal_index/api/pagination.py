@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generic, List, Sequence, TypeVar
+from typing import Generic, List, TypeVar
+from collections.abc import Sequence
 
 T = TypeVar("T")
 

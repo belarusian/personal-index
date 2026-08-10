@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -45,9 +44,9 @@ class URLValidator:
 
     def __init__(
         self,
-        allowed_schemes: Optional[set[str]] = None,
-        blocked_domains: Optional[set[str]] = None,
-        blocked_paths: Optional[list[str]] = None,
+        allowed_schemes: set[str] | None = None,
+        blocked_domains: set[str] | None = None,
+        blocked_paths: list[str] | None = None,
         max_url_length: int = MAX_URL_LENGTH,
     ):
         self.allowed_schemes = allowed_schemes or self.SCHEMES

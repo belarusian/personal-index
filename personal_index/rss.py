@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -16,8 +16,8 @@ class FeedEntry:
     summary: str = ""
     content: str = ""
     author: str = ""
-    published: Optional[str] = None
-    updated: Optional[str] = None
+    published: str | None = None
+    updated: str | None = None
     categories: List[str] = field(default_factory=list)
     guid: str = ""
 

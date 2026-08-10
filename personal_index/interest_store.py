@@ -7,7 +7,7 @@ import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from personal_index.models import Interest, InterestType
 
@@ -90,7 +90,7 @@ class InterestStore:
                 return True
         return False
 
-    def get(self, name: str) -> Optional[Interest]:
+    def get(self, name: str) -> Interest | None:
         """Get an interest by name."""
         for interest in self._interests:
             if interest.name == name:
@@ -103,7 +103,7 @@ class InterestStore:
             return [i for i in self._interests if i.enabled]
         return list(self._interests)
 
-    def toggle(self, name: str) -> Optional[Interest]:
+    def toggle(self, name: str) -> Interest | None:
         """Toggle an interest's enabled status."""
         interest = self.get(name)
         if interest is None:
@@ -112,7 +112,7 @@ class InterestStore:
         self._save()
         return interest
 
-    def update_priority(self, name: str, priority: int) -> Optional[Interest]:
+    def update_priority(self, name: str, priority: int) -> Interest | None:
         """Update an interest's priority (clamped 1-10)."""
         interest = self.get(name)
         if interest is None:

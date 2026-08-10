@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from .bookmarks import BookmarkManager
-from typing import List, Optional
+from typing import List
 
 
 
@@ -45,7 +45,7 @@ class Exporter:
 
     SUPPORTED_FORMATS = {"json", "csv", "html", "xml", "markdown", "opml"}
 
-    def __init__(self, manager: Optional[BookmarkManager] = None):
+    def __init__(self, manager: BookmarkManager | None = None):
         self._manager = manager or BookmarkManager()
 
     @property
@@ -53,7 +53,7 @@ class Exporter:
         """Manager."""
         return self._manager
 
-    def export_to_file(self, filepath: str, fmt: Optional[str] = None) -> ExportResult:
+    def export_to_file(self, filepath: str, fmt: str | None = None) -> ExportResult:
         """Export bookmarks to a file, auto-detecting format from extension."""
         if fmt is None:
             ext = Path(filepath).suffix.lstrip(".").lower()
@@ -74,7 +74,7 @@ class Exporter:
             format=fmt,
         )
 
-    def export_to_content(self, fmt: str) -> Optional[str]:
+    def export_to_content(self, fmt: str) -> str | None:
         """Export bookmarks to a string in the specified format."""
         fmt = fmt.lower()
         if fmt == "json":
@@ -209,10 +209,10 @@ class Exporter:
     def export_filtered(
         self,
         fmt: str,
-        category: Optional[str] = None,
-        tag: Optional[str] = None,
+        category: str | None = None,
+        tag: str | None = None,
         favorites_only: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Export filtered bookmarks to a string."""
         bookmarks = self._manager.list_all()
 

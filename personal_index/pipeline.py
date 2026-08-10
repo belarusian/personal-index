@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class ContentPipeline:
         """Names of currently enabled steps."""
         return [s.name for s in self._steps if s.enabled]
 
-    def get_step(self, name: str) -> Optional[PipelineStep]:
+    def get_step(self, name: str) -> PipelineStep | None:
         """Get a step by name.
 
         Args:

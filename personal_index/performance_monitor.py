@@ -6,7 +6,6 @@ import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +74,7 @@ class PerformanceMonitor:
         self._window_size = window_size
         self._timers: dict[str, float] = {}
 
-    def record(self, name: str, value: float, tags: Optional[dict] = None) -> None:
+    def record(self, name: str, value: float, tags: dict | None = None) -> None:
         """Record a metric value."""
         sample = MetricSample(name=name, value=value, tags=tags or {})
         samples = self._samples[name]
@@ -96,7 +95,7 @@ class PerformanceMonitor:
         """Create a timer context manager."""
         return TimerContext(self, name)
 
-    def get_stats(self, name: str) -> Optional[MetricStats]:
+    def get_stats(self, name: str) -> MetricStats | None:
         """Get aggregated stats for a metric."""
         return self._stats.get(name)
 
@@ -121,7 +120,7 @@ class TimerContext:
     def __init__(self, monitor: PerformanceMonitor, name: str):
         self._monitor = monitor
         self._name = name
-        self._start: Optional[float] = None
+        self._start: float | None = None
 
     def __enter__(self) -> TimerContext:
         self._start = time.time()

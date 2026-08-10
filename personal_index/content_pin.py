@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -32,7 +32,7 @@ class PinnedItem:
 class ContentPinner:
     """Manage pinned content items."""
 
-    def __init__(self, storage_path: Optional[str] = None) -> None:
+    def __init__(self, storage_path: str | None = None) -> None:
         """Initialize the content pinner.
 
         Args:
@@ -77,7 +77,7 @@ class ContentPinner:
         with open(self.storage_path, "w") as f:
             json.dump(data, f, indent=2)
 
-    def pin(self, item_id: str, reason: str = "", metadata: Optional[dict] = None) -> bool:
+    def pin(self, item_id: str, reason: str = "", metadata: dict | None = None) -> bool:
         """Pin a content item.
 
         Args:
@@ -136,7 +136,7 @@ class ContentPinner:
 
 
 # Module-level instance for convenience
-_default_pinner: Optional[ContentPinner] = None
+_default_pinner: ContentPinner | None = None
 
 
 def _get_default_pinner() -> ContentPinner:
@@ -147,7 +147,7 @@ def _get_default_pinner() -> ContentPinner:
     return _default_pinner
 
 
-def pin_content(item_id: str, reason: str = "", metadata: Optional[dict] = None) -> bool:
+def pin_content(item_id: str, reason: str = "", metadata: dict | None = None) -> bool:
     """Pin a content item using the default pinner.
 
     Args:

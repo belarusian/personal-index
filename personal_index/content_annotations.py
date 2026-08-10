@@ -6,7 +6,6 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
 
 
 class AnnotationType(str, Enum):
@@ -29,12 +28,12 @@ class Annotation:
     annotation_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     author: str = ""
     tags: list[str] = field(default_factory=list)
-    position_start: Optional[int] = None
-    position_end: Optional[int] = None
+    position_start: int | None = None
+    position_end: int | None = None
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
-    updated_at: Optional[str] = None
+    updated_at: str | None = None
 
     def update_text(self, new_text: str) -> None:
         """Update the annotation text."""
@@ -131,7 +130,7 @@ class AnnotationManager:
                 self._by_tag[tag] = []
             self._by_tag[tag].append(annotation.annotation_id)
 
-    def get(self, annotation_id: str) -> Optional[Annotation]:
+    def get(self, annotation_id: str) -> Annotation | None:
         """Get an annotation by ID."""
         return self._annotations.get(annotation_id)
 

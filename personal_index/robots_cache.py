@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ class RobotsCacheEntry:
     domain: str
     allowed: dict[str, bool] = field(default_factory=dict)
     disallowed: dict[str, bool] = field(default_factory=dict)
-    crawl_delay: Optional[float] = None
+    crawl_delay: float | None = None
     sitemap_urls: list[str] = field(default_factory=list)
     fetched_at: float = field(default_factory=time.time)
     raw_content: str = ""
@@ -57,7 +56,7 @@ class RobotsCache:
         self._ttl = ttl
         self._max_entries = max_entries
 
-    def get(self, domain: str) -> Optional[RobotsCacheEntry]:
+    def get(self, domain: str) -> RobotsCacheEntry | None:
         """Get a cached robots.txt entry for a domain.
 
         Args:

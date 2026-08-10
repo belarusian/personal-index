@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class ExportConfig:
     include_tags: bool = True
     include_summary: bool = False
     sort_by: str = "date"
-    group_by: Optional[str] = None
+    group_by: str | None = None
 
     _VALID_SORT = {"date", "title", "priority", "relevance"}
     _VALID_GROUP = {"tags", "date", "category", None}
@@ -51,13 +51,13 @@ class MarkdownExporter:
     or date, and optional metadata/tags/summary inclusion.
     """
 
-    def __init__(self, config: Optional[ExportConfig] = None) -> None:
+    def __init__(self, config: ExportConfig | None = None) -> None:
         self.config = config or ExportConfig()
 
     def export(
         self,
         items: list[dict[str, Any]],
-        format: Optional[ExportFormat] = None,
+        format: ExportFormat | None = None,
     ) -> str:
         """Export content items to the specified format.
 

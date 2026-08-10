@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 from urllib.parse import urljoin
 
 
@@ -13,7 +13,7 @@ from urllib.parse import urljoin
 class SitemapEntry:
     """A single entry from a sitemap."""
     loc: str
-    lastmod: Optional[str] = None
+    lastmod: str | None = None
     changefreq: str = "monthly"
     priority: float = 0.5
 
@@ -111,7 +111,7 @@ class SitemapParser:
 
     def _parse_url_element(
         self, url_elem: ET.Element, base_url: str = ""
-    ) -> Optional[SitemapEntry]:
+    ) -> SitemapEntry | None:
         """Parse a single <url> element."""
         loc_elem = url_elem.find("ns:loc", self.NAMESPACES)
         if loc_elem is None or not loc_elem.text:
