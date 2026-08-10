@@ -138,7 +138,7 @@ class SlidingWindowRateLimiter:
             if entry:
                 entry.cleanup(now, rule.window_seconds)
                 remaining = max(0, rule.max_requests - len(entry.timestamps))
-                status["rules"].append({  # type: ignore[misc]
+                status["rules"].append({  # type: ignore[attr-defined]
                     "key": rule.key,
                     "limit": rule.max_requests,
                     "remaining": remaining,
