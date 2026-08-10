@@ -3,7 +3,7 @@
 import pytest
 
 from personal_index.content_filter import ContentFilter, FilterConfig
-from personal_index.interest_store import InterestStore
+from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest, InterestType
 
 
@@ -14,7 +14,7 @@ def filter_no_store():
 
 @pytest.fixture
 def filter_with_store(tmp_path):
-    store = InterestStore(storage_path=str(tmp_path / "interests.json"))
+    store = InterestStore(store_path=str(tmp_path / "interests.json"))
     store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
     store.add(Interest("ML", InterestType.TOPIC, "machine learning", 8))
     return ContentFilter(interest_store=store)
