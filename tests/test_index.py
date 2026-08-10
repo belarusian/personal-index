@@ -159,3 +159,28 @@ class TestSearchIndexLoadNonePath:
         idx = SearchIndex(db_path=None)
         idx._save()
         # Should not raise any error
+
+
+class TestRemovePageNoUnusedVariable:
+    """Tests for TICKET-32: No unused variable in remove_page()."""
+
+    def test_remove_page_no_unused_variable(self, search_index):
+        """remove_page should not assign unused variable page."""
+        import inspect
+        source = inspect.getsource(search_index.remove_page)
+        assert 'page = self._pages.pop' not in source,             'remove_page should not assign unused variable page'
+
+    def test_remove_page_cleans_word_index(self, search_index):
+        """remove_page should clean up word index entries."""
+        page = _make_page('https://example.com/1', 'Page One', 'Hello world test')
+        search_index.add_page(page)
+        # Verify word index has entries
+        assert 'hello' in search_index._word_index
+        assert 'world' in search_index._word_index
+        # Remove page
+        result = search_index.remove_page('https://example.com/1')
+        assert result is True
+        # Verify word index is cleaned up
+        assert 'hello' not in search_index._word_index
+        assert 'world' not in search_index._word_index
+        assert search_index.get_page_count() == 0
