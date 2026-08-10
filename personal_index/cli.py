@@ -204,13 +204,13 @@ def config_show():
     cfg = mgr.config
     click.echo(f"Config dir: {cfg.config_dir}")
     click.echo(f"Data dir: {cfg.data_dir}")
-    click.echo(f"\nCrawler:")
+    click.echo("\nCrawler:")
     click.echo(f"  Max depth: {cfg.crawler.max_depth}")
     click.echo(f"  Politeness delay: {cfg.crawler.politeness_delay}s")
     click.echo(f"  Max concurrent: {cfg.crawler.max_concurrent_requests}")
     click.echo(f"  Timeout: {cfg.crawler.request_timeout}s")
     click.echo(f"  Respect robots.txt: {cfg.crawler.respect_robots_txt}")
-    click.echo(f"\nSchedule:")
+    click.echo("\nSchedule:")
     click.echo(f"  Enabled: {cfg.schedule.enabled}")
     click.echo(f"  Interval: {cfg.schedule.interval_hours}h")
 
