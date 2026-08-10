@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
+
+from typing import ClassVar
 
 
 import json

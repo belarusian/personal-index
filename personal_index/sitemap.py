@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """Sitemap parser for discovering URLs on websites."""
+
+from typing import ClassVar
 
 
 import xml.etree.ElementTree as ET

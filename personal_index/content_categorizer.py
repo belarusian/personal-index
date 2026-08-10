@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 """Content categorizer module for classifying saved items by topic.
 
 Analyzes content text, titles, URLs, and metadata to assign topic categories
 with confidence scores. Uses rule-based keyword matching with multiple signals.
 """
+
+from typing import ClassVar
 
 
 from dataclasses import dataclass, field
