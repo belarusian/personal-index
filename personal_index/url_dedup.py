@@ -99,8 +99,7 @@ class URLDeduplicator:
         # Fuzzy match within same domain (compare paths only)
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
-        if domain.startswith("www."):
-            domain = domain[4:]
+        domain = domain.removeprefix("www.")
 
         if domain in self._url_groups:
             path = self._get_path(normalized)
@@ -132,8 +131,7 @@ class URLDeduplicator:
             # Track by domain
             parsed = urlparse(url)
             domain = parsed.netloc.lower()
-            if domain.startswith("www."):
-                domain = domain[4:]
+            domain = domain.removeprefix("www.")
             if domain not in self._url_groups:
                 self._url_groups[domain] = []
             self._url_groups[domain].append(url)
@@ -176,8 +174,7 @@ class URLDeduplicator:
         for normalized, original in self._seen_urls.items():
             parsed = urlparse(original)
             domain = parsed.netloc.lower()
-            if domain.startswith("www."):
-                domain = domain[4:]
+            domain = domain.removeprefix("www.")
             if domain in self._url_groups:
                 orig_path = self._get_path(original)
                 for url in self._url_groups[domain]:
