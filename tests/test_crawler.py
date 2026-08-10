@@ -1,6 +1,7 @@
 """Tests for personal_index.crawler."""
 
 import pytest
+import requests
 import responses
 
 from personal_index.crawler import Crawler, CrawlerConfig
@@ -117,7 +118,7 @@ class TestCrawler:
         responses.replace(
             responses.GET,
             "https://example.com/slow",
-            body=Exception("timeout"),
+            body=requests.Timeout("timeout"),
         )
         # Just test that it doesn't crash
         resp = crawler._fetch("https://example.com/slow")
