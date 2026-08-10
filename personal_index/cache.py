@@ -257,6 +257,7 @@ class CacheDecorator:
             cache = LRUCache(max_size=self.lru_size)
 
         def wrapper(*args, **kwargs):
+            """Cache wrapper that stores and retrieves function results."""
             key = f"{func.__name__}:{args}:{sorted(kwargs.items())}"
             result = cache.get(key)
             if result is not None:
