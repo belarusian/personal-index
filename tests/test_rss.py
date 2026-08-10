@@ -225,3 +225,17 @@ class TestRSSParser:
         </feed>"""
         feed = self.parser.parse(xml)
         assert feed.entries[0].categories == ["tech", "news"]
+
+
+def test_rss_no_ambiguous_variable_names():
+    """Verify rss.py does not use ambiguous variable name 'l' (TICKET-98)."""
+    import ast
+    import os
+    rss_path = os.path.join(os.path.dirname(__file__), "..", "personal_index", "rss.py")
+    with open(rss_path) as f:
+        source = f.read()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For):
+            if isinstance(node.target, ast.Name) and node.target.id == "l":
+                raise AssertionError("Ambiguous variable name 'l' found in for-loop")
