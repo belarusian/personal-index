@@ -15,6 +15,13 @@ class InterestType(Enum):
     URL_PATTERN = "url_pattern"
 
 
+class MatchMode(Enum):
+    """How keywords should be matched."""
+    ANY = "any"
+    ALL = "all"
+    REGEX = "regex"
+
+
 @dataclass
 class Interest:
     """Represents a user-defined interest to track."""
@@ -29,6 +36,8 @@ class Interest:
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     enabled: bool = True
+    topic: str = ""
+    match_mode: MatchMode = MatchMode.ANY
 
     def __post_init__(self):
         """Handle edge case where keywords is passed as int (positional priority)."""
@@ -48,7 +57,12 @@ class Interest:
         Returns:
             Dictionary representation of the interest.
         """
-        return asdict(self)
+        d = asdict(self)
+        if isinstance(d.get("interest_type"), InterestType):
+            d["interest_type"] = d["interest_type"].value
+        if isinstance(d.get("match_mode"), MatchMode):
+            d["match_mode"] = d["match_mode"].value
+        return d
 
     @classmethod
     def from_dict(cls, data: dict) -> "Interest":
@@ -60,10 +74,15 @@ class Interest:
         Returns:
             A new Interest instance.
         """
-        return cls(
-            **{k: v for k, v in data.items()
-               if k in cls.__dataclass_fields__}
-        )
+        interest_type = data.get("interest_type", "keyword")
+        if isinstance(interest_type, str):
+            interest_type = InterestType(interest_type)
+        match_mode = data.get("match_mode", "any")
+        if isinstance(match_mode, str):
+            match_mode = MatchMode(match_mode)
+        filtered = {k: v for k, v in data.items()
+                    if k in cls.__dataclass_fields__ and k not in ("interest_type", "match_mode")}
+        return cls(interest_type=interest_type, match_mode=match_mode, **filtered)
 
     def matches(self, text: str, url: str = "") -> bool:
         """Check if text/url matches this interest."""
@@ -119,6 +138,17 @@ class CrawlConfig:
     respect_robots_txt: bool = True
     allowed_domains: list = field(default_factory=list)
     blocked_domains: list = field(default_factory=list)
+    max_pages: int = 100
+    blocked_extensions: list = field(default_factory=lambda: [
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".ico",
+        ".css", ".js", ".pdf", ".zip", ".tar", ".gz", ".rar",
+        ".mp3", ".mp4", ".avi", ".mov", ".wmv", ".flv",
+        ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+        ".exe", ".bin", ".dmg", ".iso",
+    ])
+    delay: float = 1.0
+    max_concurrent_requests: int = 5
+    request_timeout: int = 30
 
     def to_dict(self) -> dict:
         """Serialize the crawl config to a dictionary.

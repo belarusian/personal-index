@@ -17,7 +17,7 @@ class TestFullPipeline:
         """Test complete pipeline: crawl -> filter -> index -> search."""
         config = AppConfig(config_dir=tmp_path, index_dir=tmp_path / "index")
         config.interests.append(
-            Interest(topic="AI", keywords=["artificial intelligence", "machine learning"])
+            Interest(name="AI", topic="AI", keywords=["artificial intelligence", "machine learning"])
         )
 
         # Create content filter
@@ -72,7 +72,7 @@ class TestFullPipeline:
         """Test crawler with mocked HTTP fetch."""
         config = AppConfig(config_dir=tmp_path, index_dir=tmp_path / "index")
         config.crawler = CrawlerConfig(politeness_delay=0)
-        config.interests.append(Interest(topic="test", keywords=["hello"]))
+        config.interests.append(Interest(name="test", topic="test", keywords=["hello"]))
 
         content_filter = ContentFilter(config.interests, min_relevance_score=0.0)
         crawler = WebCrawler(config=config, content_filter=content_filter)
@@ -117,6 +117,7 @@ class TestFullPipeline:
         config = AppConfig(config_dir=tmp_path)
         config.interests.append(
             Interest(
+                name="Technology",
                 topic="Technology",
                 keywords=["AI", "ML"],
                 priority=8,

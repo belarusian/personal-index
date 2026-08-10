@@ -12,7 +12,7 @@ class TestInterest:
         assert interest.name == "python"
         assert interest.keywords == ["python", "programming"]
         assert interest.enabled is True
-        assert interest.priority == 1
+        assert interest.priority == 5  # Default priority from models.py
 
     def test_to_dict_and_from_dict(self):
         interest = Interest(name="ai", keywords=["ai", "ml"], priority=3)

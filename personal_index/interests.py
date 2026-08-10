@@ -8,40 +8,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Set
 
-
-@dataclass
-class Interest:
-    """User interest for tracking topics."""
-
-    name: str
-    keywords: List[str] = field(default_factory=list)
-    topics: List[str] = field(default_factory=list)
-    url_patterns: List[str] = field(default_factory=list)
-    priority: int = 1
-    enabled: bool = True
-
-    def to_dict(self) -> dict:
-        """Serialize to dictionary."""
-        return {
-            "name": self.name,
-            "keywords": self.keywords,
-            "topics": self.topics,
-            "url_patterns": self.url_patterns,
-            "priority": self.priority,
-            "enabled": self.enabled,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "Interest":
-        """Deserialize from dictionary."""
-        return cls(
-            name=data["name"],
-            keywords=data.get("keywords", []),
-            topics=data.get("topics", []),
-            url_patterns=data.get("url_patterns", []),
-            priority=data.get("priority", 1),
-            enabled=data.get("enabled", True),
-        )
+from personal_index.models import Interest
 
 
 @dataclass
@@ -59,6 +26,8 @@ class InterestStore:
 
     def _load(self) -> None:
         """Load interests from file."""
+        if not self.store_path:
+            return
         try:
             with open(self.store_path, "r") as f:
                 data = json.load(f)
