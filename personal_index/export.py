@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 """Export bookmarks and indexed content to various formats."""
 
+from __future__ import annotations
 
 import csv
 import json
@@ -26,7 +25,6 @@ EXTENSION_MAP = {
     "opml": "opml",
 }
 
-
 @dataclass
 class ExportResult:
     """Result of an export operation."""
@@ -39,7 +37,6 @@ class ExportResult:
     def __post_init__(self):
         if not self.exported_at:
             self.exported_at = datetime.now(timezone.utc).isoformat()
-
 
 class Exporter:
     """Export bookmarks to various file formats."""

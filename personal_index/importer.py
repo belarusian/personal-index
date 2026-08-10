@@ -10,15 +10,18 @@ from io import StringIO
 from pathlib import Path
 from typing import ClassVar
 
-from defusedxml.ElementTree import ParseError as ET_ParseError
-from defusedxml.ElementTree import fromstring as ET_fromstring
+from defusedxml.ElementTree import (
+    ParseError as ET_ParseError,
+)
+from defusedxml.ElementTree import (
+    fromstring as ET_fromstring,
+)
 
 from .bookmarks import Bookmark, BookmarkManager
 
 
 @dataclass
 class ImportResult:
-    """Result of an import operation."""
     total_imported: int = 0
     total_skipped: int = 0
     errors: list[str] = field(default_factory=list)
@@ -241,3 +244,6 @@ class Importer:
                 result.total_imported += 1
 
         return result
+
+    """Result of an import operation."""
+

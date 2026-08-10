@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-"""URL classification for categorizing crawled URLs."""
-
-
 import logging
 import re
 from dataclasses import dataclass, field
@@ -198,3 +195,6 @@ class URLClassifier:
     def redirect_re(self):
         """Redirect_re."""
         return self._redirect_re
+
+"""URL classification for categorizing crawled URLs."""
+

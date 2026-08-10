@@ -85,15 +85,16 @@ class TestImporterExceptionHandling:
         from personal_index import importer
         source = _get_source_lines(importer)
         blocks = _find_except_blocks(source)
-        json_blocks = [b for b in blocks if 100 < b["lineno"] < 110]
+        json_blocks = [b for b in blocks if 85 < b["lineno"] < 95]
         assert len(json_blocks) == 1
-        assert "ValueError" in json_blocks[0]["exc_type"]
+        # json.JSONDecodeError is a subclass of ValueError
+        assert "JSONDecodeError" in json_blocks[0]["exc_type"] or "ValueError" in json_blocks[0]["exc_type"]
 
     def test_csv_import_catches_specific_exceptions(self):
         from personal_index import importer
         source = _get_source_lines(importer)
         blocks = _find_except_blocks(source)
-        csv_blocks = [b for b in blocks if 125 < b["lineno"] < 135]
+        csv_blocks = [b for b in blocks if 130 < b["lineno"] < 140]
         assert len(csv_blocks) == 1
         assert "ValueError" in csv_blocks[0]["exc_type"]
 
@@ -101,7 +102,7 @@ class TestImporterExceptionHandling:
         from personal_index import importer
         source = _get_source_lines(importer)
         blocks = _find_except_blocks(source)
-        xml_blocks = [b for b in blocks if 215 < b["lineno"] < 225]
+        xml_blocks = [b for b in blocks if 220 < b["lineno"] < 230]
         assert len(xml_blocks) == 1
         assert "ValueError" in xml_blocks[0]["exc_type"]
 

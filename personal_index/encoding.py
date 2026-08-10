@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 """Text encoding detection and conversion utilities."""
 
+from __future__ import annotations
 
 import logging
 import re
@@ -10,7 +9,6 @@ from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class EncodingResult:
     """Result of encoding detection."""
@@ -18,7 +16,6 @@ class EncodingResult:
     encoding: str
     confidence: float
     language: str | None = None
-
 
 class EncodingDetector:
     """Detects text encoding and performs conversions."""
