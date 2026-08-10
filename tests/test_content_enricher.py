@@ -141,3 +141,30 @@ class TestContentEnricher:
         html = '<html><code>print("hello")</code></html>'
         enriched = self.enricher.enrich("Code", "text", html=html)
         assert enriched.has_code is True
+
+
+class TestEnrichedContentDatetime:
+    """Tests for timezone-aware datetime in EnrichedContent."""
+
+    def test_enriched_at_is_timezone_aware(self):
+        """enriched_at should be timezone-aware (UTC), not naive."""
+        from personal_index.content_enricher import EnrichedContent
+        content = EnrichedContent(title="Test", text="Hello world")
+        assert content.enriched_at.tzinfo is not None, "enriched_at should be timezone-aware"
+
+    def test_enriched_at_is_utc(self):
+        """enriched_at should be in UTC timezone."""
+        from datetime import timezone
+        from personal_index.content_enricher import EnrichedContent
+        content = EnrichedContent(title="Test", text="Hello world")
+        assert content.enriched_at.tzinfo == timezone.utc, "enriched_at should be UTC"
+
+    def test_enriched_at_no_deprecation_warning(self):
+        """Creating EnrichedContent should not trigger deprecation warnings."""
+        import warnings
+        from personal_index.content_enricher import EnrichedContent
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            EnrichedContent(title="Test", text="Hello world")
+            deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
+            assert len(deprecation_warnings) == 0, f"Expected no deprecation warnings, got: {[str(x.message) for x in deprecation_warnings]}"

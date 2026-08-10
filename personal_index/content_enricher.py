@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from personal_index.text_utils import (
     count_words,
@@ -28,7 +28,7 @@ class EnrichedContent:
     has_images: bool = False
     sentiment_score: float = 0.0
     complexity_score: float = 0.0
-    enriched_at: datetime = field(default_factory=datetime.utcnow)
+    enriched_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict:
         """Convert to dictionary representation."""
