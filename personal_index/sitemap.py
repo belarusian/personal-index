@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 
-import xml.etree.ElementTree as ET
+from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET_ParseError
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -60,8 +60,8 @@ class SitemapParser:
             return Sitemap(source_url=source_url)
 
         try:
-            root = ET.fromstring(xml_content)
-        except ET.ParseError:
+            root = ET_fromstring(xml_content)
+        except ET_ParseError:
             return Sitemap(source_url=source_url)
 
         sitemap = Sitemap(source_url=source_url)

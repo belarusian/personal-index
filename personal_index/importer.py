@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from xml.etree import ElementTree as ET
+from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET_ParseError
 
 from .bookmarks import Bookmark, BookmarkManager
 
@@ -149,8 +149,8 @@ class Importer:
             soup = BeautifulSoup(content, "html.parser")
         except ImportError:
             try:
-                tree = ET.fromstring(content)
-            except ET.ParseError as e:
+                tree = ET_fromstring(content)
+            except ET_ParseError as e:
                 result.errors.append(f"Invalid HTML/XML: {e}")
                 return result
             self._parse_html_element(tree, result, [])
@@ -192,8 +192,8 @@ class Importer:
         """Import from generic XML format."""
         result = ImportResult(source=source, format="xml")
         try:
-            root = ET.fromstring(content)
-        except ET.ParseError as e:
+            root = ET_fromstring(content)
+        except ET_ParseError as e:
             result.errors.append(f"Invalid XML: {e}")
             return result
 
@@ -227,8 +227,8 @@ class Importer:
         """Import from OPML format."""
         result = ImportResult(source=source, format="opml")
         try:
-            root = ET.fromstring(content)
-        except ET.ParseError as e:
+            root = ET_fromstring(content)
+        except ET_ParseError as e:
             result.errors.append(f"Invalid OPML: {e}")
             return result
 
