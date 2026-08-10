@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+"""URL and content validation utilities."""
+
+
 import logging
 from dataclasses import dataclass, field
 from typing import ClassVar
 from urllib.parse import urlparse
-
-"""URL and content validation utilities."""
 
 logger = logging.getLogger(__name__)
 

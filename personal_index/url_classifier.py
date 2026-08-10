@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+"""URL classification for categorizing crawled URLs."""
+
+
 import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import ClassVar
 from urllib.parse import urlparse
-
-"""URL classification for categorizing crawled URLs."""
 
 logger = logging.getLogger(__name__)
 

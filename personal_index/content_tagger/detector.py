@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+"""Topic detection engine for content tagging."""
+
+
 import re
 from dataclasses import dataclass
 from typing import ClassVar
 
 from personal_index.content_tagger.tag import Tag
-
-"""Topic detection engine for content tagging."""
 
 @dataclass
 class _TopicDefinition:
