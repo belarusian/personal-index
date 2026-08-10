@@ -88,7 +88,7 @@ class MarkdownExporter:
         if self.config.sort_by == "date":
             return sorted(
                 items,
-                key=lambda x: x.get("published_date", ""),
+                key=lambda x: x.get("published_date", "") or x.get("created_at", ""),
                 reverse=True,
             )
         elif self.config.sort_by == "title":
@@ -270,3 +270,57 @@ class MarkdownExporter:
         if len(text) <= max_length:
             return text
         return text[:max_length].rsplit(" ", 1)[0] + "..."
+
+
+# Convenience functions for backward compatibility
+
+
+def export_to_md(data: dict) -> str:
+    """Export data to markdown format.
+
+    Args:
+        data: Dictionary with data to export (single item or list).
+
+    Returns:
+        Markdown string.
+    """
+    from pathlib import Path
+    
+    exporter = MarkdownExporter()
+    
+    # Handle both single dict and list of dicts
+    if isinstance(data, dict):
+        items = [data]
+    else:
+        items = data
+    
+    return exporter.export(items)
+
+
+def save_markdown(data: dict, filepath: str) -> bool:
+    """Save data as markdown file.
+
+    Args:
+        data: Dictionary with data to export (single item or list).
+        filepath: Output file path.
+
+    Returns:
+        True if successfully saved.
+    """
+    from pathlib import Path
+    
+    try:
+        exporter = MarkdownExporter()
+        
+        # Handle both single dict and list of dicts
+        if isinstance(data, dict):
+            items = [data]
+        else:
+            items = data
+        
+        content = exporter.export(items)
+        Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+        Path(filepath).write_text(content)
+        return True
+    except Exception:
+        return False

@@ -365,3 +365,38 @@ class ArticleSummarizer:
             )
             for a in articles
         ]
+
+
+# ---------------------------------------------------------------------------
+# Convenience functions for backward compatibility
+# ---------------------------------------------------------------------------
+
+
+def summarize(text: str, method: str = "frequency") -> str:
+    """Generate a summary of text.
+
+    Args:
+        text: Text to summarize.
+        method: Summarization method.
+
+    Returns:
+        Summary string.
+    """
+    summarizer = ContentSummarizer()
+    result = summarizer.summarize(text, method=method)
+    return result.summary
+
+
+def extract_keywords(text: str, max_phrases: int = 10) -> list[str]:
+    """Extract key phrases from text.
+
+    Args:
+        text: Text to analyze.
+        max_phrases: Maximum number of phrases to return.
+
+    Returns:
+        List of key phrases.
+    """
+    summarizer = ContentSummarizer()
+    result = summarizer.summarize(text)
+    return result.key_phrases[:max_phrases]

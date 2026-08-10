@@ -283,6 +283,7 @@ class _ConfigManager:
         self.config = _Config()
 
     def save(self):
+        """Save configuration to file."""
         pass
 
 

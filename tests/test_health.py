@@ -8,7 +8,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from personal_index.health import (
+from personal_index.content_health import (
     HealthCheckResult,
     HealthChecker,
     HealthReport,
