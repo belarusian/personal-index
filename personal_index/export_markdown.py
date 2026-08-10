@@ -57,13 +57,13 @@ class MarkdownExporter:
     def export(
         self,
         items: list[dict[str, Any]],
-        format: ExportFormat | None = None,
+        export_format: ExportFormat | None = None,
     ) -> str:
         """Export content items to the specified format.
 
         Args:
             items: List of content item dicts.
-            format: Export format (defaults to markdown).
+            export_format: Export format (defaults to markdown).
 
         Returns:
             Formatted export string.
@@ -71,7 +71,7 @@ class MarkdownExporter:
         if not items:
             return ""
 
-        use_format = format or ExportFormat.MARKDOWN
+        use_format = export_format or ExportFormat.MARKDOWN
         sorted_items = self._sort_items(items)
 
         if use_format == ExportFormat.MARKDOWN:

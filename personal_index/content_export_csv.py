@@ -55,7 +55,7 @@ class CSVExporter:
         sort_key: Callable[[dict], Any] | None = None,
         limit: int | None = None,
         offset: int = 0,
-        format: ExportFormat = ExportFormat.CSV,
+        export_format: ExportFormat = ExportFormat.CSV,
         encoding: str = "utf-8",
     ) -> str:
         """Export items to the specified format."""
@@ -85,21 +85,21 @@ class CSVExporter:
         # Apply column name mapping
         col_map = column_names or {}
 
-        if format == ExportFormat.CSV:
+        if export_format == ExportFormat.CSV:
             return self._export_csv(
                 filtered, columns, delimiter=delimiter,
                 quoting=quoting, include_header=include_header,
                 column_names=col_map,
             )
-        elif format == ExportFormat.TSV:
+        elif export_format == ExportFormat.TSV:
             return self._export_csv(
                 filtered, columns, delimiter="\t",
                 quoting=quoting, include_header=include_header,
                 column_names=col_map,
             )
-        elif format == ExportFormat.JSON:
+        elif export_format == ExportFormat.JSON:
             return self._export_json(filtered, columns, col_map)
-        elif format == ExportFormat.JSON_LINES:
+        elif export_format == ExportFormat.JSON_LINES:
             return self._export_json_lines(filtered, columns, col_map)
         else:
             return self._export_csv(
