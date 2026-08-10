@@ -119,7 +119,7 @@ class Crawler:
         soup = BeautifulSoup(html, "html.parser")
         links = []
         for a_tag in soup.find_all("a", href=True):
-            href = a_tag["href"]
+            href = str(a_tag["href"])
             if href.startswith(("javascript:", "mailto:", "data:", "tel:")):
                 continue
             from personal_index.url_utils import resolve_relative_url
@@ -146,7 +146,7 @@ class Crawler:
         meta_desc = ""
         meta_tag = soup.find("meta", attrs={"name": "description"})
         if meta_tag and meta_tag.get("content"):
-            meta_desc = meta_tag["content"].strip()
+            meta_desc = str(meta_tag["content"]).strip()
 
         # Extract text
         text = soup.get_text(separator=" ")

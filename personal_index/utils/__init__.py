@@ -23,7 +23,7 @@ def extract_links(html: str, base_url: str) -> list[str]:
     soup = BeautifulSoup(html, "html.parser")
     links = []
     for a_tag in soup.find_all("a", href=True):
-        href = a_tag["href"]
+        href = str(a_tag["href"])
         # Skip javascript, mailto, etc.
         if href.startswith(("javascript:", "mailto:", "data:", "tel:")):
             continue
@@ -49,7 +49,7 @@ def extract_meta_description(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     meta = soup.find("meta", attrs={"name": "description"})
     if meta and meta.get("content"):
-        return meta["content"].strip()
+        return str(meta["content"]).strip()
     return ""
 
 
