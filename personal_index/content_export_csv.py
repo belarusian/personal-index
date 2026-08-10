@@ -39,6 +39,7 @@ class CSVExporter:
     ]
 
     def __init__(self) -> None:
+        """Initialize the CSV exporter."""
         pass
 
     def export(
