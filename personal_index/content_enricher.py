@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+"""Content enrichment module for enhancing indexed content with metadata."""
+
+
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -11,8 +14,6 @@ from personal_index.text_utils import (
     read_time_minutes,
     tokenize,
 )
-
-"""Content enrichment module for enhancing indexed content with metadata."""
 
 
 @dataclass

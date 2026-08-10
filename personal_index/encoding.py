@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+"""Text encoding detection and conversion utilities."""
+
+
 import logging
 import re
 from dataclasses import dataclass
 from typing import ClassVar
-
-"""Text encoding detection and conversion utilities."""
 
 logger = logging.getLogger(__name__)
 

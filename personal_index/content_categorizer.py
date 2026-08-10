@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""Content categorizer module for classifying saved items by topic.
+
+Analyzes content text, titles, URLs, and metadata to assign topic categories
+with confidence scores. Uses rule-based keyword matching with multiple signals.
+"""
+
 from dataclasses import dataclass, field
 from typing import ClassVar
 from urllib.parse import urlparse
@@ -9,12 +15,6 @@ from personal_index.text_utils import tokenize
 # ---------------------------------------------------------------------------
 # Built-in topic definitions
 # ---------------------------------------------------------------------------
-
-"""Content categorizer module for classifying saved items by topic.
-
-Analyzes content text, titles, URLs, and metadata to assign topic categories
-with confidence scores. Uses rule-based keyword matching with multiple signals.
-"""
 
 BUILTIN_TOPICS: dict[str, list[str]] = {
     "technology": [

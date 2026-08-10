@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+"""Import bookmarks and content from various formats."""
+
+
 import csv
 import json
 from dataclasses import dataclass, field
@@ -12,8 +15,6 @@ from defusedxml.ElementTree import ParseError as ET_ParseError
 from defusedxml.ElementTree import fromstring as ET_fromstring
 
 from .bookmarks import Bookmark, BookmarkManager
-
-"""Import bookmarks and content from various formats."""
 
 @dataclass
 class ImportResult:
