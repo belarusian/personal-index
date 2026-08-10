@@ -237,6 +237,10 @@ class IndexedPage:
     status_code: int = 200
     content_length: int = 0
     language: str = "en"
+    score: float = 1.0
+    indexed_at: str = ""
+    source_interest: str = ""
+    word_count: int = 0
 
     def to_dict(self) -> dict:
         """Serialize the indexed page to a dictionary.
@@ -265,10 +269,11 @@ class IndexedPage:
 @dataclass
 class SearchResult:
     """Represents a search result."""
-    page: IndexedPage
-    score: float = 0.0
-    matched_terms: list = field(default_factory=list)
+    url: str = ""
+    title: str = ""
     snippet: str = ""
+    relevance_score: float = 0.0
+    matched_terms: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Serialize the search result to a dictionary.
@@ -277,11 +282,18 @@ class SearchResult:
             Dictionary representation of the search result.
         """
         return {
-            "page": self.page.to_dict(),
-            "score": self.score,
-            "matched_terms": self.matched_terms,
+            "url": self.url,
+            "title": self.title,
             "snippet": self.snippet,
+            "relevance_score": self.relevance_score,
+            "matched_terms": self.matched_terms,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "SearchResult":
+        """Create a SearchResult from a dictionary."""
+        return cls(**{k: v for k, v in data.items()
+                      if k in cls.__dataclass_fields__})
 
 
 @dataclass
