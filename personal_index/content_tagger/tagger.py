@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from personal_index.content_tagger.detector import TopicDetector
 from personal_index.content_tagger.tag import Tag
+
+if TYPE_CHECKING:
+    from personal_index.content_tagger.tagger import TagResult as _TagResult
 
 
 @dataclass
@@ -29,14 +32,15 @@ class TagResult:
 
 
 class ContentTagger:
-    TagResult = TagResult  # Expose for ContentTagger.TagResult access
     """High-level interface for tagging content by detected topics."""
+
+    TagResult = TagResult  # type: ignore[misc]  # Expose for ContentTagger.TagResult access
 
     def __init__(self) -> None:
         self._detector = TopicDetector()
         self._tag_stats: dict[str, int] = {}
 
-    def tag(self, content: str, min_confidence: float = 0.0) -> TagResult:
+    def tag(self, content: str, min_confidence: float = 0.0) -> TagResult:  # type: ignore[type-arg]
         """Tag content by detecting topics."""
         if not content or not content.strip():
             return TagResult(content=content, tags=[])
@@ -49,7 +53,7 @@ class ContentTagger:
 
         return TagResult(content=content, tags=tags)
 
-    def batch_tag(self, contents: list[str]) -> list[TagResult]:
+    def batch_tag(self, contents: list[str]) -> list[TagResult]:  # type: ignore[type-arg]
         """Tag multiple pieces of content."""
         return [self.tag(c) for c in contents]
 
