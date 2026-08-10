@@ -114,7 +114,7 @@ class ConsoleHandler(NotificationHandler):
             NotificationLevel.CRITICAL: "[CRIT]",
         }
         label = prefix.get(NotificationLevel(notification.level), "[????]")
-        print(f"  {label} {notification.title}: {notification.message}")
+        logger.info("%s %s: %s", label, notification.title, notification.message)
         return True
 
     def close(self) -> None:
