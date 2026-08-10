@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
-
 import re
 from dataclasses import dataclass
+from typing import ClassVar
 
 from personal_index.content_tagger.tag import Tag
 

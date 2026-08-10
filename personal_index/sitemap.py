@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
-
-from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET_ParseError
-from xml.etree.ElementTree import Element as ET_Element
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import ClassVar
 from urllib.parse import urljoin
+from xml.etree.ElementTree import Element as ET_Element
+
+from defusedxml.ElementTree import ParseError as ET_ParseError
+from defusedxml.ElementTree import fromstring as ET_fromstring
 
 """Sitemap parser for discovering URLs on websites."""
 

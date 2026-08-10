@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
-
 import csv
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET_ParseError
+from typing import ClassVar
+
+from defusedxml.ElementTree import ParseError as ET_ParseError
+from defusedxml.ElementTree import fromstring as ET_fromstring
 
 from .bookmarks import Bookmark, BookmarkManager
 

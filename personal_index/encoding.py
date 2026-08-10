@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
-
 import logging
 import re
 from dataclasses import dataclass
+from typing import ClassVar
 
 """Text encoding detection and conversion utilities."""
 
