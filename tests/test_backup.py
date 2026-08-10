@@ -227,3 +227,42 @@ class TestBackupManager:
         # ID should contain timestamp and UUID parts
         assert "_" in manifest.backup_id
         assert len(manifest.backup_id) > 10
+
+
+class TestBackupTarFilter:
+    """Tests for tar.extractall() filter argument (TICKET-47)."""
+
+    def test_restore_uses_filter_argument(self):
+        """tar.extractall should use filter='data' to prevent path traversal."""
+        import warnings
+        from personal_index.backup import BackupManager
+        import tempfile
+        import os
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a source directory with a file
+            source_dir = os.path.join(tmpdir, "source")
+            os.makedirs(source_dir)
+            test_file = os.path.join(source_dir, "test.txt")
+            with open(test_file, "w") as f:
+                f.write("hello world")
+
+            # Create backup
+            backup_dir = os.path.join(tmpdir, "backups")
+            manager = BackupManager(backup_dir=backup_dir)
+            manifest = manager.create_backup(source_dir)
+
+            # Restore with no deprecation warnings
+            restore_dir = os.path.join(tmpdir, "restored")
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                result = manager.restore_backup(manifest.backup_id, restore_dir)
+                deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
+                assert len(deprecation_warnings) == 0, f"Expected no deprecation warnings, got: {[str(x.message) for x in deprecation_warnings]}"
+
+            # Verify restoration worked
+            assert result["files_restored"] == 1
+            restored_file = os.path.join(restore_dir, "test.txt")
+            assert os.path.exists(restored_file)
+            with open(restored_file) as f:
+                assert f.read() == "hello world"
