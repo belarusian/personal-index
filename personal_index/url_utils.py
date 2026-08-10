@@ -336,7 +336,7 @@ def extract_all_urls(html: str, base_url: str = "") -> list:
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(html, "html.parser")
         for a in soup.find_all("a", href=True):
-            href = a["href"].strip()
+            href = str(a["href"]).strip()
             if href.startswith(("#", "javascript:")):
                 continue
             full_url = urljoin(base_url, href) if base_url else href

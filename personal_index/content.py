@@ -71,14 +71,14 @@ def extract_content(
     meta_desc = ""
     meta_tag = soup.find("meta", attrs={"name": "description"})
     if meta_tag and meta_tag.get("content"):
-        meta_desc = meta_tag["content"].strip()
+        meta_desc = str(meta_tag["content"]).strip()
 
     # Extract meta keywords
     meta_keywords = []
     meta_kw_tag = soup.find("meta", attrs={"name": "keywords"})
     if meta_kw_tag and meta_kw_tag.get("content"):
         meta_keywords = [
-            kw.strip() for kw in meta_kw_tag["content"].split(",") if kw.strip()
+            kw.strip() for kw in str(meta_kw_tag["content"]).split(",") if kw.strip()
         ]
 
     # Extract headings
@@ -100,7 +100,7 @@ def extract_content(
     # Extract links
     links = []
     for a_tag in soup.find_all("a", href=True):
-        href = a_tag["href"]
+        href = str(a_tag["href"])
         if not href.startswith(("javascript:", "mailto:", "data:", "tel:")):
             from personal_index.url_utils import resolve_relative_url
             resolved = resolve_relative_url(url, href)
@@ -111,7 +111,7 @@ def extract_content(
     language = "en"
     html_tag = soup.find("html")
     if html_tag and html_tag.get("lang"):
-        language = html_tag["lang"].split("-")[0]
+        language = str(html_tag["lang"]).split("-")[0]
 
     return ExtractedContent(
         url=url,
