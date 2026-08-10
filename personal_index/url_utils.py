@@ -1,9 +1,18 @@
-"""URL utility functions for the personal index."""
+"""URL utility functions for the personal index.
+
+Merged from url_utils.py and url_normalizer.py.
+"""
 
 from __future__ import annotations
 
 import re
-from urllib.parse import urlparse, urljoin, urlunparse
+from urllib.parse import (
+    urlparse,
+    urljoin,
+    urlunparse,
+    parse_qs,
+    urlencode,
+)
 
 # Common file extensions to exclude from crawling
 EXCLUDED_EXTENSIONS = {
@@ -28,32 +37,81 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-def normalize_url(url: str) -> str:
-    """Normalize URL: lowercase scheme/domain, remove fragments, default ports."""
+def normalize_url(
+    url: str,
+    remove_fragment: bool = True,
+    lowercase_path: bool = True,
+    remove_default_port: bool = True,
+    sort_query_params: bool = True,
+) -> str:
+    """Normalize a URL by applying standard transformations.
+
+    Args:
+        url: The URL to normalize.
+        remove_fragment: Whether to remove the fragment.
+        lowercase_path: Whether to lowercase the path.
+        remove_default_port: Whether to remove default ports (80/443).
+        sort_query_params: Whether to sort query parameters.
+    """
     if not url:
         return url
     try:
         parsed = urlparse(url)
+
+        # Lowercase scheme and netloc
         scheme = parsed.scheme.lower()
         netloc = parsed.netloc.lower()
+
         # Remove default ports
-        if scheme == "http" and netloc.endswith(":80"):
-            netloc = netloc[:-3]
-        elif scheme == "https" and netloc.endswith(":443"):
-            netloc = netloc[:-4]
-        path = parsed.path
-        # Remove trailing slash from all paths including root
-        if path.endswith("/") and path != "":
+        if remove_default_port:
+            netloc = _remove_default_port(netloc, scheme)
+
+        # Lowercase path if requested
+        path = parsed.path.lower() if lowercase_path else parsed.path
+        # Normalize path: collapse slashes
+        path = re.sub(r"/+", "/", path)
+        # Remove trailing slash entirely (urlunparse with empty path = no slash)
+        if path.endswith("/") and path != "/":
             path = path.rstrip("/")
-        if not path:
+        elif path == "/":
             path = ""
+
+        # Sort query parameters
+        query = parsed.query
+        if sort_query_params and query:
+            params = parse_qs(query, keep_blank_values=True)
+            sorted_params = dict(sorted(params.items()))
+            query = urlencode(sorted_params, doseq=True)
+
         # Remove fragment
-        normalized = urlunparse(
-            (scheme, netloc, path, parsed.params, parsed.query, "")
-        )
-        return normalized
+        fragment = "" if remove_fragment else parsed.fragment
+
+        return urlunparse((scheme, netloc, path, "", query, fragment))
     except Exception:
         return url
+
+
+def _remove_default_port(netloc: str, scheme: str) -> str:
+    """Remove default port from netloc."""
+    default_ports = {"http": 80, "https": 443, "ftp": 21}
+    default_port = default_ports.get(scheme)
+    if default_port is None:
+        return netloc
+
+    if ":" in netloc:
+        host, port_str = netloc.rsplit(":", 1)
+        try:
+            port = int(port_str)
+            if port == default_port:
+                return host
+        except ValueError:
+            pass
+    return netloc
+
+
+def is_canonical(url: str) -> bool:
+    """Check if a URL is already in canonical form."""
+    return normalize_url(url) == url
 
 
 def extract_domain(url: str) -> str:
@@ -65,6 +123,28 @@ def extract_domain(url: str) -> str:
         return parsed.netloc.lower()
     except Exception:
         return ""
+
+
+# Alias for compatibility
+get_domain = extract_domain
+
+
+def get_path(url: str) -> str:
+    """Extract the path from a URL."""
+    parsed = urlparse(url)
+    return parsed.path if parsed.path else "/"
+
+
+def get_query_string(url: str) -> str:
+    """Extract the query string from a URL."""
+    parsed = urlparse(url)
+    return parsed.query
+
+
+def get_fragment(url: str) -> str:
+    """Extract the fragment from a URL."""
+    parsed = urlparse(url)
+    return parsed.fragment
 
 
 def extract_subdomain(url: str) -> str:
@@ -97,6 +177,11 @@ def is_internal_link(url: str, base_url: str) -> bool:
     return is_same_domain(url, base_url)
 
 
+def urls_are_equivalent(url1: str, url2: str) -> bool:
+    """Check if two URLs are equivalent after normalization."""
+    return normalize_url(url1) == normalize_url(url2)
+
+
 def remove_query_params(url: str, params: list = None) -> str:
     """Remove specific query parameters from URL."""
     if not params:
@@ -115,6 +200,20 @@ def remove_query_params(url: str, params: list = None) -> str:
         ))
     except Exception:
         return url
+
+
+def strip_tracking_params(url: str) -> str:
+    """Remove common tracking parameters from a URL."""
+    tracking_params = {
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+        "utm_id", "fbclid", "gclid", "mc_eid", "igshid",
+    }
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query, keep_blank_values=True)
+    cleaned = {k: v for k, v in params.items() if k not in tracking_params}
+    query = urlencode(cleaned, doseq=True)
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path,
+                       parsed.params, query, parsed.fragment))
 
 
 def url_to_path(url: str) -> str:
@@ -158,6 +257,34 @@ def join_urls(base: str, relative: str) -> str:
         base_parsed.scheme, base_parsed.netloc, new_path,
         "", "", ""
     ))
+
+
+def resolve_relative_url(base_url: str, relative_url: str) -> str:
+    """Resolve a relative URL against a base URL."""
+    parsed_base = urlparse(base_url)
+    parsed_rel = urlparse(relative_url)
+
+    if parsed_rel.scheme:
+        return relative_url
+
+    if parsed_rel.netloc:
+        return urlunparse((parsed_base.scheme, parsed_rel.netloc,
+                           parsed_rel.path, parsed_rel.params,
+                           parsed_rel.query, parsed_rel.fragment))
+
+    # Relative path
+    if relative_url.startswith("/"):
+        path = relative_url
+    else:
+        base_path = parsed_base.path
+        if base_path.endswith("/"):
+            path = base_path + relative_url
+        else:
+            path = base_path.rsplit("/", 1)[0] + "/" + relative_url
+
+    return urlunparse((parsed_base.scheme, parsed_base.netloc,
+                       path, parsed_rel.params,
+                       parsed_rel.query, parsed_rel.fragment))
 
 
 def extract_all_urls(html: str, base_url: str = "") -> list:
