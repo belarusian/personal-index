@@ -50,17 +50,17 @@ class SitemapBuilder:
         self.entries: list[SitemapEntry] = []
 
     def add_entry(
-        """Process add_entry.
-
-        Args:
-        url, last_modified, change_frequency, priority.
-        """
         self,
         url: str,
         last_modified: Optional[datetime] = None,
         change_frequency: str = "monthly",
         priority: float = 0.5,
     ) -> None:
+        """Process add_entry.
+
+        Args:
+            url, last_modified, change_frequency, priority.
+        """
         self.entries.append(SitemapEntry(url, last_modified, change_frequency, priority))
 
     def add_entries(self, entries: list[SitemapEntry]) -> None:
