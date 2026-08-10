@@ -107,16 +107,16 @@ class TestImporterExceptionHandling:
 
 
 class TestPipelineExceptionHandling:
-    """pipeline.py:99 - should log errors when catching Exception."""
+    """pipeline.py:99 - should catch specific exceptions and log errors."""
 
     def test_pipeline_run_logs_errors(self):
         from personal_index import pipeline
         source = _get_source_lines(pipeline)
         blocks = _find_except_blocks(source)
         run_blocks = [b for b in blocks if 94 < b["lineno"] < 106]
-        exc_blocks = [b for b in run_blocks if "Exception" in b["exc_type"]]
-        assert len(exc_blocks) >= 1
-        assert exc_blocks[0]["has_logging"]
+        specific_blocks = [b for b in run_blocks if "ValueError" in b["exc_type"] or "TypeError" in b["exc_type"] or "RuntimeError" in b["exc_type"]]
+        assert len(specific_blocks) >= 1
+        assert specific_blocks[0]["has_logging"]
 
 
 class TestUrlHistoryExceptionHandling:
