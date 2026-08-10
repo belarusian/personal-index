@@ -97,7 +97,7 @@ def normalize_url(
 
         return urlunparse((scheme, netloc, path, "", query, fragment))
     except Exception:
-        return None
+        return url
 
 
 def _remove_default_port(netloc: str, scheme: str) -> str:
@@ -228,7 +228,7 @@ def remove_query_params(url: str, params: list = None) -> str:
             parsed.params, new_query, parsed.fragment
         ))
     except Exception:
-        return None
+        return url
 
 
 def strip_tracking_params(url: str) -> str:
