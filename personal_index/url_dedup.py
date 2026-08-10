@@ -210,5 +210,5 @@ class URLDeduplicator:
 
     def get_domain_urls(self, domain: str) -> List[str]:
         """Get all URLs for a specific domain."""
-        clean_domain = domain.lower().lstrip("www.")
+        clean_domain = domain.lower().removeprefix("www.")
         return self._url_groups.get(clean_domain, [])
