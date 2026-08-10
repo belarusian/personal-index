@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+from personal_index.models import IndexedPage, SearchResult
 
 # Common stop words to exclude from indexing
 STOP_WORDS = frozenset({
@@ -26,59 +27,13 @@ STOP_WORDS = frozenset({
 })
 
 
-@dataclass
-class IndexedPage:
-    """A page stored in the search index."""
-
-    url: str
-    title: str
-    content: str
-    keywords: List[str] = field(default_factory=list)
-    score: float = 1.0
-    indexed_at: str = ""
-    source_interest: str = ""
-    word_count: int = 0
-
-    def to_dict(self) -> dict:
-        """Serialize the index entry to a dictionary.
-
-        Returns:
-            Dictionary representation.
-        """
-        return {
-            "url": self.url,
-            "title": self.title,
-            "content": self.content,
-            "keywords": self.keywords,
-            "score": self.score,
-            "indexed_at": self.indexed_at,
-            "source_interest": self.source_interest,
-            "word_count": self.word_count,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "IndexedPage":
-        """Process from_dict.
-
-        Args:
-        data.
-        """
-        return cls(**data)
-
-
-@dataclass
-class SearchResult:
-    """A result from a search query."""
-
-    url: str
-    title: str
-    snippet: str = ""
-    relevance_score: float = 0.0
+# Re-export for backward compatibility
+__all__ = ["IndexedPage", "SearchResult", "SearchIndex"]
 
 
 @dataclass
 class SearchIndex:
-    """Search index with SQLite-like persistence via JSON."""
+    """Search index with JSON persistence."""
 
     db_path: str | None = None
     _pages: Dict[str, IndexedPage] = field(default_factory=dict, repr=False)
@@ -122,7 +77,6 @@ class SearchIndex:
     def add_page(self, page: IndexedPage) -> int:
         """Add a page to the index. Returns page id."""
         self._pages[page.url] = page
-        # Build word index
         text = f"{page.title} {page.content}"
         tokens = self._tokenize(text)
         for token in set(tokens):
@@ -137,11 +91,7 @@ class SearchIndex:
         """Remove a page from the index."""
         if url not in self._pages:
             return False
-        # Pop the page to remove it (kept for potential future use)
-        page = self._pages.pop(url)  # noqa: F841
-        # text = f"{page.title} {page.content}"
-        # tokens = set(self._tokenize(text))
-        # Iterate over a copy of keys to avoid RuntimeError
+        page = self._pages.pop(url)
         for token in list(self._word_index.keys()):
             if url in self._word_index[token]:
                 self._word_index[token].remove(url)
