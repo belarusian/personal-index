@@ -75,6 +75,7 @@ class CollectionManager:
     """Manages collections of saved content items."""
 
     def __init__(self) -> None:
+        """Initialize the collection manager with empty storage."""
         self._collections: dict[str, Collection] = {}
         self._item_to_collections: dict[str, list[str]] = {}
 
