@@ -218,18 +218,18 @@ class TestCSVExporter:
 
     def test_export_format_csv(self):
         items = [{"id": "1", "title": "Test"}]
-        result = self.exporter.export(items, format=ExportFormat.CSV)
+        result = self.exporter.export(items, export_format=ExportFormat.CSV)
         assert isinstance(result, str)
 
     def test_export_format_tsv(self):
         items = [{"id": "1", "title": "Test"}]
-        result = self.exporter.export(items, format=ExportFormat.TSV)
+        result = self.exporter.export(items, export_format=ExportFormat.TSV)
         assert "\t" in result
 
     def test_export_format_json_lines(self):
         import json
         items = [{"id": "1", "title": "Test"}]
-        result = self.exporter.export(items, format=ExportFormat.JSON_LINES)
+        result = self.exporter.export(items, export_format=ExportFormat.JSON_LINES)
         lines = result.strip().split("\n")
         for line in lines:
             obj = json.loads(line)
@@ -238,7 +238,7 @@ class TestCSVExporter:
     def test_export_format_json(self):
         import json
         items = [{"id": "1", "title": "Test"}]
-        result = self.exporter.export(items, format=ExportFormat.JSON)
+        result = self.exporter.export(items, export_format=ExportFormat.JSON)
         data = json.loads(result)
         assert isinstance(data, list)
         assert len(data) == 1

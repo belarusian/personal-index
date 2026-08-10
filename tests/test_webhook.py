@@ -86,7 +86,7 @@ class TestWebhookSender:
 
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("personal_index.webhook.urlopen") as mock_urlopen:
+        with patch("urllib.request.urlopen") as mock_urlopen:
             mock_response = MagicMock()
             mock_response.status = 200
             mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
@@ -105,7 +105,7 @@ class TestWebhookSender:
         sender.add_endpoint(config)
         payload = WebhookPayload(event=WebhookEvent.ERROR_OCCURRED)
 
-        with patch("personal_index.webhook.urlopen") as mock_urlopen:
+        with patch("urllib.request.urlopen") as mock_urlopen:
             results = sender.send(payload)
             assert len(results) == 0
             mock_urlopen.assert_not_called()
@@ -133,7 +133,7 @@ class TestWebhookSender:
         sender.add_endpoint(config)
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("personal_index.webhook.urlopen") as mock_urlopen:
+        with patch("urllib.request.urlopen") as mock_urlopen:
             results = sender.send(payload)
             assert len(results) == 0
             mock_urlopen.assert_not_called()
@@ -146,7 +146,7 @@ class TestWebhookSender:
 
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("personal_index.webhook.urlopen") as mock_urlopen:
+        with patch("urllib.request.urlopen") as mock_urlopen:
             mock_response = MagicMock()
             mock_response.status = 200
             mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
