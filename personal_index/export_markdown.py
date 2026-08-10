@@ -1,14 +1,19 @@
-"""Export content as markdown, HTML, or plain text."""
+"""Export content as markdown, HTML, and plain text formats."""
 
 from __future__ import annotations
 
 import html
+import logging
+import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
-class ExportFormat(Enum):
+class ExportFormat(str, Enum):
     """Supported export formats."""
 
     MARKDOWN = "markdown"
@@ -24,56 +29,63 @@ class ExportConfig:
     include_tags: bool = True
     include_summary: bool = False
     sort_by: str = "date"
-    group_by: str | None = None
+    group_by: Optional[str] = None
+
+    _VALID_SORT = {"date", "title", "priority", "relevance"}
+    _VALID_GROUP = {"tags", "date", "category", None}
 
     def __post_init__(self) -> None:
-        if self.sort_by not in ("date", "title", "priority"):
+        if self.sort_by not in self._VALID_SORT:
             raise ValueError(
-                f"Invalid sort_by value: {self.sort_by!r}. "
-                "Must be one of: 'date', 'title', 'priority'."
+                f"Invalid sort_by '{self.sort_by}'. Must be one of: {self._VALID_SORT}"
             )
-        if self.group_by is not None and self.group_by not in ("tags", "date"):
+        if self.group_by not in self._VALID_GROUP:
             raise ValueError(
-                f"Invalid group_by value: {self.group_by!r}. "
-                "Must be one of: 'tags', 'date' or None."
+                f"Invalid group_by '{self.group_by}'. Must be one of: {self._VALID_GROUP}"
             )
 
 
 class MarkdownExporter:
-    """Export content items as markdown, HTML, or plain text."""
+    """Export saved content as markdown, HTML, or plain text.
 
-    def __init__(self, config: ExportConfig | None = None) -> None:
+    Supports sorting by date, title, or priority, grouping by tags
+    or date, and optional metadata/tags/summary inclusion.
+    """
+
+    def __init__(self, config: Optional[ExportConfig] = None) -> None:
         self.config = config or ExportConfig()
 
     def export(
         self,
         items: list[dict[str, Any]],
-        format: ExportFormat = ExportFormat.MARKDOWN,
+        format: Optional[ExportFormat] = None,
     ) -> str:
-        """Export a list of content items.
+        """Export content items to the specified format.
 
         Args:
-            items: List of content item dicts with keys like
-                   'url', 'title', 'content', 'tags', 'published_date',
-                   'priority_score'.
-            format: The export format (markdown, html, plain_text).
+            items: List of content item dicts.
+            format: Export format (defaults to markdown).
 
         Returns:
-            The exported content as a string.
+            Formatted export string.
         """
         if not items:
             return ""
 
+        use_format = format or ExportFormat.MARKDOWN
         sorted_items = self._sort_items(items)
 
-        if self.config.group_by:
-            grouped = self._group_items(sorted_items)
-            return self._render_grouped(grouped, format)
-
-        return self._render_items(sorted_items, format)
+        if use_format == ExportFormat.MARKDOWN:
+            return self._export_markdown(sorted_items)
+        elif use_format == ExportFormat.HTML:
+            return self._export_html(sorted_items)
+        elif use_format == ExportFormat.PLAIN_TEXT:
+            return self._export_plain_text(sorted_items)
+        else:
+            return self._export_markdown(sorted_items)
 
     def _sort_items(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Sort items according to config."""
+        """Sort items based on configuration."""
         if self.config.sort_by == "date":
             return sorted(
                 items,
@@ -88,179 +100,174 @@ class MarkdownExporter:
                 key=lambda x: x.get("priority_score", 0),
                 reverse=True,
             )
+        elif self.config.sort_by == "relevance":
+            return sorted(
+                items,
+                key=lambda x: x.get("relevance_score", 0),
+                reverse=True,
+            )
         return items
 
     def _group_items(
         self, items: list[dict[str, Any]]
     ) -> dict[str, list[dict[str, Any]]]:
-        """Group items by the configured group_by field."""
-        grouped: dict[str, list[dict[str, Any]]] = {}
+        """Group items based on configuration."""
+        if not self.config.group_by:
+            return {"all": items}
+
+        groups: dict[str, list[dict[str, Any]]] = {}
+
         if self.config.group_by == "tags":
             for item in items:
                 tags = item.get("tags", [])
                 if tags:
                     for tag in tags:
-                        if tag not in grouped:
-                            grouped[tag] = []
-                        grouped[tag].append(item)
+                        tag_key = tag.lower()
+                        groups.setdefault(tag_key, []).append(item)
                 else:
-                    key = "untagged"
-                    if key not in grouped:
-                        grouped[key] = []
-                    grouped[key].append(item)
+                    groups.setdefault("untagged", []).append(item)
         elif self.config.group_by == "date":
             for item in items:
-                date = item.get("published_date", "unknown")
-                if date:
-                    # Group by month
-                    key = date[:7] if len(date) >= 7 else date
+                date_str = item.get("published_date", "")
+                if date_str:
+                    try:
+                        dt = datetime.fromisoformat(date_str)
+                        group_key = dt.strftime("%Y-%m")
+                    except (ValueError, TypeError):
+                        group_key = "unknown"
                 else:
-                    key = "unknown"
-                if key not in grouped:
-                    grouped[key] = []
-                grouped[key].append(item)
-        return grouped
+                    group_key = "unknown"
+                groups.setdefault(group_key, []).append(item)
+        elif self.config.group_by == "category":
+            for item in items:
+                category = item.get("category", "uncategorized")
+                groups.setdefault(category, []).append(item)
 
-    def _render_grouped(
-        self,
-        grouped: dict[str, list[dict[str, Any]]],
-        format: ExportFormat,
-    ) -> str:
-        """Render grouped items."""
-        parts: list[str] = []
-        for group_key, group_items in grouped.items():
-            if format == ExportFormat.MARKDOWN:
-                parts.append(f"\n## {group_key}\n")
-            elif format == ExportFormat.HTML:
-                parts.append(f"<h2>{html.escape(str(group_key))}</h2>\n")
-            else:
-                parts.append(f"\n== {group_key} ==\n")
-            parts.append(self._render_items(group_items, format))
-        return "\n".join(parts)
+        return groups if groups else {"all": items}
 
-    def _render_items(
-        self, items: list[dict[str, Any]], format: ExportFormat
-    ) -> str:
-        """Render a list of items in the given format."""
-        parts: list[str] = []
-        for item in items:
-            if format == ExportFormat.MARKDOWN:
-                parts.append(self._render_markdown_item(item))
-            elif format == ExportFormat.HTML:
-                parts.append(self._render_html_item(item))
-            else:
-                parts.append(self._render_plain_text_item(item))
-        return "\n".join(parts)
-
-    def _render_markdown_item(self, item: dict[str, Any]) -> str:
-        """Render a single item as markdown."""
-        title = item.get("title", "Untitled")
-        url = item.get("url", "")
-        content = item.get("content", "")
-        tags = item.get("tags", [])
-        published_date = item.get("published_date", "")
-
+    def _export_markdown(self, items: list[dict[str, Any]]) -> str:
+        """Export items as markdown."""
+        groups = self._group_items(items)
         lines: list[str] = []
 
-        # Title as heading
-        lines.append(f"## {title}")
+        for group_name, group_items in groups.items():
+            if len(groups) > 1:
+                lines.append(f"## {group_name}")
+                lines.append("")
 
-        # Link
-        if url:
-            lines.append(f"[{title}]({url})")
+            for item in group_items:
+                title = item.get("title", "Untitled")
+                url = item.get("url", "")
+                content = item.get("content", "")
+                tags = item.get("tags", [])
+                date = item.get("published_date", "")
 
-        # Metadata
-        if self.config.include_metadata and published_date:
-            lines.append(f"**Published:** {published_date}")
+                # Title as heading
+                lines.append(f"# {title}")
 
-        # Tags
-        if self.config.include_tags and tags:
-            lines.append(f"**Tags:** {', '.join(tags)}")
+                # Link
+                if url:
+                    lines.append(f"[{title}]({url})")
 
-        # Content
-        if content:
-            lines.append("")
-            if self.config.include_summary:
-                summary = self._summarize(content)
-                lines.append(summary)
-            else:
-                lines.append(content)
+                # Metadata
+                if self.config.include_metadata and date:
+                    lines.append(f"**Published:** {date}")
 
+                # Tags
+                if self.config.include_tags and tags:
+                    tag_str = ", ".join(tags)
+                    lines.append(f"**Tags:** {tag_str}")
+
+                # Content/Summary
+                if content:
+                    lines.append("")
+                    if self.config.include_summary:
+                        summary = self._truncate(content, 200)
+                        lines.append(summary)
+                    else:
+                        lines.append(content)
+
+                lines.append("")
+
+        return "\n".join(lines).strip()
+
+    def _export_html(self, items: list[dict[str, Any]]) -> str:
+        """Export items as HTML."""
+        groups = self._group_items(items)
+        lines: list[str] = []
+        lines.append("<!DOCTYPE html>")
+        lines.append("<html><head><meta charset=\"utf-8\"></head><body>")
+        lines.append("<h1>Exported Content</h1>")
+
+        for group_name, group_items in groups.items():
+            if len(groups) > 1:
+                lines.append(f"<h2>{html.escape(group_name)}</h2>")
+
+            lines.append("<ul>")
+            for item in group_items:
+                title = html.escape(item.get("title", "Untitled"))
+                url = html.escape(item.get("url", ""))
+                content = html.escape(item.get("content", ""))
+                tags = item.get("tags", [])
+                date = item.get("published_date", "")
+
+                lines.append("<li>")
+                lines.append(f"<h3><a href=\"{url}\">{title}</a></h3>")
+
+                if self.config.include_metadata and date:
+                    lines.append(f"<p><em>Published: {html.escape(date)}</em></p>")
+
+                if self.config.include_tags and tags:
+                    tag_str = ", ".join(html.escape(t) for t in tags)
+                    lines.append(f"<p>Tags: {tag_str}</p>")
+
+                if content:
+                    display = self._truncate(content, 200) if self.config.include_summary else content
+                    lines.append(f"<p>{html.escape(display)}</p>")
+
+                lines.append("</li>")
+            lines.append("</ul>")
+
+        lines.append("</body></html>")
         return "\n".join(lines)
 
-    def _render_html_item(self, item: dict[str, Any]) -> str:
-        """Render a single item as HTML."""
-        title = item.get("title", "Untitled")
-        url = item.get("url", "")
-        content = item.get("content", "")
-        tags = item.get("tags", [])
-        published_date = item.get("published_date", "")
-
-        parts: list[str] = []
-
-        # Title as heading
-        escaped_title = html.escape(title)
-        parts.append(f"<h2>{escaped_title}</h2>")
-
-        # Link
-        if url:
-            escaped_url = html.escape(url)
-            parts.append(f'<p><a href="{escaped_url}">{escaped_title}</a></p>')
-
-        # Metadata
-        if self.config.include_metadata and published_date:
-            parts.append(f"<p><strong>Published:</strong> {html.escape(published_date)}</p>")
-
-        # Tags
-        if self.config.include_tags and tags:
-            escaped_tags = ", ".join(html.escape(t) for t in tags)
-            parts.append(f"<p><strong>Tags:</strong> {escaped_tags}</p>")
-
-        # Content
-        if content:
-            escaped_content = html.escape(content)
-            if self.config.include_summary:
-                summary = self._summarize(content)
-                escaped_summary = html.escape(summary)
-                parts.append(f"<p>{escaped_summary}</p>")
-            else:
-                parts.append(f"<p>{escaped_content}</p>")
-
-        return "\n".join(parts)
-
-    def _render_plain_text_item(self, item: dict[str, Any]) -> str:
-        """Render a single item as plain text."""
-        title = item.get("title", "Untitled")
-        url = item.get("url", "")
-        content = item.get("content", "")
-        tags = item.get("tags", [])
-        published_date = item.get("published_date", "")
-
+    def _export_plain_text(self, items: list[dict[str, Any]]) -> str:
+        """Export items as plain text."""
+        groups = self._group_items(items)
         lines: list[str] = []
 
-        lines.append(title)
-        lines.append("-" * len(title))
+        for group_name, group_items in groups.items():
+            if len(groups) > 1:
+                lines.append(f"=== {group_name} ===")
+                lines.append("")
 
-        if url:
-            lines.append(url)
+            for item in group_items:
+                title = item.get("title", "Untitled")
+                url = item.get("url", "")
+                content = item.get("content", "")
+                tags = item.get("tags", [])
+                date = item.get("published_date", "")
 
-        if self.config.include_metadata and published_date:
-            lines.append(f"Published: {published_date}")
+                lines.append(f"{title}")
+                lines.append(f"{url}")
 
-        if self.config.include_tags and tags:
-            lines.append(f"Tags: {', '.join(tags)}")
+                if self.config.include_metadata and date:
+                    lines.append(f"Date: {date}")
 
-        if content:
-            lines.append("")
-            if self.config.include_summary:
-                lines.append(self._summarize(content))
-            else:
-                lines.append(content)
+                if self.config.include_tags and tags:
+                    lines.append(f"Tags: {', '.join(tags)}")
 
-        return "\n".join(lines)
+                if content:
+                    display = self._truncate(content, 200) if self.config.include_summary else content
+                    lines.append(display)
 
-    def _summarize(self, text: str, max_length: int = 200) -> str:
-        """Create a simple summary by truncating text."""
+                lines.append("-" * 40)
+                lines.append("")
+
+        return "\n".join(lines).strip()
+
+    def _truncate(self, text: str, max_length: int) -> str:
+        """Truncate text to max_length, adding ellipsis if needed."""
         if len(text) <= max_length:
             return text
         return text[:max_length].rsplit(" ", 1)[0] + "..."
