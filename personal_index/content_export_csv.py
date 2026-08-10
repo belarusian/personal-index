@@ -149,7 +149,7 @@ class CSVExporter:
         col_map = column_names or {}
         output = io.StringIO()
         writer = csv.writer(
-            output, delimiter=delimiter, quoting=quoting,
+            output, delimiter=delimiter, quoting=quoting,  # type: ignore[arg-type]
             lineterminator="\n",
         )
 

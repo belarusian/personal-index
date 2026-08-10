@@ -86,7 +86,7 @@ class HTMLScraper:
     def _extract_charset(self, soup: BeautifulSoup, result: ScrapedContent) -> None:
         meta_charset = soup.find("meta", attrs={"charset": True})
         if meta_charset:
-            result.charset = meta_charset.get("charset", "utf-8")  # type: ignore[misc]
+            result.charset = meta_charset.get("charset", "utf-8")  # type: ignore[assignment]
         meta_http = soup.find("meta", attrs={"http-equiv": "Content-Type"})
         if meta_http and meta_http.get("content"):
             match = re.search(r"charset=([^\s;]+)", str(meta_http["content"]))  # type: ignore[misc]
