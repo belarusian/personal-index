@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import ClassVar
+
+
 @dataclass
 class BookmarkExportResult:
     """Result of a bookmark export operation."""
