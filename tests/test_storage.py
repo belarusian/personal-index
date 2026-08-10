@@ -133,3 +133,56 @@ class TestStorageStats:
         assert stats["enabled_interests"] == 1
         assert stats["total_pages"] == 1
         assert stats["total_content_bytes"] == 100
+
+
+class TestStorageTypeNarrowing:
+    """Tests for TICKET-31: _read_json returns list|dict, callers must narrow."""
+
+    def test_add_interest_with_dict_file(self, tmp_path):
+        """add_interest should handle dict content in interests file gracefully."""
+        storage = Storage(data_dir=str(tmp_path))
+        # Simulate a dict in the interests file (should be a list)
+        storage.interests_file.write_text('{"name": "bad"}')
+        interest = Interest(name="test", keywords=["python"])
+        result = storage.add_interest(interest)
+        assert result.name == "test"
+
+    def test_add_page_with_dict_file(self, tmp_path):
+        """add_page should handle dict content in pages file gracefully."""
+        storage = Storage(data_dir=str(tmp_path))
+        # Simulate a dict in the pages file (should be a list)
+        storage.pages_file.write_text('{"url": "bad"}')
+        page = IndexedPage(url="http://example.com", title="Test")
+        result = storage.add_page(page)
+        assert result.url == "http://example.com"
+
+    def test_get_config_with_list_file(self, tmp_path):
+        """get_config should handle list content in config file gracefully."""
+        storage = Storage(data_dir=str(tmp_path))
+        # Simulate a list in the config file (should be a dict)
+        storage.config_file.write_text('[1, 2, 3]')
+        config = storage.get_config()
+        assert isinstance(config, CrawlConfig)
+
+    def test_get_config_with_empty_file(self, tmp_path):
+        """get_config should return default CrawlConfig for empty file."""
+        storage = Storage(data_dir=str(tmp_path))
+        storage.config_file.write_text("")
+        config = storage.get_config()
+        assert isinstance(config, CrawlConfig)
+
+    def test_add_interest_normal_operation(self, tmp_path):
+        """add_interest should work normally with proper list content."""
+        storage = Storage(data_dir=str(tmp_path))
+        interest = Interest(name="test", keywords=["python"])
+        result = storage.add_interest(interest)
+        assert result.name == "test"
+        assert len(storage.get_interests()) == 1
+
+    def test_add_page_normal_operation(self, tmp_path):
+        """add_page should work normally with proper list content."""
+        storage = Storage(data_dir=str(tmp_path))
+        page = IndexedPage(url="http://example.com", title="Test")
+        result = storage.add_page(page)
+        assert result.url == "http://example.com"
+        assert len(storage.get_pages()) == 1
