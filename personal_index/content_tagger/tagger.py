@@ -31,13 +31,11 @@ class TagResult:
 class ContentTagger:
     """High-level interface for tagging content by detected topics."""
 
-    TagResult = TagResult  # type: ignore[misc]  # Expose for ContentTagger.TagResult access
-
     def __init__(self) -> None:
         self._detector = TopicDetector()
         self._tag_stats: dict[str, int] = {}
 
-    def tag(self, content: str, min_confidence: float = 0.0) -> TagResult:  # type: ignore[type-arg]
+    def tag(self, content: str, min_confidence: float = 0.0) -> TagResult:
         """Tag content by detecting topics."""
         if not content or not content.strip():
             return TagResult(content=content, tags=[])
@@ -50,7 +48,7 @@ class ContentTagger:
 
         return TagResult(content=content, tags=tags)
 
-    def batch_tag(self, contents: list[str]) -> list[TagResult]:  # type: ignore[type-arg]
+    def batch_tag(self, contents: list[str]) -> list[TagResult]:
         """Tag multiple pieces of content."""
         return [self.tag(c) for c in contents]
 

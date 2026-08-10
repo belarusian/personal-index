@@ -3,7 +3,7 @@
 import pytest
 from personal_index.content_tagger.tag import Tag
 from personal_index.content_tagger.detector import TopicDetector
-from personal_index.content_tagger.tagger import ContentTagger
+from personal_index.content_tagger.tagger import ContentTagger, TagResult
 
 
 # ── Tag tests ──────────────────────────────────────────────
@@ -140,7 +140,7 @@ class TestContentTagger:
 
     def test_tag_result_from_dict(self):
         data = {"tags": [{"name": "test", "confidence": 0.8}], "content": "test content"}
-        result = ContentTagger.TagResult.from_dict(data)
+        result = TagResult.from_dict(data)
         assert len(result.tags) == 1
         assert result.tags[0].name == "test"
 
