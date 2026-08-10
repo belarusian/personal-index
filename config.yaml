@@ -1,0 +1,14 @@
+crawler:
+  max_depth: 5
+  politeness_delay: 1.0
+  rate_limit: 10
+  respect_robots_txt: true
+  timeout: 30
+data_dir: .personal_index
+index:
+  enable_stemming: true
+  index_path: .personal_index
+interests: []
+scheduler:
+  enabled: false
+  interval_hours: 24

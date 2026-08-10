@@ -1,0 +1,17 @@
+{
+  "Python": {
+    "name": "Python",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "python"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 8,
+    "created_at": "2026-08-10T22:42:43.047055+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  }
+}
