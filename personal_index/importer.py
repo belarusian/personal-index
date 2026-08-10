@@ -103,7 +103,7 @@ class Importer:
                     result.total_imported += 1
                 else:
                     result.total_skipped += 1
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 result.errors.append(f"Error importing item: {e}")
 
         return result
@@ -128,7 +128,7 @@ class Importer:
                     result.total_imported += 1
                 else:
                     result.total_skipped += 1
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 result.errors.append(f"Error importing row: {e}")
 
         return result
@@ -217,7 +217,7 @@ class Importer:
                     result.total_imported += 1
                 else:
                     result.total_skipped += 1
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 result.errors.append(f"Error parsing bookmark element: {e}")
 
         return result

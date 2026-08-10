@@ -127,7 +127,7 @@ class URLHistory:
         for v in self._history:
             try:
                 domain = urlparse(v.url).netloc or "unknown"
-            except Exception:
+            except ValueError:
                 domain = "unknown"
             if domain not in domains:
                 domains[domain] = {"visits": 0, "errors": 0}
