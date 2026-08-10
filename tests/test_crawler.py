@@ -194,3 +194,25 @@ class TestCrawler:
 
     def test_results_property(self, crawler):
         assert crawler.results == []
+
+
+class TestCrawlerInit:
+    """Test Crawler initialization with interest_store parameter."""
+
+    def test_crawler_accepts_interest_store(self):
+        """Crawler.__init__ should accept interest_store kwarg (TICKET-34)."""
+        from personal_index.crawler import Crawler, CrawlerConfig
+        from personal_index.interests import InterestStore
+
+        config = CrawlerConfig()
+        store = InterestStore()
+        crawler = Crawler(config=config, interest_store=store)
+        assert crawler.interest_store is store
+
+    def test_crawler_without_interest_store(self):
+        """Crawler.__init__ should work without interest_store."""
+        from personal_index.crawler import Crawler, CrawlerConfig
+
+        config = CrawlerConfig()
+        crawler = Crawler(config=config)
+        assert crawler.interest_store is None

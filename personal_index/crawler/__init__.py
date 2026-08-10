@@ -50,12 +50,12 @@ class CrawlerConfig:
 class Crawler:
     """Web crawler with depth control and politeness."""
 
-    def __init__(self, config: CrawlerConfig | None = None):
+    def __init__(self, config: CrawlerConfig | None = None, interest_store: InterestStore | None = None):
         self.config = config or CrawlerConfig()
         self._visited: set[str] = set()
         self._pages_crawled: int = 0
         self._results: list[CrawledPage] = []
-        self.interest_store: InterestStore | None = None
+        self.interest_store = interest_store
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "personal-index/0.1.0",
