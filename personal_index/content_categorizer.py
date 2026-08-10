@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
-
 from dataclasses import dataclass, field
+from typing import ClassVar
 from urllib.parse import urlparse
 
 from personal_index.text_utils import tokenize

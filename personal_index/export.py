@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
-
 import csv
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
+from typing import ClassVar
 
 from .bookmarks import BookmarkManager
 

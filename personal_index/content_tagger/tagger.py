@@ -8,9 +8,6 @@ from typing import TYPE_CHECKING, Any
 from personal_index.content_tagger.detector import TopicDetector
 from personal_index.content_tagger.tag import Tag
 
-if TYPE_CHECKING:
-    pass
-
 
 @dataclass
 class TagResult:
