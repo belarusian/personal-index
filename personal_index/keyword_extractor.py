@@ -16,7 +16,7 @@ class Keyword:
     text: str
     frequency: int
     score: float
-    positions: List[int] = None  # positions in text
+    positions: List[int] | None = None  # positions in text
 
     def __post_init__(self):
         if self.positions is None:

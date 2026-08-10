@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import typing
+from typing import get_type_hints
+
 import pytest
 
 from personal_index.keyword_extractor import KeywordExtractor, Keyword
@@ -127,3 +130,22 @@ class TestKeywordExtractor:
         assert "python" in keyword_texts
         assert "java" not in keyword_texts
         assert "javascript" not in keyword_texts
+
+    def test_keyword_positions_type_annotation(self):
+        """Verify Keyword.positions accepts None and list[int]."""
+        # positions defaults to None, should be set to [] in __post_init__
+        kw = Keyword(text="test", frequency=1, score=1.0)
+        assert kw.positions == []
+
+        # positions can be set to a list
+        kw2 = Keyword(text="test", frequency=1, score=1.0, positions=[0, 1, 2])
+        assert kw2.positions == [0, 1, 2]
+
+        # Verify the type annotation is correct (List[int] | None, not List[int])
+        hints = get_type_hints(Keyword)
+        positions_hint = hints.get("positions")
+        # The annotation should allow None (Union with None)
+        origin = typing.get_origin(positions_hint)
+        if origin is typing.Union:
+            args = typing.get_args(positions_hint)
+            assert type(None) in args, "positions should accept None"
