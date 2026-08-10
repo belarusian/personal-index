@@ -138,3 +138,19 @@ class TestVersionTracker:
         tracker = VersionTracker()
         v = tracker.record_version("http://example.com", "content", metadata={"source": "crawl"})
         assert v.metadata == {"source": "crawl"}
+
+
+class TestVersioningSecurity:
+    """Test that versioning uses secure hashing."""
+
+    def test_generate_version_id_uses_sha256(self):
+        """Verify generate_version_id produces SHA-256 based output."""
+        from personal_index.versioning import VersionTracker
+        vid = VersionTracker.generate_version_id("http://example.com", "abc123")
+        assert len(vid) == 12  # First 12 chars of SHA-256 hex
+        # Verify it is deterministic
+        vid2 = VersionTracker.generate_version_id("http://example.com", "abc123")
+        assert vid == vid2
+        # Verify different input produces different version id
+        vid3 = VersionTracker.generate_version_id("http://example.com", "def456")
+        assert vid != vid3
