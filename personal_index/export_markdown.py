@@ -287,10 +287,7 @@ def export_to_md(data: dict) -> str:
     exporter = MarkdownExporter()
     
     # Handle both single dict and list of dicts
-    if isinstance(data, dict):
-        items = [data]
-    else:
-        items = data
+    items = [data] if isinstance(data, dict) else data
     
     return exporter.export(items)
 
@@ -311,10 +308,7 @@ def save_markdown(data: dict, filepath: str) -> bool:
         exporter = MarkdownExporter()
         
         # Handle both single dict and list of dicts
-        if isinstance(data, dict):
-            items = [data]
-        else:
-            items = data
+        items = [data] if isinstance(data, dict) else data
         
         content = exporter.export(items)
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)

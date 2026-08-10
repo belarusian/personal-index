@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-"""Import bookmarks and content from various formats."""
-
 from typing import ClassVar
 
 
@@ -15,6 +13,7 @@ from defusedxml.ElementTree import fromstring as ET_fromstring, ParseError as ET
 
 from .bookmarks import Bookmark, BookmarkManager
 
+"""Import bookmarks and content from various formats."""
 
 @dataclass
 class ImportResult:

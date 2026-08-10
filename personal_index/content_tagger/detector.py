@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-"""Topic detection engine for content tagging."""
-
 from typing import ClassVar
 
 
@@ -10,6 +8,7 @@ from dataclasses import dataclass
 
 from personal_index.content_tagger.tag import Tag
 
+"""Topic detection engine for content tagging."""
 
 @dataclass
 class _TopicDefinition:

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-"""Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
-
 from typing import ClassVar
 
 
@@ -10,6 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+"""Bookmark export module for exporting saved bookmarks as HTML, JSON, and OPML."""
 
 @dataclass
 class BookmarkExportResult:

@@ -66,11 +66,7 @@ class UrlFilter:
             if rule.matches(url):
                 return True
         # Check blacklist
-        for rule in self._blacklist:
-            if rule.matches(url):
-                return False
-        # Default: allow
-        return True
+        return all(not rule.matches(url) for rule in self._blacklist)
 
     def is_blocked(self, url: str) -> bool:
         """Check if a URL is blocked.

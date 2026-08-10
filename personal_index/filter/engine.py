@@ -106,10 +106,7 @@ class ContentFilter:
         """Check if URL should be crawled based on patterns."""
         if not self._compiled_patterns:
             return True
-        for _, pattern in self._compiled_patterns:
-            if pattern.search(url):
-                return True
-        return False
+        return any(pattern.search(url) for _, pattern in self._compiled_patterns)
 
     def extract_relevant_text(self, text: str, max_length: int = 500) -> str:
         """Extract relevant text, truncating if needed."""

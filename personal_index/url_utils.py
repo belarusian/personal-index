@@ -339,10 +339,7 @@ def extract_all_urls(html: str, base_url: str = "") -> list:
             href = a["href"].strip()
             if href.startswith(("#", "javascript:")):
                 continue
-            if base_url:
-                full_url = urljoin(base_url, href)
-            else:
-                full_url = href
+            full_url = urljoin(base_url, href) if base_url else href
             normalized = normalize_url(full_url)
             if is_valid_url(normalized):
                 urls.append(normalized)
@@ -383,7 +380,4 @@ def is_excluded_url(url: str) -> bool:
     if parsed.scheme in EXCLUDED_SCHEMES:
         return True
     path = parsed.path.lower()
-    for ext in EXCLUDED_EXTENSIONS:
-        if path.endswith(ext):
-            return True
-    return False
+    return any(path.endswith(ext) for ext in EXCLUDED_EXTENSIONS)
