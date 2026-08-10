@@ -159,9 +159,9 @@ class RSSParser:
         link_elem = root.find("atom:link[@rel='alternate']", ns)
         if link_elem is None:
             links = root.findall("atom:link", ns)
-            for l in links:
-                if l.get("rel") == "alternate" or l.get("rel") is None:
-                    link_elem = l
+            for link in links:
+                if link.get("rel") == "alternate" or l.get("rel") is None:
+                    link_elem = link
                     break
         feed.link = link_elem.get("href", "") if link_elem is not None else ""
 
@@ -197,9 +197,9 @@ class RSSParser:
         link_elem = entry_elem.find("atom:link[@rel='alternate']", ns)
         if link_elem is None:
             links = entry_elem.findall("atom:link", ns)
-            for l in links:
-                if l.get("rel") == "alternate" or l.get("rel") is None:
-                    link_elem = l
+            for link in links:
+                if link.get("rel") == "alternate" or l.get("rel") is None:
+                    link_elem = link
                     break
         entry.link = link_elem.get("href", "") if link_elem is not None else ""
 
