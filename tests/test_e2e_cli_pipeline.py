@@ -231,8 +231,8 @@ class TestE2ETags:
         runner = CliRunner()
         runner.invoke(main, ["init"])
 
-        runner.invoke(main, ["tag", "add", "temp"])
-        result = runner.invoke(main, ["tag", "remove", "temp"])
+        runner.invoke(main, ["tags", "add", "temp", "https://example.com/test"])
+        result = runner.invoke(main, ["tags", "remove", "temp", "https://example.com/test"])
         assert result.exit_code == 0
         assert "Removed" in result.output and "temp" in result.output
 
