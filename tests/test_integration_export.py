@@ -29,7 +29,7 @@ class TestExportIntegration:
             {"title": "Test Article", "url": "https://example.com/1", "score": 0.9},
             {"title": "Another Article", "url": "https://example.com/2", "score": 0.7},
         ]
-        md = export_to_md({"items": items})
+        md = export_to_md(items)
         assert "# Personal Index" in md
         assert "Test Article" in md
         assert "Another Article" in md
@@ -41,7 +41,7 @@ class TestExportIntegration:
         items = [
             {"title": "Test", "url": "https://example.com/1", "score": 0.9},
         ]
-        csv_data = export_to_csv({"items": items})
+        csv_data = export_to_csv(items)
         assert "title" in csv_data
         assert "Test" in csv_data
 
@@ -61,7 +61,7 @@ class TestExportIntegration:
     def test_export_empty(self):
         """Exporting empty list should produce valid output."""
         from personal_index.export_markdown import export_to_md
-        md = export_to_md({"items": []})
+        md = export_to_md([])
         assert "# Personal Index" in md
 
     def test_export_preserves_order(self):
@@ -72,7 +72,7 @@ class TestExportIntegration:
             {"title": f"Article {i}", "url": f"https://example.com/{i}", "score": 1.0 - i * 0.1}
             for i in range(5)
         ]
-        md = export_to_md({"items": items})
+        md = export_to_md(items)
         # Check that articles appear in order
         pos1 = md.index("Article 0")
         pos2 = md.index("Article 4")
@@ -86,6 +86,6 @@ class TestExportIntegration:
             {"title": "Tagged Article", "url": "https://example.com/1", "score": 0.9,
              "tags": ["python", "tutorial"]},
         ]
-        md = export_to_md({"items": items})
+        md = export_to_md(items)
         assert "python" in md
         assert "tutorial" in md
