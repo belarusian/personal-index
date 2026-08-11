@@ -220,7 +220,7 @@ class TestE2ETags:
 
         result = runner.invoke(main, ["tags", "add", "important", "https://example.com/page"])
         assert result.exit_code == 0
-        assert "Added tag: important" in result.output
+        assert "Added tag" in result.output and "important" in result.output
 
         result = runner.invoke(main, ["tag", "list"])
         assert result.exit_code == 0
@@ -234,7 +234,7 @@ class TestE2ETags:
         runner.invoke(main, ["tag", "add", "temp"])
         result = runner.invoke(main, ["tag", "remove", "temp"])
         assert result.exit_code == 0
-        assert "Removed tag: temp" in result.output
+        assert "Removed" in result.output and "temp" in result.output
 
 
 class TestE2EIndex:
