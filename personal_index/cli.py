@@ -363,8 +363,10 @@ if __name__ == "__main__":
 @main.command()
 @click.option("--config", default="config.yaml", help="Config file path")
 @click.option("--data-dir", default=".personal_index", help="Data directory")
-def status(config, data_dir):
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+def status(config, data_dir, as_json):
     """Show system status: index size, interests, pipeline config."""
+    import json
     import os
 
     click.echo("Personal Index Status")
@@ -404,6 +406,15 @@ def status(config, data_dir):
         click.echo(f"Pipeline steps: {', '.join(pcfg.get_enabled_steps())}")
     except Exception as e:
         click.echo(f"Pipeline config error: {e}")
+
+    if as_json:
+        status_data = {
+            "data_dir": data_dir,
+            "data_dir_exists": os.path.exists(data_dir),
+            "interests_count": len(interests),
+            "indexed_pages": count,
+        }
+        click.echo(json.dumps(status_data, indent=2))
 
 
 @main.command()
