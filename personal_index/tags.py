@@ -27,6 +27,11 @@ class Tag:
             return self.name == other.name
         return False
 
+    def __lt__(self, other):
+        if isinstance(other, Tag):
+            return self.name < other.name
+        return NotImplemented
+
 
 @dataclass
 class TagStore:
