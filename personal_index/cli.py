@@ -459,7 +459,7 @@ def export_cmd(fmt, output, query, limit, data_dir):
     if query:
         results = index.search(query, limit=limit)
     else:
-        results = index.list_pages(limit=limit)
+        results = index.list_pages()[:limit]
 
     if not results:
         click.echo("No content to export.")
