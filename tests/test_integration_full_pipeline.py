@@ -233,7 +233,7 @@ class TestCLIEndToEnd:
 
         # Add interest
         result = runner.invoke(main, [
-            "interests", "add", "dev",
+            "interests", "add", "-n", "dev",
             "-k", "software", "-k", "testing", "-k", "development"
         ])
         assert result.exit_code == 0
@@ -261,7 +261,7 @@ class TestCLIEndToEnd:
 
         # Add interests
         result = runner.invoke(main, [
-            "interests", "add", "python",
+            "interests", "add", "-n", "python",
             "-k", "python", "-k", "programming"
         ])
         assert result.exit_code == 0
@@ -303,7 +303,7 @@ class TestCLIEndToEnd:
             ("cooking", ["recipe", "baking"]),
         ]:
             result = runner.invoke(main, [
-                "interests", "add", name,
+                "interests", "add", "-n", name,
                 "-k", keywords[0], "-k", keywords[1]
             ])
             assert result.exit_code == 0
