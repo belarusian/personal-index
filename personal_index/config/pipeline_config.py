@@ -22,7 +22,11 @@ class PipelineConfig:
     steps: list[PipelineStepConfig] = field(default_factory=list)
     min_score_threshold: float = 0.0
     min_content_length: int = 100
+    max_content_length: int = 100000
+    min_title_length: int = 3
+    blocked_domains: list[str] = field(default_factory=list)
     max_pages: int = 100
+    max_depth: int = 3
     crawl_timeout: int = 30
     politeness_delay: float = 1.0
 
@@ -90,7 +94,11 @@ def load_pipeline_config(config_path: str = "config.yaml") -> PipelineConfig:
         steps=steps,
         min_score_threshold=pipeline_data.get("min_score_threshold", 0.0),
         min_content_length=pipeline_data.get("min_content_length", 100),
+        max_content_length=pipeline_data.get("max_content_length", 100000),
+        min_title_length=pipeline_data.get("min_title_length", 3),
+        blocked_domains=pipeline_data.get("blocked_domains", []),
         max_pages=crawler_data.get("max_pages", 100),
+        max_depth=crawler_data.get("max_depth", 3),
         crawl_timeout=crawler_data.get("timeout", 30),
         politeness_delay=crawler_data.get("politeness_delay", 1.0),
     )

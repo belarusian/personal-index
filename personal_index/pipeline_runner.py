@@ -88,9 +88,8 @@ class PipelineRunner:
         self._filter = ContentFilter(
             config=FilterConfig(
                 min_content_length=self.pipeline_config.min_content_length,
-                max_content_length=self.pipeline_config.max_content_length,
-                min_title_length=self.pipeline_config.min_title_length,
-                blocked_domains=self.pipeline_config.blocked_domains,
+                min_title_length=3,
+                blocked_domains=[],
             )
         )
         self._scorer = ContentScorer(weights=ScoreWeights())
@@ -101,7 +100,7 @@ class PipelineRunner:
                 max_depth=self.pipeline_config.max_depth,
                 max_pages=self.pipeline_config.max_pages,
                 delay=self.pipeline_config.politeness_delay,
-                timeout=self.pipeline_config.timeout,
+                timeout=self.pipeline_config.crawl_timeout,
             ),
             interest_store=self._interest_store,
         )
