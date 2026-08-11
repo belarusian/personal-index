@@ -335,6 +335,57 @@ class PipelineRunner:
             "tagged_pages": self._tag_store.get_tagged_page_count(),
         }
 
+
+    def add_page_directly(self, page: CrawledPage) -> bool:
+        """Add a page directly through the pipeline (skip crawl stage).
+
+        Runs the page through extract → filter → score → tag → index.
+
+        Args:
+            page: A CrawledPage to process.
+
+        Returns:
+            True if the page was successfully indexed, False otherwise.
+        """
+        # Stage 2: Extract (page already has content)
+        if not page.content or len(page.content.strip()) == 0:
+            return False
+
+        # Stage 3: Filter
+        if not self._filter.should_include(page):
+            return False
+
+        # Stage 4: Score
+        text = f"{page.title} {page.content}"
+        score = self._scorer.score(
+            keyword_matches=len(page.matched_interests or []),
+            total_keywords=max(len(self._interest_store.get_all_keywords()), 1),
+            word_count=len(page.content.split()),
+            domain_authority=0.5,
+        )
+        page.relevance_score = score.total
+
+        if page.relevance_score < self.pipeline_config.min_score_threshold:
+            return False
+
+        # Stage 5: Tag
+        matches = self._interest_store.matches_any(text, page.url)
+        for interest in matches:
+            self._tag_store.add_tag_to_page(page.url, interest.name)
+            if interest.name not in (page.matched_interests or []):
+                if page.matched_interests is None:
+                    page.matched_interests = []
+                page.matched_interests.append(interest.name)
+
+        # Stage 6: Index
+        try:
+            self._search_index.add_page(page)
+            self._search_index._save()
+            self._tag_store._save()
+            return True
+        except Exception:
+            return False
+
     def close(self) -> None:
         """Close all resources."""
         self._crawler.close()
