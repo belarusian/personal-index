@@ -386,6 +386,47 @@ class PipelineRunner:
         except (OSError, ValueError):
             return False
 
+
+    def _process_file(self, file_path: str) -> CrawledPage | None:
+        """Process a single file and return a CrawledPage.
+        
+        Helper method for testing individual file processing.
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                file_content = f.read()
+            from pathlib import Path
+            p = Path(file_path)
+            page = CrawledPage(
+                url=f'file://{os.path.abspath(file_path)}',
+                title=p.stem,
+                content=file_content,
+                meta_description=file_content[:200],
+            )
+            return page
+        except (OSError, ValueError):
+            return None
+
+    def _auto_tag_page(self, page: CrawledPage) -> list[str]:
+        """Auto-tag a page based on interest matching.
+        
+        Helper method for testing the tagging stage.
+        Returns list of tag names applied.
+        """
+        text = f'{page.title} {page.content}'
+        matches = self._interest_store.matches_any(text, page.url)
+        tags = []
+        for interest in matches:
+            self._tag_store.add_tag_to_page(page.url, interest.name)
+            tags.append(interest.name)
+        # Add keyword-based tags
+        from personal_index.keyword_extractor import extract_keywords
+        keywords = extract_keywords(page.content, max_keywords=5)
+        for kw in keywords:
+            self._tag_store.add_tag_to_page(page.url, kw)
+            tags.append(kw)
+        return tags
+
     def close(self) -> None:
         """Close all resources."""
         self._crawler.close()
