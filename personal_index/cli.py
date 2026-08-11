@@ -1047,13 +1047,3 @@ main.add_command(doctor_cmd)
 
 if __name__ == "__main__":
     main()
-
-main.add_command(stats_cmd)
-main.add_command(list_cmd)
-main.add_command(remove_cmd)
-
-main.add_command(clear_cmd)
-
-main.add_command(top_cmd)
-
-main.add_command(doctor_cmd)
