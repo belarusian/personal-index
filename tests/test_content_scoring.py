@@ -1,140 +1,165 @@
-"""Tests for content scoring module."""
+"""Tests for the content scoring and ranking module."""
+
+from datetime import datetime, timedelta
 
 import pytest
-from personal_index.content_scoring import ContentScorer, ScoreBreakdown
+
+from personal_index.content_scoring import (
+    ContentScore,
+    ContentScorer,
+    ScoreFactor,
+    ScoreWeights,
+)
 
 
-class TestScoreBreakdown:
-    def test_default_values(self):
-        b = ScoreBreakdown()
-        assert b.total_score == 0.0
-        assert b.content_length_score == 0.0
+class TestScoreWeights:
+    def test_default_weights(self) -> None:
+        w = ScoreWeights()
+        assert w.recency == 0.2
+        assert w.relevance == 0.25
+        assert w.engagement == 0.15
+        assert w.quality == 0.15
+        assert w.authority == 0.1
+        assert w.freshness == 0.15
+
+    def test_normalize_equal_weights(self) -> None:
+        w = ScoreWeights(
+            recency=1, relevance=1, engagement=1,
+            quality=1, authority=1, freshness=1,
+        )
+        n = w.normalize()
+        assert abs(sum([
+            n.recency, n.relevance, n.engagement,
+            n.quality, n.authority, n.freshness,
+        ]) - 1.0) < 0.001
+
+    def test_normalize_zero_weights(self) -> None:
+        w = ScoreWeights(
+            recency=0, relevance=0, engagement=0,
+            quality=0, authority=0, freshness=0,
+        )
+        n = w.normalize()
+        assert n.recency == 0.2  # Falls back to defaults
+
+    def test_normalize_custom_weights(self) -> None:
+        w = ScoreWeights(recency=0.5, relevance=0.5)
+        n = w.normalize()
+        assert abs(n.recency - 0.5) < 0.001
+        assert abs(n.relevance - 0.5) < 0.001
+
+
+class TestContentScore:
+    def test_default_score(self) -> None:
+        s = ContentScore()
+        assert s.total == 0.0
+        assert s.factors == {}
+
+    def test_to_dict(self) -> None:
+        s = ContentScore(
+            total=0.75, recency=0.9, relevance=0.8,
+            engagement=0.6, quality=0.7, authority=0.5,
+            freshness=0.8,
+        )
+        d = s.to_dict()
+        assert d["total"] == 0.75
+        assert d["recency"] == 0.9
+        assert isinstance(d["factors"], dict)
 
 
 class TestContentScorer:
-    def _make_content(self, text="", keywords=None, headings=None,
-                      links=None, images=None):
-        return {
-            "text": text,
-            "keywords": keywords or [],
-            "headings": headings or [],
-            "links": links or [],
-            "images": images or [],
-        }
+    def setup_method(self) -> None:
+        self.scorer = ContentScorer()
 
-    def test_score_returns_breakdown(self):
-        scorer = ContentScorer()
-        score, breakdown = scorer.score(self._make_content(text="hello world"))
-        assert isinstance(score, float)
-        assert isinstance(breakdown, ScoreBreakdown)
+    def test_score_all_defaults(self) -> None:
+        result = self.scorer.score()
+        assert isinstance(result, ContentScore)
+        assert 0.0 <= result.total <= 1.0
 
-    def test_content_length_short(self):
-        scorer = ContentScorer()
-        _, breakdown = scorer.score(self._make_content(text="short"))
-        assert breakdown.content_length_score < 0.5
-
-    def test_content_length_optimal(self):
-        text = "word " * 500  # 500 words
-        scorer = ContentScorer()
-        _, breakdown = scorer.score(self._make_content(text=text))
-        assert breakdown.content_length_score == 1.0
-
-    def test_content_length_very_long(self):
-        text = "word " * 5000  # 5000 words
-        scorer = ContentScorer()
-        _, breakdown = scorer.score(self._make_content(text=text))
-        assert breakdown.content_length_score < 1.0
-
-    def test_keyword_density_match(self):
-        scorer = ContentScorer()
-        content = self._make_content(
-            text="Python programming language is great",
-            keywords=["python", "programming"],
+    def test_score_perfect_relevance(self) -> None:
+        result = self.scorer.score(
+            keyword_matches=10, total_keywords=10,
         )
-        _, breakdown = scorer.score(content)
-        assert breakdown.keyword_density_score > 0.5
+        assert result.relevance == 1.0
 
-    def test_keyword_density_no_match(self):
-        scorer = ContentScorer()
-        content = self._make_content(
-            text="Hello world",
-            keywords=["python", "programming"],
+    def test_score_zero_relevance(self) -> None:
+        result = self.scorer.score(
+            keyword_matches=0, total_keywords=10,
         )
-        _, breakdown = scorer.score(content)
-        assert breakdown.keyword_density_score == 0.0
+        assert result.relevance == 0.0
 
-    def test_keyword_density_no_keywords(self):
-        scorer = ContentScorer()
-        content = self._make_content(text="Hello world", keywords=[])
-        _, breakdown = scorer.score(content)
-        assert breakdown.keyword_density_score == 0.5
+    def test_score_high_engagement(self) -> None:
+        result = self.scorer.score(
+            view_count=1000, bookmark_count=100, share_count=50,
+        )
+        assert result.engagement > 0.5
 
-    def test_heading_score_with_h1(self):
-        scorer = ContentScorer()
-        content = self._make_content(headings=["h1: Title", "h2: Sub"])
-        _, breakdown = scorer.score(content)
-        assert breakdown.heading_score > 0.0
+    def test_score_low_engagement(self) -> None:
+        result = self.scorer.score(
+            view_count=0, bookmark_count=0, share_count=0,
+        )
+        assert result.engagement == 0.0
 
-    def test_heading_score_no_headings(self):
-        scorer = ContentScorer()
-        content = self._make_content(headings=[])
-        _, breakdown = scorer.score(content)
-        assert breakdown.heading_score == 0.0
+    def test_score_quality_with_images(self) -> None:
+        result = self.scorer.score(
+            word_count=1000, has_images=True,
+        )
+        assert result.quality > self.scorer.score(word_count=1000).quality
 
-    def test_link_score_moderate(self):
-        scorer = ContentScorer()
-        links = [{"url": f"http://example.com/{i}"} for i in range(10)]
-        content = self._make_content(links=links)
-        _, breakdown = scorer.score(content)
-        assert 0.3 < breakdown.link_score <= 1.0
+    def test_score_authority_verified(self) -> None:
+        result = self.scorer.score(
+            domain_authority=0.8, is_verified_source=True,
+        )
+        assert result.authority > self.scorer.score(
+            domain_authority=0.8, is_verified_source=False,
+        ).authority
 
-    def test_link_score_too_many(self):
-        scorer = ContentScorer()
-        links = [{"url": f"http://example.com/{i}"} for i in range(150)]
-        content = self._make_content(links=links)
-        _, breakdown = scorer.score(content)
-        assert breakdown.link_score == 0.2
+    def test_score_recency_new_content(self) -> None:
+        now = datetime.now()
+        result = self.scorer.score(published_at=now)
+        assert result.recency > 0.9
 
-    def test_link_score_none(self):
-        scorer = ContentScorer()
-        content = self._make_content(links=[])
-        _, breakdown = scorer.score(content)
-        assert breakdown.link_score == 0.3
+    def test_score_recency_old_content(self) -> None:
+        old = datetime.now() - timedelta(days=365)
+        result = self.scorer.score(published_at=old)
+        assert result.recency < 0.1
 
-    def test_image_score_with_alt(self):
-        scorer = ContentScorer()
-        images = [{"src": "img.png", "alt": "Description"}]
-        content = self._make_content(images=images)
-        _, breakdown = scorer.score(content)
-        assert breakdown.image_score == 1.0
-
-    def test_image_score_no_alt(self):
-        scorer = ContentScorer()
-        images = [{"src": "img.png", "alt": ""}]
-        content = self._make_content(images=images)
-        _, breakdown = scorer.score(content)
-        assert breakdown.image_score == 0.0
-
-    def test_readability_optimal(self):
-        # Words of 4-7 chars
-        text = "The quick brown fox jumps over the lazy dog"
-        scorer = ContentScorer()
-        _, breakdown = scorer.score(self._make_content(text=text))
-        assert breakdown.readability_score >= 0.7
-
-    def test_rank_items(self):
-        scorer = ContentScorer()
-        items = [
-            self._make_content(text="word " * 500, keywords=["word"]),
-            self._make_content(text="short"),
-        ]
-        ranked = scorer.rank(items)
-        assert len(ranked) == 2
-        assert ranked[0][1] >= ranked[1][1]
-
-    def test_custom_weights(self):
-        weights = {"content_length": 1.0, "keyword_density": 0, "headings": 0,
-                   "links": 0, "images": 0, "readability": 0, "freshness": 0}
+    def test_custom_weights(self) -> None:
+        weights = ScoreWeights(relevance=1.0)
         scorer = ContentScorer(weights=weights)
-        score, breakdown = scorer.score(self._make_content(text="word " * 500))
-        assert breakdown.total_score == breakdown.content_length_score
+        result = scorer.score(keyword_matches=5, total_keywords=5)
+        assert result.total == pytest.approx(1.0, abs=0.01)
+
+    def test_rank_returns_sorted(self) -> None:
+        items = [
+            {"keyword_matches": 10, "total_keywords": 10},
+            {"keyword_matches": 0, "total_keywords": 10},
+            {"keyword_matches": 5, "total_keywords": 10},
+        ]
+        ranked = self.scorer.rank(items)
+        assert len(ranked) == 3
+        assert ranked[0][1].total >= ranked[1][1].total
+        assert ranked[1][1].total >= ranked[2][1].total
+
+    def test_rank_limit(self) -> None:
+        items = [{"keyword_matches": i, "total_keywords": 10} for i in range(20)]
+        ranked = self.scorer.rank(items, limit=5)
+        assert len(ranked) == 5
+
+    def test_score_freshness_never(self) -> None:
+        result = self.scorer.score(
+            last_crawled=datetime.now(), change_frequency="never",
+        )
+        assert result.freshness == 1.0
+
+    def test_score_freshness_recent(self) -> None:
+        result = self.scorer.score(
+            last_crawled=datetime.now(), change_frequency="daily",
+        )
+        assert result.freshness > 0.9
+
+    def test_score_freshness_stale(self) -> None:
+        old = datetime.now() - timedelta(days=100)
+        result = self.scorer.score(
+            last_crawled=old, change_frequency="daily",
+        )
+        assert result.freshness < 0.5
