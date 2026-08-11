@@ -12,7 +12,7 @@ import yaml
 from personal_index.cli_pipeline import pipeline as pipeline_cmd
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
-from personal_index.models import Interest, CrawledPage
+from personal_index.models import CrawledPage, Interest
 from personal_index.scheduler import Scheduler
 
 
@@ -614,7 +614,6 @@ if __name__ == "__main__":
 @click.group()
 def index():
     """Manage the search index (alias for index_cmd_group)."""
-    pass
 
 
 @index.command("count")
@@ -661,7 +660,6 @@ def index_remove_alias(ctx, url, data_dir):
 @click.group()
 def schedule():
     """Manage scheduled crawl jobs."""
-    pass
 
 
 @schedule.command("add")
@@ -723,7 +721,6 @@ def schedule_remove(ctx, name, data_dir):
 @click.group()
 def config():
     """View and modify configuration."""
-    pass
 
 
 @config.command("show")
