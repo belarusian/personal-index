@@ -137,8 +137,9 @@ class TestTagSearchIndexIntegration:
 
         # Tags are retrievable
         tags = tag_store.get_tags_for_page(page.url)
-        assert "python" in tags
-        assert "tutorial" in tags
+        tag_names = [t.name for t in tags]
+        assert "python" in tag_names
+        assert "tutorial" in tag_names
 
     def test_tags_persist_after_reload(self, tmp_path):
         """Tags persist when TagStore is reloaded from disk."""
@@ -149,7 +150,7 @@ class TestTagSearchIndexIntegration:
         # Reload
         tag_store2 = TagStore(store_path=str(tmp_path / "tags.json"))
         tags = tag_store2.get_tags_for_page("https://example.com/page1")
-        assert "important" in tags
+        assert any(t.name == "important" for t in tags)
 
     def test_index_persists_after_reload(self, tmp_path):
         """Search index persists when reloaded from disk."""

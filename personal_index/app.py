@@ -225,7 +225,7 @@ class PersonalIndexApp:
                 "tags": result.get("tags", []),
             })
 
-        return result
+        return result  # type: ignore[no-any-return]
 
     def search(self, query: str, limit: int = 20) -> list:
         """Search indexed content."""

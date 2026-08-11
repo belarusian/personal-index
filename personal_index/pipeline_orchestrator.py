@@ -116,7 +116,7 @@ class PipelineOrchestrator:
         if self.progress_callback:
             try:
                 self.progress_callback(stage, current, total)
-            except Exception:
+            except (RuntimeError, TypeError):
                 pass
 
     def run(self, seed_urls: list[str]) -> PipelineResult:
@@ -183,8 +183,8 @@ class PipelineOrchestrator:
                 result.pages.append(page)
                 self._emit_progress("index", i + 1, len(filtered_pages))
 
-        except Exception as e:
-            logger.error("Pipeline error: %s", e, exc_info=True)
+        except (RuntimeError, OSError) as e:
+            logger.exception("Pipeline error: %s", e)
             result.errors.append(str(e))
             result.success = False
         finally:
@@ -258,8 +258,8 @@ class PipelineOrchestrator:
                 result.pages.append(page)
                 self._emit_progress("index", i + 1, len(filtered_pages))
 
-        except Exception as e:
-            logger.error("Pipeline error: %s", e, exc_info=True)
+        except (RuntimeError, OSError) as e:
+            logger.exception("Pipeline error: %s", e)
             result.errors.append(str(e))
             result.success = False
         finally:
