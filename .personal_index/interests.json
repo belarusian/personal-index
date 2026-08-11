@@ -1,21 +1,4 @@
 {
-  "programming": {
-    "name": "programming",
-    "interest_type": "keyword",
-    "value": "",
-    "keywords": [
-      "python",
-      "javascript",
-      "rust"
-    ],
-    "url_patterns": [],
-    "topics": [],
-    "priority": 5,
-    "created_at": "2026-08-11T13:40:20.057688+00:00",
-    "enabled": true,
-    "topic": "",
-    "match_mode": "any"
-  },
   "technology": {
     "name": "technology",
     "interest_type": "keyword",

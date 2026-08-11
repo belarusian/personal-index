@@ -1,0 +1,1203 @@
+{
+  "pages": [
+    {
+      "url": "https://iana.org/protocols",
+      "title": "Protocol Registries",
+      "score": 0.5583,
+      "tags": [
+        "review",
+        "required",
+        "expert",
+        "specification",
+        "news",
+        "rust",
+        "rfc",
+        "technology"
+      ],
+      "snippet": "Protocol Registries Domains Protocols Numbers About Protocol Registries Protocol parameter registries represent the authoritative record of many of the codes and numbers contained in a variety of Inte"
+    },
+    {
+      "url": "https://iana.org/news",
+      "title": "News",
+      "score": 0.5583,
+      "tags": [
+        "iana",
+        "news",
+        "rust",
+        "zone",
+        "root",
+        "icann",
+        "technology",
+        "update"
+      ],
+      "snippet": "News Domains Protocols Numbers About News 2026-07-27 Updated Root KSK Rollover Guide Released Updated guidance on what to expect during a Root Zone KSK rollover, in advance of the upcoming October 202"
+    },
+    {
+      "url": "http://www.icann.org/topics/idn",
+      "title": "Internationalized Domain Names - ICANN",
+      "score": 0.5487,
+      "tags": [
+        "idn",
+        "domain",
+        "news",
+        "rust",
+        "name",
+        "policy",
+        "icann",
+        "technology"
+      ],
+      "snippet": "Internationalized Domain Names - ICANN Skip to main content Search ICANN.org Log In Sign Up Get Started About ICANN ICANN for Beginners Fellowship Program NextGen@ICANN Program History News and Media "
+    },
+    {
+      "url": "https://iana.org/dnssec/files",
+      "title": "DNSSEC Trust Anchors and Rollovers",
+      "score": 0.5348,
+      "tags": [
+        "key",
+        "news",
+        "rust",
+        "zone",
+        "anchors",
+        "technology",
+        "trust",
+        "root"
+      ],
+      "snippet": "DNSSEC Trust Anchors and Rollovers Domains Protocols Numbers About Trust Anchors and Rollovers The Root Key Signing Key (KSK) acts as the trust anchor for DNSSEC for the Domain Name System. This trust"
+    },
+    {
+      "url": "https://iana.org/domains/root/db",
+      "title": "Root Zone Database",
+      "score": 0.5305,
+      "tags": [
+        "registry",
+        "llc",
+        "rust",
+        "generic",
+        "inc",
+        "technology",
+        "country-code"
+      ],
+      "snippet": "Root Zone Database Domains Protocols Numbers About Root Zone Database The Root Zone Database represents the delegation details of top-level domains, including gTLDs such as .com , and country-code TLD"
+    },
+    {
+      "url": "https://www.icann.org/privacy/policy",
+      "title": "ITI Web ICANN",
+      "score": 0.5305,
+      "tags": [
+        "privacy",
+        "information",
+        "user",
+        "news",
+        "personal",
+        "policy",
+        "technology"
+      ],
+      "snippet": "Privacy Policy \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u4e2d\u6587 English Fran\u00e7ais P\u0443\u0441\u0441\u043a\u0438\u0439 Espa\u00f1ol Logo en Search Search Search Filtered Search Log In Sign Up Are you sure you want to sign out from https://www.icann.org ? Yes Cancel If you "
+    },
+    {
+      "url": "https://www.icann.org/privacy/tos",
+      "title": "ITI Web ICANN",
+      "score": 0.5305,
+      "tags": [
+        "service",
+        "content",
+        "terms",
+        "use",
+        "news",
+        "platform",
+        "technology"
+      ],
+      "snippet": "Terms of Service \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u4e2d\u6587 English Fran\u00e7ais P\u0443\u0441\u0441\u043a\u0438\u0439 Espa\u00f1ol Logo en Search Search Search Filtered Search Log In Sign Up Are you sure you want to sign out from https://www.icann.org ? Yes Cancel If yo"
+    },
+    {
+      "url": "http://www.icann.org/en/registries/agreements.htm",
+      "title": "ra.gTLDRegistryAgreements",
+      "score": 0.5305,
+      "tags": [
+        "registry",
+        "llc",
+        "rust",
+        "ltd",
+        "inc",
+        "technology",
+        "limited"
+      ],
+      "snippet": "gTLD Registry Agreements \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u4e2d\u6587 English Fran\u00e7ais P\u0443\u0441\u0441\u043a\u0438\u0439 Espa\u00f1ol Logo en Search Search Search Filtered Search Log In Sign Up Are you sure you want to sign out from https://www.icann.org ? Yes Canc"
+    },
+    {
+      "url": "https://iana.org/help/protocol-registration",
+      "title": "Guidance for RFC Authors",
+      "score": 0.5279,
+      "tags": [
+        "iana",
+        "registry",
+        "news",
+        "registrations",
+        "group",
+        "document",
+        "technology"
+      ],
+      "snippet": "Guidance for RFC Authors Domains Protocols Numbers About Instructions and Guides Guidance for RFC Authors RFCs often contain content that is directly applicable to IANA, and these sections should conf"
+    },
+    {
+      "url": "https://iana.org/help/cctld-delegation-answers",
+      "title": "Common Questions on delegating and transferring country-code top-level domains (ccTLDs)",
+      "score": 0.5249,
+      "tags": [
+        "request",
+        "transfer",
+        "rust",
+        "are",
+        "cctld",
+        "technology",
+        "manager"
+      ],
+      "snippet": "Common Questions on delegating and transferring country-code top-level domains (ccTLDs) Domains Protocols Numbers About Instructions and Guides Common Questions on delegating and transferring country-"
+    },
+    {
+      "url": "https://iana.org/help/cctld-delegation",
+      "title": "Delegating or transferring a country-code top-level domain (ccTLD)",
+      "score": 0.5238,
+      "tags": [
+        "request",
+        "transfer",
+        "domain",
+        "rust",
+        "technology",
+        "delegation",
+        "manager"
+      ],
+      "snippet": "Delegating or transferring a country-code top-level domain (ccTLD) Domains Protocols Numbers About Instructions and Guides Delegating or transferring a country-code top-level domain (ccTLD) This docum"
+    },
+    {
+      "url": "https://iana.org/domains/reserved",
+      "title": "IANA-managed Reserved Domains",
+      "score": 0.5193,
+      "tags": [
+        "domain",
+        "registry",
+        "news",
+        "rust",
+        "are",
+        "domains",
+        "technology",
+        "overview"
+      ],
+      "snippet": "IANA-managed Reserved Domains Domains Protocols Numbers About IANA-managed Reserved Domains Certain domains are set aside, and nominally registered to \u201cIANA\u201d, for specific policy or technical purposes"
+    },
+    {
+      "url": "https://iana.org/help/tcr-criteria",
+      "title": "Criteria for Trusted Community Representatives",
+      "score": 0.5179,
+      "tags": [
+        "tcr",
+        "tcrs",
+        "rust",
+        "cos",
+        "are",
+        "technology",
+        "criteria"
+      ],
+      "snippet": "Criteria for Trusted Community Representatives Domains Protocols Numbers About Instructions and Guides Criteria for Trusted Community Representatives We seek to maintain confidence and acceptance of t"
+    },
+    {
+      "url": "https://iana.org/help/rzms-changelog",
+      "title": "What's new in the Root Zone Management System",
+      "score": 0.5158,
+      "tags": [
+        "december",
+        "version",
+        "issue",
+        "news",
+        "technology",
+        "2025",
+        "2017"
+      ],
+      "snippet": "What's new in the Root Zone Management System Domains Protocols Numbers About Instructions and Guides What's New in RZMS We regularly update the Root Zone Management System to implement new features, "
+    },
+    {
+      "url": "https://iana.org/help/nameserver-requirements",
+      "title": "Technical requirements for authoritative name servers",
+      "score": 0.5151,
+      "tags": [
+        "globally",
+        "servers",
+        "must",
+        "rust",
+        "name",
+        "rfc",
+        "technology"
+      ],
+      "snippet": "Technical requirements for authoritative name servers Domains Protocols Numbers About Instructions and Guides Technical requirements for authoritative name servers These are the technicals tests we pe"
+    },
+    {
+      "url": "https://iana.org/help/cctld-revocation",
+      "title": "Revocation of a Country-code Top-level Domain",
+      "score": 0.5142,
+      "tags": [
+        "domain",
+        "iana",
+        "rust",
+        "cctld",
+        "technology",
+        "revocation",
+        "manager"
+      ],
+      "snippet": "Revocation of a Country-code Top-level Domain Domains Protocols Numbers About Instructions and Guides Revocation of a country-code top-level domain Revocation of a country-code top-level domain is a p"
+    },
+    {
+      "url": "https://iana.org/help/idn-repository-procedure",
+      "title": "IDN Repository Procedures",
+      "score": 0.5115,
+      "tags": [
+        "script",
+        "news",
+        "contact",
+        "are",
+        "lgr",
+        "language",
+        "technology"
+      ],
+      "snippet": "IDN Repository Procedures Domains Protocols Numbers About Instructions and Guides Procedures for the IDN Repository Overview The Repository of IDN Practices was created to support the development of t"
+    },
+    {
+      "url": "https://iana.org/dnssec/tcrs",
+      "title": "Trusted Community Representatives",
+      "score": 0.5099,
+      "tags": [
+        "2010",
+        "key",
+        "rust",
+        "slot",
+        "officer",
+        "cryptographic",
+        "technology"
+      ],
+      "snippet": "Trusted Community Representatives Domains Protocols Numbers About Trusted Community Representatives We seek to improve confidence and acceptance in the DNSSEC security mechanism among the wider Intern"
+    },
+    {
+      "url": "https://iana.org/help/tcr-travel-support",
+      "title": "Travel Support for Trusted Community Representatives",
+      "score": 0.5081,
+      "tags": [
+        "ksk",
+        "support",
+        "travel",
+        "rust",
+        "ceremony",
+        "icann",
+        "technology"
+      ],
+      "snippet": "Travel Support for Trusted Community Representatives Domains Protocols Numbers About Instructions and Guides Travel Support for Trusted Community Representatives We provide travel support for eligible"
+    },
+    {
+      "url": "https://iana.org/help/key-ceremony-schedule",
+      "title": "Key Signing Ceremony scheduling",
+      "score": 0.5079,
+      "tags": [
+        "ksk",
+        "ceremonies",
+        "key",
+        "rust",
+        "are",
+        "ceremony",
+        "technology"
+      ],
+      "snippet": "Key Signing Ceremony scheduling Domains Protocols Numbers About Instructions and Guides Key Signing Ceremony scheduling Key Signing Ceremonies are public events, designed to promote awareness of this "
+    },
+    {
+      "url": "https://iana.org/dnssec/ceremonies",
+      "title": "Root KSK Ceremonies",
+      "score": 0.506,
+      "tags": [
+        "ksk",
+        "zsks",
+        "sign",
+        "rust",
+        "replace",
+        "ceremony",
+        "technology"
+      ],
+      "snippet": "Root KSK Ceremonies Domains Protocols Numbers About Key Signing Ceremonies Ceremonies are usually conducted four times a year to perform operations using the Root Key Signing Key, and involving Truste"
+    },
+    {
+      "url": "https://iana.org/help/tcr-roles",
+      "title": "Trusted Community Representative Roles",
+      "score": 0.5058,
+      "tags": [
+        "key",
+        "rksh",
+        "travel",
+        "rust",
+        "roles",
+        "ceremony",
+        "technology"
+      ],
+      "snippet": "Trusted Community Representative Roles Domains Protocols Numbers About Instructions and Guides Trusted Community Representative Roles This document explains the various roles performed by trusted comm"
+    },
+    {
+      "url": "https://iana.org/dnssec/procedures",
+      "title": "DNSSEC Practice Statement",
+      "score": 0.5055,
+      "tags": [
+        "ksk",
+        "operations",
+        "describes",
+        "rust",
+        "technology",
+        "2025",
+        "effective"
+      ],
+      "snippet": "DNSSEC Practice Statement Domains Protocols Numbers About Policies and Procedures DNSSEC Practice Statements The DNSSEC Practice Statements represent the adopted policies against which the cryptograph"
+    },
+    {
+      "url": "https://iana.org/domains/int/policy",
+      "title": ".INT Policy & Procedures",
+      "score": 0.5032,
+      "tags": [
+        "int",
+        "domain",
+        "must",
+        "rust",
+        "treaty",
+        "technology",
+        "organization"
+      ],
+      "snippet": ".INT Policy & Procedures Domains Protocols Numbers About .INT Policy & Procedures Eligibility for a .INT domain To register in the .int domain, the applicant must be an intergovernmental organization "
+    },
+    {
+      "url": "https://iana.org/domains/idn-tables",
+      "title": "Repository of IDN Practices",
+      "score": 0.5028,
+      "tags": [
+        "identity",
+        "2024",
+        "language",
+        "technology",
+        "digital",
+        "limited"
+      ],
+      "snippet": "Repository of IDN Practices Domains Protocols Numbers About Repository of IDN Practices We maintain a collection of \u201cIDN tables\u201d, which represent permitted code points (letters) allowed for Internatio"
+    },
+    {
+      "url": "https://iana.org/help/key-ceremony-roles",
+      "title": "KSK Ceremony Roles",
+      "score": 0.502,
+      "tags": [
+        "script",
+        "rust",
+        "are",
+        "roles",
+        "ceremony",
+        "role",
+        "technology"
+      ],
+      "snippet": "KSK Ceremony Roles Domains Protocols Numbers About Instructions and Guides Key Ceremony Roles There are a number of different roles for attendees of a key signing ceremony. This document provides an o"
+    },
+    {
+      "url": "https://iana.org/help/gtld-delegation",
+      "title": "Delegating a generic top-level domain",
+      "score": 0.5017,
+      "tags": [
+        "request",
+        "domain",
+        "news",
+        "registry",
+        "zone",
+        "technology",
+        "delegation"
+      ],
+      "snippet": "Delegating a generic top-level domain Domains Protocols Numbers About Instructions and Guides Delegating a generic top-level domain This document provides a guide to the generic top-level domain (gTLD"
+    },
+    {
+      "url": "https://iana.org/help/tcr-application",
+      "title": "Call for volunteers as Trusted Community Representatives",
+      "score": 0.4993,
+      "tags": [
+        "community",
+        "key",
+        "tcr",
+        "tcrs",
+        "rust",
+        "are",
+        "technology"
+      ],
+      "snippet": "Call for volunteers as Trusted Community Representatives Domains Protocols Numbers About Instructions and Guides Call for volunteers as Trusted Community Representatives We are seeking interested indi"
+    },
+    {
+      "url": "https://iana.org/help/id-verification",
+      "title": "Identity Verification for Root Zone Management",
+      "score": 0.4965,
+      "tags": [
+        "iana",
+        "identity",
+        "rust",
+        "zone",
+        "account",
+        "technology",
+        "verification"
+      ],
+      "snippet": "Identity Verification for Root Zone Management Domains Protocols Numbers About Instructions and Guides Identity Verification for Root Zone Management Authorized representatives of TLD managers may ver"
+    },
+    {
+      "url": "https://iana.org/domains/arpa",
+      "title": ".ARPA Domain",
+      "score": 0.4946,
+      "tags": [
+        "internet",
+        "domain",
+        "registry",
+        "rust",
+        "arpa",
+        "rfc",
+        "technology"
+      ],
+      "snippet": ".ARPA Domain Domains Protocols Numbers About .ARPA Zone Management The .arpa domain is the \u201cAddress and Routing Parameter Area\u201d domain and is designated to be used exclusively for Internet-infrastruct"
+    },
+    {
+      "url": "https://iana.org/help/key-ceremony-attendance",
+      "title": "Attending a KSK Ceremony",
+      "score": 0.4942,
+      "tags": [
+        "number",
+        "rust",
+        "are",
+        "press",
+        "external",
+        "ceremony",
+        "technology"
+      ],
+      "snippet": "Attending a KSK Ceremony Domains Protocols Numbers About Instructions and Guides Attending a KSK Ceremony We typically hold key ceremonies four times a year. Part of the trust model for the Domain Nam"
+    },
+    {
+      "url": "https://iana.org/help/licensing-terms",
+      "title": "Licensing Terms",
+      "score": 0.4942,
+      "tags": [
+        "iana",
+        "ietf",
+        "rust",
+        "protocol",
+        "are",
+        "registries",
+        "technology"
+      ],
+      "snippet": "Licensing Terms Domains Protocols Numbers About Instructions and Guides Licensing Terms Joint Statement of IANA and IETF Concerning Copyright Rights in the Protocol Registries dated 10 November 2021 T"
+    },
+    {
+      "url": "https://iana.org/help/tcr-changes",
+      "title": "Changes to the TCR selection process",
+      "score": 0.4917,
+      "tags": [
+        "process",
+        "changes",
+        "tcrs",
+        "rust",
+        "new",
+        "time",
+        "technology"
+      ],
+      "snippet": "Changes to the TCR selection process Domains Protocols Numbers About Instructions and Guides Changes to TCR selection process The following changes were implemented in 2017: Permanent application proc"
+    },
+    {
+      "url": "https://iana.org/help/root-zone-process",
+      "title": "Root Zone Change Request Process",
+      "score": 0.4913,
+      "tags": [
+        "request",
+        "news",
+        "technical",
+        "zone",
+        "root",
+        "technology",
+        "processing"
+      ],
+      "snippet": "Root Zone Change Request Process Domains Protocols Numbers About Instructions and Guides Root Zone Change Request Process Methods for submitting a routine request An online interface is provided for T"
+    },
+    {
+      "url": "https://iana.org/time-zones",
+      "title": "Time Zones",
+      "score": 0.4898,
+      "tags": [
+        "zones",
+        "data",
+        "news",
+        "database",
+        "zone",
+        "time",
+        "technology"
+      ],
+      "snippet": "Time Zones Domains Protocols Numbers About Time Zones The Time Zone Database (often called tz or zoneinfo ) contains code and data that represent the history of local time for many representative loca"
+    },
+    {
+      "url": "https://iana.org/help",
+      "title": "Instructions and Guides",
+      "score": 0.4895,
+      "tags": [
+        "top-level",
+        "domain",
+        "rust",
+        "management",
+        "zone",
+        "root",
+        "technology"
+      ],
+      "snippet": "Instructions and Guides Domains Protocols Numbers About Instructions and Guides Root Zone Management Root Zone Change Request Process Technical Requirements for Requests to Change TLD Nameservers in t"
+    },
+    {
+      "url": "https://iana.org/dnssec",
+      "title": "DNSSEC Information",
+      "score": 0.4892,
+      "tags": [
+        "key",
+        "rust",
+        "signing",
+        "zone",
+        "dnssec",
+        "root",
+        "technology"
+      ],
+      "snippet": "DNSSEC Information Domains Protocols Numbers About DNSSEC Information Information regarding our role as operator of the Key Signing Key (KSK) for the DNS Root Zone. Next Key Ceremony Root KSK Ceremony"
+    },
+    {
+      "url": "https://iana.org/help/abuse-answers",
+      "title": "Abuse Issues and IP Addresses",
+      "score": 0.4882,
+      "tags": [
+        "internet",
+        "address",
+        "addresses",
+        "are",
+        "255",
+        "technology"
+      ],
+      "snippet": "Abuse Issues and IP Addresses Domains Protocols Numbers About Instructions and Guides Abuse Issues and IP Addresses Introduction We receive many reports of spam, apparent hacker activity, and other fo"
+    },
+    {
+      "url": "https://iana.org/domains",
+      "title": "Domain Name Services",
+      "score": 0.4878,
+      "tags": [
+        "key",
+        "domain",
+        "rust",
+        "zone",
+        "root",
+        "domains",
+        "technology"
+      ],
+      "snippet": "Domain Name Services Domains Protocols Numbers About Domain Name Services We operate and maintain a number of key aspects of the DNS, including the root zone, and the .int and .arpa domains. The DNS R"
+    },
+    {
+      "url": "https://iana.org/domains/root",
+      "title": "Root Zone Management",
+      "score": 0.4874,
+      "tags": [
+        "top-level",
+        "registry",
+        "rust",
+        "zone",
+        "root",
+        "domains",
+        "technology"
+      ],
+      "snippet": "Root Zone Management Domains Protocols Numbers About Root Zone Management The Domain Name System (DNS) root zone is the highest-level of the naming hierarchy, principally composed of delegations of to"
+    },
+    {
+      "url": "https://iana.org/domains/int/manage",
+      "title": ".INT Registration and Management",
+      "score": 0.4867,
+      "tags": [
+        "int",
+        "domain",
+        "registry",
+        "rust",
+        "name",
+        "technology",
+        "overview"
+      ],
+      "snippet": ".INT Registration and Management Domains Protocols Numbers About .INT Registration and Management How to Apply for Registration If you believe you meet the eligibility policy required to qualify for a"
+    },
+    {
+      "url": "https://iana.org/help/test-tld-procedure",
+      "title": "Procedures for Test IDN Deployment",
+      "score": 0.4854,
+      "tags": [
+        "idn",
+        "procedure",
+        "iana",
+        "zone",
+        "root",
+        "technology"
+      ],
+      "snippet": "Procedures for Test IDN Deployment Domains Protocols Numbers About Instructions and Guides Procedures for Test IDN Deployment This document is historical and no longer maintained. It is preserved for "
+    },
+    {
+      "url": "https://iana.org/domains/int",
+      "title": "Intergovernmental Treaty (.INT) Domains",
+      "score": 0.4852,
+      "tags": [
+        "int",
+        "domain",
+        "registry",
+        "rust",
+        "domains",
+        "technology",
+        "overview"
+      ],
+      "snippet": "Intergovernmental Treaty (.INT) Domains Domains Protocols Numbers About .INT Zone Management The .int domain is a specialized domain offering no-cost registrations solely to: specialized agencies of t"
+    },
+    {
+      "url": "https://www.icann.org/",
+      "title": "Internet Corporation for Assigned Names and Numbers (ICANN)",
+      "score": 0.4848,
+      "tags": [
+        "learn",
+        "2026",
+        "policy",
+        "icann",
+        "technology",
+        "public"
+      ],
+      "snippet": "Internet Corporation for Assigned Names and Numbers (ICANN) \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u4e2d\u6587 English Fran\u00e7ais P\u0443\u0441\u0441\u043a\u0438\u0439 Espa\u00f1ol Logo en Search Search Search Filtered Search Log In Sign Up Are you sure you want to sign out fr"
+    },
+    {
+      "url": "http://www.icann.org/",
+      "title": "Internet Corporation for Assigned Names and Numbers (ICANN)",
+      "score": 0.4848,
+      "tags": [
+        "learn",
+        "2026",
+        "policy",
+        "icann",
+        "technology",
+        "public"
+      ],
+      "snippet": "Internet Corporation for Assigned Names and Numbers (ICANN) \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u4e2d\u6587 English Fran\u00e7ais P\u0443\u0441\u0441\u043a\u0438\u0439 Espa\u00f1ol Logo en Search Search Search Filtered Search Log In Sign Up Are you sure you want to sign out fr"
+    },
+    {
+      "url": "https://iana.org/domains/root/files",
+      "title": "Root Files",
+      "score": 0.4848,
+      "tags": [
+        "registry",
+        "files",
+        "rust",
+        "zone",
+        "root",
+        "technology",
+        "overview"
+      ],
+      "snippet": "Root Files Domains Protocols Numbers About Root Files Downloadable versions of the DNS root zone and related files. Root Zone Files Operators who manage a DNS recursive resolver typically need to conf"
+    },
+    {
+      "url": "https://iana.org/help/dns-blackhole",
+      "title": "DNS Blackhole (AS112) Service",
+      "score": 0.4846,
+      "tags": [
+        "queries",
+        "servers",
+        "blackhole",
+        "are",
+        "dns",
+        "technology"
+      ],
+      "snippet": "DNS Blackhole (AS112) Service Domains Protocols Numbers About Instructions and Guides DNS Blackhole (AS112) Service Domain Name System resolvers can erroneously perform DNS lookups associated with pri"
+    },
+    {
+      "url": "https://iana.org/help/cctld-retirement",
+      "title": "Retirement of a Country-code Top-level Domain (ccTLD)",
+      "score": 0.4834,
+      "tags": [
+        "domain",
+        "iana",
+        "removal",
+        "retirement",
+        "cctld",
+        "technology"
+      ],
+      "snippet": "Retirement of a Country-code Top-level Domain (ccTLD) Domains Protocols Numbers About Instructions and Guides Retirement of a Country-code Top-level Domain (ccTLD) This document provides a guide to th"
+    },
+    {
+      "url": "https://iana.org/domains/root/help",
+      "title": "Root Zone Instructions and Guides",
+      "score": 0.4832,
+      "tags": [
+        "top-level",
+        "domain",
+        "rust",
+        "zone",
+        "root",
+        "technology",
+        "overview"
+      ],
+      "snippet": "Root Zone Instructions and Guides Domains Protocols Numbers About Instructions and Guides Root Zone Change Request Process Technical Requirements for Requests to Change TLD Nameservers in the Root Zon"
+    },
+    {
+      "url": "https://iana.org/domains/root/manage",
+      "title": "Manage the Root Zone",
+      "score": 0.4816,
+      "tags": [
+        "domain",
+        "registry",
+        "rust",
+        "zone",
+        "root",
+        "technology",
+        "overview"
+      ],
+      "snippet": "Manage the Root Zone Domains Protocols Numbers About Managing Delegations Top-level domain managers can review the particulars of your top-level domain in IANA's records, and request changes through o"
+    },
+    {
+      "url": "https://iana.org/help/operational-plans",
+      "title": "Preparing an Operational and Technical Plan",
+      "score": 0.4813,
+      "tags": [
+        "domain",
+        "registry",
+        "technical",
+        "proposed",
+        "are",
+        "technology"
+      ],
+      "snippet": "Preparing an Operational and Technical Plan Domains Protocols Numbers About Instructions and Guides Preparing an Operational and Technical Plan This article provides additional detail on preparing an "
+    },
+    {
+      "url": "https://iana.org/help/rzm-system",
+      "title": "New DNS Root Zone Management System",
+      "score": 0.4777,
+      "tags": [
+        "requests",
+        "top-level",
+        "system",
+        "zone",
+        "root",
+        "technology"
+      ],
+      "snippet": "New DNS Root Zone Management System Domains Protocols Numbers About Instructions and Guides New DNS Root Zone Management System This document is historical and no longer maintained. It is preserved fo"
+    },
+    {
+      "url": "https://iana.org/help/eligible-tlds",
+      "title": "Qualifying top-level domain strings",
+      "score": 0.4732,
+      "tags": [
+        "top-level",
+        "domain",
+        "3166",
+        "technology",
+        "iso",
+        "standard"
+      ],
+      "snippet": "Qualifying top-level domain strings Domains Protocols Numbers About Instructions and Guides Qualifying top-level domain strings Eligible categories of top-level domains The current ways in which a top"
+    },
+    {
+      "url": "https://iana.org/help/kmf-west",
+      "title": "Root Zone Key Management Facility West",
+      "score": 0.4714,
+      "tags": [
+        "key",
+        "registry",
+        "rust",
+        "zone",
+        "hotel",
+        "root",
+        "technology"
+      ],
+      "snippet": "Root Zone Key Management Facility West Domains Protocols Numbers About Instructions and Guides Root Zone Key Management Facility West Location 1920 East Maple Avenue El Segundo, California 90245 Recom"
+    },
+    {
+      "url": "https://iana.org/help/kmf-east",
+      "title": "Root Zone Key Management Facility East",
+      "score": 0.4704,
+      "tags": [
+        "key",
+        "registry",
+        "rust",
+        "management",
+        "zone",
+        "root",
+        "technology"
+      ],
+      "snippet": "Root Zone Key Management Facility East Domains Protocols Numbers About Instructions and Guides Root Zone Key Management Facility East Location 18155 Technology Drive Culpeper, Virginia 22701 Recommend"
+    },
+    {
+      "url": "https://iana.org/help/inr-request-procedure",
+      "title": "Making Internet Number Resource Allocations to Regional Internet Registries",
+      "score": 0.4701,
+      "tags": [
+        "numbers",
+        "iana",
+        "address",
+        "rir",
+        "allocations",
+        "technology"
+      ],
+      "snippet": "Making Internet Number Resource Allocations to Regional Internet Registries Domains Protocols Numbers About Instructions and Guides Making Internet Number Resource Allocations to Regional Internet Reg"
+    },
+    {
+      "url": "https://iana.org/help/rzms-answers",
+      "title": "Common Questions on the Next-Generation Root Zone Management System",
+      "score": 0.4699,
+      "tags": [
+        "password",
+        "their",
+        "iana",
+        "account",
+        "are",
+        "technology"
+      ],
+      "snippet": "Common Questions on the Next-Generation Root Zone Management System Domains Protocols Numbers About Instructions and Guides Common Questions on the Next-Generation Root Zone Management System This doc"
+    },
+    {
+      "url": "https://iana.org/help/rzm-api",
+      "title": "Root Zone Management API",
+      "score": 0.4694,
+      "tags": [
+        "production",
+        "environment",
+        "ote",
+        "zone",
+        "api",
+        "technology"
+      ],
+      "snippet": "Root Zone Management API Domains Protocols Numbers About Instructions and Guides Root Zone Management API Root zone change requests can be submitted and transacted upon via an application programming "
+    },
+    {
+      "url": "https://iana.org/help/abuse",
+      "title": "Network Abuse Information",
+      "score": 0.4682,
+      "tags": [
+        "network",
+        "numbers",
+        "iana",
+        "are",
+        "begins",
+        "technology"
+      ],
+      "snippet": "Network Abuse Information Domains Protocols Numbers About Instructions and Guides Does it look like we're attacking you? Some of the most common things we hear are \"My network is under attack by IANA!"
+    },
+    {
+      "url": "https://iana.org/numbers",
+      "title": "Number Resources",
+      "score": 0.4667,
+      "tags": [
+        "internet",
+        "number",
+        "addresses",
+        "are",
+        "technology",
+        "ipv6"
+      ],
+      "snippet": "Number Resources Domains Protocols Numbers About Number Resources We are responsible for global coordination of the Internet Protocol addressing systems, as well as the Autonomous System Numbers used "
+    },
+    {
+      "url": "https://iana.org/help/pti-transition",
+      "title": "About the IANA stewardship transition",
+      "score": 0.4665,
+      "tags": [
+        "2016",
+        "iana",
+        "technology",
+        "icann",
+        "pti",
+        "functions"
+      ],
+      "snippet": "About the IANA stewardship transition Domains Protocols Numbers About Instructions and Guides About the IANA stewardship transition This document is historical and no longer maintained. It is preserve"
+    },
+    {
+      "url": "https://iana.org/about",
+      "title": "About us",
+      "score": 0.4659,
+      "tags": [
+        "internet",
+        "iana",
+        "are",
+        "registries",
+        "technology",
+        "identifiers"
+      ],
+      "snippet": "About us Domains Protocols Numbers About About IANA For the Internet to work as a single seamless network, technical identifiers must mean the same thing everywhere: network identifiers like domain na"
+    },
+    {
+      "url": "https://iana.org/help/complaint-procedure",
+      "title": "Customer Service Complaint Resolution Process",
+      "score": 0.4656,
+      "tags": [
+        "process",
+        "information",
+        "management",
+        "complaint",
+        "resolution",
+        "technology"
+      ],
+      "snippet": "Customer Service Complaint Resolution Process Domains Protocols Numbers About Instructions and Guides Customer Service Complaint Resolution Process We strive to provide a good service that meets our c"
+    },
+    {
+      "url": "https://iana.org/performance",
+      "title": "Performance",
+      "score": 0.4648,
+      "tags": [
+        "2026",
+        "june",
+        "100",
+        "technology",
+        "2025",
+        "performance"
+      ],
+      "snippet": "Performance Domains Protocols Numbers About Performance At a glance Naming 99.5% SLAs met, April to June 2026 July 2025: 98% August 2025: 100% September 2025: 98% October 2025: 100% November 2025: 100"
+    },
+    {
+      "url": "https://iana.org/help/whois",
+      "title": "Using our WHOIS Server",
+      "score": 0.4644,
+      "tags": [
+        "registry",
+        "org",
+        "server",
+        "allocations",
+        "technology",
+        "whois"
+      ],
+      "snippet": "Using our WHOIS Server Domains Protocols Numbers About Instructions and Guides Using our WHOIS Server We provide a WHOIS server at whois.iana.org for looking up information for a number of registries "
+    },
+    {
+      "url": "https://iana.org/help/int-eligibility",
+      "title": "Eligibility for a .INT domain",
+      "score": 0.4641,
+      "tags": [
+        "int",
+        "domain",
+        "must",
+        "treaty",
+        "technology",
+        "organization"
+      ],
+      "snippet": "Eligibility for a .INT domain Domains Protocols Numbers About Instructions and Guides Eligibility for a .INT domain To register in the .int domain, the applicant must be an intergovernmental organizat"
+    },
+    {
+      "url": "https://iana.org/numbers/registries",
+      "title": "Number-related Registries",
+      "score": 0.463,
+      "tags": [
+        "space",
+        "ipv4",
+        "numbers",
+        "address",
+        "technology",
+        "ipv6"
+      ],
+      "snippet": "Number-related Registries Domains Protocols Numbers About Number-related Registries These are the registries we maintain for the three core number resource types: IPv4 addresses, IPv6 addresses, and A"
+    },
+    {
+      "url": "https://iana.org/help/rdap-requirements",
+      "title": "Requirements for RDAP Servers providing Domain Name Data",
+      "score": 0.463,
+      "tags": [
+        "rdap",
+        "domain",
+        "http",
+        "iana",
+        "response",
+        "technology"
+      ],
+      "snippet": "Requirements for RDAP Servers providing Domain Name Data Domains Protocols Numbers About Instructions and Guides Requirements for RDAP Servers providing Domain Name Data When a request to publish an R"
+    },
+    {
+      "url": "https://iana.org/help/obtaining-consent",
+      "title": "Obtaining consent for a root zone change",
+      "score": 0.4619,
+      "tags": [
+        "request",
+        "consent",
+        "change",
+        "domains",
+        "technology",
+        "contacts"
+      ],
+      "snippet": "Obtaining consent for a root zone change Domains Protocols Numbers About Instructions and Guides Obtaining consent for a root zone change Standard confirmation For a routine change to a top-level doma"
+    },
+    {
+      "url": "https://iana.org/protocols/apply",
+      "title": "Protocol Registry Change Processes",
+      "score": 0.458,
+      "tags": [
+        "request",
+        "registry",
+        "protocol",
+        "registration",
+        "technology",
+        "assignment"
+      ],
+      "snippet": "Protocol Registry Change Processes Domains Protocols Numbers About Protocol Registration Forms Registration forms are listed below. If we don\u2019t have a registry-specific form, the General Protocol Regi"
+    },
+    {
+      "url": "https://iana.org/numbers/allocations",
+      "title": "RIR Allocation Data",
+      "score": 0.4567,
+      "tags": [
+        "utilization",
+        "number",
+        "rir",
+        "technology",
+        "allocation",
+        "ipv6"
+      ],
+      "snippet": "RIR Allocation Data Domains Protocols Numbers About Number Resource Allocation Data Our primary role in managing Internet number resources is to provide pools of unallocated IP addresses and AS number"
+    },
+    {
+      "url": "https://iana.org/archive",
+      "title": "Archive",
+      "score": 0.4567,
+      "tags": [
+        "documents",
+        "reports",
+        "iana",
+        "archive",
+        "are",
+        "technology"
+      ],
+      "snippet": "Archive Domains Protocols Numbers About Archive These are archived documents from prior services, projects or oversight mechanism that are no longer active. These documents should not be relied upon f"
+    },
+    {
+      "url": "https://iana.org/help/kmf-rules",
+      "title": "Key Management Facility House Rules",
+      "score": 0.456,
+      "tags": [
+        "key",
+        "management",
+        "facility",
+        "are",
+        "ceremony",
+        "technology"
+      ],
+      "snippet": "Key Management Facility House Rules Domains Protocols Numbers About Instructions and Guides Key Management Facility House Rules The following rules applies to both Root Zone Key Management Facilities."
+    },
+    {
+      "url": "https://iana.org/assignments/special-use-domain-names",
+      "title": "Special-Use Domain Names",
+      "score": 0.455,
+      "tags": [
+        "in-addr",
+        "172",
+        "arpa",
+        "rfc6762",
+        "technology",
+        "rfc6761"
+      ],
+      "snippet": "Special-Use Domain Names Domains Protocols Numbers About Special-Use Domain Names Created 2012-07-06 Last Updated 2026-05-22 Available Formats XML HTML Plain text Registry Included Below Special-Use D"
+    },
+    {
+      "url": "https://iana.org/help/updating-legacy-ipv4-space",
+      "title": "Updating legacy Class A IPv4 allocations",
+      "score": 0.4548,
+      "tags": [
+        "ipv4",
+        "legacy",
+        "registry",
+        "rir",
+        "class",
+        "technology"
+      ],
+      "snippet": "Updating legacy Class A IPv4 allocations Domains Protocols Numbers About Instructions and Guides Updating legacy Class A IPv4 allocations As advised to ICANN by the Number Resource Organisation in Feb"
+    },
+    {
+      "url": "https://iana.org/about/organization",
+      "title": "The Organization",
+      "score": 0.4537,
+      "tags": [
+        "iana",
+        "identifiers",
+        "functions",
+        "technology",
+        "organization",
+        "performance"
+      ],
+      "snippet": "The Organization Domains Protocols Numbers About The Organization These pages describe how the organization behind the IANA functions is constituted and held accountable: how it is governed, who overs"
+    },
+    {
+      "url": "https://iana.org/domains/example",
+      "title": "Example Domains",
+      "score": 0.451,
+      "tags": [
+        "service",
+        "number",
+        "example",
+        "are",
+        "domains",
+        "technology"
+      ],
+      "snippet": "Example Domains Domains Protocols Numbers About Instructions and Guides Example Domains As described in RFC 2606 and RFC 6761 , a number of domains such as example.com and example.org are maintained f"
+    },
+    {
+      "url": "https://iana.org/help/example-domains",
+      "title": "Example Domains",
+      "score": 0.451,
+      "tags": [
+        "service",
+        "number",
+        "example",
+        "are",
+        "domains",
+        "technology"
+      ],
+      "snippet": "Example Domains Domains Protocols Numbers About Instructions and Guides Example Domains As described in RFC 2606 and RFC 6761 , a number of domains such as example.com and example.org are maintained f"
+    },
+    {
+      "url": "https://iana.org/",
+      "title": "Internet Assigned Numbers Authority",
+      "score": 0.4509,
+      "tags": [
+        "internet",
+        "number",
+        "registry",
+        "protocol",
+        "zone",
+        "technology"
+      ],
+      "snippet": "Internet Assigned Numbers Authority Internet Assigned Numbers Authority The global coordination of the DNS Root, IP addressing, and other Internet protocol resources is performed as the Internet Assig"
+    },
+    {
+      "url": "https://iana.org/help/caretaker-operations",
+      "title": "Caretaker Operations for a Top-Level Domain",
+      "score": 0.4494,
+      "tags": [
+        "top-level",
+        "domain",
+        "operations",
+        "registry",
+        "caretaker",
+        "technology"
+      ],
+      "snippet": "Caretaker Operations for a Top-Level Domain Domains Protocols Numbers About Instructions and Guides Caretaker operations for a top-level domain IANA may denote specific top-level domains as in caretak"
+    },
+    {
+      "url": "https://iana.org/contact",
+      "title": "Contact Us",
+      "score": 0.4442,
+      "tags": [
+        "iana",
+        "registry",
+        "contact",
+        "abuse",
+        "protocols",
+        "technology"
+      ],
+      "snippet": "Contact Us Domains Protocols Numbers About Contact Us If you have questions regarding abuse, please see our Abuse Issues and IP Addresses Page . General email contact iana@iana.org Postal address Inte"
+    },
+    {
+      "url": "https://example.com",
+      "title": "Example Domain",
+      "score": 0.4107,
+      "tags": [
+        "examples",
+        "use",
+        "domain",
+        "example",
+        "documentation",
+        "technology"
+      ],
+      "snippet": "Example Domain Example Domain This domain is for use in documentation examples without needing permission. Avoid use in operations. Learn more"
+    }
+  ],
+  "total": 82
+}

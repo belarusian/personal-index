@@ -1,5 +1,3 @@
-# Personal Index - User Guide
+# Personal Index User Guide
 
-## Getting Started
-
-### Installation
+## Quick Start

@@ -1,2298 +1,1856 @@
 {
   "tags": {
-    "important": {
-      "name": "important",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T10:25:01.843221+00:00"
-    },
-    "important,reference": {
-      "name": "important,reference",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:24:32.699064+00:00"
-    },
     "technology": {
       "name": "technology",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.042531+00:00"
+      "created_at": "2026-08-11T20:00:19.319923+00:00"
     },
     "domain": {
       "name": "domain",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.044469+00:00"
+      "created_at": "2026-08-11T20:00:19.322132+00:00"
     },
     "example": {
       "name": "example",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.044689+00:00"
+      "created_at": "2026-08-11T20:00:19.322282+00:00"
     },
     "use": {
       "name": "use",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.044861+00:00"
+      "created_at": "2026-08-11T20:00:19.322412+00:00"
     },
     "documentation": {
       "name": "documentation",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.045032+00:00"
+      "created_at": "2026-08-11T20:00:19.322521+00:00"
     },
     "examples": {
       "name": "examples",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.045175+00:00"
+      "created_at": "2026-08-11T20:00:19.322622+00:00"
     },
     "domains": {
       "name": "domains",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.045697+00:00"
+      "created_at": "2026-08-11T20:00:19.322993+00:00"
     },
     "are": {
       "name": "are",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.045982+00:00"
+      "created_at": "2026-08-11T20:00:19.323202+00:00"
     },
     "number": {
       "name": "number",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.046116+00:00"
+      "created_at": "2026-08-11T20:00:19.323311+00:00"
     },
     "service": {
       "name": "service",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.046254+00:00"
+      "created_at": "2026-08-11T20:00:19.323416+00:00"
     },
     "internet": {
       "name": "internet",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.046727+00:00"
+      "created_at": "2026-08-11T20:00:19.323781+00:00"
     },
     "protocol": {
       "name": "protocol",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.046880+00:00"
+      "created_at": "2026-08-11T20:00:19.323896+00:00"
     },
     "zone": {
       "name": "zone",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.047028+00:00"
+      "created_at": "2026-08-11T20:00:19.324014+00:00"
     },
     "registry": {
       "name": "registry",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.047180+00:00"
+      "created_at": "2026-08-11T20:00:19.324130+00:00"
     },
     "iana": {
       "name": "iana",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.048046+00:00"
+      "created_at": "2026-08-11T20:00:19.324792+00:00"
     },
     "identifiers": {
       "name": "identifiers",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.048231+00:00"
+      "created_at": "2026-08-11T20:00:19.324927+00:00"
     },
     "registries": {
       "name": "registries",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T11:59:20.048411+00:00"
-    },
-    "programming": {
-      "name": "programming",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.048981+00:00"
-    },
-    "key": {
-      "name": "key",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.049760+00:00"
-    },
-    "root": {
-      "name": "root",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.049975+00:00"
-    },
-    "top-level": {
-      "name": "top-level",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.052007+00:00"
-    },
-    "generic": {
-      "name": "generic",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.059196+00:00"
-    },
-    "llc": {
-      "name": "llc",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.059581+00:00"
-    },
-    "country-code": {
-      "name": "country-code",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.059794+00:00"
-    },
-    "inc": {
-      "name": "inc",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.060013+00:00"
-    },
-    "int": {
-      "name": "int",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.060959+00:00"
-    },
-    "overview": {
-      "name": "overview",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.061718+00:00"
-    },
-    "arpa": {
-      "name": "arpa",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.062606+00:00"
-    },
-    "rfc": {
-      "name": "rfc",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.062803+00:00"
-    },
-    "language": {
-      "name": "language",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.070903+00:00"
-    },
-    "limited": {
-      "name": "limited",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.071105+00:00"
-    },
-    "2024": {
-      "name": "2024",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.071293+00:00"
-    },
-    "identity": {
-      "name": "identity",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.071486+00:00"
-    },
-    "digital": {
-      "name": "digital",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.071678+00:00"
-    },
-    "addresses": {
-      "name": "addresses",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.072340+00:00"
-    },
-    "ipv6": {
-      "name": "ipv6",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.072528+00:00"
-    },
-    "numbers": {
-      "name": "numbers",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.073934+00:00"
-    },
-    "network": {
-      "name": "network",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.074327+00:00"
-    },
-    "begins": {
-      "name": "begins",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.074522+00:00"
-    },
-    "news": {
-      "name": "news",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.076214+00:00"
-    },
-    "review": {
-      "name": "review",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.082404+00:00"
-    },
-    "required": {
-      "name": "required",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.082618+00:00"
-    },
-    "expert": {
-      "name": "expert",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.082833+00:00"
-    },
-    "specification": {
-      "name": "specification",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.083031+00:00"
-    },
-    "request": {
-      "name": "request",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.083612+00:00"
-    },
-    "registration": {
-      "name": "registration",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.084263+00:00"
-    },
-    "assignment": {
-      "name": "assignment",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.084471+00:00"
-    },
-    "time": {
-      "name": "time",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.085291+00:00"
-    },
-    "database": {
-      "name": "database",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.085493+00:00"
-    },
-    "zones": {
-      "name": "zones",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.085914+00:00"
-    },
-    "data": {
-      "name": "data",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.086120+00:00"
-    },
-    "address": {
-      "name": "address",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.086951+00:00"
-    },
-    "space": {
-      "name": "space",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.087164+00:00"
-    },
-    "ipv4": {
-      "name": "ipv4",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.087383+00:00"
-    },
-    "allocation": {
-      "name": "allocation",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.088180+00:00"
-    },
-    "rir": {
-      "name": "rir",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.088406+00:00"
-    },
-    "utilization": {
-      "name": "utilization",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.088856+00:00"
-    },
-    "update": {
-      "name": "update",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.092992+00:00"
-    },
-    "icann": {
-      "name": "icann",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.093222+00:00"
-    },
-    "100": {
-      "name": "100",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.093904+00:00"
-    },
-    "2026": {
-      "name": "2026",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.094137+00:00"
-    },
-    "2025": {
-      "name": "2025",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.094372+00:00"
-    },
-    "performance": {
-      "name": "performance",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.094613+00:00"
-    },
-    "june": {
-      "name": "june",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.094877+00:00"
-    },
-    "organization": {
-      "name": "organization",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.095494+00:00"
-    },
-    "functions": {
-      "name": "functions",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.096013+00:00"
-    },
-    "reports": {
-      "name": "reports",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.097154+00:00"
-    },
-    "archive": {
-      "name": "archive",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.097674+00:00"
-    },
-    "documents": {
-      "name": "documents",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.097926+00:00"
-    },
-    "contact": {
-      "name": "contact",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.098784+00:00"
-    },
-    "abuse": {
-      "name": "abuse",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.099045+00:00"
-    },
-    "protocols": {
-      "name": "protocols",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.099850+00:00"
-    },
-    "information": {
-      "name": "information",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.102018+00:00"
-    },
-    "personal": {
-      "name": "personal",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.102270+00:00"
-    },
-    "policy": {
-      "name": "policy",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.102549+00:00"
-    },
-    "user": {
-      "name": "user",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.102835+00:00"
-    },
-    "privacy": {
-      "name": "privacy",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.103110+00:00"
-    },
-    "platform": {
-      "name": "platform",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.105391+00:00"
-    },
-    "terms": {
-      "name": "terms",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.105656+00:00"
-    },
-    "content": {
-      "name": "content",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.106451+00:00"
-    },
-    "management": {
-      "name": "management",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.108260+00:00"
-    },
-    "technical": {
-      "name": "technical",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.109871+00:00"
-    },
-    "processing": {
-      "name": "processing",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.110754+00:00"
-    },
-    "name": {
-      "name": "name",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.112167+00:00"
-    },
-    "servers": {
-      "name": "servers",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.112715+00:00"
-    },
-    "must": {
-      "name": "must",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.113033+00:00"
-    },
-    "globally": {
-      "name": "globally",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.113345+00:00"
-    },
-    "rdap": {
-      "name": "rdap",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.114134+00:00"
-    },
-    "response": {
-      "name": "response",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.114450+00:00"
-    },
-    "http": {
-      "name": "http",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.115017+00:00"
-    },
-    "change": {
-      "name": "change",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.116146+00:00"
-    },
-    "consent": {
-      "name": "consent",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.116464+00:00"
-    },
-    "contacts": {
-      "name": "contacts",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.116760+00:00"
-    },
-    "iso": {
-      "name": "iso",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.118854+00:00"
-    },
-    "3166": {
-      "name": "3166",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.119187+00:00"
-    },
-    "standard": {
-      "name": "standard",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.119529+00:00"
-    },
-    "verification": {
-      "name": "verification",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.121121+00:00"
-    },
-    "account": {
-      "name": "account",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.121472+00:00"
-    },
-    "api": {
-      "name": "api",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.123133+00:00"
-    },
-    "environment": {
-      "name": "environment",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.123443+00:00"
-    },
-    "ote": {
-      "name": "ote",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.123768+00:00"
-    },
-    "production": {
-      "name": "production",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.124389+00:00"
-    },
-    "version": {
-      "name": "version",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.125979+00:00"
-    },
-    "issue": {
-      "name": "issue",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.126306+00:00"
-    },
-    "december": {
-      "name": "december",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.126636+00:00"
-    },
-    "2017": {
-      "name": "2017",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.127278+00:00"
-    },
-    "delegation": {
-      "name": "delegation",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.128616+00:00"
-    },
-    "transfer": {
-      "name": "transfer",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.132644+00:00"
-    },
-    "manager": {
-      "name": "manager",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.133304+00:00"
-    },
-    "cctld": {
-      "name": "cctld",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.136454+00:00"
-    },
-    "proposed": {
-      "name": "proposed",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.138565+00:00"
-    },
-    "revocation": {
-      "name": "revocation",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.141477+00:00"
-    },
-    "retirement": {
-      "name": "retirement",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.143807+00:00"
-    },
-    "removal": {
-      "name": "removal",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.144976+00:00"
-    },
-    "caretaker": {
-      "name": "caretaker",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.146190+00:00"
-    },
-    "operations": {
-      "name": "operations",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.146594+00:00"
-    },
-    "process": {
-      "name": "process",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.148211+00:00"
-    },
-    "resolution": {
-      "name": "resolution",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.148585+00:00"
-    },
-    "complaint": {
-      "name": "complaint",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.148999+00:00"
-    },
-    "ceremony": {
-      "name": "ceremony",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.151092+00:00"
-    },
-    "external": {
-      "name": "external",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.151462+00:00"
-    },
-    "press": {
-      "name": "press",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.152608+00:00"
-    },
-    "roles": {
-      "name": "roles",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.154507+00:00"
-    },
-    "role": {
-      "name": "role",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.155282+00:00"
-    },
-    "script": {
-      "name": "script",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.155675+00:00"
-    },
-    "ceremonies": {
-      "name": "ceremonies",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.158052+00:00"
-    },
-    "ksk": {
-      "name": "ksk",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.158918+00:00"
-    },
-    "tcrs": {
-      "name": "tcrs",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.161268+00:00"
-    },
-    "tcr": {
-      "name": "tcr",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.162094+00:00"
-    },
-    "criteria": {
-      "name": "criteria",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.162535+00:00"
-    },
-    "cos": {
-      "name": "cos",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.162978+00:00"
-    },
-    "community": {
-      "name": "community",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.165853+00:00"
-    },
-    "travel": {
-      "name": "travel",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.168700+00:00"
-    },
-    "rksh": {
-      "name": "rksh",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.169512+00:00"
-    },
-    "support": {
-      "name": "support",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.172441+00:00"
-    },
-    "changes": {
-      "name": "changes",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.174762+00:00"
-    },
-    "new": {
-      "name": "new",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.176014+00:00"
-    },
-    "facility": {
-      "name": "facility",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.177404+00:00"
-    },
-    "hotel": {
-      "name": "hotel",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.184707+00:00"
-    },
-    "treaty": {
-      "name": "treaty",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.187988+00:00"
-    },
-    "lgr": {
-      "name": "lgr",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.190329+00:00"
-    },
-    "document": {
-      "name": "document",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.194993+00:00"
-    },
-    "group": {
-      "name": "group",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.195481+00:00"
-    },
-    "registrations": {
-      "name": "registrations",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.195969+00:00"
-    },
-    "ietf": {
-      "name": "ietf",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.199496+00:00"
-    },
-    "allocations": {
-      "name": "allocations",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.201105+00:00"
-    },
-    "legacy": {
-      "name": "legacy",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.204179+00:00"
-    },
-    "class": {
-      "name": "class",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.204679+00:00"
-    },
-    "whois": {
-      "name": "whois",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.209803+00:00"
-    },
-    "server": {
-      "name": "server",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.210269+00:00"
-    },
-    "org": {
-      "name": "org",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.211228+00:00"
-    },
-    "255": {
-      "name": "255",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.214837+00:00"
-    },
-    "blackhole": {
-      "name": "blackhole",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.216798+00:00"
-    },
-    "dns": {
-      "name": "dns",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.218259+00:00"
-    },
-    "queries": {
-      "name": "queries",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.218746+00:00"
-    },
-    "password": {
-      "name": "password",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.220995+00:00"
-    },
-    "their": {
-      "name": "their",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.222201+00:00"
-    },
-    "pti": {
-      "name": "pti",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.224695+00:00"
-    },
-    "2016": {
-      "name": "2016",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.225247+00:00"
-    },
-    "system": {
-      "name": "system",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.227159+00:00"
-    },
-    "requests": {
-      "name": "requests",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.229376+00:00"
-    },
-    "idn": {
-      "name": "idn",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.232473+00:00"
-    },
-    "procedure": {
-      "name": "procedure",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.233008+00:00"
-    },
-    "public": {
-      "name": "public",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.245278+00:00"
-    },
-    "learn": {
-      "name": "learn",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.246387+00:00"
-    },
-    "ltd": {
-      "name": "ltd",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.252403+00:00"
-    },
-    "rfc6761": {
-      "name": "rfc6761",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.254103+00:00"
-    },
-    "in-addr": {
-      "name": "in-addr",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.254641+00:00"
-    },
-    "172": {
-      "name": "172",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.255167+00:00"
-    },
-    "rfc6762": {
-      "name": "rfc6762",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.255709+00:00"
-    },
-    "files": {
-      "name": "files",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.259171+00:00"
-    },
-    "signing": {
-      "name": "signing",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.279598+00:00"
-    },
-    "dnssec": {
-      "name": "dnssec",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.280146+00:00"
-    },
-    "trust": {
-      "name": "trust",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.283047+00:00"
-    },
-    "anchors": {
-      "name": "anchors",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.284254+00:00"
-    },
-    "sign": {
-      "name": "sign",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.288656+00:00"
-    },
-    "zsks": {
-      "name": "zsks",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.289229+00:00"
-    },
-    "replace": {
-      "name": "replace",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.289792+00:00"
-    },
-    "effective": {
-      "name": "effective",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.292393+00:00"
-    },
-    "describes": {
-      "name": "describes",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.293565+00:00"
-    },
-    "2010": {
-      "name": "2010",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.296431+00:00"
-    },
-    "cryptographic": {
-      "name": "cryptographic",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.297052+00:00"
-    },
-    "officer": {
-      "name": "officer",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.297701+00:00"
-    },
-    "slot": {
-      "name": "slot",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T11:59:20.298293+00:00"
-    },
-    "python": {
-      "name": "python",
-      "color": "#3498db",
-      "description": "",
-      "created_at": "2026-08-11T12:08:37.719518+00:00"
+      "created_at": "2026-08-11T20:00:19.325060+00:00"
     },
     "rust": {
       "name": "rust",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T13:28:00.593740+00:00"
+      "created_at": "2026-08-11T20:00:19.325607+00:00"
     },
-    "pipeline": {
-      "name": "pipeline",
+    "key": {
+      "name": "key",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.181607+00:00"
+      "created_at": "2026-08-11T20:00:19.326228+00:00"
     },
-    "core": {
-      "name": "core",
+    "root": {
+      "name": "root",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.183166+00:00"
+      "created_at": "2026-08-11T20:00:19.326369+00:00"
     },
-    "engine": {
-      "name": "engine",
+    "top-level": {
+      "name": "top-level",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.184523+00:00"
+      "created_at": "2026-08-11T20:00:19.327679+00:00"
     },
-    "cli": {
-      "name": "cli",
+    "generic": {
+      "name": "generic",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.185253+00:00"
+      "created_at": "2026-08-11T20:00:19.333417+00:00"
     },
-    "reference": {
-      "name": "reference",
+    "llc": {
+      "name": "llc",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.185936+00:00"
+      "created_at": "2026-08-11T20:00:19.333587+00:00"
     },
-    "personal-index": {
-      "name": "personal-index",
+    "country-code": {
+      "name": "country-code",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.186614+00:00"
+      "created_at": "2026-08-11T20:00:19.333740+00:00"
     },
-    "provides": {
-      "name": "provides",
+    "inc": {
+      "name": "inc",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.187302+00:00"
+      "created_at": "2026-08-11T20:00:19.333881+00:00"
     },
-    "commands": {
-      "name": "commands",
+    "int": {
+      "name": "int",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.187994+00:00"
+      "created_at": "2026-08-11T20:00:19.334636+00:00"
     },
-    "index": {
-      "name": "index",
+    "overview": {
+      "name": "overview",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.189395+00:00"
+      "created_at": "2026-08-11T20:00:19.335225+00:00"
     },
-    "guide": {
-      "name": "guide",
+    "arpa": {
+      "name": "arpa",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.190747+00:00"
+      "created_at": "2026-08-11T20:00:19.335959+00:00"
     },
-    "getting": {
-      "name": "getting",
+    "rfc": {
+      "name": "rfc",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.191429+00:00"
+      "created_at": "2026-08-11T20:00:19.336114+00:00"
     },
-    "architecture": {
-      "name": "architecture",
+    "language": {
+      "name": "language",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.193138+00:00"
+      "created_at": "2026-08-11T20:00:19.343208+00:00"
     },
-    "web": {
-      "name": "web",
+    "limited": {
+      "name": "limited",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.193928+00:00"
+      "created_at": "2026-08-11T20:00:19.343370+00:00"
     },
-    "verbose": {
-      "name": "verbose",
+    "2024": {
+      "name": "2024",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.197675+00:00"
+      "created_at": "2026-08-11T20:00:19.343530+00:00"
     },
-    "help": {
-      "name": "help",
+    "identity": {
+      "name": "identity",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.198404+00:00"
+      "created_at": "2026-08-11T20:00:19.343691+00:00"
     },
-    "interests": {
-      "name": "interests",
+    "digital": {
+      "name": "digital",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.199132+00:00"
+      "created_at": "2026-08-11T20:00:19.343866+00:00"
     },
-    "manage": {
-      "name": "manage",
+    "addresses": {
+      "name": "addresses",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.199870+00:00"
+      "created_at": "2026-08-11T20:00:19.344460+00:00"
     },
-    "tests": {
-      "name": "tests",
+    "ipv6": {
+      "name": "ipv6",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.201469+00:00"
+      "created_at": "2026-08-11T20:00:19.344634+00:00"
     },
-    "integration": {
-      "name": "integration",
+    "numbers": {
+      "name": "numbers",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.202214+00:00"
+      "created_at": "2026-08-11T20:00:19.345873+00:00"
     },
-    "search": {
-      "name": "search",
+    "network": {
+      "name": "network",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.203657+00:00"
+      "created_at": "2026-08-11T20:00:19.346220+00:00"
     },
-    "quick": {
-      "name": "quick",
+    "begins": {
+      "name": "begins",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.205908+00:00"
+      "created_at": "2026-08-11T20:00:19.346399+00:00"
     },
-    "start": {
-      "name": "start",
+    "news": {
+      "name": "news",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.206636+00:00"
+      "created_at": "2026-08-11T20:00:19.347909+00:00"
     },
-    "installation": {
-      "name": "installation",
+    "review": {
+      "name": "review",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.207363+00:00"
+      "created_at": "2026-08-11T20:00:19.353649+00:00"
     },
-    "usage": {
-      "name": "usage",
+    "required": {
+      "name": "required",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.209747+00:00"
+      "created_at": "2026-08-11T20:00:19.353825+00:00"
     },
-    "description": {
-      "name": "description",
+    "expert": {
+      "name": "expert",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.219059+00:00"
+      "created_at": "2026-08-11T20:00:19.354001+00:00"
     },
-    "url": {
-      "name": "url",
+    "specification": {
+      "name": "specification",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.220619+00:00"
+      "created_at": "2026-08-11T20:00:19.354183+00:00"
     },
-    "to_dict": {
-      "name": "to_dict",
+    "request": {
+      "name": "request",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.221377+00:00"
+      "created_at": "2026-08-11T20:00:19.354719+00:00"
     },
-    "args": {
-      "name": "args",
+    "registration": {
+      "name": "registration",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.222144+00:00"
+      "created_at": "2026-08-11T20:00:19.355270+00:00"
     },
-    "running": {
-      "name": "running",
+    "assignment": {
+      "name": "assignment",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.224472+00:00"
+      "created_at": "2026-08-11T20:00:19.355455+00:00"
     },
-    "minutes": {
-      "name": "minutes",
+    "time": {
+      "name": "time",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.226005+00:00"
+      "created_at": "2026-08-11T20:00:19.356220+00:00"
     },
-    "personal_index": {
-      "name": "personal_index",
+    "database": {
+      "name": "database",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.227680+00:00"
+      "created_at": "2026-08-11T20:00:19.356421+00:00"
     },
-    "classes": {
-      "name": "classes",
+    "zones": {
+      "name": "zones",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.230772+00:00"
+      "created_at": "2026-08-11T20:00:19.356816+00:00"
     },
-    "started": {
-      "name": "started",
+    "data": {
+      "name": "data",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.232359+00:00"
+      "created_at": "2026-08-11T20:00:19.357018+00:00"
     },
-    "configuration": {
-      "name": "configuration",
+    "address": {
+      "name": "address",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.244565+00:00"
+      "created_at": "2026-08-11T20:00:19.357805+00:00"
     },
-    "config": {
-      "name": "config",
+    "space": {
+      "name": "space",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.245360+00:00"
+      "created_at": "2026-08-11T20:00:19.358000+00:00"
     },
-    "yaml": {
-      "name": "yaml",
+    "ipv4": {
+      "name": "ipv4",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.246144+00:00"
+      "created_at": "2026-08-11T20:00:19.358202+00:00"
     },
-    "main": {
-      "name": "main",
+    "allocation": {
+      "name": "allocation",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.246940+00:00"
+      "created_at": "2026-08-11T20:00:19.358954+00:00"
     },
-    "file": {
-      "name": "file",
+    "rir": {
+      "name": "rir",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.247730+00:00"
+      "created_at": "2026-08-11T20:00:19.359170+00:00"
     },
-    "complete": {
-      "name": "complete",
+    "utilization": {
+      "name": "utilization",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.251673+00:00"
+      "created_at": "2026-08-11T20:00:19.359593+00:00"
     },
-    "explains": {
-      "name": "explains",
+    "update": {
+      "name": "update",
       "color": "#3498db",
       "description": "",
-      "created_at": "2026-08-11T17:16:09.258845+00:00"
+      "created_at": "2026-08-11T20:00:19.363703+00:00"
+    },
+    "icann": {
+      "name": "icann",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.363918+00:00"
+    },
+    "100": {
+      "name": "100",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.364551+00:00"
+    },
+    "2026": {
+      "name": "2026",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.364775+00:00"
+    },
+    "2025": {
+      "name": "2025",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.364999+00:00"
+    },
+    "performance": {
+      "name": "performance",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.365241+00:00"
+    },
+    "june": {
+      "name": "june",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.365479+00:00"
+    },
+    "organization": {
+      "name": "organization",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.366077+00:00"
+    },
+    "functions": {
+      "name": "functions",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.366553+00:00"
+    },
+    "reports": {
+      "name": "reports",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.367677+00:00"
+    },
+    "archive": {
+      "name": "archive",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.368174+00:00"
+    },
+    "documents": {
+      "name": "documents",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.368422+00:00"
+    },
+    "contact": {
+      "name": "contact",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.369273+00:00"
+    },
+    "abuse": {
+      "name": "abuse",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.369532+00:00"
+    },
+    "protocols": {
+      "name": "protocols",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.371047+00:00"
+    },
+    "policy": {
+      "name": "policy",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.372439+00:00"
+    },
+    "public": {
+      "name": "public",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.372710+00:00"
+    },
+    "learn": {
+      "name": "learn",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.373260+00:00"
+    },
+    "information": {
+      "name": "information",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.376324+00:00"
+    },
+    "personal": {
+      "name": "personal",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.376618+00:00"
+    },
+    "user": {
+      "name": "user",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.377180+00:00"
+    },
+    "privacy": {
+      "name": "privacy",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.377461+00:00"
+    },
+    "platform": {
+      "name": "platform",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.380007+00:00"
+    },
+    "terms": {
+      "name": "terms",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.380302+00:00"
+    },
+    "content": {
+      "name": "content",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.381166+00:00"
+    },
+    "management": {
+      "name": "management",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.383157+00:00"
+    },
+    "technical": {
+      "name": "technical",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.384822+00:00"
+    },
+    "processing": {
+      "name": "processing",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.385691+00:00"
+    },
+    "name": {
+      "name": "name",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.387240+00:00"
+    },
+    "servers": {
+      "name": "servers",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.387853+00:00"
+    },
+    "must": {
+      "name": "must",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.388161+00:00"
+    },
+    "globally": {
+      "name": "globally",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.388471+00:00"
+    },
+    "rdap": {
+      "name": "rdap",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.389281+00:00"
+    },
+    "response": {
+      "name": "response",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.389600+00:00"
+    },
+    "http": {
+      "name": "http",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.390243+00:00"
+    },
+    "change": {
+      "name": "change",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.391300+00:00"
+    },
+    "consent": {
+      "name": "consent",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.391601+00:00"
+    },
+    "contacts": {
+      "name": "contacts",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.391915+00:00"
+    },
+    "iso": {
+      "name": "iso",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.394226+00:00"
+    },
+    "3166": {
+      "name": "3166",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.394560+00:00"
+    },
+    "standard": {
+      "name": "standard",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.394896+00:00"
+    },
+    "verification": {
+      "name": "verification",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.396489+00:00"
+    },
+    "account": {
+      "name": "account",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.396799+00:00"
+    },
+    "api": {
+      "name": "api",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.398511+00:00"
+    },
+    "environment": {
+      "name": "environment",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.398832+00:00"
+    },
+    "ote": {
+      "name": "ote",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.399198+00:00"
+    },
+    "production": {
+      "name": "production",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.399913+00:00"
+    },
+    "version": {
+      "name": "version",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.401542+00:00"
+    },
+    "issue": {
+      "name": "issue",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.401869+00:00"
+    },
+    "december": {
+      "name": "december",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.402235+00:00"
+    },
+    "2017": {
+      "name": "2017",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.402971+00:00"
+    },
+    "delegation": {
+      "name": "delegation",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.404313+00:00"
+    },
+    "transfer": {
+      "name": "transfer",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.408484+00:00"
+    },
+    "manager": {
+      "name": "manager",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.409166+00:00"
+    },
+    "cctld": {
+      "name": "cctld",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.412425+00:00"
+    },
+    "proposed": {
+      "name": "proposed",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.414589+00:00"
+    },
+    "revocation": {
+      "name": "revocation",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.417518+00:00"
+    },
+    "retirement": {
+      "name": "retirement",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.420040+00:00"
+    },
+    "removal": {
+      "name": "removal",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.421224+00:00"
+    },
+    "caretaker": {
+      "name": "caretaker",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.423373+00:00"
+    },
+    "operations": {
+      "name": "operations",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.423768+00:00"
+    },
+    "process": {
+      "name": "process",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.425447+00:00"
+    },
+    "resolution": {
+      "name": "resolution",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.425881+00:00"
+    },
+    "complaint": {
+      "name": "complaint",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.426307+00:00"
+    },
+    "ceremony": {
+      "name": "ceremony",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.428659+00:00"
+    },
+    "external": {
+      "name": "external",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.429478+00:00"
+    },
+    "press": {
+      "name": "press",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.431758+00:00"
+    },
+    "roles": {
+      "name": "roles",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.433899+00:00"
+    },
+    "role": {
+      "name": "role",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.434835+00:00"
+    },
+    "script": {
+      "name": "script",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.435419+00:00"
+    },
+    "ceremonies": {
+      "name": "ceremonies",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.438313+00:00"
+    },
+    "ksk": {
+      "name": "ksk",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.439383+00:00"
+    },
+    "tcrs": {
+      "name": "tcrs",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.441652+00:00"
+    },
+    "tcr": {
+      "name": "tcr",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.442699+00:00"
+    },
+    "criteria": {
+      "name": "criteria",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.443158+00:00"
+    },
+    "cos": {
+      "name": "cos",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.443624+00:00"
+    },
+    "community": {
+      "name": "community",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.449863+00:00"
+    },
+    "travel": {
+      "name": "travel",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.457456+00:00"
+    },
+    "rksh": {
+      "name": "rksh",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.459706+00:00"
+    },
+    "support": {
+      "name": "support",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.466143+00:00"
+    },
+    "changes": {
+      "name": "changes",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.473560+00:00"
+    },
+    "new": {
+      "name": "new",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.475055+00:00"
+    },
+    "facility": {
+      "name": "facility",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.476608+00:00"
+    },
+    "hotel": {
+      "name": "hotel",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.485235+00:00"
+    },
+    "treaty": {
+      "name": "treaty",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.498302+00:00"
+    },
+    "lgr": {
+      "name": "lgr",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.501602+00:00"
+    },
+    "document": {
+      "name": "document",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.507587+00:00"
+    },
+    "group": {
+      "name": "group",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.508212+00:00"
+    },
+    "registrations": {
+      "name": "registrations",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.508809+00:00"
+    },
+    "ietf": {
+      "name": "ietf",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.513336+00:00"
+    },
+    "allocations": {
+      "name": "allocations",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.515482+00:00"
+    },
+    "legacy": {
+      "name": "legacy",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.520657+00:00"
+    },
+    "class": {
+      "name": "class",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.521589+00:00"
+    },
+    "whois": {
+      "name": "whois",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.531650+00:00"
+    },
+    "server": {
+      "name": "server",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.532164+00:00"
+    },
+    "org": {
+      "name": "org",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.533120+00:00"
+    },
+    "255": {
+      "name": "255",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.536916+00:00"
+    },
+    "blackhole": {
+      "name": "blackhole",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.538866+00:00"
+    },
+    "dns": {
+      "name": "dns",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.540732+00:00"
+    },
+    "queries": {
+      "name": "queries",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.541322+00:00"
+    },
+    "password": {
+      "name": "password",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.543797+00:00"
+    },
+    "their": {
+      "name": "their",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.544886+00:00"
+    },
+    "pti": {
+      "name": "pti",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.547258+00:00"
+    },
+    "2016": {
+      "name": "2016",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.547822+00:00"
+    },
+    "system": {
+      "name": "system",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.549853+00:00"
+    },
+    "requests": {
+      "name": "requests",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.552006+00:00"
+    },
+    "idn": {
+      "name": "idn",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.555250+00:00"
+    },
+    "procedure": {
+      "name": "procedure",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.555763+00:00"
+    },
+    "ltd": {
+      "name": "ltd",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.576304+00:00"
+    },
+    "rfc6761": {
+      "name": "rfc6761",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.578089+00:00"
+    },
+    "in-addr": {
+      "name": "in-addr",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.578651+00:00"
+    },
+    "172": {
+      "name": "172",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.579245+00:00"
+    },
+    "rfc6762": {
+      "name": "rfc6762",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.579823+00:00"
+    },
+    "files": {
+      "name": "files",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.583468+00:00"
+    },
+    "signing": {
+      "name": "signing",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.605043+00:00"
+    },
+    "dnssec": {
+      "name": "dnssec",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.605649+00:00"
+    },
+    "trust": {
+      "name": "trust",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.608702+00:00"
+    },
+    "anchors": {
+      "name": "anchors",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.609918+00:00"
+    },
+    "sign": {
+      "name": "sign",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.614475+00:00"
+    },
+    "zsks": {
+      "name": "zsks",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.615082+00:00"
+    },
+    "replace": {
+      "name": "replace",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.615682+00:00"
+    },
+    "effective": {
+      "name": "effective",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.618523+00:00"
+    },
+    "describes": {
+      "name": "describes",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.619809+00:00"
+    },
+    "2010": {
+      "name": "2010",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.622872+00:00"
+    },
+    "cryptographic": {
+      "name": "cryptographic",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.623453+00:00"
+    },
+    "officer": {
+      "name": "officer",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.624073+00:00"
+    },
+    "slot": {
+      "name": "slot",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:00:19.624701+00:00"
+    },
+    "python": {
+      "name": "python",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T20:02:07.988265+00:00"
     }
   },
   "page_tags": {
-    "https://example.com/page1": [
-      "important"
-    ],
-    "https://example.com/page": [
-      "important",
-      "important,reference"
-    ],
     "https://example.com": [
       "examples",
-      "technology",
-      "documentation",
-      "example",
       "use",
+      "example",
+      "documentation",
+      "technology",
       "domain"
     ],
     "https://iana.org/domains/example": [
-      "service",
-      "technology",
-      "domains",
       "example",
+      "are",
+      "technology",
+      "service",
       "number",
-      "are"
+      "domains"
     ],
     "https://iana.org/": [
-      "registry",
       "zone",
-      "protocol",
-      "technology",
       "internet",
-      "number"
+      "technology",
+      "registry",
+      "number",
+      "protocol"
     ],
     "https://iana.org/about": [
-      "technology",
       "identifiers",
-      "registries",
       "internet",
-      "are",
-      "iana"
+      "iana",
+      "technology",
+      "registries",
+      "are"
     ],
     "https://iana.org/domains": [
       "zone",
-      "technology",
       "key",
-      "programming",
-      "rust",
       "domains",
+      "rust",
+      "technology",
       "domain",
       "root"
     ],
     "https://iana.org/domains/root": [
-      "registry",
       "zone",
-      "technology",
-      "programming",
-      "rust",
-      "domains",
       "top-level",
+      "domains",
+      "rust",
+      "technology",
+      "registry",
       "root"
     ],
     "https://iana.org/domains/root/db": [
-      "country-code",
-      "registry",
-      "technology",
-      "programming",
-      "rust",
       "inc",
+      "llc",
       "generic",
-      "llc"
+      "country-code",
+      "rust",
+      "technology",
+      "registry"
     ],
     "https://iana.org/domains/int": [
-      "int",
-      "registry",
-      "technology",
-      "programming",
-      "rust",
-      "domains",
       "overview",
-      "domain"
+      "rust",
+      "int",
+      "technology",
+      "domain",
+      "registry",
+      "domains"
     ],
     "https://iana.org/domains/arpa": [
-      "registry",
-      "technology",
-      "programming",
-      "rust",
       "internet",
+      "rust",
       "rfc",
-      "arpa",
-      "domain"
+      "technology",
+      "domain",
+      "registry",
+      "arpa"
     ],
     "https://iana.org/domains/idn-tables": [
-      "technology",
-      "2024",
-      "language",
-      "identity",
       "limited",
-      "digital"
+      "2024",
+      "identity",
+      "language",
+      "digital",
+      "technology"
     ],
     "https://iana.org/numbers": [
+      "internet",
+      "are",
       "technology",
       "ipv6",
-      "internet",
       "addresses",
-      "number",
-      "are"
+      "number"
     ],
     "https://iana.org/help/abuse": [
-      "technology",
-      "network",
-      "begins",
+      "iana",
       "numbers",
       "are",
-      "iana"
+      "technology",
+      "begins",
+      "network"
     ],
     "https://iana.org/protocols": [
-      "required",
+      "review",
+      "expert",
       "news",
-      "technology",
-      "programming",
+      "required",
       "specification",
       "rust",
-      "review",
-      "rfc",
-      "expert"
+      "technology",
+      "rfc"
     ],
     "https://iana.org/protocols/apply": [
+      "request",
+      "technology",
+      "assignment",
       "registration",
       "registry",
-      "protocol",
-      "technology",
-      "request",
-      "assignment"
+      "protocol"
     ],
     "https://iana.org/time-zones": [
-      "zone",
-      "news",
-      "technology",
-      "data",
       "database",
       "zones",
-      "time"
+      "zone",
+      "time",
+      "data",
+      "news",
+      "technology"
     ],
     "https://iana.org/numbers/registries": [
-      "technology",
-      "ipv6",
       "space",
+      "address",
       "numbers",
       "ipv4",
-      "address"
+      "technology",
+      "ipv6"
     ],
     "https://iana.org/numbers/allocations": [
-      "technology",
       "ipv6",
-      "number",
+      "allocation",
+      "technology",
       "utilization",
       "rir",
-      "allocation"
+      "number"
     ],
     "https://iana.org/news": [
-      "zone",
-      "news",
       "update",
-      "technology",
-      "programming",
-      "rust",
-      "icann",
+      "zone",
       "iana",
+      "icann",
+      "news",
+      "rust",
+      "technology",
       "root"
     ],
     "https://iana.org/performance": [
-      "technology",
-      "2026",
       "performance",
-      "2025",
+      "june",
       "100",
-      "june"
+      "2025",
+      "2026",
+      "technology"
     ],
     "https://iana.org/about/organization": [
-      "technology",
+      "performance",
       "functions",
       "identifiers",
-      "performance",
+      "iana",
       "organization",
-      "iana"
+      "technology"
     ],
     "https://iana.org/archive": [
-      "technology",
+      "iana",
       "reports",
-      "archive",
       "documents",
-      "are",
-      "iana"
+      "archive",
+      "technology",
+      "are"
     ],
     "https://iana.org/contact": [
-      "registry",
+      "contact",
+      "iana",
+      "protocols",
       "technology",
       "abuse",
-      "contact",
-      "protocols",
-      "iana"
+      "registry"
+    ],
+    "https://www.icann.org/": [
+      "public",
+      "2026",
+      "icann",
+      "policy",
+      "technology",
+      "learn"
     ],
     "https://www.icann.org/privacy/policy": [
-      "news",
-      "technology",
+      "user",
       "information",
       "personal",
       "privacy",
-      "user",
-      "policy"
+      "policy",
+      "news",
+      "technology"
     ],
     "https://www.icann.org/privacy/tos": [
-      "news",
-      "service",
-      "technology",
-      "terms",
-      "content",
+      "platform",
       "use",
-      "platform"
+      "news",
+      "terms",
+      "technology",
+      "content",
+      "service"
     ],
     "https://iana.org/help": [
       "zone",
-      "management",
-      "technology",
-      "programming",
-      "rust",
       "top-level",
+      "management",
+      "rust",
+      "technology",
       "domain",
       "root"
     ],
     "https://iana.org/help/root-zone-process": [
       "zone",
-      "news",
-      "technology",
-      "processing",
       "request",
+      "news",
+      "processing",
+      "technology",
       "technical",
       "root"
     ],
     "https://iana.org/help/nameserver-requirements": [
-      "technology",
-      "programming",
-      "must",
-      "servers",
-      "name",
       "globally",
+      "servers",
       "rust",
-      "rfc"
+      "rfc",
+      "technology",
+      "name",
+      "must"
     ],
     "https://iana.org/help/rdap-requirements": [
+      "http",
       "rdap",
+      "iana",
       "response",
       "technology",
-      "http",
-      "iana",
       "domain"
     ],
     "https://iana.org/help/obtaining-consent": [
       "contacts",
-      "technology",
+      "request",
       "consent",
-      "domains",
       "change",
-      "request"
+      "technology",
+      "domains"
     ],
     "https://iana.org/help/eligible-tlds": [
-      "technology",
-      "iso",
-      "standard",
-      "top-level",
       "3166",
+      "top-level",
+      "iso",
+      "technology",
+      "standard",
       "domain"
     ],
     "https://iana.org/help/id-verification": [
       "zone",
-      "technology",
-      "programming",
-      "rust",
-      "verification",
       "identity",
+      "iana",
+      "rust",
       "account",
-      "iana"
+      "technology",
+      "verification"
     ],
     "https://iana.org/help/rzm-api": [
-      "zone",
-      "technology",
-      "ote",
-      "api",
       "environment",
-      "production"
+      "production",
+      "zone",
+      "api",
+      "technology",
+      "ote"
     ],
     "https://iana.org/help/rzms-changelog": [
-      "news",
-      "technology",
-      "december",
-      "2025",
-      "version",
       "issue",
-      "2017"
+      "2025",
+      "december",
+      "news",
+      "2017",
+      "technology",
+      "version"
     ],
     "https://iana.org/help/gtld-delegation": [
-      "registry",
       "zone",
+      "request",
       "news",
       "technology",
-      "delegation",
-      "request",
-      "domain"
+      "domain",
+      "registry",
+      "delegation"
     ],
     "https://iana.org/help/cctld-delegation": [
-      "technology",
-      "programming",
-      "transfer",
-      "delegation",
-      "rust",
       "manager",
       "request",
-      "domain"
+      "transfer",
+      "rust",
+      "technology",
+      "domain",
+      "delegation"
     ],
     "https://iana.org/help/cctld-delegation-answers": [
       "cctld",
-      "technology",
-      "programming",
+      "request",
       "transfer",
       "rust",
-      "manager",
-      "request",
-      "are"
+      "technology",
+      "are",
+      "manager"
     ],
     "https://iana.org/help/operational-plans": [
-      "registry",
-      "technology",
-      "technical",
       "proposed",
+      "technology",
       "are",
-      "domain"
+      "domain",
+      "registry",
+      "technical"
     ],
     "https://iana.org/help/cctld-revocation": [
       "cctld",
-      "technology",
-      "programming",
-      "domain",
-      "rust",
       "manager",
       "iana",
-      "revocation"
+      "revocation",
+      "rust",
+      "technology",
+      "domain"
     ],
     "https://iana.org/help/cctld-retirement": [
       "cctld",
+      "iana",
       "removal",
       "retirement",
       "technology",
-      "iana",
       "domain"
     ],
     "https://iana.org/help/caretaker-operations": [
-      "registry",
-      "technology",
       "operations",
       "top-level",
+      "caretaker",
+      "technology",
       "domain",
-      "caretaker"
+      "registry"
     ],
     "https://iana.org/help/complaint-procedure": [
-      "management",
-      "technology",
-      "resolution",
-      "complaint",
       "information",
+      "complaint",
+      "management",
+      "resolution",
+      "technology",
       "process"
     ],
     "https://iana.org/help/key-ceremony-attendance": [
-      "technology",
-      "programming",
-      "ceremony",
-      "rust",
       "external",
-      "number",
+      "rust",
+      "ceremony",
+      "technology",
       "press",
-      "are"
+      "are",
+      "number"
     ],
     "https://iana.org/help/key-ceremony-roles": [
+      "script",
       "roles",
-      "technology",
-      "programming",
-      "ceremony",
       "rust",
       "role",
-      "are",
-      "script"
+      "ceremony",
+      "technology",
+      "are"
     ],
     "https://iana.org/help/key-ceremony-schedule": [
-      "ceremonies",
-      "key",
       "ksk",
-      "technology",
+      "key",
       "ceremony",
-      "programming",
       "rust",
-      "are"
+      "technology",
+      "are",
+      "ceremonies"
     ],
     "https://iana.org/help/tcr-criteria": [
-      "technology",
-      "programming",
       "criteria",
-      "rust",
-      "cos",
-      "are",
       "tcrs",
-      "tcr"
+      "rust",
+      "technology",
+      "tcr",
+      "are",
+      "cos"
     ],
     "https://iana.org/help/tcr-application": [
-      "community",
-      "technology",
-      "programming",
+      "tcrs",
       "key",
       "rust",
+      "technology",
+      "tcr",
       "are",
-      "tcrs",
-      "tcr"
+      "community"
     ],
     "https://iana.org/help/tcr-roles": [
-      "roles",
-      "technology",
+      "rksh",
       "key",
-      "programming",
-      "ceremony",
+      "roles",
       "rust",
+      "ceremony",
       "travel",
-      "rksh"
+      "technology"
     ],
     "https://iana.org/help/tcr-travel-support": [
-      "technology",
-      "programming",
       "ksk",
-      "ceremony",
-      "rust",
+      "support",
       "icann",
+      "rust",
+      "ceremony",
       "travel",
-      "support"
+      "technology"
     ],
     "https://iana.org/help/tcr-changes": [
+      "tcrs",
+      "time",
+      "rust",
       "changes",
       "technology",
-      "programming",
-      "rust",
-      "new",
-      "time",
       "process",
-      "tcrs"
+      "new"
     ],
     "https://iana.org/help/kmf-rules": [
-      "facility",
       "management",
-      "technology",
       "key",
+      "facility",
       "ceremony",
-      "are"
+      "are",
+      "technology"
     ],
     "https://iana.org/help/kmf-east": [
-      "registry",
       "zone",
       "management",
-      "technology",
       "key",
-      "programming",
       "rust",
+      "technology",
+      "registry",
       "root"
     ],
     "https://iana.org/help/kmf-west": [
-      "registry",
-      "zone",
       "hotel",
+      "zone",
       "key",
-      "technology",
-      "programming",
       "rust",
+      "technology",
+      "registry",
       "root"
     ],
     "https://iana.org/help/int-eligibility": [
       "int",
-      "technology",
-      "must",
       "organization",
+      "technology",
       "treaty",
-      "domain"
+      "domain",
+      "must"
     ],
     "https://iana.org/help/idn-repository-procedure": [
-      "news",
-      "technology",
+      "script",
       "contact",
+      "news",
       "language",
       "lgr",
-      "are",
-      "script"
+      "technology",
+      "are"
     ],
     "https://iana.org/help/protocol-registration": [
-      "registry",
-      "news",
-      "group",
-      "technology",
       "registrations",
       "document",
-      "iana"
+      "group",
+      "iana",
+      "news",
+      "technology",
+      "registry"
     ],
     "https://iana.org/help/licensing-terms": [
-      "protocol",
-      "technology",
-      "programming",
-      "registries",
-      "rust",
-      "are",
+      "ietf",
       "iana",
-      "ietf"
+      "rust",
+      "technology",
+      "registries",
+      "are",
+      "protocol"
     ],
     "https://iana.org/help/inr-request-procedure": [
-      "allocations",
-      "technology",
-      "numbers",
       "address",
       "iana",
+      "numbers",
+      "allocations",
+      "technology",
       "rir"
     ],
     "https://iana.org/help/updating-legacy-ipv4-space": [
-      "registry",
-      "technology",
-      "ipv4",
       "class",
       "legacy",
-      "rir"
+      "ipv4",
+      "technology",
+      "rir",
+      "registry"
     ],
     "https://iana.org/help/example-domains": [
-      "service",
-      "technology",
-      "domains",
       "example",
+      "are",
+      "technology",
+      "service",
       "number",
-      "are"
+      "domains"
     ],
     "https://iana.org/help/whois": [
-      "registry",
+      "org",
+      "server",
+      "whois",
       "allocations",
       "technology",
-      "org",
-      "whois",
-      "server"
+      "registry"
     ],
     "https://iana.org/help/abuse-answers": [
-      "technology",
-      "internet",
-      "addresses",
-      "address",
       "255",
-      "are"
+      "internet",
+      "address",
+      "are",
+      "technology",
+      "addresses"
     ],
     "https://iana.org/help/dns-blackhole": [
-      "technology",
-      "servers",
       "queries",
-      "are",
+      "servers",
       "blackhole",
+      "technology",
+      "are",
       "dns"
     ],
     "https://iana.org/help/rzms-answers": [
-      "technology",
       "password",
       "their",
+      "iana",
       "account",
       "are",
-      "iana"
+      "technology"
     ],
     "https://iana.org/help/pti-transition": [
-      "technology",
-      "functions",
-      "icann",
-      "2016",
       "pti",
-      "iana"
+      "functions",
+      "2016",
+      "iana",
+      "icann",
+      "technology"
     ],
     "https://iana.org/help/rzm-system": [
       "zone",
-      "technology",
       "requests",
-      "system",
       "top-level",
-      "root"
+      "technology",
+      "root",
+      "system"
     ],
     "https://iana.org/help/test-tld-procedure": [
       "zone",
-      "technology",
-      "idn",
       "iana",
+      "idn",
+      "technology",
       "procedure",
       "root"
     ],
     "https://iana.org/domains/reserved": [
-      "registry",
-      "news",
-      "technology",
-      "programming",
-      "rust",
-      "domains",
       "overview",
+      "news",
+      "rust",
       "are",
-      "domain"
+      "technology",
+      "domain",
+      "registry",
+      "domains"
     ],
     "http://www.icann.org/topics/idn": [
-      "news",
-      "technology",
-      "programming",
-      "idn",
-      "rust",
       "icann",
-      "name",
+      "idn",
+      "policy",
+      "news",
+      "rust",
+      "technology",
       "domain",
-      "policy"
+      "name"
     ],
     "http://www.icann.org/": [
-      "technology",
-      "learn",
+      "public",
       "2026",
       "icann",
-      "public",
-      "policy"
+      "policy",
+      "technology",
+      "learn"
     ],
     "http://www.icann.org/en/registries/agreements.htm": [
-      "registry",
-      "technology",
-      "programming",
-      "rust",
-      "ltd",
       "limited",
       "inc",
-      "llc"
+      "ltd",
+      "llc",
+      "rust",
+      "technology",
+      "registry"
     ],
     "https://iana.org/assignments/special-use-domain-names": [
+      "rfc6762",
       "rfc6761",
       "technology",
-      "172",
       "arpa",
-      "rfc6762",
+      "172",
       "in-addr"
     ],
     "https://iana.org/domains/root/files": [
-      "registry",
-      "zone",
-      "technology",
-      "programming",
-      "rust",
-      "overview",
       "files",
+      "overview",
+      "zone",
+      "rust",
+      "technology",
+      "registry",
       "root"
     ],
     "https://iana.org/domains/root/manage": [
-      "registry",
-      "zone",
-      "technology",
-      "programming",
-      "rust",
       "overview",
+      "zone",
+      "rust",
+      "technology",
       "domain",
+      "registry",
       "root"
     ],
     "https://iana.org/domains/root/help": [
-      "zone",
-      "technology",
-      "programming",
-      "rust",
       "overview",
+      "zone",
       "top-level",
+      "rust",
+      "technology",
       "domain",
       "root"
     ],
     "https://iana.org/domains/int/manage": [
-      "int",
-      "registry",
-      "technology",
-      "programming",
-      "rust",
-      "name",
       "overview",
-      "domain"
+      "rust",
+      "int",
+      "technology",
+      "domain",
+      "name",
+      "registry"
     ],
     "https://iana.org/domains/int/policy": [
-      "int",
-      "technology",
-      "programming",
-      "must",
       "rust",
       "organization",
+      "int",
+      "technology",
       "treaty",
-      "domain"
+      "domain",
+      "must"
     ],
     "https://iana.org/dnssec": [
       "zone",
-      "dnssec",
-      "technology",
       "key",
       "signing",
-      "programming",
       "rust",
+      "technology",
+      "dnssec",
       "root"
     ],
     "https://iana.org/dnssec/files": [
       "zone",
-      "news",
-      "technology",
       "key",
-      "programming",
-      "anchors",
       "trust",
+      "news",
       "rust",
+      "technology",
+      "anchors",
       "root"
     ],
     "https://iana.org/dnssec/ceremonies": [
-      "technology",
-      "sign",
-      "ksk",
-      "programming",
-      "ceremony",
       "zsks",
+      "ksk",
+      "replace",
+      "sign",
       "rust",
-      "replace"
+      "ceremony",
+      "technology"
     ],
     "https://iana.org/dnssec/procedures": [
-      "describes",
-      "technology",
-      "programming",
       "ksk",
-      "operations",
       "2025",
+      "operations",
+      "effective",
       "rust",
-      "effective"
+      "describes",
+      "technology"
     ],
     "https://iana.org/dnssec/tcrs": [
-      "technology",
-      "key",
-      "programming",
-      "rust",
-      "officer",
-      "slot",
       "cryptographic",
-      "2010"
-    ],
-    "https://www.icann.org/": [
+      "slot",
+      "key",
+      "rust",
       "technology",
-      "learn",
-      "2026",
-      "icann",
-      "public",
-      "policy"
+      "2010",
+      "officer"
     ],
-    "/var/folders/3c/km3f3yvx23nbm9dnm010n_9c0000gn/T/tmpgwijzbo1.txt": [
-      "programming",
-      "python"
-    ],
-    "/path/to/file.txt": [
-      "important"
-    ],
-    "docs/ARCHITECTURE.md": [
+    "file:///Users/av4nda/Research/autonomous-project/docs/index.html": [
       "technology"
-    ],
-    "docs/CHANGELOG.md": [
-      "news",
-      "technology"
-    ],
-    "docs/USAGE_GUIDE.md": [
-      "technology"
-    ],
-    "docs/API_OLD.md": [
-      "technology",
-      "programming"
-    ],
-    "docs/GETTING_STARTED.md": [
-      "programming"
-    ],
-    "docs/configuration.md": [
-      "technology"
-    ],
-    "docs/INTEGRATION_GUIDE.md": [
-      "technology"
-    ],
-    "docs/PIPELINE_ARCHITECTURE.md": [
-      "technology"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/pipeline.md": [
-      "pipeline",
-      "engine",
-      "overview",
-      "processing",
-      "core"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/CLI_REFERENCE.md": [
-      "provides",
-      "reference",
-      "cli",
-      "commands",
-      "personal-index"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/USER_GUIDE.md": [
-      "guide",
-      "personal",
-      "getting",
-      "user",
-      "index"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/ARCHITECTURE.md": [
-      "architecture",
-      "overview",
-      "personal",
-      "personal-index",
-      "web"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/API.md": [
-      "help",
-      "technology",
-      "interests",
-      "verbose",
-      "manage",
-      "personal-index"
+      "technology"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/CHANGELOG.md": [
-      "integration",
-      "news",
-      "tests",
-      "pipeline",
-      "content",
-      "search"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/USAGE_GUIDE.md": [
-      "installation",
-      "examples",
-      "start",
-      "guide",
-      "quick"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/USAGE.md": [
-      "start",
-      "guide",
-      "usage",
-      "personal-index",
-      "quick"
+      "news"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/API_OLD.md": [
-      "args",
-      "technology",
-      "programming",
-      "description",
-      "content",
       "python",
-      "url",
-      "to_dict"
+      "technology"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/QUICKSTART.md": [
-      "start",
-      "minutes",
-      "running",
-      "personal-index",
-      "quick"
+      "python"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/MODULES.md": [
-      "technology",
-      "key",
-      "pipeline",
-      "classes",
-      "search",
-      "personal_index"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/getting-started.md": [
-      "installation",
-      "getting",
-      "started"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/README.md": [
-      "documentation",
-      "personal",
-      "search",
-      "index",
-      "web"
+      "technology"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/GETTING_STARTED.md": [
-      "programming",
-      "guide",
-      "started",
-      "python",
-      "getting",
-      "personal-index"
+      "python"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/configuration.md": [
-      "technology",
-      "config",
-      "configuration",
-      "file",
-      "main",
-      "yaml"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/cli-reference.md": [
-      "reference",
-      "cli",
-      "complete",
-      "personal",
-      "index"
-    ],
-    "file:///Users/av4nda/Research/autonomous-project/docs/CLI_PIPELINE.md": [
-      "complete",
-      "cli",
-      "pipeline",
-      "personal",
-      "index"
+      "technology"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/INTEGRATION_GUIDE.md": [
-      "integration",
-      "technology",
-      "guide",
-      "explains",
-      "use",
-      "personal-index"
+      "technology"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/PIPELINE_ARCHITECTURE.md": [
-      "technology",
-      "architecture",
-      "pipeline",
-      "explains",
-      "content",
-      "document"
+      "technology"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/ARCHITECTURE.md": [
+      "technology"
     ]
   }
 }
