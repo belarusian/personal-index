@@ -249,3 +249,32 @@ class TestPipelineIntegration:
 
         assert stats.pages_crawled == 1
         assert stats.pages_indexed == 0
+
+
+class TestPipelineStatsOutput:
+    """Test pipeline stats output formatting."""
+
+    def test_stats_empty(self):
+        stats = PipelineStats()
+        summary = stats.summary()
+        assert "Pipeline complete:" in summary
+        assert "Crawled:    0" in summary
+
+    def test_stats_all_stages(self):
+        stats = PipelineStats(
+            pages_crawled=100,
+            pages_extracted=100,
+            pages_filtered_in=80,
+            pages_filtered_out=20,
+            pages_scored=80,
+            pages_tagged=80,
+            pages_indexed=80,
+        )
+        summary = stats.summary()
+        assert "Crawled:    100" in summary
+        assert "Extracted:  100" in summary
+        assert "Filtered in: 80" in summary
+        assert "Filtered out: 20" in summary
+        assert "Scored:     80" in summary
+        assert "Tagged:     80" in summary
+        assert "Indexed:    80" in summary
