@@ -17,7 +17,8 @@ from personal_index.pipeline_runner import PipelineRunner
 @click.option("--dry-run", is_flag=True, help="Show what would be done without running")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose logging")
 @click.option("-o", "--output", default=None, help="Save pipeline stats to file")
-def pipeline(urls, depth, config, data_dir, dry_run, verbose, output):
+@click.option("-q", "--quiet", is_flag=True, help="Minimal output, only show errors")
+def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet):
     """Run the full pipeline: crawl → extract → filter → score → tag → index.
 
     URLs are the seed URLs to start crawling from.
@@ -38,9 +39,11 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output):
         click.echo(f"  Min content length: {pipeline_cfg.min_content_length}")
         return
 
-    click.echo(f"Running pipeline on {len(urls)} seed URL(s)...")
-    click.echo(f"  URLs: {', '.join(urls)}")
-    click.echo(f"  Depth: {depth}")
+    if not quiet:
+        click.echo(f"Running pipeline on {len(urls)} seed URL(s)...")
+        click.echo(f"  URLs: {', '.join(urls)}")
+    if not quiet:
+        click.echo(f"  Depth: {depth}")
     click.echo()
 
     runner = PipelineRunner(
