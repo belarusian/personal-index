@@ -8,6 +8,7 @@ import sys
 import click
 
 from personal_index.index import SearchIndex
+from personal_index.tags import TagStore
 
 
 @click.command("search")
@@ -32,12 +33,23 @@ def search(ctx, query, limit, data_dir, tag, sort, highlight):
     """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     index = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
+    tag_store = TagStore(store_path=os.path.join(dd, "tags.json"))
 
     if not query:
         click.echo("Error: Search query is required.", err=True)
         sys.exit(1)
 
     results = index.search(query, limit=limit)
+
+    # Filter by tags if specified
+    if tag:
+        tag_set = set(tag)
+        filtered = []
+        for r in results:
+            page_tags = tag_store.get_tags_for_page(r.url)
+            if page_tags and tag_set & set(page_tags):
+                filtered.append(r)
+        results = filtered
 
     if not results:
         click.echo(f"No results found for '{query}'")
@@ -52,5 +64,8 @@ def search(ctx, query, limit, data_dir, tag, sort, highlight):
         click.echo(f"   Score: {result.relevance_score:.3f}")
         if result.snippet:
             click.echo(f"   {result.snippet}")
+        page_tags = tag_store.get_tags_for_page(result.url)
+        if page_tags:
+            click.echo(f"   Tags: {', '.join(page_tags)}")
 
     click.echo(f"\n{'-' * 70}")
