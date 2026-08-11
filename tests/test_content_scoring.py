@@ -42,7 +42,7 @@ class TestScoreWeights:
         assert n.recency == 0.2  # Falls back to defaults
 
     def test_normalize_custom_weights(self) -> None:
-        w = ScoreWeights(recency=0.5, relevance=0.5)
+        w = ScoreWeights(recency=0.5, relevance=0.5, engagement=0, quality=0, authority=0, freshness=0)
         n = w.normalize()
         assert abs(n.recency - 0.5) < 0.001
         assert abs(n.relevance - 0.5) < 0.001
