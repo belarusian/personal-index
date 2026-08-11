@@ -123,12 +123,10 @@ class SearchIndex:
                         return False
             elif isinstance(value, dict):
                 # Range filter: {"$gte": ..., "$lte": ...}
-                if "$gte" in value and item_value is not None:
-                    if item_value < value["$gte"]:
-                        return False
-                if "$lte" in value and item_value is not None:
-                    if item_value > value["$lte"]:
-                        return False
+                if "$gte" in value and item_value is not None and item_value < value["$gte"]:
+                    return False
+                if "$lte" in value and item_value is not None and item_value > value["$lte"]:
+                    return False
             else:
                 if item_value != value:
                     return False
@@ -236,10 +234,12 @@ class ContentSearch:
         limit: int = 20,
         offset: int = 0,
     ) -> dict[str, Any]:
-        return self.index.search(query, filters=filters, limit=limit, offset=offset)
+        result: dict[str, Any] = self.index.search(query, filters=filters, limit=limit, offset=offset)
+        return result
 
     def remove_item(self, item_id: str) -> None:
         self.index.remove_item(item_id)
 
     def get_suggestions(self, prefix: str, limit: int = 5) -> list[str]:
-        return self.index.get_suggestions(prefix, limit)
+        result: list[str] = self.index.get_suggestions(prefix, limit)
+        return result

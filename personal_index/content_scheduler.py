@@ -79,16 +79,16 @@ class ScheduledTask:
         """Parse a cron field into a list of valid values."""
         if field == "*":
             return list(range(min_val, max_val + 1))
-        values = set()
+        values: set[int] = set()
         for part in field.split(","):
             if "/" in part:
-                base, step = part.split("/", 1)
+                base, step_str = part.split("/", 1)
                 start = int(base) if base != "*" else min_val
-                step = int(step)
+                step = int(step_str)
                 values.update(range(start, max_val + 1, step))
             elif "-" in part:
-                start, end = part.split("-", 1)
-                values.update(range(int(start), int(end) + 1))
+                start_str, end_str = part.split("-", 1)
+                values.update(range(int(start_str), int(end_str) + 1))
             else:
                 values.add(int(part))
         return sorted(v for v in values if min_val <= v <= max_val)
@@ -126,7 +126,7 @@ class ScheduledTask:
             self.run_count += 1
             self._compute_next_run()
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.status = TaskStatus.FAILED
             self.last_error = str(e)
             return False

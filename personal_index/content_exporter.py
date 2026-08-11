@@ -27,7 +27,8 @@ class ContentExporter:
         if fmt not in self.SUPPORTED_FORMATS:
             raise ValueError(f"Unsupported format: {fmt}. Supported: {self.SUPPORTED_FORMATS}")
         handler = getattr(self, f"_export_{fmt}")
-        return handler(items)
+        result: str = handler(items)
+        return result
 
     def _export_json(self, items: list[dict[str, Any]]) -> str:
         return json.dumps(items, indent=2, default=str)
@@ -154,22 +155,6 @@ class ContentExporter:
             return date_val.strftime("%Y-%m-%d")
         return str(date_val)
 
-    def export_to_file(self, items, fmt, filepath):
-        """Export items to a file."""
-        content = self.export(items, fmt)
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        return filepath
-
-    @staticmethod
-    def detect_format(filepath):
-        """Detect export format from file extension."""
-        ext = filepath.rsplit(".", 1)[-1].lower() if "." in filepath else ""
-        mapping = {"html": "html", "htm": "html", "json": "json", "md": "markdown", "markdown": "markdown", "rss": "rss", "xml": "rss"}
-        return mapping.get(ext)
-
-
-
     def _format_rss_date(self, date_val: Any) -> str:
         if date_val is None:
             return ""
@@ -190,5 +175,3 @@ class ContentExporter:
         ext = filepath.rsplit(".", 1)[-1].lower() if "." in filepath else ""
         mapping = {"html": "html", "htm": "html", "json": "json", "md": "markdown", "markdown": "markdown", "rss": "rss", "xml": "rss"}
         return mapping.get(ext)
-
-

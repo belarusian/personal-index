@@ -90,7 +90,9 @@ class DashboardData:
 
 def _extract_docstring(node: ast.AST) -> str:
     """Pull the docstring from a function/class/module node."""
-    return ast.get_docstring(node) or ""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
+        return ast.get_docstring(node) or ""
+    return ""
 
 
 def _ast_name(node: ast.AST) -> str:
@@ -211,7 +213,7 @@ def run_ruff(modules: list[ModuleInfo]) -> None:
     try:
         result = subprocess.run(
             [sys.executable, "-m", "ruff", "check", "--output-format=text", "."],
-            capture_output=True, text=True, timeout=60,
+            capture_output=True, text=True, timeout=60, check=False,
         )
         for line in (result.stdout + result.stderr).splitlines():
             line = line.strip()
@@ -240,7 +242,7 @@ def run_mypy(modules: list[ModuleInfo]) -> None:
     try:
         result = subprocess.run(
             [sys.executable, "-m", "mypy", "."],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=120, check=False,
         )
         for line in (result.stdout + result.stderr).splitlines():
             line = line.strip()
@@ -264,17 +266,16 @@ def run_pytest(modules: list[ModuleInfo]) -> str:
     try:
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "--tb=short", "-q"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=120, check=False,
         )
         summary = result.stdout + result.stderr
         # Try to attribute tests to modules from output
         for line in summary.splitlines():
             for mod in modules:
-                if mod.filepath.replace("/", ".") in line or mod.module_name in line:
-                    if "PASSED" in line or "passed" in line:
-                        mod.test_count = max(mod.test_count, 1)
+                if (mod.filepath.replace("/", ".") in line or mod.module_name in line) and ("PASSED" in line or "passed" in line):
+                    mod.test_count = max(mod.test_count, 1)
     except (subprocess.TimeoutExpired, FileNotFoundError):
-        summary = "pytest not available or timed out."
+        summary = "pytest could not be run: timed out or not available."
     return summary
 
 
@@ -291,11 +292,9 @@ def detect_dependencies(modules: list[ModuleInfo]) -> dict[str, list[str]]:
         for imp in mod.imports:
             # Check if import matches any known module (prefix match)
             for name in module_names:
-                if name == imp or name.startswith(imp + ".") or imp.startswith(name + "."):
-                    if name != mod.module_name:
-                        deps.append(name)
-        if deps:
-            graph[mod.module_name] = sorted(set(deps))
+                if (name == imp or name.startswith(imp + ".") or imp.startswith(name + ".")) and name != mod.module_name:
+                    deps.append(name)
+        graph[mod.module_name] = sorted(set(deps))
     return graph
 
 
@@ -309,7 +308,7 @@ def fetch_recent_commits(n: int = 20) -> list[CommitInfo]:
     try:
         result = subprocess.run(
             ["git", "log", f"-{n}", "--format=%h|%s|%an|%ad", "--date=short"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True, text=True, timeout=10, check=False,
         )
         for line in result.stdout.strip().splitlines():
             if not line.strip():
@@ -342,12 +341,24 @@ def _escape_html(text: str) -> str:
 
 
 def _status_color(status: str) -> str:
-    """Return phosphor color for module status."""
+    """Return color for module status."""
     if status == "error":
-        return "#ff4444"
+        return "#ef4444"
     elif status == "warning":
-        return "#f0a030"
-    return "#86f7ad"
+        return "#eab308"
+    elif status == "clean":
+        return "#22c55e"
+    return "#6b7280"
+
+def _status_bg(status: str) -> str:
+    """Return background color for module status."""
+    if status == "error":
+        return "#991b1b"
+    elif status == "warning":
+        return "#854d0e"
+    elif status == "clean":
+        return "#166534"
+    return "#374151"
 
 
 def _status_indicator(status: str) -> str:

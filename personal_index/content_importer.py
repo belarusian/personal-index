@@ -27,7 +27,8 @@ class ContentImporter:
         if fmt not in self.SUPPORTED_FORMATS:
             raise ValueError(f"Unsupported format: {fmt}. Supported: {self.SUPPORTED_FORMATS}")
         handler = getattr(self, f"_import_{fmt}")
-        return handler(data)
+        result: list[dict[str, Any]] = handler(data)
+        return result
 
     def _import_json(self, data: str) -> list[dict[str, Any]]:
         parsed = json.loads(data)
@@ -68,7 +69,7 @@ class ContentImporter:
         items = []
         lines = data.split("\n")
         current_item: dict[str, Any] | None = None
-        desc_lines = []
+        desc_lines: list[str] = []
 
         for line in lines:
             stripped = line.strip()
@@ -78,7 +79,7 @@ class ContentImporter:
                 if current_item:
                     current_item["description"] = "\n".join(desc_lines).strip()
                     items.append(current_item)
-                    desc_lines = []
+                    desc_lines: list[str] = []
                 link_text, link_url, plain_title = heading_match.groups()
                 title = link_text or plain_title
                 link = link_url or ""
@@ -140,7 +141,8 @@ class ContentImporter:
 
     def _next_id(self) -> int:
         self._id_counter += 1
-        return self._id_counter
+        result: int = self._id_counter
+        return result
 
     def batch_import(self, data_sources):
         """Import from multiple data sources.

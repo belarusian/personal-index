@@ -25,7 +25,7 @@ class ContentAnalytics:
 
     def get_tag_counts(self) -> dict[str, int]:
         """Count occurrences of each tag."""
-        counter = Counter()
+        counter: Counter[str] = Counter()
         for item in self._items:
             tags = item.get("tags", [])
             if isinstance(tags, list):
