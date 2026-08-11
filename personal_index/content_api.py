@@ -28,32 +28,40 @@ class ContentAPI:
         path_parts = [p for p in parsed.path.strip("/").split("/") if p]
         params = parse_qs(query_string)
 
-        # Route matching
+        # Route: /api/v1/health
+        if path_parts == ["api", "v1", "health"]:
+            return self._health_check()
+
+        # Route: /api/v1/stats
+        if path_parts == ["api", "v1", "stats"]:
+            return self._get_stats()
+
+        # Route: /api/v1/content
         if path_parts == ["api", "v1", "content"]:
             if method == "GET":
                 return self._list_content(params)
             elif method == "POST":
                 return self._create_content(body)
-        elif len(path_parts) == 3 and path_parts[:2] == ["api", "v1"] and path_parts[2] == "content":
-            # /api/v1/content/{id}
-            item_id = path_parts[2] if len(path_parts) == 3 else None
-            if item_id:
-                if method == "GET":
-                    return self._get_content(item_id)
-                elif method == "PUT":
-                    return self._update_content(item_id, body)
-                elif method == "DELETE":
-                    return self._delete_content(item_id)
-        elif path_parts == ["api", "v1", "content", "search"]:
+
+        # Route: /api/v1/content/search
+        if path_parts == ["api", "v1", "content", "search"]:
             if method == "GET":
                 return self._search_content(params)
-        elif path_parts == ["api", "v1", "content", "export"]:
+
+        # Route: /api/v1/content/export
+        if path_parts == ["api", "v1", "content", "export"]:
             if method == "GET":
                 return self._export_content(params)
-        elif path_parts == ["api", "v1", "health"]:
-            return self._health_check()
-        elif path_parts == ["api", "v1", "stats"]:
-            return self._get_stats()
+
+        # Route: /api/v1/content/{id}
+        if len(path_parts) == 4 and path_parts[:3] == ["api", "v1", "content"]:
+            item_id = path_parts[3]
+            if method == "GET":
+                return self._get_content(item_id)
+            elif method == "PUT":
+                return self._update_content(item_id, body)
+            elif method == "DELETE":
+                return self._delete_content(item_id)
 
         return 404, {"error": "Not found", "path": path}
 
