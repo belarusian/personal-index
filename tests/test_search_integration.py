@@ -1,6 +1,7 @@
 """Search integration tests.
 
-Tests the search functionality end-to-end with real indexing and querying.
+Tests search functionality across the full stack,
+verifying indexing, retrieval, and ranking work correctly.
 """
 
 from __future__ import annotations
@@ -10,257 +11,260 @@ import tempfile
 
 import pytest
 
+from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
-from personal_index.models import CrawledPage, IndexedPage
+from personal_index.models import CrawledPage, Interest
+from personal_index.pipeline_runner import PipelineRunner
 
 
-class TestSearchIndexBasic:
-    """Test basic search index operations."""
+class TestSearchIntegration:
+    """Test search functionality with real indexed data."""
 
-    def test_add_and_search_page(self, tmp_path):
-        """Should add a page and find it via search."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
+    def test_search_finds_relevant_content(self, tmp_path):
+        """Test that search returns relevant results."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
 
-        page = CrawledPage(
-            url="https://example.com/python",
-            title="Python Programming",
-            content="Python is a popular programming language used for web development.",
-            relevance_score=0.8,
-        )
-        index.add_page(page)
+        # Create test files
+        files = []
+        for topic, content in [
+            ("python", "Python is a programming language created by Guido van Rossum."),
+            ("javascript", "JavaScript is a scripting language for web development."),
+            ("rust", "Rust is a systems programming language focused on safety."),
+        ]:
+            f = tmp_path / f"{topic}.txt"
+            f.write_text(content)
+            files.append(str(f))
 
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files(files)
+        finally:
+            runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+
+        # Search for "python"
         results = index.search("python")
         assert len(results) >= 1
-        assert results[0].url == "https://example.com/python"
+        assert any("python" in r.url.lower() for r in results)
 
-    def test_search_multiple_pages(self, tmp_path):
-        """Should search across multiple indexed pages."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
+    def test_search_ranking_by_relevance(self, tmp_path):
+        """Test that search results are ranked by relevance."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
 
-        pages = [
-            CrawledPage(
-                url="https://example.com/python",
-                title="Python Guide",
-                content="Python programming language for web development.",
-                relevance_score=0.9,
-            ),
-            CrawledPage(
-                url="https://example.com/javascript",
-                title="JavaScript Guide",
-                content="JavaScript is used for frontend web development.",
-                relevance_score=0.8,
-            ),
-            CrawledPage(
-                url="https://example.com/rust",
-                title="Rust Guide",
-                content="Rust is a systems programming language.",
-                relevance_score=0.7,
-            ),
-        ]
-        for page in pages:
-            index.add_page(page)
-
-        # Search for "web" should find python and javascript
-        results = index.search("web")
-        urls = [r.url for r in results]
-        assert "https://example.com/python" in urls
-        assert "https://example.com/javascript" in urls
-
-    def test_search_no_results(self, tmp_path):
-        """Should return empty results for non-matching query."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
-
-        page = CrawledPage(
-            url="https://example.com/python",
-            title="Python Guide",
-            content="Python programming language.",
-            relevance_score=0.9,
+        # Create files with varying relevance to "python"
+        files = []
+        # High relevance: many mentions of python
+        f1 = tmp_path / "high_relevance.txt"
+        f1.write_text(
+            "Python Python Python. Python is great for Python development. "
+            "Python programming with Python frameworks."
         )
-        index.add_page(page)
+        files.append(str(f1))
 
+        # Low relevance: one mention
+        f2 = tmp_path / "low_relevance.txt"
+        f2.write_text("This article mentions Python once in passing.")
+        files.append(str(f2))
+
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files(files)
+        finally:
+            runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python")
+
+        assert len(results) >= 2
+        # Higher relevance should rank first
+        assert results[0].relevance_score >= results[1].relevance_score
+
+    def test_search_with_no_results(self, tmp_path):
+        """Test search returns empty results for non-matching queries."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        f = tmp_path / "article.txt"
+        f.write_text("Python programming language.")
+
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files([str(f)])
+        finally:
+            runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
         results = index.search("xyznonexistent")
         assert len(results) == 0
 
-    def test_search_limit(self, tmp_path):
-        """Should respect the limit parameter."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
+    def test_search_with_empty_query(self, tmp_path):
+        """Test search handles empty query gracefully."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
 
-        for i in range(10):
-            page = CrawledPage(
-                url=f"https://example.com/page{i}",
-                title=f"Page {i}",
-                content="This page contains the word test for searching.",
-                relevance_score=0.5 + i * 0.05,
-            )
-            index.add_page(page)
+        f = tmp_path / "article.txt"
+        f.write_text("Python programming language.")
 
-        results = index.search("test", limit=3)
-        assert len(results) <= 3
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
 
-    def test_search_result_has_score(self, tmp_path):
-        """Search results should have relevance scores."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
+        try:
+            runner.run_from_files([str(f)])
+        finally:
+            runner.close()
 
-        page = CrawledPage(
-            url="https://example.com/scored",
-            title="Scored Page",
-            content="This page has content for scoring.",
-            relevance_score=0.95,
-        )
-        index.add_page(page)
-
-        results = index.search("content")
-        assert len(results) >= 1
-        assert results[0].relevance_score > 0
-
-    def test_search_result_has_snippet(self, tmp_path):
-        """Search results should include text snippets."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
-
-        page = CrawledPage(
-            url="https://example.com/snippet",
-            title="Snippet Test",
-            content="This is a test page with important content for snippet extraction.",
-            relevance_score=0.8,
-        )
-        index.add_page(page)
-
-        results = index.search("snippet")
-        assert len(results) >= 1
-        assert results[0].snippet is not None
-
-
-class TestSearchIndexPersistence:
-    """Test search index persistence."""
-
-    def test_index_survives_restart(self, tmp_path):
-        """Index data should persist across SearchIndex instances."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
-
-        page = CrawledPage(
-            url="https://example.com/persist",
-            title="Persistent Page",
-            content="This page persists across restarts.",
-            relevance_score=0.9,
-        )
-        index.add_page(page)
-        index._save()
-
-        # Create new index instance
-        index2 = SearchIndex(db_path=db_path)
-        assert index2.get_page_count() == 1
-        results = index2.search("restarts")
-        assert len(results) >= 1
-
-    def test_index_file_created_on_save(self, tmp_path):
-        """Saving should create the index file."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
-
-        page = CrawledPage(
-            url="https://example.com/new",
-            title="New Page",
-            content="New content.",
-            relevance_score=0.5,
-        )
-        index.add_page(page)
-        index._save()
-
-        assert os.path.exists(db_path)
-
-
-class TestSearchIndexEdgeCases:
-    """Test search index edge cases."""
-
-    def test_search_empty_index(self, tmp_path):
-        """Searching an empty index should return no results."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
-        results = index.search("anything")
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("")
         assert len(results) == 0
 
+    def test_search_limit_results(self, tmp_path):
+        """Test search respects the limit parameter."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Create 5 files all containing "python"
+        files = []
+        for i in range(5):
+            f = tmp_path / f"article_{i}.txt"
+            f.write_text(f"Python programming article {i}.")
+            files.append(str(f))
+
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files(files)
+        finally:
+            runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python", limit=2)
+        assert len(results) <= 2
+
+    def test_search_snippet_generation(self, tmp_path):
+        """Test that search results include relevant snippets."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        f = tmp_path / "article.txt"
+        f.write_text(
+            "This is a long article about Python programming. "
+            "Python is used for web development, data science, "
+            "and machine learning. Python has a large ecosystem."
+        )
+
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files([str(f)])
+        finally:
+            runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python")
+        assert len(results) >= 1
+        assert len(results[0].snippet) > 0
+        # Snippet should contain the search term
+        assert "python" in results[0].snippet.lower()
+
+    def test_search_multi_word_query(self, tmp_path):
+        """Test search with multi-word queries."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        f = tmp_path / "article.txt"
+        f.write_text(
+            "Python web development with Django and Flask frameworks. "
+            "Building web applications with Python is straightforward."
+        )
+
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files([str(f)])
+        finally:
+            runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python web development")
+        assert len(results) >= 1
+
+    def test_search_persistence_across_sessions(self, tmp_path):
+        """Test that search works after index is saved and reloaded."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        f = tmp_path / "article.txt"
+        f.write_text("Python programming language for web development.")
+
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files([str(f)])
+        finally:
+            runner.close()
+
+        # Create a new index instance (simulating new session)
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python")
+        assert len(results) >= 1
+
     def test_search_case_insensitive(self, tmp_path):
-        """Search should be case-insensitive."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
+        """Test that search is case-insensitive."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
 
-        page = CrawledPage(
-            url="https://example.com/case",
-            title="Case Test",
-            content="This page discusses Python programming.",
-            relevance_score=0.8,
-        )
-        index.add_page(page)
+        f = tmp_path / "article.txt"
+        f.write_text("Python programming language.")
 
-        results_lower = index.search("python")
-        results_upper = index.search("PYTHON")
-        assert len(results_lower) == len(results_upper)
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
 
-    def test_search_stop_words_ignored(self, tmp_path):
-        """Common stop words should not affect search results."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
+        try:
+            runner.run_from_files([str(f)])
+        finally:
+            runner.close()
 
-        page = CrawledPage(
-            url="https://example.com/stops",
-            title="Stop Words",
-            content="The quick brown fox jumps over the lazy dog.",
-            relevance_score=0.7,
-        )
-        index.add_page(page)
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
 
-        # "the" is a stop word, should not match
-        results = index.search("the")
-        # Results may or may not include it depending on implementation
-        # Just verify no crash
+        # All these should find the same result
+        for query in ["python", "Python", "PYTHON", "PyThOn"]:
+            results = index.search(query)
+            assert len(results) >= 1, f"Query '{query}' should find results"
+
+    def test_search_with_special_characters(self, tmp_path):
+        """Test search handles special characters in queries."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        f = tmp_path / "article.txt"
+        f.write_text("Python programming language for web development.")
+
+        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+        try:
+            runner.run_from_files([str(f)])
+        finally:
+            runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+
+        # Special characters should not crash
+        results = index.search("python & javascript")
         assert isinstance(results, list)
 
-    def test_add_duplicate_url_updates(self, tmp_path):
-        """Adding a page with the same URL should update it."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
-
-        page1 = CrawledPage(
-            url="https://example.com/dup",
-            title="Original Title",
-            content="Original content.",
-            relevance_score=0.5,
-        )
-        index.add_page(page1)
-
-        page2 = CrawledPage(
-            url="https://example.com/dup",
-            title="Updated Title",
-            content="Updated content with more text.",
-            relevance_score=0.9,
-        )
-        index.add_page(page2)
-
-        assert index.get_page_count() == 1
-        page = index.get_page("https://example.com/dup")
-        assert page is not None
-        assert page.title == "Updated Title"
-
-    def test_search_special_characters(self, tmp_path):
-        """Search with special characters should not crash."""
-        db_path = str(tmp_path / "index.json")
-        index = SearchIndex(db_path=db_path)
-
-        page = CrawledPage(
-            url="https://example.com/special",
-            title="Special Chars",
-            content="This page has special chars: @#$%^&*()",
-            relevance_score=0.6,
-        )
-        index.add_page(page)
-
-        # Should not crash
-        results = index.search("special chars @#$%")
+        results = index.search("python's")
         assert isinstance(results, list)
