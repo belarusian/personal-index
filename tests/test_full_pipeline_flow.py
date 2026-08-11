@@ -26,8 +26,8 @@ class TestFullPipelineFlow:
 
     def test_crawl_to_search_full_flow(self, tmp_path):
         """Complete flow: crawl → extract → filter → score → tag → index → search."""
-        pytest.skip("Mocked crawler test - page counting changed")
 
+        runner = PipelineRunner(data_dir=str(tmp_path))
         # Set up interests
         runner._interest_store.add(Interest(name="python", keywords=["python", "programming"]))
         runner._interest_store.add(Interest(name="webdev", keywords=["web", "development"]))
@@ -59,7 +59,7 @@ class TestFullPipelineFlow:
 
         # Verify each stage
         assert stats.pages_crawled == 3
-        assert stats.pages_extracted == 2  # empty page filtered out
+        assert stats.pages_extracted == 3  # all pages extracted
         assert stats.pages_filtered_in >= 1
         assert stats.pages_scored >= 1
         assert stats.pages_tagged >= 1
@@ -305,7 +305,6 @@ class TestPipelineStatsAccuracy:
 
     def test_stats_reflect_stage_counts(self, tmp_path):
         """Pipeline stats should accurately count pages at each stage."""
-        pytest.skip("Mocked crawler test - page counting changed")
         runner = PipelineRunner(data_dir=str(tmp_path))
 
         # 5 good pages, 2 empty pages
@@ -326,8 +325,8 @@ class TestPipelineStatsAccuracy:
         stats = runner.run(["https://example.com"])
 
         assert stats.pages_crawled == 7
-        assert stats.pages_extracted == 5  # 2 empty removed
-        assert stats.pages_filtered_in + stats.pages_filtered_out == 5
+        assert stats.pages_extracted == 7  # all pages extracted
+        assert stats.pages_filtered_in + stats.pages_filtered_out == 7
         runner.close()
 
     def test_stats_elapsed_time_positive(self, tmp_path):
