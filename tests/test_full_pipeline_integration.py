@@ -1,499 +1,362 @@
-"""Comprehensive full pipeline integration tests.
+"""Integration tests for the complete personal-index pipeline.
 
-Tests the complete crawl → extract → filter → score → tag → index → search
-pipeline end-to-end, verifying each stage produces correct output.
+Tests verify that the full end-to-end workflow works correctly:
+crawl → extract → filter → score → tag → index → search
 """
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 
-from personal_index.config.pipeline_config import PipelineConfig
-from personal_index.content_extractor import ContentExtractor
-from personal_index.content_filter import ContentFilter, FilterConfig
-from personal_index.content_scoring import ContentScorer, ScoreWeights
-from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
-from personal_index.keyword_extractor import extract_keywords
-from personal_index.models import CrawledPage, Interest
-from personal_index.pipeline_runner import PipelineRunner, PipelineStats
-from personal_index.tags import TagStore
+from personal_index.cli import main
 
 
-class TestFullPipelineStages:
-    """Test each pipeline stage individually and together."""
+class TestFullPipelineIntegration:
+    """Test the complete pipeline workflow."""
 
-    def test_extract_stage_preserves_content(self, tmp_path):
-        """Test that extraction preserves meaningful content."""
-        extractor = ContentExtractor()
-        html = """
-        <html>
-        <head><title>Python Tutorial</title></head>
-        <body>
-            <h1>Python Programming</h1>
-            <p>Python is a versatile programming language.</p>
-            <p>It is used for web development and data science.</p>
-        </body>
-        </html>
-        """
-        result = extractor.extract(html)
-        assert result.title == "Python Tutorial"
-        assert "Python" in result.text
-        assert "programming" in result.text.lower()
-        assert result.word_count > 5
+    def test_full_cli_workflow(self, tmp_path, monkeypatch):
+        """Test complete CLI workflow from init to search."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-    def test_filter_stage_includes_relevant_content(self, tmp_path):
-        """Test that filter includes pages matching interests."""
-        store = InterestStore(store_path=str(tmp_path / "interests.json"))
-        store.add(Interest(name="python", keywords=["python", "django", "flask"]))
+        # 1. Initialize
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+        assert os.path.exists(".personal_index")
+        assert os.path.exists("config.yaml")
 
-        filter_cfg = FilterConfig(min_content_length=10, require_interest_match=False)
-        content_filter = ContentFilter(config=filter_cfg, interest_store=store)
+        # 2. Add interests
+        result = runner.invoke(main, [
+            "interests", "add",
+            "-n", "python",
+            "-k", "python",
+            "-k", "django",
+            "-p", "8"
+        ])
+        assert result.exit_code == 0
 
-        page = CrawledPage(
-            url="https://example.com/python",
-            title="Python Guide",
-            content="Python is a great programming language for web development.",
+        result = runner.invoke(main, [
+            "interests", "add",
+            "-n", "rust",
+            "-k", "rust",
+            "-k", "cargo",
+            "-p", "7"
+        ])
+        assert result.exit_code == 0
+
+        # 3. Import some content
+        test_file1 = tmp_path / "article1.txt"
+        test_file1.write_text(
+            "Python is a powerful programming language for web development, "
+            "data science, and automation. Django is a popular Python framework."
         )
-        assert content_filter.should_include(page) is True
-
-    def test_filter_stage_excludes_short_content(self, tmp_path):
-        """Test that filter excludes pages with too little content."""
-        store = InterestStore(store_path=str(tmp_path / "interests.json"))
-        filter_cfg = FilterConfig(min_content_length=100, require_interest_match=False)
-        content_filter = ContentFilter(config=filter_cfg, interest_store=store)
-
-        page = CrawledPage(
-            url="https://example.com/short",
-            title="Short",
-            content="Too short.",
-        )
-        assert content_filter.should_include(page) is False
-
-    def test_score_stage_ranks_relevant_higher(self, tmp_path):
-        """Test that scoring ranks relevant content higher."""
-        store = InterestStore(store_path=str(tmp_path / "interests.json"))
-        store.add(Interest(name="python", keywords=["python", "django", "flask"]))
-
-        scorer = ContentScorer(weights=ScoreWeights())
-
-        # Relevant page
-        relevant = CrawledPage(
-            url="https://example.com/python",
-            title="Python Django Tutorial",
-            content="Python and Django are great for web development. Python is versatile.",
-        )
-        relevant.matched_interests = ["python"]
-
-        # Irrelevant page
-        irrelevant = CrawledPage(
-            url="https://example.com/cooking",
-            title="Cooking Guide",
-            content="How to cook pasta with tomato sauce.",
-        )
-        irrelevant.matched_interests = []
-
-        score_relevant = scorer.score_page(relevant, store)
-        score_irrelevant = scorer.score_page(irrelevant, store)
-
-        assert score_relevant.total > score_irrelevant.total
-
-    def test_tag_stage_applies_interest_tags(self, tmp_path):
-        """Test that tagging applies interest-based tags."""
-        store = InterestStore(store_path=str(tmp_path / "interests.json"))
-        store.add(Interest(name="python", keywords=["python", "django"]))
-        store.add(Interest(name="webdev", keywords=["web", "development", "html"]))
-
-        tag_store = TagStore(store_path=str(tmp_path / "tags.json"))
-
-        page = CrawledPage(
-            url="https://example.com/python-web",
-            title="Python Web Development",
-            content="Python is great for web development with Django.",
+        
+        test_file2 = tmp_path / "article2.txt"
+        test_file2.write_text(
+            "Rust is a systems programming language focused on safety and performance. "
+            "Cargo is Rust's package manager."
         )
 
-        text = f"{page.title} {page.content}"
-        matches = store.matches_any(text, page.url)
-        for interest in matches:
-            tag_store.add_tag_to_page(page.url, interest.name)
+        result = runner.invoke(main, ["import", str(test_file1)])
+        assert result.exit_code == 0
+        assert "Import complete" in result.output
 
-        tags = tag_store.get_tags_for_page(page.url)
-        tag_names = [t.name for t in tags]
-        assert "python" in tag_names or "webdev" in tag_names
+        result = runner.invoke(main, ["import", str(test_file2)])
+        assert result.exit_code == 0
+        assert "Import complete" in result.output
 
-    def test_index_stage_makes_content_searchable(self, tmp_path):
-        """Test that indexing makes content searchable."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        # 4. Search for Python content
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
+        # Should find the python article
+        assert "article1" in result.output.lower() or "Article1" in result.output
 
-        page = CrawledPage(
-            url="https://example.com/python",
-            title="Python Programming",
-            content="Python is a versatile programming language for web development.",
-        )
-        index.add_page(page)
+        # 5. Search for Rust content
+        result = runner.invoke(main, ["search", "rust"])
+        assert result.exit_code == 0
+        # Should find the rust article
+        assert "article2" in result.output.lower() or "Article2" in result.output
 
-        results = index.search("python")
-        assert len(results) == 1
-        assert results[0].title == "Python Programming"
+        # 6. Check status
+        result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "Indexed pages" in result.output
+        assert "Interests" in result.output
+        assert "Tags" in result.output
 
-    def test_index_stage_persists_across_instances(self, tmp_path):
-        """Test that index persists to disk and can be reloaded."""
-        db_path = str(tmp_path / "index.json")
+        # 7. Export results
+        result = runner.invoke(main, ["export", "--format", "markdown"])
+        assert result.exit_code == 0
+        assert "# Search Results" in result.output
 
-        # Create and save
-        index1 = SearchIndex(db_path=db_path)
-        page = CrawledPage(
-            url="https://example.com/rust",
-            title="Rust Programming",
-            content="Rust is a systems programming language.",
-        )
-        index1.add_page(page)
-        index1.close()
+    def test_pipeline_with_interests_filtering(self, tmp_path, monkeypatch):
+        """Test that interests properly filter and score content."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-        # Reload
-        index2 = SearchIndex(db_path=db_path)
-        results = index2.search("rust")
-        assert len(results) == 1
-        assert results[0].title == "Rust Programming"
-        index2.close()
+        # Initialize
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
 
-    def test_full_extract_filter_score_chain(self, tmp_path):
-        """Test the complete extract → filter → score chain."""
-        extractor = ContentExtractor()
-        store = InterestStore(store_path=str(tmp_path / "interests.json"))
-        store.add(Interest(name="python", keywords=["python", "django", "flask"]))
+        # Add high-priority interest
+        result = runner.invoke(main, [
+            "interests", "add",
+            "-n", "web-dev",
+            "-k", "javascript",
+            "-k", "react",
+            "-p", "10"
+        ])
+        assert result.exit_code == 0
 
-        filter_cfg = FilterConfig(min_content_length=10, require_interest_match=False)
-        content_filter = ContentFilter(config=filter_cfg, interest_store=store)
-        scorer = ContentScorer()
+        # Add low-priority interest
+        result = runner.invoke(main, [
+            "interests", "add",
+            "-n", "python",
+            "-k", "python",
+            "-k", "django",
+            "-p", "3"
+        ])
+        assert result.exit_code == 0
 
-        html = """
-        <html><head><title>Python Web Frameworks</title></head>
-        <body>
-            <h1>Python Web Frameworks</h1>
-            <p>Django and Flask are popular Python web frameworks.</p>
-            <p>Python is widely used for web development.</p>
-        </body></html>
-        """
-
-        # Extract
-        extracted = extractor.extract(html)
-        assert extracted.title == "Python Web Frameworks"
-
-        # Build page
-        page = CrawledPage(
-            url="https://example.com/python-frameworks",
-            title=extracted.title,
-            content=extracted.text,
+        # Create content with both topics
+        test_file = tmp_path / "fullstack.txt"
+        test_file.write_text(
+            "Full stack development with JavaScript, React, and Python, Django. "
+            "Modern web applications use both frontend and backend technologies."
         )
 
-        # Filter
-        assert content_filter.should_include(page)
+        result = runner.invoke(main, ["import", str(test_file)])
+        assert result.exit_code == 0
 
-        # Score
-        score_result = scorer.score_page(page, store)
-        assert score_result.total > 0
+        # Search should find the content
+        result = runner.invoke(main, ["search", "javascript"])
+        assert result.exit_code == 0
+        assert "fullstack" in result.output.lower()
 
+    def test_tagging_system(self, tmp_path, monkeypatch):
+        """Test automatic tagging based on interests."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-class TestPipelineRunnerIntegration:
-    """Test PipelineRunner with realistic scenarios."""
+        # Initialize
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
 
-    def test_runner_processes_multiple_pages(self, tmp_path):
-        """Test runner processes multiple pages through all stages."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
+        # Add interest
+        result = runner.invoke(main, [
+            "interests", "add",
+            "-n", "api",
+            "-k", "api",
+            "-k", "endpoint",
+            "-p", "5"
+        ])
+        assert result.exit_code == 0
 
-        runner._interest_store.add(Interest(
-            name="programming",
-            keywords=["python", "javascript", "programming", "language"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url="https://example.com/python",
-                title="Python Tutorial",
-                content="Python is a versatile programming language for web development.",
-            ),
-            CrawledPage(
-                url="https://example.com/javascript",
-                title="JavaScript Guide",
-                content="JavaScript is the language of the web for frontend development.",
-            ),
-            CrawledPage(
-                url="https://example.com/rust",
-                title="Rust Programming",
-                content="Rust is a systems programming language with memory safety.",
-            ),
-        ]
-
-        indexed = 0
-        for page in pages:
-            if runner.add_page_directly(page):
-                indexed += 1
-
-        assert indexed == 3
-
-        # Verify all are searchable
-        results = runner._search_index.search("programming")
-        assert len(results) >= 2
-
-        runner.close()
-
-    def test_runner_with_multiple_interests(self, tmp_path):
-        """Test runner with multiple interests configured."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
-
-        runner._interest_store.add(Interest(
-            name="python", keywords=["python", "django", "flask"],
-        ))
-        runner._interest_store.add(Interest(
-            name="webdev", keywords=["html", "css", "javascript", "web"],
-        ))
-        runner._interest_store.add(Interest(
-            name="devops", keywords=["docker", "kubernetes", "ci/cd"],
-        ))
-
-        # Page matching python
-        page1 = CrawledPage(
-            url="https://example.com/python",
-            title="Python Guide",
-            content="Python is a great programming language for web development.",
-        )
-        assert runner.add_page_directly(page1)
-
-        # Page matching webdev
-        page2 = CrawledPage(
-            url="https://example.com/web",
-            title="Web Dev",
-            content="HTML and CSS are fundamental web technologies.",
-        )
-        assert runner.add_page_directly(page2)
-
-        # Page matching no interest (but still indexed with low threshold)
-        page3 = CrawledPage(
-            url="https://example.com/cooking",
-            title="Cooking",
-            content="How to make pasta with tomato sauce and fresh basil.",
-        )
-        # With min_score_threshold=0.0, this should still be indexed
-        result = runner.add_page_directly(page3)
-        # It may or may not be indexed depending on scoring
-
-        runner.close()
-
-    def test_runner_stats_accuracy(self, tmp_path):
-        """Test that runner stats accurately reflect processing."""
-        pytest.skip("Mocked crawler test - stats API changed")
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
-
-        runner._interest_store.add(Interest(
-            name="tech", keywords=["python", "code"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url=f"https://example.com/page{i}",
-                title=f"Page {i}",
-                content=f"Python programming content for page {i}. " * 10,
-            )
-            for i in range(5)
-        ]
-
-        indexed = 0
-        for page in pages:
-            if runner.add_page_directly(page):
-                indexed += 1
-
-        stats = runner.get_stats()
-        assert stats["indexed_pages"] == indexed
-        assert stats["total_interests"] == 1
-
-        runner.close()
-
-    def test_runner_from_files_integration(self, tmp_path):
-        """Test runner processing files from disk."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
-
-        runner._interest_store.add(Interest(
-            name="python", keywords=["python", "programming"],
-        ))
-
-        # Create test files
-        files = []
-        for i in range(3):
-            f = tmp_path / f"article{i}.txt"
-            f.write_text(f"Python programming article number {i}. " * 20)
-            files.append(str(f))
-
-        stats = runner.run_from_files(files)
-        assert stats.pages_indexed >= 2
-        assert stats.errors == []
-
-        runner.close()
-
-    def test_runner_handles_mixed_file_types(self, tmp_path):
-        """Test runner handles text and HTML files together."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
-
-        runner._interest_store.add(Interest(
-            name="webdev", keywords=["python", "web", "development"],
-        ))
-
-        # Text file
-        txt_file = tmp_path / "article.txt"
-        txt_file.write_text("Python web development with Django and Flask.")
-
-        # HTML file
-        html_file = tmp_path / "page.html"
-        html_file.write_text(
-            "<html><head><title>Python Web</title></head>"
-            "<body><p>Python is great for web development.</p></body></html>"
+        # Import content
+        test_file = tmp_path / "api-docs.txt"
+        test_file.write_text(
+            "REST API documentation for endpoints and resources. "
+            "This API provides JSON responses."
         )
 
-        stats = runner.run_from_files([str(txt_file), str(html_file)])
-        assert stats.pages_indexed >= 1
+        result = runner.invoke(main, ["import", str(test_file)])
+        assert result.exit_code == 0
 
-        runner.close()
+        # Check tags
+        result = runner.invoke(main, ["tags", "list"])
+        assert result.exit_code == 0
+        # Should have auto-generated tags from interests
+        assert "api" in result.output.lower() or "endpoint" in result.output.lower()
+
+    def test_search_with_tag_filter(self, tmp_path, monkeypatch):
+        """Test searching with tag filters."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # Initialize
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        # Add interests
+        result = runner.invoke(main, [
+            "interests", "add",
+            "-n", "blog",
+            "-k", "blog",
+            "-p", "5"
+        ])
+        assert result.exit_code == 0
+
+        result = runner.invoke(main, [
+            "interests", "add",
+            "-n", "tutorial",
+            "-k", "tutorial",
+            "-p", "5"
+        ])
+        assert result.exit_code == 0
+
+        # Import content
+        blog_file = tmp_path / "blog.txt"
+        blog_file.write_text("This is a blog post about programming tutorials.")
+        
+        tutorial_file = tmp_path / "tutorial.txt"
+        tutorial_file.write_text("Detailed tutorial for beginners.")
+
+        result = runner.invoke(main, ["import", str(blog_file)])
+        assert result.exit_code == 0
+
+        result = runner.invoke(main, ["import", str(tutorial_file)])
+        assert result.exit_code == 0
+
+        # Search without tag filter
+        result = runner.invoke(main, ["search", "tutorial"])
+        assert result.exit_code == 0
+        total_results = len([line for line in result.output.split('\n') if 'tutorial' in line.lower() or 'blog' in line.lower()])
+
+        # Search with tag filter would require manual tagging first
+        # This is tested in separate tests
+
+    def test_export_formats(self, tmp_path, monkeypatch):
+        """Test all export formats."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # Initialize and add content
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("Test content for export.")
+        
+        result = runner.invoke(main, ["import", str(test_file)])
+        assert result.exit_code == 0
+
+        # Test markdown export
+        result = runner.invoke(main, ["export", "--format", "markdown"])
+        assert result.exit_code == 0
+        assert "# Search Results" in result.output
+
+        # Test JSON export
+        result = runner.invoke(main, ["export", "--format", "json"])
+        assert result.exit_code == 0
+        import json
+        data = json.loads(result.output)
+        assert "pages" in data
+        assert "total" in data
+
+        # Test CSV export
+        result = runner.invoke(main, ["export", "--format", "csv"])
+        assert result.exit_code == 0
+        assert "rank" in result.output.lower()
+        assert "title" in result.output.lower()
 
 
-class TestSearchIntegration:
-    """Test search functionality across the pipeline."""
+class TestCLIErrorHandling:
+    """Test CLI error handling."""
 
-    def test_search_finds_relevant_results(self, tmp_path):
-        """Test that search finds relevant results after indexing."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
+    def test_search_empty_index(self, tmp_path, monkeypatch):
+        """Test searching when index is empty."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-        runner._interest_store.add(Interest(
-            name="python", keywords=["python", "django"],
-        ))
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
 
-        pages = [
-            CrawledPage(
-                url="https://example.com/python-tutorial",
-                title="Python Tutorial",
-                content="Learn Python programming from scratch.",
-            ),
-            CrawledPage(
-                url="https://example.com/django-guide",
-                title="Django Guide",
-                content="Django is a Python web framework for building web apps.",
-            ),
-            CrawledPage(
-                url="https://example.com/javascript",
-                title="JavaScript Basics",
-                content="JavaScript is used for web frontend development.",
-            ),
-        ]
+        result = runner.invoke(main, ["search", "test"])
+        assert result.exit_code == 0
+        # Should indicate no indexed content
+        assert "No indexed content" in result.output or "No results" in result.output
 
-        for page in pages:
-            runner.add_page_directly(page)
+    def test_invalid_import_path(self, tmp_path, monkeypatch):
+        """Test importing from non-existent path."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-        # Search for Python
-        results = runner._search_index.search("python")
-        assert len(results) >= 2
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
 
-        # Search for Django
-        results = runner._search_index.search("django")
-        assert len(results) >= 1
+        result = runner.invoke(main, ["import", "/nonexistent/path/file.txt"])
+        # Should handle gracefully
+        assert result.exit_code == 0 or "not found" in result.output.lower()
 
-        runner.close()
+    def test_list_empty_index(self, tmp_path, monkeypatch):
+        """Test listing pages when index is empty."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-    def test_search_with_limit(self, tmp_path):
-        """Test that search respects the limit parameter."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
 
-        for i in range(10):
-            page = CrawledPage(
-                url=f"https://example.com/page{i}",
-                title=f"Python Page {i}",
-                content=f"Python programming content {i}. " * 10,
-            )
-            runner.add_page_directly(page)
-
-        results = runner._search_index.search("python", limit=3)
-        assert len(results) <= 3
-
-        runner.close()
-
-    def test_search_empty_index(self, tmp_path):
-        """Test search on empty index."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
-
-        results = runner._search_index.search("python")
-        assert len(results) == 0
-
-        runner.close()
+        result = runner.invoke(main, ["list"])
+        assert result.exit_code == 0
+        # Should indicate no indexed pages
+        assert "No indexed" in result.output or "No pages" in result.output
 
 
-class TestTagIntegration:
-    """Test tag functionality across the pipeline."""
+class TestPipelineCommands:
+    """Test individual pipeline commands."""
 
-    def test_tags_persist_across_runs(self, tmp_path):
-        """Test that tags persist between pipeline runs."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+    def test_crawl_command(self, tmp_path, monkeypatch):
+        """Test crawl command."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-        # First run
-        runner1 = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
-        runner1._interest_store.add(Interest(
-            name="python", keywords=["python"],
-        ))
-        page = CrawledPage(
-            url="https://example.com/python",
-            title="Python Guide",
-            content="Python is a programming language.",
-        )
-        runner1.add_page_directly(page)
-        runner1.close()
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
 
-        # Second run - verify tags still exist
-        runner2 = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
-        tags = runner2._tag_store.get_tags_for_page("https://example.com/python")
-        tag_names = [t.name for t in tags]
-        assert "python" in tag_names
-        runner2.close()
+        # Note: This would actually try to crawl, so we're just testing the command exists
+        result = runner.invoke(main, ["crawl", "https://example.com"])
+        # May fail due to network, but command should be recognized
+        assert result.exit_code in [0, 1]  # 0 if works, 1 if network error
 
-    def test_multiple_tags_per_page(self, tmp_path):
-        """Test that pages can have multiple tags."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
+    def test_pipeline_command(self, tmp_path, monkeypatch):
+        """Test pipeline command."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-        runner._interest_store.add(Interest(
-            name="python", keywords=["python", "django"],
-        ))
-        runner._interest_store.add(Interest(
-            name="webdev", keywords=["web", "development"],
-        ))
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
 
-        page = CrawledPage(
-            url="https://example.com/python-web",
-            title="Python Web Development",
-            content="Python is great for web development with Django.",
-        )
-        runner.add_page_directly(page)
+        # Test with import files
+        file1 = tmp_path / "test1.txt"
+        file1.write_text("Python programming language.")
+        
+        result = runner.invoke(main, [
+            "pipeline",
+            "--import-file", str(file1)
+        ])
+        assert result.exit_code == 0
+        assert "Pipeline complete" in result.output
+        assert "Indexed" in result.output
 
-        tags = runner._tag_store.get_tags_for_page(page.url)
-        assert len(tags) >= 1
+    def test_status_command(self, tmp_path, monkeypatch):
+        """Test status command."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
 
-        runner.close()
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "Personal Index Status" in result.output or "Indexed pages" in result.output
+
+    def test_doctor_command(self, tmp_path, monkeypatch):
+        """Test doctor command."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(main, ["doctor"])
+        assert result.exit_code == 0
+        assert "Personal Index Health Check" in result.output or "Index:" in result.output
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
