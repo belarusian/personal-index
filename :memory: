@@ -1,0 +1,63 @@
+{
+  "python": {
+    "name": "python",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "python"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T16:01:14.230530+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "web": {
+    "name": "web",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "web",
+      "http"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T16:01:14.230605+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "active": {
+    "name": "active",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "test"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T16:01:14.233308+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "inactive": {
+    "name": "inactive",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "test"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T16:01:14.233426+00:00",
+    "enabled": false,
+    "topic": "",
+    "match_mode": "any"
+  }
+}
