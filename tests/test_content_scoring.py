@@ -124,7 +124,7 @@ class TestContentScorer:
         assert result.recency < 0.1
 
     def test_custom_weights(self) -> None:
-        weights = ScoreWeights(relevance=1.0)
+        weights = ScoreWeights(relevance=1.0, recency=0, engagement=0, quality=0, authority=0, freshness=0)
         scorer = ContentScorer(weights=weights)
         result = scorer.score(keyword_matches=5, total_keywords=5)
         assert result.total == pytest.approx(1.0, abs=0.01)
