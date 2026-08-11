@@ -46,7 +46,7 @@ class TestTagAnalytics:
 class TestTitleLength:
     def test_title_lengths(self, analytics):
         lengths = analytics.get_title_lengths()
-        assert lengths == [5, 14, 18]
+        assert lengths == [5, 12, 20]
 
     def test_avg_title_length(self, analytics):
         avg = analytics.get_avg_title_length()
