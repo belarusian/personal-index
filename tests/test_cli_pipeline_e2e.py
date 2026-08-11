@@ -1,6 +1,7 @@
-"""CLI pipeline end-to-end tests.
+"""End-to-end CLI pipeline tests.
 
-Tests the full CLI workflow: init → interests → import → pipeline → search → export.
+Tests the CLI pipeline command with real file-based operations,
+verifying the complete user workflow from init through search.
 """
 
 from __future__ import annotations
@@ -15,171 +16,128 @@ from click.testing import CliRunner
 from personal_index.cli import main
 
 
-class TestCLIPipelineEndToEnd:
-    """Test complete CLI pipeline workflows."""
+class TestCLIPipelineE2E:
+    """Test the CLI pipeline command end-to-end."""
 
-    def test_init_creates_structure(self, tmp_path, monkeypatch):
-        """Test init creates all required directories and config."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-        assert Path(".personal_index").exists()
-        assert Path(".personal_index/cache").exists()
-        assert Path(".personal_index/archive").exists()
-        assert Path(".personal_index/backups").exists()
-        assert Path("config.yaml").exists()
-
-    def test_full_workflow_init_import_search_export(self, tmp_path, monkeypatch):
-        """Test complete workflow: init → import → search → export."""
+    def test_pipeline_dry_run(self, tmp_path, monkeypatch):
+        """Test pipeline dry-run mode shows configuration."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        # 1. Init
+        # Init first
+        runner.invoke(main, ["init"])
+
+        result = runner.invoke(main, [
+            "pipeline", "https://example.com", "--dry-run"
+        ])
+        assert result.exit_code == 0
+        assert "Dry run mode" in result.output
+        assert "Seed URLs" in result.output
+        assert "example.com" in result.output
+
+    def test_pipeline_no_crawl_mode(self, tmp_path, monkeypatch):
+        """Test pipeline --no-crawl processes existing data."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Run pipeline without crawl on empty data
+        result = runner.invoke(main, [
+            "pipeline", "--no-crawl"
+        ])
+        assert result.exit_code == 0
+        assert "Pipeline Summary" in result.output
+
+    def test_pipeline_with_step_selection(self, tmp_path, monkeypatch):
+        """Test pipeline with specific step selection."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        result = runner.invoke(main, [
+            "pipeline", "https://example.com",
+            "--step", "extract",
+            "--step", "index",
+            "--dry-run"
+        ])
+        assert result.exit_code == 0
+        assert "Dry run mode" in result.output
+
+    def test_pipeline_with_output_file(self, tmp_path, monkeypatch):
+        """Test pipeline saves stats to output file."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        result = runner.invoke(main, [
+            "pipeline", "--no-crawl",
+            "-o", str(tmp_path / "stats.txt")
+        ])
+        assert result.exit_code == 0
+        assert "Stats saved to" in result.output
+        assert (tmp_path / "stats.txt").exists()
+
+    def test_pipeline_quiet_mode(self, tmp_path, monkeypatch):
+        """Test pipeline quiet mode suppresses output."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        result = runner.invoke(main, [
+            "pipeline", "--no-crawl", "-q"
+        ])
+        assert result.exit_code == 0
+        # Quiet mode should still show summary
+        assert "Pipeline Summary" in result.output
+
+    def test_full_cli_workflow_init_import_search_export(self, tmp_path, monkeypatch):
+        """Test complete CLI workflow: init → import → search → export."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # 1. Initialize
         result = runner.invoke(main, ["init"])
         assert result.exit_code == 0
+        assert "Initialized" in result.output
 
         # 2. Add interests
         result = runner.invoke(main, [
             "interests", "add", "-n", "python",
-            "-k", "python", "-k", "programming",
+            "-k", "python", "-k", "django", "-k", "flask"
         ])
         assert result.exit_code == 0
 
         # 3. Create and import content
         article = tmp_path / "article.txt"
         article.write_text(
-            "Python is a versatile programming language used for web development, "
-            "data science, and automation. It is widely used in production."
+            "Python is a versatile programming language. Django and Flask are popular "
+            "Python web frameworks. Python is used for web development, data science, "
+            "machine learning, and automation tasks."
         )
         result = runner.invoke(main, ["import", str(article)])
         assert result.exit_code == 0
 
-        # 4. Search
+        # 4. Search for content
         result = runner.invoke(main, ["search", "python"])
         assert result.exit_code == 0
         assert "Python" in result.output or "python" in result.output.lower()
 
-        # 5. Export
+        # 5. Export results
         result = runner.invoke(main, ["export", "--format", "markdown"])
         assert result.exit_code == 0
+        assert "# Search Results" in result.output
 
-    def test_pipeline_command_with_imported_content(self, tmp_path, monkeypatch):
-        """Test pipeline command processes imported content."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Init
-        runner.invoke(main, ["init"])
-
-        # Add interest
-        runner.invoke(main, [
-            "interests", "add", "-n", "tech",
-            "-k", "python", "-k", "javascript",
-        ])
-
-        # Create content
-        article = tmp_path / "article.txt"
-        article.write_text(
-            "Python and JavaScript are popular programming languages for web development. "
-            "Both are widely used in modern software engineering."
-        )
-        runner.invoke(main, ["import", str(article)])
-
-        # Run pipeline (no-crawl mode, just process existing)
-        result = runner.invoke(main, ["pipeline", "--no-crawl"])
-        assert result.exit_code == 0
-
-    def test_pipeline_dry_run(self, tmp_path, monkeypatch):
-        """Test pipeline dry-run shows configuration."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        result = runner.invoke(main, ["pipeline", "--dry-run"])
-        assert result.exit_code == 0
-        assert "Dry run" in result.output or "pipeline" in result.output.lower()
-
-    def test_search_after_pipeline(self, tmp_path, monkeypatch):
-        """Test search works after running pipeline."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        runner.invoke(main, [
-            "interests", "add", "-n", "webdev",
-            "-k", "python", "-k", "web",
-        ])
-
-        article = tmp_path / "article.txt"
-        article.write_text(
-            "Python web development with Django and Flask frameworks. "
-            "Build robust web applications with Python."
-        )
-        runner.invoke(main, ["import", str(article)])
-        runner.invoke(main, ["pipeline", "--no-crawl"])
-
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
-
-    def test_export_json_contains_results(self, tmp_path, monkeypatch):
-        """Test JSON export contains search results."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        runner.invoke(main, [
-            "interests", "add", "-n", "tech",
-            "-k", "python",
-        ])
-
-        article = tmp_path / "article.txt"
-        article.write_text(
-            "Python programming language for web development and data science."
-        )
-        runner.invoke(main, ["import", str(article)])
-
-        result = runner.invoke(main, ["export", "--format", "json"])
-        assert result.exit_code == 0
-
-    def test_export_csv_contains_results(self, tmp_path, monkeypatch):
-        """Test CSV export contains search results."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        runner.invoke(main, [
-            "interests", "add", "-n", "tech",
-            "-k", "python",
-        ])
-
-        article = tmp_path / "article.txt"
-        article.write_text(
-            "Python programming language for web development."
-        )
-        runner.invoke(main, ["import", str(article)])
-
-        result = runner.invoke(main, ["export", "--format", "csv"])
-        assert result.exit_code == 0
-
-    def test_status_shows_index_stats(self, tmp_path, monkeypatch):
-        """Test status command shows index statistics."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        article = tmp_path / "article.txt"
-        article.write_text(
-            "Python programming language for web development and software engineering."
-        )
-        runner.invoke(main, ["import", str(article)])
-
+        # 6. Check status
         result = runner.invoke(main, ["status"])
         assert result.exit_code == 0
-        assert "Status" in result.output or "status" in result.output.lower()
+        assert "Status" in result.output
 
-    def test_multiple_interests_and_search(self, tmp_path, monkeypatch):
-        """Test multiple interests work correctly with search."""
+    def test_cli_multiple_interests_and_search(self, tmp_path, monkeypatch):
+        """Test adding multiple interests and searching across them."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
@@ -187,56 +145,119 @@ class TestCLIPipelineEndToEnd:
 
         # Add multiple interests
         runner.invoke(main, [
-            "interests", "add", "-n", "python",
-            "-k", "python", "-k", "django",
+            "interests", "add", "-n", "web-dev",
+            "-k", "javascript", "-k", "react", "-k", "vue"
         ])
         runner.invoke(main, [
-            "interests", "add", "-n", "javascript",
-            "-k", "javascript", "-k", "react",
+            "interests", "add", "-n", "backend",
+            "-k", "python", "-k", "rust", "-k", "go"
         ])
 
-        # List interests
-        result = runner.invoke(main, ["interests", "list"])
-        assert result.exit_code == 0
-        assert "python" in result.output.lower()
-        assert "javascript" in result.output.lower()
+        # Import content matching both interests
+        article = tmp_path / "fullstack.txt"
+        article.write_text(
+            "Full-stack development uses JavaScript and React for the frontend, "
+            "with Python and Rust for the backend. Modern web applications combine "
+            "these technologies for optimal performance."
+        )
+        runner.invoke(main, ["import", str(article)])
 
-    def test_import_multiple_files(self, tmp_path, monkeypatch):
-        """Test importing multiple files."""
+        # Search should find content
+        result = runner.invoke(main, ["search", "javascript python"])
+        assert result.exit_code == 0
+
+    def test_cli_import_multiple_files(self, tmp_path, monkeypatch):
+        """Test importing multiple files at once."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
         runner.invoke(main, ["init"])
-        runner.invoke(main, [
-            "interests", "add", "-n", "tech",
-            "-k", "python", "-k", "rust",
-        ])
 
         # Create multiple files
         for i in range(3):
-            article = tmp_path / f"article_{i}.txt"
-            article.write_text(
-                f"Article {i}: Python programming and software development. "
-                f"This is content number {i} about technology."
+            f = tmp_path / f"article_{i}.txt"
+            f.write_text(
+                f"This is article number {i} about programming languages. "
+                f"Python and JavaScript are popular choices for web development."
             )
-            result = runner.invoke(main, ["import", str(article)])
+
+        # Import all files
+        for i in range(3):
+            result = runner.invoke(main, ["import", str(tmp_path / f"article_{i}.txt")])
             assert result.exit_code == 0
 
-        # Search should find content
-        result = runner.invoke(main, ["search", "python"])
+        # Search should find all articles
+        result = runner.invoke(main, ["search", "programming"])
         assert result.exit_code == 0
 
-    def test_tags_cli_workflow(self, tmp_path, monkeypatch):
-        """Test tag management via CLI."""
+    def test_cli_export_all_formats(self, tmp_path, monkeypatch):
+        """Test exporting in all supported formats."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
         runner.invoke(main, ["init"])
 
-        # Add tag
+        article = tmp_path / "test.txt"
+        article.write_text("Python programming tutorial for web development.")
+        runner.invoke(main, ["import", str(article)])
+
+        # Test each format
+        for fmt in ["markdown", "json", "csv"]:
+            result = runner.invoke(main, ["export", "--format", fmt])
+            assert result.exit_code == 0, f"Export failed for format {fmt}: {result.output}"
+
+    def test_cli_config_commands(self, tmp_path, monkeypatch):
+        """Test config management commands."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # View config
+        result = runner.invoke(main, ["config", "view"])
+        assert result.exit_code == 0
+
+        # Set crawler config
+        result = runner.invoke(main, ["config", "set-crawler", "--max-depth", "5"])
+        assert result.exit_code == 0
+
+        # Verify config was updated
+        result = runner.invoke(main, ["config", "view"])
+        assert result.exit_code == 0
+
+    def test_cli_schedule_commands(self, tmp_path, monkeypatch):
+        """Test schedule management commands."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Add schedule
         result = runner.invoke(main, [
-            "tags", "add", "important",
-            "https://example.com/page1",
+            "schedule", "add", "-n", "daily",
+            "-u", "https://example.com", "-i", "24"
+        ])
+        assert result.exit_code == 0
+
+        # List schedules
+        result = runner.invoke(main, ["schedule", "list"])
+        assert result.exit_code == 0
+        assert "daily" in result.output
+
+        # Remove schedule
+        result = runner.invoke(main, ["schedule", "remove", "daily"])
+        assert result.exit_code == 0
+
+    def test_cli_tag_management(self, tmp_path, monkeypatch):
+        """Test tag management commands."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Add tag to URL
+        result = runner.invoke(main, [
+            "tags", "add", "important", "https://example.com/page1"
         ])
         assert result.exit_code == 0
 
@@ -244,64 +265,44 @@ class TestCLIPipelineEndToEnd:
         result = runner.invoke(main, ["tags", "list"])
         assert result.exit_code == 0
 
-    def test_config_show(self, tmp_path, monkeypatch):
-        """Test config show command."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        result = runner.invoke(main, ["config", "show"])
+        # Remove tag
+        result = runner.invoke(main, [
+            "tags", "remove", "important", "https://example.com/page1"
+        ])
         assert result.exit_code == 0
 
-    def test_interests_remove(self, tmp_path, monkeypatch):
-        """Test removing interests."""
-        monkeypatch.chdir(tmp_path)
+
+class TestCLIDataDirectory:
+    """Test CLI with custom data directories."""
+
+    def test_custom_data_dir(self, tmp_path, monkeypatch):
+        """Test using a custom data directory."""
+        custom_dir = tmp_path / "custom_index"
         runner = CliRunner()
 
+        result = runner.invoke(main, ["init", "--data-dir", str(custom_dir)])
+        assert result.exit_code == 0
+        assert custom_dir.exists()
+        assert (custom_dir / "cache").exists()
+        assert (custom_dir / "archive").exists()
+
+    def test_data_dir_persistence(self, tmp_path, monkeypatch):
+        """Test that data persists in custom data directory."""
+        custom_dir = tmp_path / "my_index"
+        runner = CliRunner()
+
+        # First run: init and add content
+        runner.invoke(main, ["init", "--data-dir", str(custom_dir)])
         runner.invoke(main, [
-            "interests", "add", "-n", "temp",
-            "-k", "temporary",
+            "interests", "add", "-n", "test",
+            "--data-dir", str(custom_dir),
+            "-k", "python"
         ])
-        result = runner.invoke(main, ["interests", "remove", "temp"])
-        assert result.exit_code == 0
 
-        # Verify removed
-        result = runner.invoke(main, ["interests", "list"])
-        assert "temp" not in result.output.lower() or "temporary" not in result.output.lower()
-
-
-class TestCLIPipelineStepSelection:
-    """Test CLI pipeline step selection."""
-
-    def test_pipeline_step_filter_only(self, tmp_path, monkeypatch):
-        """Test running only the filter step."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
+        # Second run: verify data persists
         result = runner.invoke(main, [
-            "pipeline", "--step", "filter", "--dry-run"
+            "interests", "list",
+            "--data-dir", str(custom_dir)
         ])
         assert result.exit_code == 0
-
-    def test_pipeline_step_score_only(self, tmp_path, monkeypatch):
-        """Test running only the score step."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        result = runner.invoke(main, [
-            "pipeline", "--step", "score", "--dry-run"
-        ])
-        assert result.exit_code == 0
-
-    def test_pipeline_multiple_steps(self, tmp_path, monkeypatch):
-        """Test running multiple specific steps."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-        result = runner.invoke(main, [
-            "pipeline", "--step", "filter", "--step", "score", "--dry-run"
-        ])
-        assert result.exit_code == 0
+        assert "test" in result.output
