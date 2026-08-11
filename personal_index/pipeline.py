@@ -8,8 +8,9 @@ from __future__ import annotations
 import logging
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from personal_index.content_extractor import ContentExtractor
 from personal_index.content_filter import ContentFilter, FilterConfig
@@ -309,7 +310,6 @@ class Pipeline:
     ) -> list[CrawledPage]:
         """Extract step: parse HTML and extract meaningful content."""
         logger.info("Step 2/6: Extracting content from %d pages", len(pages))
-        extracted_count = 0
 
         for i, page in enumerate(pages):
             if page.raw_html:
@@ -373,7 +373,7 @@ class Pipeline:
 
         for i, page in enumerate(pages):
             score_result = self.scorer.score_page(page, self.interest_store)
-            score_val: float = score_result.total if hasattr(score_result, "total") else float(score_result)
+            score_val: float = score_result.total
             page.relevance_score = score_val
 
             if score_val >= self.config.min_score_threshold:
@@ -493,7 +493,7 @@ class Pipeline:
             return False
 
         score_result = self.scorer.score_page(page, self.interest_store)
-        score_val: float = score_result.total if hasattr(score_result, "total") else float(score_result)
+        score_val: float = score_result.total
         page.relevance_score = score_val
 
         if score_val < self.config.min_score_threshold:
