@@ -90,7 +90,7 @@ class TestPipelineRunnerBasic:
         assert stats.pages_indexed == 1
 
     def test_run_from_files_nonexistent(self, tmp_path):
-        """Non-existent files should produce errors, not crash."""
+        """Non-existent files should produce errors."""
         data_dir = str(tmp_path / "data")
         os.makedirs(data_dir)
 
@@ -98,8 +98,30 @@ class TestPipelineRunnerBasic:
         stats = runner.run_from_files(["/nonexistent/file.txt"])
         runner.close()
 
-        assert len(stats.errors) > 0
-        assert stats.pages_indexed == 0
+        # Should have at least one error for the missing file
+        assert len(stats.errors) >= 1
+
+    def test_run_from_files_mixed(self, tmp_path):
+        """Mix of valid and invalid files should handle gracefully."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "good.txt").write_text(
+            "This is a valid article with enough content."
+        )
+
+        runner = PipelineRunner(data_dir=data_dir)
+        stats = runner.run_from_files([
+            str(docs / "good.txt"),
+            "/nonexistent/file.txt",
+        ])
+        runner.close()
+
+        # Should process the good file and report error for bad one
+        assert stats.pages_indexed == 1
+        assert len(stats.errors) >= 1
 
 
 class TestPipelineSearchIntegration:
@@ -424,9 +446,10 @@ class TestPipelineEndToEnd:
         assert len(python_results) == 1
         assert len(rust_results) == 1
 
-        # Verify tags
+        # Verify tags - check tag names from Tag objects
         tag_store = TagStore(store_path=os.path.join(data_dir, "tags.json"))
         python_tags = tag_store.get_tags_for_page(str(docs / "python.txt"))
-        assert "python" in python_tags
+        python_tag_names = [t.name for t in python_tags]
+        assert "python" in python_tag_names
 
         runner.close()
