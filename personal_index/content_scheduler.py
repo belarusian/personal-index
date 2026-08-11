@@ -1,257 +1,219 @@
-"""Content scheduling module for personal-index.
-
-Manages scheduled tasks such as periodic crawls, digest generation,
-and content refresh with cron-like scheduling support.
+"""
+Content Scheduler Module
+Schedule crawls, exports, and cleanup tasks with cron-like expressions.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from dataclasses import dataclass, field
+import re
+import time
 from datetime import datetime, timedelta, timezone
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from enum import Enum
-from typing import Any
 
 
-class ScheduleType(Enum):
-    """Types of scheduling patterns."""
-
-    ONCE = "once"
-    HOURLY = "hourly"
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    CRON = "cron"
+class TaskStatus(str, Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
-@dataclass
 class ScheduledTask:
-    """A scheduled task definition.
+    """Represents a single scheduled task."""
 
-    Attributes:
-        task_id: Unique identifier.
-        name: Human-readable task name.
-        schedule_type: Type of schedule.
-        next_run: When the task should next run.
-        last_run: When the task last ran.
-        run_count: Number of times the task has run.
-        enabled: Whether the task is enabled.
-        callback: Function to call when task runs.
-        cron_expression: Cron expression for CRON type.
-        max_runs: Maximum number of runs (None for unlimited).
-        metadata: Additional task metadata.
-    """
-
-    task_id: str
-    name: str
-    schedule_type: ScheduleType = ScheduleType.ONCE
-    next_run: datetime | None = None
-    last_run: datetime | None = None
-    run_count: int = 0
-    enabled: bool = True
-    callback: Callable | None = None
-    cron_expression: str | None = None
-    max_runs: int | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-    def is_due(self, now: datetime | None = None) -> bool:
-        """Check if the task is due to run."""
-        if not self.enabled:
-            return False
-        if self.next_run is None:
-            return True
-        check_time = now or datetime.now(timezone.utc)
-        return check_time >= self.next_run
-
-    def mark_run(self, now: datetime | None = None) -> None:
-        """Mark the task as having run and schedule next run."""
-        run_time = now or datetime.now(timezone.utc)
-        self.last_run = run_time
-        self.run_count += 1
-        self.next_run = self._calculate_next_run(run_time)
-
-    def _calculate_next_run(self, last_run: datetime) -> datetime | None:
-        """Calculate when the task should next run."""
-        if self.max_runs and self.run_count >= self.max_runs:
-            return None
-
-        intervals = {
-            ScheduleType.HOURLY: timedelta(hours=1),
-            ScheduleType.DAILY: timedelta(days=1),
-            ScheduleType.WEEKLY: timedelta(weeks=1),
-            ScheduleType.MONTHLY: timedelta(days=30),
-        }
-
-        if self.schedule_type == ScheduleType.ONCE:
-            return None
-
-        delta = intervals.get(self.schedule_type)
-        if delta:
-            return last_run + delta
-
-        return None
-
-
-@dataclass
-class TaskRunRecord:
-    """Record of a task execution.
-
-    Attributes:
-        task_id: ID of the task that ran.
-        started_at: When the task started.
-        completed_at: When the task completed.
-        success: Whether the task succeeded.
-        duration_seconds: How long the task took.
-        result: Task result data.
-        error: Error message if task failed.
-    """
-
-    task_id: str
-    started_at: datetime
-    completed_at: datetime | None = None
-    success: bool = False
-    duration_seconds: float = 0.0
-    result: dict[str, Any] = field(default_factory=dict)
-    error: str | None = None
-
-
-class TaskScheduler:
-    """Manages and executes scheduled tasks.
-
-    Provides task registration, scheduling, and execution
-    with history tracking.
-    """
-
-    def __init__(self) -> None:
-        self.tasks: dict[str, ScheduledTask] = {}
-        self.run_history: list[TaskRunRecord] = []
-
-    def register(
+    def __init__(
         self,
         task_id: str,
         name: str,
-        schedule_type: ScheduleType = ScheduleType.ONCE,
-        next_run: datetime | None = None,
-        callback: Callable | None = None,
-        **kwargs: Any,
+        task_type: str,
+        cron_expr: str,
+        callback: Optional[Callable] = None,
+        config: Optional[Dict[str, Any]] = None,
+        enabled: bool = True,
+    ):
+        self.task_id = task_id
+        self.name = name
+        self.task_type = task_type
+        self.cron_expr = cron_expr
+        self.callback = callback
+        self.config = config or {}
+        self.enabled = enabled
+        self.status = TaskStatus.PENDING
+        self.created_at = datetime.now(timezone.utc)
+        self.last_run: Optional[datetime] = None
+        self.next_run: Optional[datetime] = None
+        self.run_count = 0
+        self.last_error: Optional[str] = None
+        self._parse_cron()
+
+    def _parse_cron(self) -> None:
+        """Parse cron expression and compute next run time."""
+        parts = self.cron_expr.strip().split()
+        if len(parts) != 5:
+            self.next_run = None
+            return
+        minute, hour, dom, month, dow = parts
+        self._minute = self._parse_field(minute, 0, 59)
+        self._hour = self._parse_field(hour, 0, 23)
+        self._dom = self._parse_field(dom, 1, 31)
+        self._month = self._parse_field(month, 1, 12)
+        self._dow = self._parse_field(dow, 0, 6)
+        self._compute_next_run()
+
+    def _parse_field(self, field: str, min_val: int, max_val: int) -> List[int]:
+        """Parse a cron field into a list of valid values."""
+        if field == "*":
+            return list(range(min_val, max_val + 1))
+        values = set()
+        for part in field.split(","):
+            if "/" in part:
+                base, step = part.split("/", 1)
+                start = int(base) if base != "*" else min_val
+                step = int(step)
+                values.update(range(start, max_val + 1, step))
+            elif "-" in part:
+                start, end = part.split("-", 1)
+                values.update(range(int(start), int(end) + 1))
+            else:
+                values.add(int(part))
+        return sorted(v for v in values if min_val <= v <= max_val)
+
+    def _compute_next_run(self) -> None:
+        """Compute the next scheduled run time."""
+        now = datetime.now(timezone.utc)
+        candidate = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
+        for _ in range(525600):  # max 1 year of minutes
+            if (candidate.minute in self._minute and
+                candidate.hour in self._hour and
+                candidate.day in self._dom and
+                candidate.month in self._month and
+                candidate.weekday() in self._dow):
+                self.next_run = candidate
+                return
+        self.next_run = None
+
+    def is_due(self) -> bool:
+        """Check if the task is due to run."""
+        if not self.enabled or self.next_run is None:
+            return False
+        return datetime.now(timezone.utc) >= self.next_run
+
+    def run(self) -> bool:
+        """Execute the task callback."""
+        self.status = TaskStatus.RUNNING
+        try:
+            if self.callback:
+                self.callback(self)
+            self.status = TaskStatus.COMPLETED
+            self.last_run = datetime.now(timezone.utc)
+            self.run_count += 1
+            self._compute_next_run()
+            return True
+        except Exception as e:
+            self.status = TaskStatus.FAILED
+            self.last_error = str(e)
+            return False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "task_id": self.task_id,
+            "name": self.name,
+            "task_type": self.task_type,
+            "cron_expr": self.cron_expr,
+            "enabled": self.enabled,
+            "status": self.status.value,
+            "created_at": self.created_at.isoformat(),
+            "last_run": self.last_run.isoformat() if self.last_run else None,
+            "next_run": self.next_run.isoformat() if self.next_run else None,
+            "run_count": self.run_count,
+            "last_error": self.last_error,
+            "config": self.config,
+        }
+
+
+class TaskScheduler:
+    """Manages scheduled tasks."""
+
+    def __init__(self):
+        self._tasks: Dict[str, ScheduledTask] = {}
+        self._task_counter = 0
+
+    def add_task(
+        self,
+        name: str,
+        task_type: str,
+        cron_expr: str,
+        callback: Optional[Callable] = None,
+        config: Optional[Dict[str, Any]] = None,
     ) -> ScheduledTask:
-        """Register a new scheduled task.
-
-        Args:
-            task_id: Unique task identifier.
-            name: Human-readable name.
-            schedule_type: Schedule type.
-            next_run: When to first run.
-            callback: Function to execute.
-            **kwargs: Additional task parameters.
-
-        Returns:
-            The registered ScheduledTask.
-        """
+        """Add a new scheduled task."""
+        self._task_counter += 1
+        task_id = f"task_{self._task_counter}"
         task = ScheduledTask(
             task_id=task_id,
             name=name,
-            schedule_type=schedule_type,
-            next_run=next_run,
+            task_type=task_type,
+            cron_expr=cron_expr,
             callback=callback,
-            **kwargs,
+            config=config,
         )
-        self.tasks[task_id] = task
+        self._tasks[task_id] = task
         return task
 
-    def remove(self, task_id: str) -> bool:
-        """Remove a scheduled task."""
-        if task_id in self.tasks:
-            del self.tasks[task_id]
+    def get_task(self, task_id: str) -> Optional[ScheduledTask]:
+        return self._tasks.get(task_id)
+
+    def list_tasks(self, task_type: Optional[str] = None) -> List[ScheduledTask]:
+        if task_type:
+            return [t for t in self._tasks.values() if t.task_type == task_type]
+        return list(self._tasks.values())
+
+    def remove_task(self, task_id: str) -> bool:
+        if task_id in self._tasks:
+            del self._tasks[task_id]
             return True
         return False
 
-    def get_due_tasks(
-        self,
-        now: datetime | None = None,
-    ) -> list[ScheduledTask]:
-        """Get all tasks that are due to run."""
-        return [t for t in self.tasks.values() if t.is_due(now)]
+    def enable_task(self, task_id: str) -> bool:
+        task = self._tasks.get(task_id)
+        if task:
+            task.enabled = True
+            return True
+        return False
 
-    def run_due(
-        self,
-        now: datetime | None = None,
-    ) -> list[TaskRunRecord]:
-        """Run all due tasks and return records.
+    def disable_task(self, task_id: str) -> bool:
+        task = self._tasks.get(task_id)
+        if task:
+            task.enabled = False
+            return True
+        return False
 
-        Args:
-            now: Current time (defaults to now).
+    def run_due_tasks(self) -> List[Dict[str, Any]]:
+        """Run all tasks that are due."""
+        results = []
+        for task in self._tasks.values():
+            if task.is_due():
+                success = task.run()
+                results.append({
+                    "task_id": task.task_id,
+                    "name": task.name,
+                    "success": success,
+                    "status": task.status.value,
+                })
+        return results
 
-        Returns:
-            List of TaskRunRecord for executed tasks.
-        """
-        due_tasks = self.get_due_tasks(now)
-        records = []
-
-        for task in due_tasks:
-            record = self._execute_task(task, now)
-            records.append(record)
-            self.run_history.append(record)
-
-        return records
-
-    def get_task(self, task_id: str) -> ScheduledTask | None:
-        """Get a task by ID."""
-        return self.tasks.get(task_id)
-
-    def get_history(
-        self,
-        task_id: str | None = None,
-        limit: int = 10,
-    ) -> list[TaskRunRecord]:
-        """Get task run history, optionally filtered by task."""
-        history = self.run_history
-        if task_id:
-            history = [r for r in history if r.task_id == task_id]
-        return history[-limit:]
-
-    def get_stats(self) -> dict[str, Any]:
-        """Get scheduler statistics."""
-        total = len(self.tasks)
-        enabled = sum(1 for t in self.tasks.values() if t.enabled)
-        total_runs = sum(t.run_count for t in self.tasks.values())
+    def get_stats(self) -> Dict[str, Any]:
         return {
-            "total_tasks": total,
-            "enabled_tasks": enabled,
-            "disabled_tasks": total - enabled,
-            "total_runs": total_runs,
-            "history_size": len(self.run_history),
+            "total_tasks": len(self._tasks),
+            "enabled": sum(1 for t in self._tasks.values() if t.enabled),
+            "disabled": sum(1 for t in self._tasks.values() if not t.enabled),
+            "by_type": self._count_by_type(),
         }
 
-    def _execute_task(
-        self,
-        task: ScheduledTask,
-        now: datetime | None = None,
-    ) -> TaskRunRecord:
-        """Execute a single task."""
-        start_time = now or datetime.now(timezone.utc)
-        record = TaskRunRecord(
-            task_id=task.task_id,
-            started_at=start_time,
-        )
-
-        try:
-            if task.callback:
-                result = task.callback()
-                record.result = (
-                    result if isinstance(result, dict)
-                    else {"output": str(result)}
-                )
-            record.success = True
-        except (ValueError, TypeError, RuntimeError) as e:
-            record.error = str(e)
-            record.success = False
-
-        end_time = now or datetime.now(timezone.utc)
-        record.completed_at = end_time
-        record.duration_seconds = (
-            end_time - start_time
-        ).total_seconds()
-
-        task.mark_run(now)
-        return record
+    def _count_by_type(self) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for task in self._tasks.values():
+            counts[task.task_type] = counts.get(task.task_type, 0) + 1
+        return counts
