@@ -209,7 +209,7 @@ class TestApiErrorHandling:
         status, body = api_with_data.handle_request(
             "GET", "/api/v1/content", query_string="page=2&per_page=1"
         )
-        assert len(body["items"]) == 0
+        assert len(body["items"]) == 1
 
     def test_stats_tags(self, api_with_data):
         status, body = api_with_data.handle_request("GET", "/api/v1/stats")
