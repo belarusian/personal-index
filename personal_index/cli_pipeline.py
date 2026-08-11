@@ -12,11 +12,8 @@ import time
 
 import click
 
-from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage
 from personal_index.pipeline import Pipeline, PipelineConfig
-from personal_index.tags import TagStore
 
 
 @click.command("pipeline")
@@ -146,7 +143,7 @@ def pipeline(ctx, urls, data_dir, depth, max_pages, timeout, delay,
 
     # Show final stats
     final_stats = pipe.get_stats()
-    click.echo(f"\nIndex stats:")
+    click.echo("\nIndex stats:")
     click.echo(f"  Total indexed pages: {final_stats['indexed_pages']}")
     click.echo(f"  Total interests:     {final_stats['total_interests']}")
     click.echo(f"  Total tags:          {final_stats['total_tags']}")

@@ -7,10 +7,10 @@ including recency, relevance, user engagement, and content quality.
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-import re
 from typing import Any
 
 

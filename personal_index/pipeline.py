@@ -17,7 +17,7 @@ from personal_index.content_scoring import ContentScorer, ScoreWeights
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, PipelineStats
-from personal_index.scraper import HTMLScraper, ScraperConfig
+from personal_index.scraper import HTMLScraper
 from personal_index.tags import TagStore
 
 logger = logging.getLogger(__name__)
@@ -98,9 +98,8 @@ class PipelineStep:
         try:
             return self.handler(data)
         except Exception as e:
-            if self.on_error == "continue":
-                return data
-            elif self.on_error == "skip":
+            logger.error("Step %s failed: %s", self.name, e)
+            if self.on_error == "continue" or self.on_error == "skip":
                 return data
             else:
                 raise
@@ -135,10 +134,8 @@ class ContentPipeline:
         for name, func, on_error in self._steps:
             try:
                 data = func(data)
-            except Exception as e:
-                if on_error == "continue":
-                    pass
-                elif on_error == "skip":
+            except Exception:
+                if on_error == "continue" or on_error == "skip":
                     pass
                 else:
                     raise
@@ -280,8 +277,8 @@ class Pipeline:
             return None
 
         try:
-            import urllib.request
             import ssl
+            import urllib.request
 
             ctx = ssl.create_default_context()
             ctx.check_hostname = False
