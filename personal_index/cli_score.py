@@ -7,7 +7,6 @@ on configured interests and scoring weights.
 from __future__ import annotations
 
 import os
-import sys
 
 import click
 
@@ -65,7 +64,7 @@ def score(ctx, data_dir, min_score, top, recency, relevance, quality):
             )
             if result.total >= min_score:
                 scored.append((page, result))
-        except Exception as e:
+        except (OSError, ValueError) as e:
             click.echo(f"Error scoring {page.url}: {e}", err=True)
 
     scored.sort(key=lambda x: x[1].total, reverse=True)

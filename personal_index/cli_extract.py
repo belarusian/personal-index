@@ -6,7 +6,6 @@ or local files without running the full pipeline.
 
 from __future__ import annotations
 
-import os
 import sys
 
 import click
@@ -39,7 +38,6 @@ def extract(ctx, sources, output_format, output, data_dir):
         sys.exit(1)
 
     extractor = ContentExtractor()
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
 
     results = []
     for source in sources:
@@ -51,7 +49,7 @@ def extract(ctx, sources, output_format, output, data_dir):
             results.append(result)
             click.echo(f"Extracted from {source}: {len(result.content or '')} chars")
             click.echo(f"  Title: {result.title}")
-        except Exception as e:
+        except (OSError, ValueError) as e:
             click.echo(f"Error extracting {source}: {e}", err=True)
 
     if output and results:

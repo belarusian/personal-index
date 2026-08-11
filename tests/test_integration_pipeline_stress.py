@@ -91,9 +91,7 @@ class TestPipelineStress:
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "article.txt").write_text("Plain text article about programming.")
-        (docs / "article.md").write_text("# Markdown Article
-
-About software.")
+        (docs / "article.md").write_text("# Markdown Article\n\nAbout software.")
         (docs / "article.html").write_text(
             "<html><body><p>HTML article about web development.</p></body></html>"
         )
