@@ -209,6 +209,20 @@ class SearchIndex:
 
 
 
+
+
+    def highlight_matches(self, text, query, marker="*"):
+        """Highlight query terms in text."""
+        tokens = self._tokenize(query)
+        result = text
+        for token in tokens:
+            if token in result.lower():
+                import re as _re
+                pattern = _re.compile(_re.escape(token), _re.IGNORECASE)
+                result = pattern.sub(f"{marker}{token}{marker}", result)
+        return result
+
+
 class ContentSearch:
     """High-level search interface."""
 
