@@ -24,7 +24,6 @@ class TestSchedulerIntegration:
 
     def test_add_scheduled_job(self):
         """Adding a scheduled job should work."""
-        import pytest; pytest.skip("Integration test pending implementation")
         config = ScheduleConfig(
             seed_urls=["https://example.com"],
             interval_hours=24,
@@ -36,7 +35,6 @@ class TestSchedulerIntegration:
 
     def test_add_multiple_jobs(self):
         """Adding multiple jobs should accumulate."""
-        import pytest; pytest.skip("Integration test pending implementation")
         self.app.scheduler.add_job(name="job1", config=ScheduleConfig(seed_urls=["https://a.com"], interval_hours=12))
         self.app.scheduler.add_job(name="job2", config=ScheduleConfig(seed_urls=["https://b.com"], interval_hours=24))
         jobs = self.app.scheduler.list_jobs()
@@ -44,7 +42,6 @@ class TestSchedulerIntegration:
 
     def test_remove_job(self):
         """Removing a job should work."""
-        import pytest; pytest.skip("Integration test pending implementation")
         self.app.scheduler.add_job(name="temp", config=ScheduleConfig(seed_urls=["https://x.com"], interval_hours=6))
         assert len(self.app.scheduler.list_jobs()) == 1
         self.app.scheduler.remove_job("temp")
@@ -52,12 +49,10 @@ class TestSchedulerIntegration:
 
     def test_remove_nonexistent_job(self):
         """Removing a nonexistent job should return False."""
-        import pytest; pytest.skip("Integration test pending implementation")
         assert self.app.scheduler.remove_job("nonexistent") is False
 
     def test_job_persistence(self):
         """Jobs should persist across reloads."""
-        import pytest; pytest.skip("Integration test pending implementation")
         self.app.scheduler.add_job(name="persist", config=ScheduleConfig(seed_urls=["https://p.com"], interval_hours=48))
         schedule_path = os.path.join(self.app.data_dir, "schedules.json")
         new_store = ScheduleStore(path=schedule_path)
@@ -72,6 +67,5 @@ class TestSchedulerIntegration:
 
     def test_empty_scheduler(self):
         """New scheduler should have no jobs."""
-        import pytest; pytest.skip("Integration test pending implementation")
         jobs = self.app.scheduler.list_jobs()
         assert jobs == []

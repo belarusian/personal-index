@@ -22,7 +22,6 @@ class TestConfigIntegration:
 
     def test_load_default_config(self):
         """Loading a valid config should return AppConfig."""
-        import pytest; pytest.skip("Integration test pending implementation")
         config_data = {
             "data_dir": ".personal_index",
             "crawler": {"max_depth": 5, "politeness_delay": 1.0, "rate_limit": 10,
@@ -40,7 +39,6 @@ class TestConfigIntegration:
 
     def test_save_and_reload_config(self):
         """Saved config should reload correctly."""
-        import pytest; pytest.skip("Integration test pending implementation")
         cfg = AppConfig(
             data_dir=".test_data",
             crawler=CrawlerConfig(max_depth=10, politeness_delay=2.0),
@@ -56,7 +54,6 @@ class TestConfigIntegration:
 
     def test_app_uses_config(self):
         """App should use configuration values."""
-        import pytest; pytest.skip("Integration test pending implementation")
         config_data = {
             "data_dir": os.path.join(self.tmpdir, "data"),
             "crawler": {"max_depth": 3, "politeness_delay": 0.5, "rate_limit": 5,
@@ -75,7 +72,6 @@ class TestConfigIntegration:
 
     def test_config_fallback_on_missing_file(self):
         """App should use defaults when config file is missing."""
-        import pytest; pytest.skip("Integration test pending implementation")
         app = PersonalIndexApp(
             config_path=os.path.join(self.tmpdir, "nonexistent.yaml"),
             data_dir=self.tmpdir,
@@ -85,7 +81,6 @@ class TestConfigIntegration:
 
     def test_save_config_creates_file(self):
         """save_config should create the file if it doesn't exist."""
-        import pytest; pytest.skip("Integration test pending implementation")
         new_path = os.path.join(self.tmpdir, "new_config.yaml")
         cfg = AppConfig(
             data_dir=self.tmpdir,

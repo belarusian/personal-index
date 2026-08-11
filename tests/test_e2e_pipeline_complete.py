@@ -27,7 +27,6 @@ class TestFullPipelineEndToEnd:
     """Test the complete pipeline without mocking."""
 
     def test_pipeline_runner_processes_pages_directly(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test pipeline runner with add_page_directly (no crawl needed)."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
@@ -62,7 +61,6 @@ class TestFullPipelineEndToEnd:
         assert len(page_tags) > 0
 
     def test_pipeline_runner_filters_low_score(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test that pages below score threshold are filtered out."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.8, min_content_length=10)
@@ -88,7 +86,6 @@ class TestFullPipelineEndToEnd:
         assert result is False
 
     def test_pipeline_runner_filters_short_content(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test that pages with too little content are filtered out."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=50)
@@ -109,7 +106,6 @@ class TestFullPipelineEndToEnd:
         assert result is False
 
     def test_full_pipeline_with_multiple_pages(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test pipeline with multiple pages of varying relevance."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
@@ -160,7 +156,6 @@ class TestFullPipelineEndToEnd:
         assert len(results) >= 1
 
     def test_pipeline_stats_tracking(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test that pipeline stats are properly tracked."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
@@ -189,7 +184,6 @@ class TestFullPipelineEndToEnd:
         assert runner._tag_store.get_tagged_page_count() >= 1
 
     def test_pipeline_persistence_across_runs(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test that pipeline state persists across runner instances."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
@@ -222,7 +216,6 @@ class TestFullPipelineEndToEnd:
         assert interests[0].name == "tech"
 
     def test_pipeline_with_no_interests_passes_all(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test pipeline behavior when no interests are configured."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
@@ -354,7 +347,6 @@ class TestPipelineEdgeCases:
     """Test edge cases in the pipeline."""
 
     def test_empty_content_page(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test pipeline handles pages with empty content."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=0)
@@ -375,7 +367,6 @@ class TestPipelineEdgeCases:
         assert result is False  # Empty content should be rejected
 
     def test_unicode_content(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test pipeline handles unicode content."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
@@ -402,7 +393,6 @@ class TestPipelineEdgeCases:
         assert len(results) >= 1
 
     def test_duplicate_url_handling(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test pipeline handles duplicate URLs correctly."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
