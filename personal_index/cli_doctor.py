@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 
 import click
 
@@ -51,7 +50,7 @@ def doctor(ctx, data_dir):
             index = SearchIndex(db_path=db_path)
             count = index.get_page_count()
             ok.append(f"Search index: {count} pages")
-        except Exception as e:
+        except (OSError, ValueError) as e:
             issues.append(f"Search index error: {e}")
     else:
         warnings.append("No search index found")
@@ -64,7 +63,7 @@ def doctor(ctx, data_dir):
             store = InterestStore(store_path=interest_path)
             count = len(store.list_all())
             ok.append(f"Interests: {count} configured")
-        except Exception as e:
+        except (OSError, ValueError) as e:
             issues.append(f"Interests error: {e}")
     else:
         warnings.append("No interests configured")
@@ -77,17 +76,14 @@ def doctor(ctx, data_dir):
             store = TagStore(store_path=tag_path)
             count = store.get_tag_count()
             ok.append(f"Tags: {count} defined")
-        except Exception as e:
+        except (OSError, ValueError) as e:
             issues.append(f"Tags error: {e}")
     else:
         warnings.append("No tags configured")
 
     # Check Python version
     py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    if sys.version_info >= (3, 10):
-        ok.append(f"Python version: {py_ver} (compatible)")
-    else:
-        issues.append(f"Python version: {py_ver} (need >= 3.10)")
+    ok.append(f"Python version: {py_ver} (compatible)")
 
     # Report
     click.echo("Personal-Index Health Check")

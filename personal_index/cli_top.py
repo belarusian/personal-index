@@ -8,7 +8,6 @@ import os
 import click
 
 from personal_index.index import SearchIndex
-from personal_index.tags import TagStore
 
 
 @click.command("top")
