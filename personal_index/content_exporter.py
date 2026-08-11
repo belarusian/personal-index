@@ -154,9 +154,25 @@ class ContentExporter:
             return date_val.strftime("%Y-%m-%d")
         return str(date_val)
 
+    def export_to_file(self, items, fmt, filepath):
+        """Export items to a file."""
+        content = self.export(items, fmt)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return filepath
+
+
     def _format_rss_date(self, date_val: Any) -> str:
         if date_val is None:
             return ""
         if isinstance(date_val, datetime):
             return date_val.strftime("%a, %d %b %Y %H:%M:%S +0000")
         return str(date_val)
+
+    def export_to_file(self, items, fmt, filepath):
+        """Export items to a file."""
+        content = self.export(items, fmt)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return filepath
+
