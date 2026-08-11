@@ -199,3 +199,27 @@ class TestEdgeCases:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# --- Batch Import Tests ---
+
+class TestBatchImport:
+    def test_batch_import_json_and_csv(self, importer):
+        json_data = '[{"title": "JSON Post"}]'
+        csv_data = "title,description\nCSV Post,From CSV"
+        items = importer.batch_import([
+            (json_data, "json"),
+            (csv_data, "csv"),
+        ])
+        assert len(items) == 2
+        titles = [i["title"] for i in items]
+        assert "JSON Post" in titles
+        assert "CSV Post" in titles
+
+    def test_batch_import_empty(self, importer):
+        items = importer.batch_import([])
+        assert items == []
+
+    def test_batch_import_single_source(self, importer):
+        items = importer.batch_import([('{"title": "T"}', "json")])
+        assert len(items) == 1
