@@ -8,7 +8,7 @@ import time
 
 import click
 
-from personal_index.config.pipeline_config import load_pipeline_config, PipelineStepConfig
+from personal_index.config.pipeline_config import PipelineStepConfig, load_pipeline_config
 from personal_index.pipeline_runner import PipelineRunner
 
 
@@ -114,9 +114,9 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_
         if stats.pages_indexed > 0:
             click.echo()
             click.echo("Next steps:")
-            click.echo(f"  Search: personal-index search 'your query'")
-            click.echo(f"  Export: personal-index export --format markdown")
-            click.echo(f"  Status: personal-index status")
+            click.echo("  Search: personal-index search 'your query'")
+            click.echo("  Export: personal-index export --format markdown")
+            click.echo("  Status: personal-index status")
 
     if output:
         with open(output, "w") as f:

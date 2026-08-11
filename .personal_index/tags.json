@@ -76,14 +76,14 @@
     ],
     "https://iana.org/help/rzm-api": [
       "webdev",
+      "python",
       "api",
-      "Python",
-      "python"
+      "Python"
     ],
     "https://iana.org/help/rzms-changelog": [
       "webdev",
-      "Python",
-      "python"
+      "python",
+      "Python"
     ],
     "https://iana.org/help/gtld-delegation": [
       "webdev"
@@ -135,8 +135,8 @@
     ],
     "https://another-site.com/software-codes-tgd170-fdm-97-boost-development-speed-by-30-today": [
       "webdev",
-      "Python",
-      "python"
+      "python",
+      "Python"
     ],
     "https://another-site.com/bank-of-america-auto-finance": [
       "webdev"

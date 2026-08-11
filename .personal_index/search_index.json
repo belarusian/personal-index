@@ -24,7 +24,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:15.454511+00:00",
+      "crawled_at": "2026-08-11T09:17:42.933421+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1286,
@@ -74,7 +74,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:18.861944+00:00",
+      "crawled_at": "2026-08-11T09:17:54.731370+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 100000,
@@ -284,7 +284,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:33.753963+00:00",
+      "crawled_at": "2026-08-11T09:17:59.243856+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 38078,
@@ -382,7 +382,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:39.762978+00:00",
+      "crawled_at": "2026-08-11T09:18:05.770067+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 21065,
@@ -400,7 +400,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:42.096034+00:00",
+      "crawled_at": "2026-08-11T09:18:06.409375+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 26436,
@@ -764,7 +764,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:15:56.624000+00:00",
+      "crawled_at": "2026-08-11T09:17:47.999643+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 68464,
@@ -782,7 +782,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:15.885344+00:00",
+      "crawled_at": "2026-08-11T09:18:07.527453+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2371,
@@ -801,7 +801,7 @@
         "Python",
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:21.918615+00:00",
+      "crawled_at": "2026-08-11T09:18:13.559747+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3301,
@@ -820,7 +820,7 @@
         "Python",
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:22.936012+00:00",
+      "crawled_at": "2026-08-11T09:18:14.591916+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 9096,
@@ -838,7 +838,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:23.932848+00:00",
+      "crawled_at": "2026-08-11T09:18:15.574523+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4117,
@@ -856,7 +856,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:28.962001+00:00",
+      "crawled_at": "2026-08-11T09:18:20.588071+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 6898,
@@ -874,7 +874,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:31.993818+00:00",
+      "crawled_at": "2026-08-11T09:18:23.626235+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2748,
@@ -892,7 +892,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:47.101444+00:00",
+      "crawled_at": "2026-08-11T09:18:38.753120+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3298,
@@ -910,7 +910,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:49.109985+00:00",
+      "crawled_at": "2026-08-11T09:18:40.709553+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1286,
@@ -928,7 +928,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:52.130775+00:00",
+      "crawled_at": "2026-08-11T09:18:43.770046+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7189,
@@ -946,7 +946,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:54.145866+00:00",
+      "crawled_at": "2026-08-11T09:18:45.790138+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2878,
@@ -964,7 +964,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:55.151550+00:00",
+      "crawled_at": "2026-08-11T09:18:46.808636+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4936,
@@ -982,7 +982,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:56.159544+00:00",
+      "crawled_at": "2026-08-11T09:18:47.976440+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7661,
@@ -1000,7 +1000,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:16:59.797755+00:00",
+      "crawled_at": "2026-08-11T09:18:51.385535+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 13156,
@@ -1018,7 +1018,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:00.471970+00:00",
+      "crawled_at": "2026-08-11T09:18:52.058314+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 7892,
@@ -1036,7 +1036,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:04.520652+00:00",
+      "crawled_at": "2026-08-11T09:18:56.045348+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 32858,
@@ -1054,7 +1054,7 @@
       "matched_interests": [
         "webdev"
       ],
-      "crawled_at": "2026-08-11T09:17:14.648546+00:00",
+      "crawled_at": "2026-08-11T09:19:06.239949+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7293,

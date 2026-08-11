@@ -103,9 +103,9 @@ class TestPipelineRunner:
             pages_indexed=8,
         )
         summary = stats.summary()
-        assert "Crawled:    10" in summary
+        assert "Crawled:      10" in summary
         assert "Filtered out: 2" in summary
-        assert "Indexed:    8" in summary
+        assert "Indexed:      8" in summary
 
     def test_stats_summary_with_errors(self):
         stats = PipelineStats(
@@ -113,7 +113,7 @@ class TestPipelineRunner:
             errors=["Error 1", "Error 2"],
         )
         summary = stats.summary()
-        assert "Errors:     2" in summary
+        assert "Errors:       2" in summary
 
 
 class TestPipelineSteps:
