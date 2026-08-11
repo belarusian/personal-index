@@ -10,16 +10,11 @@ self-contained HTML dashboard with dark theme.
 from __future__ import annotations
 
 import ast
-import csv
-import io
 import os
 import subprocess
 import sys
-import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -202,8 +197,7 @@ def detect_dependencies(modules: list[ModuleInfo]) -> dict[str, list[str]]:
         for imp in mod.imports:
             # Try to match import against known module names
             for name in module_names:
-                if name == imp or name.endswith(f".{imp}") or imp.endswith(f".{name}"):
-                    if name != mod.module_name:
+                if (name == imp or name.endswith(f".{imp}") or imp.endswith(f".{name}")) and name != mod.module_name:
                         graph.setdefault(mod.module_name, []).append(name)
     return graph
 
@@ -218,6 +212,7 @@ def run_ruff(modules: list[ModuleInfo]) -> None:
         result = subprocess.run(
             [sys.executable, "-m", "ruff", "check", "--output-format=text", "personal_index/"],
             capture_output=True,
+            check=False,
             text=True,
             timeout=120,
         )
@@ -250,6 +245,7 @@ def run_mypy(modules: list[ModuleInfo]) -> None:
         result = subprocess.run(
             [sys.executable, "-m", "mypy", "personal_index/"],
             capture_output=True,
+            check=False,
             text=True,
             timeout=120,
         )
@@ -276,6 +272,7 @@ def run_pytest(modules: list[ModuleInfo]) -> str:
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "tests/", "-q", "--tb=no"],
             capture_output=True,
+            check=False,
             text=True,
             timeout=120,
         )
@@ -326,7 +323,6 @@ def generate_dashboard(data: DashboardData, output_path: str = "personal_index/d
         total_funcs = funcs_count + methods_count
         errors = len(mod.ruff_errors) + len(mod.mypy_errors)
         warnings = len(mod.ruff_warnings)
-        short_name = mod.module_name.split(".")[-1]
         module_rows += f"""\
             <div class="module-card" style="border-left: 4px solid {color};">
                 <div class="module-header">
@@ -346,7 +342,6 @@ def generate_dashboard(data: DashboardData, output_path: str = "personal_index/d
 
     # Build dependency tree
     dep_tree = ""
-    visited = set()
     for mod_name in sorted(data.dependency_graph.keys()):
         deps = data.dependency_graph.get(mod_name, [])
         if deps:
