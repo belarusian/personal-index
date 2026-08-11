@@ -78,9 +78,9 @@ class DashboardData:
 # AST helpers
 # ---------------------------------------------------------------------------
 
-def _extract_docstring(node: ast.AST) -> str:
+def _extract_docstring(node: ast.AST) -> str:  # type: ignore[arg-type]  # type: ignore[assignment]
     """Pull the docstring from a function/class/module node."""
-    return ast.get_docstring(node) or ""
+    return ast.get_docstring(node) or ""  # type: ignore[arg-type]
 
 
 def _parse_module(filepath: str) -> ModuleInfo:
@@ -619,7 +619,6 @@ def generate_dashboard(data: DashboardData, output_path: str = "personal_index/d
 </html>
 """
     Path(output_path).write_text(html, encoding="utf-8")
-    return output_path
 
 
 # ---------------------------------------------------------------------------
