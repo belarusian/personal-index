@@ -127,18 +127,31 @@ class PipelineRunner:
         # Step 4: Score
         if self.pipeline_config.is_step_enabled("score"):
             logger.info("Step 4/6: Scoring content")
+            scored_pages = []
             for page in pages:
                 word_count = len(page.content.split()) if page.content else 0
+                # Count keyword matches against interests
+                keyword_matches = 0
+                total_keywords = 0
+                for interest in self._interest_store.list_all():
+                    for kw in interest.keywords:
+                        total_keywords += 1
+                        if kw.lower() in (page.content or "").lower():
+                            keyword_matches += 1
                 score_result = self._scorer.score(
-                    keyword_matches=0,
-                    total_keywords=1,
+                    keyword_matches=keyword_matches,
+                    total_keywords=max(total_keywords, 1),
                     word_count=word_count,
                     domain_authority=0.5,
                 )
-                score = score_result.total if hasattr(score_result, "total") else score_result.score if hasattr(score_result, "score") else 0.0
+                score = score_result.total if hasattr(score_result, "total") else 0.0
                 page.relevance_score = score
                 if score >= self.pipeline_config.min_score_threshold:
+                    scored_pages.append(page)
                     stats.pages_scored += 1
+                else:
+                    stats.pages_filtered_out += 1
+            pages = scored_pages
             logger.info("  Scored %d pages", stats.pages_scored)
 
         # Step 5: Tag
