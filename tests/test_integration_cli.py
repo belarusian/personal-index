@@ -214,3 +214,14 @@ class TestCLICrawl:
         result = runner.invoke(main, ["crawl", "--no-index", "https://example.com"])
         # Should not crash even if network fails
         assert result.exit_code == 0 or "Crawled" in result.output or "Error" in result.output or "Connection" in result.output or "connection" in result.output.lower() or "failed" in result.output.lower() or "timeout" in result.output.lower() or "Timeout" in result.output or "Max" in result.output or "max" in result.output.lower() or "connection" in str(result.exception).lower() if result.exception else True
+
+
+class TestCLIStatusJSON:
+    """Test CLI status JSON output."""
+
+    def test_status_json(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(main, ["status", "--json"])
+        assert result.exit_code == 0
+        assert "data_dir" in result.output
