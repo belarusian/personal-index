@@ -164,3 +164,16 @@ class ContentAPI:
             for tag in item.get("tags", []):
                 tag_counts[tag] = tag_counts.get(tag, 0) + 1
         return tag_counts
+    def _validate_content(self, data):
+        """Validate content data and return errors."""
+        errors = []
+        if not isinstance(data, dict):
+            return ["Request body must be a JSON object"]
+        if "title" in data and not isinstance(data["title"], str):
+            errors.append("Title must be a string")
+        if "tags" in data and not isinstance(data["tags"], list):
+            errors.append("Tags must be a list")
+        if "title" in data and len(data["title"]) > 200:
+            errors.append("Title must be under 200 characters")
+        return errors
+
