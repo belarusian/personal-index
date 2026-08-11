@@ -63,3 +63,98 @@ class TestCsvImport:
         data = "name,url\nMy Post,http://x.com"
         items = importer.import_content(data, "csv")
         assert items[0]["name"] == "My Post"
+
+
+# --- HTML Import Tests ---
+
+class TestHtmlImport:
+    def test_import_html_articles(self, importer):
+        data = "<html><body><article><h2>Title 1</h2><p>Description 1</p></article></body></html>"
+        items = importer.import_content(data, "html")
+        assert len(items) == 1
+        assert items[0]["title"] == "Title 1"
+
+    def test_import_html_multiple_articles(self, importer):
+        data = (
+            "<article><h2>A</h2><p>Desc A</p></article>"
+            "<article><h2>B</h2><p>Desc B</p></article>"
+        )
+        items = importer.import_content(data, "html")
+        assert len(items) == 2
+
+    def test_import_html_with_link(self, importer):
+        data = '<article><h2><a href="http://x.com">Title</a></h2><p>Desc</p></article>'
+        items = importer.import_content(data, "html")
+        assert items[0]["link"] == "http://x.com"
+
+    def test_import_html_fallback_h2_p(self, importer):
+        data = "<h2>Heading</h2><p>Paragraph</p>"
+        items = importer.import_content(data, "html")
+        assert len(items) == 1
+        assert items[0]["title"] == "Heading"
+
+    def test_import_html_empty(self, importer):
+        items = importer.import_content("<html></html>", "html")
+        assert items == []
+
+
+# --- Markdown Import Tests ---
+
+class TestMarkdownImport:
+    def test_import_markdown_basic(self, importer):
+        data = "# Title\n\n## Post 1\n\nDescription here\n\n## Post 2\n\nAnother desc"
+        items = importer.import_content(data, "markdown")
+        assert len(items) == 2
+        assert items[0]["title"] == "Post 1"
+
+    def test_import_markdown_with_links(self, importer):
+        data = "## [Linked Post](http://example.com)\n\nSome text"
+        items = importer.import_content(data, "markdown")
+        assert items[0]["title"] == "Linked Post"
+        assert items[0]["link"] == "http://example.com"
+
+    def test_import_markdown_empty(self, importer):
+        items = importer.import_content("# Empty", "markdown")
+        assert items == []
+
+    def test_import_markdown_multiline_desc(self, importer):
+        data = "## Post\n\nLine 1\nLine 2\nLine 3"
+        items = importer.import_content(data, "markdown")
+        assert "Line 1" in items[0]["description"]
+        assert "Line 3" in items[0]["description"]
+
+
+# --- RSS Import Tests ---
+
+class TestRssImport:
+    def test_import_rss_basic(self, importer):
+        data = (
+            '<?xml version="1.0"?><rss version="2.0"><channel>'
+            '<item><title>Post 1</title><link>http://a.com</link>'
+            '<description>Desc 1</description><guid>1</guid></item>'
+            '</channel></rss>'
+        )
+        items = importer.import_content(data, "rss")
+        assert len(items) == 1
+        assert items[0]["title"] == "Post 1"
+
+    def test_import_rss_multiple_items(self, importer):
+        data = (
+            '<rss version="2.0"><channel>'
+            '<item><title>A</title><link>http://a</link><description>DA</description><guid>1</guid></item>'
+            '<item><title>B</title><link>http://b</link><description>DB</description><guid>2</guid></item>'
+            '</channel></rss>'
+        )
+        items = importer.import_content(data, "rss")
+        assert len(items) == 2
+
+    def test_import_rss_empty(self, importer):
+        data = '<rss version="2.0"><channel></channel></rss>'
+        items = importer.import_content(data, "rss")
+        assert items == []
+
+    def test_import_rss_missing_guid(self, importer):
+        data = '<rss version="2.0"><channel><item><title>T</title></item></channel></rss>'
+        items = importer.import_content(data, "rss")
+        assert items[0]["title"] == "T"
+        assert items[0]["id"] != ""
