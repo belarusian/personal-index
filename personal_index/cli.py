@@ -25,6 +25,7 @@ from personal_index.index import SearchIndex
 from personal_index.tags import TagStore
 from personal_index.cli_stats import stats as stats_cmd
 from personal_index.cli_list import list_pages as list_cmd
+from personal_index.cli_remove import remove_page as remove_cmd
 
 
 def get_search_index(data_dir: str) -> SearchIndex:
@@ -1035,3 +1036,5 @@ def doctor(ctx, data_dir):
 
 if __name__ == "__main__":
     main()
+
+main.add_command(remove_cmd)

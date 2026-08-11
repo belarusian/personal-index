@@ -156,6 +156,15 @@ class TagStore:
         """Get number of pages that have at least one tag."""
         return sum(1 for tags in self._page_tags.values() if tags)
 
+
+    def remove_page(self, url: str) -> bool:
+        """Remove all tags for a page. Returns True if page had tags."""
+        if url not in self._page_tags:
+            return False
+        del self._page_tags[url]
+        self._save()
+        return True
+
     def clear(self) -> None:
         """Clear all tags and associations."""
         self._tags.clear()
