@@ -7,7 +7,6 @@ import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
 
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
@@ -197,7 +196,7 @@ class PipelineRunner:
                 self._emit_progress("index", i + 1, len(filtered_pages))
             logger.info("Indexed %d pages", stats.pages_indexed)
 
-        except Exception as e:
+        except (RuntimeError, OSError) as e:
             logger.error("Pipeline error: %s", e)
             stats.errors.append(str(e))
         finally:
@@ -228,7 +227,7 @@ class PipelineRunner:
                     if page:
                         crawled_pages.append(page)
                         stats.pages_crawled += 1
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Error reading {filepath}: {e}")
                 self._emit_progress("crawl", i + 1, len(file_paths))
             logger.info("Read %d files", stats.pages_crawled)
@@ -277,7 +276,7 @@ class PipelineRunner:
                 stats.pages_indexed += 1
                 self._emit_progress("index", i + 1, len(filtered_pages))
 
-        except Exception as e:
+        except (RuntimeError, OSError) as e:
             logger.error("Pipeline error: %s", e)
             stats.errors.append(str(e))
         finally:
@@ -320,6 +319,46 @@ class PipelineRunner:
             self._tag_store.add_tag_to_page(page.url, kw)
             tags.append(kw)
         return tags
+
+    def add_page_directly(self, page: CrawledPage) -> bool:
+        """Add a page directly through the pipeline (skip crawl)."""
+        if not page.content:
+            return False
+
+        if not self._filter.should_include(page):
+            return False
+
+        keyword_matches = 0
+        total_keywords = 0
+        matched_interests = []
+        for interest in self._interest_store.list_all():
+            for kw in interest.keywords:
+                total_keywords += 1
+                if kw.lower() in page.content.lower():
+                    keyword_matches += 1
+                    matched_interests.append(interest.name)
+
+        score_result = self._scorer.score(
+            keyword_matches=keyword_matches,
+            total_keywords=max(total_keywords, 1),
+            word_count=len(page.content.split()),
+            domain_authority=0.5,
+        )
+        score_val = score_result.total
+        page.relevance_score = score_val
+
+        if score_val < self.pipeline_config.min_score_threshold:
+            return False
+
+        tags = self._auto_tag_page(page)
+        for tag_name in tags:
+            self._tag_store.add_tag_to_page(page.url, tag_name)
+
+        try:
+            self._search_index.add_page(page)
+            return True
+        except (OSError, ValueError):
+            return False
 
     def close(self) -> None:
         """Close all resources."""

@@ -48,7 +48,7 @@ class TestCLITagsE2E:
         runner.invoke(main, [
             "tags", "add", "temp", "https://example.com/page1",
         ])
-        result = runner.invoke(main, ["tags", "remove", "temp"])
+        result = runner.invoke(main, ["tags", "remove", "temp", "https://example.com/page1"])
         assert result.exit_code == 0
 
     def test_tags_persistence(self, tmp_path, monkeypatch):
