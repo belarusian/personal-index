@@ -111,9 +111,9 @@ class TagStore:
         return True
 
     def add_tag_to_page(self, url: str, tag_name: str) -> bool:
-        """Add a tag to a page. Returns False if tag doesn't exist."""
+        """Add a tag to a page. Auto-creates tag if it doesn't exist."""
         if tag_name not in self._tags:
-            return False
+            self._tags[tag_name] = Tag(name=tag_name)
         if url not in self._page_tags:
             self._page_tags[url] = set()
         self._page_tags[url].add(tag_name)
@@ -124,6 +124,7 @@ class TagStore:
         """Remove a tag from a page."""
         if url not in self._page_tags:
             return False
+        self._page_tags[url].discard(tag_name)
         self._save()
         return True
 
