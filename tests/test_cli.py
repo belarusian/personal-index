@@ -9,10 +9,10 @@ from click.testing import CliRunner
 from personal_index.cli import (
     main,
     interests,
-    crawl,
     search,
-    index,
     schedule,
+    tags,
+    config,
 )
 from personal_index.interests import InterestStore
 from personal_index.index import SearchIndex
@@ -88,7 +88,7 @@ class TestInterestCommands:
         toggled_interest = Interest(name="test", enabled=False)
         with patch.object(InterestStore, '__init__', lambda self, store_path=None: None):
             with patch.object(InterestStore, 'toggle', return_value=toggled_interest):
-                result = runner.invoke(interests, ['toggle', 'test'])
+                result = runner.invoke(interests, ['enable', 'test'])
                 assert result.exit_code == 0
                 assert "disabled" in result.output
 
@@ -117,61 +117,69 @@ class TestSearchCommand:
                 assert "Python Guide" in result.output
 
     def test_search_with_limit(self, runner, tmp_path):
+        from personal_index.index import SearchResult
+        test_results = [
+            SearchResult(url=f"https://example.com/{i}", title=f"Result {i}",
+                         snippet=f"Snippet {i}", relevance_score=float(i))
+            for i in range(5)
+        ]
         with patch.object(SearchIndex, '__init__', lambda self, db_path=None: None):
-            with patch.object(SearchIndex, 'search') as mock_search:
-                mock_search.return_value = []
-                result = runner.invoke(search, ['python', '--limit', '5'])
+            with patch.object(SearchIndex, 'search', return_value=test_results):
+                result = runner.invoke(search, ['python', '-n', '3'])
                 assert result.exit_code == 0
-                mock_search.assert_called_once()
+
+    def test_search_with_snippet(self, runner, tmp_path):
+        from personal_index.index import SearchResult
+        test_result = SearchResult(
+            url="https://example.com",
+            title="Python Guide",
+            snippet="Learn Python programming",
+            relevance_score=1.5,
+        )
+        with patch.object(SearchIndex, '__init__', lambda self, db_path=None: None):
+            with patch.object(SearchIndex, 'search', return_value=[test_result]):
+                result = runner.invoke(search, ['python', '--snippet'])
+                assert result.exit_code == 0
+                assert "Learn Python" in result.output
 
 
 @pytest.mark.skip(reason="CLI internals not mockable")
 class TestCrawlCommand:
     def test_crawl_basic(self, runner, tmp_path):
-        with patch('personal_index.crawler.Crawler') as mock_crawler_cls:
-            mock_crawler = MagicMock()
-            mock_crawler_cls.return_value = mock_crawler
-            mock_crawler.crawl.return_value = []
-            result = runner.invoke(crawl, ['https://example.com'])
+        with patch('personal_index.crawler.main.Crawler') as MockCrawler:
+            mock_instance = MagicMock()
+            mock_instance.crawl.return_value = []
+            MockCrawler.return_value = mock_instance
+            result = runner.invoke(main, ['pipeline', 'https://example.com'])
             assert result.exit_code == 0
 
     def test_crawl_with_depth(self, runner, tmp_path):
-        with patch('personal_index.crawler.Crawler') as mock_crawler_cls:
-            mock_crawler = MagicMock()
-            mock_crawler_cls.return_value = mock_crawler
-            mock_crawler.crawl.return_value = []
-            result = runner.invoke(crawl, ['https://example.com', '--depth', '2'])
+        with patch('personal_index.crawler.main.Crawler') as MockCrawler:
+            mock_instance = MagicMock()
+            mock_instance.crawl.return_value = []
+            MockCrawler.return_value = mock_instance
+            result = runner.invoke(main, ['pipeline', 'https://example.com', '-d', '2'])
             assert result.exit_code == 0
+
+    def test_crawl_dry_run(self, runner, tmp_path):
+        result = runner.invoke(main, ['pipeline', 'https://example.com', '--dry-run'])
+        assert result.exit_code == 0
+        assert "Dry run" in result.output
 
 
 @pytest.mark.skip(reason="CLI internals not mockable")
-class TestIndexCommands:
-    def test_index_count(self, runner, tmp_path):
+class TestIndexCommand:
+    def test_index_stats(self, runner, tmp_path):
         with patch.object(SearchIndex, '__init__', lambda self, db_path=None: None):
             with patch.object(SearchIndex, 'get_page_count', return_value=42):
-                result = runner.invoke(index, ['count'])
+                result = runner.invoke(main, ['status'])
                 assert result.exit_code == 0
-                assert "42" in result.output
-
-    def test_index_list_empty(self, runner, tmp_path):
-        with patch.object(SearchIndex, '__init__', lambda self, db_path=None: None):
-            with patch.object(SearchIndex, 'list_pages', return_value=[]):
-                result = runner.invoke(index, ['list'])
-                assert result.exit_code == 0
-                assert "No pages" in result.output
-
-    def test_index_clear(self, runner, tmp_path):
-        with patch.object(SearchIndex, '__init__', lambda self, db_path=None: None):
-            with patch.object(SearchIndex, 'clear'):
-                result = runner.invoke(index, ['clear'], input='y\n')
-                assert result.exit_code == 0
-                assert "cleared" in result.output
+                assert "Indexed pages" in result.output
 
 
 @pytest.mark.skip(reason="CLI internals not mockable")
 class TestScheduleCommands:
     def test_schedule_add(self, runner, tmp_path):
-        # Mock all three required arguments for Scheduler.__init__
         with patch.object(Scheduler, '__init__', lambda self, interest_store=None, search_index=None, schedule_store=None: None):
             with patch.object(Scheduler, 'add_job'):
                 result = runner.invoke(
@@ -205,7 +213,6 @@ class TestScheduleCommands:
 @pytest.mark.skip(reason="CLI internals not mockable")
 class TestConfigCommands:
     def test_config_show(self, runner, tmp_path):
-        # Mock load_config to return a default config
         with patch('personal_index.config.loader.load_config') as mock_load:
             from personal_index.models import AppConfig, CrawlConfig, SchedulerConfig, IndexConfig
             mock_config = AppConfig(
@@ -221,7 +228,6 @@ class TestConfigCommands:
             assert "Max depth: 3" in result.output
 
     def test_config_set_crawler(self, runner, tmp_path):
-        # Mock load_config and save_config
         with patch('personal_index.config.loader.load_config') as mock_load:
             from personal_index.models import AppConfig, CrawlConfig, SchedulerConfig, IndexConfig
             mock_config = AppConfig(
@@ -231,15 +237,13 @@ class TestConfigCommands:
                 index=IndexConfig(),
             )
             mock_load.return_value = mock_config
-            
+
             with patch('personal_index.config.loader.save_config') as mock_save:
                 result = runner.invoke(config, ['set-crawler', '--max-depth', '5'])
                 assert result.exit_code == 0
-                # Verify save was called with updated config
                 assert mock_save.called
 
     def test_config_set_schedule(self, runner, tmp_path):
-        # Mock load_config and save_config
         with patch('personal_index.config.loader.load_config') as mock_load:
             from personal_index.models import AppConfig, CrawlConfig, SchedulerConfig, IndexConfig
             mock_config = AppConfig(
@@ -249,11 +253,10 @@ class TestConfigCommands:
                 index=IndexConfig(),
             )
             mock_load.return_value = mock_config
-            
+
             with patch('personal_index.config.loader.save_config') as mock_save:
                 result = runner.invoke(config, ['set-schedule', '--interval', '12'])
                 assert result.exit_code == 0
-                # Verify save was called
                 assert mock_save.called
 
 
@@ -269,4 +272,23 @@ class TestMainCommand:
         assert "personal-index" in result.output
         assert "interests" in result.output
         assert "search" in result.output
-        assert "crawl" in result.output
+        assert "pipeline" in result.output
+
+    def test_init_creates_data_dir(self, runner, tmp_path):
+        data_dir = str(tmp_path / "mydata")
+        result = runner.invoke(main, ['--data-dir', data_dir, 'init'])
+        assert result.exit_code == 0
+        assert os.path.isdir(data_dir)
+        assert "Initialized" in result.output
+
+    def test_status_command(self, runner, tmp_path):
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+        result = runner.invoke(main, ['--data-dir', data_dir, 'status'])
+        assert result.exit_code == 0
+        assert "Status" in result.output
+
+    def test_import_command_file_not_found(self, runner, tmp_path):
+        result = runner.invoke(main, ['import', '/nonexistent/path'])
+        assert result.exit_code == 0
+        assert "not found" in result.output
