@@ -504,3 +504,46 @@ def export_cmd(fmt, output, query, limit, data_dir):
         click.echo(f"Exported {len(results)} items to {output}")
     else:
         click.echo(content)
+
+
+@main.group()
+def tag():
+    """Manage content tags."""
+
+
+@tag.command("list")
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+def list_tags(data_dir):
+    """List all defined tags."""
+    from personal_index.tags import TagStore
+    store = TagStore(store_path=f"{data_dir}/tags.json")
+    tags = store.list_all()
+    if not tags:
+        click.echo("No tags defined.")
+        return
+    for tag in tags:
+        click.echo(f"  {tag.name} ({tag.color})")
+
+
+@tag.command("add")
+@click.argument("name")
+@click.option("--color", default="#3498db", help="Tag color hex")
+@click.option("--description", default="", help="Tag description")
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+def add_tag(name, color, description, data_dir):
+    """Add a new tag."""
+    from personal_index.tags import TagStore
+    store = TagStore(store_path=f"{data_dir}/tags.json")
+    store.add_tag(name, color=color, description=description)
+    click.echo(f"Added tag: {name}")
+
+
+@tag.command("remove")
+@click.argument("name")
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+def remove_tag(name, data_dir):
+    """Remove a tag."""
+    from personal_index.tags import TagStore
+    store = TagStore(store_path=f"{data_dir}/tags.json")
+    store.remove_tag(name)
+    click.echo(f"Removed tag: {name}")
