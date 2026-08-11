@@ -66,6 +66,8 @@ class SearchIndex:
         }
         with open(self.db_path, "w") as f:
             json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
 
     @staticmethod
     def _tokenize(text: str) -> list[str]:

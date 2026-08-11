@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+import uuid
 from pathlib import Path
 
 import pytest
@@ -52,7 +53,7 @@ class TestTagManagement:
 
     def test_tag_store_programmatic(self, tmp_path):
         """Test TagStore programmatic operations."""
-        store = TagStore(store_path=str(tmp_path / "tags.json"))
+        store = TagStore(store_path=str(tmp_path / f"tags_{uuid.uuid4().hex[:8]}.json"))
 
         # Create tags
         store.create_tag("python", color="#3572A5")
@@ -79,7 +80,7 @@ class TestTagManagement:
 
     def test_tag_store_persistence(self, tmp_path):
         """Test TagStore persists data to disk."""
-        path = str(tmp_path / "tags.json")
+        path = str(tmp_path / f"tags_{uuid.uuid4().hex[:8]}.json")
         store = TagStore(store_path=path)
         store.create_tag("test", color="#ff0000")
         store.add_tag_to_page("https://example.com/p1", "test")
@@ -98,7 +99,7 @@ class TestSearchIntegration:
 
     def test_search_basic(self, tmp_path):
         """Test basic search returns relevant results."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
@@ -123,7 +124,7 @@ class TestSearchIntegration:
 
     def test_search_relevance_ordering(self, tmp_path):
         """Test search results are ordered by relevance."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
@@ -144,7 +145,7 @@ class TestSearchIntegration:
 
     def test_search_with_limit(self, tmp_path):
         """Test search respects limit parameter."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         for i in range(10):
@@ -159,13 +160,13 @@ class TestSearchIntegration:
 
     def test_search_empty_query(self, tmp_path):
         """Test search with empty query returns no results."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
         results = index.search("")
         assert len(results) == 0
 
     def test_search_no_results(self, tmp_path):
         """Test search with no matching terms."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
@@ -179,7 +180,7 @@ class TestSearchIntegration:
 
     def test_search_snippet_generation(self, tmp_path):
         """Test search generates useful snippets."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
@@ -197,7 +198,7 @@ class TestSearchIntegration:
 
     def test_search_persistence(self, tmp_path):
         """Test search works after index reload."""
-        path = str(tmp_path / "index.json")
+        path = str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json")
 
         # Create and save
         index = SearchIndex(db_path=path)
@@ -234,7 +235,7 @@ class TestSearchIndexOperations:
 
     def test_add_and_get_page(self, tmp_path):
         """Test adding and retrieving a page."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         page = CrawledPage(
@@ -250,7 +251,7 @@ class TestSearchIndexOperations:
 
     def test_remove_page(self, tmp_path):
         """Test removing a page from index."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
@@ -265,13 +266,13 @@ class TestSearchIndexOperations:
 
     def test_remove_nonexistent_page(self, tmp_path):
         """Test removing a page that doesn't exist."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
         result = index.remove_page("https://nonexistent.com/page")
         assert result is False
 
     def test_list_pages_sorted_by_score(self, tmp_path):
         """Test list_pages returns pages sorted by score."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
@@ -292,7 +293,7 @@ class TestSearchIndexOperations:
 
     def test_clear_index(self, tmp_path):
         """Test clearing the entire index."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
@@ -312,7 +313,7 @@ class TestSearchIndexOperations:
 
     def test_duplicate_url_handling(self, tmp_path):
         """Test that adding the same URL twice updates the entry."""
-        index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
         index.add_page(CrawledPage(
