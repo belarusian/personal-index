@@ -130,7 +130,9 @@ def toggle_interest(name):
 @click.argument("query")
 @click.option("-l", "--limit", default=10, type=int, help="Max results")
 @click.option("--json", "as_json", is_flag=True, help="Output results as JSON")
-def search(query, limit, as_json):
+@click.option("--tag", default=None, help="Filter results by tag")
+@click.option("--sort", default="relevance", type=click.Choice(["relevance", "date", "title"]), help="Sort results by field")
+def search(query, limit, as_json, tag, sort):
     """Search indexed content."""
     import json
     index = SearchIndex()
