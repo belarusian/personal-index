@@ -246,8 +246,7 @@ class TestPipelineSteps:
         assert index.get_page_count() == 0
 
     def test_full_pipeline_mocked(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
-        """Test the full pipeline with mocked crawler."""
+        """Test the full pipeline with mocked crawler - all 6 steps."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
         runner = PipelineRunner(config=cfg, data_dir=data_dir)
@@ -271,7 +270,7 @@ class TestPipelineSteps:
             ),
         ]
 
-        with patch('personal_index.pipeline_runner.Crawler') as MockCrawler:
+        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
             mock_crawler = MagicMock()
             mock_crawler.crawl.return_value = pages
             MockCrawler.return_value = mock_crawler
