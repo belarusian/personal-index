@@ -2,11 +2,21 @@
 
 from personal_index.content_monitor.alert import Alert, AlertManager
 from personal_index.content_monitor.health import HealthChecker
+from personal_index.content_monitor.info import (
+    DiskUsageInfo,
+    ErrorRateInfo,
+    HealthReport,
+    SourceFreshness,
+)
 from personal_index.content_monitor.monitor import ContentMonitor
 
 __all__ = [
     "Alert",
     "AlertManager",
     "ContentMonitor",
+    "DiskUsageInfo",
+    "ErrorRateInfo",
     "HealthChecker",
+    "HealthReport",
+    "SourceFreshness",
 ]
