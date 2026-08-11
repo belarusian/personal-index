@@ -21,7 +21,7 @@ import sys
 import click
 import yaml
 
-from personal_index.index import SearchIndex, SearchResult
+from personal_index.index import SearchIndex
 from personal_index.tags import TagStore
 
 
@@ -408,9 +408,9 @@ def import_(ctx, source, recursive, data_dir):
     tag_store = get_tag_store(dd)
     interest_store = get_interest_store(dd)
 
-    from personal_index.models import CrawledPage
-    from personal_index.content_scoring import ContentScorer, ScoreWeights
     from personal_index.content_filter import ContentFilter, FilterConfig
+    from personal_index.content_scoring import ContentScorer, ScoreWeights
+    from personal_index.models import CrawledPage
 
     scorer = ContentScorer(weights=ScoreWeights())
     content_filter = ContentFilter(config=FilterConfig(min_content_length=10))
@@ -515,7 +515,7 @@ def status(ctx, data_dir):
     # Show top pages by score
     pages = idx.list_pages()
     if pages:
-        click.echo(f"\nTop pages by score:")
+        click.echo("\nTop pages by score:")
         for page in pages[:5]:
             click.echo(f"  {page.title} ({page.url}) - score: {page.score:.4f}")
 
@@ -648,8 +648,8 @@ def reindex(ctx, data_dir):
     tag_store = get_tag_store(dd)
     interest_store = get_interest_store(dd)
 
-    from personal_index.content_scoring import ContentScorer, ScoreWeights
     from personal_index.content_filter import ContentFilter, FilterConfig
+    from personal_index.content_scoring import ContentScorer, ScoreWeights
 
     scorer = ContentScorer(weights=ScoreWeights())
     content_filter = ContentFilter(config=FilterConfig(min_content_length=10))
