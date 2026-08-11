@@ -284,7 +284,6 @@ def interests(ctx):
         personal-index interests add programming -k python -k javascript
         personal-index interests remove programming
     """
-    pass
 
 
 @interests.command("list")
@@ -324,7 +323,7 @@ def interests_add(ctx, name, keywords, data_dir):
         personal-index interests add science -k physics -k chemistry
     """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.interests import InterestStore, Interest
+    from personal_index.interests import Interest, InterestStore
     interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
 
     keyword_list = [k.strip() for k in keywords if k.strip()]
@@ -420,14 +419,12 @@ def tags(ctx):
         personal-index tags list
         personal-index tags add my-tag https://example.com/page
     """
-    pass
 
 
 @main.group()
 @click.pass_context
 def tag(ctx):
     """Alias for 'tags' command (singular form)."""
-    pass
 
 
 @tags.command("list")
@@ -625,6 +622,9 @@ def _import_single_file(filepath: str, idx: SearchIndex) -> int:
                 )
                 idx.add_page(page)
                 return 1
+            else:
+                # Unknown JSON structure
+                return 0
         except json.JSONDecodeError:
             click.echo(f"Invalid JSON in {filepath}")
             return 0
@@ -643,6 +643,7 @@ def _import_single_file(filepath: str, idx: SearchIndex) -> int:
         except Exception as e:
             click.echo(f"Error reading {filepath}: {e}")
             return 0
+        return 0
 
 
 @main.command()
@@ -765,7 +766,6 @@ def config(ctx):
         personal-index config set-crawler --max-depth 5
         personal-index config set-schedule --interval 12
     """
-    pass
 
 
 @config.command("show")
@@ -842,7 +842,6 @@ def schedule(ctx):
         personal-index schedule list
         personal-index schedule remove daily
     """
-    pass
 
 
 @schedule.command("add")
@@ -856,7 +855,7 @@ def schedule(ctx):
 def schedule_add(ctx, name, url, interval, depth, max_pages, data_dir):
     """Add a new scheduled crawl job."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.scheduler import ScheduleStore, ScheduleEntry, ScheduleConfig
+    from personal_index.scheduler import ScheduleConfig, ScheduleEntry, ScheduleStore
 
     store_path = os.path.join(dd, "schedules.json")
     store = ScheduleStore(path=store_path)
@@ -915,7 +914,8 @@ def schedule_remove(ctx, name, data_dir):
 
 
 # Import pipeline command
-from personal_index.cli_pipeline import pipeline  # noqa: E402
+from personal_index.cli_pipeline import pipeline
+
 main.add_command(pipeline)
 
 if __name__ == "__main__":

@@ -29,6 +29,12 @@
       "color": "#3498db",
       "description": "",
       "created_at": "2026-08-11T07:53:47.980537+00:00"
+    },
+    "AI": {
+      "name": "AI",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T07:56:55.628339+00:00"
     }
   },
   "page_tags": {
@@ -57,14 +63,14 @@
       "webdev"
     ],
     "https://iana.org/help/rzm-api": [
-      "python",
+      "webdev",
       "Python",
-      "api",
-      "webdev"
+      "python",
+      "api"
     ],
     "https://iana.org/help/rzms-changelog": [
-      "python",
       "Python",
+      "python",
       "webdev"
     ],
     "https://iana.org/help/gtld-delegation": [
@@ -110,6 +116,41 @@
       "important"
     ],
     "https://example.com/article": [
+      "webdev"
+    ],
+    "https://another-site.com/travel-agent-business-cards": [
+      "webdev"
+    ],
+    "https://another-site.com/software-codes-tgd170-fdm-97-boost-development-speed-by-30-today": [
+      "Python",
+      "python",
+      "webdev"
+    ],
+    "https://another-site.com/bank-of-america-auto-finance": [
+      "webdev"
+    ],
+    "https://another-site.com/churning-finance": [
+      "webdev"
+    ],
+    "https://another-site.com/last-minute-travel-insurance-online": [
+      "webdev"
+    ],
+    "https://another-site.com/lifestyle-apps": [
+      "AI"
+    ],
+    "http://nettikasinot.tv": [
+      "webdev"
+    ],
+    "http://livecasinosgreek.com": [
+      "webdev"
+    ],
+    "http://upgaming.com/": [
+      "webdev"
+    ],
+    "http://slotscalendar.com": [
+      "webdev"
+    ],
+    "https://another-site.com/privacy-policy-2": [
       "webdev"
     ]
   }
