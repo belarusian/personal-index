@@ -106,7 +106,7 @@ class Interest:
                 import re
                 import fnmatch
                 # Try glob-style matching first (*.example.com/*)
-                if "*" in pattern and "/" in pattern:
+                if "*" in pattern:
                     if fnmatch.fnmatch(url.lower(), pattern.lower()):
                         return True
                 # Then try as regex
@@ -256,7 +256,13 @@ class IndexedPage:
         Returns:
             Dictionary representation of the page.
         """
-        return asdict(self)
+        result = {}
+        for field_name in self.__dataclass_fields__:
+            value = getattr(self, field_name)
+            if hasattr(value, "isoformat"):
+                value = value.isoformat()
+            result[field_name] = value
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> IndexedPage:

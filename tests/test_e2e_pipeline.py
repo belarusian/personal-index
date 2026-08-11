@@ -1,4 +1,4 @@
-"""End-to-end integration tests for the full pipeline: crawl → extract → filter → score → tag → index → search.
+"""End-to-end integration tests for the full pipeline: crawl -> extract -> filter -> score -> tag -> index -> search.
 
 These tests verify that all pipeline stages work together correctly,
 using in-memory data and mocked network calls.
@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -34,7 +33,7 @@ class TestEndToEndPipeline:
         return f"<html><head><title>{title}</title></head><body><h1>{title}</h1><p>{body}</p></body></html>"
 
     def test_full_pipeline_crawl_extract_filter_score_tag_index(self, tmp_path):
-        """Test the complete pipeline: crawl → extract → filter → score → tag → index."""
+        """Test the complete pipeline: crawl -> extract -> filter -> score -> tag -> index."""
         data_dir = str(tmp_path / "data")
         os.makedirs(data_dir, exist_ok=True)
 
@@ -70,13 +69,12 @@ class TestEndToEndPipeline:
             html=self._make_html("Python Tutorial", "Python programming content"),
         )
 
-        with patch.object(runner, '_auto_tag', return_value=["python", "tutorial"]):
-            with patch('personal_index.pipeline_runner.Crawler') as MockCrawler:
-                mock_crawler = MagicMock()
-                mock_crawler.crawl.return_value = [page]
-                MockCrawler.return_value = mock_crawler
+        with patch('personal_index.pipeline_runner.Crawler') as MockCrawler:
+            mock_crawler = MagicMock()
+            mock_crawler.crawl.return_value = [page]
+            MockCrawler.return_value = mock_crawler
 
-                stats = runner.run(["https://example.com"], max_depth=1)
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 1
         assert stats.pages_extracted == 1
@@ -98,13 +96,12 @@ class TestEndToEndPipeline:
                 PipelineStepConfig(name="tag", enabled=True),
                 PipelineStepConfig(name="index", enabled=True),
             ],
-            min_content_length=50,  # Require at least 50 chars
+            min_content_length=50,
             min_score_threshold=0.0,
         )
 
         runner = PipelineRunner(config=cfg, data_dir=data_dir)
 
-        # Short content that should be filtered out
         short_page = CrawledPage(
             url="https://example.com/short",
             title="Short",
@@ -127,7 +124,6 @@ class TestEndToEndPipeline:
         data_dir = str(tmp_path / "data")
         os.makedirs(data_dir, exist_ok=True)
 
-        # Set up interests
         interest_store = InterestStore(store_path=f"{data_dir}/interests.json")
         interest_store.add(Interest(
             name="AI",
@@ -207,6 +203,7 @@ class TestEndToEndSearch:
         """Test that imported content can be searched."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
         # Create test files
         test_file = tmp_path / "article.txt"
@@ -214,12 +211,12 @@ class TestEndToEndSearch:
             "Python is a great programming language for web development and data science."
         )
 
-        # Import
-        result = runner.invoke(main, ["import", str(test_file)])
+        # Import with explicit data dir
+        result = runner.invoke(main, ["import", str(test_file), "--data-dir", data_dir])
         assert result.exit_code == 0
 
-        # Search
-        result = runner.invoke(main, ["search", "python programming"])
+        # Search with same data dir
+        result = runner.invoke(main, ["search", "python programming", "--data-dir", data_dir])
         assert result.exit_code == 0
         assert "Python" in result.output or "article" in result.output.lower()
 
@@ -227,12 +224,13 @@ class TestEndToEndSearch:
         """Test that search returns valid JSON."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
         test_file = tmp_path / "data.txt"
         test_file.write_text("Machine learning is transforming artificial intelligence.")
 
-        runner.invoke(main, ["import", str(test_file)])
-        result = runner.invoke(main, ["search", "--json", "machine learning"])
+        runner.invoke(main, ["import", str(test_file), "--data-dir", data_dir])
+        result = runner.invoke(main, ["search", "--json", "machine learning", "--data-dir", data_dir])
         assert result.exit_code == 0
 
         data = json.loads(result.output)
@@ -242,22 +240,24 @@ class TestEndToEndSearch:
         """Test search returns empty when no matches."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
-        result = runner.invoke(main, ["search", "xyznonexistent"])
+        result = runner.invoke(main, ["search", "xyznonexistent", "--data-dir", data_dir])
         assert result.exit_code == 0
         assert "No results" in result.output or "[]" in result.output
 
 
 class TestEndToEndCLIWorkflow:
-    """Test the complete CLI workflow: init → interests → import → search → export."""
+    """Test the complete CLI workflow: init -> interests -> import -> search -> export."""
 
     def test_full_cli_workflow(self, tmp_path, monkeypatch):
         """Test the complete user workflow from init to export."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
         # 1. Init
-        result = runner.invoke(main, ["init"])
+        result = runner.invoke(main, ["init", "--data-dir", data_dir])
         assert result.exit_code == 0
         assert "Initialized" in result.output
 
@@ -280,16 +280,16 @@ class TestEndToEndCLIWorkflow:
             "Python programming is essential for modern software development. "
             "It is used in web development, data science, and machine learning."
         )
-        result = runner.invoke(main, ["import", str(article)])
+        result = runner.invoke(main, ["import", str(article), "--data-dir", data_dir])
         assert result.exit_code == 0
         assert "Imported" in result.output
 
         # 5. Search
-        result = runner.invoke(main, ["search", "python"])
+        result = runner.invoke(main, ["search", "python", "--data-dir", data_dir])
         assert result.exit_code == 0
 
         # 6. Export
-        result = runner.invoke(main, ["export", "--format", "json"])
+        result = runner.invoke(main, ["export", "--format", "json", "--data-dir", data_dir])
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert isinstance(data, list)
@@ -313,16 +313,15 @@ class TestEndToEndCLIWorkflow:
         """Test tag add/list workflow."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
-        # Add tags
-        result = runner.invoke(main, ["tag", "add", "important", "--color", "#ff0000"])
+        result = runner.invoke(main, ["tag", "add", "important", "--color", "#ff0000", "--data-dir", data_dir])
         assert result.exit_code == 0
 
-        result = runner.invoke(main, ["tag", "add", "review", "--color", "#00ff00"])
+        result = runner.invoke(main, ["tag", "add", "review", "--color", "#00ff00", "--data-dir", data_dir])
         assert result.exit_code == 0
 
-        # List tags
-        result = runner.invoke(main, ["tag", "list"])
+        result = runner.invoke(main, ["tag", "list", "--data-dir", data_dir])
         assert result.exit_code == 0
         assert "important" in result.output
         assert "review" in result.output
@@ -399,7 +398,6 @@ class TestEndToEndIndexOperations:
         """Test that index persists to disk and reloads."""
         idx_path = str(tmp_path / "persist.json")
 
-        # Create and save
         index1 = SearchIndex(db_path=idx_path)
         index1.add_page(IndexedPage(
             url="https://example.com/persist",
@@ -407,7 +405,6 @@ class TestEndToEndIndexOperations:
             content="This should persist across restarts.",
         ))
 
-        # Reload
         index2 = SearchIndex(db_path=idx_path)
         assert index2.get_page_count() == 1
         page = index2.get_page("https://example.com/persist")
@@ -441,16 +438,14 @@ class TestEndToEndContentProcessing:
     """Test content extraction, filtering, and scoring together."""
 
     def test_extract_filter_score_chain(self):
-        """Test the extract → filter → score chain."""
+        """Test the extract -> filter -> score chain."""
         html = "<html><head><title>Test Article</title></head><body><p>Python programming is fun.</p></body></html>"
 
-        # Extract
         extractor = ContentExtractor()
         extracted = extractor.extract(html)
         assert extracted.title == "Test Article"
         assert "Python programming" in extracted.text
 
-        # Filter
         filter_cfg = FilterConfig(min_content_length=5)
         content_filter = ContentFilter(config=filter_cfg)
         page = CrawledPage(
@@ -460,7 +455,6 @@ class TestEndToEndContentProcessing:
         )
         assert content_filter.should_include(page) is True
 
-        # Score
         scorer = ContentScorer()
         score = scorer.score(
             keyword_matches=2,
@@ -525,12 +519,13 @@ class TestEndToEndExportFormats:
         """Test JSON export."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
         article = tmp_path / "test.txt"
         article.write_text("Test content for export.")
-        runner.invoke(main, ["import", str(article)])
+        runner.invoke(main, ["import", str(article), "--data-dir", data_dir])
 
-        result = runner.invoke(main, ["export", "--format", "json"])
+        result = runner.invoke(main, ["export", "--format", "json", "--data-dir", data_dir])
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert isinstance(data, list)
@@ -539,12 +534,13 @@ class TestEndToEndExportFormats:
         """Test Markdown export."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
         article = tmp_path / "test.txt"
         article.write_text("Test content for export.")
-        runner.invoke(main, ["import", str(article)])
+        runner.invoke(main, ["import", str(article), "--data-dir", data_dir])
 
-        result = runner.invoke(main, ["export", "--format", "markdown"])
+        result = runner.invoke(main, ["export", "--format", "markdown", "--data-dir", data_dir])
         assert result.exit_code == 0
         assert "# Exported Content" in result.output
 
@@ -552,12 +548,13 @@ class TestEndToEndExportFormats:
         """Test CSV export."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
         article = tmp_path / "test.txt"
         article.write_text("Test content for export.")
-        runner.invoke(main, ["import", str(article)])
+        runner.invoke(main, ["import", str(article), "--data-dir", data_dir])
 
-        result = runner.invoke(main, ["export", "--format", "csv"])
+        result = runner.invoke(main, ["export", "--format", "csv", "--data-dir", data_dir])
         assert result.exit_code == 0
         assert "title" in result.output
 
@@ -565,13 +562,14 @@ class TestEndToEndExportFormats:
         """Test export to a file."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+        data_dir = str(tmp_path / ".personal_index")
 
         article = tmp_path / "test.txt"
         article.write_text("Test content for file export.")
-        runner.invoke(main, ["import", str(article)])
+        runner.invoke(main, ["import", str(article), "--data-dir", data_dir])
 
         output_file = str(tmp_path / "export.json")
-        result = runner.invoke(main, ["export", "--format", "json", "--output", output_file])
+        result = runner.invoke(main, ["export", "--format", "json", "--output", output_file, "--data-dir", data_dir])
         assert result.exit_code == 0
         assert os.path.exists(output_file)
 

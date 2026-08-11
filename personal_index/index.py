@@ -79,18 +79,20 @@ class SearchIndex:
         """Add a page to the index. Returns page id."""
         if isinstance(page, CrawledPage):
             from personal_index.url_utils import extract_domain
+            crawled_at = getattr(page, "crawled_at", "")
+            if hasattr(crawled_at, "isoformat"):
+                crawled_at = crawled_at.isoformat()
             indexed = IndexedPage(
                 url=page.url,
                 title=page.title,
                 content=page.content or "",
                 score=getattr(page, "relevance_score", 0.0),
-                crawled_at=getattr(page, "crawled_at", ""),
-                domain=extract_domain(page.url) if hasattr(page, "url") else "",
+                crawled_at=crawled_at,
+                domain=extract_domain(page.url) or "",
                 status_code=getattr(page, "status_code", 200),
                 content_length=len(page.content or ""),
                 language=getattr(page, "language", "en"),
                 keywords=getattr(page, "keywords", []),
-                meta_description=getattr(page, "meta_description", ""),
                 matched_interests=getattr(page, "matched_interests", []),
             )
         else:

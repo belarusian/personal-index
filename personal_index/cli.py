@@ -16,8 +16,10 @@ from personal_index.scheduler import Scheduler, ScheduleStore
 
 
 
-def get_search_index(data_dir: str = ".personal_index") -> SearchIndex:
+def get_search_index(data_dir: str | None = None) -> SearchIndex:
     """Get a SearchIndex with persistent storage in the data directory."""
+    if data_dir is None:
+        data_dir = ".personal_index"
     index_path = os.path.join(data_dir, "search_index.json")
     return SearchIndex(db_path=index_path)
 
@@ -140,10 +142,11 @@ def toggle_interest(name):
 @click.option("--json", "as_json", is_flag=True, help="Output results as JSON")
 @click.option("--tag", default=None, help="Filter results by tag")
 @click.option("--sort", default="relevance", type=click.Choice(["relevance", "date", "title"]), help="Sort results by field")
-def search(query, limit, as_json, tag, sort):
+@click.option("--data-dir", default=None, help="Data directory")
+def search(query, limit, as_json, tag, sort, data_dir):
     """Search indexed content."""
     import json
-    index = get_search_index()
+    index = get_search_index(data_dir)
     results = index.search(query, limit=limit)
     if not results:
         if as_json:
@@ -469,7 +472,7 @@ def import_cmd(path, recursive, config, data_dir, tag):
     from personal_index.models import CrawledPage
 
     extractor = ContentExtractor()
-    index = get_search_index()
+    index = get_search_index(data_dir)
     imported = 0
 
     paths_to_import = []
@@ -515,7 +518,7 @@ def export_cmd(fmt, output, query, limit, data_dir):
     """
     from personal_index.index import SearchIndex
 
-    index = get_search_index()
+    index = get_search_index(data_dir)
 
     if query:
         results = index.search(query, limit=limit)
