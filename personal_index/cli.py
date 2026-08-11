@@ -86,7 +86,8 @@ def add_interest(name, keyword, url_pattern, priority):
 
 
 @interests.command("list")
-def list_interests():
+@click.option("--all", "show_all", is_flag=True, help="Show disabled interests too")
+def list_interests(show_all):
     """List all tracked interests."""
     store = get_interest_store()
     all_interests = store.list_all()
