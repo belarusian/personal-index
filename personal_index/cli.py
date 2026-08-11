@@ -11,6 +11,7 @@ from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import Interest
 from personal_index.scheduler import Scheduler, ScheduleStore
+from personal_index.cli_pipeline import pipeline as pipeline_cmd
 
 
 def get_interest_store() -> InterestStore:
