@@ -24,7 +24,6 @@ class TestFilteringIntegration:
 
     def test_filter_via_pipeline(self):
         """Content should be filtered through the pipeline."""
-        import pytest; pytest.skip("Integration test pending implementation")
         result = self.app.process_content(
             "https://example.com",
             "Meaningful content about technology",
@@ -34,7 +33,6 @@ class TestFilteringIntegration:
 
     def test_filter_direct(self):
         """ContentFilter should work directly."""
-        import pytest; pytest.skip("Integration test pending implementation")
         filter_ = ContentFilter(config=FilterConfig())
         from personal_index.models import CrawledPage
         page = CrawledPage(url="https://example.com", title="Test", content="Some content")
@@ -42,7 +40,6 @@ class TestFilteringIntegration:
 
     def test_filter_empty_content(self):
         """Empty content should be handled by filter."""
-        import pytest; pytest.skip("Integration test pending implementation")
         filter_ = ContentFilter(config=FilterConfig())
         from personal_index.models import CrawledPage
         page = CrawledPage(url="https://example.com", title="Test", content="")
@@ -50,7 +47,6 @@ class TestFilteringIntegration:
 
     def test_filter_short_content(self):
         """Very short content should be handled by filter."""
-        import pytest; pytest.skip("Integration test pending implementation")
         filter_ = ContentFilter(config=FilterConfig())
         from personal_index.models import CrawledPage
         page = CrawledPage(url="https://example.com", title="Test", content="Hi")
@@ -58,7 +54,6 @@ class TestFilteringIntegration:
 
     def test_filter_long_content(self):
         """Long content should be handled by filter."""
-        import pytest; pytest.skip("Integration test pending implementation")
         filter_ = ContentFilter(config=FilterConfig())
         from personal_index.models import CrawledPage
         page = CrawledPage(url="https://example.com", title="Test", content="Word " * 1000)
