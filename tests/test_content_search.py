@@ -269,3 +269,27 @@ class TestIndexPersistence:
         new_search = ContentSearch()
         new_search.index.load_index(str(tmp_path / "empty.json"))
         assert new_search.index.item_count == 0
+
+
+# --- Highlight Tests ---
+
+class TestHighlight:
+    def test_highlight_basic(self, search):
+        text = "Python is great for Python programming"
+        result = search.index.highlight_matches(text, "python")
+        assert "*" in result
+
+    def test_highlight_case_insensitive(self, search):
+        text = "PYTHON is great"
+        result = search.index.highlight_matches(text, "python")
+        assert "*python*" in result.lower() or "*PYTHON*" in result
+
+    def test_highlight_multiple_terms(self, search):
+        text = "Python JavaScript both are languages"
+        result = search.index.highlight_matches(text, "python javascript")
+        assert "*" in result
+
+    def test_highlight_no_match(self, search):
+        text = "No matching terms here"
+        result = search.index.highlight_matches(text, "xyz")
+        assert result == text
