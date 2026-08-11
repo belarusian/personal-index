@@ -5,12 +5,20 @@
       "color": "#3498db",
       "description": "",
       "created_at": "2026-08-11T10:25:01.843221+00:00"
+    },
+    "important,reference": {
+      "name": "important,reference",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T11:24:32.699064+00:00"
     }
   },
   "page_tags": {
     "https://example.com/page1": [
       "important"
     ],
-    "https://example.com/page": []
+    "https://example.com/page": [
+      "important,reference"
+    ]
   }
 }
