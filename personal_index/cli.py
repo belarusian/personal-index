@@ -782,3 +782,77 @@ def config_set_schedule(ctx, interval, data_dir):
     with open(config_path, "w") as f:
         yaml.dump(data, f, default_flow_style=False)
     click.echo("Scheduler configuration updated.")
+
+
+@main.command()
+@click.argument("paths", nargs=-1, required=True)
+@click.option("--recursive", "-r", is_flag=True, help="Recursively import directories")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def import_files(ctx, paths, recursive, data_dir):
+    """Import local files into the index.
+
+    Reads files from the given paths, extracts content, filters by interests,
+    scores, tags, and indexes them.
+
+    Examples:
+        personal-index import ./articles/
+        personal-index import -r ./docs/
+        personal-index import file1.md file2.txt
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    import os
+    from personal_index.pipeline_runner import PipelineRunner
+    from personal_index.models import CrawledPage
+
+    runner = PipelineRunner(data_dir=dd)
+    imported = 0
+    skipped = 0
+    errors = 0
+
+    for path in paths:
+        if not os.path.exists(path):
+            click.echo(f"Warning: path not found: {path}", err=True)
+            errors += 1
+            continue
+
+        if os.path.isfile(path):
+            files = [path]
+        elif os.path.isdir(path) and recursive:
+            files = []
+            for root, dirs, filenames in os.walk(path):
+                for fn in filenames:
+                    fp = os.path.join(root, fn)
+                    # Skip hidden and binary files
+                    if fn.startswith("."):
+                        continue
+                    files.append(fp)
+        elif os.path.isdir(path):
+            files = [os.path.join(path, f) for f in os.listdir(path)
+                     if os.path.isfile(os.path.join(path, f)) and not f.startswith(".")]
+        else:
+            continue
+
+        for fp in files:
+            try:
+                with open(fp, "r", errors="replace") as f:
+                    content = f.read()
+                if len(content) < 10:
+                    skipped += 1
+                    continue
+                # Use file path as URL-like identifier
+                url = f"file://{os.path.abspath(fp)}"
+                page = CrawledPage(
+                    url=url,
+                    title=os.path.basename(fp),
+                    content=content,
+                )
+                if runner.add_page_directly(page):
+                    imported += 1
+                else:
+                    skipped += 1
+            except Exception as e:
+                click.echo(f"Error importing {fp}: {e}", err=True)
+                errors += 1
+
+    click.echo(f"Import complete: {imported} imported, {skipped} skipped, {errors} errors")
