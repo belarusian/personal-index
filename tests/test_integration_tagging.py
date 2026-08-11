@@ -35,18 +35,18 @@ class TestTaggingIntegration:
     def test_tagging_direct(self):
         """ContentTagger should work directly."""
         tagger = ContentTagger()
-        tags = tagger.tag("Python programming tutorial", "Python Tutorial")
-        assert isinstance(tags, list)
+        tags = tagger.tag("Python programming tutorial", min_confidence=0.5)
+        assert isinstance(tags.tags, list)
 
     def test_tagging_empty_content(self):
         """Empty content should return empty or minimal tags."""
         tagger = ContentTagger()
-        tags = tagger.tag("", "")
-        assert isinstance(tags, list)
+        tags = tagger.tag("", min_confidence=0.5)
+        assert isinstance(tags.tags, list)
 
     def test_tagging_consistent(self):
         """Same content should produce same tags."""
         tagger = ContentTagger()
-        tags1 = tagger.tag("Python programming", "Python")
-        tags2 = tagger.tag("Python programming", "Python")
-        assert tags1 == tags2
+        tags1 = tagger.tag("Python programming", min_confidence=0.5)
+        tags2 = tagger.tag("Python programming", min_confidence=0.5)
+        assert tags1.tags == tags2.tags
