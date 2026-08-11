@@ -55,6 +55,10 @@ def main(ctx, data_dir):
     ctx.obj["data_dir"] = data_dir or ".personal_index"
 
 
+# Register pipeline command
+main.add_command(pipeline_cmd, "pipeline")
+
+
 @main.command()
 @click.option("--data-dir", default=None, help="Data directory")
 @click.option("--config", default="config.yaml", help="Config file path")
@@ -316,7 +320,6 @@ def search(ctx, query, limit, snippet, data_dir):
             if not content and isinstance(page, CrawledPage):
                 content = page.content or ""
             if content:
-                # Show first 200 chars
                 snippet_text = content[:200].strip()
                 if len(content) > 200:
                     snippet_text += "..."
@@ -367,7 +370,7 @@ def status(ctx, data_dir):
         click.echo("Config: not found (run 'personal-index init' to create)")
 
 
-@main.command()
+@main.command("import-files")
 @click.argument("paths", nargs=-1, required=True)
 @click.option("--recursive", "-r", is_flag=True, help="Recursively import directories")
 @click.option("--data-dir", default=None, help="Data directory")
@@ -435,6 +438,10 @@ def import_files(ctx, paths, recursive, data_dir):
                 errors += 1
 
     click.echo(f"Import complete: {imported} imported, {skipped} skipped, {errors} errors")
+
+
+# Also register as 'import' alias
+main.add_command(import_files, "import")
 
 
 @main.group()
