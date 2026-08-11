@@ -388,3 +388,54 @@ def status(config, data_dir):
         click.echo(f"Pipeline steps: {', '.join(pcfg.get_enabled_steps())}")
     except Exception as e:
         click.echo(f"Pipeline config error: {e}")
+
+
+@main.command()
+@click.argument("path", required=True)
+@click.option("--recursive", "-r", is_flag=True, help="Recursively import directory")
+@click.option("--config", default="config.yaml", help="Config file path")
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+def import_cmd(path, recursive, config, data_dir):
+    """Import local files into the index.
+
+    PATH can be a file or directory. Use --recursive for directories.
+    """
+    import os
+    from pathlib import Path
+
+    from personal_index.content_extractor import ContentExtractor
+    from personal_index.index import SearchIndex
+    from personal_index.models import CrawledPage
+
+    extractor = ContentExtractor()
+    index = SearchIndex()
+    imported = 0
+
+    paths_to_import = []
+    p = Path(path)
+    if p.is_file():
+        paths_to_import.append(p)
+    elif p.is_dir():
+        if recursive:
+            paths_to_import = sorted(p.rglob("*"))
+            paths_to_import = [f for f in paths_to_import if f.is_file()]
+        else:
+            paths_to_import = sorted(p.glob("*"))
+            paths_to_import = [f for f in paths_to_import if f.is_file()]
+
+    for file_path in paths_to_import:
+        try:
+            with open(file_path, "r", errors="replace") as f:
+                text = f.read()
+            page = CrawledPage(
+                url=f"file://{file_path.resolve()}",
+                title=file_path.name,
+                content=text,
+                html="",
+            )
+            index.index_page(page)
+            imported += 1
+        except Exception as e:
+            click.echo(f"  Error importing {file_path}: {e}", err=True)
+
+    click.echo(f"Imported {imported} file(s) into index.")
