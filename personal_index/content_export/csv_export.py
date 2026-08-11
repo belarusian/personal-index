@@ -31,7 +31,7 @@ class CsvExportOptions:
 
     delimiter: str = ","
     quotechar: str = '"'
-    quoting: int = csv.QUOTE_MINIMAL
+    quoting: int = csv.QUOTE_NONNUMERIC
     encoding: str = "utf-8"
     include_header: bool = True
     columns: list[str] | None = None
@@ -116,8 +116,13 @@ class CsvExporter:
                 result[key] = self._format_value(value)
         return result
 
-    def _format_value(self, value: Any) -> str:
-        """Format a value for CSV output."""
+    def _format_value(self, value: Any) -> Any:
+        """Format a value for CSV output.
+
+        Returns numbers for numeric strings so QUOTE_NONNUMERIC
+        doesn't quote them, while empty strings (from None) stay
+        as strings and get quoted.
+        """
         if value is None:
             return ""
         if isinstance(value, datetime):
@@ -126,6 +131,16 @@ class CsvExporter:
             return "; ".join(str(v) for v in value)
         if isinstance(value, bool):
             return str(value).lower()
+        if isinstance(value, str):
+            # Convert numeric strings to numbers so QUOTE_NONNUMERIC
+            # doesn't add unnecessary quotes around them
+            try:
+                return int(value)
+            except ValueError:
+                try:
+                    return float(value)
+                except ValueError:
+                    pass
         return str(value)
 
     def _get_columns(
