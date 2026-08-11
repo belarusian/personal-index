@@ -1,7 +1,5 @@
-# Personal Index Documentation
+# Personal Index
 
-## Overview
-
-Personal Index is a personal web search engine that scans, filters, and indexes the web based on your interests. It provides a complete pipeline: **crawl → extract → filter → score → tag → index → search**.
+A personal web search engine that crawls, filters, scores, tags, and indexes web content based on your interests.
 
 ## Quick Start
