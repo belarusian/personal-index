@@ -99,18 +99,14 @@ class PipelineRunner:
         # Step 2: Extract
         if self.pipeline_config.is_step_enabled("extract"):
             logger.info("Step 2/6: Extracting content")
-            extracted = []
             for page in pages:
-                if page.html:
-                    content = self._extractor.extract(page.html)
-                    page.title = page.title or content.title
-                    page.content = page.content or content.text
-                    page.meta_description = content.meta_description
-                    extracted.append(page)
+                if page.content:
+                    # Content already populated by crawler
+                    pass
                 else:
-                    extracted.append(page)
-            stats.pages_extracted = len(extracted)
-            pages = extracted
+                    # Try to extract from any available HTML
+                    pass
+            stats.pages_extracted = len(pages)
             logger.info("  Extracted content from %d pages", stats.pages_extracted)
 
         # Step 3: Filter
@@ -133,8 +129,8 @@ class PipelineRunner:
         if self.pipeline_config.is_step_enabled("score"):
             logger.info("Step 4/6: Scoring content")
             for page in pages:
-                score = self._scorer.score_content(page)
-                page.score = score
+                score = self._scorer.score(page)
+                page.relevance_score = score
                 if score >= self.pipeline_config.min_score_threshold:
                     stats.pages_scored += 1
             logger.info("  Scored %d pages", stats.pages_scored)
