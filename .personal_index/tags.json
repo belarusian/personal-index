@@ -10,6 +10,7 @@
   "page_tags": {
     "https://example.com/page1": [
       "important"
-    ]
+    ],
+    "https://example.com/page": []
   }
 }

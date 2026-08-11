@@ -112,6 +112,19 @@ class PipelineRunner:
         for subdir in ["cache", "archive", "backups"]:
             os.makedirs(os.path.join(data_dir, subdir), exist_ok=True)
 
+    def _emit_progress(self, stage: str, count: int, total: int = 0) -> None:
+        """Emit progress update, handling different callback signatures."""
+        if self._progress_callback is None:
+            return
+        import inspect
+        sig = inspect.signature(self._progress_callback)
+        params = list(sig.parameters.values())
+        # If callback accepts 3 params, pass total too
+        if len(params) >= 3:
+            self._progress_callback(stage, count, total)
+        else:
+            self._progress_callback(stage, count)
+
     def run(self, seed_urls: list[str], max_depth: int | None = None) -> PipelineStats:
         """Run the full pipeline on the given seed URLs.
 
@@ -202,8 +215,7 @@ class PipelineRunner:
         try:
             pages = self._crawler.crawl(seed_urls, max_depth=max_depth)
             stats.pages_crawled = len(pages)
-            if self._progress_callback:
-                self._progress_callback("crawl", stats.pages_crawled)
+            self._emit_progress("crawl", stats.pages_crawled)
             return pages
         except Exception as e:
             stats.errors.append(f"Crawl error: {e}")
@@ -230,8 +242,7 @@ class PipelineRunner:
             except Exception as e:
                 stats.errors.append(f"File read error {fp}: {e}")
         stats.pages_crawled = len(pages)
-        if self._progress_callback:
-            self._progress_callback("crawl", stats.pages_crawled)
+        self._emit_progress("crawl", stats.pages_crawled)
         return pages
 
     def _extract_stage(
@@ -241,8 +252,7 @@ class PipelineRunner:
         # Content is already extracted by the crawler
         extracted = [p for p in pages if p.content]
         stats.pages_extracted = len(extracted)
-        if self._progress_callback:
-            self._progress_callback("extract", stats.pages_extracted)
+        self._emit_progress("extract", stats.pages_extracted)
         return extracted
 
     def _filter_stage(
@@ -252,8 +262,7 @@ class PipelineRunner:
         included = self._filter.filter_pages(pages)
         stats.pages_filtered_in = len(included)
         stats.pages_filtered_out = len(pages) - len(included)
-        if self._progress_callback:
-            self._progress_callback("filter", stats.pages_filtered_in)
+        self._emit_progress("filter", stats.pages_filtered_in)
         return included
 
     def _score_stage(
@@ -270,8 +279,7 @@ class PipelineRunner:
             )
             page.relevance_score = score.total
         stats.pages_scored = len(pages)
-        if self._progress_callback:
-            self._progress_callback("score", stats.pages_scored)
+        self._emit_progress("score", stats.pages_scored)
         return pages
 
     def _tag_stage(
@@ -300,8 +308,7 @@ class PipelineRunner:
         stats.interests_matched = sum(
             1 for p in pages if p.matched_interests
         )
-        if self._progress_callback:
-            self._progress_callback("tag", stats.pages_tagged)
+        self._emit_progress("tag", stats.pages_tagged)
         return pages
 
     def _index_stage(
@@ -317,8 +324,7 @@ class PipelineRunner:
         self._search_index._save()
         self._tag_store._save()
         self._interest_store._save()
-        if self._progress_callback:
-            self._progress_callback("index", stats.pages_indexed)
+        self._emit_progress("index", stats.pages_indexed)
 
     def get_stats(self) -> dict[str, Any]:
         """Get current pipeline statistics."""
