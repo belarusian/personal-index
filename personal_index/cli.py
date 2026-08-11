@@ -362,7 +362,7 @@ def tags_list(ctx, data_dir):
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     store = get_tag_store(dd)
 
-    tag_names = store.get_all_tags()
+    tag_names = store.list_tags()
     if not tag_names:
         click.echo("No tags found.")
         return
@@ -386,8 +386,8 @@ def tags_remove(ctx, tag_name, url, data_dir):
     click.echo(f"Removed tag '{tag_name}' from {url}")
 
 
-# Import command
-@main.command()
+# Import command - use 'import_' to avoid Python keyword conflict
+@main.command("import")
 @click.argument("source", required=True)
 @click.option("-r", "--recursive", is_flag=True, help="Recursively import directories")
 @click.option("--data-dir", default=None, help="Data directory")
@@ -412,7 +412,7 @@ def import_(ctx, source, recursive, data_dir):
     from personal_index.content_filter import ContentFilter, FilterConfig
 
     scorer = ContentScorer(weights=ScoreWeights())
-    content_filter = ContentFilter(config=FilterConfig())
+    content_filter = ContentFilter(config=FilterConfig(min_content_length=10))
 
     def _import_single_file(filepath: str) -> int:
         """Import a single file through the full pipeline."""
@@ -648,7 +648,7 @@ def reindex(ctx, data_dir):
     from personal_index.content_filter import ContentFilter, FilterConfig
 
     scorer = ContentScorer(weights=ScoreWeights())
-    content_filter = ContentFilter(config=FilterConfig())
+    content_filter = ContentFilter(config=FilterConfig(min_content_length=10))
 
     # Clear existing index
     idx.clear()
@@ -737,7 +737,7 @@ def export(ctx, fmt, output, data_dir):
                     "title": p.title,
                     "content": p.content[:500] if p.content else "",
                     "score": p.score,
-                    "tags": tag_store.get_tags_for_page(p.url),
+                    "tags": [t.name if hasattr(t, "name") else str(t) for t in tag_store.get_tags_for_page(p.url)],
                 }
                 for p in pages
             ],
@@ -748,7 +748,8 @@ def export(ctx, fmt, output, data_dir):
         lines = ["# Search Results", ""]
         for p in pages:
             tags = tag_store.get_tags_for_page(p.url)
-            tag_str = f" [{', '.join(tags)}]" if tags else ""
+            tag_names = [t.name if hasattr(t, "name") else str(t) for t in tags]
+            tag_str = f" [{', '.join(tag_names)}]" if tag_names else ""
             lines.append(f"## {p.title}{tag_str}")
             lines.append(f"**URL:** {p.url}")
             lines.append(f"**Score:** {p.score:.4f}")
@@ -764,16 +765,18 @@ def export(ctx, fmt, output, data_dir):
         writer.writerow(["url", "title", "score", "tags", "content_preview"])
         for p in pages:
             tags = tag_store.get_tags_for_page(p.url)
+            tag_names = [t.name if hasattr(t, "name") else str(t) for t in tags]
             writer.writerow([
                 p.url, p.title, f"{p.score:.4f}",
-                ";".join(tags), (p.content or "")[:200]
+                ";".join(tag_names), (p.content or "")[:200]
             ])
         output_text = buf.getvalue()
     else:
         lines = [f"Indexed Pages ({len(pages)})", "=" * 40]
         for p in pages:
             tags = tag_store.get_tags_for_page(p.url)
-            tag_str = f" [{', '.join(tags)}]" if tags else ""
+            tag_names = [t.name if hasattr(t, "name") else str(t) for t in tags]
+            tag_str = f" [{', '.join(tag_names)}]" if tag_names else ""
             lines.append(f"\n{p.title}{tag_str}")
             lines.append(f"  URL: {p.url}")
             lines.append(f"  Score: {p.score:.4f}")
