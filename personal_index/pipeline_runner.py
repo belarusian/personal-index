@@ -163,7 +163,7 @@ class PipelineRunner:
             logger.info("Stage 6/6: Indexing %d pages", len(pages))
             self._index_stage(pages, stats)
 
-        except Exception as e:
+        except (OSError, ValueError) as e:
             stats.errors.append(f"Pipeline error: {e}")
             logger.error("Pipeline error: %s", e)
 
@@ -201,7 +201,7 @@ class PipelineRunner:
             # Stage 6: Index
             self._index_stage(pages, stats)
 
-        except Exception as e:
+        except (OSError, ValueError) as e:
             stats.errors.append(f"Pipeline error: {e}")
             logger.error("Pipeline error: %s", e)
 
@@ -217,7 +217,7 @@ class PipelineRunner:
             stats.pages_crawled = len(pages)
             self._emit_progress("crawl", stats.pages_crawled)
             return pages
-        except Exception as e:
+        except (OSError, ValueError) as e:
             stats.errors.append(f"Crawl error: {e}")
             return []
 
@@ -239,7 +239,7 @@ class PipelineRunner:
                     meta_description=content[:200],
                 )
                 pages.append(page)
-            except Exception as e:
+            except (OSError, ValueError) as e:
                 stats.errors.append(f"File read error {fp}: {e}")
         stats.pages_crawled = len(pages)
         self._emit_progress("crawl", stats.pages_crawled)
@@ -270,7 +270,6 @@ class PipelineRunner:
     ) -> list[CrawledPage]:
         """Stage 4: Score pages."""
         for page in pages:
-            text = f"{page.title} {page.content}"
             score = self._scorer.score(
                 keyword_matches=len(page.matched_interests or []),
                 total_keywords=max(len(self._interest_store.get_all_keywords()), 1),
@@ -318,7 +317,7 @@ class PipelineRunner:
         for page in pages:
             try:
                 self._search_index.add_page(page)
-            except Exception as e:
+            except (OSError, ValueError) as e:
                 stats.errors.append(f"Index error for {page.url}: {e}")
         stats.pages_indexed = self._search_index.get_page_count()
         self._search_index._save()
@@ -383,7 +382,7 @@ class PipelineRunner:
             self._search_index._save()
             self._tag_store._save()
             return True
-        except Exception:
+        except (OSError, ValueError):
             return False
 
     def close(self) -> None:

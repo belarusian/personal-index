@@ -297,7 +297,7 @@ def interests_add(ctx, name, keywords, priority, data_dir):
         priority=priority,
     )
     store.add(interest)
-    kw_str = ', '.join(keywords) if keywords else '(none)'
+
     click.echo(f"Added interest: {name}")
 
 

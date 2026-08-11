@@ -252,7 +252,7 @@ class Pipeline:
                 if page:
                     pages.append(page)
                     stats.pages_crawled += 1
-            except Exception as e:
+            except (OSError, ValueError) as e:
                 logger.warning("Failed to crawl %s: %s", url, e)
                 stats.errors.append(f"Crawl error for {url}: {e}")
             if callback:
@@ -297,7 +297,7 @@ class Pipeline:
                     status_code=resp.status,
                     raw_html=html,
                 )
-        except Exception as e:
+        except (OSError, ValueError) as e:
             logger.warning("Failed to fetch %s: %s", url, e)
             return None
 
