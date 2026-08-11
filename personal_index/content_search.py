@@ -187,6 +187,27 @@ class SearchIndex:
         suggestions.sort()
         return suggestions[:limit]
 
+    def save_index(self, filepath):
+        """Save the search index to a JSON file."""
+        import json as _json
+        data = {
+            "items": self._items,
+            "index": {k: list(v) for k, v in self._index.items()},
+            "term_freq": self._term_freq,
+        }
+        with open(filepath, "w") as f:
+            _json.dump(data, f, default=str)
+
+    def load_index(self, filepath):
+        """Load the search index from a JSON file."""
+        import json as _json
+        with open(filepath) as f:
+            data = _json.load(f)
+        self._items = data["items"]
+        self._index = {k: set(v) for k, v in data["index"].items()}
+        self._term_freq = data["term_freq"]
+
+
 
 class ContentSearch:
     """High-level search interface."""
