@@ -51,6 +51,16 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet):
         config=pipeline_cfg,
         data_dir=data_dir,
     )
+
+    if not quiet:
+        click.echo("Running pipeline steps:")
+        steps = ["crawl", "extract", "filter", "score", "tag", "index"]
+        for step in steps:
+            enabled = pipeline_cfg.is_step_enabled(step)
+            status = "✓" if enabled else "○"
+            click.echo(f"  [{status}] {step}")
+        click.echo()
+
     stats = runner.run(list(urls), max_depth=depth)
 
     click.echo()
