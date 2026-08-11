@@ -246,7 +246,7 @@ def run_mypy(modules: list[ModuleInfo]) -> None:
         )
         for line in (result.stdout + result.stderr).splitlines():
             line = line.strip()
-            if not line:
+            if not line or ": note:" in line:
                 continue
             for mod in modules:
                 if mod.filepath in line:
@@ -961,6 +961,15 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
     print("[docs_generator] Running pytest ...")
     test_summary = run_pytest(modules)
 
+    # Scan tests/ directory for test count
+    test_root = os.path.join(os.path.dirname(root) if root != "." else ".", "tests")
+    if not os.path.isdir(test_root):
+        test_root = "tests"
+    print(f"[docs_generator] Scanning tests in {test_root} ...")
+    test_modules = scan_modules(test_root) if os.path.isdir(test_root) else []
+    total_tests = sum(m.test_count for m in test_modules)
+    print(f"[docs_generator] Found {total_tests} tests in {len(test_modules)} test files")
+
     # Build dependency graph
     dep_graph = detect_dependencies(modules)
 
@@ -974,7 +983,7 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
         total_lines=sum(m.line_count for m in modules),
         total_classes=sum(len(m.classes) for m in modules),
         total_functions=sum(len(m.functions) + sum(len(c.methods) for c in m.classes) for m in modules),
-        total_tests=sum(m.test_count for m in modules),
+        total_tests=total_tests,
         total_ruff_errors=sum(len(m.ruff_errors) for m in modules),
         total_ruff_warnings=sum(len(m.ruff_warnings) for m in modules),
         total_mypy_errors=sum(len(m.mypy_errors) for m in modules),
