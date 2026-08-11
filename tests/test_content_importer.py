@@ -158,3 +158,37 @@ class TestRssImport:
         items = importer.import_content(data, "rss")
         assert items[0]["title"] == "T"
         assert items[0]["id"] != ""
+
+
+# --- Edge Cases & Validation ---
+
+class TestEdgeCases:
+    def test_unsupported_format_raises(self, importer):
+        with pytest.raises(ValueError, match="Unsupported format"):
+            importer.import_content("", "xml")
+
+    def test_supported_formats(self):
+        assert ContentImporter.SUPPORTED_FORMATS == ("json", "html", "markdown", "rss", "csv")
+
+    def test_import_json_invalid(self, importer):
+        with pytest.raises(json.JSONDecodeError):
+            importer.import_content("not json", "json")
+
+    def test_import_csv_with_empty_values(self, importer):
+        data = "title,description\nPost 1,\n,Desc 2"
+        items = importer.import_content(data, "csv")
+        assert len(items) == 2
+
+    def test_import_markdown_no_sections(self, importer):
+        items = importer.import_content("Just plain text", "markdown")
+        assert items == []
+
+    def test_import_json_normalizes_tags(self, importer):
+        data = '[{"title": "T", "tags": ["x", "y"], "extra": "ignored"}]'
+        items = importer.import_content(data, "json")
+        assert items[0]["tags"] == ["x", "y"]
+        assert "extra" not in items[0]
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
