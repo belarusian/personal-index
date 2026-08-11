@@ -77,17 +77,17 @@ class TestMemoryCache:
         assert self.cache.get("key5") == "value5"
 
     def test_lru_access_updates_order(self) -> None:
-        self.cache.set("key1", "value1")
-        self.cache.set("key2", "value2")
-        self.cache.set("key3", "value3")
+        cache = MemoryCache(max_size=3)
+        cache.set("key1", "value1")
+        cache.set("key2", "value2")
+        cache.set("key3", "value3")
         # Access key1 to make it recently used
-        self.cache.get("key1")
+        cache.get("key1")
         # Add more to trigger eviction
-        self.cache.set("key4", "value4")
-        self.cache.set("key5", "value5")
+        cache.set("key4", "value4")
         # key2 should be evicted (least recently used)
-        assert self.cache.get("key2") is None
-        assert self.cache.get("key1") == "value1"
+        assert cache.get("key2") is None
+        assert cache.get("key1") == "value1"
 
     def test_ttl_expiry(self) -> None:
         self.cache.set("key1", "value1", ttl=0.1)

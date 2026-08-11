@@ -132,8 +132,7 @@ class TestJsonExporter:
         opts = JsonExportOptions(indent=None)
         exporter = JsonExporter(options=opts)
         result = exporter.export_item(self.items[0])
-        assert "
-" not in result
+        assert "\n" not in result
 
     def test_export_summary(self) -> None:
         result = self.exporter.export_summary(self.items)
