@@ -8,7 +8,7 @@ import tempfile
 import pytest
 
 from personal_index.app import PersonalIndexApp
-from personal_index.content_filter import ContentFilter
+from personal_index.content_filter import ContentFilter, FilterConfig
 
 
 class TestFilteringIntegration:
@@ -33,23 +33,28 @@ class TestFilteringIntegration:
 
     def test_filter_direct(self):
         """ContentFilter should work directly."""
-        filter_ = ContentFilter()
-        assert isinstance(filter_.should_index("Some content"), bool)
+        filter_ = ContentFilter(config=FilterConfig())
+        from personal_index.models import CrawledPage
+        page = CrawledPage(url="https://example.com", title="Test", content="Some content")
+        assert isinstance(filter_.should_include(page), bool)
 
     def test_filter_empty_content(self):
         """Empty content should be handled by filter."""
-        filter_ = ContentFilter()
-        result = filter_.should_index("")
-        assert isinstance(result, bool)
+        filter_ = ContentFilter(config=FilterConfig())
+        from personal_index.models import CrawledPage
+        page = CrawledPage(url="https://example.com", title="Test", content="")
+        assert isinstance(filter_.should_include(page), bool)
 
     def test_filter_short_content(self):
         """Very short content should be handled by filter."""
-        filter_ = ContentFilter()
-        result = filter_.should_index("Hi")
-        assert isinstance(result, bool)
+        filter_ = ContentFilter(config=FilterConfig())
+        from personal_index.models import CrawledPage
+        page = CrawledPage(url="https://example.com", title="Test", content="Hi")
+        assert isinstance(filter_.should_include(page), bool)
 
     def test_filter_long_content(self):
         """Long content should be handled by filter."""
-        filter_ = ContentFilter()
-        result = filter_.should_index("Word " * 1000)
-        assert isinstance(result, bool)
+        filter_ = ContentFilter(config=FilterConfig())
+        from personal_index.models import CrawledPage
+        page = CrawledPage(url="https://example.com", title="Test", content="Word " * 1000)
+        assert isinstance(filter_.should_include(page), bool)
