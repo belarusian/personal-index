@@ -406,6 +406,15 @@ class Pipeline:
 
     def add_page_directly(self, page: CrawledPage) -> bool:
         """Add a page directly through the pipeline (skip crawl)."""
+        # Extract content from raw HTML if available
+        if page.raw_html and (not page.title or not page.content):
+            extracted = self.extractor.extract(page.raw_html)
+            if extracted.title:
+                page.title = extracted.title
+            if extracted.text:
+                page.content = extracted.text
+            page.word_count = extracted.word_count
+
         if not page.content:
             return False
 
