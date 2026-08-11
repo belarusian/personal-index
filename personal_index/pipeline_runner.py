@@ -7,6 +7,7 @@ import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
@@ -355,12 +356,14 @@ class PipelineRunner:
         if not content or not content.strip():
             return None
 
+        content = content.strip()
         return CrawledPage(
             url=filepath,
             title=title,
-            content=content.strip(),
+            content=content,
             status_code=200,
-            content_length=len(content),
+            word_count=len(content.split()),
+            crawled_at=datetime.now(timezone.utc),
         )
 
     def _score_page(self, page: CrawledPage) -> ScoreWeights:
