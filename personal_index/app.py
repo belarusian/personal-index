@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 
 from personal_index.config.loader import load_config
-from personal_index.config.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
 from personal_index.content_search import ContentSearch, SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.pipeline import ContentPipeline
@@ -22,23 +21,23 @@ class PersonalIndexApp:
     def __init__(self, config_path: str = "config.yaml", data_dir: str = ".personal_index"):
         self.config_path = config_path
         self.data_dir = data_dir
-        self._config: AppConfig | None = None
-        self._interest_store: InterestStore | None = None
-        self._search_index: SearchIndex | None = None
-        self._content_search: ContentSearch | None = None
-        self._scheduler: Scheduler | None = None
-        self._pipeline: ContentPipeline | None = None
+        self._config = None
+        self._interest_store = None
+        self._search_index = None
+        self._content_search = None
+        self._scheduler = None
+        self._pipeline = None
         self._initialized = False
 
     @property
-    def config(self) -> AppConfig:
+    def config(self):
         """Load and return application configuration."""
         if self._config is None:
             self._config = self._load_config()
         return self._config
 
     @property
-    def interest_store(self) -> InterestStore:
+    def interest_store(self):
         """Get the interest store singleton."""
         if self._interest_store is None:
             store_path = os.path.join(self.data_dir, "interests.json")
@@ -46,21 +45,21 @@ class PersonalIndexApp:
         return self._interest_store
 
     @property
-    def search_index(self) -> SearchIndex:
+    def search_index(self):
         """Get the search index singleton."""
         if self._search_index is None:
             self._search_index = SearchIndex()
         return self._search_index
 
     @property
-    def content_search(self) -> ContentSearch:
+    def content_search(self):
         """Get the content search singleton."""
         if self._content_search is None:
             self._content_search = ContentSearch(self.search_index)
         return self._content_search
 
     @property
-    def scheduler(self) -> Scheduler:
+    def scheduler(self):
         """Get the scheduler singleton."""
         if self._scheduler is None:
             schedule_store = ScheduleStore(path=os.path.join(self.data_dir, "schedules.json"))
@@ -72,18 +71,19 @@ class PersonalIndexApp:
         return self._scheduler
 
     @property
-    def pipeline(self) -> ContentPipeline:
+    def pipeline(self):
         """Get the content processing pipeline."""
         if self._pipeline is None:
             self._pipeline = self._build_pipeline()
         return self._pipeline
 
-    def _load_config(self) -> AppConfig:
+    def _load_config(self):
         """Load configuration from file or use defaults."""
         try:
             return load_config(self.config_path)
         except (FileNotFoundError, OSError):
             logger.info("No config file found, using defaults")
+            from personal_index.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
             return AppConfig(
                 data_dir=self.data_dir,
                 crawl=CrawlConfig(),
@@ -91,41 +91,70 @@ class PersonalIndexApp:
                 index=IndexConfig(),
             )
 
-    def _build_pipeline(self) -> ContentPipeline:
+    def _build_pipeline(self):
         """Build the default content processing pipeline."""
-        from personal_index.content_extractor import extract_text
-        from personal_index.content_filter import ContentFilter
-        from personal_index.content_scoring import ContentScorer
+        from personal_index.content_extractor import ContentExtractor
+        from personal_index.content_filter import ContentFilter, FilterConfig
+        from personal_index.content_scoring import ContentScorer, ScoreWeights
         from personal_index.content_tagger import ContentTagger
 
         pipeline = ContentPipeline(name="default")
 
         # Step 1: Extract text content
+        extractor = ContentExtractor()
+
         def extract_step(data: dict) -> dict:
             url = data.get("url", "")
-            raw = data.get("raw_content", "")
-            data["extracted_text"] = extract_text(raw) if raw else ""
+            raw = data.get("raw_content", data.get("content", ""))
+            extracted = extractor.extract(raw)
+            data["extracted_text"] = extracted.text
+            data["title"] = data.get("title") or extracted.title or "Untitled"
             return data
 
         pipeline.add_step("extract", extract_step, on_error="continue")
 
         # Step 2: Filter content
-        content_filter = ContentFilter()
+        filter_config = FilterConfig()
+        content_filter = ContentFilter(config=filter_config)
 
         def filter_step(data: dict) -> dict:
-            text = data.get("extracted_text", data.get("text", ""))
-            data["passes_filter"] = content_filter.should_index(text)
+            from personal_index.models import CrawledPage
+            page = CrawledPage(
+                url=data.get("url", ""),
+                title=data.get("title", ""),
+                content=data.get("extracted_text", data.get("text", "")),
+            )
+            data["passes_filter"] = content_filter.should_include(page)
             return data
 
         pipeline.add_step("filter", filter_step, on_error="continue")
 
         # Step 3: Score content
-        scorer = ContentScorer()
+        scorer = ContentScorer(weights=ScoreWeights())
 
         def score_step(data: dict) -> dict:
             text = data.get("extracted_text", data.get("text", ""))
             title = data.get("title", "")
-            data["score"] = scorer.score(text, title)
+            word_count = len(text.split()) if text else 0
+            # Count keyword matches (simplified)
+            keywords = []
+            for interest in self.interest_store.list_all():
+                if interest.enabled:
+                    keywords.extend(interest.keywords)
+            keyword_matches = sum(1 for kw in keywords if kw.lower() in text.lower())
+            
+            from datetime import datetime, timezone
+            score = scorer.score(
+                published_at=None,
+                updated_at=datetime.now(timezone.utc),
+                keyword_matches=keyword_matches,
+                total_keywords=len(keywords) if keywords else 1,
+                view_count=0,
+                bookmark_count=0,
+                share_count=0,
+                word_count=word_count,
+            )
+            data["score"] = score.total
             return data
 
         pipeline.add_step("score", score_step, on_error="continue")
@@ -143,7 +172,7 @@ class PersonalIndexApp:
 
         return pipeline
 
-    def initialize(self) -> None:
+    def initialize(self):
         """Initialize all application components."""
         if self._initialized:
             return
@@ -160,10 +189,11 @@ class PersonalIndexApp:
         self._initialized = True
         logger.info("PersonalIndexApp initialized with data_dir=%s", self.data_dir)
 
-    def shutdown(self) -> None:
+    def shutdown(self):
         """Clean up application resources."""
         if self._interest_store:
-            self._interest_store.save()
+            # InterestStore doesn't have a save method, just pass
+            pass
         logger.info("PersonalIndexApp shutdown complete")
 
     def process_content(self, url: str, raw_content: str, title: str = "") -> dict:
@@ -179,17 +209,25 @@ class PersonalIndexApp:
         result = self.pipeline.run(data)
 
         if result.success and result.data.get("passes_filter", True):
-            self.search_index.add_item(result.data)
+            # Add to search index
+            from personal_index.models import IndexedPage
+            page = IndexedPage(
+                url=result.data.get("url", ""),
+                title=result.data.get("title", "Untitled"),
+                content=result.data.get("extracted_text", ""),
+            )
+            self.search_index.add_page(page)
 
         return result.data
 
-    def search(self, query: str, limit: int = 20) -> list[dict]:
+    def search(self, query: str, limit: int = 20) -> list:
         """Search indexed content."""
         self.initialize()
-        return self.content_search.search(query, limit=limit)
+        results = self.content_search.search(query, limit=limit)
+        # Convert to dict for compatibility
+        return [r.to_dict() if hasattr(r, 'to_dict') else r for r in results]
 
-    def add_interest(self, name: str, keywords: list[str] | None = None,
-                     url_patterns: list[str] | None = None, priority: int = 5) -> None:
+    def add_interest(self, name: str, keywords=None, url_patterns=None, priority: int = 5):
         """Add a tracked interest."""
         from personal_index.models import Interest
 
@@ -206,7 +244,7 @@ class PersonalIndexApp:
         """Get application statistics."""
         self.initialize()
         return {
-            "indexed_items": len(self.search_index._items),
+            "indexed_items": len(self.search_index._pages),
             "interests": len(self.interest_store.list_all()),
             "scheduled_jobs": len(self.scheduler.list_jobs()),
             "pipeline_steps": self.pipeline.step_count,
