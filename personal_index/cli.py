@@ -12,7 +12,7 @@ from personal_index.cli_pipeline import pipeline as pipeline_cmd
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import Interest
-from personal_index.scheduler import Scheduler, ScheduleStore
+from personal_index.scheduler import Scheduler
 
 
 def get_search_index(data_dir: str | None = None) -> SearchIndex:
@@ -205,7 +205,6 @@ def crawl(ctx, url, depth, no_index, data_dir):
     """Crawl a URL and optionally index it."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     from personal_index.crawler.main import Crawler, CrawlerConfig
-    from personal_index.interests import InterestStore
 
     interest_store = get_interest_store(dd)
     crawler = Crawler(
