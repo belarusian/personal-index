@@ -51,6 +51,13 @@ def search(ctx, query, limit, data_dir, tag, sort, highlight):
                 filtered.append(r)
         results = filtered
 
+    # Apply sorting
+    if sort == "date":
+        results.sort(key=lambda r: r.url, reverse=True)
+    elif sort == "relevance":
+        results.sort(key=lambda r: r.relevance_score, reverse=True)
+    # "score" is default from index.search()
+
     if not results:
         click.echo(f"No results found for '{query}'")
         return
