@@ -125,7 +125,7 @@ class DeduplicationEngine:
                 return True, stored_url, 1.0
 
         # Check against stored token sets if available
-        for stored_url in self._document_hashes.keys():
+        for stored_url in self._document_hashes:
             if stored_url == url:
                 continue
             # We need to store tokens for proper comparison
