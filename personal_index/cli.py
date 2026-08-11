@@ -168,7 +168,7 @@ def crawl(ctx, url, depth, data_dir, timeout, delay, max_pages):
         with open(pages_path, "w") as f:
             json.dump(pages_data, f, indent=2)
         click.echo(f"Saved to {pages_path}")
-    except Exception as e:
+    except (OSError, ValueError) as e:
         click.echo(f"Crawl error: {e}", err=True)
         sys.exit(1)
     finally:
@@ -526,7 +526,7 @@ def export(ctx, format, output, query, data_dir):
         results = idx.search(query, limit=100)
     else:
         results = []
-        for url in idx._pages.keys():
+        for url in idx._pages:
             page = idx._pages[url]
             snippet = idx._create_snippet(page.content, "")
             results.append(SearchResult(
@@ -640,7 +640,7 @@ def _import_single_file(filepath: str, idx: SearchIndex) -> int:
             )
             idx.add_page(page)
             return 1
-        except Exception as e:
+        except (OSError, ValueError) as e:
             click.echo(f"Error reading {filepath}: {e}")
             return 0
         return 0

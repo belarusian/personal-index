@@ -109,7 +109,7 @@ class PipelineRunner:
                 try:
                     pages = crawler.crawl(seed_urls, max_depth=max_depth)
                     crawler.close()
-                except Exception as e:
+                except (OSError, ValueError) as e:
                     logger.error("Crawl failed: %s", e)
                     stats.errors.append(f"Crawl error: {e}")
                 stats.pages_crawled = len(pages)
@@ -191,7 +191,7 @@ class PipelineRunner:
                 try:
                     self._search_index.add_page(page)
                     stats.pages_indexed += 1
-                except Exception as e:
+                except (OSError, ValueError) as e:
                     logger.warning("Failed to index %s: %s", page.url, e)
                     stats.errors.append(f"Index error for {page.url}: {e}")
             logger.info("  Indexed %d pages", stats.pages_indexed)
@@ -266,5 +266,5 @@ class PipelineRunner:
         try:
             self._search_index.add_page(page)
             return True
-        except Exception:
+        except (OSError, ValueError):
             return False

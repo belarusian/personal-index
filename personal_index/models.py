@@ -106,14 +106,13 @@ class Interest:
                 import fnmatch
                 import re
                 # Try glob-style matching first (*.example.com/*)
-                if "*" in pattern:
-                    if fnmatch.fnmatch(url.lower(), pattern.lower()):
+                if "*" in pattern and fnmatch.fnmatch(url.lower(), pattern.lower()):
                         return True
                 # Then try as regex
                 if re.search(pattern, url, re.IGNORECASE):
                     return True
-            except (re.error, Exception):
-                pass
+            except re.error:
+                return False
         return False
 
     def score(self, text: str) -> float:
