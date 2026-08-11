@@ -21,6 +21,7 @@ import sys
 import click
 import yaml
 
+from personal_index.cli_crawl import crawl as crawl_cmd
 from personal_index.cli_clear import clear as clear_cmd
 from personal_index.cli_doctor import doctor as doctor_cmd
 from personal_index.cli_list import list_pages as list_cmd
@@ -932,6 +933,7 @@ main.add_command(status_cmd)
 main.add_command(search_cmd)
 main.add_command(verify_cmd)
 main.add_command(watch_cmd)
+main.add_command(crawl_cmd)
 
 
 if __name__ == "__main__":
