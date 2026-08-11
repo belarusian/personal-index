@@ -506,6 +506,18 @@ def tags_pages(ctx, tag_name, data_dir):
         click.echo(f"  {page_url}")
 
 
+
+@main.group()
+def tag():
+    """Alias for tags command group."""
+    pass
+
+# Register tag commands as aliases
+tag.add_command(tags_list, 'list')
+tag.add_command(tags_add, 'add')
+tag.add_command(tags_remove, 'remove')
+tag.add_command(tags_pages, 'pages')
+
 @main.group()
 def schedule():
     """Manage scheduled crawl jobs."""
@@ -523,9 +535,9 @@ def schedule_add(ctx, name, url, interval, data_dir):
     store = get_interest_store(dd)
     idx = get_search_index(dd)
     from personal_index.scheduler import ScheduleStore
-    sched_store = ScheduleStore(store_path=f"{dd}/schedule.json")
+    sched_store = ScheduleStore(path=f"{dd}/schedule.json")
     scheduler = Scheduler(interest_store=store, search_index=idx, schedule_store=sched_store)
-    scheduler.add_job(name=name, url=url, interval_hours=interval)
+    scheduler.add_schedule(name=name, seed_urls=[url], interval_hours=interval)
     click.echo(f"Added scheduled job: {name} (every {interval}h)")
 
 
@@ -538,14 +550,14 @@ def schedule_list(ctx, data_dir):
     store = get_interest_store(dd)
     idx = get_search_index(dd)
     from personal_index.scheduler import ScheduleStore
-    sched_store = ScheduleStore(store_path=f"{dd}/schedule.json")
+    sched_store = ScheduleStore(path=f"{dd}/schedule.json")
     scheduler = Scheduler(interest_store=store, search_index=idx, schedule_store=sched_store)
     jobs = scheduler.list_jobs()
     if not jobs:
         click.echo("No scheduled jobs.")
         return
     for job in jobs:
-        click.echo(f"  {job.name}: {job.url} (every {job.interval_hours}h)")
+        click.echo(f"  {job.name}: {job.config.seed_urls[0] if job.config.seed_urls else "unknown"} (every {job.config.interval_hours}h)")
 
 
 @schedule.command("remove")
@@ -558,9 +570,9 @@ def schedule_remove(ctx, name, data_dir):
     store = get_interest_store(dd)
     idx = get_search_index(dd)
     from personal_index.scheduler import ScheduleStore
-    sched_store = ScheduleStore(store_path=f"{dd}/schedule.json")
+    sched_store = ScheduleStore(path=f"{dd}/schedule.json")
     scheduler = Scheduler(interest_store=store, search_index=idx, schedule_store=sched_store)
-    if scheduler.remove_job(name):
+    if scheduler.remove_schedule(name):
         click.echo(f"Removed scheduled job: {name}")
     else:
         click.echo(f"Job not found: {name}", err=True)
@@ -635,3 +647,58 @@ def config_set_schedule(ctx, interval, data_dir):
 
 # Register config group with main
 main.add_command(config)
+
+
+@main.command()
+@click.option("--format", "-f", type=click.Choice(["markdown", "json", "csv"]), default="markdown", help="Export format")
+@click.option("--output", "-o", default=None, help="Output file path")
+@click.option("--query", "-q", default=None, help="Filter by search query")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def export(ctx, format, output, query, data_dir):
+    """Export indexed content to various formats.
+
+    Examples:
+        personal-index export --format markdown
+        personal-index export -f json -o results.json
+        personal-index export -q "python" -f csv
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    tag_store = get_tag_store(dd)
+
+    # Search if query provided, otherwise get all pages
+    if query:
+        results = idx.search(query, limit=100)
+    else:
+        # Get all indexed pages
+        results = []
+        for url in idx._pages.keys():
+            page = idx._pages[url]
+            snippet = idx._create_snippet(page.content, "")
+            results.append(SearchResult(
+                url=url,
+                title=page.title,
+                snippet=snippet,
+                relevance_score=0.0,
+            ))
+
+    if format == "markdown":
+        from personal_index.export_markdown import export_markdown
+        output_text = export_markdown(results, tag_store)
+    elif format == "json":
+        from personal_index.content_export.json_export import export_json
+        output_text = export_json(results, tag_store)
+    elif format == "csv":
+        from personal_index.content_export.csv_export import export_csv
+        output_text = export_csv(results, tag_store)
+    else:
+        click.echo(f"Unsupported format: {format}", err=True)
+        sys.exit(1)
+
+    if output:
+        with open(output, "w") as f:
+            f.write(output_text)
+        click.echo(f"Exported to {output}")
+    else:
+        click.echo(output_text)
