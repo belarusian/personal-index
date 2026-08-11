@@ -198,6 +198,9 @@ class ContentScorer:
         """
         now = datetime.now(timezone.utc)
         date = updated_at or published_at or now
+        # Handle naive datetimes by making them UTC-aware
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc)
         age_days = max(0, (now - date).days)
         # Exponential decay: half-life of 30 days
         return round(math.exp(-math.log(2) * age_days / 30), 4)
@@ -267,6 +270,8 @@ class ContentScorer:
         now = datetime.now(timezone.utc)
         if last_crawled is None:
             return 0.5
+            if last_crawled.tzinfo is None:
+                last_crawled = last_crawled.replace(tzinfo=timezone.utc)
 
         age_hours = max(0, (now - last_crawled).total_seconds() / 3600)
 
