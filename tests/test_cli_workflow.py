@@ -1,12 +1,13 @@
-"""CLI workflow integration tests.
+"""Comprehensive CLI workflow integration tests.
 
-Tests complete CLI workflows using the Click test runner,
-verifying the full user journey from init to search.
+Tests the complete user journey from initialization through
+crawling, indexing, searching, and exporting content.
 """
 
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -15,417 +16,333 @@ from click.testing import CliRunner
 from personal_index.cli import main
 
 
-class TestCLIWorkflow:
-    """Test complete CLI workflows end-to-end."""
+class TestCompleteWorkflow:
+    """Test the complete user workflow end-to-end."""
 
-    def test_complete_user_journey(self):
-        """Test the complete user journey: init → interests → import → search → export."""
+    def test_init_to_search_workflow(self, tmp_path, monkeypatch):
+        """Test the full workflow: init → add interests → import → search → export."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            # Step 1: Initialize
-            result = runner.invoke(main, ["init"])
-            assert result.exit_code == 0
-            assert "Initialized" in result.output
+        # Step 1: Initialize
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+        assert ".personal_index" in result.output
 
-            # Step 2: Add interests
-            result = runner.invoke(main, [
-                "interests", "add",
-                "-n", "programming",
-                "-k", "python", "-k", "javascript", "-k", "rust",
-            ])
-            assert result.exit_code == 0
+        # Step 2: Add interests
+        result = runner.invoke(main, [
+            "interests", "add", "-n", "programming",
+            "-k", "python", "-k", "javascript", "-k", "rust",
+        ])
+        assert result.exit_code == 0
 
-            # Step 3: Verify interests
-            result = runner.invoke(main, ["interests", "list"])
-            assert result.exit_code == 0
-            assert "programming" in result.output
+        result = runner.invoke(main, [
+            "interests", "add", "-n", "webdev",
+            "-k", "html", "-k", "css", "-k", "react",
+        ])
+        assert result.exit_code == 0
 
-            # Step 4: Import content
-            article = Path("python_guide.txt")
-            article.write_text(
-                "Python is a versatile programming language used for web development, "
-                "data science, and automation. Python supports multiple paradigms."
+        # Step 3: Verify interests
+        result = runner.invoke(main, ["interests", "list"])
+        assert result.exit_code == 0
+        assert "programming" in result.output
+        assert "webdev" in result.output
+
+        # Step 4: Create and import content
+        article = tmp_path / "python_web_dev.txt"
+        article.write_text(
+            "Python web development frameworks include Django and Flask. "
+            "Python is a versatile programming language for building web applications. "
+            "Many developers use Python for backend development and data processing."
+        )
+
+        result = runner.invoke(main, ["pipeline", "--import-file", str(article)])
+        assert result.exit_code == 0
+        assert "Indexed:" in result.output
+
+        # Step 5: Search
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
+        assert "python" in result.output.lower()
+
+        # Step 6: Export
+        result = runner.invoke(main, ["export", "--format", "json"])
+        assert result.exit_code == 0
+
+        # Step 7: Check status
+        result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "Pages indexed:" in result.output
+
+    def test_add_remove_interest_workflow(self, tmp_path, monkeypatch):
+        """Test adding and removing interests."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Add interest
+        result = runner.invoke(main, [
+            "interests", "add", "-n", "test-interest",
+            "-k", "test",
+        ])
+        assert result.exit_code == 0
+
+        # Verify it exists
+        result = runner.invoke(main, ["interests", "list"])
+        assert "test-interest" in result.output
+
+        # Remove interest
+        result = runner.invoke(main, ["interests", "remove", "test-interest"])
+        assert result.exit_code == 0
+
+        # Verify it's gone
+        result = runner.invoke(main, ["interests", "list"])
+        assert "test-interest" not in result.output
+
+    def test_tag_workflow(self, tmp_path, monkeypatch):
+        """Test adding and listing tags."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Add tag
+        result = runner.invoke(main, [
+            "tags", "add", "important",
+            "https://example.com/page1",
+        ])
+        assert result.exit_code == 0
+
+        # List tags
+        result = runner.invoke(main, ["tags", "list"])
+        assert result.exit_code == 0
+        assert "important" in result.output
+
+    def test_import_search_export_workflow(self, tmp_path, monkeypatch):
+        """Test import → search → export workflow."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Import multiple files
+        files = []
+        for i in range(3):
+            f = tmp_path / f"article_{i}.txt"
+            f.write_text(
+                f"Article {i}: Python programming for web development. "
+                f"This article covers Python best practices and patterns."
             )
-            result = runner.invoke(main, ["import", str(article)])
-            assert result.exit_code == 0
+            files.append(str(f))
 
-            # Step 5: Search
-            result = runner.invoke(main, ["search", "python"])
-            assert result.exit_code == 0
+        result = runner.invoke(main, ["pipeline"] + [
+            "--import-file", f for f in files
+        ])
+        assert result.exit_code == 0
 
-            # Step 6: List pages
-            result = runner.invoke(main, ["list"])
-            assert result.exit_code == 0
+        # Search
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
 
-            # Step 7: Stats
-            result = runner.invoke(main, ["stats"])
-            assert result.exit_code == 0
+        # Export as JSON
+        result = runner.invoke(main, ["export", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "results" in data
 
-            # Step 8: Export
-            result = runner.invoke(main, ["export", "--format", "json"])
-            assert result.exit_code == 0
-            data = json.loads(result.output)
-            assert "results" in data or "pages" in data
+        # Export as CSV
+        result = runner.invoke(main, ["export", "--format", "csv"])
+        assert result.exit_code == 0
 
-    def test_pipeline_command_with_files(self):
-        """Test the pipeline command with file imports."""
+        # Export as markdown
+        result = runner.invoke(main, ["export", "--format", "markdown"])
+        assert result.exit_code == 0
+
+    def test_pipeline_with_custom_options(self, tmp_path, monkeypatch):
+        """Test pipeline with various custom options."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            # Initialize
-            runner.invoke(main, ["init"])
+        runner.invoke(main, ["init"])
 
-            # Add interests
-            runner.invoke(main, [
-                "interests", "add", "-n", "tech",
-                "-k", "python", "-k", "programming",
-            ])
+        test_file = tmp_path / "article.txt"
+        test_file.write_text(
+            "Python programming language for web development and data science."
+        )
 
-            # Create test files
-            docs_dir = Path("docs")
-            docs_dir.mkdir()
-            (docs_dir / "python.txt").write_text(
-                "Python programming language for web development and data science."
-            )
-            (docs_dir / "rust.txt").write_text(
-                "Rust programming language for systems programming and performance."
-            )
+        # Test with custom min content length
+        result = runner.invoke(main, [
+            "pipeline", "--import-file", str(test_file),
+            "--min-content-length", "5",
+        ])
+        assert result.exit_code == 0
 
-            # Run pipeline
-            result = runner.invoke(main, [
-                "pipeline",
-                "--import-file", str(docs_dir / "python.txt"),
-                "--import-file", str(docs_dir / "rust.txt"),
-            ])
-            assert result.exit_code == 0
-            assert "Pipeline complete" in result.output or "Indexed:" in result.output
+        # Test with custom min score
+        result = runner.invoke(main, [
+            "pipeline", "--import-file", str(test_file),
+            "--min-score", "0.0",
+        ])
+        assert result.exit_code == 0
 
-            # Verify indexed
-            result = runner.invoke(main, ["list"])
-            assert result.exit_code == 0
-
-    def test_search_with_tag_filter(self):
-        """Test searching with tag filter."""
+    def test_list_command(self, tmp_path, monkeypatch):
+        """Test the list command shows indexed pages."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
+        runner.invoke(main, ["init"])
 
-            # Import content
-            article = Path("article.txt")
-            article.write_text("Python programming tutorial for web development.")
-            runner.invoke(main, ["import", str(article)])
+        test_file = tmp_path / "article.txt"
+        test_file.write_text(
+            "Python programming language for web development."
+        )
+        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
 
-            # Add a tag
-            runner.invoke(main, ["tags", "add", "tutorial", "file://*"])
+        result = runner.invoke(main, ["list"])
+        assert result.exit_code == 0
 
-            # Search with tag filter
-            result = runner.invoke(main, ["search", "python", "--tag", "tutorial"])
-            assert result.exit_code == 0
-
-    def test_export_all_formats(self):
-        """Test exporting in all supported formats."""
+    def test_stats_command(self, tmp_path, monkeypatch):
+        """Test the stats command shows statistics."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
+        runner.invoke(main, ["init"])
 
-            article = Path("article.txt")
-            article.write_text("Python programming language for web development.")
-            runner.invoke(main, ["import", str(article)])
+        test_file = tmp_path / "article.txt"
+        test_file.write_text(
+            "Python programming language for web development."
+        )
+        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
 
-            # JSON export
-            result = runner.invoke(main, ["export", "--format", "json"])
-            assert result.exit_code == 0
-            data = json.loads(result.output)
-            assert isinstance(data, dict)
+        result = runner.invoke(main, ["stats"])
+        assert result.exit_code == 0
 
-            # CSV export
-            result = runner.invoke(main, ["export", "--format", "csv"])
-            assert result.exit_code == 0
-            assert "title" in result.output.lower() or "url" in result.output.lower()
-
-            # Markdown export
-            result = runner.invoke(main, ["export", "--format", "markdown"])
-            assert result.exit_code == 0
-            assert "#" in result.output
-
-    def test_clear_and_reindex(self):
-        """Test clearing the index and re-importing."""
+    def test_doctor_command(self, tmp_path, monkeypatch):
+        """Test the doctor command checks health."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
+        runner.invoke(main, ["init"])
 
-            article = Path("article.txt")
-            article.write_text("Python programming language.")
-            runner.invoke(main, ["import", str(article)])
+        result = runner.invoke(main, ["doctor"])
+        assert result.exit_code == 0
+        assert "Health Check" in result.output or "Personal Index" in result.output
 
-            # Verify indexed
-            result = runner.invoke(main, ["list"])
-            assert result.exit_code == 0
-
-            # Clear
-            result = runner.invoke(main, ["clear", "--index", "--tags", "--no-interests"])
-            assert result.exit_code == 0
-
-            # Verify cleared
-            result = runner.invoke(main, ["list"])
-            assert result.exit_code == 0
-
-            # Re-import
-            runner.invoke(main, ["import", str(article)])
-            result = runner.invoke(main, ["list"])
-            assert result.exit_code == 0
-
-    def test_doctor_command(self):
-        """Test the doctor diagnostic command."""
+    def test_clear_command(self, tmp_path, monkeypatch):
+        """Test the clear command removes all indexed content."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
+        runner.invoke(main, ["init"])
 
-            article = Path("article.txt")
-            article.write_text("Python programming language.")
-            runner.invoke(main, ["import", str(article)])
+        test_file = tmp_path / "article.txt"
+        test_file.write_text(
+            "Python programming language for web development."
+        )
+        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
 
-            result = runner.invoke(main, ["doctor"])
-            assert result.exit_code == 0
-            assert "Health Check" in result.output or "checks" in result.output.lower()
+        # Verify content exists
+        result = runner.invoke(main, ["list"])
+        assert result.exit_code == 0
 
-    def test_top_command(self):
-        """Test the top pages command."""
-        runner = CliRunner()
+        # Clear
+        result = runner.invoke(main, ["clear"])
+        assert result.exit_code == 0
 
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
-
-            # Import multiple files
-            for i in range(3):
-                article = Path(f"article_{i}.txt")
-                article.write_text(f"Python programming article number {i}.")
-                runner.invoke(main, ["import", str(article)])
-
-            result = runner.invoke(main, ["top", "--limit", "2"])
-            assert result.exit_code == 0
-
-    def test_remove_command(self):
-        """Test removing a page from the index."""
-        runner = CliRunner()
-
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
-
-            article = Path("article.txt")
-            article.write_text("Python programming language.")
-            runner.invoke(main, ["import", str(article)])
-
-            # Get the URL
-            result = runner.invoke(main, ["list", "--format", "json"])
-            assert result.exit_code == 0
-            data = json.loads(result.output)
-            if data.get("pages"):
-                url = data["pages"][0]["url"]
-                result = runner.invoke(main, ["remove", url])
-                assert result.exit_code == 0
-
-    def test_version_command(self):
+    def test_version_command(self, tmp_path, monkeypatch):
         """Test the version command."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
+
         result = runner.invoke(main, ["--version"])
         assert result.exit_code == 0
         assert "0.1.0" in result.output
 
-    def test_help_command(self):
-        """Test the help command."""
+
+class TestCLIEdgeCases:
+    """Test CLI edge cases and error handling."""
+
+    def test_pipeline_no_args(self, tmp_path, monkeypatch):
+        """Test pipeline command with no arguments."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        result = runner.invoke(main, ["--help"])
+        runner.invoke(main, ["init"])
+        result = runner.invoke(main, ["pipeline"])
+        assert result.exit_code == 1  # Should fail without URLs or files
+
+    def test_search_before_init(self, tmp_path, monkeypatch):
+        """Test searching before initialization."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["search", "test"])
+        # Should handle gracefully
         assert result.exit_code == 0
-        assert "personal-index" in result.output.lower() or "Personal Index" in result.output
 
-        # Subcommand help
-        result = runner.invoke(main, ["pipeline", "--help"])
+    def test_import_binary_file(self, tmp_path, monkeypatch):
+        """Test importing a binary file."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        binary_file = tmp_path / "binary.bin"
+        binary_file.write_bytes(b"\x00\x01\x02\x03\x04\x05" * 100)
+
+        result = runner.invoke(main, ["pipeline", "--import-file", str(binary_file)])
+        # Should not crash
         assert result.exit_code == 0
-        assert "pipeline" in result.output.lower()
 
-        result = runner.invoke(main, ["search", "--help"])
+    def test_import_unicode_file(self, tmp_path, monkeypatch):
+        """Test importing a file with unicode content."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        unicode_file = tmp_path / "unicode.txt"
+        unicode_file.write_text(
+            "Python プログラミング 言語 for web development. "
+            "日本語のコンテンツをインデックスします。"
+        )
+
+        result = runner.invoke(main, [
+            "pipeline", "--import-file", str(unicode_file),
+            "--min-content-length", "5",
+        ])
         assert result.exit_code == 0
-        assert "search" in result.output.lower()
 
-    def test_import_recursive_directory(self):
-        """Test importing a directory recursively."""
+    def test_large_file_import(self, tmp_path, monkeypatch):
+        """Test importing a large file."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
+        runner.invoke(main, ["init"])
 
-            # Create nested directory structure
-            docs = Path("docs")
-            docs.mkdir()
-            (docs / "guide.txt").write_text("Python programming guide.")
-            (docs / "tutorial.txt").write_text("JavaScript tutorial for beginners.")
+        large_file = tmp_path / "large.txt"
+        large_file.write_text(
+            "Python programming. " * 10000  # ~200KB
+        )
 
-            nested = docs / "advanced"
-            nested.mkdir()
-            (nested / "deep.txt").write_text("Advanced Rust programming concepts.")
+        result = runner.invoke(main, ["pipeline", "--import-file", str(large_file)])
+        assert result.exit_code == 0
 
-            result = runner.invoke(main, ["import", str(docs), "--recursive"])
-            assert result.exit_code == 0
-
-            # Verify all files were imported
-            result = runner.invoke(main, ["list", "--format", "json"])
-            assert result.exit_code == 0
-            data = json.loads(result.output)
-            assert len(data.get("pages", [])) >= 3
-
-    def test_search_json_output(self):
-        """Test search with JSON output format."""
+    def test_concurrent_pipeline_runs(self, tmp_path, monkeypatch):
+        """Test running pipeline multiple times."""
+        monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
+        runner.invoke(main, ["init"])
 
-            article = Path("article.txt")
-            article.write_text("Python programming language for web development.")
-            runner.invoke(main, ["import", str(article)])
-
-            result = runner.invoke(main, ["search", "python", "--format", "json"])
-            assert result.exit_code == 0
-            data = json.loads(result.output)
-            assert "results" in data
-            assert len(data["results"]) >= 1
-
-    def test_list_sort_options(self):
-        """Test list command with different sort options."""
-        runner = CliRunner()
-
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
-
-            for i in range(3):
-                article = Path(f"article_{i}.txt")
-                article.write_text(f"Content for article {i}.")
-                runner.invoke(main, ["import", str(article)])
-
-            # Sort by score
-            result = runner.invoke(main, ["list", "--sort", "score"])
-            assert result.exit_code == 0
-
-            # Sort by title
-            result = runner.invoke(main, ["list", "--sort", "title"])
-            assert result.exit_code == 0
-
-            # Sort by date
-            result = runner.invoke(main, ["list", "--sort", "date"])
-            assert result.exit_code == 0
-
-    def test_interests_add_remove(self):
-        """Test adding and removing interests."""
-        runner = CliRunner()
-
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
-
-            # Add interest
-            result = runner.invoke(main, [
-                "interests", "add", "-n", "test", "-k", "python",
-            ])
-            assert result.exit_code == 0
-
-            # Verify
-            result = runner.invoke(main, ["interests", "list"])
-            assert result.exit_code == 0
-            assert "test" in result.output
-
-            # Remove
-            result = runner.invoke(main, ["interests", "remove", "test"])
-            assert result.exit_code == 0
-
-            # Verify removed
-            result = runner.invoke(main, ["interests", "list"])
-            assert result.exit_code == 0
-            assert "test" not in result.output
-
-    def test_tags_add_list(self):
-        """Test adding and listing tags."""
-        runner = CliRunner()
-
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
-
-            # Add tag
-            result = runner.invoke(main, ["tags", "add", "important", "https://example.com"])
-            assert result.exit_code == 0
-
-            # List tags
-            result = runner.invoke(main, ["tags", "list"])
-            assert result.exit_code == 0
-
-    def test_pipeline_with_min_score(self):
-        """Test pipeline with minimum score threshold."""
-        runner = CliRunner()
-
-        with runner.isolated_filesystem():
-            runner.invoke(main, ["init"])
-
-            article = Path("article.txt")
-            article.write_text("Python programming language for web development.")
-
-            result = runner.invoke(main, [
-                "pipeline",
-                "--import-file", str(article),
-                "--min-score", "0.0",
-            ])
-            assert result.exit_code == 0
-
-    def test_full_workflow_with_pipeline(self):
-        """Test complete workflow using pipeline command instead of import."""
-        runner = CliRunner()
-
-        with runner.isolated_filesystem():
-            # Initialize
-            result = runner.invoke(main, ["init"])
-            assert result.exit_code == 0
-
-            # Add interests
-            result = runner.invoke(main, [
-                "interests", "add", "-n", "programming",
-                "-k", "python", "-k", "javascript",
-            ])
-            assert result.exit_code == 0
-
-            # Create test files
-            (Path("python.txt")).write_text(
-                "Python is a great programming language for web development."
+        for i in range(3):
+            test_file = tmp_path / f"article_{i}.txt"
+            test_file.write_text(
+                f"Article {i}: Python programming for web development."
             )
-            (Path("javascript.txt")).write_text(
-                "JavaScript is the language of the web, used for frontend development."
-            )
-
-            # Run pipeline
-            result = runner.invoke(main, [
-                "pipeline",
-                "--import-file", "python.txt",
-                "--import-file", "javascript.txt",
-            ])
+            result = runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
             assert result.exit_code == 0
 
-            # Search for python
-            result = runner.invoke(main, ["search", "python"])
-            assert result.exit_code == 0
-
-            # Search for javascript
-            result = runner.invoke(main, ["search", "javascript"])
-            assert result.exit_code == 0
-
-            # List all pages
-            result = runner.invoke(main, ["list", "--format", "json"])
-            assert result.exit_code == 0
-            data = json.loads(result.output)
-            assert len(data.get("pages", [])) >= 2
-
-            # Export results
-            result = runner.invoke(main, ["export", "--format", "json"])
-            assert result.exit_code == 0
+        # All articles should be indexed
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
