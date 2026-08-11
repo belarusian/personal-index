@@ -129,7 +129,7 @@ class ContentMerger:
             priority_order = list(sources.keys())
 
         # Process sources in reverse priority order
-        # so higher priority sources overwrite
+        # so higher priority sources overwrite lower priority ones
         ordered_sources = {}
         for name in reversed(priority_order):
             if name in sources:
@@ -140,7 +140,15 @@ class ContentMerger:
             if name not in ordered_sources:
                 ordered_sources[name] = items
 
-        return self.merge(ordered_sources)
+        # Temporarily set conflict strategy to "newest" which will
+        # prefer the later-inserted (higher priority) source when
+        # dates are absent
+        old_strategy = self.conflict_strategy
+        self.conflict_strategy = "priority"
+        try:
+            return self.merge(ordered_sources)
+        finally:
+            self.conflict_strategy = old_strategy
 
     def merge_tags(
         self,
@@ -198,6 +206,10 @@ class ContentMerger:
             result["tags"] = merged_tags
             result["_source"] = f"{existing.get('_source', '')},{new_source}"
             return result
+
+        elif self.conflict_strategy == "priority":
+            # In priority mode, the new item (processed later = higher priority) wins
+            return {**new_item, "_source": new_source}
 
         # Default: keep existing
         return existing
