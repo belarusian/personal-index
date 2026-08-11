@@ -385,14 +385,15 @@ class TestGenerate:
         mock_scan,
         tmp_path: Path,
     ):
-        mock_scan.return_value = [
+        mock_scan.side_effect = lambda path: [
             ModuleInfo(filepath="a.py", module_name="a", line_count=10),
-        ]
+        ] if path == "fake" else []
         mock_pytest.return_value = "1 passed"
         out = tmp_path / "out.html"
         result = generate(root="fake", output=str(out))
         assert result == str(out)
-        mock_scan.assert_called_once_with("fake")
+        assert mock_scan.call_count == 2
+        mock_scan.assert_any_call("fake")
         mock_ruff.assert_called_once()
         mock_mypy.assert_called_once()
         mock_pytest.assert_called_once()
