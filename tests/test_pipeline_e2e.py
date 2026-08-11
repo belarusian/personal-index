@@ -33,7 +33,7 @@ class TestPipelineEndToEnd:
 
         # Add interests
         result = runner.invoke(main, [
-            "interests", "add", "python",
+            "interests", "add", "-n", "python",
             "-k", "python", "-k", "programming",
         ])
         assert result.exit_code == 0
@@ -65,7 +65,7 @@ class TestPipelineEndToEnd:
         runner = CliRunner()
 
         runner.invoke(main, ["init"])
-        runner.invoke(main, ["interests", "add", "tech", "-k", "python", "-k", "javascript"])
+        runner.invoke(main, ["interests", "add", "-n", "tech", "-k", "python", "-k", "javascript"])
 
         # Create multiple files
         (tmp_path / "python.txt").write_text(
@@ -153,7 +153,7 @@ class TestPipelineEndToEnd:
         runner = CliRunner()
 
         runner.invoke(main, ["init"])
-        runner.invoke(main, ["interests", "add", "python", "-k", "python"])
+        runner.invoke(main, ["interests", "add", "-n", "python", "-k", "python"])
 
         # Relevant content
         relevant = tmp_path / "relevant.txt"
