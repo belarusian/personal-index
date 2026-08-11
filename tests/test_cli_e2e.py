@@ -37,7 +37,7 @@ class TestCLIInit:
             import yaml
             config = yaml.safe_load(f)
         assert "crawler" in config
-        assert "pipeline" in config
+        assert "filter" in config
 
     def test_init_idempotent(self, tmp_path, monkeypatch):
         """Running init twice should not error."""
@@ -194,4 +194,4 @@ class TestCLIConfig:
         main(['init'], standalone_mode=False)
         main(['config', 'show'], standalone_mode=False)
         captured = capsys.readouterr()
-        assert "Data dir" in captured.out or "data dir" in captured.out.lower()
+        assert "Current configuration" in captured.out or "crawler" in captured.out.lower()

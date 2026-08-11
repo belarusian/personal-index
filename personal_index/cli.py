@@ -382,8 +382,8 @@ def import_(ctx, source, recursive, data_dir):
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     os.makedirs(dd, exist_ok=True)
 
-    from personal_index.pipeline_runner import PipelineRunner
     from personal_index.config.pipeline_config import PipelineConfig
+    from personal_index.pipeline_runner import PipelineRunner
 
     config = PipelineConfig(
         min_score_threshold=0.0,

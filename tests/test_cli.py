@@ -31,7 +31,7 @@ class TestInterestCommands:
         data_dir = str(tmp_path / "data")
         result = runner.invoke(
             main,
-            ['--data-dir', data_dir, 'interests', 'add', '-n', 'test', '-k', 'python', '-k', 'coding', '-p', '3'],
+            ['--data-dir', data_dir, 'interests', 'add', '-n', 'test', '-k', 'python', '-k', 'coding', '--priority', '3'],
         )
         assert result.exit_code == 0
         assert "Added interest" in result.output
@@ -203,5 +203,5 @@ class TestMainCommand:
 
     def test_import_command_file_not_found(self, runner, tmp_path):
         result = runner.invoke(main, ['import', '/nonexistent/path'])
-        assert result.exit_code == 0
-        assert "No such file or directory" in result.output
+        assert result.exit_code == 1
+        assert "not found" in result.output

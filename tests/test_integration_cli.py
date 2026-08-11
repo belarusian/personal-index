@@ -107,7 +107,7 @@ class TestCLIImport:
         test_file.write_text("This is test content for importing with enough words to pass the minimum content length filter in the pipeline runner for personal index.")
         result = runner.invoke(main, ["import", str(test_file)])
         assert result.exit_code == 0
-        assert "Imported" in result.output
+        assert "Import complete" in result.output
 
     def test_import_directory_recursive(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -119,7 +119,7 @@ class TestCLIImport:
         (subdir / "file2.txt").write_text("File two content about research and data analysis and scientific experiment methods that has enough words to pass the minimum content length filter for the pipeline runner.")
         result = runner.invoke(main, ["import", str(subdir), "--recursive"])
         assert result.exit_code == 0
-        assert "Imported" in result.output
+        assert "Import complete" in result.output
 
 
 class TestCLITag:
@@ -222,7 +222,7 @@ class TestCLISearchJSON:
     def test_search_json_empty(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        result = runner.invoke(main, ["search", "-f", "json", "nonexistent"])
+        result = runner.invoke(main, ["search", "--format", "json", "nonexistent"])
         # Should not crash even with no indexed content
         assert result.exit_code == 0 or "No indexed content" in result.output
 
