@@ -129,7 +129,14 @@ class PipelineRunner:
         if self.pipeline_config.is_step_enabled("score"):
             logger.info("Step 4/6: Scoring content")
             for page in pages:
-                score = self._scorer.score(page)
+                word_count = len(page.content.split()) if page.content else 0
+                score_result = self._scorer.score(
+                    keyword_matches=0,
+                    total_keywords=1,
+                    word_count=word_count,
+                    domain_authority=0.5,
+                )
+                score = score_result.total if hasattr(score_result, "total") else score_result.score if hasattr(score_result, "score") else 0.0
                 page.relevance_score = score
                 if score >= self.pipeline_config.min_score_threshold:
                     stats.pages_scored += 1

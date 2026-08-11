@@ -168,13 +168,14 @@ class TestPipelineSteps:
 
     def test_scorer_scores_content(self):
         scorer = ContentScorer()
-        page = CrawledPage(
-            url="https://example.com",
-            title="Test",
-            content="python programming tutorial",
+        result = scorer.score(
+            keyword_matches=3,
+            total_keywords=5,
+            word_count=100,
+            domain_authority=0.7,
         )
-        score = scorer.score(page)
-        assert isinstance(score, (int, float))
+        assert result is not None
+        assert hasattr(result, 'total') or hasattr(result, 'score')
 
 
 class TestPipelineIntegration:
