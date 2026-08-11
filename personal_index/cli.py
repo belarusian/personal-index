@@ -28,6 +28,41 @@ def main():
     """personal-index - Track and index content matching your interests."""
 
 
+@main.command()
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+@click.option("--config", default="config.yaml", help="Config file path")
+def init(data_dir, config):
+    """Initialize a new personal-index project."""
+    os.makedirs(data_dir, exist_ok=True)
+    
+    # Create default config if it doesn't exist
+    if not os.path.exists(config):
+        default_config = {
+            "data_dir": data_dir,
+            "crawler": {
+                "max_depth": 3,
+                "politeness_delay": 1.0,
+                "rate_limit": 10,
+                "respect_robots_txt": True,
+                "timeout": 30,
+            },
+            "scheduler": {
+                "enabled": False,
+                "interval_hours": 24,
+            },
+            "index": {
+                "enable_stemming": True,
+                "index_path": data_dir,
+            },
+            "interests": [],
+        }
+        with open(config, "w") as f:
+            yaml.dump(default_config, f, default_flow_style=False)
+    
+    click.echo(f"Initialized personal-index in {data_dir}")
+    click.echo("Run 'personal-index interests add' to start tracking topics.")
+
+
 @main.group()
 def interests():
     """Manage tracked interests."""
