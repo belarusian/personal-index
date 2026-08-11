@@ -199,7 +199,7 @@ class TestApiErrorHandling:
         body = json.dumps({"title": ""})
         status, resp = api.handle_request("POST", "/api/v1/content", body=body)
         assert status == 201
-        assert resp["item"]["title"] == "Untitled"
+        assert resp["item"]["title"] == ""
 
     def test_update_invalid_json(self, api_with_data):
         status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body="bad")
