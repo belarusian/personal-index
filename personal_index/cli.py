@@ -196,7 +196,7 @@ def crawl(ctx, url, depth, data_dir, timeout, delay, max_pages):
 @click.option("--limit", "-n", default=20, type=int, help="Max results")
 @click.option("--tag", default=None, help="Filter by tag")
 @click.option("--data-dir", default=None, help="Data directory")
-@click.option("--format", "-f", "fmt", type=click.Choice(["text", "json"]), default="text", help="Output format")
+@click.option("--format", "-f", "fmt", type=click.Choice(["text", "json", "csv"]), default="text", help="Output format")
 @click.pass_context
 def search(ctx, query, limit, tag, data_dir, fmt):
     """Search the indexed content.
@@ -239,6 +239,15 @@ def search(ctx, query, limit, tag, data_dir, fmt):
             "total": len(results),
         }
         click.echo(json.dumps(data, indent=2))
+    elif fmt == "csv":
+        import csv as _csv
+        import io as _io
+        output = _io.StringIO()
+        writer = _csv.writer(output)
+        writer.writerow(["rank", "title", "url", "score", "snippet"])
+        for i, r in enumerate(results, 1):
+            writer.writerow([i, r.title, r.url, f"{r.relevance_score:.4f}", r.snippet[:200]])
+        click.echo(output.getvalue().strip())
     else:
         if not results:
             click.echo(f"No results found for '{query}'")
