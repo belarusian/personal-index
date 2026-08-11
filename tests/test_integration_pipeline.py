@@ -61,7 +61,7 @@ pipeline:
   min_score_threshold: 0.5
   min_content_length: 200
 """)
-        cfg = PipelineConfig()  # load_pipeline_config needs str path
+        cfg = PipelineConfig()
         assert cfg.enabled is True
 
 
@@ -96,21 +96,18 @@ class TestPipelineRunner:
         data_dir = str(tmp_path / "data")
         runner = PipelineRunner(data_dir=data_dir)
 
-        # Create a mock page
         page = CrawledPage(
             url="https://example.com/test",
             title="Test Page",
             content="This is a test page about python programming.",
-            html="<html><body><p>Test content</p></body></html>",
         )
 
-        with patch.object(runner, '_auto_tag', return_value=['test']):
-            with patch('personal_index.pipeline_runner.Crawler') as MockCrawler:
-                mock_crawler = MagicMock()
-                mock_crawler.crawl.return_value = [page]
-                MockCrawler.return_value = mock_crawler
+        with patch('personal_index.pipeline_runner.Crawler') as MockCrawler:
+            mock_crawler = MagicMock()
+            mock_crawler.crawl.return_value = [page]
+            MockCrawler.return_value = mock_crawler
 
-                stats = runner.run(["https://example.com"], max_depth=1)
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 1
         assert stats.pages_extracted == 1
@@ -154,7 +151,8 @@ class TestPipelineSteps:
         content_filter = ContentFilter(config=filter_cfg)
         page = CrawledPage(
             url="https://example.com",
-            content="This is a sufficiently long piece of content.",
+            title="Test",
+            content="This is a sufficiently long piece of content for testing.",
         )
         assert content_filter.should_include(page) is True
 
@@ -163,6 +161,7 @@ class TestPipelineSteps:
         content_filter = ContentFilter(config=filter_cfg)
         page = CrawledPage(
             url="https://example.com",
+            title="Test",
             content="Short",
         )
         assert content_filter.should_include(page) is False
@@ -174,7 +173,7 @@ class TestPipelineSteps:
             title="Test",
             content="python programming tutorial",
         )
-        score = scorer.score_content(page)
+        score = scorer.score(page)
         assert isinstance(score, (int, float))
 
 
@@ -203,7 +202,6 @@ class TestPipelineIntegration:
             url="https://example.com/article",
             title="Python Tutorial",
             content="This is a comprehensive Python programming tutorial covering basics.",
-            html="<html><body><p>Python tutorial content</p></body></html>",
         )
 
         with patch('personal_index.pipeline_runner.Crawler') as MockCrawler:
@@ -249,5 +247,4 @@ class TestPipelineIntegration:
             stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 1
-        # Other steps should be skipped
         assert stats.pages_indexed == 0
