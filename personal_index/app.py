@@ -166,8 +166,7 @@ class PersonalIndexApp:
 
         def tag_step(data: dict) -> dict:
             text = data.get("extracted_text", data.get("text", ""))
-            title = data.get("title", "")
-            data["tags"] = tagger.tag(text, title)
+            data["tags"] = tagger.tag(text, min_confidence=0.5).tags
             return data
 
         pipeline.add_step("tag", tag_step, on_error="continue")
