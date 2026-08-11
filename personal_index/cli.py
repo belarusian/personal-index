@@ -342,3 +342,49 @@ def config_set_schedule(interval, enable, disable):
 
 if __name__ == "__main__":
     main()
+
+
+@main.command()
+@click.option("--config", default="config.yaml", help="Config file path")
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+def status(config, data_dir):
+    """Show system status: index size, interests, pipeline config."""
+    import os
+
+    click.echo("Personal Index Status")
+    click.echo("=" * 40)
+
+    # Data dir
+    click.echo(f"Data dir: {data_dir}")
+    click.echo(f"  Exists: {os.path.exists(data_dir)}")
+    if os.path.exists(data_dir):
+        size = sum(
+            os.path.getsize(os.path.join(dp, f))
+            for dp, _, fn in os.walk(data_dir)
+            for f in fn
+            for dp_dp, f in [(dp, f)]
+        )
+        click.echo(f"  Size: {size:,} bytes")
+
+    # Interests
+    store = get_interest_store()
+    interests = store.list_all()
+    click.echo(f"Interests: {len(interests)}")
+    for interest in interests[:5]:
+        click.echo(f"  - {interest.name} (priority={interest.priority})")
+    if len(interests) > 5:
+        click.echo(f"  ... and {len(interests) - 5} more")
+
+    # Index
+    idx = SearchIndex()
+    count = idx.count()
+    click.echo(f"Indexed pages: {count}")
+
+    # Pipeline config
+    from personal_index.config.pipeline_config import load_pipeline_config
+    try:
+        pcfg = load_pipeline_config(config)
+        click.echo(f"Pipeline enabled: {pcfg.enabled}")
+        click.echo(f"Pipeline steps: {', '.join(pcfg.get_enabled_steps())}")
+    except Exception as e:
+        click.echo(f"Pipeline config error: {e}")
