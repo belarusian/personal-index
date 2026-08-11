@@ -129,20 +129,36 @@ def toggle_interest(name):
 @main.command()
 @click.argument("query")
 @click.option("-l", "--limit", default=10, type=int, help="Max results")
-def search(query, limit):
+@click.option("--json", "as_json", is_flag=True, help="Output results as JSON")
+def search(query, limit, as_json):
     """Search indexed content."""
+    import json
     index = SearchIndex()
     results = index.search(query, limit=limit)
     if not results:
-        click.echo("No results found.")
+        if as_json:
+            click.echo("[]")
+        else:
+            click.echo("No results found.")
         return
-    click.echo(f"Found {len(results)} results for '{query}':\n")
-    for i, r in enumerate(results, 1):
-        click.echo(f"  {i}. {r.title}")
-        click.echo(f"     {r.url}")
-        if r.snippet:
-            click.echo(f"     {r.snippet}")
-        click.echo()
+    if as_json:
+        data = []
+        for r in results:
+            data.append({
+                "title": r.title,
+                "url": r.url,
+                "snippet": getattr(r, "snippet", ""),
+                "score": getattr(r, "score", 0),
+            })
+        click.echo(json.dumps(data, indent=2))
+    else:
+        click.echo(f"Found {len(results)} results for '{query}':\n")
+        for i, r in enumerate(results, 1):
+            click.echo(f"  {i}. {r.title}")
+            click.echo(f"     {r.url}")
+            if r.snippet:
+                click.echo(f"     {r.snippet}")
+            click.echo()
 
 
 @main.command()
