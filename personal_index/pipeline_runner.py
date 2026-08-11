@@ -158,9 +158,11 @@ class PipelineRunner:
             extracted_pages = []
             for i, page in enumerate(crawled_pages):
                 try:
+                    # Count as extracted even if content is empty
+                    stats.pages_extracted += 1
+                    # Only add to extracted_pages if it has content
                     if page.content:
                         extracted_pages.append(page)
-                        stats.pages_extracted += 1
                     self._emit_progress("extract", i + 1, len(crawled_pages))
                 except Exception as e:
                     stats.errors.append(f"Extract error for {page.url}: {e}")
@@ -269,9 +271,11 @@ class PipelineRunner:
             extracted_pages = []
             for i, page in enumerate(crawled_pages):
                 try:
+                    # Count as extracted even if content is empty
+                    stats.pages_extracted += 1
+                    # Only add to extracted_pages if it has content
                     if page.content:
                         extracted_pages.append(page)
-                        stats.pages_extracted += 1
                     self._emit_progress("extract", i + 1, len(crawled_pages))
                 except Exception as e:
                     stats.errors.append(f"Extract error for {page.url}: {e}")
