@@ -130,6 +130,48 @@ def stats(ctx, data_dir):
         click.echo("Storage: {}".format(size_str))
 
 
+
+@main.command()
+@click.option("--limit", "-l", default=20, type=int, help="Maximum pages to show")
+@click.option("--sort", "-s", default="score", type=click.Choice(["score", "date", "title"]),
+              help="Sort order")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def list(ctx, limit, sort, data_dir):
+    """List all indexed pages.
+
+    Shows all pages currently in the search index.
+
+    Examples:
+        personal-index list
+        personal-index list --limit 50
+        personal-index list --sort date
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+
+    pages = idx.list_pages()
+    if sort == "date":
+        pages = sorted(pages, key=lambda p: p.crawled_at or "", reverse=True)
+    elif sort == "title":
+        pages = sorted(pages, key=lambda p: p.title.lower())
+    else:
+        pages = sorted(pages, key=lambda p: p.score, reverse=True)
+    pages = pages[:limit]
+
+    if not pages:
+        click.echo("No indexed pages found. Run 'personal-index pipeline' to add content.")
+        return
+
+    click.echo("Indexed Pages")
+    click.echo("=" * 60)
+    for i, page in enumerate(pages, 1):
+        click.echo("{}. {}".format(i, page.title))
+        click.echo("   {}".format(page.url))
+        click.echo("   Score: {:.4f}".format(page.relevance_score))
+        click.echo("")
+
+
 # Doctor command
 @main.command()
 @click.option("--data-dir", default=None, help="Data directory")
