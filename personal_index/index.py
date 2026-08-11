@@ -65,7 +65,7 @@ class SearchIndex:
             "word_index": self._word_index,
         }
         with open(self.db_path, "w") as f:
-            json.dump(data, f, indent=2)
+            json.dump(data, f, indent=2, default=str)
             f.flush()
             os.fsync(f.fileno())
 
