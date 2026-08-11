@@ -133,3 +133,12 @@ class TestContentValidator:
         content = "word " * 200
         result = v.validate(content)
         assert any("long" in w.lower() for w in result.warnings)
+
+
+def test_validator_module_docstring_and_imports():
+    """Verify module has proper docstring before imports (E402 fix)."""
+    import personal_index.validator as mod
+    assert mod.__doc__ == "URL and content validation utilities."
+    # Verify the module imports correctly without E402 issues
+    assert hasattr(mod, "URLValidator")
+    assert hasattr(mod, "ContentValidator")

@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """URL and content validation utilities."""
+
+from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field

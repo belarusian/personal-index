@@ -92,3 +92,12 @@ class TestURLClassifier:
         c = URLClassifier()
         result = c.classify("http://example.com/page")
         assert len(result.reasons) > 0
+
+
+def test_url_classifier_module_docstring_and_imports():
+    """Verify module has proper docstring before imports (E402 fix)."""
+    import personal_index.url_classifier as mod
+    assert mod.__doc__ == "URL classification for categorizing crawled URLs."
+    # Verify the module imports correctly without E402 issues
+    assert hasattr(mod, "URLClassifier")
+    assert hasattr(mod, "URLCategory")

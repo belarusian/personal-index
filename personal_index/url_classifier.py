@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """URL classification for categorizing crawled URLs."""
+
+from __future__ import annotations
 
 import logging
 import re
