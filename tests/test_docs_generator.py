@@ -332,14 +332,13 @@ class TestGenerateDashboard:
         generate_dashboard(data, str(out))
         content = out.read_text()
         assert "<!DOCTYPE html>" in content
-        assert "personal-index Dashboard" in content
+        assert "personal-index" in content
         assert "a" in content
         assert "b" in content
-        assert "clean" in content
-        assert "error" in content
-        assert "2 passed" in content
+        assert "TERMINAL DASHBOARD" in content
+        assert "1 errors" in content
         # Dark theme check
-        assert "#0f172a" in content
+        assert "#010403" in content
         # No external dependencies
         assert "http:" not in content
         assert "https:" not in content

@@ -79,7 +79,7 @@ class ContentImporter:
                 if current_item:
                     current_item["description"] = "\n".join(desc_lines).strip()
                     items.append(current_item)
-                    desc_lines: list[str] = []
+                    desc_lines = []
                 link_text, link_url, plain_title = heading_match.groups()
                 title = link_text or plain_title
                 link = link_url or ""
