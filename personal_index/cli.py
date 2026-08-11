@@ -433,7 +433,7 @@ def import_cmd(path, recursive, config, data_dir):
                 content=text,
                 html="",
             )
-            index.index_page(page)
+            index.add_page(page)
             imported += 1
         except Exception as e:
             click.echo(f"  Error importing {file_path}: {e}", err=True)

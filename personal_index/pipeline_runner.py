@@ -157,7 +157,7 @@ class PipelineRunner:
             logger.info("Step 6/6: Indexing content")
             for page in pages:
                 try:
-                    self._search_index.index_page(page)
+                    self._search_index.add_page(page)
                     stats.pages_indexed += 1
                 except Exception as e:
                     logger.warning("Failed to index %s: %s", page.url, e)
