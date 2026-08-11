@@ -189,3 +189,50 @@ class TestNotFound:
     def test_unknown_route(self, api):
         status, body = api.handle_request("GET", "/unknown")
         assert status == 404
+
+
+# --- Additional API Tests ---
+
+class TestApiErrorHandling:
+    def test_create_empty_title(self, api):
+        body = json.dumps({"title": ""})
+        status, resp = api.handle_request("POST", "/api/v1/content", body=body)
+        assert status == 201
+        assert resp["item"]["title"] == "Untitled"
+
+    def test_update_invalid_json(self, api_with_data):
+        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body="bad")
+        assert status == 400
+
+    def test_list_page_2_empty(self, api_with_data):
+        status, body = api_with_data.handle_request(
+            "GET", "/api/v1/content", query_string="page=2&per_page=1"
+        )
+        assert len(body["items"]) == 0
+
+    def test_stats_tags(self, api_with_data):
+        status, body = api_with_data.handle_request("GET", "/api/v1/stats")
+        assert "tags" in body
+        assert body["tags"]["a"] == 1
+
+    def test_export_default_format(self, api_with_data):
+        status, body = api_with_data.handle_request("GET", "/api/v1/content/export")
+        assert body["format"] == "json"
+
+    def test_multiple_creates(self, api):
+        for i in range(5):
+            body = json.dumps({"title": f"Post {i}"})
+            status, _ = api.handle_request("POST", "/api/v1/content", body=body)
+            assert status == 201
+        status, body = api.handle_request("GET", "/api/v1/content")
+        assert body["total"] == 5
+
+    def test_update_tags(self, api_with_data):
+        body = json.dumps({"tags": ["new", "tags"]})
+        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
+        assert resp["item"]["tags"] == ["new", "tags"]
+
+    def test_update_link(self, api_with_data):
+        body = json.dumps({"link": "http://new-url.com"})
+        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
+        assert resp["item"]["link"] == "http://new-url.com"
