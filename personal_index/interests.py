@@ -128,6 +128,12 @@ class InterestStore:
                 matches.append(interest)
         return matches
 
+
+    def clear(self) -> None:
+        """Remove all interests."""
+        self._interests.clear()
+        self._save()
+
     def total_score(self, text: str) -> float:
         """Calculate total relevance score across all interests."""
         return sum(interest.score(text) for interest in self._interests.values())
