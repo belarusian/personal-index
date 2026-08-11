@@ -470,7 +470,7 @@ class TestPipelineErrorHandling:
 
         with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
             mock_crawler = MagicMock()
-            mock_crawler.crawl.side_effect = Exception("Network error")
+            mock_crawler.crawl.side_effect = OSError("Network error")
             MockCrawler.return_value = mock_crawler
 
             stats = runner.run(["https://example.com"], max_depth=1)
