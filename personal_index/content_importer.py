@@ -142,3 +142,14 @@ class ContentImporter:
     def _next_id(self) -> int:
         self._id_counter += 1
         return self._id_counter
+
+    def batch_import(self, data_sources):
+        """Import from multiple data sources.
+        data_sources: list of (data_str, format) tuples
+        """
+        all_items = []
+        for data, fmt in data_sources:
+            items = self.import_content(data, fmt)
+            all_items.extend(items)
+        return all_items
+
