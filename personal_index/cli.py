@@ -37,6 +37,22 @@ def get_tag_store(data_dir: str) -> TagStore:
     return TagStore(store_path=store_path)
 
 
+def get_interest_store(data_dir: str):
+    """Get or create an interest store for the given data directory."""
+    from personal_index.interests import InterestStore
+    store_path = os.path.join(data_dir, "interests.json")
+    return InterestStore(store_path=store_path)
+
+
+def load_config(data_dir: str) -> dict:
+    """Load configuration from config.yaml."""
+    config_path = "config.yaml"
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            return yaml.safe_load(f) or {}
+    return {}
+
+
 @click.group(cls=click.Group, invoke_without_command=True)
 @click.option("--data-dir", default=None, help="Data directory")
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
@@ -180,9 +196,9 @@ def crawl(ctx, url, depth, data_dir, timeout, delay, max_pages):
 @click.option("--limit", "-n", default=20, type=int, help="Max results")
 @click.option("--tag", default=None, help="Filter by tag")
 @click.option("--data-dir", default=None, help="Data directory")
-@click.option("--format", "-f", type=click.Choice(["text", "json"]), default="text", help="Output format")
+@click.option("--format", "-f", "fmt", type=click.Choice(["text", "json"]), default="text", help="Output format")
 @click.pass_context
-def search(ctx, query, limit, tag, data_dir, format):
+def search(ctx, query, limit, tag, data_dir, fmt):
     """Search the indexed content.
 
     Searches through all indexed pages for the given query.
@@ -198,138 +214,100 @@ def search(ctx, query, limit, tag, data_dir, format):
     tag_store = get_tag_store(dd)
 
     if idx.get_page_count() == 0:
-        click.echo("No indexed content found. Run 'personal-index pipeline <URL>' first.")
+        click.echo("No indexed content found. Run 'personal-index pipeline' first.")
         return
 
     results = idx.search(query, limit=limit)
 
+    # Apply tag filter if specified
     if tag:
-        tagged_urls = set(tag_store.get_pages_for_tag(tag))
+        tagged_urls = tag_store.get_pages_for_tag(tag)
         results = [r for r in results if r.url in tagged_urls]
 
-    if not results:
-        click.echo(f"No results found for '{query}'")
-        return
-
-    if format == "json":
-        output = [
-            {
-                "url": r.url,
-                "title": r.title,
-                "snippet": r.snippet,
-                "score": r.relevance_score,
-            }
-            for r in results
-        ]
-        click.echo(json.dumps(output, indent=2))
+    # Output results
+    if fmt == "json":
+        data = {
+            "results": [
+                {
+                    "url": r.url,
+                    "title": r.title,
+                    "snippet": r.snippet,
+                    "relevance_score": r.relevance_score,
+                }
+                for r in results
+            ],
+            "total": len(results),
+        }
+        click.echo(json.dumps(data, indent=2))
     else:
-        click.echo(f"Search results for '{query}' ({len(results)} found):")
+        if not results:
+            click.echo(f"No results found for '{query}'")
+            return
+
+        click.echo(f"\nSearch results for '{query}' ({len(results)} found):")
         click.echo("-" * 60)
-        for i, r in enumerate(results, 1):
-            page_tags = tag_store.get_tags_for_page(r.url)
-            tag_str = f" [{', '.join(t.name for t in page_tags)}]" if page_tags else ""
-            click.echo(f"\n{i}. {r.title}{tag_str}")
-            click.echo(f"   {r.url}")
-            click.echo(f"   Score: {r.relevance_score:.4f}")
-            if r.snippet:
-                click.echo(f"   {r.snippet[:200]}")
-            click.echo()
+
+        for i, result in enumerate(results, 1):
+            click.echo(f"\n{i}. {result.title}")
+            click.echo(f"   {result.url}")
+            click.echo(f"   Score: {result.relevance_score:.4f}")
+            if result.snippet:
+                click.echo(f"   {result.snippet[:200]}")
 
 
-@main.command()
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def status(ctx, data_dir):
-    """Show the current status of the index.
-
-    Displays statistics about indexed pages, tags, and interests.
-
-    Examples:
-        personal-index status
-    """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    idx = get_search_index(dd)
-    tag_store = get_tag_store(dd)
-
-    from personal_index.interests import InterestStore
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
-
-    click.echo("Personal Index Status")
-    click.echo("=" * 40)
-    click.echo(f"Data directory: {dd}")
-    click.echo(f"Indexed pages: {idx.get_page_count()}")
-    click.echo(f"Tags: {tag_store.get_tag_count()}")
-    click.echo(f"Tagged pages: {tag_store.get_tagged_page_count()}")
-    click.echo(f"Interests: {len(interest_store.list_all())}")
-
-    # Show top tags
-    tags = tag_store.list_tags()
-    if tags:
-        click.echo("\nTop tags:")
-        for tag in sorted(tags, key=lambda t: len(tag_store.get_pages_for_tag(t.name)), reverse=True)[:10]:
-            count = len(tag_store.get_pages_for_tag(tag.name))
-            click.echo(f"  {tag.name}: {count} pages")
-
-
+# Interest management commands
 @main.group()
 @click.pass_context
 def interests(ctx):
-    """Manage content interests.
+    """Manage your content interests.
 
-    Interests define what content the pipeline should prioritize.
-    Pages matching your interests get higher scores.
+    Define topics and keywords you want to track.
 
     Examples:
-        personal-index interests list
         personal-index interests add programming -k python -k javascript
+        personal-index interests list
         personal-index interests remove programming
     """
+
+
+@interests.command("add")
+@click.option("-n", "--name", required=True, help="Interest name")
+@click.option("-k", "--keyword", "keywords", multiple=True, help="Keywords to track")
+@click.option("-p", "--priority", default=5, type=int, help="Priority (1-10)")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def interests_add(ctx, name, keywords, priority, data_dir):
+    """Add a new interest to track."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    store = get_interest_store(dd)
+
+    from personal_index.models import Interest
+    interest = Interest(
+        name=name,
+        keywords=list(keywords),
+        priority=priority,
+    )
+    store.add(interest)
+    click.echo(f"Added interest '{name}' with keywords: {', '.join(keywords)}")
 
 
 @interests.command("list")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def interests_list(ctx, data_dir):
-    """List all configured interests."""
+    """List all tracked interests."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.interests import InterestStore
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
-    all_interests = interest_store.list_all()
+    store = get_interest_store(dd)
 
+    all_interests = store.list_all()
     if not all_interests:
-        click.echo("No interests configured.")
-        click.echo("Add one: personal-index interests add mytopic -k kw1 -k kw2")
+        click.echo("No interests configured. Add one with 'personal-index interests add'")
         return
 
-    click.echo(f"Configured interests ({len(all_interests)}):")
+    click.echo(f"Interests ({len(all_interests)}):")
     for interest in all_interests:
-        keywords = ", ".join(interest.keywords)
-        click.echo(f"  {interest.name}: {keywords}")
-
-
-@interests.command("add")
-@click.option("-n", "--name", required=True, help="Interest name")
-@click.option("-k", "--keyword", "keywords", multiple=True, required=True, help="Keywords (can specify multiple)")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def interests_add(ctx, name, keywords, data_dir):
-    """Add a new interest.
-
-    NAME is the interest name (e.g., "programming", "news").
-    KEYWORDS are terms to match (use -k multiple times).
-
-    Examples:
-        personal-index interests add programming -k python -k javascript -k web
-        personal-index interests add science -k physics -k chemistry
-    """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.interests import Interest, InterestStore
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
-
-    keyword_list = [k.strip() for k in keywords if k.strip()]
-    interest = Interest(name=name, keywords=keyword_list)
-    interest_store.add(interest)
-    click.echo(f"Added interest: {name}")
+        kws = ", ".join(interest.keywords) if interest.keywords else "(none)"
+        click.echo(f"  {interest.name}: priority={interest.priority}, keywords=[{kws}]")
 
 
 @interests.command("remove")
@@ -337,113 +315,30 @@ def interests_add(ctx, name, keywords, data_dir):
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def interests_remove(ctx, name, data_dir):
-    """Remove an interest by name."""
+    """Remove an interest."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.interests import InterestStore
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
+    store = get_interest_store(dd)
 
-    if interest_store.remove(name):
-        click.echo(f"Removed interest: {name}")
+    if store.remove(name):
+        click.echo(f"Removed interest '{name}'")
     else:
         click.echo(f"Interest '{name}' not found", err=True)
         sys.exit(1)
 
 
-@interests.command("priority")
-@click.argument("name")
-@click.argument("priority", type=int)
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def interests_priority(ctx, name, priority, data_dir):
-    """Set the priority of an interest (1-10)."""
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.interests import InterestStore
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
-    interest = interest_store.get(name)
-    if interest:
-        interest.priority = max(1, min(10, priority))
-        interest_store.add(interest)
-        click.echo(f"Set priority for '{name}' to {priority}")
-    else:
-        click.echo(f"Interest '{name}' not found", err=True)
-        sys.exit(1)
-
-
-@interests.command("enable")
-@click.argument("name")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def interests_enable(ctx, name, data_dir):
-    """Enable a disabled interest."""
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.interests import InterestStore
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
-    interest = interest_store.get(name)
-    if interest:
-        interest.enabled = True
-        interest_store.add(interest)
-        click.echo(f"Enabled interest: {name}")
-    else:
-        click.echo(f"Interest '{name}' not found", err=True)
-        sys.exit(1)
-
-
-@interests.command("disable")
-@click.argument("name")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def interests_disable(ctx, name, data_dir):
-    """Disable an interest."""
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.interests import InterestStore
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
-    interest = interest_store.get(name)
-    if interest:
-        interest.enabled = False
-        interest_store.add(interest)
-        click.echo(f"Disabled interest: {name}")
-    else:
-        click.echo(f"Interest '{name}' not found", err=True)
-        sys.exit(1)
-
-
+# Tag management commands
 @main.group()
 @click.pass_context
 def tags(ctx):
     """Manage content tags.
 
-    Tags are automatically assigned during the pipeline but can also
-    be managed manually.
+    Tag indexed content for easier filtering and organization.
 
     Examples:
+        personal-index tags add important https://example.com/page
         personal-index tags list
-        personal-index tags add my-tag https://example.com/page
+        personal-index tags remove important https://example.com/page
     """
-
-
-@main.group()
-@click.pass_context
-def tag(ctx):
-    """Alias for 'tags' command (singular form)."""
-
-
-@tags.command("list")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def tags_list(ctx, data_dir):
-    """List all tags and their page counts."""
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    tag_store = get_tag_store(dd)
-    all_tags = tag_store.list_tags()
-
-    if not all_tags:
-        click.echo("No tags found.")
-        return
-
-    click.echo(f"Tags ({len(all_tags)}):")
-    for tag in sorted(all_tags, key=lambda t: len(tag_store.get_pages_for_tag(t.name)), reverse=True):
-        count = len(tag_store.get_pages_for_tag(tag.name))
-        click.echo(f"  {tag.name}: {count} pages")
 
 
 @tags.command("add")
@@ -452,11 +347,30 @@ def tags_list(ctx, data_dir):
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def tags_add(ctx, tag_name, url, data_dir):
-    """Add a tag to a specific page URL."""
+    """Add a tag to a page."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    tag_store = get_tag_store(dd)
-    tag_store.add_tag_to_page(url, tag_name)
+    store = get_tag_store(dd)
+    store.add_tag_to_page(url, tag_name)
     click.echo(f"Added tag '{tag_name}' to {url}")
+
+
+@tags.command("list")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def tags_list(ctx, data_dir):
+    """List all tags."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    store = get_tag_store(dd)
+
+    tag_names = store.get_all_tags()
+    if not tag_names:
+        click.echo("No tags found.")
+        return
+
+    click.echo(f"Tags ({len(tag_names)}):")
+    for tag in sorted(tag_names):
+        pages = store.get_pages_for_tag(tag)
+        click.echo(f"  {tag}: {len(pages)} page(s)")
 
 
 @tags.command("remove")
@@ -465,187 +379,144 @@ def tags_add(ctx, tag_name, url, data_dir):
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def tags_remove(ctx, tag_name, url, data_dir):
-    """Remove a tag from a specific page URL."""
+    """Remove a tag from a page."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    tag_store = get_tag_store(dd)
-    if tag_store.remove_tag_from_page(url, tag_name):
-        click.echo(f"Removed tag '{tag_name}' from {url}")
-    else:
-        click.echo(f"Tag '{tag_name}' not found on {url}", err=True)
-        sys.exit(1)
+    store = get_tag_store(dd)
+    store.remove_tag_from_page(url, tag_name)
+    click.echo(f"Removed tag '{tag_name}' from {url}")
 
 
-# Tag aliases (singular form for backward compatibility)
-@tag.command("list")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def tag_list(ctx, data_dir):
-    """Alias for tags list."""
-    ctx.invoke(tags_list, data_dir=data_dir)
-
-
-@tag.command("add")
-@click.argument("tag_name")
-@click.argument("url")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def tag_add(ctx, tag_name, url, data_dir):
-    """Alias for tags add."""
-    ctx.invoke(tags_add, tag_name=tag_name, url=url, data_dir=data_dir)
-
-
-@tag.command("remove")
-@click.argument("tag_name")
-@click.argument("url")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def tag_remove(ctx, tag_name, url, data_dir):
-    """Alias for tags remove."""
-    ctx.invoke(tags_remove, tag_name=tag_name, url=url, data_dir=data_dir)
-
-
+# Import command
 @main.command()
-@click.option("--format", "-f", type=click.Choice(["markdown", "json", "csv"]), default="markdown", help="Export format")
-@click.option("--output", "-o", default=None, help="Output file path")
-@click.option("--query", "-q", default=None, help="Filter by search query")
+@click.argument("source", required=True)
+@click.option("-r", "--recursive", is_flag=True, help="Recursively import directories")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
-def export(ctx, format, output, query, data_dir):
-    """Export indexed content to various formats.
+def import_(ctx, source, recursive, data_dir):
+    """Import content from files or directories.
+
+    Supports text files, HTML files, and JSON files.
+    Imported content is automatically scored, tagged, and indexed.
 
     Examples:
-        personal-index export --format markdown
-        personal-index export -f json -o results.json
-        personal-index export -q "python" -f csv
+        personal-index import article.txt
+        personal-index import ./articles/ --recursive
     """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
     tag_store = get_tag_store(dd)
+    interest_store = get_interest_store(dd)
 
-    if query:
-        results = idx.search(query, limit=100)
-    else:
-        results = []
-        for url in idx._pages:
-            page = idx._pages[url]
-            snippet = idx._create_snippet(page.content, "")
-            results.append(SearchResult(
-                url=url,
-                title=page.title,
-                snippet=snippet,
-                relevance_score=0.0,
-            ))
-
-    if format == "markdown":
-        from personal_index.export_markdown import export_markdown
-        output_text = export_markdown(results, tag_store)
-    elif format == "json":
-        from personal_index.content_export.json_export import export_json
-        output_text = export_json(results, tag_store)
-    elif format == "csv":
-        from personal_index.content_export.csv_export import export_csv
-        output_text = export_csv(results, tag_store)
-    else:
-        click.echo(f"Unsupported format: {format}", err=True)
-        sys.exit(1)
-
-    if output:
-        with open(output, "w") as f:
-            f.write(output_text)
-        click.echo(f"Exported to {output}")
-    else:
-        click.echo(output_text)
-
-
-@main.command(name="import")
-@click.argument("filepaths", nargs=-1, required=True)
-@click.option("--data-dir", default=None, help="Data directory")
-@click.option("--recursive", "-r", is_flag=True, help="Import directory recursively")
-@click.pass_context
-def import_content(ctx, filepaths, data_dir, recursive):
-    """Import content from a file or directory.
-
-    Import text files or JSON files into the index.
-    Text files are imported as-is, JSON files are parsed as page data.
-
-    Examples:
-        personal-index import content.json
-        personal-index import ./articles --recursive
-    """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    idx = get_search_index(dd)
-
-    imported = 0
-    for filepath in filepaths:
-        if not os.path.exists(filepath):
-            click.echo(f"File not found: {filepath}", err=True)
-            continue
-
-        if os.path.isdir(filepath):
-            if not recursive:
-                click.echo(f"Is a directory: {filepath}. Use --recursive to import.", err=True)
-                continue
-            for root, dirs, files in os.walk(filepath):
-                for fname in files:
-                    fpath = os.path.join(root, fname)
-                    imported += _import_single_file(fpath, idx)
-        else:
-            imported += _import_single_file(filepath, idx)
-
-    click.echo(f"Import complete: {imported} page(s) imported")
-
-
-def _import_single_file(filepath: str, idx: SearchIndex) -> int:
-    """Import a single file into the index. Returns number of pages imported."""
     from personal_index.models import CrawledPage
+    from personal_index.content_scoring import ContentScorer, ScoreWeights
+    from personal_index.content_filter import ContentFilter, FilterConfig
 
-    if filepath.endswith(".json"):
-        try:
-            with open(filepath) as f:
-                data = json.load(f)
-            if isinstance(data, list):
-                count = 0
-                for item in data:
-                    page = CrawledPage(
-                        url=item.get("url", filepath),
-                        title=item.get("title", os.path.basename(filepath)),
-                        content=item.get("content", ""),
-                    )
-                    idx.add_page(page)
-                    count += 1
-                return count
-            elif isinstance(data, dict):
-                page = CrawledPage(
-                    url=data.get("url", filepath),
-                    title=data.get("title", os.path.basename(filepath)),
-                    content=data.get("content", ""),
-                )
-                idx.add_page(page)
-                return 1
-            else:
-                # Unknown JSON structure
-                return 0
-        except json.JSONDecodeError:
-            click.echo(f"Invalid JSON in {filepath}")
-            return 0
-    else:
-        # Text file - import as a single page
+    scorer = ContentScorer(weights=ScoreWeights())
+    content_filter = ContentFilter(config=FilterConfig())
+
+    def _import_single_file(filepath: str) -> int:
+        """Import a single file through the full pipeline."""
         try:
             with open(filepath, "r", errors="replace") as f:
                 content = f.read()
+
             page = CrawledPage(
                 url=filepath,
                 title=os.path.basename(filepath),
                 content=content,
             )
+
+            # Filter
+            if not content_filter.should_include(page):
+                click.echo(f"  Filtered out: {filepath}")
+                return 0
+
+            # Score
+            word_count = len(content.split())
+            keyword_matches = 0
+            total_keywords = 0
+            matched_interests = []
+            for interest in interest_store.list_all():
+                for kw in interest.keywords:
+                    total_keywords += 1
+                    if kw.lower() in content.lower():
+                        keyword_matches += 1
+                        matched_interests.append(interest.name)
+            score_result = scorer.score(
+                keyword_matches=keyword_matches,
+                total_keywords=max(total_keywords, 1),
+                word_count=word_count,
+                domain_authority=0.5,
+            )
+            score = score_result.total if hasattr(score_result, "total") else 0.0
+            page.relevance_score = score
+            page.matched_interests = matched_interests
+
+            # Tag
+            for interest_name in set(matched_interests):
+                tag_store.add_tag_to_page(filepath, interest_name)
+
+            # Index
             idx.add_page(page)
+            click.echo(f"  Imported: {filepath} (score={score:.4f})")
             return 1
         except (OSError, ValueError) as e:
-            click.echo(f"Error reading {filepath}: {e}")
+            click.echo(f"  Error importing {filepath}: {e}")
             return 0
-        return 0
+
+    if os.path.isdir(source):
+        if recursive:
+            import pathlib
+            files = list(pathlib.Path(source).rglob("*"))
+            files = [f for f in files if f.is_file()]
+        else:
+            import pathlib
+            files = list(pathlib.Path(source).iterdir())
+            files = [f for f in files if f.is_file()]
+
+        click.echo(f"Importing {len(files)} files from {source}...")
+        total = 0
+        for f in files:
+            total += _import_single_file(str(f))
+        click.echo(f"Imported {total}/{len(files)} files")
+    else:
+        total = _import_single_file(source)
+        click.echo(f"Imported {total} file(s)")
 
 
+# Status command
+@main.command()
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def status(ctx, data_dir):
+    """Show the current status of the index.
+
+    Displays statistics about indexed content, tags, and interests.
+
+    Examples:
+        personal-index status
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    tag_store = get_tag_store(dd)
+    interest_store = get_interest_store(dd)
+
+    click.echo("Personal Index Status")
+    click.echo("=" * 40)
+    click.echo(f"Data directory: {dd}")
+    click.echo(f"Indexed pages: {idx.get_page_count()}")
+    click.echo(f"Tags: {tag_store.get_tag_count()}")
+    click.echo(f"Interests: {len(interest_store.list_all())}")
+
+    # Show top pages by score
+    pages = idx.list_pages()
+    if pages:
+        click.echo(f"\nTop pages by score:")
+        for page in pages[:5]:
+            click.echo(f"  {page.title} ({page.url}) - score: {page.score:.4f}")
+
+
+# Reset command
 @main.command()
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
@@ -684,6 +555,7 @@ def reset(ctx, data_dir):
     click.echo("Index reset complete.")
 
 
+# Validate command
 @main.command()
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
@@ -753,6 +625,166 @@ def validate(ctx, data_dir):
 
     if errors:
         sys.exit(1)
+
+
+# Reindex command
+@main.command()
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def reindex(ctx, data_dir):
+    """Rebuild the search index from existing crawled pages.
+
+    Useful after updating interests or scoring weights.
+
+    Examples:
+        personal-index reindex
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    tag_store = get_tag_store(dd)
+    interest_store = get_interest_store(dd)
+
+    from personal_index.content_scoring import ContentScorer, ScoreWeights
+    from personal_index.content_filter import ContentFilter, FilterConfig
+
+    scorer = ContentScorer(weights=ScoreWeights())
+    content_filter = ContentFilter(config=FilterConfig())
+
+    # Clear existing index
+    idx.clear()
+    tag_store.clear()
+
+    # Re-process all existing pages
+    pages_path = os.path.join(dd, "crawled_pages.json")
+    if not os.path.exists(pages_path):
+        click.echo("No crawled pages found. Run 'personal-index pipeline' first.")
+        return
+
+    with open(pages_path, "r") as f:
+        pages_data = json.load(f)
+
+    from personal_index.models import CrawledPage
+
+    reindexed = 0
+    for pd in pages_data:
+        page = CrawledPage(
+            url=pd["url"],
+            title=pd.get("title", ""),
+            content=pd.get("content", ""),
+        )
+
+        if not content_filter.should_include(page):
+            continue
+
+        word_count = len((page.content or "").split())
+        keyword_matches = 0
+        total_keywords = 0
+        matched_interests = []
+        for interest in interest_store.list_all():
+            for kw in interest.keywords:
+                total_keywords += 1
+                if kw.lower() in (page.content or "").lower():
+                    keyword_matches += 1
+                    matched_interests.append(interest.name)
+        score_result = scorer.score(
+            keyword_matches=keyword_matches,
+            total_keywords=max(total_keywords, 1),
+            word_count=word_count,
+            domain_authority=0.5,
+        )
+        score = score_result.total if hasattr(score_result, "total") else 0.0
+        page.relevance_score = score
+        page.matched_interests = matched_interests
+
+        for interest_name in set(matched_interests):
+            tag_store.add_tag_to_page(page.url, interest_name)
+
+        idx.add_page(page)
+        reindexed += 1
+
+    click.echo(f"Reindexed {reindexed} pages")
+
+
+# Export command
+@main.command()
+@click.option("--format", "-f", "fmt", type=click.Choice(["text", "json", "markdown", "csv"]), default="text", help="Export format")
+@click.option("--output", "-o", default=None, help="Output file path")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def export(ctx, fmt, output, data_dir):
+    """Export indexed content.
+
+    Exports all indexed pages in the specified format.
+
+    Examples:
+        personal-index export --format json
+        personal-index export --format markdown -o results.md
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    tag_store = get_tag_store(dd)
+
+    pages = idx.list_pages()
+    if not pages:
+        click.echo("No indexed content to export.")
+        return
+
+    if fmt == "json":
+        data = {
+            "pages": [
+                {
+                    "url": p.url,
+                    "title": p.title,
+                    "content": p.content[:500] if p.content else "",
+                    "score": p.score,
+                    "tags": tag_store.get_tags_for_page(p.url),
+                }
+                for p in pages
+            ],
+            "total": len(pages),
+        }
+        output_text = json.dumps(data, indent=2)
+    elif fmt == "markdown":
+        lines = ["# Search Results", ""]
+        for p in pages:
+            tags = tag_store.get_tags_for_page(p.url)
+            tag_str = f" [{', '.join(tags)}]" if tags else ""
+            lines.append(f"## {p.title}{tag_str}")
+            lines.append(f"**URL:** {p.url}")
+            lines.append(f"**Score:** {p.score:.4f}")
+            if p.content:
+                lines.append(f"\n{p.content[:500]}")
+            lines.append("")
+        output_text = "\n".join(lines)
+    elif fmt == "csv":
+        import csv
+        import io
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["url", "title", "score", "tags", "content_preview"])
+        for p in pages:
+            tags = tag_store.get_tags_for_page(p.url)
+            writer.writerow([
+                p.url, p.title, f"{p.score:.4f}",
+                ";".join(tags), (p.content or "")[:200]
+            ])
+        output_text = buf.getvalue()
+    else:
+        lines = [f"Indexed Pages ({len(pages)})", "=" * 40]
+        for p in pages:
+            tags = tag_store.get_tags_for_page(p.url)
+            tag_str = f" [{', '.join(tags)}]" if tags else ""
+            lines.append(f"\n{p.title}{tag_str}")
+            lines.append(f"  URL: {p.url}")
+            lines.append(f"  Score: {p.score:.4f}")
+        output_text = "\n".join(lines)
+
+    if output:
+        with open(output, "w") as f:
+            f.write(output_text)
+        click.echo(f"Exported to {output}")
+    else:
+        click.echo(output_text)
 
 
 # Config management commands
@@ -917,6 +949,71 @@ def schedule_remove(ctx, name, data_dir):
 from personal_index.cli_pipeline import pipeline
 
 main.add_command(pipeline)
+
+# Doctor command
+@main.command()
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def doctor(ctx, data_dir):
+    """Diagnose issues with your personal-index setup.
+
+    Checks configuration, data directory, and component health.
+
+    Examples:
+        personal-index doctor
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    issues = []
+    warnings = []
+
+    # Check data directory
+    if not os.path.exists(dd):
+        issues.append(f"Data directory '{dd}' does not exist. Run 'personal-index init'.")
+    else:
+        # Check subdirectories
+        for subdir in ["cache", "archive", "backups"]:
+            if not os.path.exists(os.path.join(dd, subdir)):
+                warnings.append(f"Missing subdirectory: {subdir}")
+
+    # Check config
+    if not os.path.exists("config.yaml"):
+        warnings.append("No config.yaml found. Run 'personal-index init' for defaults.")
+
+    # Check index
+    idx = get_search_index(dd)
+    if idx.get_page_count() == 0:
+        warnings.append("Index is empty. Run 'personal-index pipeline' to add content.")
+
+    # Check interests
+    interest_store = get_interest_store(dd)
+    if not interest_store.list_all():
+        warnings.append("No interests configured. Add interests for better scoring.")
+
+    # Check tag store
+    tag_store = get_tag_store(dd)
+
+    click.echo("Personal Index Health Check")
+    click.echo("=" * 40)
+
+    if issues:
+        click.echo(f"\n✗ Issues ({len(issues)}):")
+        for issue in issues:
+            click.echo(f"  - {issue}")
+    else:
+        click.echo("\n✓ No critical issues found")
+
+    if warnings:
+        click.echo(f"\n⚠ Warnings ({len(warnings)}):")
+        for warning in warnings:
+            click.echo(f"  - {warning}")
+
+    click.echo(f"\nIndex: {idx.get_page_count()} pages")
+    click.echo(f"Tags: {tag_store.get_tag_count()}")
+    click.echo(f"Interests: {len(interest_store.list_all())}")
+
+    if issues:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
