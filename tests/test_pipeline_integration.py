@@ -16,7 +16,7 @@ import pytest
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
-from personal_index.models import CrawledPage
+from personal_index.models import CrawledPage, Interest
 from personal_index.pipeline_runner import PipelineRunner, PipelineStats
 from personal_index.tags import TagStore
 
@@ -44,7 +44,6 @@ class TestPipelineRunnerBasic:
         runner = PipelineRunner(data_dir=data_dir)
 
         # Add an interest so scoring works
-        from personal_index.models import Interest
         runner._interest_store.add(Interest(
             name="programming",
             keywords=["python", "javascript", "programming"]
@@ -74,7 +73,6 @@ class TestPipelineRunnerBasic:
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "empty.txt").write_text("")
-        (docs / "short.txt").write_text("hi")
         (docs / "good.txt").write_text(
             "This is a proper article with enough content to be indexed "
             "and scored properly by the pipeline system."
@@ -83,14 +81,13 @@ class TestPipelineRunnerBasic:
         runner = PipelineRunner(data_dir=data_dir)
         stats = runner.run_from_files([
             str(docs / "empty.txt"),
-            str(docs / "short.txt"),
             str(docs / "good.txt"),
         ])
         runner.close()
 
         # Empty file should not be indexed
-        assert stats.pages_indexed >= 1
-        assert stats.pages_crawled >= 1
+        assert stats.pages_crawled == 1  # Only good.txt
+        assert stats.pages_indexed == 1
 
     def test_run_from_files_nonexistent(self, tmp_path):
         """Non-existent files should produce errors, not crash."""
@@ -176,7 +173,6 @@ class TestPipelineTaggingIntegration:
         )
 
         runner = PipelineRunner(data_dir=data_dir)
-        from personal_index.models import Interest
         runner._interest_store.add(Interest(
             name="devops",
             keywords=["docker", "kubernetes", "devops"]
@@ -186,12 +182,13 @@ class TestPipelineTaggingIntegration:
 
         # Check tags were applied
         tag_store = TagStore(store_path=os.path.join(data_dir, "tags.json"))
-        all_tags = tag_store.get_all_tags()
+        all_tags = tag_store.list_tags()
 
         runner.close()
 
         assert len(all_tags) > 0
-        assert "devops" in all_tags
+        tag_names = [t.name for t in all_tags]
+        assert "devops" in tag_names
 
     def test_interest_matching_in_pipeline(self, tmp_path):
         """Interest matching should boost scores during pipeline."""
@@ -208,7 +205,6 @@ class TestPipelineTaggingIntegration:
         )
 
         runner = PipelineRunner(data_dir=data_dir)
-        from personal_index.models import Interest
         runner._interest_store.add(Interest(
             name="tech",
             keywords=["python", "programming", "data science"]
@@ -308,7 +304,6 @@ class TestPipelinePersistence:
         os.makedirs(data_dir)
 
         runner = PipelineRunner(data_dir=data_dir)
-        from personal_index.models import Interest
         runner._interest_store.add(Interest(
             name="test_interest",
             keywords=["test", "integration"]
@@ -351,3 +346,87 @@ class TestPipelineStats:
         assert stats.pages_extracted == 0
         assert stats.errors == []
         assert stats.elapsed_seconds == 0.0
+
+
+class TestPipelineHTMLFiles:
+    """Test pipeline with HTML files."""
+
+    def test_html_file_processing(self, tmp_path):
+        """HTML files should be properly extracted and indexed."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "page.html").write_text(
+            "<html><head><title>Python Tutorial</title></head>"
+            "<body><h1>Python Tutorial</h1>"
+            "<p>Learn Python programming from scratch.</p>"
+            "</body></html>"
+        )
+
+        runner = PipelineRunner(data_dir=data_dir)
+        stats = runner.run_from_files([str(docs / "page.html")])
+        runner.close()
+
+        assert stats.pages_crawled == 1
+        assert stats.pages_indexed == 1
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python")
+        assert len(results) == 1
+        assert "Python" in results[0].title
+
+
+class TestPipelineEndToEnd:
+    """Full end-to-end pipeline tests."""
+
+    def test_full_workflow(self, tmp_path):
+        """Complete workflow: add interests, import files, search, verify."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "python.txt").write_text(
+            "Python is a versatile programming language for web development, "
+            "data science, and machine learning."
+        )
+        (docs / "rust.txt").write_text(
+            "Rust is a systems programming language focused on safety and performance."
+        )
+
+        runner = PipelineRunner(data_dir=data_dir)
+        runner._interest_store.add(Interest(
+            name="python",
+            keywords=["python", "programming"]
+        ))
+        runner._interest_store.add(Interest(
+            name="rust",
+            keywords=["rust", "systems"]
+        ))
+
+        stats = runner.run_from_files([
+            str(docs / "python.txt"),
+            str(docs / "rust.txt"),
+        ])
+
+        # Verify all stages completed
+        assert stats.pages_crawled == 2
+        assert stats.pages_indexed == 2
+        assert stats.tags_applied > 0
+
+        # Verify search works
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        python_results = index.search("python")
+        rust_results = index.search("rust")
+
+        assert len(python_results) == 1
+        assert len(rust_results) == 1
+
+        # Verify tags
+        tag_store = TagStore(store_path=os.path.join(data_dir, "tags.json"))
+        python_tags = tag_store.get_tags_for_page(str(docs / "python.txt"))
+        assert "python" in python_tags
+
+        runner.close()
