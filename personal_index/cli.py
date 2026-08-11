@@ -377,7 +377,7 @@ def status(config, data_dir):
 
     # Index
     idx = SearchIndex()
-    count = idx.count()
+    count = idx.get_page_count()
     click.echo(f"Indexed pages: {count}")
 
     # Pipeline config
@@ -459,7 +459,7 @@ def export_cmd(fmt, output, query, limit, data_dir):
     if query:
         results = index.search(query, limit=limit)
     else:
-        results = index.list_all(limit=limit)
+        results = index.list_pages(limit=limit)
 
     if not results:
         click.echo("No content to export.")
@@ -517,7 +517,7 @@ def list_tags(data_dir):
     """List all defined tags."""
     from personal_index.tags import TagStore
     store = TagStore(store_path=f"{data_dir}/tags.json")
-    tags = store.list_all()
+    tags = store.list_tags()
     if not tags:
         click.echo("No tags defined.")
         return
@@ -534,7 +534,7 @@ def add_tag(name, color, description, data_dir):
     """Add a new tag."""
     from personal_index.tags import TagStore
     store = TagStore(store_path=f"{data_dir}/tags.json")
-    store.add_tag(name, color=color, description=description)
+    store.create_tag(name, color=color, description=description)
     click.echo(f"Added tag: {name}")
 
 
