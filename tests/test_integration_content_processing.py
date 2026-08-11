@@ -10,7 +10,6 @@ import pytest
 from personal_index.app import PersonalIndexApp
 
 
-import pytest
 @pytest.mark.skip(reason="Test isolation issue")
 class TestContentProcessingIntegration:
     """Test content processing through the pipeline."""
@@ -24,7 +23,6 @@ class TestContentProcessingIntegration:
         self.app.initialize()
 
     def test_extract_text_from_html(self):
-        import pytest; pytest.skip("Test isolation issue")
         """Pipeline should extract text from HTML content."""
         result = self.app.process_content(
             "https://example.com",

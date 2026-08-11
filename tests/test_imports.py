@@ -19,8 +19,8 @@ def get_all_modules():
 
 # Known pre-existing syntax errors - skip these
 SKIP_MODULES = {
-    "personal_index.content_priority",
-    "personal_index.sitemap_builder",
+
+
 }
 
 
