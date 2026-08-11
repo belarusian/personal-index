@@ -1,3 +1,5 @@
-# Personal Index - Quick Start Guide
+# Quick Start
+
+Get up and running with personal-index in minutes.
 
 ## Installation
