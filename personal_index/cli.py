@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import os
-import sys
 
 import click
 import yaml
@@ -160,7 +158,6 @@ def crawl(url, depth):
 @main.group()
 def index():
     """Manage the search index."""
-    pass
 
 
 @index.command("count")
@@ -194,7 +191,6 @@ def index_clear():
 @main.group()
 def schedule():
     """Manage scheduled jobs."""
-    pass
 
 
 @schedule.command("add")
@@ -257,7 +253,6 @@ def remove_schedule(name):
 @main.group()
 def config():
     """Manage configuration."""
-    pass
 
 
 @config.command("show")

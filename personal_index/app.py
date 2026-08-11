@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
 
 from personal_index.config.loader import load_config
 from personal_index.content_search import ContentSearch, SearchIndex
@@ -85,7 +84,7 @@ class PersonalIndexApp:
             return load_config(self.config_path)
         except (FileNotFoundError, OSError):
             logger.info("No config file found, using defaults")
-            from personal_index.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
+            from personal_index.config.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
             return AppConfig(
                 data_dir=self.data_dir,
                 crawl=CrawlConfig(),
@@ -106,7 +105,7 @@ class PersonalIndexApp:
         extractor = ContentExtractor()
 
         def extract_step(data: dict) -> dict:
-            url = data.get("url", "")
+
             raw = data.get("raw_content", data.get("content", ""))
             extracted = extractor.extract(raw)
             data["extracted_text"] = extracted.text
@@ -136,7 +135,7 @@ class PersonalIndexApp:
 
         def score_step(data: dict) -> dict:
             text = data.get("extracted_text", data.get("text", ""))
-            title = data.get("title", "")
+
             word_count = len(text.split()) if text else 0
             # Count keyword matches (simplified)
             keywords = []
@@ -221,7 +220,7 @@ class PersonalIndexApp:
                 "tags": result.data.get("tags", []),
             })
 
-        return result.data
+        return result.data  # type: ignore[no-any-return]
 
     def search(self, query: str, limit: int = 20) -> list:
         """Search indexed content."""
