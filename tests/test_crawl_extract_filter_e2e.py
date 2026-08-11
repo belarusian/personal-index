@@ -115,7 +115,7 @@ class TestCrawlExtractFilterE2E:
         html = "<html><body><p>Hello world</p></body></html>"
         result = scraper.scrape(html)
         assert result.title == ""  # No title tag
-        assert "Hello world" in result.text
+        assert "Hello world" in result.raw_text
 
     def test_scraper_with_title(self):
         """Test HTMLScraper extracts title."""
@@ -123,7 +123,7 @@ class TestCrawlExtractFilterE2E:
         html = "<html><head><title>My Page</title></head><body><p>Content</p></body></html>"
         result = scraper.scrape(html)
         assert result.title == "My Page"
-        assert "Content" in result.text
+        assert "Content" in result.raw_text
 
     def test_full_extract_filter_score_chain(self, tmp_path):
         """Test the full extract → filter → score chain."""
