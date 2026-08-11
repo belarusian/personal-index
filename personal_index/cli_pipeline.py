@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 
 import click
 
@@ -11,7 +12,7 @@ from personal_index.pipeline_runner import PipelineRunner
 
 
 @click.command()
-@click.argument("urls", nargs=-1, required=True)
+@click.argument("urls", nargs=-1, required=False)
 @click.option("-d", "--depth", default=3, type=int, help="Crawl depth")
 @click.option("--config", default="config.yaml", help="Config file path")
 @click.option("--data-dir", default=".personal_index", help="Data directory")
@@ -19,20 +20,50 @@ from personal_index.pipeline_runner import PipelineRunner
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose logging")
 @click.option("-o", "--output", default=None, help="Save pipeline stats to file")
 @click.option("-q", "--quiet", is_flag=True, help="Minimal output, only show errors")
-def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet):
+@click.option("--no-crawl", is_flag=True, help="Skip crawling, only process existing data")
+@click.option("--step", type=click.Choice(["crawl", "extract", "filter", "score", "tag", "index"]),
+              multiple=True, help="Run only specific pipeline steps")
+def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_crawl, step):
     """Run the full pipeline: crawl → extract → filter → score → tag → index.
 
-    URLs are the seed URLs to start crawling from.
+    URLs are the seed URLs to start crawling from. If no URLs are provided,
+    the pipeline processes existing indexed content.
+
+    Examples:
+        personal-index pipeline https://example.com
+        personal-index pipeline https://example.com -d 2
+        personal-index pipeline --no-crawl  # re-process existing data
+        personal-index pipeline https://example.com --step filter --step score
     """
     if verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
     pipeline_cfg = load_pipeline_config(config)
+
+    # Override steps if --step is provided
+    if step:
+        all_steps = ["crawl", "extract", "filter", "score", "tag", "index"]
+        pipeline_cfg.steps = []
+        for s in all_steps:
+            enabled = s in step
+            from personal_index.config.pipeline_config import PipelineStepConfig
+            pipeline_cfg.steps.append(PipelineStepConfig(name=s, enabled=enabled))
+
+    if no_crawl:
+        from personal_index.config.pipeline_config import PipelineStepConfig
+        all_steps = ["crawl", "extract", "filter", "score", "tag", "index"]
+        pipeline_cfg.steps = []
+        for s in all_steps:
+            pipeline_cfg.steps.append(PipelineStepConfig(name=s, enabled=(s != "crawl")))
 
     if dry_run:
         click.echo("Dry run mode - pipeline configuration:")
         click.echo(f"  Config: {config}")
         click.echo(f"  Data dir: {data_dir}")
-        click.echo(f"  Seed URLs: {', '.join(urls)}")
+        if urls:
+            click.echo(f"  Seed URLs: {', '.join(urls)}")
+        else:
+            click.echo("  Seed URLs: (none, using existing data)")
         click.echo(f"  Max depth: {depth}")
         click.echo(f"  Pipeline enabled: {pipeline_cfg.enabled}")
         click.echo(f"  Steps: {pipeline_cfg.get_enabled_steps()}")
@@ -42,10 +73,11 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet):
 
     if not quiet:
         click.echo(f"Running pipeline on {len(urls)} seed URL(s)...")
-        click.echo(f"  URLs: {', '.join(urls)}")
-    if not quiet:
+        if urls:
+            click.echo(f"  URLs: {', '.join(urls)}")
         click.echo(f"  Depth: {depth}")
-    click.echo()
+        click.echo(f"  Data dir: {data_dir}")
+        click.echo()
 
     runner = PipelineRunner(
         config=pipeline_cfg,
@@ -53,15 +85,16 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet):
     )
 
     if not quiet:
-        click.echo("Running pipeline steps:")
+        click.echo("Pipeline steps:")
         steps = ["crawl", "extract", "filter", "score", "tag", "index"]
-        for step in steps:
-            enabled = pipeline_cfg.is_step_enabled(step)
+        for s in steps:
+            enabled = pipeline_cfg.is_step_enabled(s)
             status = "✓" if enabled else "○"
-            click.echo(f"  [{status}] {step}")
+            click.echo(f"  [{status}] {s}")
         click.echo()
 
-    stats = runner.run(list(urls), max_depth=depth)
+    seed_urls = list(urls) if urls else []
+    stats = runner.run(seed_urls, max_depth=depth)
 
     click.echo()
     click.echo(stats.summary())
@@ -72,6 +105,7 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet):
         click.echo(f"Stats saved to {output}")
 
     if stats.errors:
-        click.echo("\nErrors:")
+        click.echo("\nErrors encountered:")
         for err in stats.errors:
             click.echo(f"  - {err}")
+        sys.exit(1)
