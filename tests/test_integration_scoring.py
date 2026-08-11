@@ -8,7 +8,7 @@ import tempfile
 import pytest
 
 from personal_index.app import PersonalIndexApp
-from personal_index.content_scoring import ContentScorer
+from personal_index.content_scoring import ContentScorer, ScoreWeights
 
 
 class TestScoringIntegration:
@@ -49,7 +49,17 @@ class TestScoringIntegration:
 
     def test_scorer_direct(self):
         """ContentScorer should work directly."""
-        scorer = ContentScorer()
-        score = scorer.score("Some content", "A Title")
-        assert isinstance(score, (int, float))
-        assert score >= 0
+        scorer = ContentScorer(weights=ScoreWeights())
+        from datetime import datetime, timezone
+        score = scorer.score(
+            published_at=None,
+            updated_at=datetime.now(timezone.utc),
+            keyword_matches=1,
+            total_keywords=1,
+            view_count=0,
+            bookmark_count=0,
+            share_count=0,
+            word_count=10,
+        )
+        assert isinstance(score.total, (int, float))
+        assert score.total >= 0
