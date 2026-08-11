@@ -130,7 +130,7 @@ class TestContentFilter:
         matching = CrawledPage(url="https://x.com", title="Test", content="Python is great.")
         assert f.should_include(matching)
 
-        non_matching = CrawledPage(url="https://x.com", title="Test", content="No python here at all.")
+        non_matching = CrawledPage(url="https://x.com", title="Test", content="No programming language mentioned here at all whatsoever.")
         assert not f.should_include(non_matching)
 
     def test_filter_get_reasons(self):
