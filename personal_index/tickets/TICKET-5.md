@@ -1,5 +1,4 @@
-# TICKET-5: `quoting` argument to `DictWriter` has incompatible type `int` vs `Literal`
+# TICKET-5: Unused loop variable in content_transform.py (B007)
 
 ## Evidence
-
-File: `personal_index/content_export/csv_export.py`, line 73
+- `personal_index/content_transform.py`, line 59

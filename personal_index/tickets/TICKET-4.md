@@ -1,5 +1,4 @@
-# TICKET-4: Missing type annotation for `available` set in MarkdownExporter.export_table
+# TICKET-4: Commented-out code in tags.py (ERA001)
 
 ## Evidence
-
-File: `personal_index/content_export/markdown_export.py`, line 140
+- `personal_index/tags.py`, line 127

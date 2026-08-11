@@ -1,5 +1,5 @@
-# TICKET-2: Returning `Any` from function declared to return `T | None` in CacheStore.get
+# TICKET-2: Assert used for runtime validation in production code (S101)
 
 ## Evidence
-
-File: `personal_index/content_cache/cache_store.py`, line 60
+- `personal_index/content_router/handler.py`, line 48
+- `personal_index/content_search/tokenizer.py`, lines 43 and 69

@@ -1,5 +1,6 @@
-# TICKET-1: Incompatible type assignment — `None` to `list[str]` in ContentHandler
+# TICKET-1: Webhook URL open without scheme validation (S310)
 
 ## Evidence
-
-File: `personal_index/content_router/handler.py`, line 20
+- `personal_index/webhook.py`, lines 117-123
+- `urllib.request.urlopen()` is called with `config.url` directly, without validating the URL scheme
+- Ruff rule S310: "Audit URL open for permitted schemes. Allowing use of `file:` or custom schemes is often unexpected."

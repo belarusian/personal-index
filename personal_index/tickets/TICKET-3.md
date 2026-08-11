@@ -1,7 +1,5 @@
-# TICKET-3: `max()` key argument has incompatible overloaded function type in InsightEngine
+# TICKET-3: Dead code and unused loop variables in content_dedup.py (ERA001, B007)
 
 ## Evidence
-
-File: `personal_index/content_analytics/insights.py`, lines 74 and 136
-
-Line 74:
+- `personal_index/content_dedup.py`, lines 107, 121, 130
+- Commented-out code left in production:
