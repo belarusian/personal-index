@@ -172,3 +172,66 @@ class TestRssExport:
         result = exporter.export([], "rss")
         assert "<channel>" in result
         assert result.count("<item>") == 0
+
+
+# --- Format Validation Tests ---
+
+class TestFormatValidation:
+    def test_unsupported_format_raises(self, exporter):
+        with pytest.raises(ValueError, match="Unsupported format"):
+            exporter.export([], "xml")
+
+    def test_unsupported_format_message(self, exporter):
+        with pytest.raises(ValueError) as exc_info:
+            exporter.export([], "pdf")
+        assert "html" in str(exc_info.value)
+        assert "json" in str(exc_info.value)
+
+    def test_supported_formats_list(self):
+        assert ContentExporter.SUPPORTED_FORMATS == ("html", "json", "markdown", "rss")
+
+
+# --- Edge Cases ---
+
+class TestEdgeCases:
+    def test_export_minimal_item(self, exporter):
+        items = [{}]
+        result = exporter.export(items, "json")
+        data = json.loads(result)
+        assert data[0] == {}
+
+    def test_export_none_date(self, exporter):
+        items = [{"title": "No Date", "date": None}]
+        result = exporter.export(items, "html")
+        assert "No Date" in result
+
+    def test_export_special_chars_title(self, exporter):
+        items = [{"title": "Post with \"quotes\" & <tags>"}]
+        result = exporter.export(items, "html")
+        assert "<tags>" not in result
+
+    def test_export_unicode_content(self, exporter):
+        items = [{"title": "日本語テスト", "description": "中文描述"}]
+        result = exporter.export(items, "json")
+        data = json.loads(result)
+        assert data[0]["title"] == "日本語テスト"
+
+    def test_export_large_list(self, exporter):
+        items = [{"title": f"Post {i}", "id": str(i)} for i in range(100)]
+        result = exporter.export(items, "json")
+        data = json.loads(result)
+        assert len(data) == 100
+
+    def test_export_datetime_serialization(self, exporter):
+        items = [{"title": "Test", "date": datetime(2024, 6, 15, tzinfo=timezone.utc)}]
+        result = exporter.export(items, "json")
+        data = json.loads(result)
+        assert "2024-06-15" in data[0]["date"]
+
+    def test_export_base_url_trailing_slash(self):
+        exp = ContentExporter(base_url="http://example.com/")
+        assert exp.base_url == "http://example.com"
+
+    def test_export_custom_title(self):
+        exp = ContentExporter(title="Custom Title")
+        assert exp.title == "Custom Title"
