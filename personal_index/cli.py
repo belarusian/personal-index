@@ -434,7 +434,8 @@ def status(config, data_dir, as_json, fmt):
 @click.option("--recursive", "-r", is_flag=True, help="Recursively import directory")
 @click.option("--config", default="config.yaml", help="Config file path")
 @click.option("--data-dir", default=".personal_index", help="Data directory")
-def import_cmd(path, recursive, config, data_dir):
+@click.option("--tag", "-t", multiple=True, help="Tag to apply to imported files")
+def import_cmd(path, recursive, config, data_dir, tag):
     """Import local files into the index.
 
     PATH can be a file or directory. Use --recursive for directories.
