@@ -37,16 +37,16 @@ class PipelineStats:
         """Return a formatted summary string."""
         lines = [
             "Pipeline Summary",
-            "─" * 40,
-            f"Crawled:      {self.pages_crawled}",
-            f"Extracted:    {self.pages_extracted}",
+            "-" * 40,
+            f"Crawled:    {self.pages_crawled}",
+            f"Extracted:  {self.pages_extracted}",
             f"Filtered in:  {self.pages_filtered_in}",
             f"Filtered out: {self.pages_filtered_out}",
-            f"Scored:       {self.pages_scored}",
-            f"Tagged:       {self.pages_tagged}",
-            f"Indexed:      {self.pages_indexed}",
-            f"Errors:       {len(self.errors)}",
-            f"Time:         {self.elapsed_seconds:.1f}s",
+            f"Scored:     {self.pages_scored}",
+            f"Tagged:     {self.pages_tagged}",
+            f"Indexed:    {self.pages_indexed}",
+            f"Errors:     {len(self.errors)}",
+            f"Time:       {self.elapsed_seconds:.1f}s",
         ]
         return "\n".join(lines)
 
