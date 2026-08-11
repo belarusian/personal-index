@@ -30,5 +30,53 @@
     "enabled": true,
     "topic": "",
     "match_mode": "any"
+  },
+  "python": {
+    "name": "python",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "python",
+      "programming"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 8,
+    "created_at": "2026-08-11T05:54:53.356170+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "webdev": {
+    "name": "webdev",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "javascript",
+      "react",
+      "web"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 7,
+    "created_at": "2026-08-11T05:54:53.465921+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "my-blog": {
+    "name": "my-blog",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [],
+    "url_patterns": [
+      "*.myblog.com/*"
+    ],
+    "topics": [],
+    "priority": 10,
+    "created_at": "2026-08-11T05:54:53.574385+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
   }
 }

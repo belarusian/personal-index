@@ -1,0 +1,8 @@
+[
+  {
+    "title": "API_OLD.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/API_OLD.md",
+    "snippet": "...all` | Run all health checks. |\n| health | `check_python_version` | Check Python version compatibility. |\n| health | `check_data_directory` | Check data directory exists and is accessible. |\n| health | `che...",
+    "score": 0
+  }
+]

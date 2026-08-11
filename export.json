@@ -1,0 +1,206 @@
+[
+  {
+    "title": "Example Domain",
+    "url": "https://example.com",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Example Domains",
+    "url": "https://iana.org/domains/example",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Internet Assigned Numbers Authority",
+    "url": "https://iana.org/",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Domain Name Services",
+    "url": "https://iana.org/domains",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Protocol Registries",
+    "url": "https://iana.org/protocols",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Number Resources",
+    "url": "https://iana.org/numbers",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "About us",
+    "url": "https://iana.org/about",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Instructions and Guides",
+    "url": "https://iana.org/help",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "IANA-managed Reserved Domains",
+    "url": "https://iana.org/domains/reserved",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Root Zone Management",
+    "url": "https://iana.org/domains/root",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Intergovernmental Treaty (.INT) Domains",
+    "url": "https://iana.org/domains/int",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": ".ARPA Domain",
+    "url": "https://iana.org/domains/arpa",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Repository of IDN Practices",
+    "url": "https://iana.org/domains/idn-tables",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Number-related Registries",
+    "url": "https://iana.org/numbers/registries",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "RIR Allocation Data",
+    "url": "https://iana.org/numbers/allocations",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Network Abuse Information",
+    "url": "https://iana.org/help/abuse",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Time Zones",
+    "url": "https://iana.org/time-zones",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "News",
+    "url": "https://iana.org/news",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Performance",
+    "url": "https://iana.org/performance",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "The Organization",
+    "url": "https://iana.org/about/organization",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Archive",
+    "url": "https://iana.org/archive",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Contact Us",
+    "url": "https://iana.org/contact",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Public Technical Identifiers (PTI)",
+    "url": "https://pti.icann.org",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "ITI Web ICANN",
+    "url": "https://www.icann.org/privacy/policy",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "ITI Web ICANN",
+    "url": "https://www.icann.org/privacy/tos",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "Internet Corporation for Assigned Names and Numbers (ICANN)",
+    "url": "https://www.icann.org/",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "API.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/API.md",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "API_OLD.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/API_OLD.md",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "ARCHITECTURE.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/ARCHITECTURE.md",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "CHANGELOG.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/CHANGELOG.md",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "MODULES.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/MODULES.md",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "README.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/README.md",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "getting-started.md",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/getting-started.md",
+    "snippet": "",
+    "score": 0.0
+  },
+  {
+    "title": "index.html",
+    "url": "file:///Users/av4nda/Research/autonomous-project/docs/index.html",
+    "snippet": "",
+    "score": 0.0
+  }
+]

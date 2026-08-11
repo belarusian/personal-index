@@ -1,0 +1,104 @@
+{
+  "tags": {
+    "webdev": {
+      "name": "webdev",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T05:56:47.780574+00:00"
+    },
+    "Python": {
+      "name": "Python",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T05:56:47.786102+00:00"
+    },
+    "python": {
+      "name": "python",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T05:56:47.786181+00:00"
+    },
+    "api": {
+      "name": "api",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T05:56:47.786262+00:00"
+    }
+  },
+  "page_tags": {
+    "https://iana.org/domains/example": [
+      "webdev"
+    ],
+    "https://iana.org/domains/root/db": [
+      "webdev"
+    ],
+    "https://iana.org/protocols": [
+      "webdev"
+    ],
+    "https://iana.org/news": [
+      "webdev"
+    ],
+    "https://www.icann.org/": [
+      "webdev"
+    ],
+    "https://www.icann.org/privacy/policy": [
+      "webdev"
+    ],
+    "https://www.icann.org/privacy/tos": [
+      "webdev"
+    ],
+    "https://iana.org/help/root-zone-process": [
+      "webdev"
+    ],
+    "https://iana.org/help/rzm-api": [
+      "webdev",
+      "Python",
+      "python",
+      "api"
+    ],
+    "https://iana.org/help/rzms-changelog": [
+      "webdev",
+      "Python",
+      "python"
+    ],
+    "https://iana.org/help/gtld-delegation": [
+      "webdev"
+    ],
+    "https://iana.org/help/cctld-retirement": [
+      "webdev"
+    ],
+    "https://iana.org/help/key-ceremony-attendance": [
+      "webdev"
+    ],
+    "https://iana.org/help/inr-request-procedure": [
+      "webdev"
+    ],
+    "https://iana.org/help/example-domains": [
+      "webdev"
+    ],
+    "https://iana.org/help/dns-blackhole": [
+      "webdev"
+    ],
+    "https://iana.org/help/pti-transition": [
+      "webdev"
+    ],
+    "https://iana.org/help/rzm-system": [
+      "webdev"
+    ],
+    "https://iana.org/help/test-tld-procedure": [
+      "webdev"
+    ],
+    "http://www.icann.org/topics/idn": [
+      "webdev"
+    ],
+    "http://www.icann.org/": [
+      "webdev"
+    ],
+    "http://www.icann.org/en/registries/agreements.htm": [
+      "webdev"
+    ],
+    "https://iana.org/dnssec/tcrs": [
+      "webdev"
+    ]
+  }
+}
