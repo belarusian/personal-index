@@ -103,14 +103,13 @@ class TestPipelineRunner:
             content="This is a test page about python programming and software development that has enough words to pass the minimum content length filter for the pipeline runner to work correctly.",
         )
 
-        with patch.object(runner, '_filter') as mock_filter:
-            mock_filter.should_include.return_value = True
-            with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-                mock_crawler = MagicMock()
-                mock_crawler.crawl.return_value = [page]
-                MockCrawler.return_value = mock_crawler
+        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
+            mock_crawler = MagicMock()
+            mock_crawler.crawl.return_value = [page]
+            mock_crawler.close.return_value = None
+            MockCrawler.return_value = mock_crawler
 
-                stats = runner.run(["https://example.com"], max_depth=1)
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 1
         assert stats.pages_extracted == 1
@@ -273,9 +272,11 @@ class TestPipelineSteps:
             ),
         ]
 
+        # Mock at the point where it's used in pipeline_runner
         with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
             mock_crawler = MagicMock()
             mock_crawler.crawl.return_value = pages
+            mock_crawler.close.return_value = None
             MockCrawler.return_value = mock_crawler
 
             stats = runner.run(["https://example.com"], max_depth=1)
