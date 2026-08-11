@@ -1,18 +1,19 @@
-"""End-to-end pipeline runner: crawl → extract → filter → score → tag → index."""
+"""Pipeline runner that orchestrates crawl → extract → filter → score → tag → index."""
 
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass, field
+from typing import Any
 
-from personal_index.config.pipeline_config import PipelineConfig, load_pipeline_config
-from personal_index.content_extractor import ContentExtractor
+from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer
 from personal_index.crawler.main import Crawler, CrawlerConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
-from personal_index.models import AppConfig, CrawledPage
+from personal_index.models import CrawledPage
 from personal_index.tags import TagStore
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PipelineStats:
     """Statistics from a pipeline run."""
+
     pages_crawled: int = 0
     pages_extracted: int = 0
     pages_filtered_in: int = 0
@@ -32,47 +34,61 @@ class PipelineStats:
     elapsed_seconds: float = 0.0
 
     def summary(self) -> str:
-        """Return a human-readable summary."""
+        """Return a formatted summary string."""
         lines = [
-            "Pipeline complete:",
-            f"  Crawled:    {self.pages_crawled}",
-            f"  Extracted:  {self.pages_extracted}",
-            f"  Filtered in: {self.pages_filtered_in}",
-            f"  Filtered out: {self.pages_filtered_out}",
-            f"  Scored:     {self.pages_scored}",
-            f"  Tagged:     {self.pages_tagged}",
-            f"  Indexed:    {self.pages_indexed}",
+            "Pipeline Summary",
+            "─" * 40,
+            f"Crawled:      {self.pages_crawled}",
+            f"Extracted:    {self.pages_extracted}",
+            f"Filtered in:  {self.pages_filtered_in}",
+            f"Filtered out: {self.pages_filtered_out}",
+            f"Scored:       {self.pages_scored}",
+            f"Tagged:       {self.pages_tagged}",
+            f"Indexed:      {self.pages_indexed}",
+            f"Errors:       {len(self.errors)}",
+            f"Time:         {self.elapsed_seconds:.1f}s",
         ]
-        if self.errors:
-            lines.append(f"  Errors:     {len(self.errors)}")
         return "\n".join(lines)
 
 
 class PipelineRunner:
-    """Orchestrates the full crawl→extract→filter→score→tag→index pipeline."""
+    """Orchestrates the full content processing pipeline.
+
+    Steps: crawl → extract → filter → score → tag → index
+    """
 
     def __init__(
         self,
         config: PipelineConfig | None = None,
-        app_config: AppConfig | None = None,
         data_dir: str = ".personal_index",
     ):
-        self.pipeline_config = config or load_pipeline_config()
-        self.app_config = app_config
+        self.pipeline_config = config or PipelineConfig()
         self.data_dir = data_dir
-        self._extractor = ContentExtractor()
+
+        # Initialize components
+        self._interest_store = InterestStore(
+            store_path=f"{data_dir}/interests.json"
+        )
+        self._search_index = SearchIndex(
+            db_path=f"{data_dir}/search_index.json"
+        )
+        self._tag_store = TagStore(
+            store_path=f"{data_dir}/tags.json"
+        )
         self._scorer = ContentScorer()
-        self._interest_store = InterestStore(store_path=f"{data_dir}/interests.json")
         self._filter = ContentFilter(
             config=FilterConfig(
                 min_content_length=self.pipeline_config.min_content_length,
+                require_interest_match=True,
             ),
             interest_store=self._interest_store,
         )
-        self._tag_store = TagStore(store_path=f"{data_dir}/tags.json")
-        self._search_index = SearchIndex()
 
-    def run(self, seed_urls: list[str], max_depth: int = 3) -> PipelineStats:
+    def run(
+        self,
+        seed_urls: list[str],
+        max_depth: int = 3,
+    ) -> PipelineStats:
         """Run the full pipeline on seed URLs.
 
         Args:
@@ -82,33 +98,35 @@ class PipelineRunner:
         Returns:
             PipelineStats with counts from each stage.
         """
-        import time as _time
-        start_time = _time.time()
+        start_time = time.time()
         stats = PipelineStats()
         pages: list[CrawledPage] = []
 
         # Step 1: Crawl
         if self.pipeline_config.is_step_enabled("crawl"):
             logger.info("Step 1/6: Crawling %d seed URLs", len(seed_urls))
-            crawler = Crawler(
-                config=CrawlerConfig(max_depth=max_depth),
-                interest_store=self._interest_store,
-            )
-            pages = crawler.crawl(seed_urls, max_depth=max_depth)
-            stats.pages_crawled = len(pages)
-            logger.info("  Crawled %d pages", stats.pages_crawled)
+            if not seed_urls:
+                logger.info("  No seed URLs provided, skipping crawl")
+            else:
+                crawler = Crawler(
+                    config=CrawlerConfig(max_depth=max_depth),
+                    interest_store=self._interest_store,
+                )
+                pages = crawler.crawl(seed_urls, max_depth=max_depth)
+                stats.pages_crawled = len(pages)
+                logger.info("  Crawled %d pages", stats.pages_crawled)
 
         # Step 2: Extract
         if self.pipeline_config.is_step_enabled("extract"):
             logger.info("Step 2/6: Extracting content")
+            extracted_count = 0
             for page in pages:
                 if page.content:
-                    # Content already populated by crawler
-                    pass
+                    extracted_count += 1
                 else:
-                    # Try to extract from any available HTML
-                    pass
-            stats.pages_extracted = len(pages)
+                    # Mark pages without content
+                    page.content = ""
+            stats.pages_extracted = extracted_count
             logger.info("  Extracted content from %d pages", stats.pages_extracted)
 
         # Step 3: Filter
@@ -160,11 +178,13 @@ class PipelineRunner:
         # Step 5: Tag
         if self.pipeline_config.is_step_enabled("tag"):
             logger.info("Step 5/6: Tagging content")
+            tagged_count = 0
             for page in pages:
                 tags = self._auto_tag(page)
                 for tag_name in tags:
                     self._tag_store.add_tag_to_page(page.url, tag_name)
-                    stats.pages_tagged += 1
+                    tagged_count += 1
+            stats.pages_tagged = tagged_count
             logger.info("  Tagged %d pages", stats.pages_tagged)
 
         # Step 6: Index
@@ -172,14 +192,14 @@ class PipelineRunner:
             logger.info("Step 6/6: Indexing content")
             for page in pages:
                 try:
-                    self._search_index.add_page(page)  # type: ignore[arg-type]
+                    self._search_index.add_page(page)
                     stats.pages_indexed += 1
                 except Exception as e:
                     logger.warning("Failed to index %s: %s", page.url, e)
                     stats.errors.append(f"Index error for {page.url}: {e}")
             logger.info("  Indexed %d pages", stats.pages_indexed)
 
-        stats.elapsed_seconds = _time.time() - start_time
+        stats.elapsed_seconds = time.time() - start_time
         return stats
 
     def _auto_tag(self, page: CrawledPage) -> list[str]:
