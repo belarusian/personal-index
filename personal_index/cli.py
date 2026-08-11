@@ -533,8 +533,9 @@ def export_cmd(ctx, fmt, output, query, limit, data_dir):
             lines.append(f"**URL:** {r.url}")
             if hasattr(r, 'score') and r.score:
                 lines.append(f"**Score:** {r.score:.2f}")
-            if getattr(r, "snippet", ""):
-                lines.append(f"{getattr(r, "snippet", "")}")
+            snippet = getattr(r, "snippet", "")
+            if snippet:
+                lines.append(snippet)
             lines.append("")
         content = "\n".join(lines)
     elif fmt == "json":
