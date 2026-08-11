@@ -11,6 +11,16 @@ from typing import Any, Dict, List
 
 
 
+
+class DocumentHash:
+    """Computes document fingerprints using SHA256."""
+
+    @staticmethod
+    def compute_fingerprint(content: str) -> str:
+        """Compute a 16-char fingerprint for content."""
+        import hashlib
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
+
 class CheckResult:
     """Result of a single item check."""
     def __init__(self, is_duplicate: bool, url: str):
