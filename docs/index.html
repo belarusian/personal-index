@@ -391,7 +391,7 @@ body::after {
 <!-- HEADER -->
 <div class="header">
     <h1>personal-index // TERMINAL DASHBOARD</h1>
-    <div class="prompt">codebase projection — 183 modules scanned</div>
+    <div class="prompt">codebase projection — 185 modules scanned</div>
 </div>
 
 <!-- 1. SURFACE STATS -->
@@ -399,11 +399,11 @@ body::after {
     <div class="section-title">Surface Stats</div>
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value">183</div>
+            <div class="stat-value">185</div>
             <div class="stat-label">Modules</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">30,667</div>
+            <div class="stat-value">30,790</div>
             <div class="stat-label">Lines</div>
         </div>
         <div class="stat-card">
@@ -411,7 +411,7 @@ body::after {
             <div class="stat-label">Classes</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">1734</div>
+            <div class="stat-value">1738</div>
             <div class="stat-label">Functions</div>
         </div>
         <div class="stat-card">
@@ -443,6 +443,18 @@ body::after {
             <span>CLASSES: 0</span>
             <span>FUNCS: 0</span>
             <span>LINES: 18</span>
+            <span>TESTS: 0</span>
+        </div>
+    </div>
+    <div class="mod-card" style="border-color: #22c55e;">
+        <div class="mod-header">
+            <span class="mod-name">personal_index.__main__</span>
+            <span class="mod-status" style="color: #22c55e;">[OK]</span>
+        </div>
+        <div class="mod-meta">
+            <span>CLASSES: 0</span>
+            <span>FUNCS: 0</span>
+            <span>LINES: 6</span>
             <span>TESTS: 0</span>
         </div>
     </div>
@@ -706,7 +718,19 @@ body::after {
         <div class="mod-meta">
             <span>CLASSES: 0</span>
             <span>FUNCS: 1</span>
-            <span>LINES: 150</span>
+            <span>LINES: 164</span>
+            <span>TESTS: 0</span>
+        </div>
+    </div>
+    <div class="mod-card" style="border-color: #22c55e;">
+        <div class="mod-header">
+            <span class="mod-name">personal_index.cli_search</span>
+            <span class="mod-status" style="color: #22c55e;">[OK]</span>
+        </div>
+        <div class="mod-meta">
+            <span>CLASSES: 0</span>
+            <span>FUNCS: 4</span>
+            <span>LINES: 103</span>
             <span>TESTS: 0</span>
         </div>
     </div>
@@ -2643,6 +2667,8 @@ body::after {
 <div class="dep-child">├── personal_index.content_importer</div>
 <div class="dep-child">├── personal_index.content_scheduler</div>
 <div class="dep-child">├── personal_index.content_search</div>
+<div class="dep-node"><span class="dep-module">personal_index.__main__</span></div>
+<div class="dep-child">├── personal_index.cli</div>
 <div class="dep-node"><span class="dep-module">personal_index.analytics</span></div>
 <div class="dep-node"><span class="dep-module">personal_index.annotation</span></div>
 <div class="dep-node"><span class="dep-module">personal_index.api.__init__</span></div>
@@ -2683,6 +2709,9 @@ body::after {
 <div class="dep-node"><span class="dep-module">personal_index.cli_pipeline</span></div>
 <div class="dep-child">├── personal_index.models</div>
 <div class="dep-child">├── personal_index.pipeline</div>
+<div class="dep-node"><span class="dep-module">personal_index.cli_search</span></div>
+<div class="dep-child">├── personal_index.index</div>
+<div class="dep-child">├── personal_index.tags</div>
 <div class="dep-node"><span class="dep-module">personal_index.config.__init__</span></div>
 <div class="dep-child">├── personal_index.models</div>
 <div class="dep-node"><span class="dep-module">personal_index.config.loader</span></div>
@@ -2984,6 +3013,13 @@ body::after {
         <span class="test-bar-count">0</span>
     </div>
     <div class="test-bar-row">
+        <span class="test-bar-label">personal_index.__main__</span>
+        <div class="test-bar-track">
+            <div class="test-bar-fill" style="width: 0%;"></div>
+        </div>
+        <span class="test-bar-count">0</span>
+    </div>
+    <div class="test-bar-row">
         <span class="test-bar-label">personal_index.analytics</span>
         <div class="test-bar-track">
             <div class="test-bar-fill" style="width: 0%;"></div>
@@ -3041,6 +3077,13 @@ body::after {
     </div>
     <div class="test-bar-row">
         <span class="test-bar-label">personal_index.cli_pipeline</span>
+        <div class="test-bar-track">
+            <div class="test-bar-fill" style="width: 0%;"></div>
+        </div>
+        <span class="test-bar-count">0</span>
+    </div>
+    <div class="test-bar-row">
+        <span class="test-bar-label">personal_index.cli_search</span>
         <div class="test-bar-track">
             <div class="test-bar-fill" style="width: 0%;"></div>
         </div>
@@ -4266,6 +4309,108 @@ body::after {
     <div class="commit-list">
 
     <div class="commit-row">
+        <span class="commit-sha">830d9ba</span>
+        <span class="commit-msg">fix: ruff errors, skip flaky search integration tests</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">3e02dd7</span>
+        <span class="commit-msg">autonomous: save progress</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">0d6ed75</span>
+        <span class="commit-msg">fix: add pytest fixture to clean up .personal_index between tests</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">b16bf2c</span>
+        <span class="commit-msg">fix: use raw_text instead of text for HTMLScraper results</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">85d6bf2</span>
+        <span class="commit-msg">test: add crawl→extract→filter e2e integration tests</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">be2b0e8</span>
+        <span class="commit-msg">fix: use truly non-matching content in filter interest test</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">1a64d58</span>
+        <span class="commit-msg">fix: align pipeline stage tests with actual API signatures</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">d46db81</span>
+        <span class="commit-msg">test: add comprehensive pipeline stage unit tests</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">a65417a</span>
+        <span class="commit-msg">fix: match search JSON output format (list not dict)</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">0ed1738</span>
+        <span class="commit-msg">fix: remove unsupported csv search format test</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">f86c315</span>
+        <span class="commit-msg">fix: use correct -f flag for search format in tests</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">2a73764</span>
+        <span class="commit-msg">test: add search integration tests with multiple formats</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">58490c5</span>
+        <span class="commit-msg">feat: add standalone search CLI module with json/csv output</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">7261eac</span>
+        <span class="commit-msg">test: add comprehensive e2e pipeline integration tests</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">c44ad5a</span>
+        <span class="commit-msg">fix: improve CLI pipeline with interest loading and better error reporting</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">54b82b7</span>
+        <span class="commit-msg">feat: add __main__.py for python -m personal_index support</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">0460e15</span>
+        <span class="commit-msg">docs: regenerate dashboard</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
         <span class="commit-sha">9963a8d</span>
         <span class="commit-msg">fix: ruff errors, skip flaky content processing and pipeline tests</span>
         <span class="commit-author">Dev Agent</span>
@@ -4280,108 +4425,6 @@ body::after {
     <div class="commit-row">
         <span class="commit-sha">b1a12e5</span>
         <span class="commit-msg">feat: fix pipeline add_page_directly to extract HTML content</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">3ff882c</span>
-        <span class="commit-msg">test: add CLI pipeline end-to-end tests (11 tests)</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">81b3733</span>
-        <span class="commit-msg">test: add comprehensive pipeline e2e integration tests (28 tests)</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">daf9875</span>
-        <span class="commit-msg">feat: add word_count, raw_html, domain_authority fields to CrawledPage</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">5ede705</span>
-        <span class="commit-msg">feat: add PipelineStats model and ContentScorer.score_page()</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">7caa59a</span>
-        <span class="commit-msg">feat: add Pipeline orchestrator class wiring crawl→extract→filter→score→tag→index</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">51d99de</span>
-        <span class="commit-msg">docs: regenerate dashboard</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">e6e5e3e</span>
-        <span class="commit-msg">fix: ruff errors, fix stats summary format assertions</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">d3b8821</span>
-        <span class="commit-msg">autonomous: save progress</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">a139fb7</span>
-        <span class="commit-msg">docs: add comprehensive README with usage examples</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">c9a758a</span>
-        <span class="commit-msg">feat: add search pipeline integration tests</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">a50db8f</span>
-        <span class="commit-msg">feat: add progress tracking and enhanced stats to pipeline runner</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">08f8314</span>
-        <span class="commit-msg">feat: improve CLI pipeline command with better UX</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">a14c51b</span>
-        <span class="commit-msg">feat: add CLI pipeline end-to-end tests</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">4d05045</span>
-        <span class="commit-msg">feat: add comprehensive end-to-end pipeline integration tests</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">aa2b4ce</span>
-        <span class="commit-msg">docs: regenerate dashboard</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">75746a0</span>
-        <span class="commit-msg">chore: update test index files</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">843e78f</span>
-        <span class="commit-msg">docs: add comprehensive CLI pipeline documentation</span>
         <span class="commit-author">Dev Agent</span>
         <span class="commit-date">2026-08-11</span>
     </div>
@@ -4480,6 +4523,11 @@ body::after {
     </div>
     <div class="heat-row">
         <div class="heat-cell" style="background: #86f7ad; opacity: 0.2;"></div>
+        <span class="heat-name">personal_index.__main__</span>
+        <span class="heat-errs" style="color: #86f7ad;">E:0 W:0</span>
+    </div>
+    <div class="heat-row">
+        <div class="heat-cell" style="background: #86f7ad; opacity: 0.2;"></div>
         <span class="heat-name">personal_index.app</span>
         <span class="heat-errs" style="color: #86f7ad;">E:0 W:0</span>
     </div>
@@ -4511,6 +4559,11 @@ body::after {
     <div class="heat-row">
         <div class="heat-cell" style="background: #86f7ad; opacity: 0.2;"></div>
         <span class="heat-name">personal_index.cli_pipeline</span>
+        <span class="heat-errs" style="color: #86f7ad;">E:0 W:0</span>
+    </div>
+    <div class="heat-row">
+        <div class="heat-cell" style="background: #86f7ad; opacity: 0.2;"></div>
+        <span class="heat-name">personal_index.cli_search</span>
         <span class="heat-errs" style="color: #86f7ad;">E:0 W:0</span>
     </div>
     <div class="heat-row">
@@ -5312,7 +5365,7 @@ body::after {
 </div>
 
 <div class="footer">
-    [ personal_index.docs_generator ] — 183 modules | 30,667 lines | 54 errors | 0 warnings
+    [ personal_index.docs_generator ] — 185 modules | 30,790 lines | 54 errors | 0 warnings
 </div>
 
 </div>
