@@ -235,3 +235,32 @@ class TestEdgeCases:
     def test_export_custom_title(self):
         exp = ContentExporter(title="Custom Title")
         assert exp.title == "Custom Title"
+
+
+# --- File Export Tests ---
+
+class TestFileExport:
+    def test_export_to_file_json(self, exporter, sample_items, tmp_path):
+        filepath = tmp_path / "test.json"
+        exporter.export_to_file(sample_items, "json", str(filepath))
+        assert filepath.exists()
+        data = json.loads(filepath.read_text())
+        assert len(data) == 2
+
+    def test_export_to_file_html(self, exporter, sample_items, tmp_path):
+        filepath = tmp_path / "test.html"
+        exporter.export_to_file(sample_items, "html", str(filepath))
+        assert filepath.exists()
+        assert "<!DOCTYPE html>" in filepath.read_text()
+
+    def test_export_to_file_markdown(self, exporter, sample_items, tmp_path):
+        filepath = tmp_path / "test.md"
+        exporter.export_to_file(sample_items, "markdown", str(filepath))
+        assert filepath.exists()
+        assert "# My Index" in filepath.read_text()
+
+    def test_export_to_file_rss(self, exporter, sample_items, tmp_path):
+        filepath = tmp_path / "test.rss"
+        exporter.export_to_file(sample_items, "rss", str(filepath))
+        assert filepath.exists()
+        assert "<rss" in filepath.read_text()
