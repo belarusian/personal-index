@@ -1,7 +1,7 @@
 """Tests for content_scheduler module."""
 
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from personal_index.content_scheduler import TaskScheduler, ScheduledTask, TaskStatus
 
 
@@ -160,10 +160,28 @@ class TestTaskExecution:
         results = []
         def cb(task):
             results.append(task.name)
-        scheduler.add_task("A", "crawl", "* * * * *", callback=cb)
-        scheduler.add_task("B", "export", "* * * * *", callback=cb)
+        task_a = scheduler.add_task("A", "crawl", "* * * * *", callback=cb)
+        task_b = scheduler.add_task("B", "export", "* * * * *", callback=cb)
+        # Force tasks to be due by setting next_run in the past
+        task_a.next_run = datetime.now(timezone.utc) - timedelta(minutes=5)
+        task_b.next_run = datetime.now(timezone.utc) - timedelta(minutes=5)
         due_results = scheduler.run_due_tasks()
         assert len(due_results) == 2
+        assert "A" in results
+        assert "B" in results
+
+    def test_run_due_tasks_skips_disabled(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        task.next_run = datetime.now(timezone.utc) - timedelta(minutes=5)
+        scheduler.disable_task(task.task_id)
+        due_results = scheduler.run_due_tasks()
+        assert len(due_results) == 0
+
+    def test_run_due_tasks_skips_not_due(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        # next_run is in the future (default)
+        due_results = scheduler.run_due_tasks()
+        assert len(due_results) == 0
 
 
 # --- Task to_dict ---
@@ -176,6 +194,14 @@ class TestTaskDict:
         assert d["task_type"] == "crawl"
         assert d["status"] == "pending"
         assert d["run_count"] == 0
+
+    def test_to_dict_after_run(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        task.run()
+        d = task.to_dict()
+        assert d["status"] == "completed"
+        assert d["run_count"] == 1
+        assert d["last_run"] is not None
 
 
 # --- Stats ---
