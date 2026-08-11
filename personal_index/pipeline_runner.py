@@ -213,6 +213,10 @@ class PipelineRunner:
             self._emit_progress("index", 0, len(tagged_pages))
             for i, page in enumerate(tagged_pages):
                 try:
+                    # Enforce minimum score threshold before indexing
+                    if page.relevance_score < self.pipeline_config.min_score_threshold:
+                        stats.pages_filtered_out += 1
+                        continue
                     self._search_index.add_page(page)
                     stats.pages_indexed += 1
                     self._emit_progress("index", i + 1, len(tagged_pages))
@@ -248,6 +252,12 @@ class PipelineRunner:
                     if page:
                         crawled_pages.append(page)
                         stats.pages_crawled += 1
+                    else:
+                        # File was empty or unreadable - record as error
+                        if not os.path.isfile(filepath):
+                            stats.errors.append(f"File not found: {filepath}")
+                        else:
+                            stats.errors.append(f"Empty or unreadable file: {filepath}")
                     self._emit_progress("crawl", i + 1, len(file_paths))
                 except Exception as e:
                     stats.errors.append(f"Read error for {filepath}: {e}")
@@ -313,6 +323,10 @@ class PipelineRunner:
             self._emit_progress("index", 0, len(tagged_pages))
             for i, page in enumerate(tagged_pages):
                 try:
+                    # Enforce minimum score threshold before indexing
+                    if page.relevance_score < self.pipeline_config.min_score_threshold:
+                        stats.pages_filtered_out += 1
+                        continue
                     self._search_index.add_page(page)
                     stats.pages_indexed += 1
                     self._emit_progress("index", i + 1, len(tagged_pages))
