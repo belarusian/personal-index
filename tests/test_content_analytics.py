@@ -1,111 +1,140 @@
-"""Tests for the content analytics module."""
+"""Tests for content analytics module."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
-from personal_index.content_analytics import (
-    AnalyticsEngine,
-    ContentAnalytics,
-)
+import pytest
 
-
-class TestContentAnalytics:
-    def test_to_dict(self) -> None:
-        analytics = ContentAnalytics(
-            total_items=100,
-            unique_domains=10,
-            unique_tags=25,
-            avg_score=0.75,
-            bookmarked_count=20,
-        )
-        d = analytics.to_dict()
-        assert d["total_items"] == 100
-        assert d["avg_score"] == 0.75
+from personal_index.content_analytics.stats import ContentStats
+from personal_index.content_analytics.trends import TrendAnalyzer, TrendPoint
+from personal_index.content_analytics.insights import InsightEngine, Insight
 
 
-class TestAnalyticsEngine:
-    def setup_method(self) -> None:
-        self.engine = AnalyticsEngine()
-        self.items = [
-            {
-                "id": str(i),
-                "title": f"Article {i}",
-                "url": f"https://example{i % 3}.com/article/{i}",
-                "tags": ["python", "web"] if i % 2 == 0 else ["javascript"],
-                "score": 0.5 + (i % 10) * 0.05,
-                "word_count": 500 + i * 100,
-                "bookmarked": i % 3 == 0,
-                "published_at": datetime(2024, 1, 1 + (i % 7)),
-            }
-            for i in range(20)
+class TestContentStats:
+    def test_empty_items(self) -> None:
+        stats = ContentStats.compute([])
+        assert stats.total_items == 0
+        assert stats.total_tags == 0
+        assert stats.avg_score == 0.0
+
+    def test_basic_stats(self) -> None:
+        items = [
+            {"type": "article", "tags": ["python"], "score": 0.8},
+            {"type": "article", "tags": ["python", "web"], "score": 0.9},
+            {"type": "video", "tags": ["web"], "score": 0.7},
         ]
+        stats = ContentStats.compute(items)
+        assert stats.total_items == 3
+        assert stats.total_tags == 2
+        assert stats.avg_score == pytest.approx(0.8, abs=0.01)
+        assert stats.items_by_type["article"] == 2
+        assert stats.items_by_type["video"] == 1
+        assert stats.items_by_tag["python"] == 2
+        assert stats.items_by_tag["web"] == 2
 
-    def test_analyze_empty(self) -> None:
-        analytics = self.engine.analyze([])
-        assert analytics.total_items == 0
+    def test_date_range(self) -> None:
+        now = datetime.now(timezone.utc)
+        items = [
+            {"created_at": now.replace(day=1), "score": 0.5},
+            {"created_at": now.replace(day=15), "score": 0.8},
+        ]
+        stats = ContentStats.compute(items)
+        assert stats.oldest_item is not None
+        assert stats.newest_item is not None
+        assert stats.oldest_item < stats.newest_item
 
-    def test_analyze_total_items(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert analytics.total_items == 20
+    def test_no_scores(self) -> None:
+        items = [{"type": "article"}, {"type": "video"}]
+        stats = ContentStats.compute(items)
+        assert stats.avg_score == 0.0
 
-    def test_analyze_unique_domains(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert analytics.unique_domains == 3
 
-    def test_analyze_top_domains(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert len(analytics.top_domains) > 0
-        assert analytics.top_domains[0][0].startswith("example")
+class TestTrendAnalyzer:
+    def test_volume_trend_empty(self) -> None:
+        analyzer = TrendAnalyzer()
+        assert analyzer.analyze_volume_trend([]) == []
 
-    def test_analyze_top_tags(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert len(analytics.top_tags) > 0
+    def test_volume_trend(self) -> None:
+        items = [
+            {"created_at": datetime(2024, 1, 1)},
+            {"created_at": datetime(2024, 1, 1)},
+            {"created_at": datetime(2024, 1, 2)},
+        ]
+        analyzer = TrendAnalyzer()
+        trend = analyzer.analyze_volume_trend(items)
+        assert len(trend) == 2
+        assert trend[0].value == 2
+        assert trend[1].value == 1
 
-    def test_analyze_avg_score(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert analytics.avg_score > 0
-        assert analytics.avg_score < 1.0
+    def test_score_trend(self) -> None:
+        items = [
+            {"created_at": datetime(2024, 1, 1), "score": 0.5},
+            {"created_at": datetime(2024, 1, 1), "score": 0.9},
+            {"created_at": datetime(2024, 1, 2), "score": 0.7},
+        ]
+        analyzer = TrendAnalyzer()
+        trend = analyzer.analyze_score_trend(items)
+        assert len(trend) == 2
+        assert trend[0].value == pytest.approx(0.7, abs=0.01)
+        assert trend[1].value == pytest.approx(0.7, abs=0.01)
 
-    def test_analyze_score_distribution(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert "excellent (0.8-1.0)" in analytics.score_distribution
+    def test_detect_anomalies(self) -> None:
+        trend = [
+            TrendPoint(datetime(2024, 1, i), float(i))
+            for i in range(1, 11)
+        ]
+        trend.append(TrendPoint(datetime(2024, 1, 11), 100.0))
+        analyzer = TrendAnalyzer()
+        anomalies = analyzer.detect_anomalies(trend)
+        assert len(anomalies) >= 1
+        assert anomalies[0].value == 100.0
 
-    def test_analyze_bookmarked(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert analytics.bookmarked_count > 0
+    def test_detect_anomalies_no_anomaly(self) -> None:
+        trend = [
+            TrendPoint(datetime(2024, 1, i), 5.0)
+            for i in range(1, 11)
+        ]
+        analyzer = TrendAnalyzer()
+        anomalies = analyzer.detect_anomalies(trend)
+        assert anomalies == []
 
-    def test_analyze_tagged(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert analytics.tagged_count == 20  # All items have tags
 
-    def test_analyze_dates(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert analytics.oldest_item is not None
-        assert analytics.newest_item is not None
-        assert analytics.oldest_item <= analytics.newest_item
+class TestInsightEngine:
+    def test_insights_empty(self) -> None:
+        engine = InsightEngine()
+        assert engine.generate_insights([]) == []
 
-    def test_analyze_daily_counts(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert len(analytics.daily_counts) > 0
+    def test_insights_below_threshold(self) -> None:
+        engine = InsightEngine(min_items_for_insight=10)
+        items = [{"type": "article", "tags": ["a"], "score": 0.5} for _ in range(5)]
+        assert engine.generate_insights(items) == []
 
-    def test_analyze_avg_word_count(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        assert analytics.avg_word_count > 0
+    def test_tag_insight(self) -> None:
+        items = [
+            {"type": "article", "tags": ["python"], "score": 0.5}
+            for _ in range(10)
+        ]
+        engine = InsightEngine()
+        insights = engine.generate_insights(items)
+        tag_insights = [i for i in insights if i.category == "tags"]
+        assert len(tag_insights) == 1
+        assert "python" in tag_insights[0].description
 
-    def test_compare_periods(self) -> None:
-        comparison = self.engine.compare_periods(
-            self.items,
-            period1_start=datetime(2024, 1, 1),
-            period1_end=datetime(2024, 1, 3),
-            period2_start=datetime(2024, 1, 4),
-            period2_end=datetime(2024, 1, 7),
-        )
-        assert "period1" in comparison
-        assert "period2" in comparison
-        assert "changes" in comparison
+    def test_score_insight(self) -> None:
+        items = [
+            {"type": "article", "tags": ["a"], "score": 0.9}
+            for _ in range(10)
+        ]
+        engine = InsightEngine()
+        insights = engine.generate_insights(items)
+        score_insights = [i for i in insights if i.category == "scoring"]
+        assert len(score_insights) >= 1
 
-    def test_analyze_to_dict(self) -> None:
-        analytics = self.engine.analyze(self.items)
-        d = analytics.to_dict()
-        assert "total_items" in d
-        assert "top_domains" in d
-        assert "score_distribution" in d
+    def test_low_quality_warning(self) -> None:
+        items = [
+            {"type": "article", "tags": ["a"], "score": 0.1}
+            for _ in range(10)
+        ]
+        engine = InsightEngine()
+        insights = engine.generate_insights(items)
+        warnings = [i for i in insights if i.severity == "warning"]
+        assert len(warnings) >= 1
