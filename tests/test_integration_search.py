@@ -20,27 +20,29 @@ class TestSearchIntegration:
             data_dir=os.path.join(self.tmpdir, "data"),
         )
         self.app.initialize()
+        # Add an interest so content passes the interest match filter
+        self.app.add_interest("General", keywords=["python", "javascript", "tech", "programming", "content", "article"])
 
     def _add_content(self, url: str, content: str, title: str = ""):
-        self.app.process_content(url, content, title)
+        """Add content that passes the filter (min 100 chars)."""
+        # Pad content to meet min_content_length=100
+        padded = content if len(content) >= 100 else content + " " + "extra context words for padding. " * 10
+        self.app.process_content(url, padded, title)
 
     def test_single_term_search(self):
         """Search for a single term."""
-        import pytest; pytest.skip("Integration test pending implementation")
-        self._add_content("https://ex.com/1", "Python is great", "Python Guide")
+        self._add_content("https://ex.com/1", "Python is great for programming", "Python Guide")
         results = self.app.search("python")
         assert len(results) >= 1
 
     def test_multi_term_search(self):
         """Search for multiple terms."""
-        import pytest; pytest.skip("Integration test pending implementation")
         self._add_content("https://ex.com/1", "Python and JavaScript are programming languages", "Languages")
         results = self.app.search("python javascript")
         assert len(results) >= 1
 
     def test_search_limit(self):
         """Search should respect the limit parameter."""
-        import pytest; pytest.skip("Integration test pending implementation")
         for i in range(10):
             self._add_content(f"https://ex.com/{i}", f"Article number {i} about tech", f"Article {i}")
         results = self.app.search("tech", limit=3)
@@ -48,29 +50,25 @@ class TestSearchIntegration:
 
     def test_search_case_insensitive(self):
         """Search should be case-insensitive."""
-        import pytest; pytest.skip("Integration test pending implementation")
-        self._add_content("https://ex.com/1", "Python programming", "Python")
+        self._add_content("https://ex.com/1", "Python programming language", "Python")
         assert len(self.app.search("python")) >= 1
         assert len(self.app.search("PYTHON")) >= 1
         assert len(self.app.search("Python")) >= 1
 
     def test_search_no_results(self):
         """Search for non-existent term returns empty."""
-        import pytest; pytest.skip("Integration test pending implementation")
-        self._add_content("https://ex.com/1", "Python programming", "Python")
+        self._add_content("https://ex.com/1", "Python programming language", "Python")
         results = self.app.search("xyznonexistent")
         assert results == []
 
     def test_search_with_special_chars(self):
         """Search should handle special characters gracefully."""
-        import pytest; pytest.skip("Integration test pending implementation")
-        self._add_content("https://ex.com/1", "Using Python's features", "Python Features")
+        self._add_content("https://ex.com/1", "Using Python's features for development", "Python Features")
         results = self.app.search("python")
         assert len(results) >= 1
 
     def test_search_multiple_documents(self):
         """Search across multiple documents."""
-        import pytest; pytest.skip("Integration test pending implementation")
         docs = [
             ("https://ex.com/py", "Python is a programming language", "Python"),
             ("https://ex.com/js", "JavaScript is also a programming language", "JavaScript"),
@@ -84,16 +82,14 @@ class TestSearchIntegration:
 
     def test_search_returns_title(self):
         """Search results should include the title."""
-        import pytest; pytest.skip("Integration test pending implementation")
-        self._add_content("https://ex.com/1", "Some content", "My Special Title")
+        self._add_content("https://ex.com/1", "Some content here", "My Special Title")
         results = self.app.search("content")
         assert len(results) >= 1
         assert "title" in results[0]
 
     def test_search_returns_url(self):
         """Search results should include the URL."""
-        import pytest; pytest.skip("Integration test pending implementation")
-        self._add_content("https://example.com/page", "Some content", "Title")
+        self._add_content("https://example.com/page", "Some content here", "Title")
         results = self.app.search("content")
         assert len(results) >= 1
         assert "url" in results[0]
@@ -101,8 +97,7 @@ class TestSearchIntegration:
 
     def test_search_returns_score(self):
         """Search results should include a relevance score."""
-        import pytest; pytest.skip("Integration test pending implementation")
-        self._add_content("https://ex.com/1", "Important content", "Title")
+        self._add_content("https://ex.com/1", "Important content here", "Title")
         results = self.app.search("content")
         assert len(results) >= 1
         assert "score" in results[0]

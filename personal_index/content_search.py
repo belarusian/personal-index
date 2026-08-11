@@ -137,7 +137,13 @@ class SearchIndex:
         for field in ("title", "description", "content", "tags"):
             val = item.get(field)
             if isinstance(val, list):
-                parts.extend(val)
+                for v in val:
+                    if isinstance(v, str):
+                        parts.append(v)
+                    elif hasattr(v, "name"):
+                        parts.append(v.name)
+                    else:
+                        parts.append(str(v))
             elif isinstance(val, str):
                 parts.append(val)
         return " ".join(parts)

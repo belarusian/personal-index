@@ -213,26 +213,40 @@ class PersonalIndexApp:
 
         result = self.pipeline.run(data)
 
-        if result.success and result.data.get("passes_filter", True):
+        if result.get("passes_filter", True):
             # Add to search index
-            item_id = result.data.get("url", "")
+            item_id = result.get("url", "")
             self.search_index.add_item({
                 "id": item_id,
-                "url": result.data.get("url", ""),
-                "title": result.data.get("title", "Untitled"),
-                "content": result.data.get("extracted_text", ""),
-                "score": result.data.get("score", 0),
-                "tags": result.data.get("tags", []),
+                "url": result.get("url", ""),
+                "title": result.get("title", "Untitled"),
+                "content": result.get("extracted_text", ""),
+                "score": result.get("score", 0),
+                "tags": result.get("tags", []),
             })
 
-        return result.data  # type: ignore[no-any-return]
+        return result
 
     def search(self, query: str, limit: int = 20) -> list:
         """Search indexed content."""
         self.initialize()
-        results = self.content_search.search(query, limit=limit)
-        # Convert to dict for compatibility
-        return [r.to_dict() if hasattr(r, 'to_dict') else r for r in results]
+        result = self.content_search.search(query, limit=limit)
+        # ContentSearch.search returns {"results": [...], "total": N, "query": "..."}
+        items = result.get("results", [])
+        # Each item is {"item": {...}, "score": float}
+        out = []
+        for entry in items:
+            if isinstance(entry, dict) and "item" in entry:
+                item = entry["item"]
+                item["score"] = entry.get("score", 0)
+                out.append(item)
+            elif isinstance(entry, dict):
+                out.append(entry)
+            elif hasattr(entry, "to_dict"):
+                out.append(entry.to_dict())
+            else:
+                out.append(entry)
+        return out
 
     def add_interest(self, name: str, keywords=None, url_patterns=None, priority: int = 5):
         """Add a tracked interest."""
