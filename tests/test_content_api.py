@@ -236,3 +236,27 @@ class TestApiErrorHandling:
         body = json.dumps({"link": "http://new-url.com"})
         status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
         assert resp["item"]["link"] == "http://new-url.com"
+
+
+# --- Validation Tests ---
+
+class TestContentValidation:
+    def test_validate_valid_content(self, api):
+        errors = api._validate_content({"title": "Test", "tags": ["a"]})
+        assert errors == []
+
+    def test_validate_not_dict(self, api):
+        errors = api._validate_content("string")
+        assert len(errors) > 0
+
+    def test_validate_title_not_string(self, api):
+        errors = api._validate_content({"title": 123})
+        assert any("Title" in e for e in errors)
+
+    def test_validate_tags_not_list(self, api):
+        errors = api._validate_content({"tags": "not-a-list"})
+        assert any("Tags" in e for e in errors)
+
+    def test_validate_title_too_long(self, api):
+        errors = api._validate_content({"title": "x" * 201})
+        assert any("200" in e for e in errors)
