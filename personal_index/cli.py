@@ -439,3 +439,68 @@ def import_cmd(path, recursive, config, data_dir):
             click.echo(f"  Error importing {file_path}: {e}", err=True)
 
     click.echo(f"Imported {imported} file(s) into index.")
+
+
+@main.command()
+@click.option("-f", "--format", "fmt", default="markdown", type=click.Choice(["markdown", "json", "csv"]), help="Export format")
+@click.option("-o", "--output", default=None, help="Output file path")
+@click.option("-q", "--query", default=None, help="Only export matching results")
+@click.option("-l", "--limit", default=100, type=int, help="Max items to export")
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+def export_cmd(fmt, output, query, limit, data_dir):
+    """Export indexed content to a file.
+
+    Exports can be filtered with --query and limited with --limit.
+    """
+    from personal_index.index import SearchIndex
+
+    index = SearchIndex()
+
+    if query:
+        results = index.search(query, limit=limit)
+    else:
+        results = index.list_all(limit=limit)
+
+    if not results:
+        click.echo("No content to export.")
+        return
+
+    if fmt == "markdown":
+        lines = ["# Exported Content", ""]
+        for r in results:
+            lines.append(f"## {r.title}")
+            lines.append(f"**URL:** {r.url}")
+            if hasattr(r, 'score') and r.score:
+                lines.append(f"**Score:** {r.score:.2f}")
+            if r.snippet:
+                lines.append(f"{r.snippet}")
+            lines.append("")
+        content = "\n".join(lines)
+    elif fmt == "json":
+        import json
+        data = []
+        for r in results:
+            item = {
+                "title": r.title,
+                "url": r.url,
+                "snippet": getattr(r, 'snippet', ''),
+                "score": getattr(r, 'score', 0),
+            }
+            data.append(item)
+        content = json.dumps(data, indent=2)
+    else:  # csv
+        import csv
+        import io
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["title", "url", "snippet", "score"])
+        for r in results:
+            writer.writerow([r.title, r.url, getattr(r, 'snippet', ''), getattr(r, 'score', 0)])
+        content = buf.getvalue()
+
+    if output:
+        with open(output, "w") as f:
+            f.write(content)
+        click.echo(f"Exported {len(results)} items to {output}")
+    else:
+        click.echo(content)
