@@ -7,10 +7,11 @@ import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
-from personal_index.content_scoring import ContentScorer
+from personal_index.content_scoring import ContentScorer, ScoreWeights
 from personal_index.crawler.main import Crawler, CrawlerConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
@@ -50,196 +51,282 @@ class PipelineStats:
             f"Tags applied: {self.tags_applied}",
             f"Indexed:      {self.pages_indexed}",
             f"Errors:       {len(self.errors)}",
-            f"Time:         {self.elapsed_seconds:.2f}s",
+            f"Time:         {self.elapsed_seconds:.1f}s",
         ]
         return "\n".join(lines)
 
-    def to_dict(self) -> dict:
-        """Convert stats to dictionary."""
-        return {
-            "pages_crawled": self.pages_crawled,
-            "pages_extracted": self.pages_extracted,
-            "pages_filtered_in": self.pages_filtered_in,
-            "pages_filtered_out": self.pages_filtered_out,
-            "pages_scored": self.pages_scored,
-            "pages_tagged": self.pages_tagged,
-            "tags_applied": self.tags_applied,
-            "pages_indexed": self.pages_indexed,
-            "errors": self.errors,
-            "elapsed_seconds": self.elapsed_seconds,
-        }
-
 
 class PipelineRunner:
-    """Orchestrates the full content processing pipeline."""
+    """Orchestrates the full pipeline: crawl → extract → filter → score → tag → index.
+
+    This is the main entry point for running the complete pipeline.
+    It manages all components and coordinates data flow between stages.
+    """
 
     def __init__(
         self,
-        config: PipelineConfig | None = None,
         data_dir: str = ".personal_index",
-        progress_callback: Callable[[str, int, int], None] | None = None,
+        pipeline_config: PipelineConfig | None = None,
+        progress_callback: Callable | None = None,
     ):
-        self.pipeline_config = config or PipelineConfig()
         self.data_dir = data_dir
-        self.progress_callback = progress_callback
-        os.makedirs(data_dir, exist_ok=True)
+        self.pipeline_config = pipeline_config or PipelineConfig()
+        self._progress_callback = progress_callback
 
-        # Initialize sub-components
+        # Initialize stores
         self._interest_store = InterestStore(
             store_path=os.path.join(data_dir, "interests.json")
-        )
-        self._search_index = SearchIndex(
-            db_path=os.path.join(data_dir, "search_index.json")
         )
         self._tag_store = TagStore(
             store_path=os.path.join(data_dir, "tags.json")
         )
-        self._scorer = ContentScorer()
+        self._search_index = SearchIndex(
+            db_path=os.path.join(data_dir, "search_index.json")
+        )
+
+        # Initialize processing components
         self._filter = ContentFilter(
             config=FilterConfig(
                 min_content_length=self.pipeline_config.min_content_length,
-                require_interest_match=True,
+                max_content_length=self.pipeline_config.max_content_length,
+                min_title_length=self.pipeline_config.min_title_length,
+                blocked_domains=self.pipeline_config.blocked_domains,
+            )
+        )
+        self._scorer = ContentScorer(weights=ScoreWeights())
+
+        # Initialize crawler
+        self._crawler = Crawler(
+            config=CrawlerConfig(
+                max_depth=self.pipeline_config.max_depth,
+                max_pages=self.pipeline_config.max_pages,
+                delay=self.pipeline_config.politeness_delay,
+                timeout=self.pipeline_config.timeout,
             ),
             interest_store=self._interest_store,
         )
 
-    def _progress(self, step: str, current: int, total: int) -> None:
-        """Emit progress update if callback is set."""
-        if self.progress_callback:
-            self.progress_callback(step, current, total)
+        # Ensure data directory exists
+        os.makedirs(data_dir, exist_ok=True)
+        for subdir in ["cache", "archive", "backups"]:
+            os.makedirs(os.path.join(data_dir, subdir), exist_ok=True)
 
-    def run(self, seed_urls: list[str], max_depth: int = 3) -> PipelineStats:
-        """Run the full pipeline on seed URLs.
+    def run(self, seed_urls: list[str]) -> PipelineStats:
+        """Run the full pipeline on the given seed URLs.
 
         Args:
-            seed_urls: URLs to start crawling from. If empty, skips crawl step.
-            max_depth: Maximum crawl depth.
+            seed_urls: List of URLs to start crawling from.
 
         Returns:
-            PipelineStats with results from each step.
+            PipelineStats with results from each stage.
         """
-        start_time = time.time()
         stats = PipelineStats()
-        pages: list[CrawledPage] = []
+        start_time = time.time()
 
-        # Step 1: Crawl
-        if self.pipeline_config.is_step_enabled("crawl"):
-            logger.info("Step 1/6: Crawling %d seed URLs", len(seed_urls))
-            if not seed_urls:
-                logger.info("  No seed URLs provided, skipping crawl")
-            else:
-                crawler = Crawler(
-                    config=CrawlerConfig(max_depth=max_depth),
-                    interest_store=self._interest_store,
-                )
-                try:
-                    pages = crawler.crawl(seed_urls, max_depth=max_depth)
-                    crawler.close()
-                except (OSError, ValueError) as e:
-                    logger.error("Crawl failed: %s", e)
-                    stats.errors.append(f"Crawl error: {e}")
-                stats.pages_crawled = len(pages)
-                self._progress("crawl", stats.pages_crawled, stats.pages_crawled)
-                logger.info("  Crawled %d pages", stats.pages_crawled)
+        try:
+            # Stage 1: Crawl
+            logger.info("Stage 1/6: Crawling %d seed URLs", len(seed_urls))
+            pages = self._crawl_stage(seed_urls, stats)
 
-        # Step 2: Extract
-        if self.pipeline_config.is_step_enabled("extract"):
-            logger.info("Step 2/6: Extracting content from %d pages", len(pages))
-            extracted_count = 0
-            for i, page in enumerate(pages):
-                if page.content and len(page.content) > 0:
-                    extracted_count += 1
-                else:
-                    page.content = ""
-                self._progress("extract", i + 1, len(pages))
-            stats.pages_extracted = extracted_count
-            logger.info("  Extracted content from %d pages", stats.pages_extracted)
+            # Stage 2: Extract
+            logger.info("Stage 2/6: Extracting content from %d pages", len(pages))
+            pages = self._extract_stage(pages, stats)
 
-        # Step 3: Filter
-        if self.pipeline_config.is_step_enabled("filter"):
-            logger.info("Step 3/6: Filtering %d pages", len(pages))
-            filtered = []
-            for i, page in enumerate(pages):
-                if self._filter.should_include(page):
-                    filtered.append(page)
-                    stats.pages_filtered_in += 1
-                else:
-                    stats.pages_filtered_out += 1
-                self._progress("filter", i + 1, len(pages))
-            pages = filtered
-            logger.info("  Filtered: %d in, %d out", stats.pages_filtered_in, stats.pages_filtered_out)
+            # Stage 3: Filter
+            logger.info("Stage 3/6: Filtering %d pages", len(pages))
+            pages = self._filter_stage(pages, stats)
 
-        # Step 4: Score
-        if self.pipeline_config.is_step_enabled("score"):
-            logger.info("Step 4/6: Scoring %d pages", len(pages))
-            scored_pages = []
-            for i, page in enumerate(pages):
-                word_count = len(page.content.split()) if page.content else 0
-                keyword_matches = 0
-                total_keywords = 0
-                for interest in self._interest_store.list_all():
-                    for kw in interest.keywords:
-                        total_keywords += 1
-                        if kw.lower() in (page.content or "").lower():
-                            keyword_matches += 1
-                score_result = self._scorer.score(
-                    keyword_matches=keyword_matches,
-                    total_keywords=max(total_keywords, 1),
-                    word_count=word_count,
-                    domain_authority=0.5,
-                )
-                score = score_result.total if hasattr(score_result, "total") else 0.0
-                page.relevance_score = score
-                if score >= self.pipeline_config.min_score_threshold:
-                    scored_pages.append(page)
-                    stats.pages_scored += 1
-                else:
-                    stats.pages_filtered_out += 1
-                self._progress("score", i + 1, len(pages))
-            pages = scored_pages
-            logger.info("  Scored %d pages above threshold", stats.pages_scored)
+            # Stage 4: Score
+            logger.info("Stage 4/6: Scoring %d pages", len(pages))
+            pages = self._score_stage(pages, stats)
 
-        # Step 5: Tag
-        if self.pipeline_config.is_step_enabled("tag"):
-            logger.info("Step 5/6: Tagging %d pages", len(pages))
-            tagged_count = 0
-            total_tags = 0
-            for i, page in enumerate(pages):
-                tags = self._auto_tag(page)
-                for tag_name in tags:
-                    self._tag_store.add_tag_to_page(page.url, tag_name)
-                    total_tags += 1
-                if tags:
-                    tagged_count += 1
-                self._progress("tag", i + 1, len(pages))
-            stats.pages_tagged = tagged_count
-            stats.tags_applied = total_tags
-            logger.info("  Tagged %d pages with %d total tags", tagged_count, total_tags)
+            # Stage 5: Tag
+            logger.info("Stage 5/6: Tagging %d pages", len(pages))
+            pages = self._tag_stage(pages, stats)
 
-        # Step 6: Index
-        if self.pipeline_config.is_step_enabled("index"):
-            logger.info("Step 6/6: Indexing %d pages", len(pages))
-            for i, page in enumerate(pages):
-                try:
-                    self._search_index.add_page(page)
-                    stats.pages_indexed += 1
-                except (OSError, ValueError) as e:
-                    logger.warning("Failed to index %s: %s", page.url, e)
-                    stats.errors.append(f"Index error for {page.url}: {e}")
-                self._progress("index", i + 1, len(pages))
-            logger.info("  Indexed %d pages", stats.pages_indexed)
+            # Stage 6: Index
+            logger.info("Stage 6/6: Indexing %d pages", len(pages))
+            self._index_stage(pages, stats)
+
+        except Exception as e:
+            logger.error("Pipeline failed: %s", e)
+            stats.errors.append(f"Pipeline error: {e}")
 
         stats.elapsed_seconds = time.time() - start_time
         return stats
 
+    def run_from_files(self, file_paths: list[str]) -> PipelineStats:
+        """Run the pipeline on local files (skip crawl stage).
+
+        Args:
+            file_paths: List of file paths to process.
+
+        Returns:
+            PipelineStats with results from each stage.
+        """
+        stats = PipelineStats()
+        start_time = time.time()
+
+        try:
+            # Stage 1: Read files (replaces crawl)
+            pages = self._read_files_stage(file_paths, stats)
+
+            # Stage 2: Extract (already done for local files)
+            stats.pages_extracted = len(pages)
+
+            # Stage 3: Filter
+            pages = self._filter_stage(pages, stats)
+
+            # Stage 4: Score
+            pages = self._score_stage(pages, stats)
+
+            # Stage 5: Tag
+            pages = self._tag_stage(pages, stats)
+
+            # Stage 6: Index
+            self._index_stage(pages, stats)
+
+        except Exception as e:
+            logger.error("Pipeline failed: %s", e)
+            stats.errors.append(f"Pipeline error: {e}")
+
+        stats.elapsed_seconds = time.time() - start_time
+        return stats
+
+    def _crawl_stage(self, seed_urls: list[str], stats: PipelineStats) -> list[CrawledPage]:
+        """Execute the crawl stage."""
+        try:
+            pages = self._crawler.crawl(seed_urls)
+            stats.pages_crawled = len(pages)
+            self._progress("crawl", len(pages), len(pages))
+            return pages
+        except Exception as e:
+            stats.errors.append(f"Crawl error: {e}")
+            return []
+
+    def _extract_stage(self, pages: list[CrawledPage], stats: PipelineStats) -> list[CrawledPage]:
+        """Execute the extract stage.
+
+        Content is already extracted by the crawler, so this validates
+        that content exists and is usable.
+        """
+        extracted = []
+        for page in pages:
+            if page.content and len(page.content.strip()) > 0:
+                extracted.append(page)
+                stats.pages_extracted += 1
+            else:
+                stats.pages_filtered_out += 1
+        self._progress("extract", stats.pages_extracted, len(pages))
+        return extracted
+
+    def _filter_stage(self, pages: list[CrawledPage], stats: PipelineStats) -> list[CrawledPage]:
+        """Execute the filter stage."""
+        filtered = []
+        for page in pages:
+            if self._filter.should_include(page):
+                filtered.append(page)
+                stats.pages_filtered_in += 1
+            else:
+                stats.pages_filtered_out += 1
+        self._progress("filter", stats.pages_filtered_in, len(pages))
+        return filtered
+
+    def _score_stage(self, pages: list[CrawledPage], stats: PipelineStats) -> list[CrawledPage]:
+        """Execute the scoring stage."""
+        scored = []
+        interests = self._interest_store.list_all()
+
+        for page in pages:
+            word_count = len((page.content or "").split())
+            keyword_matches = 0
+            total_keywords = 0
+            matched_interest_names = []
+
+            for interest in interests:
+                for kw in interest.keywords:
+                    total_keywords += 1
+                    if kw.lower() in (page.content or "").lower():
+                        keyword_matches += 1
+                        matched_interest_names.append(interest.name)
+
+            score_result = self._scorer.score(
+                keyword_matches=keyword_matches,
+                total_keywords=max(total_keywords, 1),
+                word_count=word_count,
+                domain_authority=0.5,
+            )
+            score = score_result.total if hasattr(score_result, "total") else 0.0
+            page.relevance_score = score
+            page.matched_interests = matched_interest_names
+
+            if score >= self.pipeline_config.min_score_threshold:
+                scored.append(page)
+                stats.pages_scored += 1
+                if matched_interest_names:
+                    stats.interests_matched += 1
+            else:
+                stats.pages_filtered_out += 1
+
+        self._progress("score", stats.pages_scored, len(pages))
+        return scored
+
+    def _tag_stage(self, pages: list[CrawledPage], stats: PipelineStats) -> list[CrawledPage]:
+        """Execute the tagging stage."""
+        tagged_count = 0
+        total_tags = 0
+
+        for page in pages:
+            tags = self._auto_tag(page)
+            for tag_name in tags:
+                self._tag_store.add_tag_to_page(page.url, tag_name)
+                total_tags += 1
+            if tags:
+                tagged_count += 1
+
+        stats.pages_tagged = tagged_count
+        stats.tags_applied = total_tags
+        self._progress("tag", tagged_count, len(pages))
+        return pages
+
+    def _index_stage(self, pages: list[CrawledPage], stats: PipelineStats) -> None:
+        """Execute the indexing stage."""
+        for page in pages:
+            try:
+                self._search_index.add_page(page)
+                stats.pages_indexed += 1
+            except (OSError, ValueError) as e:
+                stats.errors.append(f"Index error for {page.url}: {e}")
+        self._progress("index", stats.pages_indexed, len(pages))
+
+    def _read_files_stage(self, file_paths: list[str], stats: PipelineStats) -> list[CrawledPage]:
+        """Read local files and convert to CrawledPage objects."""
+        pages = []
+        for filepath in file_paths:
+            try:
+                with open(filepath, "r", errors="replace") as f:
+                    content = f.read()
+                page = CrawledPage(
+                    url=filepath,
+                    title=os.path.basename(filepath),
+                    content=content,
+                )
+                pages.append(page)
+                stats.pages_crawled += 1
+            except (OSError, ValueError) as e:
+                stats.errors.append(f"Read error for {filepath}: {e}")
+        return pages
+
     def _auto_tag(self, page: CrawledPage) -> list[str]:
         """Auto-generate tags for a page based on content and interests."""
         tags = set()
+
         # Tag by interest matches
-        for interest in self._interest_store.list_all():
-            if interest.matches(page.content or "", page.url):
-                tags.add(interest.name)
-        # Tag by content type heuristics
+        if page.matched_interests:
+            for interest_name in page.matched_interests:
+                tags.add(interest_name)
+
+        # Tag by URL pattern heuristics
         if page.url:
             url_lower = page.url.lower()
             if "blog" in url_lower:
@@ -250,54 +337,24 @@ class PipelineRunner:
                 tags.add("documentation")
             if "github" in url_lower:
                 tags.add("github")
-        # Tag by matched interests
-        if page.matched_interests:
-            for mi in page.matched_interests:
-                tags.add(mi)
+
         return list(tags)
 
-    def add_page_directly(self, page: CrawledPage) -> bool:
-        """Add a page directly through the pipeline (skip crawl).
+    def _progress(self, stage: str, current: int, total: int) -> None:
+        """Report progress if callback is set."""
+        if self._progress_callback:
+            self._progress_callback(stage, current, total)
 
-        Useful for importing content from non-web sources.
-        """
-        # Extract (already done for direct pages)
-        if not page.content:
-            return False
+    def get_stats(self) -> dict[str, Any]:
+        """Get current pipeline statistics."""
+        return {
+            "indexed_pages": self._search_index.get_page_count(),
+            "total_interests": len(self._interest_store.list_all()),
+            "total_tags": self._tag_store.get_tag_count(),
+            "tagged_pages": len(self._tag_store._page_tags),
+        }
 
-        # Filter
-        if not self._filter.should_include(page):
-            return False
-
-        # Score
-        word_count = len(page.content.split()) if page.content else 0
-        keyword_matches = 0
-        total_keywords = 0
-        for interest in self._interest_store.list_all():
-            for kw in interest.keywords:
-                total_keywords += 1
-                if kw.lower() in (page.content or "").lower():
-                    keyword_matches += 1
-        score_result = self._scorer.score(
-            keyword_matches=keyword_matches,
-            total_keywords=max(total_keywords, 1),
-            word_count=word_count,
-            domain_authority=0.5,
-        )
-        score = score_result.total if hasattr(score_result, "total") else 0.0
-        page.relevance_score = score
-
-        if score < self.pipeline_config.min_score_threshold:
-            return False
-
-        # Tag
-        tags = self._auto_tag(page)
-        for tag_name in tags:
-            self._tag_store.add_tag_to_page(page.url, tag_name)
-
-        # Index
-        try:
-            self._search_index.add_page(page)
-            return True
-        except (OSError, ValueError):
-            return False
+    def close(self) -> None:
+        """Close all resources."""
+        self._crawler.close()
+        self._search_index.close()
