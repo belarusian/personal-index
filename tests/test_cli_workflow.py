@@ -137,7 +137,7 @@ class TestCompleteWorkflow:
             files.append(str(f))
 
         result = runner.invoke(main, ["pipeline"] + [
-            "--import-file", f for f in files
+            item for f in files for item in ["--import-file", f]
         ])
         assert result.exit_code == 0
 
