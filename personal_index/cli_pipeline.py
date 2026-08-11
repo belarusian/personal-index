@@ -39,10 +39,11 @@ def progress_callback(stage: str, current: int, total: int) -> None:
 @click.option("--no-score", is_flag=True, help="Skip score stage")
 @click.option("--no-tag", is_flag=True, help="Skip tag stage")
 @click.option("--no-index", is_flag=True, help="Skip index stage")
+@click.option("--recursive", "-r", is_flag=True, help="Recursively import directories")
 @click.pass_context
 def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
              min_content_length, data_dir, steps, no_crawl, no_filter,
-             no_score, no_tag, no_index):
+             no_score, no_tag, no_index, recursive):
     """Run the full content pipeline.
 
     Processes content through all stages: crawl → extract → filter →
@@ -56,8 +57,8 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
         # Import local files
         personal-index pipeline --import-file ./article.txt
 
-        # Import directory of files
-        personal-index pipeline --import-file ./docs/*.txt
+        # Import directory of files recursively
+        personal-index pipeline --import-file ./docs/ --recursive
 
         # Custom settings
         personal-index pipeline https://example.com -d 2 -m 50 --min-score 0.5
@@ -102,9 +103,20 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
 
     try:
         if import_files:
-            click.echo(f"Importing {len(import_files)} file(s)...")
-            stats = runner.run_from_files(list(import_files))
-            # Show imported count
+            # Expand directories recursively if requested
+            expanded_files = []
+            for f in import_files:
+                if os.path.isdir(f) and recursive:
+                    for root, dirs, files in os.walk(f):
+                        for filename in files:
+                            filepath = os.path.join(root, filename)
+                            if filepath.endswith(('.txt', '.md', '.html', '.htm', '.json', '.xml', '.rst')):
+                                expanded_files.append(filepath)
+                else:
+                    expanded_files.append(f)
+
+            click.echo(f"Importing {len(expanded_files)} file(s)...")
+            stats = runner.run_from_files(expanded_files)
             click.echo(f"  Imported:     {stats.pages_indexed}")
         elif urls:
             click.echo(f"Running pipeline on {len(urls)} URL(s)...")
@@ -126,18 +138,22 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
         click.echo(f"  Tagged:       {stats.pages_tagged}")
         click.echo(f"  Tags applied: {stats.tags_applied}")
         click.echo(f"  Indexed:      {stats.pages_indexed}")
+        click.echo(f"  Errors:       {len(stats.errors)}")
+
         if stats.errors:
-            click.echo(f"  Errors:       {len(stats.errors)}")
-            for err in stats.errors[:5]:
-                click.echo(f"    - {err}")
+            click.echo("\nErrors:")
+            for error in stats.errors[:10]:
+                click.echo(f"  - {error}")
+            if len(stats.errors) > 10:
+                click.echo(f"  ... and {len(stats.errors) - 10} more")
 
-        # Show final stats
-        final_stats = runner.get_stats()
-        click.echo("\nIndex stats:")
-        click.echo(f"  Total indexed pages: {final_stats['indexed_pages']}")
-        click.echo(f"  Total interests:     {final_stats['total_interests']}")
-        click.echo(f"  Total tags:          {final_stats['total_tags']}")
-        click.echo(f"  Tagged pages:        {final_stats['tagged_pages']}")
-
-    finally:
         runner.close()
+
+    except KeyboardInterrupt:
+        click.echo("\nPipeline interrupted by user.")
+        runner.close()
+        sys.exit(130)
+    except Exception as e:
+        click.echo(f"\nPipeline failed: {e}", err=True)
+        runner.close()
+        sys.exit(1)
