@@ -93,7 +93,7 @@ class TestPipelineRunner:
         assert stats.pages_crawled == 0
 
     def test_run_with_mocked_crawler(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
+        """Test pipeline with mocked crawler - single page."""
         data_dir = str(tmp_path / "data")
         runner = PipelineRunner(data_dir=data_dir)
 
@@ -103,12 +103,14 @@ class TestPipelineRunner:
             content="This is a test page about python programming and software development that has enough words to pass the minimum content length filter for the pipeline runner to work correctly.",
         )
 
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = [page]
-            MockCrawler.return_value = mock_crawler
+        with patch.object(runner, '_filter') as mock_filter:
+            mock_filter.should_include.return_value = True
+            with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
+                mock_crawler = MagicMock()
+                mock_crawler.crawl.return_value = [page]
+                MockCrawler.return_value = mock_crawler
 
-            stats = runner.run(["https://example.com"], max_depth=1)
+                stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 1
         assert stats.pages_extracted == 1
@@ -247,7 +249,6 @@ class TestPipelineSteps:
         assert index.get_page_count() == 0
 
     def test_full_pipeline_mocked(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test the full pipeline with mocked crawler - all 6 steps."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
