@@ -111,7 +111,7 @@ def standalone():
         assert info.functions[0].name == "standalone"
 
     def test_counts_lines(self, tmp_path: Path):
-        src = "\n".join([f"# line {i}" for i in range(1, 51)])
+        src = "\n".join([f"# line {i}" for i in range(1, 52)])
         p = _write_tmp_module(tmp_path, "mod.py", src)
         info = _parse_module(str(p))
         assert info.line_count == 50
