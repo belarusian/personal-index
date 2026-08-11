@@ -2,6 +2,7 @@
 
 import json
 import pytest
+import personal_index.content_api as api_module
 from personal_index.content_api import ContentAPI
 
 
@@ -266,34 +267,34 @@ class TestContentValidation:
 
 class TestRequestLogger:
     def test_logger_records_request(self, api):
-        logger = ContentAPI.RequestLogger(api)
+        logger = api_module.RequestLogger(api)
         logger.handle_request("GET", "/api/v1/health")
         assert len(logger.log) == 1
         assert logger.log[0]["method"] == "GET"
 
     def test_logger_records_status(self, api):
-        logger = ContentAPI.RequestLogger(api)
+        logger = api_module.RequestLogger(api)
         logger.handle_request("GET", "/api/v1/health")
         assert logger.log[0]["status"] == 200
 
     def test_logger_multiple_requests(self, api):
-        logger = ContentAPI.RequestLogger(api)
+        logger = api_module.RequestLogger(api)
         logger.handle_request("GET", "/api/v1/health")
         logger.handle_request("GET", "/api/v1/stats")
         assert len(logger.log) == 2
 
     def test_logger_clear(self, api):
-        logger = ContentAPI.RequestLogger(api)
+        logger = api_module.RequestLogger(api)
         logger.handle_request("GET", "/api/v1/health")
         logger.clear_log()
         assert len(logger.log) == 0
 
     def test_logger_404(self, api):
-        logger = ContentAPI.RequestLogger(api)
+        logger = api_module.RequestLogger(api)
         logger.handle_request("GET", "/unknown")
         assert logger.log[0]["status"] == 404
 
     def test_logger_has_timestamp(self, api):
-        logger = ContentAPI.RequestLogger(api)
+        logger = api_module.RequestLogger(api)
         logger.handle_request("GET", "/api/v1/health")
         assert "timestamp" in logger.log[0]
