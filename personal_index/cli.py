@@ -241,6 +241,7 @@ from personal_index.cli_interests import interests as interests_cmd
 from personal_index.cli_tags import tags as tags_cmd
 from personal_index.cli_import import import_cmd
 from personal_index.cli_export import export_cmd
+from personal_index.cli_schedule import schedule as schedule_cmd
 
 main.add_command(pipeline)
 main.add_command(run_pipeline)
@@ -250,6 +251,7 @@ main.add_command(interests_cmd)
 main.add_command(tags_cmd)
 main.add_command(import_cmd)
 main.add_command(export_cmd)
+main.add_command(schedule_cmd)
 
 # Doctor command
 @main.command()
