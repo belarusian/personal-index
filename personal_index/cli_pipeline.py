@@ -16,7 +16,8 @@ from personal_index.pipeline_runner import PipelineRunner
 @click.option("--data-dir", default=".personal_index", help="Data directory")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without running")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose logging")
-def pipeline(urls, depth, config, data_dir, dry_run):
+@click.option("-o", "--output", default=None, help="Save pipeline stats to file")
+def pipeline(urls, depth, config, data_dir, dry_run, verbose, output):
     """Run the full pipeline: crawl → extract → filter → score → tag → index.
 
     URLs are the seed URLs to start crawling from.
@@ -50,6 +51,11 @@ def pipeline(urls, depth, config, data_dir, dry_run):
 
     click.echo()
     click.echo(stats.summary())
+
+    if output:
+        with open(output, "w") as f:
+            f.write(stats.summary())
+        click.echo(f"Stats saved to {output}")
 
     if stats.errors:
         click.echo("\nErrors:")
