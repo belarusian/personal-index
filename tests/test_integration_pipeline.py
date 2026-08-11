@@ -26,7 +26,7 @@ class TestPipelineConfig:
         assert cfg.enabled is True
         assert cfg.steps == []
         assert cfg.min_score_threshold == 0.0
-        assert cfg.min_content_length == 100
+        assert cfg.min_content_length == 10
 
     def test_enabled_steps(self):
         cfg = PipelineConfig(
