@@ -5,77 +5,34 @@ All notable changes to personal-index will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Comprehensive documentation suite (README, USAGE_GUIDE, ARCHITECTURE, CLI_REFERENCE)
-- Full end-to-end pipeline integration tests
-- Export functions for markdown, JSON, and CSV formats
+- Comprehensive integration test suite (159 tests)
+- Full pipeline end-to-end CLI tests
+- Interest management integration tests
+- Tagging integration tests
+- Scoring and filtering integration tests
+- Search integration tests
 
 ### Changed
-- Improved CLI command structure with proper subcommands
-- Better error handling in pipeline execution
+- Improved documentation with comprehensive guides
 
-## [0.1.0] - 2024
+## [0.1.0] - 2026-08-11
 
 ### Added
 - Initial release of personal-index
-- Full-text search functionality
-- Interest-based content filtering
-- Web crawler with depth control and politeness
-- Content extraction from HTML
-- Scoring system for relevance ranking
-- Auto-tagging based on interests
-- Import/export functionality
-- CLI with all core commands
+- CLI commands: init, crawl, pipeline, search, export
+- Interest management system
+- Tag management system
+- Content filtering and scoring
+- Search functionality with multiple output formats
+- Full pipeline integration tests
+- Configuration support
+- Programmatic API
 
 ### Features
-- `personal-index init`: Initialize project
-- `personal-index crawl <URL>`: Crawl web pages
-- `personal-index pipeline <URL>`: Run full processing pipeline
-- `personal-index search <QUERY>`: Search indexed content
-- `personal-index interests add/list/remove`: Manage interests
-- `personal-index tags add/list`: Manage tags
-- `personal-index import <FILE>`: Import local files
-- `personal-index export --format FORMAT`: Export results
-- `personal-index status`: View index statistics
-
-## Pipeline Stages
-
-### Crawl
-- Depth-limited crawling
-- Politeness delays between requests
-- Robots.txt compliance
-- Interest-aware filtering
-
-### Extract
-- HTML parsing and content extraction
-- Title, headings, and metadata extraction
-- Link discovery for further crawling
-
-### Filter
-- Interest-based filtering
-- Minimum content length threshold
-- Duplicate detection
-
-### Score
-- Keyword matching with priority weights
-- Content quality factors
-- Domain authority estimation
-
-### Tag
-- Interest-based tags
-- URL pattern tags
-- Content heuristics
-
-### Index
-- Full-text search with inverted index
-- Relevance ranking
-- Persistent storage
-
-## Testing
-
-All tests pass:
-- Unit tests for individual components
-- Integration tests for component interactions
-- End-to-end tests for full workflows
-- CLI integration tests
-
-Run tests: `pytest`
+- Crawl websites with configurable depth
+- Import local files and directories
+- Filter content based on interests
+- Score content by relevance
+- Auto-tag matching content
+- Search indexed content
+- Export results in multiple formats
