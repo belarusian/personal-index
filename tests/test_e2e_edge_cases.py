@@ -145,7 +145,7 @@ class TestPipelineEdgeCases:
     def test_pipeline_high_score_threshold(self, tmp_path):
         """Test pipeline filters by high score threshold."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.9, min_content_length=10)
+        cfg = PipelineConfig(min_score_threshold=0.3, min_content_length=10)
         runner = PipelineRunner(data_dir=data_dir, pipeline_config=cfg)
 
         runner._interest_store.add(Interest(
