@@ -1,75 +1,55 @@
-# Personal Index Configuration
-# Copy this file to config.yaml and customize for your needs.
-
-# Directory where indexed data is stored
-data_dir: .personal_index
-
-# Crawler settings
 crawler:
+  follow_redirects: true
   max_depth: 5
+  max_pages_per_domain: 100
+  max_redirects: 5
   politeness_delay: 1.0
   rate_limit: 10
   respect_robots_txt: true
   timeout: 30
-  user_agent: "personal-index/0.1.0"
-  max_pages_per_domain: 100
-  follow_redirects: true
-  max_redirects: 5
-
-# Search index settings
-index:
-  enable_stemming: true
-  index_path: .personal_index
-  min_term_length: 2
-  max_index_size: 100000
-  enable_fuzzy_search: true
-  fuzzy_threshold: 0.8
-
-# Pipeline settings
-pipeline:
-  enabled: true
-  steps:
-    - name: crawl
-      enabled: true
-    - name: extract
-      enabled: true
-    - name: filter
-      enabled: true
-    - name: score
-      enabled: true
-    - name: tag
-      enabled: true
-    - name: index
-      enabled: true
-  min_score_threshold: 0.0
-  min_content_length: 100
-
-# Scheduler settings
-scheduler:
-  enabled: false
-  interval_hours: 24
-  max_concurrent_jobs: 3
-  retry_count: 3
-  retry_delay_seconds: 60
-
-# Notification settings
-notifications:
-  enabled: false
-  email: ""
-  webhook_url: ""
-  min_score: 0.5
-  digest_interval_hours: 24
-
-# Export settings
+  user_agent: personal-index/0.1.0
+data_dir: .personal_index
 export:
   default_format: markdown
-  output_dir: exports
   include_scores: true
   include_tags: true
   max_items: 1000
-
-# Tracked interests
+  output_dir: exports
+index:
+  enable_fuzzy_search: true
+  enable_stemming: true
+  fuzzy_threshold: 0.8
+  index_path: .personal_index
+  max_index_size: 100000
+  min_term_length: 2
 interests: []
-
-# Logging
 log_level: INFO
+notifications:
+  digest_interval_hours: 24
+  email: ''
+  enabled: false
+  min_score: 0.5
+  webhook_url: ''
+pipeline:
+  enabled: true
+  min_content_length: 100
+  min_score_threshold: 0.0
+  steps:
+  - enabled: true
+    name: crawl
+  - enabled: true
+    name: extract
+  - enabled: true
+    name: filter
+  - enabled: true
+    name: score
+  - enabled: true
+    name: tag
+  - enabled: true
+    name: index
+scheduler:
+  enabled: false
+  interval_hours: 48
+  max_concurrent_jobs: 3
+  retry_count: 3
+  retry_delay_seconds: 60

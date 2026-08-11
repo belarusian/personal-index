@@ -1,0 +1,14 @@
+crawler:
+  max_depth: 3
+  max_pages: 100
+  politeness_delay: 1.0
+  rate_limit: 10
+  timeout: 30
+data_dir: .personal_index
+pipeline:
+  enabled: true
+  min_content_length: 100
+  min_score_threshold: 0.0
+scheduler:
+  enabled: false
+  interval_hours: 24
