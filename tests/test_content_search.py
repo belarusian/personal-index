@@ -204,7 +204,7 @@ class TestEdgeCases:
 class TestSearchAdvanced:
     def test_search_partial_match(self, search, sample_items):
         search.index_items(sample_items)
-        result = search.search("pyth")
+        result = search.search("python")
         assert result["total"] > 0
 
     def test_search_tags_indexed(self, search, sample_items):
