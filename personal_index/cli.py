@@ -166,11 +166,20 @@ def search(query, limit, as_json, tag, sort):
 @main.command()
 @click.argument("url")
 @click.option("-d", "--depth", default=1, type=int, help="Crawl depth")
-def crawl(url, depth):
+@click.option("--no-index", is_flag=True, help="Crawl without indexing")
+def crawl(url, depth, no_index):
     """Crawl and index a URL."""
-    from personal_index.crawler import Crawler
-    crawler = Crawler()
-    pages = crawler.crawl(url, max_depth=depth)
+    from personal_index.crawler.main import Crawler, CrawlerConfig
+    crawler = Crawler(config=CrawlerConfig(max_depth=depth))
+    pages = crawler.crawl([url], max_depth=depth)
+    if not no_index:
+        from personal_index.index import SearchIndex
+        idx = SearchIndex()
+        for page in pages:
+            try:
+                idx.add_page(page)
+            except Exception:
+                pass
     click.echo(f"Crawled {url} (depth={depth}): {len(pages)} pages")
 
 
