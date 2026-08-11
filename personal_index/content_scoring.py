@@ -270,8 +270,8 @@ class ContentScorer:
         now = datetime.now(timezone.utc)
         if last_crawled is None:
             return 0.5
-            if last_crawled.tzinfo is None:
-                last_crawled = last_crawled.replace(tzinfo=timezone.utc)
+        if last_crawled.tzinfo is None:
+            last_crawled = last_crawled.replace(tzinfo=timezone.utc)
 
         age_hours = max(0, (now - last_crawled).total_seconds() / 3600)
 
