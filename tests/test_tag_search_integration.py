@@ -94,8 +94,6 @@ class TestTagManagement:
         assert tags[0].color == "#ff0000"
 
 
-import pytest
-@pytest.mark.skip(reason="Test isolation issue")
 class TestSearchIntegration:
     """Test search functionality with indexed content."""
 
@@ -232,8 +230,6 @@ class TestSearchIntegration:
         assert result.exit_code == 0
 
 
-import pytest
-@pytest.mark.skip(reason="Test isolation issue")
 class TestSearchIndexOperations:
     """Test SearchIndex CRUD operations."""
 

@@ -177,7 +177,6 @@ class TestScoringPipelineIntegration:
     """Test scoring integration with the full pipeline."""
 
     def test_scorer_in_pipeline(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test that scorer is used correctly in pipeline."""
         from personal_index.pipeline_runner import PipelineRunner
         from personal_index.config.pipeline_config import PipelineConfig
@@ -185,7 +184,7 @@ class TestScoringPipelineIntegration:
 
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(
             name="tech",
@@ -202,7 +201,6 @@ class TestScoringPipelineIntegration:
         assert result is True
 
     def test_score_threshold_filtering(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         """Test that score threshold filters pages correctly."""
         from personal_index.pipeline_runner import PipelineRunner
         from personal_index.config.pipeline_config import PipelineConfig
@@ -211,7 +209,7 @@ class TestScoringPipelineIntegration:
         data_dir = str(tmp_path / "data")
         # Very high threshold
         cfg = PipelineConfig(min_score_threshold=0.9, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(
             name="tech",
