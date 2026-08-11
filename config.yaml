@@ -49,7 +49,7 @@ pipeline:
     name: index
 scheduler:
   enabled: false
-  interval_hours: 12
+  interval_hours: 48
   max_concurrent_jobs: 3
   retry_count: 3
   retry_delay_seconds: 60
