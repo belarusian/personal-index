@@ -179,3 +179,28 @@ class JsonExporter:
         }
         return json.dumps(summary, indent=self.options.indent,
                          sort_keys=self.options.sort_keys)
+
+
+def export_json(results, tag_store=None) -> str:
+    """Export search results as JSON.
+
+    Args:
+        results: List of SearchResult objects.
+        tag_store: Optional TagStore for tag information.
+
+    Returns:
+        JSON formatted string of results.
+    """
+    items = []
+    for result in results:
+        item = {
+            "url": result.url,
+            "title": result.title,
+            "snippet": result.snippet,
+            "relevance_score": result.relevance_score,
+        }
+        if tag_store:
+            tags = tag_store.get_tags_for_page(result.url)
+            item["tags"] = [t.name for t in tags]
+        items.append(item)
+    return json.dumps(items, indent=2, default=str)

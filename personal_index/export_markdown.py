@@ -317,3 +317,36 @@ def save_markdown(data: dict, filepath: str) -> bool:
     except Exception as e:  # noqa: BLE001
         logger.error("Failed to save markdown to %s: %s", filepath, e)
         return False
+
+
+def export_markdown(results, tag_store=None) -> str:
+    """Export search results as markdown.
+
+    Args:
+        results: List of SearchResult objects.
+        tag_store: Optional TagStore for tag information.
+
+    Returns:
+        Markdown formatted string of results.
+    """
+    if not results:
+        return "# No Results\n\nNo content found matching your query."
+
+    lines = ["# Search Results", f"\n*{len(results)} result(s)*", ""]
+
+    for i, result in enumerate(results, 1):
+        lines.append(f"## {i}. {result.title}")
+        lines.append(f"**URL:** {result.url}")
+        if result.relevance_score:
+            lines.append(f"**Score:** {result.relevance_score:.2f}")
+        if result.snippet:
+            lines.append("")
+            lines.append(result.snippet)
+        if tag_store:
+            tags = tag_store.get_tags_for_page(result.url)
+            if tags:
+                tag_names = [t.name for t in tags]
+                lines.append(f"\n**Tags:** {', '.join(tag_names)}")
+        lines.append("")
+
+    return "\n".join(lines)

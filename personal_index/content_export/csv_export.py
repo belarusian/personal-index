@@ -158,3 +158,36 @@ class CsvExporter:
                 if c in all_columns
             ]
         return sorted(all_columns)
+
+
+def export_csv(results, tag_store=None) -> str:
+    """Export search results as CSV.
+
+    Args:
+        results: List of SearchResult objects.
+        tag_store: Optional TagStore for tag information.
+
+    Returns:
+        CSV formatted string of results.
+    """
+    if not results:
+        return "url,title,snippet,relevance_score,tags\n"
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+    writer.writerow(["url", "title", "snippet", "relevance_score", "tags"])
+
+    for result in results:
+        tags = ""
+        if tag_store:
+            tags_list = tag_store.get_tags_for_page(result.url)
+            tags = "; ".join(t.name for t in tags_list)
+        writer.writerow([
+            result.url,
+            result.title,
+            result.snippet,
+            result.relevance_score,
+            tags,
+        ])
+
+    return output.getvalue()
