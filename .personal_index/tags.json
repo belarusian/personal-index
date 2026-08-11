@@ -1127,6 +1127,246 @@
       "color": "#3498db",
       "description": "",
       "created_at": "2026-08-11T13:28:00.593740+00:00"
+    },
+    "pipeline": {
+      "name": "pipeline",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.181607+00:00"
+    },
+    "core": {
+      "name": "core",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.183166+00:00"
+    },
+    "engine": {
+      "name": "engine",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.184523+00:00"
+    },
+    "cli": {
+      "name": "cli",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.185253+00:00"
+    },
+    "reference": {
+      "name": "reference",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.185936+00:00"
+    },
+    "personal-index": {
+      "name": "personal-index",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.186614+00:00"
+    },
+    "provides": {
+      "name": "provides",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.187302+00:00"
+    },
+    "commands": {
+      "name": "commands",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.187994+00:00"
+    },
+    "index": {
+      "name": "index",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.189395+00:00"
+    },
+    "guide": {
+      "name": "guide",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.190747+00:00"
+    },
+    "getting": {
+      "name": "getting",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.191429+00:00"
+    },
+    "architecture": {
+      "name": "architecture",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.193138+00:00"
+    },
+    "web": {
+      "name": "web",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.193928+00:00"
+    },
+    "verbose": {
+      "name": "verbose",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.197675+00:00"
+    },
+    "help": {
+      "name": "help",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.198404+00:00"
+    },
+    "interests": {
+      "name": "interests",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.199132+00:00"
+    },
+    "manage": {
+      "name": "manage",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.199870+00:00"
+    },
+    "tests": {
+      "name": "tests",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.201469+00:00"
+    },
+    "integration": {
+      "name": "integration",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.202214+00:00"
+    },
+    "search": {
+      "name": "search",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.203657+00:00"
+    },
+    "quick": {
+      "name": "quick",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.205908+00:00"
+    },
+    "start": {
+      "name": "start",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.206636+00:00"
+    },
+    "installation": {
+      "name": "installation",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.207363+00:00"
+    },
+    "usage": {
+      "name": "usage",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.209747+00:00"
+    },
+    "description": {
+      "name": "description",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.219059+00:00"
+    },
+    "url": {
+      "name": "url",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.220619+00:00"
+    },
+    "to_dict": {
+      "name": "to_dict",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.221377+00:00"
+    },
+    "args": {
+      "name": "args",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.222144+00:00"
+    },
+    "running": {
+      "name": "running",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.224472+00:00"
+    },
+    "minutes": {
+      "name": "minutes",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.226005+00:00"
+    },
+    "personal_index": {
+      "name": "personal_index",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.227680+00:00"
+    },
+    "classes": {
+      "name": "classes",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.230772+00:00"
+    },
+    "started": {
+      "name": "started",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.232359+00:00"
+    },
+    "configuration": {
+      "name": "configuration",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.244565+00:00"
+    },
+    "config": {
+      "name": "config",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.245360+00:00"
+    },
+    "yaml": {
+      "name": "yaml",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.246144+00:00"
+    },
+    "main": {
+      "name": "main",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.246940+00:00"
+    },
+    "file": {
+      "name": "file",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.247730+00:00"
+    },
+    "complete": {
+      "name": "complete",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.251673+00:00"
+    },
+    "explains": {
+      "name": "explains",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T17:16:09.258845+00:00"
     }
   },
   "page_tags": {
@@ -1134,754 +1374,755 @@
       "important"
     ],
     "https://example.com/page": [
+      "important",
       "important,reference"
     ],
     "https://example.com": [
-      "documentation",
       "examples",
-      "domain",
       "technology",
+      "documentation",
+      "example",
       "use",
-      "example"
+      "domain"
     ],
     "https://iana.org/domains/example": [
       "service",
-      "are",
       "technology",
       "domains",
+      "example",
       "number",
-      "example"
+      "are"
     ],
     "https://iana.org/": [
-      "zone",
       "registry",
+      "zone",
       "protocol",
       "technology",
       "internet",
       "number"
     ],
     "https://iana.org/about": [
-      "iana",
-      "are",
+      "technology",
       "identifiers",
       "registries",
-      "technology",
-      "internet"
+      "internet",
+      "are",
+      "iana"
     ],
     "https://iana.org/domains": [
       "zone",
+      "technology",
+      "key",
       "programming",
+      "rust",
       "domains",
       "domain",
-      "key",
-      "technology",
-      "rust",
       "root"
     ],
     "https://iana.org/domains/root": [
-      "zone",
       "registry",
-      "programming",
-      "domains",
+      "zone",
       "technology",
+      "programming",
       "rust",
-      "root",
-      "top-level"
+      "domains",
+      "top-level",
+      "root"
     ],
     "https://iana.org/domains/root/db": [
-      "llc",
       "country-code",
       "registry",
-      "programming",
-      "generic",
       "technology",
+      "programming",
+      "rust",
       "inc",
-      "rust"
+      "generic",
+      "llc"
     ],
     "https://iana.org/domains/int": [
-      "overview",
+      "int",
       "registry",
-      "programming",
-      "domains",
-      "domain",
       "technology",
+      "programming",
       "rust",
-      "int"
+      "domains",
+      "overview",
+      "domain"
     ],
     "https://iana.org/domains/arpa": [
-      "arpa",
       "registry",
-      "internet",
-      "programming",
-      "domain",
-      "rfc",
       "technology",
-      "rust"
+      "programming",
+      "rust",
+      "internet",
+      "rfc",
+      "arpa",
+      "domain"
     ],
     "https://iana.org/domains/idn-tables": [
-      "limited",
-      "language",
-      "digital",
-      "identity",
       "technology",
-      "2024"
+      "2024",
+      "language",
+      "identity",
+      "limited",
+      "digital"
     ],
     "https://iana.org/numbers": [
-      "ipv6",
-      "are",
-      "addresses",
       "technology",
+      "ipv6",
       "internet",
-      "number"
+      "addresses",
+      "number",
+      "are"
     ],
     "https://iana.org/help/abuse": [
-      "network",
-      "iana",
-      "are",
-      "numbers",
       "technology",
-      "begins"
+      "network",
+      "begins",
+      "numbers",
+      "are",
+      "iana"
     ],
     "https://iana.org/protocols": [
-      "specification",
-      "programming",
-      "review",
-      "expert",
-      "news",
-      "rfc",
-      "technology",
       "required",
-      "rust"
+      "news",
+      "technology",
+      "programming",
+      "specification",
+      "rust",
+      "review",
+      "rfc",
+      "expert"
     ],
     "https://iana.org/protocols/apply": [
-      "registry",
       "registration",
-      "request",
+      "registry",
       "protocol",
       "technology",
+      "request",
       "assignment"
     ],
     "https://iana.org/time-zones": [
       "zone",
+      "news",
+      "technology",
       "data",
       "database",
-      "news",
-      "time",
-      "technology",
-      "zones"
+      "zones",
+      "time"
     ],
     "https://iana.org/numbers/registries": [
-      "address",
+      "technology",
       "ipv6",
-      "ipv4",
       "space",
       "numbers",
-      "technology"
+      "ipv4",
+      "address"
     ],
     "https://iana.org/numbers/allocations": [
-      "ipv6",
-      "utilization",
-      "allocation",
-      "rir",
       "technology",
-      "number"
+      "ipv6",
+      "number",
+      "utilization",
+      "rir",
+      "allocation"
     ],
     "https://iana.org/news": [
       "zone",
-      "iana",
-      "programming",
       "news",
+      "update",
       "technology",
-      "icann",
+      "programming",
       "rust",
-      "root",
-      "update"
+      "icann",
+      "iana",
+      "root"
     ],
     "https://iana.org/performance": [
-      "performance",
-      "2025",
       "technology",
       "2026",
-      "june",
-      "100"
+      "performance",
+      "2025",
+      "100",
+      "june"
     ],
     "https://iana.org/about/organization": [
-      "organization",
-      "performance",
-      "iana",
-      "identifiers",
       "technology",
-      "functions"
+      "functions",
+      "identifiers",
+      "performance",
+      "organization",
+      "iana"
     ],
     "https://iana.org/archive": [
-      "iana",
-      "archive",
-      "reports",
-      "are",
       "technology",
-      "documents"
+      "reports",
+      "archive",
+      "documents",
+      "are",
+      "iana"
     ],
     "https://iana.org/contact": [
       "registry",
-      "iana",
       "technology",
-      "protocols",
       "abuse",
-      "contact"
+      "contact",
+      "protocols",
+      "iana"
     ],
     "https://www.icann.org/privacy/policy": [
-      "personal",
-      "policy",
-      "privacy",
       "news",
       "technology",
       "information",
-      "user"
+      "personal",
+      "privacy",
+      "user",
+      "policy"
     ],
     "https://www.icann.org/privacy/tos": [
-      "service",
-      "platform",
-      "content",
       "news",
-      "terms",
+      "service",
       "technology",
-      "use"
+      "terms",
+      "content",
+      "use",
+      "platform"
     ],
     "https://iana.org/help": [
       "zone",
       "management",
-      "programming",
-      "domain",
       "technology",
+      "programming",
       "rust",
-      "root",
-      "top-level"
+      "top-level",
+      "domain",
+      "root"
     ],
     "https://iana.org/help/root-zone-process": [
       "zone",
-      "processing",
-      "request",
       "news",
       "technology",
+      "processing",
+      "request",
       "technical",
       "root"
     ],
     "https://iana.org/help/nameserver-requirements": [
+      "technology",
+      "programming",
+      "must",
+      "servers",
       "name",
       "globally",
-      "programming",
-      "rfc",
-      "technology",
-      "servers",
       "rust",
-      "must"
+      "rfc"
     ],
     "https://iana.org/help/rdap-requirements": [
+      "rdap",
       "response",
-      "iana",
-      "http",
-      "domain",
       "technology",
-      "rdap"
+      "http",
+      "iana",
+      "domain"
     ],
     "https://iana.org/help/obtaining-consent": [
-      "change",
-      "request",
       "contacts",
       "technology",
       "consent",
-      "domains"
+      "domains",
+      "change",
+      "request"
     ],
     "https://iana.org/help/eligible-tlds": [
+      "technology",
       "iso",
       "standard",
-      "domain",
-      "technology",
+      "top-level",
       "3166",
-      "top-level"
+      "domain"
     ],
     "https://iana.org/help/id-verification": [
       "zone",
-      "account",
-      "programming",
-      "iana",
-      "identity",
       "technology",
+      "programming",
       "rust",
-      "verification"
+      "verification",
+      "identity",
+      "account",
+      "iana"
     ],
     "https://iana.org/help/rzm-api": [
-      "environment",
       "zone",
-      "production",
       "technology",
       "ote",
-      "api"
+      "api",
+      "environment",
+      "production"
     ],
     "https://iana.org/help/rzms-changelog": [
-      "issue",
-      "december",
-      "2017",
-      "version",
       "news",
       "technology",
-      "2025"
+      "december",
+      "2025",
+      "version",
+      "issue",
+      "2017"
     ],
     "https://iana.org/help/gtld-delegation": [
-      "zone",
       "registry",
-      "request",
-      "domain",
+      "zone",
       "news",
       "technology",
-      "delegation"
+      "delegation",
+      "request",
+      "domain"
     ],
     "https://iana.org/help/cctld-delegation": [
+      "technology",
       "programming",
-      "request",
-      "domain",
       "transfer",
       "delegation",
-      "technology",
       "rust",
-      "manager"
+      "manager",
+      "request",
+      "domain"
     ],
     "https://iana.org/help/cctld-delegation-answers": [
       "cctld",
-      "programming",
-      "are",
-      "request",
-      "transfer",
       "technology",
+      "programming",
+      "transfer",
       "rust",
-      "manager"
+      "manager",
+      "request",
+      "are"
     ],
     "https://iana.org/help/operational-plans": [
       "registry",
-      "are",
-      "domain",
       "technology",
       "technical",
-      "proposed"
+      "proposed",
+      "are",
+      "domain"
     ],
     "https://iana.org/help/cctld-revocation": [
       "cctld",
-      "iana",
-      "programming",
-      "revocation",
-      "domain",
       "technology",
+      "programming",
+      "domain",
       "rust",
-      "manager"
+      "manager",
+      "iana",
+      "revocation"
     ],
     "https://iana.org/help/cctld-retirement": [
-      "retirement",
       "cctld",
-      "iana",
       "removal",
-      "domain",
-      "technology"
+      "retirement",
+      "technology",
+      "iana",
+      "domain"
     ],
     "https://iana.org/help/caretaker-operations": [
       "registry",
-      "domain",
       "technology",
       "operations",
       "top-level",
+      "domain",
       "caretaker"
     ],
     "https://iana.org/help/complaint-procedure": [
-      "process",
       "management",
-      "resolution",
       "technology",
+      "resolution",
+      "complaint",
       "information",
-      "complaint"
+      "process"
     ],
     "https://iana.org/help/key-ceremony-attendance": [
-      "ceremony",
-      "external",
-      "programming",
-      "are",
-      "press",
       "technology",
+      "programming",
+      "ceremony",
       "rust",
-      "number"
+      "external",
+      "number",
+      "press",
+      "are"
     ],
     "https://iana.org/help/key-ceremony-roles": [
-      "ceremony",
+      "roles",
+      "technology",
       "programming",
+      "ceremony",
+      "rust",
       "role",
       "are",
-      "technology",
-      "roles",
-      "script",
-      "rust"
+      "script"
     ],
     "https://iana.org/help/key-ceremony-schedule": [
+      "ceremonies",
+      "key",
       "ksk",
+      "technology",
       "ceremony",
       "programming",
-      "ceremonies",
-      "are",
-      "key",
-      "technology",
-      "rust"
+      "rust",
+      "are"
     ],
     "https://iana.org/help/tcr-criteria": [
-      "tcrs",
-      "tcr",
-      "programming",
-      "are",
-      "criteria",
       "technology",
+      "programming",
+      "criteria",
       "rust",
-      "cos"
+      "cos",
+      "are",
+      "tcrs",
+      "tcr"
     ],
     "https://iana.org/help/tcr-application": [
-      "tcrs",
-      "programming",
-      "tcr",
-      "are",
       "community",
-      "key",
       "technology",
-      "rust"
+      "programming",
+      "key",
+      "rust",
+      "are",
+      "tcrs",
+      "tcr"
     ],
     "https://iana.org/help/tcr-roles": [
-      "ceremony",
-      "rksh",
-      "programming",
-      "travel",
-      "key",
-      "technology",
       "roles",
-      "rust"
+      "technology",
+      "key",
+      "programming",
+      "ceremony",
+      "rust",
+      "travel",
+      "rksh"
     ],
     "https://iana.org/help/tcr-travel-support": [
-      "ksk",
-      "support",
-      "ceremony",
-      "programming",
-      "travel",
       "technology",
+      "programming",
+      "ksk",
+      "ceremony",
+      "rust",
       "icann",
-      "rust"
+      "travel",
+      "support"
     ],
     "https://iana.org/help/tcr-changes": [
-      "process",
-      "tcrs",
-      "programming",
       "changes",
-      "time",
       "technology",
+      "programming",
       "rust",
-      "new"
+      "new",
+      "time",
+      "process",
+      "tcrs"
     ],
     "https://iana.org/help/kmf-rules": [
-      "ceremony",
-      "management",
       "facility",
-      "are",
+      "management",
+      "technology",
       "key",
-      "technology"
+      "ceremony",
+      "are"
     ],
     "https://iana.org/help/kmf-east": [
+      "registry",
       "zone",
       "management",
-      "registry",
-      "programming",
-      "key",
       "technology",
+      "key",
+      "programming",
       "rust",
       "root"
     ],
     "https://iana.org/help/kmf-west": [
-      "hotel",
-      "zone",
       "registry",
-      "programming",
+      "zone",
+      "hotel",
       "key",
       "technology",
+      "programming",
       "rust",
       "root"
     ],
     "https://iana.org/help/int-eligibility": [
-      "organization",
-      "domain",
+      "int",
       "technology",
-      "treaty",
       "must",
-      "int"
+      "organization",
+      "treaty",
+      "domain"
     ],
     "https://iana.org/help/idn-repository-procedure": [
-      "language",
-      "are",
       "news",
       "technology",
-      "script",
       "contact",
-      "lgr"
+      "language",
+      "lgr",
+      "are",
+      "script"
     ],
     "https://iana.org/help/protocol-registration": [
-      "group",
       "registry",
-      "iana",
+      "news",
+      "group",
+      "technology",
       "registrations",
       "document",
-      "news",
-      "technology"
+      "iana"
     ],
     "https://iana.org/help/licensing-terms": [
-      "programming",
-      "iana",
-      "are",
       "protocol",
-      "registries",
       "technology",
-      "ietf",
-      "rust"
+      "programming",
+      "registries",
+      "rust",
+      "are",
+      "iana",
+      "ietf"
     ],
     "https://iana.org/help/inr-request-procedure": [
+      "allocations",
+      "technology",
+      "numbers",
       "address",
       "iana",
-      "rir",
-      "numbers",
-      "technology",
-      "allocations"
+      "rir"
     ],
     "https://iana.org/help/updating-legacy-ipv4-space": [
-      "ipv4",
       "registry",
-      "rir",
-      "legacy",
       "technology",
-      "class"
+      "ipv4",
+      "class",
+      "legacy",
+      "rir"
     ],
     "https://iana.org/help/example-domains": [
       "service",
-      "are",
       "technology",
       "domains",
+      "example",
       "number",
-      "example"
+      "are"
     ],
     "https://iana.org/help/whois": [
-      "server",
       "registry",
-      "whois",
-      "org",
+      "allocations",
       "technology",
-      "allocations"
+      "org",
+      "whois",
+      "server"
     ],
     "https://iana.org/help/abuse-answers": [
-      "address",
-      "are",
-      "255",
-      "addresses",
       "technology",
-      "internet"
+      "internet",
+      "addresses",
+      "address",
+      "255",
+      "are"
     ],
     "https://iana.org/help/dns-blackhole": [
-      "queries",
-      "are",
-      "dns",
       "technology",
       "servers",
-      "blackhole"
+      "queries",
+      "are",
+      "blackhole",
+      "dns"
     ],
     "https://iana.org/help/rzms-answers": [
-      "password",
-      "account",
-      "iana",
-      "are",
       "technology",
-      "their"
+      "password",
+      "their",
+      "account",
+      "are",
+      "iana"
     ],
     "https://iana.org/help/pti-transition": [
-      "2016",
-      "iana",
       "technology",
-      "pti",
+      "functions",
       "icann",
-      "functions"
+      "2016",
+      "pti",
+      "iana"
     ],
     "https://iana.org/help/rzm-system": [
       "zone",
-      "requests",
       "technology",
-      "root",
+      "requests",
+      "system",
       "top-level",
-      "system"
+      "root"
     ],
     "https://iana.org/help/test-tld-procedure": [
       "zone",
+      "technology",
+      "idn",
       "iana",
       "procedure",
-      "idn",
-      "technology",
       "root"
     ],
     "https://iana.org/domains/reserved": [
-      "overview",
       "registry",
-      "programming",
-      "are",
-      "domains",
-      "domain",
       "news",
       "technology",
-      "rust"
+      "programming",
+      "rust",
+      "domains",
+      "overview",
+      "are",
+      "domain"
     ],
     "http://www.icann.org/topics/idn": [
-      "name",
-      "programming",
-      "policy",
-      "domain",
       "news",
-      "idn",
-      "icann",
       "technology",
-      "rust"
+      "programming",
+      "idn",
+      "rust",
+      "icann",
+      "name",
+      "domain",
+      "policy"
     ],
     "http://www.icann.org/": [
-      "policy",
-      "learn",
       "technology",
+      "learn",
       "2026",
       "icann",
-      "public"
+      "public",
+      "policy"
     ],
     "http://www.icann.org/en/registries/agreements.htm": [
-      "limited",
-      "llc",
-      "ltd",
       "registry",
-      "programming",
       "technology",
+      "programming",
+      "rust",
+      "ltd",
+      "limited",
       "inc",
-      "rust"
+      "llc"
     ],
     "https://iana.org/assignments/special-use-domain-names": [
       "rfc6761",
-      "arpa",
-      "in-addr",
-      "172",
       "technology",
-      "rfc6762"
+      "172",
+      "arpa",
+      "rfc6762",
+      "in-addr"
     ],
     "https://iana.org/domains/root/files": [
+      "registry",
+      "zone",
+      "technology",
+      "programming",
+      "rust",
       "overview",
       "files",
-      "zone",
-      "registry",
-      "programming",
-      "technology",
-      "rust",
       "root"
     ],
     "https://iana.org/domains/root/manage": [
-      "overview",
-      "zone",
       "registry",
-      "programming",
-      "domain",
+      "zone",
       "technology",
+      "programming",
       "rust",
+      "overview",
+      "domain",
       "root"
     ],
     "https://iana.org/domains/root/help": [
-      "overview",
       "zone",
-      "programming",
-      "domain",
       "technology",
+      "programming",
       "rust",
-      "root",
-      "top-level"
+      "overview",
+      "top-level",
+      "domain",
+      "root"
     ],
     "https://iana.org/domains/int/manage": [
+      "int",
+      "registry",
+      "technology",
+      "programming",
+      "rust",
       "name",
       "overview",
-      "registry",
-      "programming",
-      "domain",
-      "technology",
-      "rust",
-      "int"
+      "domain"
     ],
     "https://iana.org/domains/int/policy": [
-      "organization",
-      "programming",
-      "domain",
+      "int",
       "technology",
-      "treaty",
-      "rust",
+      "programming",
       "must",
-      "int"
+      "rust",
+      "organization",
+      "treaty",
+      "domain"
     ],
     "https://iana.org/dnssec": [
       "zone",
+      "dnssec",
+      "technology",
+      "key",
       "signing",
       "programming",
-      "key",
-      "technology",
       "rust",
-      "root",
-      "dnssec"
+      "root"
     ],
     "https://iana.org/dnssec/files": [
       "zone",
-      "trust",
-      "programming",
-      "anchors",
-      "key",
       "news",
       "technology",
+      "key",
+      "programming",
+      "anchors",
+      "trust",
       "rust",
       "root"
     ],
     "https://iana.org/dnssec/ceremonies": [
-      "ksk",
-      "ceremony",
-      "programming",
-      "sign",
-      "zsks",
       "technology",
+      "sign",
+      "ksk",
+      "programming",
+      "ceremony",
+      "zsks",
       "rust",
       "replace"
     ],
     "https://iana.org/dnssec/procedures": [
-      "rust",
-      "ksk",
-      "effective",
-      "programming",
       "describes",
-      "2025",
       "technology",
-      "operations"
+      "programming",
+      "ksk",
+      "operations",
+      "2025",
+      "rust",
+      "effective"
     ],
     "https://iana.org/dnssec/tcrs": [
-      "cryptographic",
-      "programming",
-      "officer",
-      "2010",
-      "key",
       "technology",
+      "key",
+      "programming",
+      "rust",
+      "officer",
       "slot",
-      "rust"
+      "cryptographic",
+      "2010"
     ],
     "https://www.icann.org/": [
-      "policy",
-      "learn",
       "technology",
+      "learn",
       "2026",
       "icann",
-      "public"
+      "public",
+      "policy"
     ],
     "/var/folders/3c/km3f3yvx23nbm9dnm010n_9c0000gn/T/tmpgwijzbo1.txt": [
-      "python",
-      "programming"
+      "programming",
+      "python"
     ],
     "/path/to/file.txt": [
       "important"
@@ -1897,8 +2138,8 @@
       "technology"
     ],
     "docs/API_OLD.md": [
-      "programming",
-      "technology"
+      "technology",
+      "programming"
     ],
     "docs/GETTING_STARTED.md": [
       "programming"
@@ -1911,6 +2152,147 @@
     ],
     "docs/PIPELINE_ARCHITECTURE.md": [
       "technology"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/pipeline.md": [
+      "pipeline",
+      "engine",
+      "overview",
+      "processing",
+      "core"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/CLI_REFERENCE.md": [
+      "provides",
+      "reference",
+      "cli",
+      "commands",
+      "personal-index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/USER_GUIDE.md": [
+      "guide",
+      "personal",
+      "getting",
+      "user",
+      "index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/ARCHITECTURE.md": [
+      "architecture",
+      "overview",
+      "personal",
+      "personal-index",
+      "web"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/API.md": [
+      "help",
+      "technology",
+      "interests",
+      "verbose",
+      "manage",
+      "personal-index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/CHANGELOG.md": [
+      "integration",
+      "news",
+      "tests",
+      "pipeline",
+      "content",
+      "search"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/USAGE_GUIDE.md": [
+      "installation",
+      "examples",
+      "start",
+      "guide",
+      "quick"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/USAGE.md": [
+      "start",
+      "guide",
+      "usage",
+      "personal-index",
+      "quick"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/API_OLD.md": [
+      "args",
+      "technology",
+      "programming",
+      "description",
+      "content",
+      "python",
+      "url",
+      "to_dict"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/QUICKSTART.md": [
+      "start",
+      "minutes",
+      "running",
+      "personal-index",
+      "quick"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/MODULES.md": [
+      "technology",
+      "key",
+      "pipeline",
+      "classes",
+      "search",
+      "personal_index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/getting-started.md": [
+      "installation",
+      "getting",
+      "started"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/README.md": [
+      "documentation",
+      "personal",
+      "search",
+      "index",
+      "web"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/GETTING_STARTED.md": [
+      "programming",
+      "guide",
+      "started",
+      "python",
+      "getting",
+      "personal-index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/configuration.md": [
+      "technology",
+      "config",
+      "configuration",
+      "file",
+      "main",
+      "yaml"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/cli-reference.md": [
+      "reference",
+      "cli",
+      "complete",
+      "personal",
+      "index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/CLI_PIPELINE.md": [
+      "complete",
+      "cli",
+      "pipeline",
+      "personal",
+      "index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/INTEGRATION_GUIDE.md": [
+      "integration",
+      "technology",
+      "guide",
+      "explains",
+      "use",
+      "personal-index"
+    ],
+    "file:///Users/av4nda/Research/autonomous-project/docs/PIPELINE_ARCHITECTURE.md": [
+      "technology",
+      "architecture",
+      "pipeline",
+      "explains",
+      "content",
+      "document"
     ]
   }
 }
