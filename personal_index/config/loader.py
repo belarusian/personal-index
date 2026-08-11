@@ -72,7 +72,7 @@ def load_config(path: str) -> AppConfig:
         if isinstance(item, dict):
             interests.append(_parse_interest(item))
 
-    # Parse crawler config
+    # Parse crawler config (support both 'crawler' and 'crawl')
     crawler_data = data.get("crawler", data.get("crawl", {}))
     from personal_index.config.models import CrawlerConfig
     crawler = CrawlerConfig(**crawler_data) if crawler_data else CrawlerConfig()
