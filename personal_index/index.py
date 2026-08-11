@@ -175,15 +175,21 @@ class SearchIndex:
         return search_results
 
     def _create_snippet(self, content: str, query: str, length: int = 150) -> str:
-        """Create a snippet highlighting the query."""
+        """Create a snippet highlighting the query terms."""
         if not content:
             return ""
-        query_lower = query.lower()
-        idx = content.lower().find(query_lower)
-        if idx == -1:
+        # Try to find each query token and create best snippet
+        query_tokens = self._tokenize(query)
+        best_idx = -1
+        for token in query_tokens:
+            idx = content.lower().find(token)
+            if idx != -1:
+                best_idx = idx
+                break
+        if best_idx == -1:
             return content[:length] + ("..." if len(content) > length else "")
-        start = max(0, idx - 50)
-        end = min(len(content), idx + len(query) + length)
+        start = max(0, best_idx - 50)
+        end = min(len(content), best_idx + length)
         snippet = content[start:end]
         if start > 0:
             snippet = "..." + snippet
