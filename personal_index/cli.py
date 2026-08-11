@@ -364,64 +364,6 @@ def tags_remove(ctx, tag_name, url, data_dir):
     click.echo(f"Removed tag '{tag_name}' from {url}")
 
 
-@main.command("import")
-@click.argument("source")
-@click.option("--recursive", "-r", is_flag=True, help="Recursively import directories")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def import_(ctx, source, recursive, data_dir):
-    """Import local files into the index.
-
-    Imports text files, markdown files, and HTML files into the
-    search index. Supports recursive directory import.
-
-    Examples:
-        personal-index import ./article.txt
-        personal-index import ./docs/ --recursive
-    """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    os.makedirs(dd, exist_ok=True)
-
-    from personal_index.config.pipeline_config import PipelineConfig
-    from personal_index.pipeline_runner import PipelineRunner
-
-    config = PipelineConfig(
-        min_score_threshold=0.0,
-        min_content_length=10,
-    )
-
-    runner = PipelineRunner(
-        data_dir=dd,
-        pipeline_config=config,
-    )
-
-    files = []
-    if os.path.isdir(source):
-        for root, dirs, filenames in os.walk(source):
-            for fn in filenames:
-                fp = os.path.join(root, fn)
-                ext = os.path.splitext(fn)[1].lower()
-                if ext in ('.txt', '.md', '.rst', '.html', '.htm', '.json', '.xml'):
-                    files.append(fp)
-    elif os.path.isfile(source):
-        files.append(source)
-    else:
-        click.echo(f"Source not found: {source}", err=True)
-        sys.exit(1)
-
-    if not files:
-        click.echo("No importable files found.")
-        return
-
-    stats = runner.run_from_files(files)
-    click.echo(f"\nImport complete: {len(files)} file(s) processed")
-    click.echo(f"  Indexed: {stats.pages_indexed}")
-    click.echo(f"  Filtered out: {stats.pages_filtered_out}")
-    click.echo(f"  Errors: {len(stats.errors)}")
-
-    runner.close()
-
-
 @main.command()
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
@@ -816,6 +758,7 @@ from personal_index.cli_verify import verify
 from personal_index.cli_watch import watch
 from personal_index.cli_interests import interests as interests_cmd
 from personal_index.cli_tags import tags as tags_cmd
+from personal_index.cli_import import import_cmd
 
 main.add_command(pipeline)
 main.add_command(run_pipeline)
@@ -823,6 +766,7 @@ main.add_command(verify)
 main.add_command(watch)
 main.add_command(interests_cmd)
 main.add_command(tags_cmd)
+main.add_command(import_cmd)
 
 # Doctor command
 @main.command()
