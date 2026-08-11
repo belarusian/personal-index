@@ -438,3 +438,34 @@ class AppConfig:
     def crawler(self, value: CrawlConfig):
         """Alias for crawl setter."""
         self.crawl = value
+
+
+@dataclass
+class PipelineStats:
+    """Statistics from a pipeline run."""
+    pages_crawled: int = 0
+    pages_extracted: int = 0
+    pages_passed_filter: int = 0
+    pages_filtered_out: int = 0
+    pages_scored: int = 0
+    pages_tagged: int = 0
+    pages_indexed: int = 0
+    tags_applied: int = 0
+    errors: list = field(default_factory=list)
+    elapsed_seconds: float = 0.0
+
+    def summary(self) -> str:
+        """Return a human-readable summary."""
+        parts = [
+            f"crawled={self.pages_crawled}",
+            f"extracted={self.pages_extracted}",
+            f"filtered_in={self.pages_passed_filter}",
+            f"filtered_out={self.pages_filtered_out}",
+            f"scored={self.pages_scored}",
+            f"tagged={self.pages_tagged}",
+            f"indexed={self.pages_indexed}",
+            f"tags={self.tags_applied}",
+            f"errors={len(self.errors)}",
+            f"time={self.elapsed_seconds:.1f}s",
+        ]
+        return ", ".join(parts)

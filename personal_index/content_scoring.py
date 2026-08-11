@@ -10,6 +10,7 @@ import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+import re
 from typing import Any
 
 
@@ -292,6 +293,42 @@ class ContentScorer:
         # Score decreases as we exceed expected update interval
         ratio = age_hours / expected
         return round(max(0.0, min(1.0, 1.0 - ratio * 0.5)), 4)
+
+    def score_page(
+        self,
+        page: Any,
+        interest_store: Any = None,
+    ) -> ContentScore:
+        """Score a CrawledPage using interest matching."""
+        content = getattr(page, "content", "") or ""
+        word_count = getattr(page, "word_count", 0) or len(content.split())
+        keyword_matches = 0
+        total_keywords = 0
+        if interest_store:
+            for interest in interest_store.list_all():
+                for kw in getattr(interest, "keywords", []):
+                    total_keywords += 1
+                    if isinstance(kw, str) and kw.lower() in content.lower():
+                        keyword_matches += 1
+                for topic in getattr(interest, "topics", []):
+                    total_keywords += 1
+                    if topic.lower() in content.lower():
+                        keyword_matches += 1
+                if getattr(interest, "value", ""):
+                    total_keywords += 1
+                    if interest.value.lower() in content.lower():
+                        keyword_matches += 1
+        has_code = bool(re.search(r"<code>|\`\`\`|def |class |import ", content))
+        has_images = bool(re.search(r"<img|\.png|\.jpg|\.gif", content))
+        return self.score(
+            keyword_matches=keyword_matches,
+            total_keywords=max(total_keywords, 1),
+            word_count=word_count,
+            has_images=has_images,
+            has_code=has_code,
+            domain_authority=getattr(page, "domain_authority", 0.5),
+            last_crawled=getattr(page, "crawled_at", None),
+        )
 
     def rank(
         self,

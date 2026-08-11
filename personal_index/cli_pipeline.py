@@ -1,130 +1,142 @@
-"""CLI pipeline command for personal-index."""
+"""CLI pipeline command for personal-index.
+
+Provides the 'personal-index pipeline' command that runs the full
+crawl → extract → filter → score → tag → index pipeline.
+"""
 
 from __future__ import annotations
 
-import logging
+import os
 import sys
 import time
 
 import click
 
-from personal_index.config.pipeline_config import PipelineStepConfig, load_pipeline_config
-from personal_index.pipeline_runner import PipelineRunner
+from personal_index.index import SearchIndex
+from personal_index.interests import InterestStore
+from personal_index.models import CrawledPage
+from personal_index.pipeline import Pipeline, PipelineConfig
+from personal_index.tags import TagStore
 
 
-@click.command()
+@click.command("pipeline")
 @click.argument("urls", nargs=-1, required=False)
-@click.option("-d", "--depth", default=3, type=int, help="Crawl depth")
-@click.option("--config", default="config.yaml", help="Config file path")
-@click.option("--data-dir", default=".personal_index", help="Data directory")
-@click.option("--dry-run", is_flag=True, help="Show what would be done without running")
-@click.option("-v", "--verbose", is_flag=True, help="Enable verbose logging")
-@click.option("-o", "--output", default=None, help="Save pipeline stats to file")
-@click.option("-q", "--quiet", is_flag=True, help="Minimal output, only show errors")
-@click.option("--no-crawl", is_flag=True, help="Skip crawling, only process existing data")
-@click.option("--step", type=click.Choice(["crawl", "extract", "filter", "score", "tag", "index"]),
-              multiple=True, help="Run only specific pipeline steps")
-@click.option("--min-score", type=float, default=None, help="Override minimum score threshold")
-@click.option("--min-length", type=int, default=None, help="Override minimum content length")
-def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_crawl, step, min_score, min_length):
+@click.option("--data-dir", default=None, help="Data directory")
+@click.option("--depth", "-d", default=3, type=int, help="Max crawl depth")
+@click.option("--max-pages", "-m", default=100, type=int, help="Maximum pages to crawl")
+@click.option("--timeout", "-t", default=30, type=int, help="Request timeout in seconds")
+@click.option("--delay", default=1.0, type=float, help="Delay between requests")
+@click.option("--min-score", default=0.0, type=float, help="Minimum relevance score threshold")
+@click.option("--min-content-length", default=100, type=int, help="Minimum content length")
+@click.option("--steps", default=None, help="Comma-separated list of steps to run")
+@click.option("--skip-crawl", is_flag=True, help="Skip crawl step (use with --import)")
+@click.option("--import-file", "import_files", multiple=True, help="Import local files instead of crawling")
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
+@click.pass_context
+def pipeline(ctx, urls, data_dir, depth, max_pages, timeout, delay,
+             min_score, min_content_length, steps, skip_crawl, import_files, verbose):
     """Run the full pipeline: crawl → extract → filter → score → tag → index.
 
-    URLs are the seed URLs to start crawling from. If no URLs are provided,
-    the pipeline processes existing indexed content.
+    Processes URLs through the complete pipeline, optionally importing local files.
 
     Examples:
         personal-index pipeline https://example.com
-        personal-index pipeline https://example.com -d 2
-        personal-index pipeline --no-crawl  # re-process existing data
-        personal-index pipeline https://example.com --step filter --step score
+        personal-index pipeline https://example.com https://blog.example.com
+        personal-index pipeline --import-file ./docs/readme.md --import-file ./notes.txt
+        personal-index pipeline https://example.com --steps extract,filter,score,index
         personal-index pipeline https://example.com --min-score 0.5
     """
-    if verbose:
-        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
 
-    pipeline_cfg = load_pipeline_config(config)
+    # Build pipeline config
+    enabled_steps = None
+    if steps:
+        enabled_steps = [s.strip() for s in steps.split(",")]
+    elif skip_crawl:
+        enabled_steps = ["extract", "filter", "score", "tag", "index"]
 
-    # Apply overrides
-    if min_score is not None:
-        pipeline_cfg.min_score_threshold = min_score
-    if min_length is not None:
-        pipeline_cfg.min_content_length = min_length
-
-    # Override steps if --step is provided
-    if step:
-        all_steps = ["crawl", "extract", "filter", "score", "tag", "index"]
-        pipeline_cfg.steps = []
-        for s in all_steps:
-            enabled = s in step
-            pipeline_cfg.steps.append(PipelineStepConfig(name=s, enabled=enabled))
-
-    if no_crawl:
-        all_steps = ["crawl", "extract", "filter", "score", "tag", "index"]
-        pipeline_cfg.steps = []
-        for s in all_steps:
-            pipeline_cfg.steps.append(PipelineStepConfig(name=s, enabled=(s != "crawl")))
-
-    if dry_run:
-        click.echo("Dry run mode - pipeline configuration:")
-        click.echo(f"  Config: {config}")
-        click.echo(f"  Data dir: {data_dir}")
-        if urls:
-            click.echo(f"  Seed URLs: {', '.join(urls)}")
-        else:
-            click.echo("  Seed URLs: (none, using existing data)")
-        click.echo(f"  Max depth: {depth}")
-        click.echo(f"  Pipeline enabled: {pipeline_cfg.enabled}")
-        click.echo(f"  Steps: {pipeline_cfg.get_enabled_steps()}")
-        click.echo(f"  Min score threshold: {pipeline_cfg.min_score_threshold}")
-        click.echo(f"  Min content length: {pipeline_cfg.min_content_length}")
-        return
-
-    if not quiet:
-        click.echo(f"Running pipeline on {len(urls)} seed URL(s)...")
-        if urls:
-            click.echo(f"  URLs: {', '.join(urls)}")
-        click.echo(f"  Depth: {depth}")
-        click.echo(f"  Data dir: {data_dir}")
-        click.echo()
-
-    runner = PipelineRunner(
-        config=pipeline_cfg,
-        data_dir=data_dir,
+    config = PipelineConfig(
+        max_depth=depth,
+        max_pages=max_pages,
+        timeout=timeout,
+        politeness_delay=delay,
+        min_score_threshold=min_score,
+        min_content_length=min_content_length,
     )
+    if enabled_steps:
+        config.enabled_steps = enabled_steps
 
-    if not quiet:
-        click.echo("Pipeline steps:")
-        steps = ["crawl", "extract", "filter", "score", "tag", "index"]
-        for s in steps:
-            enabled = pipeline_cfg.is_step_enabled(s)
-            status = "✓" if enabled else "○"
-            click.echo(f"  [{status}] {s}")
-        click.echo()
+    # Initialize pipeline
+    pipe = Pipeline(data_dir=dd, config=config)
 
-    seed_urls = list(urls) if urls else []
+    click.echo(f"Running pipeline in {dd}")
+    click.echo(f"Steps: {', '.join(config.enabled_steps)}")
+
+    # Progress callback
+    last_step = ""
+    last_pct = 0
+
+    def progress_callback(step: str, current: int, total: int):
+        nonlocal last_step, last_pct
+        pct = int(current / max(total, 1) * 100)
+        if step != last_step or pct - last_pct >= 10:
+            click.echo(f"  [{step}] {current}/{total} ({pct}%)")
+            last_step = step
+            last_pct = pct
 
     start_time = time.time()
-    stats = runner.run(seed_urls, max_depth=depth)
-    elapsed = time.time() - start_time
 
-    if not quiet:
-        click.echo()
-        click.echo(stats.summary())
-
-        if stats.pages_indexed > 0:
-            click.echo()
-            click.echo("Next steps:")
-            click.echo("  Search: personal-index search 'your query'")
-            click.echo("  Export: personal-index export --format markdown")
-            click.echo("  Status: personal-index status")
-
-    if output:
-        with open(output, "w") as f:
-            f.write(stats.summary())
-        click.echo(f"\nStats saved to {output}")
-
-    if stats.errors:
-        click.echo("\nErrors encountered:")
-        for err in stats.errors:
-            click.echo(f"  - {err}")
+    if import_files:
+        # Import local files
+        click.echo(f"Importing {len(import_files)} local file(s)...")
+        imported = 0
+        for filepath in import_files:
+            if not os.path.exists(filepath):
+                click.echo(f"  Warning: {filepath} not found, skipping", err=True)
+                continue
+            try:
+                with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+                page = CrawledPage(
+                    url=f"file://{os.path.abspath(filepath)}",
+                    title=os.path.basename(filepath),
+                    content=content,
+                    status_code=200,
+                )
+                if pipe.add_page_directly(page):
+                    imported += 1
+                    click.echo(f"  Imported: {filepath}")
+                else:
+                    click.echo(f"  Filtered out: {filepath}")
+            except Exception as e:
+                click.echo(f"  Error importing {filepath}: {e}", err=True)
+        click.echo(f"Imported {imported}/{len(import_files)} files")
+    elif urls:
+        # Run crawl pipeline
+        click.echo(f"Crawling {len(urls)} seed URL(s)...")
+        stats = pipe.run(list(urls), callback=progress_callback)
+        click.echo(f"\nPipeline complete in {stats.elapsed_seconds:.1f}s:")
+        click.echo(f"  Crawled:      {stats.pages_crawled}")
+        click.echo(f"  Extracted:    {stats.pages_extracted}")
+        click.echo(f"  Passed filter:{stats.pages_passed_filter}")
+        click.echo(f"  Scored:       {stats.pages_scored}")
+        click.echo(f"  Tagged:       {stats.pages_tagged}")
+        click.echo(f"  Indexed:      {stats.pages_indexed}")
+        if stats.errors:
+            click.echo(f"  Errors:       {len(stats.errors)}")
+            for err in stats.errors[:5]:
+                click.echo(f"    - {err}")
+    else:
+        click.echo("No URLs or files specified.")
+        click.echo("Usage:")
+        click.echo("  personal-index pipeline https://example.com")
+        click.echo("  personal-index pipeline --import-file ./file.txt")
         sys.exit(1)
+
+    # Show final stats
+    final_stats = pipe.get_stats()
+    click.echo(f"\nIndex stats:")
+    click.echo(f"  Total indexed pages: {final_stats['indexed_pages']}")
+    click.echo(f"  Total interests:     {final_stats['total_interests']}")
+    click.echo(f"  Total tags:          {final_stats['total_tags']}")
+    click.echo(f"  Tagged pages:        {final_stats['tagged_pages']}")
