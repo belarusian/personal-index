@@ -28,6 +28,7 @@ from personal_index.cli_list import list_pages as list_cmd
 from personal_index.cli_remove import remove_page as remove_cmd
 from personal_index.cli_clear import clear as clear_cmd
 from personal_index.cli_top import top_pages as top_cmd
+from personal_index.cli_doctor import doctor as doctor_cmd
 
 
 def get_search_index(data_dir: str) -> SearchIndex:
@@ -1046,3 +1047,5 @@ main.add_command(remove_cmd)
 main.add_command(clear_cmd)
 
 main.add_command(top_cmd)
+
+main.add_command(doctor_cmd)
