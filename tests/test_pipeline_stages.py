@@ -27,7 +27,7 @@ class TestExtractStage:
         runner = PipelineRunner(data_dir=str(tmp_path / "data"))
         file = tmp_path / "article.txt"
         file.write_text("Python is a great programming language.")
-        page = runner._read_file_as_page(str(file))
+        page = runner._read_file(str(file))
         assert page is not None
         assert "python" in page.content.lower()
         runner.close()
@@ -40,7 +40,7 @@ class TestExtractStage:
             "<html><head><title>Test Page</title></head>"
             "<body><h1>Hello World</h1><p>Some content here.</p></body></html>"
         )
-        page = runner._read_file_as_page(str(file))
+        page = runner._read_file(str(file))
         assert page is not None
         assert "hello world" in page.title.lower() or "hello world" in page.content.lower()
         runner.close()
@@ -50,7 +50,7 @@ class TestExtractStage:
         runner = PipelineRunner(data_dir=str(tmp_path / "data"))
         file = tmp_path / "readme.md"
         file.write_text("# Python Tutorial\n\nThis is a guide about Python programming.")
-        page = runner._read_file_as_page(str(file))
+        page = runner._read_file(str(file))
         assert page is not None
         assert "python" in page.content.lower() or "python" in page.title.lower()
         runner.close()
@@ -60,9 +60,9 @@ class TestExtractStage:
         runner = PipelineRunner(data_dir=str(tmp_path / "data"))
         file = tmp_path / "empty.txt"
         file.write_text("")
-        page = runner._read_file_as_page(str(file))
-        # Empty file should produce a page with empty content
-        assert page is not None
+        page = runner._read_file(str(file))
+        # Empty file returns None
+        assert page is None
         runner.close()
 
     def test_extract_binary_file(self, tmp_path):
@@ -70,7 +70,7 @@ class TestExtractStage:
         runner = PipelineRunner(data_dir=str(tmp_path / "data"))
         file = tmp_path / "image.bin"
         file.write_bytes(bytes(range(256)) * 100)
-        page = runner._read_file_as_page(str(file))
+        page = runner._read_file(str(file))
         # Should not crash
         assert page is not None
         runner.close()
@@ -219,7 +219,7 @@ class TestTagStage:
             content="Python web development tutorial.",
         )
 
-        tags = runner._auto_tag_page(page)
+        tags, _ = runner._auto_tag_page(page)
         assert len(tags) >= 1
         runner.close()
 
@@ -237,7 +237,7 @@ class TestTagStage:
             content="How to make pasta.",
         )
 
-        tags = runner._auto_tag_page(page)
+        tags, _ = runner._auto_tag_page(page)
         # May still get some tags from keywords
         assert isinstance(tags, list)
         runner.close()

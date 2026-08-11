@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
-from personal_index.content_scoring import ContentScorer, ScoreWeights
+from personal_index.content_scoring import ContentScore, ContentScorer, ScoreWeights
 from personal_index.crawler.main import Crawler, CrawlerConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
@@ -144,11 +144,11 @@ class PipelineRunner:
             crawled_pages = []
             for i, url in enumerate(seed_urls):
                 try:
-                    pages = self._crawler.crawl(url, max_depth=max_depth)
+                    pages = self._crawler.crawl([url], max_depth=max_depth)
                     crawled_pages.extend(pages)
                     stats.pages_crawled += len(pages)
                     self._emit_progress("crawl", i + 1, len(seed_urls))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Crawl error for {url}: {e}")
                     logger.error("Crawl error for %s: %s", url, e)
 
@@ -164,7 +164,7 @@ class PipelineRunner:
                     if page.content:
                         extracted_pages.append(page)
                     self._emit_progress("extract", i + 1, len(crawled_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Extract error for {page.url}: {e}")
 
             # Stage 3: Filter
@@ -179,7 +179,7 @@ class PipelineRunner:
                     else:
                         stats.pages_filtered_out += 1
                     self._emit_progress("filter", i + 1, len(extracted_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Filter error for {page.url}: {e}")
 
             # Stage 4: Score
@@ -193,7 +193,7 @@ class PipelineRunner:
                     scored_pages.append(page)
                     stats.pages_scored += 1
                     self._emit_progress("score", i + 1, len(filtered_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Score error for {page.url}: {e}")
 
             # Stage 5: Tag
@@ -208,7 +208,7 @@ class PipelineRunner:
                     tagged_pages.append(page)
                     stats.pages_tagged += 1
                     self._emit_progress("tag", i + 1, len(scored_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Tag error for {page.url}: {e}")
 
             # Stage 6: Index
@@ -223,7 +223,7 @@ class PipelineRunner:
                     self._search_index.add_page(page)
                     stats.pages_indexed += 1
                     self._emit_progress("index", i + 1, len(tagged_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Index error for {page.url}: {e}")
 
         finally:
@@ -262,7 +262,7 @@ class PipelineRunner:
                         else:
                             stats.errors.append(f"Empty or unreadable file: {filepath}")
                     self._emit_progress("crawl", i + 1, len(file_paths))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Read error for {filepath}: {e}")
 
             # Stage 2: Extract
@@ -277,7 +277,7 @@ class PipelineRunner:
                     if page.content:
                         extracted_pages.append(page)
                     self._emit_progress("extract", i + 1, len(crawled_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Extract error for {page.url}: {e}")
 
             # Stage 3: Filter
@@ -292,7 +292,7 @@ class PipelineRunner:
                     else:
                         stats.pages_filtered_out += 1
                     self._emit_progress("filter", i + 1, len(extracted_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Filter error for {page.url}: {e}")
 
             # Stage 4: Score
@@ -306,7 +306,7 @@ class PipelineRunner:
                     scored_pages.append(page)
                     stats.pages_scored += 1
                     self._emit_progress("score", i + 1, len(filtered_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Score error for {page.url}: {e}")
 
             # Stage 5: Tag
@@ -321,7 +321,7 @@ class PipelineRunner:
                     tagged_pages.append(page)
                     stats.pages_tagged += 1
                     self._emit_progress("tag", i + 1, len(scored_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Tag error for {page.url}: {e}")
 
             # Stage 6: Index
@@ -336,7 +336,7 @@ class PipelineRunner:
                     self._search_index.add_page(page)
                     stats.pages_indexed += 1
                     self._emit_progress("index", i + 1, len(tagged_pages))
-                except Exception as e:
+                except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Index error for {page.url}: {e}")
 
         finally:
@@ -386,7 +386,7 @@ class PipelineRunner:
             crawled_at=datetime.now(timezone.utc),
         )
 
-    def _score_page(self, page: CrawledPage) -> ScoreWeights:
+    def _score_page(self, page: CrawledPage) -> ContentScore:
         """Score a page based on interest matching."""
         keyword_matches = 0
         total_keywords = 0

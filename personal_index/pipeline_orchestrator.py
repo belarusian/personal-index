@@ -184,7 +184,7 @@ class PipelineOrchestrator:
                 self._emit_progress("index", i + 1, len(filtered_pages))
 
         except (RuntimeError, OSError) as e:
-            logger.exception("Pipeline error: %s", e)
+            logger.exception("Pipeline error")
             result.errors.append(str(e))
             result.success = False
         finally:
@@ -259,7 +259,7 @@ class PipelineOrchestrator:
                 self._emit_progress("index", i + 1, len(filtered_pages))
 
         except (RuntimeError, OSError) as e:
-            logger.exception("Pipeline error: %s", e)
+            logger.exception("Pipeline error")
             result.errors.append(str(e))
             result.success = False
         finally:
