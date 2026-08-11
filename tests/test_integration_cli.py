@@ -236,3 +236,21 @@ class TestCLISearchJSON:
         result = runner.invoke(main, ["search", "--json", "nonexistent"])
         assert result.exit_code == 0
         assert "[]" in result.output
+
+
+class TestCLIIndex:
+    """Test CLI index commands."""
+
+    def test_index_count(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(main, ["index", "count"])
+        assert result.exit_code == 0
+        assert "Indexed pages:" in result.output
+
+    def test_index_rebuild(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(main, ["index", "rebuild"])
+        assert result.exit_code == 0
+        assert "rebuild complete" in result.output.lower()
