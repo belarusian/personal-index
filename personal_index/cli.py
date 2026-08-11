@@ -135,6 +135,18 @@ def index_count():
     click.echo(f"Pages indexed: {idx.get_page_count()}")
 
 
+@index.command("list")
+def index_list():
+    """List all indexed pages."""
+    idx = SearchIndex()
+    pages = idx.list_pages()
+    if not pages:
+        click.echo("No pages indexed.")
+        return
+    for page in pages:
+        click.echo(f"  {page.title}: {page.url}")
+
+
 @index.command("clear")
 @click.confirmation_option(prompt="Clear all indexed pages?")
 def index_clear():
