@@ -547,3 +547,10 @@ def remove_tag(name, data_dir):
     store = TagStore(store_path=f"{data_dir}/tags.json")
     store.remove_tag(name)
     click.echo(f"Removed tag: {name}")
+
+main.add_command(pipeline_cmd, name="pipeline")
+
+
+if __name__ == "__main__":
+    main()
+
