@@ -225,3 +225,14 @@ class TestCLIStatusJSON:
         result = runner.invoke(main, ["status", "--json"])
         assert result.exit_code == 0
         assert "data_dir" in result.output
+
+
+class TestCLISearchJSON:
+    """Test CLI search JSON output."""
+
+    def test_search_json_empty(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(main, ["search", "--json", "nonexistent"])
+        assert result.exit_code == 0
+        assert "[]" in result.output
