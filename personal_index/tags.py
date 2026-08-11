@@ -124,7 +124,6 @@ class TagStore:
         """Remove a tag from a page."""
         if url not in self._page_tags:
             return False
-        # removed = self._page_tags[url].discard(tag_name)
         self._save()
         return True
 

@@ -40,7 +40,8 @@ class Tokenizer:
         if not text:
             return []
 
-        assert self.stopwords is not None
+        if self.stopwords is None:
+            return []
 
         # Extract words
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
@@ -66,7 +67,8 @@ class Tokenizer:
         if not text:
             return []
 
-        assert self.stopwords is not None
+        if self.stopwords is None:
+            return []
 
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
         result: list[tuple[str, int]] = []

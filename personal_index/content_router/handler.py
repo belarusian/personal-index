@@ -45,7 +45,8 @@ class ContentHandler(ABC):
             True if handler supports this content type.
         """
         content_type = content.get("type", "unknown")
-        assert self.supported_types is not None
+        if self.supported_types is None:
+            return False
         return "*" in self.supported_types or content_type in self.supported_types
 
 

@@ -111,6 +111,17 @@ class WebhookSender:
 
     def _send_to_endpoint(self, config: WebhookConfig, payload: WebhookPayload) -> dict:
         last_error = None
+        # Validate URL scheme - only allow http and https
+        from urllib.parse import urlparse
+        parsed = urlparse(config.url)
+        if parsed.scheme not in ("http", "https"):
+            return {
+                "url": config.url,
+                "status": None,
+                "success": False,
+                "error": f"Unsupported URL scheme: {parsed.scheme}",
+                "attempts": 0,
+            }
         for attempt in range(config.retry_count + 1):
             try:
                 data = payload.to_json().encode("utf-8")

@@ -56,7 +56,7 @@ class TransformPipeline:
             Transformed content item.
         """
         result = dict(item)
-        for name, transform in self.transforms:
+        for _name, transform in self.transforms:
             try:
                 result = transform(result)
             except (ValueError, TypeError, KeyError):
