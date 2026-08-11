@@ -218,7 +218,7 @@ class TestE2ETags:
         runner = CliRunner()
         runner.invoke(main, ["init"])
 
-        result = runner.invoke(main, ["tag", "add", "important", "--color", "#ff0000"])
+        result = runner.invoke(main, ["tags", "add", "important", "https://example.com/page"])
         assert result.exit_code == 0
         assert "Added tag: important" in result.output
 
