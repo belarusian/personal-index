@@ -11,7 +11,7 @@ import io
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass
@@ -31,7 +31,7 @@ class CsvExportOptions:
 
     delimiter: str = ","
     quotechar: str = '"'
-    quoting: int = csv.QUOTE_NONNUMERIC
+    quoting: Literal[0, 1, 2, 3] = csv.QUOTE_NONNUMERIC
     encoding: str = "utf-8"
     include_header: bool = True
     columns: list[str] | None = None
@@ -148,7 +148,7 @@ class CsvExporter:
         items: list[dict[str, Any]],
     ) -> list[str]:
         """Determine columns from items."""
-        all_columns = set()
+        all_columns: set[str] = set()
         for item in items:
             all_columns.update(item.keys())
 

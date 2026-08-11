@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 T = TypeVar("T")
 
@@ -57,7 +57,7 @@ class CacheStore:
 
         entry.access_count += 1
         entry.last_accessed = time.time()
-        return entry.value
+        return cast(T, entry.value)
 
     def set(self, key: str, value: Any, ttl: float | None = None) -> None:
         """Set a value in the cache.

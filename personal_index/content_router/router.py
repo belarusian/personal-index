@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from personal_index.content_router.handler import ContentHandler
 from personal_index.content_router.route import Route, RouteMatcher
@@ -51,7 +51,7 @@ class ContentRouter:
         matched = self.matcher.match(content)
 
         if matched:
-            return matched.handler(content)
+            return cast(dict[str, Any], matched.handler(content))
 
         if self.default_handler:
             return self.default_handler.handle(content)

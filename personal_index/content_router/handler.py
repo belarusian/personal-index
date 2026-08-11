@@ -17,7 +17,7 @@ class ContentHandler(ABC):
     """
 
     name: str = "default"
-    supported_types: list[str] = None
+    supported_types: list[str] | None = None
 
     def __post_init__(self) -> None:
         if self.supported_types is None:
@@ -45,6 +45,7 @@ class ContentHandler(ABC):
             True if handler supports this content type.
         """
         content_type = content.get("type", "unknown")
+        assert self.supported_types is not None
         return "*" in self.supported_types or content_type in self.supported_types
 
 

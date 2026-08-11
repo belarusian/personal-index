@@ -137,7 +137,7 @@ class MarkdownExporter:
             columns = ["title", "url", "tags", "score", "bookmarked"]
 
         # Filter to available columns
-        available = set()
+        available: set[str] = set()
         for item in items:
             available.update(item.keys())
         columns = [c for c in columns if c in available]

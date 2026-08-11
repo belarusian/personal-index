@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import cast
 
 from personal_index.content_aggregator.merge import (
     MergeResult,
@@ -88,7 +89,7 @@ class ContentAggregator:
         }
 
         fn = merge_fns.get(strategy, merge_append)
-        return fn(all_items)
+        return cast(MergeResult, fn(all_items))
 
     def get_source(self, name: str) -> ContentSource | None:
         """Get a source by name.

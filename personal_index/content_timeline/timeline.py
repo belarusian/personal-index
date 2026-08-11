@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from personal_index.content_timeline.timeline_entry import TimelineEntry
@@ -83,6 +83,39 @@ class Timeline:
     def get_content_event_count(self, content_id: str) -> int:
         """Get the number of events for a specific content item."""
         return len(self.get_events_for_content(content_id))
+
+
+    def get_events_for_day(self, d: date) -> list[TimelineEvent]:
+        """Get events for a specific day."""
+        start = datetime(d.year, d.month, d.day)
+        end = datetime(d.year, d.month, d.day, 23, 59, 59, 999999)
+        return [e for e in self.events if start <= e.timestamp <= end]
+
+    def get_events_for_week(self, d: date) -> list[TimelineEvent]:
+        """Get events for the week containing the given date."""
+        # Monday of the week
+        monday = d - __import__("datetime").timedelta(days=d.weekday())
+        start = datetime(monday.year, monday.month, monday.day)
+        # Sunday end of week
+        sunday = monday + __import__("datetime").timedelta(days=6)
+        end = datetime(sunday.year, sunday.month, sunday.day, 23, 59, 59, 999999)
+        return [e for e in self.events if start <= e.timestamp <= end]
+
+    def get_events_for_month(self, year: int, month: int) -> list[TimelineEvent]:
+        """Get events for a specific month."""
+        import calendar
+        last_day = calendar.monthrange(year, month)[1]
+        start = datetime(year, month, 1)
+        end = datetime(year, month, last_day, 23, 59, 59, 999999)
+        return [e for e in self.events if start <= e.timestamp <= end]
+
+    def get_summary(self) -> dict[str, Any]:
+        """Get a summary of the timeline."""
+        return {
+            "total_events": len(self.events),
+            "total_entries": len(self.entries),
+            "content_ids": list(self.content_ids),
+        }
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize timeline to dict."""

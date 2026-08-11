@@ -32,6 +32,10 @@ class TimelineEvent:
     content_id: str
     metadata: dict[str, Any] = field(default_factory=dict)
     source: str = "system"
+    item_id: str = ""
+    title: str = ""
+    url: str = ""
+    description: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize event to dictionary."""
@@ -42,6 +46,10 @@ class TimelineEvent:
             "content_id": self.content_id,
             "metadata": self.metadata,
             "source": self.source,
+            "item_id": self.item_id,
+            "title": self.title,
+            "url": self.url,
+            "description": self.description,
         }
 
     @classmethod
@@ -62,6 +70,10 @@ class TimelineEvent:
             content_id=data["content_id"],
             metadata=data.get("metadata", {}),
             source=data.get("source", "system"),
+            item_id=data.get("item_id", ""),
+            title=data.get("title", ""),
+            url=data.get("url", ""),
+            description=data.get("description", ""),
         )
 
     def __eq__(self, other: object) -> bool:

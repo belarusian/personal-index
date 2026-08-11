@@ -71,7 +71,7 @@ class InsightEngine:
         if not tag_counts:
             return []
 
-        most_common = max(tag_counts, key=tag_counts.get)
+        most_common = max(tag_counts, key=lambda k: tag_counts[k])
         return [
             Insight(
                 title="Most common tag",
@@ -133,7 +133,7 @@ class InsightEngine:
         if len(type_counts) <= 1:
             return []
 
-        dominant = max(type_counts, key=type_counts.get)
+        dominant = max(type_counts, key=lambda k: type_counts[k])
         return [
             Insight(
                 title="Dominant content type",
