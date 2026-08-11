@@ -23,6 +23,7 @@ import yaml
 
 from personal_index.index import SearchIndex
 from personal_index.tags import TagStore
+from personal_index.cli_stats import stats as stats_cmd
 
 
 def get_search_index(data_dir: str) -> SearchIndex:
