@@ -164,3 +164,18 @@ class TestCLIImportSearchRoundtrip:
         # Search for content
         result = runner.invoke(main, ["search", "python"])
         assert result.exit_code == 0
+
+
+class TestCLIExportWithQuery:
+    """Test export with query filtering."""
+
+    def test_export_json_format(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        # Create and import a file
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("Test content for export.")
+        runner.invoke(main, ["import", str(test_file)])
+        # Export as JSON
+        result = runner.invoke(main, ["export", "--format", "json"])
+        assert result.exit_code == 0
