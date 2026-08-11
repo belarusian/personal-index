@@ -29,6 +29,7 @@ class PipelineStats:
     pages_tagged: int = 0
     pages_indexed: int = 0
     errors: list[str] = field(default_factory=list)
+    elapsed_seconds: float = 0.0
 
     def summary(self) -> str:
         """Return a human-readable summary."""
@@ -81,6 +82,8 @@ class PipelineRunner:
         Returns:
             PipelineStats with counts from each stage.
         """
+        import time as _time
+        start_time = _time.time()
         stats = PipelineStats()
         pages: list[CrawledPage] = []
 
@@ -176,6 +179,7 @@ class PipelineRunner:
                     stats.errors.append(f"Index error for {page.url}: {e}")
             logger.info("  Indexed %d pages", stats.pages_indexed)
 
+        stats.elapsed_seconds = _time.time() - start_time
         return stats
 
     def _auto_tag(self, page: CrawledPage) -> list[str]:
