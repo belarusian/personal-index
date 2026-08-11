@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 
 import click
 
-from personal_index.config.pipeline_config import load_pipeline_config
+from personal_index.config.pipeline_config import load_pipeline_config, PipelineStepConfig
 from personal_index.pipeline_runner import PipelineRunner
 
 
@@ -23,7 +24,9 @@ from personal_index.pipeline_runner import PipelineRunner
 @click.option("--no-crawl", is_flag=True, help="Skip crawling, only process existing data")
 @click.option("--step", type=click.Choice(["crawl", "extract", "filter", "score", "tag", "index"]),
               multiple=True, help="Run only specific pipeline steps")
-def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_crawl, step):
+@click.option("--min-score", type=float, default=None, help="Override minimum score threshold")
+@click.option("--min-length", type=int, default=None, help="Override minimum content length")
+def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_crawl, step, min_score, min_length):
     """Run the full pipeline: crawl → extract → filter → score → tag → index.
 
     URLs are the seed URLs to start crawling from. If no URLs are provided,
@@ -34,11 +37,18 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_
         personal-index pipeline https://example.com -d 2
         personal-index pipeline --no-crawl  # re-process existing data
         personal-index pipeline https://example.com --step filter --step score
+        personal-index pipeline https://example.com --min-score 0.5
     """
     if verbose:
         logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
     pipeline_cfg = load_pipeline_config(config)
+
+    # Apply overrides
+    if min_score is not None:
+        pipeline_cfg.min_score_threshold = min_score
+    if min_length is not None:
+        pipeline_cfg.min_content_length = min_length
 
     # Override steps if --step is provided
     if step:
@@ -46,11 +56,9 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_
         pipeline_cfg.steps = []
         for s in all_steps:
             enabled = s in step
-            from personal_index.config.pipeline_config import PipelineStepConfig
             pipeline_cfg.steps.append(PipelineStepConfig(name=s, enabled=enabled))
 
     if no_crawl:
-        from personal_index.config.pipeline_config import PipelineStepConfig
         all_steps = ["crawl", "extract", "filter", "score", "tag", "index"]
         pipeline_cfg.steps = []
         for s in all_steps:
@@ -94,15 +102,26 @@ def pipeline(urls, depth, config, data_dir, dry_run, verbose, output, quiet, no_
         click.echo()
 
     seed_urls = list(urls) if urls else []
-    stats = runner.run(seed_urls, max_depth=depth)
 
-    click.echo()
-    click.echo(stats.summary())
+    start_time = time.time()
+    stats = runner.run(seed_urls, max_depth=depth)
+    elapsed = time.time() - start_time
+
+    if not quiet:
+        click.echo()
+        click.echo(stats.summary())
+
+        if stats.pages_indexed > 0:
+            click.echo()
+            click.echo("Next steps:")
+            click.echo(f"  Search: personal-index search 'your query'")
+            click.echo(f"  Export: personal-index export --format markdown")
+            click.echo(f"  Status: personal-index status")
 
     if output:
         with open(output, "w") as f:
             f.write(stats.summary())
-        click.echo(f"Stats saved to {output}")
+        click.echo(f"\nStats saved to {output}")
 
     if stats.errors:
         click.echo("\nErrors encountered:")
