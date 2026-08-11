@@ -1,0 +1,15 @@
+{
+  "tags": {
+    "important": {
+      "name": "important",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-08-11T10:25:01.843221+00:00"
+    }
+  },
+  "page_tags": {
+    "https://example.com/page1": [
+      "important"
+    ]
+  }
+}

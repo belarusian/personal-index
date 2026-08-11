@@ -22,7 +22,7 @@ class TestSearchAfterPipeline:
         """Test that search finds content indexed by the pipeline."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(
             name="python",
@@ -48,7 +48,7 @@ class TestSearchAfterPipeline:
         """Test that search ranks results by relevance."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(
             name="tech",
@@ -80,7 +80,7 @@ class TestSearchAfterPipeline:
         """Test that search results include relevant snippets."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(
             name="web",
@@ -104,7 +104,7 @@ class TestSearchAfterPipeline:
         """Test search with empty query returns no results."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(name="test", keywords=["test"]))
         page = CrawledPage(
@@ -121,7 +121,7 @@ class TestSearchAfterPipeline:
         """Test search with no matching content."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(name="python", keywords=["python"]))
         page = CrawledPage(
@@ -138,7 +138,7 @@ class TestSearchAfterPipeline:
         """Test that search respects the limit parameter."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(name="tech", keywords=["programming"]))
 
@@ -157,7 +157,7 @@ class TestSearchAfterPipeline:
         """Test that search is case-insensitive."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(name="python", keywords=["python"]))
         page = CrawledPage(
@@ -175,7 +175,7 @@ class TestSearchAfterPipeline:
         """Test that stop words are handled correctly in search."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(name="python", keywords=["python"]))
         page = CrawledPage(
@@ -197,7 +197,7 @@ class TestSearchWithTags:
         """Test that search index and tag store work together."""
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        runner = PipelineRunner(pipeline_config=cfg, data_dir=data_dir)
 
         runner._interest_store.add(Interest(name="python", keywords=["python"]))
         page = CrawledPage(

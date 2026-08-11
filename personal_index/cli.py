@@ -288,7 +288,8 @@ def interests_add(ctx, name, keywords, priority, data_dir):
         priority=priority,
     )
     store.add(interest)
-    click.echo(f"Added interest '{name}' with keywords: {', '.join(keywords)}")
+    kw_str = ', '.join(keywords) if keywords else '(none)'
+    click.echo(f"Added interest: {name}")
 
 
 @interests.command("list")
@@ -481,7 +482,10 @@ def import_(ctx, source, recursive, data_dir):
         click.echo(f"Imported {total}/{len(files)} files")
     else:
         total = _import_single_file(source)
-        click.echo(f"Imported {total} file(s)")
+        if total > 0:
+            click.echo(f"Import complete: {total} file(s) processed")
+        else:
+            click.echo("Import failed: no files were processed")
 
 
 # Status command

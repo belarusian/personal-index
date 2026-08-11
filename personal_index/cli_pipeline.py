@@ -31,9 +31,11 @@ def progress_callback(stage: str, current: int, total: int) -> None:
 @click.option("--depth", "-d", default=3, type=int, help="Max crawl depth")
 @click.option("--max-pages", "-m", default=100, type=int, help="Max pages to crawl")
 @click.option("--min-score", default=0.0, type=float, help="Minimum score threshold")
-@click.option("--min-content-length", default=100, type=int,
+@click.option("--min-content-length", "-l", default=10, type=int,
               help="Minimum content length to include")
 @click.option("--data-dir", default=None, help="Data directory")
+@click.option("--steps", "-s", default=None,
+              help="Comma-separated list of steps to run (crawl,extract,filter,score,tag,index)")
 @click.option("--no-crawl", is_flag=True, help="Skip crawl stage (use with --import-file)")
 @click.option("--no-filter", is_flag=True, help="Skip filter stage")
 @click.option("--no-score", is_flag=True, help="Skip score stage")
@@ -41,7 +43,7 @@ def progress_callback(stage: str, current: int, total: int) -> None:
 @click.option("--no-index", is_flag=True, help="Skip index stage")
 @click.pass_context
 def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
-             min_content_length, data_dir, no_crawl, no_filter,
+             min_content_length, data_dir, steps, no_crawl, no_filter,
              no_score, no_tag, no_index):
     """Run the full content pipeline.
 
@@ -61,31 +63,38 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
 
         # Custom settings
         personal-index pipeline https://example.com -d 2 -m 50 --min-score 0.5
+
+        # Run specific steps only
+        personal-index pipeline https://example.com --steps filter,score,tag,index
     """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-
-    # Build enabled steps list
-    enabled_steps = ["crawl", "extract", "filter", "score", "tag", "index"]
-    if no_crawl:
-        enabled_steps.remove("crawl")
-    if no_filter:
-        enabled_steps.remove("filter")
-    if no_score:
-        enabled_steps.remove("score")
-    if no_tag:
-        enabled_steps.remove("tag")
-    if no_index:
-        enabled_steps.remove("index")
 
     from personal_index.config.pipeline_config import PipelineConfig
 
     config = PipelineConfig(
-        max_depth=depth,
-        max_pages=max_pages,
         min_score_threshold=min_score,
         min_content_length=min_content_length,
-        enabled_steps=enabled_steps,
+        max_pages=max_pages,
+        max_depth=depth,
     )
+
+    # Build enabled steps list
+    if steps:
+        enabled_steps = [s.strip() for s in steps.split(",")]
+    else:
+        enabled_steps = ["crawl", "extract", "filter", "score", "tag", "index"]
+
+    # Apply --no-* flags to disable specific steps
+    if no_crawl and "crawl" in enabled_steps:
+        enabled_steps.remove("crawl")
+    if no_filter and "filter" in enabled_steps:
+        enabled_steps.remove("filter")
+    if no_score and "score" in enabled_steps:
+        enabled_steps.remove("score")
+    if no_tag and "tag" in enabled_steps:
+        enabled_steps.remove("tag")
+    if no_index and "index" in enabled_steps:
+        enabled_steps.remove("index")
 
     runner = PipelineRunner(
         data_dir=dd,
@@ -97,6 +106,8 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
         if import_files:
             click.echo(f"Importing {len(import_files)} file(s)...")
             stats = runner.run_from_files(list(import_files))
+            # Show imported count
+            click.echo(f"  Imported:     {stats.pages_indexed}")
         elif urls:
             click.echo(f"Running pipeline on {len(urls)} URL(s)...")
             stats = runner.run(list(urls))
