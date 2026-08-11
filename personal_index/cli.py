@@ -14,8 +14,6 @@ from personal_index.models import Interest
 from personal_index.scheduler import Scheduler, ScheduleStore
 
 
-
-
 def get_search_index(data_dir: str | None = None) -> SearchIndex:
     """Get a SearchIndex with persistent storage in the data directory."""
     if data_dir is None:
@@ -184,7 +182,6 @@ def crawl(url, depth, no_index):
     crawler = Crawler(config=CrawlerConfig(max_depth=depth))
     pages = crawler.crawl([url], max_depth=depth)
     if not no_index:
-        from personal_index.index import SearchIndex
         idx = get_search_index()
         for page in pages:
             try:
@@ -211,7 +208,6 @@ def index_count():
 @click.option("--data-dir", default=".personal_index", help="Data directory")
 def index_rebuild(data_dir):
     """Rebuild the search index from stored data."""
-    from personal_index.index import SearchIndex
     idx = get_search_index()
     count = idx.get_page_count()
     click.echo(f"Current index has {count} pages.")
@@ -468,7 +464,6 @@ def import_cmd(path, recursive, config, data_dir, tag):
     from pathlib import Path
 
     from personal_index.content_extractor import ContentExtractor
-    from personal_index.index import SearchIndex
     from personal_index.models import CrawledPage
 
     extractor = ContentExtractor()
@@ -516,7 +511,6 @@ def export_cmd(fmt, output, query, limit, data_dir):
 
     Exports can be filtered with --query and limited with --limit.
     """
-    from personal_index.index import SearchIndex
 
     index = get_search_index(data_dir)
 

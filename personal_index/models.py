@@ -103,8 +103,8 @@ class Interest:
                 return True
         for pattern in self.url_patterns:
             try:
-                import re
                 import fnmatch
+                import re
                 # Try glob-style matching first (*.example.com/*)
                 if "*" in pattern:
                     if fnmatch.fnmatch(url.lower(), pattern.lower()):
