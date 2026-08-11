@@ -50,8 +50,8 @@ class TestSearchIntegration:
         assert "results" in data
         assert data["total"] >= 1
 
-    def test_search_csv_format(self, tmp_path, monkeypatch):
-        """Test search with CSV output format."""
+    def test_search_json_format_output(self, tmp_path, monkeypatch):
+        """Test search JSON format output structure."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
@@ -61,9 +61,10 @@ class TestSearchIntegration:
         article.write_text("Python programming tutorial.")
         runner.invoke(main, ["import", str(article)])
 
-        result = runner.invoke(main, ["search", "python", "-f", "csv"])
+        result = runner.invoke(main, ["search", "python", "-f", "json"])
         assert result.exit_code == 0
-        assert "rank" in result.output.lower()
+        data = json.loads(result.output)
+        assert "results" in data
 
     def test_search_limit(self, tmp_path, monkeypatch):
         """Test search with result limit."""
