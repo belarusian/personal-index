@@ -154,7 +154,7 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
         click.echo("\nPipeline interrupted by user.")
         runner.close()
         sys.exit(130)
-    except Exception as e:
+    except (OSError, ValueError) as e:
         click.echo(f"\nPipeline failed: {e}", err=True)
         runner.close()
         sys.exit(1)
