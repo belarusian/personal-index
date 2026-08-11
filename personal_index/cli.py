@@ -375,7 +375,8 @@ if __name__ == "__main__":
 @click.option("--config", default="config.yaml", help="Config file path")
 @click.option("--data-dir", default=".personal_index", help="Data directory")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
-def status(config, data_dir, as_json):
+@click.option("--format", "fmt", default=None, type=click.Choice(["json", "text"]), help="Output format")
+def status(config, data_dir, as_json, fmt):
     """Show system status: index size, interests, pipeline config."""
     import json
     import os
