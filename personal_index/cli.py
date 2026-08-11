@@ -605,3 +605,183 @@ main.add_command(pipeline_cmd, name="pipeline")
 
 if __name__ == "__main__":
     main()
+
+
+# Backward-compatible aliases for test imports
+# These are Click groups that may not be fully implemented yet
+# but need to exist for import compatibility.
+
+@click.group()
+def index():
+    """Manage the search index (alias for index_cmd_group)."""
+    pass
+
+
+@index.command("count")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def index_count_alias(ctx, data_dir):
+    """Show the number of indexed pages."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    click.echo(f"Indexed pages: {idx.get_page_count()}")
+
+
+@index.command("list")
+@click.option("-n", "--limit", default=20, type=int, help="Max pages to list")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def index_list_alias(ctx, limit, data_dir):
+    """List indexed pages."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    pages = idx.list_pages()[:limit]
+    if not pages:
+        click.echo("No indexed pages.")
+        return
+    for page in pages:
+        click.echo(f"  {page.title} ({page.url})")
+
+
+@index.command("remove")
+@click.argument("url")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def index_remove_alias(ctx, url, data_dir):
+    """Remove a page from the index by URL."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    if idx.remove_page(url):
+        click.echo(f"Removed: {url}")
+    else:
+        click.echo(f"Page not found: {url}", err=True)
+        sys.exit(1)
+
+
+@click.group()
+def schedule():
+    """Manage scheduled crawl jobs."""
+    pass
+
+
+@schedule.command("add")
+@click.option("-n", "--name", required=True, help="Job name")
+@click.option("-u", "--url", required=True, help="URL to crawl")
+@click.option("-i", "--interval", default=24, type=int, help="Interval in hours")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def schedule_add(ctx, name, url, interval, data_dir):
+    """Add a scheduled crawl job."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    store = get_interest_store(dd)
+    idx = get_search_index(dd)
+    from personal_index.scheduler import ScheduleStore
+    sched_store = ScheduleStore(store_path=f"{dd}/schedule.json")
+    scheduler = Scheduler(interest_store=store, search_index=idx, schedule_store=sched_store)
+    scheduler.add_job(name=name, url=url, interval_hours=interval)
+    click.echo(f"Added scheduled job: {name} (every {interval}h)")
+
+
+@schedule.command("list")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def schedule_list(ctx, data_dir):
+    """List all scheduled jobs."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    store = get_interest_store(dd)
+    idx = get_search_index(dd)
+    from personal_index.scheduler import ScheduleStore
+    sched_store = ScheduleStore(store_path=f"{dd}/schedule.json")
+    scheduler = Scheduler(interest_store=store, search_index=idx, schedule_store=sched_store)
+    jobs = scheduler.list_jobs()
+    if not jobs:
+        click.echo("No scheduled jobs.")
+        return
+    for job in jobs:
+        click.echo(f"  {job.name}: {job.url} (every {job.interval_hours}h)")
+
+
+@schedule.command("remove")
+@click.argument("name")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def schedule_remove(ctx, name, data_dir):
+    """Remove a scheduled job by name."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    store = get_interest_store(dd)
+    idx = get_search_index(dd)
+    from personal_index.scheduler import ScheduleStore
+    sched_store = ScheduleStore(store_path=f"{dd}/schedule.json")
+    scheduler = Scheduler(interest_store=store, search_index=idx, schedule_store=sched_store)
+    if scheduler.remove_job(name):
+        click.echo(f"Removed scheduled job: {name}")
+    else:
+        click.echo(f"Job not found: {name}", err=True)
+        sys.exit(1)
+
+
+@click.group()
+def config():
+    """View and modify configuration."""
+    pass
+
+
+@config.command("show")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def config_show(ctx, data_dir):
+    """Show current configuration."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    config_path = "config.yaml"
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            data = yaml.safe_load(f) or {}
+        click.echo("Current configuration:")
+        click.echo(f"  Data dir: {data.get('data_dir', dd)}")
+        crawler = data.get("crawler", {})
+        click.echo(f"  Max depth: {crawler.get('max_depth', 3)}")
+        click.echo(f"  Politeness delay: {crawler.get('politeness_delay', 1.0)}s")
+        click.echo(f"  Rate limit: {crawler.get('rate_limit', 10)}/s")
+        scheduler = data.get("scheduler", {})
+        click.echo(f"  Scheduler enabled: {scheduler.get('enabled', False)}")
+        click.echo(f"  Interval: {scheduler.get('interval_hours', 24)}h")
+    else:
+        click.echo("No config file found. Run 'personal-index init' first.")
+
+
+@config.command("set-crawler")
+@click.option("--max-depth", type=int, help="Set max crawl depth")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def config_set_crawler(ctx, max_depth, data_dir):
+    """Set crawler configuration."""
+    config_path = "config.yaml"
+    if not os.path.exists(config_path):
+        click.echo("No config file found. Run 'personal-index init' first.", err=True)
+        sys.exit(1)
+    with open(config_path, "r") as f:
+        data = yaml.safe_load(f) or {}
+    if max_depth is not None:
+        data.setdefault("crawler", {})["max_depth"] = max_depth
+    with open(config_path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False)
+    click.echo("Crawler configuration updated.")
+
+
+@config.command("set-schedule")
+@click.option("--interval", type=int, help="Set schedule interval in hours")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def config_set_schedule(ctx, interval, data_dir):
+    """Set scheduler configuration."""
+    config_path = "config.yaml"
+    if not os.path.exists(config_path):
+        click.echo("No config file found. Run 'personal-index init' first.", err=True)
+        sys.exit(1)
+    with open(config_path, "r") as f:
+        data = yaml.safe_load(f) or {}
+    if interval is not None:
+        data.setdefault("scheduler", {})["interval_hours"] = interval
+    with open(config_path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False)
+    click.echo("Scheduler configuration updated.")
