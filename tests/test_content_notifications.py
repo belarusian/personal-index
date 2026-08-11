@@ -168,6 +168,7 @@ class TestNotificationManager:
             rule_id="r1",
             name="Test",
             notification_type=NotificationType.NEW_BOOKMARK,
+            cooldown_seconds=0,
         )
         self.manager.add_rule(rule)
         self.manager.evaluate_event({"action": "bookmark"})
