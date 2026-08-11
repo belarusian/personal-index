@@ -303,7 +303,7 @@ class TestE2EPipelineStages:
                 content="Python is a great programming language for web development.",
             )
 
-            tags = runner._auto_tag_page(page)
+            tags, _ = runner._auto_tag_page(page)
             assert len(tags) > 0
             assert "python" in tags
         finally:
