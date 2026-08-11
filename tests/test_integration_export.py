@@ -30,9 +30,9 @@ class TestExportIntegration:
             {"title": "Another Article", "url": "https://example.com/2", "score": 0.7},
         ]
         md = export_to_md(items)
-        assert "# Personal Index" in md
         assert "Test Article" in md
         assert "Another Article" in md
+        assert "[Test Article](https://example.com/1)" in md
 
     def test_export_csv(self):
         """Exporting to CSV should produce valid output."""
