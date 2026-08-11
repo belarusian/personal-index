@@ -144,7 +144,7 @@ def crawl(ctx, url, depth, data_dir, timeout, delay, max_pages):
     interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
     config = CrawlerConfig(
         max_depth=depth,
-        politeness_delay=delay,
+        delay=delay,
         timeout=timeout,
         max_pages=max_pages,
     )
