@@ -197,3 +197,49 @@ class TestEdgeCases:
         # Item 1 had "tutorial" in tags, so removing it should reduce results
         ids = [r["item"]["id"] for r in result["results"]]
         assert "1" not in ids
+
+
+# --- Additional Search Tests ---
+
+class TestSearchAdvanced:
+    def test_search_partial_match(self, search, sample_items):
+        search.index_items(sample_items)
+        result = search.search("pyth")
+        assert result["total"] > 0
+
+    def test_search_tags_indexed(self, search, sample_items):
+        search.index_items(sample_items)
+        result = search.search("tutorial")
+        assert result["total"] > 0
+
+    def test_search_description_only(self, search):
+        items = [{"id": "1", "title": "X", "description": "find me here"}]
+        search.index_items(items)
+        result = search.search("find me")
+        assert result["total"] == 1
+
+    def test_search_result_structure(self, search, sample_items):
+        search.index_items(sample_items)
+        result = search.search("python")
+        for r in result["results"]:
+            assert "item" in r
+            assert "score" in r
+            assert isinstance(r["score"], float)
+
+    def test_search_total_matches(self, search, sample_items):
+        search.index_items(sample_items)
+        result = search.search("python")
+        assert result["total"] == len(result["results"])
+
+    def test_search_limit_respected(self, search, sample_items):
+        search.index_items(sample_items)
+        result = search.search("python", limit=1)
+        assert len(result["results"]) == 1
+        assert result["total"] >= 1
+
+    def test_search_offset_pagination(self, search, sample_items):
+        search.index_items(sample_items)
+        r1 = search.search("python", limit=1, offset=0)
+        r2 = search.search("python", limit=1, offset=1)
+        if r2["total"] > 1:
+            assert r1["results"][0]["item"]["id"] != r2["results"][0]["item"]["id"]
