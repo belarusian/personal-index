@@ -169,7 +169,7 @@ class PipelineRunner:
             logger.info("Stage 4/6: Scoring %d pages", len(filtered_pages))
             self._emit_progress("score", 0, len(filtered_pages))
             for i, page in enumerate(filtered_pages):
-                score_result = self._scorer.score(page)
+                score_result = self._scorer.score_page(page, interest_store=self._interest_store)
                 page.relevance_score = score_result.total
                 stats.pages_scored += 1
                 self._emit_progress("score", i + 1, len(filtered_pages))
@@ -253,7 +253,7 @@ class PipelineRunner:
             logger.info("Stage 4/6: Scoring %d pages", len(filtered_pages))
             self._emit_progress("score", 0, len(filtered_pages))
             for i, page in enumerate(filtered_pages):
-                score_result = self._scorer.score(page)
+                score_result = self._scorer.score_page(page, interest_store=self._interest_store)
                 page.relevance_score = score_result.total
                 stats.pages_scored += 1
                 self._emit_progress("score", i + 1, len(filtered_pages))
