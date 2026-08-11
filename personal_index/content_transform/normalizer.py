@@ -1,0 +1,83 @@
+"""Content normalization utilities."""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass
+class ContentNormalizer:
+    """Normalizes content fields to consistent formats.
+
+    Attributes:
+        normalize_titles: Whether to normalize title casing.
+        normalize_urls: Whether to normalize URLs.
+        normalize_tags: Whether to normalize tag format.
+    """
+
+    normalize_titles: bool = True
+    normalize_urls: bool = True
+    normalize_tags: bool = True
+
+    def normalize(self, content: dict[str, Any]) -> dict[str, Any]:
+        """Normalize a content item.
+
+        Args:
+            content: Content item to normalize.
+
+        Returns:
+            Normalized content item.
+        """
+        result = dict(content)
+
+        if self.normalize_titles and "title" in result:
+            result["title"] = self._normalize_title(str(result["title"]))
+
+        if self.normalize_urls and "url" in result:
+            result["url"] = self._normalize_url(str(result["url"]))
+
+        if self.normalize_tags and "tags" in result:
+            tags = result["tags"]
+            if isinstance(tags, list):
+                result["tags"] = [
+                    self._normalize_tag(str(t)) for t in tags
+                ]
+
+        return result
+
+    def normalize_batch(
+        self,
+        items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Normalize multiple content items.
+
+        Args:
+            items: List of content items.
+
+        Returns:
+            List of normalized content items.
+        """
+        return [self.normalize(item) for item in items]
+
+    def _normalize_title(self, title: str) -> str:
+        """Normalize title to title case."""
+        return title.strip().title()
+
+    def _normalize_url(self, url: str) -> str:
+        """Normalize URL format."""
+        url = url.strip()
+        if url and not url.startswith("http"):
+            url = "https://" + url
+        # Remove trailing slash
+        if len(url) > 1:
+            url = url.rstrip("/")
+        return url
+
+    def _normalize_tag(self, tag: str) -> str:
+        """Normalize tag format."""
+        tag = tag.strip().lower()
+        tag = re.sub(r"[^a-z0-9-]", "-", tag)
+        tag = re.sub(r"-+", "-", tag)
+        return tag.strip("-")
