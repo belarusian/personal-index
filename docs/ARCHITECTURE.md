@@ -1,128 +1,125 @@
-# Architecture
+# Personal Index Architecture
 
 ## System Overview
 
-personal-index is a personal web search engine that scans, filters, and indexes the web based on user-defined interests.
+Personal Index is a modular content management toolkit organized around a
+6-stage pipeline architecture. Each stage is independently testable and
+composable.
 
-## Core Components
+## Architecture Diagram
 
-### 1. Crawler (`personal_index.crawler`)
+```
+  +---------+     +----------+     +--------+     +-------+     +-----+     +-------+
+  | Crawl   | --> | Extract  | --> | Filter | --> | Score | --> | Tag | --> | Index |
+  +---------+     +----------+     +--------+     +-------+     +-----+     +-------+
+       |                |               |               |             |             |
+  URL sources      HTML/MD/TXT     Quality check    Interest match  Auto-tag    Search
+  Local files      Parsing         Length filter    Keyword match   Topic detect  Index
+```
 
-**Purpose:** Fetch web pages from URLs
+## Module Organization
 
-**Key classes:**
-- `Crawler` - Main crawler with depth control
-- `CrawlerConfig` - Configuration for crawling behavior
+### Core Pipeline (personal_index/)
 
-**Features:**
-- Configurable crawl depth
-- Politeness delays between requests
-- Rate limiting per domain
-- Robots.txt compliance
-- Domain filtering
+- **pipeline_runner.py** - Main orchestrator, coordinates all 6 stages
+- **pipeline.py** - Pipeline step definitions and execution
+- **pipeline_e2e.py** - End-to-end pipeline test utilities
+- **pipeline_orchestrator.py** - Advanced pipeline orchestration
+- **pipeline_runner.py** - Configurable pipeline execution engine
 
-### 2. Extractor (`personal_index.content_extractor`)
+### CLI Layer (personal_index/cli*.py)
 
-**Purpose:** Parse HTML and extract structured content
+- **cli.py** - Main CLI entry point with Click command group
+- **cli_pipeline.py** - Pipeline command implementation
+- **cli_search.py** - Search command implementation
+- **cli_import.py** - File import command
+- **cli_export.py** - Export command (JSON, Markdown, CSV)
+- **cli_interests.py** - Interest management commands
+- **cli_tags.py** - Tag management commands
+- **cli_crawl.py** - Standalone crawl command
+- **cli_extract.py** - Content extraction command
+- **cli_score.py** - Content scoring command
+- **cli_stats.py** - Statistics command
+- **cli_status.py** - Status command
+- **cli_list.py** - List pages command
+- **cli_remove.py** - Remove page command
+- **cli_clear.py** - Clear index command
+- **cli_top.py** - Top pages command
+- **cli_verify.py** - Verification command
+- **cli_watch.py** - Directory watch command
+- **cli_schedule.py** - Scheduled crawl management
+- **cli_doctor.py** - Health check command
 
-**Key classes:**
-- `ContentExtractor` - Extracts text, headings, links, images
-- `ExtractedContent` - Data class for extracted data
+### Data Layer
 
-**Features:**
-- Title extraction (including og:title)
-- Meta tag extraction
-- Heading extraction
-- Link extraction
-- Image extraction
-- Text normalization
+- **index.py** - SearchIndex: in-memory search with JSON persistence
+- **interests.py** - InterestStore: persistent interest management
+- **tags.py** - TagStore: persistent tag management
+- **models.py** - Data models (CrawledPage, Interest, IndexedPage, etc.)
+- **storage.py** - Generic storage utilities
+- **cache.py** - Caching layer
 
-### 3. Filter (`personal_index.content_filter`)
+### Processing Layer
 
-**Purpose:** Remove unwanted pages
+- **crawler/main.py** - Web crawler with depth control and politeness
+- **content_extractor.py** - Content extraction from HTML/MD/TXT
+- **content_filter.py** - Content filtering by quality and interests
+- **content_scoring.py** - Multi-factor content scoring engine
+- **content_search.py** - Search with relevance ranking
+- **keyword_extractor.py** - Keyword extraction from content
+- **text_utils.py** - Text processing utilities
 
-**Key classes:**
-- `ContentFilter` - Main filter logic
-- `FilterConfig` - Configuration for filtering rules
+### Configuration
 
-**Features:**
-- Content length filtering
-- Blocked domains
-- Pattern matching
-- Interest-based filtering
-- Minimum relevance score
+- **config/pipeline_config.py** - Pipeline configuration dataclass
+- **config.yaml** - User configuration file
 
-### 4. Scorer (`personal_index.content_scoring`)
+### Supporting Modules
 
-**Purpose:** Rate pages by relevance
-
-**Key classes:**
-- `ContentScorer` - Calculates relevance scores
-- `ScoreWeights` - Configurable scoring weights
-- `ScoreResult` - Score breakdown
-
-**Features:**
-- Keyword matching with interests
-- Word count scoring
-- Domain authority proxy
-- Configurable weightings
-
-### 5. Tagger (`personal_index.content_tagger`)
-
-**Purpose:** Auto-tag pages with keywords
-
-**Key classes:**
-- `TagStore` - Manages tags and page associations
-- `Tag` - Tag data model
-
-**Features:**
-- Interest-based tagging
-- Keyword extraction
-- Per-page tag tracking
-- Persistent storage
-
-### 6. Index (`personal_index.index`)
-
-**Purpose:** Full-text search index
-
-**Key classes:**
-- `SearchIndex` - Main index with JSON persistence
-- `IndexedPage` - Indexed page data model
-- `SearchResult` - Search result data model
-
-**Features:**
-- Full-text search
-- Tokenization with stop words
-- Inverted index
-- Relevance scoring
-- Persistent storage
-
-### 7. Interest Store (`personal_index.interests`)
-
-**Purpose:** User-defined interests for scoring
-
-**Key classes:**
-- `InterestStore` - Manages user interests
-- `Interest` - Interest data model
-
-**Features:**
-- Interest with keywords and URL patterns
-- Pattern matching
-- Scoring based on matches
-- Persistent storage
-
-### 8. Pipeline Orchestrator (`personal_index.pipeline_orchestrator`)
-
-**Purpose:** Coordinates all pipeline stages
-
-**Key classes:**
-- `PipelineOrchestrator` - Main orchestrator
-- `PipelineResult` - Result data class
-
-**Features:**
-- End-to-end pipeline execution
-- Progress callbacks
-- Error handling
-- Resource management
+- **analytics.py** - Usage analytics
+- **backup.py** - Index backup and restore
+- **bookmarks.py** - Bookmark management
+- **content_dedup.py** - Content deduplication
+- **content_versioning.py** - Content version tracking
+- **fuzzy_search.py** - Fuzzy string matching
+- **pagination.py** - Result pagination
+- **rate_limiter.py** - Request rate limiting
+- **scheduler.py** - Scheduled crawl management
+- **sitemap.py** - Sitemap generation and parsing
+- **tfidf.py** - TF-IDF scoring
+- **url_classifier.py** - URL type classification
+- **url_dedup.py** - URL deduplication
+- **url_filter.py** - URL filtering
+- **url_history.py** - URL crawl history tracking
+- **webhook.py** - Webhook notifications
 
 ## Data Flow
+
+1. **Input**: URLs or file paths
+2. **Crawl**: Fetch content, extract links, respect robots.txt
+3. **Extract**: Parse HTML/Markdown, extract text and metadata
+4. **Filter**: Apply content length, domain, and interest filters
+5. **Score**: Calculate relevance based on interests and quality
+6. **Tag**: Auto-tag based on keywords and topics
+7. **Index**: Add to searchable index with word-level indexing
+8. **Output**: Search results, exports, statistics
+
+## Persistence
+
+All data is persisted to JSON files in the data directory:
+
+- `search_index.json` - Full search index with word index
+- `interests.json` - User-defined interests
+- `tags.json` - Content tags
+- `schedules.json` - Scheduled crawl jobs
+- `cache/` - Cached crawl results
+- `archive/` - Archived content
+- `backups/` - Index backups
+
+## Design Principles
+
+1. **Modularity**: Each pipeline stage is a separate, testable module
+2. **Composability**: Stages can be run independently or as a full pipeline
+3. **Persistence**: All state is persisted to disk between runs
+4. **Configurability**: All thresholds and weights are configurable
+5. **CLI-first**: All functionality accessible via command line
