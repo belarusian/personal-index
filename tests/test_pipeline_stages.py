@@ -116,9 +116,9 @@ class TestContentFilter:
         assert not f.should_include(page)
 
     def test_filter_required_pattern(self):
-        cfg = FilterConfig(required_patterns=["required"])
+        cfg = FilterConfig(required_patterns=["required"], min_content_length=10)
         f = ContentFilter(config=cfg)
-        page = CrawledPage(url="https://x.com", title="T", content="This has the required word in it.")
+        page = CrawledPage(url="https://x.com", title="Test", content="This has the required word in it.")
         assert f.should_include(page)
 
     def test_filter_interest_match(self, tmp_path):
@@ -127,10 +127,10 @@ class TestContentFilter:
         cfg = FilterConfig(min_content_length=10, require_interest_match=True)
         f = ContentFilter(config=cfg, interest_store=store)
 
-        matching = CrawledPage(url="https://x.com", title="T", content="Python is great.")
+        matching = CrawledPage(url="https://x.com", title="Test", content="Python is great.")
         assert f.should_include(matching)
 
-        non_matching = CrawledPage(url="https://x.com", title="T", content="No python here at all.")
+        non_matching = CrawledPage(url="https://x.com", title="Test", content="No python here at all.")
         assert not f.should_include(non_matching)
 
     def test_filter_get_reasons(self):
@@ -160,7 +160,7 @@ class TestContentScorer:
             domain_authority=0.8,
         )
         assert 0.0 <= result.total <= 1.0
-        assert result.keyword_score > 0
+        assert result.relevance > 0
 
     def test_scorer_no_matches(self):
         scorer = ContentScorer()
@@ -170,7 +170,7 @@ class TestContentScorer:
             word_count=500,
             domain_authority=0.1,
         )
-        assert result.keyword_score == 0.0
+        assert result.relevance == 0.0
 
     def test_scorer_all_matches(self):
         scorer = ContentScorer()
@@ -180,7 +180,7 @@ class TestContentScorer:
             word_count=1000,
             domain_authority=1.0,
         )
-        assert result.keyword_score == 1.0
+        assert result.relevance == 1.0
 
     def test_scorer_quality(self):
         scorer = ContentScorer()
@@ -190,13 +190,16 @@ class TestContentScorer:
             word_count=5000,
             domain_authority=0.5,
         )
-        assert result.quality_score > 0
+        assert result.quality > 0
 
     def test_scorer_custom_weights(self):
         weights = ScoreWeights(
-            keyword_weight=0.5,
-            quality_weight=0.3,
-            authority_weight=0.2,
+            recency=0.1,
+            relevance=0.5,
+            engagement=0.1,
+            quality=0.2,
+            authority=0.1,
+            freshness=0.0,
         )
         scorer = ContentScorer(weights=weights)
         result = scorer.score(
