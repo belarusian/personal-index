@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from personal_index.content_diff.changes import ChangeType, ContentDiff
+from personal_index.content_diff.changes import ContentDiff
 
 
 @dataclass
@@ -37,6 +37,7 @@ class SnapshotManager:
 
     snapshots: dict[str, list[Snapshot]] = field(default_factory=dict)
     max_snapshots: int = 10
+    _counter: int = field(default=0, repr=False)
 
     def create_snapshot(
         self,
@@ -55,8 +56,9 @@ class SnapshotManager:
             The created Snapshot.
         """
         item_id = str(item.get(id_field, "unknown"))
+        self._counter += 1
         snapshot = Snapshot(
-            snapshot_id=f"{item_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+            snapshot_id=f"{item_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{self._counter}",
             timestamp=datetime.now(timezone.utc),
             data=dict(item),
             label=label,

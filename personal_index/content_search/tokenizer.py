@@ -67,7 +67,7 @@ class Tokenizer:
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
         result: list[tuple[str, int]] = []
         for i, word in enumerate(words):
-            if self.min_token_length <= len(word) <= self.max_token_length:
-                if word not in self.stopwords:
-                    result.append((word, i))
+            if (self.min_token_length <= len(word) <= self.max_token_length
+                    and word not in self.stopwords):
+                result.append((word, i))
         return result

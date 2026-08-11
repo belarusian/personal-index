@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -95,7 +95,7 @@ class InsightEngine:
             return []
 
         avg = sum(scores) / len(scores)
-        high_scores = sum(1 for s in scores if s >= 0.8)
+        _high_scores = sum(1 for s in scores if s >= 0.8)
         low_scores = sum(1 for s in scores if s < 0.3)
 
         insights: list[Insight] = [

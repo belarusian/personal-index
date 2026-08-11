@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
@@ -33,7 +33,7 @@ class CacheStats:
         total = self.hits + self.misses
         if total == 0:
             return 0.0
-        return self.hits / total
+        return round(self.hits / total, 10)
 
     @property
     def miss_rate(self) -> float:
@@ -42,7 +42,10 @@ class CacheStats:
         Returns:
             Miss rate as a float between 0.0 and 1.0.
         """
-        return 1.0 - self.hit_rate
+        total = self.hits + self.misses
+        if total == 0:
+            return 0.0
+        return round(self.misses / total, 10)
 
     def reset(self) -> None:
         """Reset all statistics."""

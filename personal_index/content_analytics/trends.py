@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -63,7 +63,7 @@ class TrendAnalyzer:
         sorted_buckets = sorted(buckets.items())
         return [
             TrendPoint(
-                timestamp=datetime.strptime(date_str, "%Y-%m-%d"),
+                timestamp=datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc),
                 value=count,
                 label=date_str,
             )
@@ -99,7 +99,7 @@ class TrendAnalyzer:
         sorted_buckets = sorted(buckets.items())
         return [
             TrendPoint(
-                timestamp=datetime.strptime(date_str, "%Y-%m-%d"),
+                timestamp=datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc),
                 value=round(sum(scores) / len(scores), 4),
                 label=date_str,
             )

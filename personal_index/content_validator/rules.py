@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -108,7 +109,7 @@ def has_valid_url(field: str) -> Callable[[dict[str, Any]], bool]:
         if not url:
             return False
         url_str = str(url)
-        return url_str.startswith("http://") or url_str.startswith("https://")
+        return url_str.startswith(("http://", "https://"))
     return check
 
 

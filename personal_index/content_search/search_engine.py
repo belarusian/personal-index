@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from personal_index.content_search.search_index import SearchIndex
-from personal_index.content_search.search_result import SearchResult, SearchResponse
+from personal_index.content_search.search_result import SearchResponse, SearchResult
 from personal_index.content_search.tokenizer import Tokenizer
 
 

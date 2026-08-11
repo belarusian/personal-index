@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from personal_index.content_backup.backup_store import BackupEntry, BackupStore
+from personal_index.content_backup.backup_store import BackupStore
 
 
 @dataclass
