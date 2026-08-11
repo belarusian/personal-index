@@ -110,3 +110,18 @@ class KeywordExtractor:
         for word in set(kw1.keys()) & set(kw2.keys()):
             shared[word] = (kw1[word] + kw2[word]) / 2
         return dict(sorted(shared.items(), key=lambda x: x[1], reverse=True))
+
+
+# Convenience function used by pipeline_runner
+def extract_keywords(text: str, max_keywords: int = 10) -> list[str]:
+    """Extract top keywords from text as plain strings.
+
+    Args:
+        text: Input text to extract keywords from.
+        max_keywords: Maximum number of keywords to return.
+
+    Returns:
+        List of keyword strings sorted by relevance score.
+    """
+    extractor = KeywordExtractor(max_keywords=max_keywords)
+    return extractor.extract_top_n(text, n=max_keywords)
