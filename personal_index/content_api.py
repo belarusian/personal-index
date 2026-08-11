@@ -169,12 +169,13 @@ class ContentAPI:
         errors = []
         if not isinstance(data, dict):
             return ["Request body must be a JSON object"]
-        if "title" in data and not isinstance(data["title"], str):
-            errors.append("Title must be a string")
+        if "title" in data:
+            if not isinstance(data["title"], str):
+                errors.append("Title must be a string")
+            elif len(data["title"]) > 200:
+                errors.append("Title must be under 200 characters")
         if "tags" in data and not isinstance(data["tags"], list):
             errors.append("Tags must be a list")
-        if "title" in data and len(data["title"]) > 200:
-            errors.append("Title must be under 200 characters")
         return errors
 
 
