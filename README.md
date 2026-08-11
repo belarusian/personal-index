@@ -1,49 +1,21 @@
-# Personal Index
+# personal-index
 
-A personal web search engine that crawls, filters, scores, and indexes content based on your interests.
+A personal web search engine that scans, filters, and indexes the web based on your interests.
+
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/example/personal-index)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
 
-- **Crawl**: Discover and fetch web pages from seed URLs
-- **Extract**: Parse HTML to extract meaningful text content
-- **Filter**: Remove low-quality or irrelevant pages
-- **Score**: Rank content by relevance to your interests
-- **Tag**: Auto-tag pages based on matched interests
-- **Index**: Build a fast full-text search index
-- **Search**: Query your personal index with natural language
-
-## Installation
-
-pip install -e .
+- **Crawl** the web from seed URLs with configurable depth
+- **Extract** content from HTML pages (title, main text, metadata)
+- **Filter** content based on your interests and custom rules
+- **Score** pages by relevance to your interests
+- **Tag** pages automatically based on content analysis
+- **Index** content for fast full-text search
+- **Export** results in multiple formats (Markdown, JSON, CSV)
 
 ## Quick Start
 
-personal-index init
-personal-index interests add -n Python -k python
-personal-index pipeline https://example.com
-personal-index search python
-personal-index status
-
-## Commands
-
-- **init** - Initialize a new project
-- **interests** - Manage tracked interests (add/list/remove/toggle)
-- **pipeline <urls>** - Run crawl -> extract -> filter -> score -> tag -> index
-- **search <query>** - Search indexed content
-- **import <path>** - Import local files into the index
-- **export** - Export indexed content (markdown/json/csv)
-- **tag** - Manage content tags (list/add/remove)
-- **status** - Show system status
-- **config** - Manage configuration
-
-## Configuration
-
-Copy config.sample.yaml to config.yaml and customize.
-
-## Architecture
-
-Crawl -> Extract -> Filter -> Score -> Tag -> Index -> Search
-
-## License
-
-MIT
+### Installation
