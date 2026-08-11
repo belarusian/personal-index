@@ -14,6 +14,13 @@ from personal_index.models import Interest
 from personal_index.scheduler import Scheduler, ScheduleStore
 
 
+
+
+def get_search_index(data_dir: str = ".personal_index") -> SearchIndex:
+    """Get a SearchIndex with persistent storage in the data directory."""
+    index_path = os.path.join(data_dir, "search_index.json")
+    return SearchIndex(db_path=index_path)
+
 def get_interest_store() -> InterestStore:
     """Get an InterestStore with default path."""
     data_dir = ".personal_index"
@@ -136,7 +143,7 @@ def toggle_interest(name):
 def search(query, limit, as_json, tag, sort):
     """Search indexed content."""
     import json
-    index = SearchIndex()
+    index = get_search_index()
     results = index.search(query, limit=limit)
     if not results:
         if as_json:
@@ -175,7 +182,7 @@ def crawl(url, depth, no_index):
     pages = crawler.crawl([url], max_depth=depth)
     if not no_index:
         from personal_index.index import SearchIndex
-        idx = SearchIndex()
+        idx = get_search_index()
         for page in pages:
             try:
                 idx.add_page(page)
@@ -192,7 +199,7 @@ def index():
 @index.command("count")
 def index_count():
     """Show number of indexed pages."""
-    idx = SearchIndex()
+    idx = get_search_index()
     count = idx.get_page_count()
     click.echo(f"Indexed pages: {count}")
 
@@ -202,18 +209,18 @@ def index_count():
 def index_rebuild(data_dir):
     """Rebuild the search index from stored data."""
     from personal_index.index import SearchIndex
-    idx = SearchIndex()
+    idx = get_search_index()
     count = idx.get_page_count()
     click.echo(f"Current index has {count} pages.")
     click.echo("Index rebuild complete.")
-    idx = SearchIndex()
+    idx = get_search_index()
     click.echo(f"Pages indexed: {idx.get_page_count()}")
 
 
 @index.command("list")
 def index_list():
     """List all indexed pages."""
-    idx = SearchIndex()
+    idx = get_search_index()
     pages = idx.list_pages()
     if not pages:
         click.echo("No pages indexed.")
@@ -226,7 +233,7 @@ def index_list():
 @click.confirmation_option(prompt="Clear all indexed pages?")
 def index_clear():
     """Clear all indexed pages."""
-    idx = SearchIndex()
+    idx = get_search_index()
     idx.clear()
     click.echo("Index cleared.")
 
@@ -243,7 +250,7 @@ def schedule():
 def add_schedule(name, url, interval):
     """Add a scheduled crawl job."""
     interest_store = get_interest_store()
-    search_index = SearchIndex()
+    search_index = get_search_index()
     schedule_store = ScheduleStore(path=".personal_index/schedules.json")
     scheduler = Scheduler(
         interest_store=interest_store,
@@ -258,7 +265,7 @@ def add_schedule(name, url, interval):
 def list_schedules():
     """List scheduled jobs."""
     interest_store = get_interest_store()
-    search_index = SearchIndex()
+    search_index = get_search_index()
     schedule_store = ScheduleStore(path=".personal_index/schedules.json")
     scheduler = Scheduler(
         interest_store=interest_store,
@@ -279,7 +286,7 @@ def list_schedules():
 def remove_schedule(name):
     """Remove a scheduled job."""
     interest_store = get_interest_store()
-    search_index = SearchIndex()
+    search_index = get_search_index()
     schedule_store = ScheduleStore(path=".personal_index/schedules.json")
     scheduler = Scheduler(
         interest_store=interest_store,
@@ -421,7 +428,7 @@ def status(config, data_dir, as_json, fmt):
         click.echo(f"  ... and {len(interests) - 5} more")
 
     # Index
-    idx = SearchIndex()
+    idx = get_search_index()
     count = idx.get_page_count()
     click.echo(f"Indexed pages: {count}")
 
@@ -462,7 +469,7 @@ def import_cmd(path, recursive, config, data_dir, tag):
     from personal_index.models import CrawledPage
 
     extractor = ContentExtractor()
-    index = SearchIndex()
+    index = get_search_index()
     imported = 0
 
     paths_to_import = []
@@ -508,7 +515,7 @@ def export_cmd(fmt, output, query, limit, data_dir):
     """
     from personal_index.index import SearchIndex
 
-    index = SearchIndex()
+    index = get_search_index()
 
     if query:
         results = index.search(query, limit=limit)

@@ -104,9 +104,15 @@ class Interest:
         for pattern in self.url_patterns:
             try:
                 import re
+                import fnmatch
+                # Try glob-style matching first (*.example.com/*)
+                if "*" in pattern and "/" in pattern:
+                    if fnmatch.fnmatch(url.lower(), pattern.lower()):
+                        return True
+                # Then try as regex
                 if re.search(pattern, url, re.IGNORECASE):
                     return True
-            except re.error:
+            except (re.error, Exception):
                 pass
         return False
 
