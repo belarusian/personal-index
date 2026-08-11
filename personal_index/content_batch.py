@@ -7,12 +7,12 @@ progress tracking.
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Callable
+from datetime import datetime, timezone
+from typing import Any
 
-BatchProcessor = Callable[[list[dict[str, Any]]], list[dict[str, Any]]]
+BatchProcessorFn = Callable[[list[dict[str, Any]]], list[dict[str, Any]]]
 
 
 @dataclass
@@ -73,7 +73,7 @@ class BatchProcessor:
     def __init__(
         self,
         batch_size: int = 100,
-        processor: BatchProcessor | None = None,
+        processor: BatchProcessorFn | None = None,
         on_progress: Callable[[int, int], None] | None = None,
     ) -> None:
         self.batch_size = batch_size
@@ -98,7 +98,7 @@ class BatchProcessor:
         result = BatchResult(
             batch_id=batch_id,
             total_items=len(items),
-            started_at=datetime.now(),
+            started_at=datetime.now(timezone.utc),
         )
 
         total = len(items)
@@ -110,7 +110,7 @@ class BatchProcessor:
                 output = self.processor(batch)
                 result.output.extend(output)
                 result.processed += len(batch)
-            except Exception as e:
+            except ValueError as e:
                 result.failed += len(batch)
                 result.errors.append({
                     "batch_start": i,
@@ -122,7 +122,7 @@ class BatchProcessor:
             if self.on_progress:
                 self.on_progress(processed_count, total)
 
-        result.completed_at = datetime.now()
+        result.completed_at = datetime.now(timezone.utc)
         if result.started_at:
             result.duration_seconds = (
                 result.completed_at - result.started_at
@@ -149,7 +149,7 @@ class BatchProcessor:
         result = BatchResult(
             batch_id=batch_id,
             total_items=len(items),
-            started_at=datetime.now(),
+            started_at=datetime.now(timezone.utc),
         )
 
         total = len(items)
@@ -157,16 +157,14 @@ class BatchProcessor:
 
         for i in range(0, total, self.batch_size):
             batch = items[i : i + self.batch_size]
-            success = False
 
             for attempt in range(max_retries):
                 try:
                     output = self.processor(batch)
                     result.output.extend(output)
                     result.processed += len(batch)
-                    success = True
                     break
-                except Exception as e:
+                except ValueError as e:
                     if attempt == max_retries - 1:
                         result.failed += len(batch)
                         result.errors.append({
@@ -179,7 +177,7 @@ class BatchProcessor:
             if self.on_progress:
                 self.on_progress(processed_count, total)
 
-        result.completed_at = datetime.now()
+        result.completed_at = datetime.now(timezone.utc)
         if result.started_at:
             result.duration_seconds = (
                 result.completed_at - result.started_at
@@ -213,7 +211,7 @@ class BatchProcessor:
         result = BatchResult(
             batch_id=batch_id,
             total_items=len(items),
-            started_at=datetime.now(),
+            started_at=datetime.now(timezone.utc),
         )
 
         for i, item in enumerate(items):
@@ -221,7 +219,7 @@ class BatchProcessor:
                 output = item_processor(item)
                 result.output.append(output)
                 result.processed += 1
-            except Exception as e:
+            except ValueError as e:
                 result.failed += 1
                 result.errors.append({
                     "item_index": i,
@@ -232,7 +230,7 @@ class BatchProcessor:
             if self.on_progress:
                 self.on_progress(i + 1, len(items))
 
-        result.completed_at = datetime.now()
+        result.completed_at = datetime.now(timezone.utc)
         if result.started_at:
             result.duration_seconds = (
                 result.completed_at - result.started_at

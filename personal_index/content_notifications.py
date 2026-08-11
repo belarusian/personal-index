@@ -8,7 +8,7 @@ and crawl results.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -145,7 +145,7 @@ class NotificationManager:
             List of generated notifications.
         """
         generated = []
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         for rule in self.rules:
             if not rule.matches(event):
@@ -172,7 +172,7 @@ class NotificationManager:
         for n in self.notifications:
             if n.notification_id == notification_id:
                 n.delivered = True
-                n.delivered_at = datetime.now()
+                n.delivered_at = datetime.now(timezone.utc)
                 return True
         return False
 
@@ -182,7 +182,7 @@ class NotificationManager:
         for n in self.notifications:
             if not n.delivered:
                 n.delivered = True
-                n.delivered_at = datetime.now()
+                n.delivered_at = datetime.now(timezone.utc)
                 count += 1
         return count
 
@@ -221,7 +221,7 @@ class NotificationManager:
             notification_type=rule.notification_type,
             title=rule.name,
             message=self._format_message(rule, event),
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             channels=rule.channels,
             data=event,
         )

@@ -6,10 +6,11 @@ and content refresh with cron-like scheduling support.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 class ScheduleType(Enum):
@@ -59,12 +60,12 @@ class ScheduledTask:
             return False
         if self.next_run is None:
             return True
-        check_time = now or datetime.now()
+        check_time = now or datetime.now(timezone.utc)
         return check_time >= self.next_run
 
     def mark_run(self, now: datetime | None = None) -> None:
         """Mark the task as having run and schedule next run."""
-        run_time = now or datetime.now()
+        run_time = now or datetime.now(timezone.utc)
         self.last_run = run_time
         self.run_count += 1
         self.next_run = self._calculate_next_run(run_time)
@@ -228,7 +229,7 @@ class TaskScheduler:
         now: datetime | None = None,
     ) -> TaskRunRecord:
         """Execute a single task."""
-        start_time = now or datetime.now()
+        start_time = now or datetime.now(timezone.utc)
         record = TaskRunRecord(
             task_id=task.task_id,
             started_at=start_time,
@@ -242,11 +243,11 @@ class TaskScheduler:
                     else {"output": str(result)}
                 )
             record.success = True
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             record.error = str(e)
             record.success = False
 
-        end_time = now or datetime.now()
+        end_time = now or datetime.now(timezone.utc)
         record.completed_at = end_time
         record.duration_seconds = (
             end_time - start_time

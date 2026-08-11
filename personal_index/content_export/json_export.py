@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -112,7 +112,7 @@ class JsonExporter:
         """
         collection = {
             "collection_name": name,
-            "exported_at": datetime.now().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "item_count": len(items),
             "items": [self._filter_fields(item) for item in items],
         }
@@ -175,7 +175,7 @@ class JsonExporter:
             "tagged_items": tagged,
             "bookmarked_items": bookmarked,
             "unique_domains": len(domains),
-            "exported_at": datetime.now().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
         }
         return json.dumps(summary, indent=self.options.indent,
                          sort_keys=self.options.sort_keys)

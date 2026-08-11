@@ -6,7 +6,7 @@ headings, links, tags, and metadata.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -82,7 +82,7 @@ class MarkdownExporter:
             Complete Markdown document string.
         """
         lines = [f"# {title}", ""]
-        lines.append(f"*Exported at: {datetime.now().strftime('%Y-%m-%d %H:%M')}*")
+        lines.append(f"*Exported at: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}*")
         lines.append("")
         lines.append("---")
         lines.append("")

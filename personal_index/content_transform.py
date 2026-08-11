@@ -7,10 +7,10 @@ and formatting.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Callable
-
+from datetime import datetime, timezone
+from typing import Any
 
 TransformFn = Callable[[dict[str, Any]], dict[str, Any]]
 
@@ -59,9 +59,10 @@ class TransformPipeline:
         for name, transform in self.transforms:
             try:
                 result = transform(result)
-            except Exception:
+            except (ValueError, TypeError, KeyError):
                 # Skip failed transforms, continue pipeline
-                pass
+                import logging
+                logging.getLogger(__name__).debug("Transform failed, skipping")
         return result
 
     def apply_batch(
@@ -130,7 +131,7 @@ def add_word_count(item: dict[str, Any]) -> dict[str, Any]:
 
 def add_timestamp(item: dict[str, Any]) -> dict[str, Any]:
     """Add processing timestamp."""
-    item["processed_at"] = datetime.now().isoformat()
+    item["processed_at"] = datetime.now(timezone.utc).isoformat()
     return item
 
 

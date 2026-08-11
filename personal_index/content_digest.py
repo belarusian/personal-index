@@ -7,7 +7,7 @@ indexed content, highlighting new and important items.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
 
@@ -139,7 +139,7 @@ class DigestGenerator:
             ContentDigest with filtered and formatted items.
         """
         if period_end is None:
-            period_end = datetime.now()
+            period_end = datetime.now(timezone.utc)
         if period_start is None:
             delta = self._get_period_delta()
             period_start = period_end - delta
@@ -211,7 +211,7 @@ class DigestGenerator:
         """Sort items by configured sort field."""
         sort_keys = {
             "score": lambda x: x.get("score", 0.0),
-            "date": lambda x: x.get("published_at") or datetime.min,
+            "date": lambda x: x.get("published_at") or datetime.min.replace(tzinfo=timezone.utc),
             "title": lambda x: x.get("title", ""),
         }
         key_func = sort_keys.get(self.config.sort_by, sort_keys["score"])

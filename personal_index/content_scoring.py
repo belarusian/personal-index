@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -196,7 +196,7 @@ class ContentScorer:
 
         Uses exponential decay: newer content scores higher.
         """
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         date = updated_at or published_at or now
         age_days = max(0, (now - date).days)
         # Exponential decay: half-life of 30 days
@@ -264,7 +264,7 @@ class ContentScorer:
         updated_at: datetime | None,
     ) -> float:
         """Score based on content freshness."""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if last_crawled is None:
             return 0.5
 

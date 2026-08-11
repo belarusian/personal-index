@@ -11,7 +11,7 @@ import hmac
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -61,7 +61,7 @@ class WebhookEndpoint:
 
     def __post_init__(self) -> None:
         if self.created_at is None:
-            self.created_at = datetime.now()
+            self.created_at = datetime.now(timezone.utc)
 
     def should_retry(self) -> bool:
         """Check if the endpoint should retry after failures."""
@@ -172,7 +172,7 @@ class WebhookManager:
             payload = self._create_payload(endpoint, event_type, data)
             self.pending.append(payload)
             payloads.append(payload)
-            endpoint.last_triggered = datetime.now()
+            endpoint.last_triggered = datetime.now(timezone.utc)
 
         return payloads
 
@@ -189,7 +189,7 @@ class WebhookManager:
         for payload in self.pending:
             if payload.payload_id == payload_id:
                 payload.delivered = True
-                payload.delivered_at = datetime.now()
+                payload.delivered_at = datetime.now(timezone.utc)
                 self.pending.remove(payload)
                 self.delivered.append(payload)
                 # Reset failure count for endpoint
@@ -219,7 +219,7 @@ class WebhookManager:
         return {
             "total_endpoints": len(self.endpoints),
             "enabled_endpoints": sum(
-                1 for e in self.endpoints.values() if e.enabled,
+                (1 for e in self.endpoints.values() if e.enabled),
             ),
             "pending_payloads": len(self.pending),
             "delivered_payloads": len(self.delivered),
@@ -234,7 +234,7 @@ class WebhookManager:
         """Create a webhook payload with optional signing."""
         payload_data = {
             "event": event_type.value,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "data": data,
         }
 
@@ -264,6 +264,6 @@ class WebhookManager:
         """Get the JSON body for a payload."""
         return json.dumps({
             "event": payload.event_type.value,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "data": payload.data,
         }, sort_keys=True)
