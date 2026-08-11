@@ -220,7 +220,7 @@ class PipelineE2E:
                 except (OSError, ValueError) as e:
                     result.errors.append(f"Index error for {page.url}: {e}")
 
-            except Exception as e:
+            except (RuntimeError, OSError) as e:
                 result.errors.append(f"Error processing {file_path}: {e}")
 
         result.elapsed_seconds = time.time() - start_time
