@@ -117,8 +117,13 @@ class SearchIndex:
         for key, value in filters.items():
             item_value = item.get(key)
             if isinstance(value, (list, set)):
-                if item_value not in value:
-                    return False
+                # For list filters: check if any item value matches any filter value
+                if isinstance(item_value, (list, set)):
+                    if not set(item_value) & set(value):
+                        return False
+                else:
+                    if item_value not in value:
+                        return False
             elif isinstance(value, dict):
                 # Range filter: {"$gte": ..., "$lte": ...}
                 if "$gte" in value and item_value is not None:
