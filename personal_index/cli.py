@@ -12,7 +12,7 @@ import yaml
 from personal_index.cli_pipeline import pipeline as pipeline_cmd
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
-from personal_index.models import CrawledPage, Interest
+from personal_index.models import CrawledPage, Interest, SearchResult
 from personal_index.scheduler import Scheduler
 from personal_index.tags import TagStore
 
@@ -294,15 +294,17 @@ def search(ctx, query, limit, snippet, data_dir):
     click.echo("")
 
     for i, result in enumerate(results, 1):
-        page = result.get("page")
-        if isinstance(page, CrawledPage):
-            title = page.title or page.url
-            url = page.url
-            score = page.relevance_score
+        # Handle both SearchResult objects and dicts
+        if isinstance(result, SearchResult):
+            title = result.title or result.url
+            url = result.url
+            score = result.relevance_score
+            snippet_text = result.snippet
         else:
             title = result.get("title", result.get("url", "Unknown"))
             url = result.get("url", "")
             score = result.get("score", 0)
+            snippet_text = result.get("snippet", "")
 
         click.echo(f"  {i}. {title}")
         click.echo(f"     URL: {url}")
@@ -315,15 +317,8 @@ def search(ctx, query, limit, snippet, data_dir):
             tag_names = [t.name for t in tags]
             click.echo(f"     Tags: {', '.join(tag_names)}")
 
-        if snippet:
-            content = result.get("snippet", "")
-            if not content and isinstance(page, CrawledPage):
-                content = page.content or ""
-            if content:
-                snippet_text = content[:200].strip()
-                if len(content) > 200:
-                    snippet_text += "..."
-                click.echo(f"     {snippet_text}")
+        if snippet and snippet_text:
+            click.echo(f"     {snippet_text}")
         click.echo()
 
 
