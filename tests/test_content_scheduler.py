@@ -225,3 +225,62 @@ class TestStats:
         scheduler.disable_task(task.task_id)
         stats = scheduler.get_stats()
         assert stats["disabled"] == 1
+
+
+# --- Additional Scheduler Tests ---
+
+class TestSchedulerEdgeCases:
+    def test_task_to_dict_has_all_fields(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *", config={"key": "val"})
+        d = task.to_dict()
+        assert "task_id" in d
+        assert "name" in d
+        assert "task_type" in d
+        assert "cron_expr" in d
+        assert "enabled" in d
+        assert "status" in d
+        assert "created_at" in d
+        assert "last_run" in d
+        assert "next_run" in d
+        assert "run_count" in d
+        assert "last_error" in d
+        assert "config" in d
+
+    def test_task_status_enum_values(self):
+        assert TaskStatus.PENDING == "pending"
+        assert TaskStatus.RUNNING == "running"
+        assert TaskStatus.COMPLETED == "completed"
+        assert TaskStatus.FAILED == "failed"
+        assert TaskStatus.CANCELLED == "cancelled"
+
+    def test_scheduler_stats_by_type_multiple(self, scheduler):
+        scheduler.add_task("A", "crawl", "* * * * *")
+        scheduler.add_task("B", "crawl", "* * * * *")
+        scheduler.add_task("C", "export", "0 * * * *")
+        stats = scheduler.get_stats()
+        assert stats["by_type"]["crawl"] == 2
+        assert stats["by_type"]["export"] == 1
+
+    def test_disable_and_reenable(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        scheduler.disable_task(task.task_id)
+        assert task.enabled is False
+        scheduler.enable_task(task.task_id)
+        assert task.enabled is True
+
+    def test_task_run_updates_last_run(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        task.run()
+        assert task.last_run is not None
+
+    def test_task_run_failure_preserves_error(self, scheduler):
+        def cb(task):
+            raise RuntimeError("test error")
+        task = scheduler.add_task("T", "crawl", "* * * * *", callback=cb)
+        task.run()
+        assert task.last_error == "test error"
+        assert task.status == TaskStatus.FAILED
+
+    def test_list_tasks_empty(self, scheduler):
+        assert scheduler.list_tasks() == []
+        assert scheduler.list_tasks("crawl") == []
