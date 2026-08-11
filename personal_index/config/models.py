@@ -52,6 +52,9 @@ class Interest:
         match_mode = data.get("match_mode", "any")
         if isinstance(match_mode, str):
             match_mode = MatchMode(match_mode)
+        elif not isinstance(match_mode, MatchMode):
+            match_mode = MatchMode.ANY
+
         return cls(
             name=data["name"],
             keywords=data.get("keywords", []),
@@ -91,8 +94,9 @@ class CrawlerConfig:
         return errors
 
 
-# Backward compat alias
+# Backward compat aliases
 CrawlConfig = CrawlerConfig
+CrawlConfig.__name__ = "CrawlConfig"
 
 
 @dataclass
@@ -193,6 +197,11 @@ class AppConfig:
     def crawl(self, value: CrawlerConfig) -> None:
         self.crawler = value
 
+    # Backward compat aliases
+    @property
+    def indexer(self) -> IndexConfig:
+        return self.index
+
     def validate(self) -> list[str]:
         """Validate all configuration sections."""
         errors = []
@@ -231,11 +240,11 @@ class AppConfig:
         return cls(
             data_dir=data.get("data_dir", ".personal_index"),
             config_dir=data.get("config_dir", ""),
-            crawler=CrawlerConfig(**crawler_data),
-            index=IndexConfig(**index_data),
-            scheduler=SchedulerConfig(**scheduler_data),
-            notifications=NotificationConfig(**notifications_data),
-            export=ExportConfig(**export_data),
+            crawler=CrawlerConfig(**crawler_data) if crawler_data else CrawlerConfig(),
+            index=IndexConfig(**index_data) if index_data else IndexConfig(),
+            scheduler=SchedulerConfig(**scheduler_data) if scheduler_data else SchedulerConfig(),
+            notifications=NotificationConfig(**notifications_data) if notifications_data else NotificationConfig(),
+            export=ExportConfig(**export_data) if export_data else ExportConfig(),
             interests=interests,
             log_level=data.get("log_level", "INFO"),
         )
