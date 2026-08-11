@@ -325,20 +325,40 @@ class PipelineRunner:
         return stats
 
     def _read_file(self, filepath: str) -> CrawledPage | None:
-        """Read a file and create a CrawledPage from it."""
-        from personal_index.content_extractor import ContentExtractor
+        """Read a file and create a CrawledPage from it.
 
-        extractor = ContentExtractor()
-        content = extractor.extract(filepath)
-
-        if not content:
+        Handles plain text (.txt, .md, .rst) and HTML (.html, .htm) files.
+        For HTML files, uses ContentExtractor to extract meaningful text.
+        For plain text files, reads content directly.
+        """
+        if not os.path.isfile(filepath):
             return None
 
+        ext = os.path.splitext(filepath)[1].lower()
         title = os.path.basename(filepath)
+
+        if ext in ('.html', '.htm'):
+            # HTML file: use ContentExtractor
+            from personal_index.content_extractor import ContentExtractor
+            extractor = ContentExtractor()
+            with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+                html_content = f.read()
+            extracted = extractor.extract(html_content)
+            content = extracted.text or ""
+            if extracted.title:
+                title = extracted.title
+        else:
+            # Plain text file: read directly
+            with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+
+        if not content or not content.strip():
+            return None
+
         return CrawledPage(
             url=filepath,
             title=title,
-            content=content,
+            content=content.strip(),
             status_code=200,
             content_length=len(content),
         )
