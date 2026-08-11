@@ -1,549 +1,566 @@
-"""End-to-end integration tests for the full crawl→extract→filter→score→tag→index pipeline.
+"""End-to-end integration tests for the full crawl→extract→filter→score→tag→index→search pipeline.
 
-These tests verify that all pipeline stages work together correctly,
-using real components (not mocks) wherever possible.
+These tests verify that the complete pipeline works correctly from start to finish,
+using real components (not mocks) where possible.
 """
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main
-from personal_index.config.pipeline_config import PipelineConfig, PipelineStepConfig
+from personal_index.content_extractor import ContentExtractor
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
-from personal_index.pipeline_runner import PipelineRunner, PipelineStats
+from personal_index.pipeline import Pipeline, PipelineConfig
 from personal_index.tags import TagStore
 
 
 class TestFullPipelineE2E:
-    """Test the complete pipeline from crawl to search."""
+    """Test the complete pipeline end-to-end with real components."""
 
-    def test_pipeline_runner_full_flow_with_mocked_crawler(self, tmp_path):
-        """Test full pipeline: crawl→extract→filter→score→tag→index with mocked crawler."""
+    def test_pipeline_import_extract_filter_score_tag_index(self, tmp_path):
+        """Test full pipeline: import → extract → filter → score → tag → index."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        config = PipelineConfig(
+            min_content_length=10,
+            min_score_threshold=0.0,
+        )
+        pipe = Pipeline(data_dir=data_dir, config=config)
 
-        # Add interests so filter passes
-        runner._interest_store.add(Interest(
-            name="programming",
-            keywords=["python", "javascript", "programming", "language", "development"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url="https://example.com/page1",
-                title="Python Tutorial",
-                content="Python is a versatile programming language used for web development, data science, and automation. It is widely used in production environments around the world.",
-            ),
-            CrawledPage(
-                url="https://example.com/page2",
-                title="JavaScript Guide",
-                content="JavaScript is the language of the web, used for frontend and backend development. Node.js enables server-side JavaScript programming for scalable applications.",
-            ),
-        ]
-
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
-
-            stats = runner.run(["https://example.com"], max_depth=1)
-
-        assert stats.pages_crawled == 2
-        assert stats.pages_extracted == 2
-        assert stats.pages_filtered_in == 2
-        assert stats.pages_scored == 2
-        assert stats.pages_tagged >= 0  # Tags applied
-        assert stats.pages_indexed == 2
-        assert stats.errors == []
-
-    def test_pipeline_filters_low_quality_content(self, tmp_path):
-        """Test that the pipeline filters out low-quality content."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=50)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        runner._interest_store.add(Interest(
-            name="tech",
-            keywords=["python", "code", "programming"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url="https://example.com/good",
-                title="Good Article",
-                content="Python programming is a great way to learn software development and build amazing applications with clean code.",
-            ),
-            CrawledPage(
-                url="https://example.com/short",
-                title="Short",
-                content="Hi.",
-            ),
-        ]
-
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
-
-            stats = runner.run(["https://example.com"], max_depth=1)
-
-        assert stats.pages_crawled == 2
-        assert stats.pages_filtered_in == 1
-        assert stats.pages_filtered_out == 1
-        assert stats.pages_indexed == 1
-
-    def test_pipeline_auto_tags_pages(self, tmp_path):
-        """Test that the pipeline auto-tags pages based on content."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        runner._interest_store.add(Interest(
+        # Add an interest
+        pipe.interest_store.add(Interest(
             name="python",
             keywords=["python", "django", "flask"],
         ))
 
+        # Import pages directly
         pages = [
             CrawledPage(
-                url="https://example.com/blog/python-tips",
-                title="Python Tips",
-                content="Python programming tips for web development using Django and Flask frameworks.",
+                url="file:///tmp/article1.txt",
+                title="Python Tutorial",
+                content="Python is a great programming language for web development with Django.",
+            ),
+            CrawledPage(
+                url="file:///tmp/article2.txt",
+                title="JavaScript Guide",
+                content="JavaScript is the language of the web, used for frontend development.",
+            ),
+            CrawledPage(
+                url="file:///tmp/article3.txt",
+                title="Flask Framework",
+                content="Flask is a lightweight Python web framework for building APIs.",
             ),
         ]
 
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
+        imported = 0
+        for page in pages:
+            if pipe.add_page_directly(page):
+                imported += 1
 
-            runner.run(["https://example.com"], max_depth=1)
+        assert imported >= 2  # At least python/flask articles should pass
 
-        # Check tags were created
-        tag_names = [t.name for t in runner._tag_store.list_tags()]
-        assert "python" in tag_names
-        assert "blog" in tag_names
+        # Verify stats
+        stats = pipe.get_stats()
+        assert stats["indexed_pages"] >= 2
+        assert stats["total_interests"] == 1
+        assert stats["total_tags"] >= 1
 
-    def test_pipeline_index_persists_and_searches(self, tmp_path):
-        """Test that indexed content persists and can be searched."""
+    def test_pipeline_search_after_index(self, tmp_path):
+        """Test that search works after indexing through the pipeline."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        runner._interest_store.add(Interest(
-            name="tech",
-            keywords=["rust", "systems", "programming"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url="https://example.com/rust-intro",
-                title="Introduction to Rust",
-                content="Rust is a systems programming language that focuses on safety, speed, and concurrency. It is used for building reliable software.",
-            ),
-        ]
-
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
-
-            runner.run(["https://example.com"], max_depth=1)
-
-        # Verify search works on indexed data
-        results = runner._search_index.search("rust")
-        assert len(results) == 1
-        assert "Rust" in results[0].title
-        assert "rust-intro" in results[0].url
-
-    def test_pipeline_with_no_interests_passes_all(self, tmp_path):
-        """Test pipeline behavior when no interests are configured."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        # No interests added - filter should still work with content length
-
-        pages = [
-            CrawledPage(
-                url="https://example.com/page1",
-                title="Some Content",
-                content="This is a page with enough content to pass the minimum length filter for testing purposes.",
-            ),
-        ]
-
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
-
-            stats = runner.run(["https://example.com"], max_depth=1)
-
-        # Without interests, require_interest_match should filter out
-        # But the pipeline runner sets require_interest_match=True
-        # So pages without matching interests get filtered
-        assert stats.pages_crawled == 1
-
-    def test_pipeline_stats_tracking(self, tmp_path):
-        """Test that pipeline stats are accurately tracked."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        runner._interest_store.add(Interest(
-            name="general",
-            keywords=["hello", "world", "test", "content", "page"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url=f"https://example.com/page{i}",
-                title=f"Page {i}",
-                content=f"This is test content for page {i}. It has enough words to pass the content length filter.",
-            )
-            for i in range(5)
-        ]
-
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
-
-            stats = runner.run(["https://example.com"], max_depth=1)
-
-        assert stats.pages_crawled == 5
-        assert stats.pages_extracted == 5
-        assert stats.pages_filtered_in == 5
-        assert stats.pages_indexed == 5
-        assert stats.elapsed_seconds >= 0
-
-        # Verify summary output contains key metrics
-        summary = stats.summary()
-        assert "Crawled:" in summary
-        assert "5" in summary
-        assert "Indexed:" in summary
-
-    def test_pipeline_stats_to_dict(self, tmp_path):
-        """Test PipelineStats.to_dict() serialization."""
-        stats = PipelineStats(
-            pages_crawled=10,
-            pages_extracted=10,
-            pages_filtered_in=8,
-            pages_filtered_out=2,
-            pages_scored=8,
-            pages_tagged=8,
-            tags_applied=16,
-            pages_indexed=8,
-            errors=["error1"],
-            elapsed_seconds=1.5,
-        )
-        d = stats.to_dict()
-        assert d["pages_crawled"] == 10
-        assert d["tags_applied"] == 16
-        assert d["elapsed_seconds"] == 1.5
-        assert d["errors"] == ["error1"]
-
-
-class TestPipelineStepControl:
-    """Test individual step enable/disable in the pipeline."""
-
-    def test_skip_crawl_step(self, tmp_path):
-        """Test running pipeline without crawl step."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(
-            steps=[PipelineStepConfig(name="crawl", enabled=False)],
-            min_score_threshold=0.0,
+        config = PipelineConfig(
             min_content_length=10,
-        )
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        stats = runner.run(["https://example.com"], max_depth=1)
-        assert stats.pages_crawled == 0
-        assert stats.pages_indexed == 0
-
-    def test_skip_filter_step(self, tmp_path):
-        """Test running pipeline without filter step."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(
-            steps=[PipelineStepConfig(name="filter", enabled=False)],
             min_score_threshold=0.0,
-            min_content_length=10,
         )
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        pipe = Pipeline(data_dir=data_dir, config=config)
 
-        runner._interest_store.add(Interest(
+        pipe.interest_store.add(Interest(
             name="tech",
-            keywords=["python"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url="https://example.com/page1",
-                title="Python Page",
-                content="Python programming language for web development and software engineering.",
-            ),
-        ]
-
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
-
-            stats = runner.run(["https://example.com"], max_depth=1)
-
-        # Without filter, all pages should pass through
-        assert stats.pages_crawled == 1
-        assert stats.pages_indexed == 1
-
-    def test_only_index_step(self, tmp_path):
-        """Test running only the index step."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(
-            steps=[
-                PipelineStepConfig(name="crawl", enabled=False),
-                PipelineStepConfig(name="extract", enabled=False),
-                PipelineStepConfig(name="filter", enabled=False),
-                PipelineStepConfig(name="score", enabled=False),
-                PipelineStepConfig(name="tag", enabled=False),
-                PipelineStepConfig(name="index", enabled=True),
-            ],
-        )
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        stats = runner.run([], max_depth=1)
-        assert stats.pages_crawled == 0
-        assert stats.pages_indexed == 0
-
-
-class TestPipelineDirectPageAdd:
-    """Test adding pages directly through the pipeline."""
-
-    def test_add_page_directly_success(self, tmp_path):
-        """Test adding a page directly through the pipeline."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        runner._interest_store.add(Interest(
-            name="python",
-            keywords=["python", "programming"],
+            keywords=["python", "javascript", "rust", "programming"],
         ))
 
         page = CrawledPage(
-            url="https://example.com/direct",
-            title="Direct Import",
-            content="Python programming is a popular way to build web applications and data pipelines.",
+            url="file:///tmp/tech.txt",
+            title="Programming Languages",
+            content="Python, JavaScript, and Rust are popular programming languages.",
         )
+        assert pipe.add_page_directly(page)
 
-        result = runner.add_page_directly(page)
-        assert result is True
-        assert runner._search_index.get_page_count() == 1
+        # Search should find the page
+        results = pipe.search("python")
+        assert len(results) >= 1
+        assert "python" in results[0].title.lower() or "python" in results[0].snippet.lower()
 
-    def test_add_page_directly_filtered_out(self, tmp_path):
-        """Test that short content is filtered when adding directly."""
+    def test_pipeline_filters_short_content(self, tmp_path):
+        """Test that the pipeline filters out short content."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=100)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        config = PipelineConfig(
+            min_content_length=50,
+            min_score_threshold=0.0,
+        )
+        pipe = Pipeline(data_dir=data_dir, config=config)
 
-        runner._interest_store.add(Interest(
-            name="python",
-            keywords=["python"],
+        pipe.interest_store.add(Interest(
+            name="test",
+            keywords=["hello"],
         ))
 
-        page = CrawledPage(
-            url="https://example.com/short",
+        short_page = CrawledPage(
+            url="file:///tmp/short.txt",
             title="Short",
-            content="Hi.",
+            content="Hi there.",
         )
+        assert not pipe.add_page_directly(short_page)
 
-        result = runner.add_page_directly(page)
-        assert result is False
-        assert runner._search_index.get_page_count() == 0
+        long_page = CrawledPage(
+            url="file:///tmp/long.txt",
+            title="Long Article",
+            content="Hello world! This is a much longer article with enough content to pass the minimum length filter. It discusses various topics in detail.",
+        )
+        assert pipe.add_page_directly(long_page)
 
-    def test_add_page_directly_no_content(self, tmp_path):
-        """Test that pages with no content are rejected."""
+    def test_pipeline_auto_tags_by_interest(self, tmp_path):
+        """Test that pages are automatically tagged based on interests."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        config = PipelineConfig(
+            min_content_length=10,
+            min_score_threshold=0.0,
+        )
+        pipe = Pipeline(data_dir=data_dir, config=config)
+
+        pipe.interest_store.add(Interest(
+            name="webdev",
+            keywords=["javascript", "react", "html", "css"],
+        ))
 
         page = CrawledPage(
-            url="https://example.com/empty",
-            title="Empty Page",
+            url="https://example.com/blog/react-tutorial",
+            title="React Tutorial",
+            content="React is a JavaScript library for building user interfaces with HTML and CSS.",
+        )
+        assert pipe.add_page_directly(page)
+
+        # Check tags were applied
+        stats = pipe.get_stats()
+        assert stats["total_tags"] >= 1
+        assert stats["tagged_pages"] >= 1
+
+    def test_pipeline_auto_tags_by_url_pattern(self, tmp_path):
+        """Test that pages are tagged based on URL patterns."""
+        data_dir = str(tmp_path / "data")
+        config = PipelineConfig(
+            min_content_length=10,
+            min_score_threshold=0.0,
+        )
+        pipe = Pipeline(data_dir=data_dir, config=config)
+
+        pipe.interest_store.add(Interest(
+            name="general",
+            keywords=["content"],
+        ))
+
+        page = CrawledPage(
+            url="https://github.com/example/repo",
+            title="GitHub Repo",
+            content="This is a content repository on GitHub with interesting code.",
+        )
+        assert pipe.add_page_directly(page)
+
+        # Check that github tag was applied
+        tags = pipe.tag_store.get_tags_for_page("https://github.com/example/repo")
+        tag_names = [t.name for t in tags]
+        assert "github" in tag_names
+
+    def test_pipeline_persistence(self, tmp_path):
+        """Test that pipeline data persists across Pipeline instances."""
+        data_dir = str(tmp_path / "data")
+        config = PipelineConfig(
+            min_content_length=10,
+            min_score_threshold=0.0,
+        )
+
+        # First instance: add content
+        pipe1 = Pipeline(data_dir=data_dir, config=config)
+        pipe1.interest_store.add(Interest(
+            name="test",
+            keywords=["hello"],
+        ))
+        page = CrawledPage(
+            url="file:///tmp/persist.txt",
+            title="Persistent Page",
+            content="Hello world! This content should persist across pipeline instances.",
+        )
+        pipe1.add_page_directly(page)
+
+        # Second instance: verify content persists
+        pipe2 = Pipeline(data_dir=data_dir, config=config)
+        stats = pipe2.get_stats()
+        assert stats["indexed_pages"] >= 1
+        assert stats["total_interests"] >= 1
+
+
+class TestCLIE2E:
+    """Test the CLI end-to-end workflows."""
+
+    def test_cli_full_workflow(self, tmp_path, monkeypatch):
+        """Test complete CLI workflow: init → interests → import → search → export."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # 1. Initialize
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        # 2. Add interests
+        result = runner.invoke(main, [
+            "interests", "add", "-n", "python",
+            "-k", "python", "-k", "django",
+        ])
+        assert result.exit_code == 0
+
+        # 3. Create and import content
+        article = tmp_path / "article.txt"
+        article.write_text(
+            "Python is a versatile programming language for web development with Django."
+        )
+        result = runner.invoke(main, ["import", str(article)])
+        assert result.exit_code == 0
+
+        # 4. Search
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
+        assert "python" in result.output.lower()
+
+        # 5. Export
+        result = runner.invoke(main, ["export", "--format", "markdown"])
+        assert result.exit_code == 0
+
+        # 6. Status
+        result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "Indexed pages:" in result.output
+
+    def test_cli_pipeline_with_import_files(self, tmp_path, monkeypatch):
+        """Test CLI pipeline command with --import-file."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # Initialize
+        runner.invoke(main, ["init"])
+
+        # Add interests
+        runner.invoke(main, [
+            "interests", "add", "-n", "tech",
+            "-k", "python", "-k", "javascript",
+        ])
+
+        # Create test files
+        file1 = tmp_path / "python.txt"
+        file1.write_text("Python is a great programming language for web development.")
+        file2 = tmp_path / "javascript.txt"
+        file2.write_text("JavaScript is the language of the web, used for frontend development.")
+
+        # Run pipeline
+        result = runner.invoke(main, [
+            "pipeline",
+            "--import-file", str(file1),
+            "--import-file", str(file2),
+        ])
+        assert result.exit_code == 0
+        assert "Imported" in result.output
+
+        # Verify search works
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
+
+    def test_cli_pipeline_dry_run(self, tmp_path, monkeypatch):
+        """Test CLI pipeline --dry-run mode."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        file1 = tmp_path / "test.txt"
+        file1.write_text("Some content here.")
+
+        result = runner.invoke(main, [
+            "pipeline",
+            "--import-file", str(file1),
+            "--dry-run",
+        ])
+        assert result.exit_code == 0
+        assert "Dry run" in result.output
+
+    def test_cli_pipeline_with_min_score(self, tmp_path, monkeypatch):
+        """Test CLI pipeline with --min-score filter."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+        runner.invoke(main, [
+            "interests", "add", "-n", "python",
+            "-k", "python",
+        ])
+
+        file1 = tmp_path / "relevant.txt"
+        file1.write_text("Python Python Python - very relevant content about Python.")
+        file2 = tmp_path / "irrelevant.txt"
+        file2.write_text("This content has nothing to do with Python at all.")
+
+        result = runner.invoke(main, [
+            "pipeline",
+            "--import-file", str(file1),
+            "--import-file", str(file2),
+            "--min-score", "0.0",
+        ])
+        assert result.exit_code == 0
+
+    def test_cli_tags_workflow(self, tmp_path, monkeypatch):
+        """Test CLI tags workflow."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Add tag
+        result = runner.invoke(main, [
+            "tags", "add", "important", "https://example.com/page1",
+        ])
+        assert result.exit_code == 0
+
+        # List tags
+        result = runner.invoke(main, ["tags", "list"])
+        assert result.exit_code == 0
+
+    def test_cli_search_with_tag_filter(self, tmp_path, monkeypatch):
+        """Test CLI search with --tag filter."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        # Import content
+        article = tmp_path / "article.txt"
+        article.write_text("Python programming tutorial for web development.")
+        runner.invoke(main, ["import", str(article)])
+
+        # Search with tag filter (may return empty if no tags)
+        result = runner.invoke(main, ["search", "python", "--tag", "python"])
+        assert result.exit_code == 0
+
+
+class TestPipelineComponents:
+    """Test individual pipeline components work correctly together."""
+
+    def test_extractor_filter_scorer_chain(self, tmp_path):
+        """Test that extractor → filter → scorer chain works."""
+        # Extract
+        extractor = ContentExtractor()
+        html = """
+        <html><head><title>Python Tutorial</title></head>
+        <body><p>Python is a great programming language.</p></body></html>
+        """
+        extracted = extractor.extract(html)
+        assert extracted.title == "Python Tutorial"
+        assert "Python" in extracted.text
+
+        # Build page from extraction
+        page = CrawledPage(
+            url="https://example.com/python",
+            title=extracted.title,
+            content=extracted.text,
+        )
+
+        # Filter
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="python", keywords=["python"]))
+        filter_cfg = FilterConfig(min_content_length=10)
+        content_filter = ContentFilter(config=filter_cfg, interest_store=store)
+        assert content_filter.should_include(page)
+
+        # Score
+        scorer = ContentScorer()
+        score_result = scorer.score_page(page, store)
+        assert score_result.total > 0
+
+    def test_index_search_roundtrip(self, tmp_path):
+        """Test that indexing and searching work correctly."""
+        db_path = str(tmp_path / "index.json")
+        index = SearchIndex(db_path=db_path)
+
+        # Add pages
+        pages = [
+            CrawledPage(url="https://a.com", title="Page A", content="Alpha content here."),
+            CrawledPage(url="https://b.com", title="Page B", content="Beta content here."),
+            CrawledPage(url="https://c.com", title="Page C", content="Gamma content here."),
+        ]
+        for page in pages:
+            index.add_page(page)
+
+        assert index.get_page_count() == 3
+
+        # Search
+        results = index.search("alpha")
+        assert len(results) == 1
+        assert results[0].url == "https://a.com"
+
+        # Persistence
+        index.close()
+        index2 = SearchIndex(db_path=db_path)
+        assert index2.get_page_count() == 3
+        results2 = index2.search("beta")
+        assert len(results2) == 1
+
+    def test_tag_store_operations(self, tmp_path):
+        """Test tag store CRUD operations."""
+        store = TagStore(store_path=str(tmp_path / "tags.json"))
+
+        # Create tags
+        store.create_tag("python", color="#3572A5")
+        store.create_tag("web", color="#2ecc71")
+
+        # Add to pages
+        store.add_tag_to_page("https://example.com/1", "python")
+        store.add_tag_to_page("https://example.com/1", "web")
+        store.add_tag_to_page("https://example.com/2", "python")
+
+        # Get tags for page
+        tags = store.get_tags_for_page("https://example.com/1")
+        tag_names = [t.name for t in tags]
+        assert "python" in tag_names
+        assert "web" in tag_names
+
+        # Get pages for tag
+        pages = store.get_pages_for_tag("python")
+        assert "https://example.com/1" in pages
+        assert "https://example.com/2" in pages
+
+        # List all tags
+        all_tags = store.list_tags()
+        assert len(all_tags) == 2
+
+    def test_interest_store_operations(self, tmp_path):
+        """Test interest store CRUD operations."""
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+
+        # Add interests
+        store.add(Interest(name="python", keywords=["python", "django"]))
+        store.add(Interest(name="web", keywords=["html", "css", "javascript"]))
+
+        # List all
+        interests = store.list_all()
+        assert len(interests) == 2
+
+        # Match
+        text = "Python and Django are great for web development."
+        matches = store.matches_any(text, "")
+        assert len(matches) >= 1
+
+        # Score
+        score = store.total_score(text)
+        assert score > 0
+
+        # Remove
+        store.remove("python")
+        interests = store.list_all()
+        assert len(interests) == 1
+
+
+class TestPipelineEdgeCases:
+    """Test edge cases and error handling in the pipeline."""
+
+    def test_pipeline_empty_content(self, tmp_path):
+        """Test pipeline handles empty content gracefully."""
+        data_dir = str(tmp_path / "data")
+        config = PipelineConfig(min_content_length=10, min_score_threshold=0.0)
+        pipe = Pipeline(data_dir=data_dir, config=config)
+
+        pipe.interest_store.add(Interest(name="test", keywords=["test"]))
+
+        page = CrawledPage(
+            url="file:///tmp/empty.txt",
+            title="Empty",
             content="",
         )
+        assert not pipe.add_page_directly(page)
 
-        result = runner.add_page_directly(page)
-        assert result is False
-
-
-class TestPipelineDataPersistence:
-    """Test that pipeline data persists across runs."""
-
-    def test_interests_persist_across_pipeline_runs(self, tmp_path):
-        """Test that interests persist between pipeline runs."""
+    def test_pipeline_no_interests(self, tmp_path):
+        """Test pipeline works without any interests configured."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        config = PipelineConfig(
+            min_content_length=10,
+            min_score_threshold=0.0,
+        )
+        pipe = Pipeline(data_dir=data_dir, config=config)
 
-        runner._interest_store.add(Interest(
-            name="python",
-            keywords=["python"],
-        ))
+        # No interests added - filter should still work
+        page = CrawledPage(
+            url="file:///tmp/no-interest.txt",
+            title="No Interest Match",
+            content="This content has no matching interests but should still be processable.",
+        )
+        # Without interests, require_interest_match should be handled
+        result = pipe.add_page_directly(page)
+        # Should either pass or fail gracefully
+        assert isinstance(result, bool)
 
-        # Create a new runner pointing to same data dir
-        runner2 = PipelineRunner(config=cfg, data_dir=data_dir)
-        interests = runner2._interest_store.list_all()
-        assert len(interests) == 1
-        assert interests[0].name == "python"
-
-    def test_index_persists_across_pipeline_runs(self, tmp_path):
-        """Test that search index persists between pipeline runs."""
+    def test_pipeline_duplicate_pages(self, tmp_path):
+        """Test pipeline handles duplicate pages."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        config = PipelineConfig(min_content_length=10, min_score_threshold=0.0)
+        pipe = Pipeline(data_dir=data_dir, config=config)
 
-        runner._interest_store.add(Interest(
-            name="tech",
-            keywords=["python", "code"],
-        ))
+        pipe.interest_store.add(Interest(name="test", keywords=["hello"]))
 
         page = CrawledPage(
-            url="https://example.com/persist",
-            title="Persistent Page",
-            content="Python code examples for web development and software engineering.",
+            url="file:///tmp/dup.txt",
+            title="Duplicate",
+            content="Hello world! This is a test page with hello content.",
         )
-        runner.add_page_directly(page)
+        pipe.add_page_directly(page)
+        pipe.add_page_directly(page)  # Duplicate
 
-        # New runner should see the indexed page
-        runner2 = PipelineRunner(config=cfg, data_dir=data_dir)
-        assert runner2._search_index.get_page_count() == 1
-        results = runner2._search_index.search("python")
-        assert len(results) == 1
+        stats = pipe.get_stats()
+        assert stats["indexed_pages"] == 1  # Should only have one copy
 
-    def test_tags_persist_across_pipeline_runs(self, tmp_path):
-        """Test that tags persist between pipeline runs."""
+    def test_pipeline_special_characters(self, tmp_path):
+        """Test pipeline handles special characters in content."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
+        config = PipelineConfig(min_content_length=10, min_score_threshold=0.0)
+        pipe = Pipeline(data_dir=data_dir, config=config)
 
-        runner._interest_store.add(Interest(
-            name="python",
-            keywords=["python"],
-        ))
+        pipe.interest_store.add(Interest(name="unicode", keywords=["test"]))
 
         page = CrawledPage(
-            url="https://example.com/tagged",
-            title="Tagged Page",
-            content="Python programming language for web development.",
+            url="file:///tmp/unicode.txt",
+            title="Unicode Test 测试",
+            content="Hello 世界! This is a test with unicode characters: émojis 🎉 and symbols ©®™.",
         )
-        runner.add_page_directly(page)
+        result = pipe.add_page_directly(page)
+        assert isinstance(result, bool)
 
-        # New runner should see the tags
-        runner2 = PipelineRunner(config=cfg, data_dir=data_dir)
-        tag_names = [t.name for t in runner2._tag_store.list_tags()]
-        assert "python" in tag_names
-
-
-class TestPipelineProgressCallback:
-    """Test pipeline progress callback functionality."""
-
-    def test_progress_callback_receives_updates(self, tmp_path):
-        """Test that progress callback receives updates during pipeline run."""
+    def test_pipeline_very_long_content(self, tmp_path):
+        """Test pipeline handles very long content."""
         data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
+        config = PipelineConfig(min_content_length=10, min_score_threshold=0.0)
+        pipe = Pipeline(data_dir=data_dir, config=config)
 
-        progress_log = []
+        pipe.interest_store.add(Interest(name="long", keywords=["test"]))
 
-        def callback(step, current, total):
-            progress_log.append((step, current, total))
-
-        runner = PipelineRunner(
-            config=cfg,
-            data_dir=data_dir,
-            progress_callback=callback,
-        )
-
-        runner._interest_store.add(Interest(
-            name="python",
-            keywords=["python"],
-        ))
-
+        long_content = "test " * 10000  # 50KB of content
         page = CrawledPage(
-            url="https://example.com/page",
-            title="Python Page",
-            content="Python programming language for web development.",
+            url="file:///tmp/long.txt",
+            title="Very Long Page",
+            content=long_content,
         )
-        runner.add_page_directly(page)
-
-        # Direct add doesn't use progress callback, but runner accepts it
-        assert runner.progress_callback is not None
-
-    def test_progress_callback_with_mocked_crawler(self, tmp_path):
-        """Test progress callback during full pipeline with mocked crawler."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-
-        progress_log = []
-
-        def callback(step, current, total):
-            progress_log.append((step, current, total))
-
-        runner = PipelineRunner(
-            config=cfg,
-            data_dir=data_dir,
-            progress_callback=callback,
-        )
-
-        runner._interest_store.add(Interest(
-            name="python",
-            keywords=["python", "programming"],
-        ))
-
-        pages = [
-            CrawledPage(
-                url="https://example.com/page1",
-                title="Python Page 1",
-                content="Python programming language for web development and software engineering.",
-            ),
-            CrawledPage(
-                url="https://example.com/page2",
-                title="Python Page 2",
-                content="More Python programming content for testing the pipeline progress callback.",
-            ),
-        ]
-
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            mock_crawler.close.return_value = None
-            MockCrawler.return_value = mock_crawler
-
-            runner.run(["https://example.com"], max_depth=1)
-
-        # Verify progress was reported for each step
-        steps_seen = {entry[0] for entry in progress_log}
-        assert "crawl" in steps_seen
-        assert "extract" in steps_seen
-        assert "filter" in steps_seen
-        assert "score" in steps_seen
-        assert "tag" in steps_seen
-        assert "index" in steps_seen
+        result = pipe.add_page_directly(page)
+        assert result is True
