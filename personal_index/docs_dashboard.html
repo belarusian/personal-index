@@ -1,0 +1,2924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>personal-index Dashboard</title>
+<style>
+    :root {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-card: #1e293b;
+        --text-primary: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --accent: #38bdf8;
+        --border: #334155;
+        --green: #22c55e;
+        --yellow: #eab308;
+        --red: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
+        padding: 2rem;
+    }
+    h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--accent);
+    }
+    h2 {
+        font-size: 1.4rem;
+        margin: 2rem 0 1rem;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.5rem;
+    }
+    .subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+    /* Summary stats */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.25rem;
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.25rem;
+    }
+    .stat-card.errors .stat-value { color: var(--red); }
+    .stat-card.warnings .stat-value { color: var(--yellow); }
+    .stat-card.tests .stat-value { color: var(--green); }
+
+    /* Module grid */
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 0.75rem;
+    }
+    .module-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+    }
+    .module-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .module-name {
+        font-family: 'Fira Code', 'Cascadia Code', monospace;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .module-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    /* Test bars */
+    .test-bar-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+    }
+    .test-bar-label {
+        width: 260px;
+        min-width: 260px;
+        font-family: monospace;
+        color: var(--text-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .test-bar-track {
+        flex: 1;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        height: 22px;
+        overflow: hidden;
+    }
+    .test-bar-fill {
+        background: var(--green);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #fff;
+        min-width: 24px;
+        border-radius: 4px;
+    }
+
+    /* Dependency tree */
+    .dep-tree {
+        font-family: 'Fira Code', 'Cascadia Code', monospace;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.8;
+    }
+    .dep-node { margin-bottom: 0.5rem; }
+    .dep-child { padding-left: 1rem; color: var(--text-secondary); }
+
+    /* Test results */
+    .test-results {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem;
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    /* Footer */
+    .footer {
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<h1>personal-index Dashboard</h1>
+<p class="subtitle">Codebase visualization &amp; health report</p>
+
+<!-- Summary Stats -->
+<h2>Summary Statistics</h2>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">188</div>
+        <div class="stat-label">Modules</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">29,075</div>
+        <div class="stat-label">Lines of Code</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">394</div>
+        <div class="stat-label">Classes</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">1623</div>
+        <div class="stat-label">Functions</div>
+    </div>
+    <div class="stat-card tests">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Tests</div>
+    </div>
+    <div class="stat-card warnings">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Warnings</div>
+    </div>
+    <div class="stat-card errors">
+        <div class="stat-value">24</div>
+        <div class="stat-label">Errors</div>
+    </div>
+</div>
+
+<!-- Module Map -->
+<h2>Module Map</h2>
+<div class="module-grid">
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>3 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.analytics</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>267 lines</span>
+                    <span>4 classes</span>
+                    <span>14 functions</span>
+                    <span>0 tests</span>
+                    <span>2 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.annotation</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>205 lines</span>
+                    <span>3 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>2 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.api.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>1 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.api.handlers</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>136 lines</span>
+                    <span>3 classes</span>
+                    <span>8 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.api.middleware</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>156 lines</span>
+                    <span>3 classes</span>
+                    <span>8 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.api.models</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>182 lines</span>
+                    <span>10 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.api.pagination</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>145 lines</span>
+                    <span>2 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.api.rate_limit_middleware</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>220 lines</span>
+                    <span>4 classes</span>
+                    <span>12 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.api.server</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>60 lines</span>
+                    <span>0 classes</span>
+                    <span>2 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.auth.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>45 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.auth.api_keys</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>187 lines</span>
+                    <span>2 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>2 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.auth.passwords</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>106 lines</span>
+                    <span>1 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.auth.permissions</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>143 lines</span>
+                    <span>4 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.auth.sessions</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>188 lines</span>
+                    <span>2 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.auth.tokens</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>189 lines</span>
+                    <span>2 classes</span>
+                    <span>14 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.backup</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>250 lines</span>
+                    <span>2 classes</span>
+                    <span>12 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.bookmark_export</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>204 lines</span>
+                    <span>2 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.bookmarks</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>162 lines</span>
+                    <span>2 classes</span>
+                    <span>18 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.cache</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>273 lines</span>
+                    <span>3 classes</span>
+                    <span>23 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.cli</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>312 lines</span>
+                    <span>0 classes</span>
+                    <span>21 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.config.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>110 lines</span>
+                    <span>3 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.config.loader</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>124 lines</span>
+                    <span>0 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.config.models</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>25 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>149 lines</span>
+                    <span>1 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_aggregator.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>12 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_aggregator.aggregator</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>116 lines</span>
+                    <span>1 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_aggregator.merge</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>163 lines</span>
+                    <span>2 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_aggregator.source</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>63 lines</span>
+                    <span>2 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_analytics</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>249 lines</span>
+                    <span>2 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_analytics.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>11 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_analytics.insights</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>144 lines</span>
+                    <span>2 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_analytics.stats</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>78 lines</span>
+                    <span>1 classes</span>
+                    <span>1 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_analytics.trends</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>137 lines</span>
+                    <span>2 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_annotations</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>276 lines</span>
+                    <span>3 classes</span>
+                    <span>25 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_archive.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>7 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_archive.archive_entry</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>75 lines</span>
+                    <span>2 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_archive.archiver</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>126 lines</span>
+                    <span>2 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_archive.compressor</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>59 lines</span>
+                    <span>2 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_backup.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>11 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_backup.backup_manager</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>136 lines</span>
+                    <span>2 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_backup.backup_store</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>178 lines</span>
+                    <span>2 classes</span>
+                    <span>8 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_backup.restore</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>122 lines</span>
+                    <span>2 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_batch</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>239 lines</span>
+                    <span>2 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_cache</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>271 lines</span>
+                    <span>4 classes</span>
+                    <span>19 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_cache.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>12 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_cache.cache_policy</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>32 lines</span>
+                    <span>2 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_cache.cache_stats</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>56 lines</span>
+                    <span>1 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_cache.cache_store</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>140 lines</span>
+                    <span>2 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_categorizer</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>590 lines</span>
+                    <span>4 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_changelog</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>37 lines</span>
+                    <span>2 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_collections</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>292 lines</span>
+                    <span>2 classes</span>
+                    <span>31 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_dedup</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>643 lines</span>
+                    <span>9 classes</span>
+                    <span>32 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_diff</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>40 lines</span>
+                    <span>1 classes</span>
+                    <span>1 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_diff.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>11 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_diff.changes</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>132 lines</span>
+                    <span>3 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_diff.snapshot</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>145 lines</span>
+                    <span>2 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_digest</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>290 lines</span>
+                    <span>5 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_enricher</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>187 lines</span>
+                    <span>2 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_export.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>15 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_export.csv_export</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>160 lines</span>
+                    <span>2 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_export.json_export</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>181 lines</span>
+                    <span>2 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_export.markdown_export</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>164 lines</span>
+                    <span>1 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_export_csv</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>221 lines</span>
+                    <span>3 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_extractor</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>163 lines</span>
+                    <span>2 classes</span>
+                    <span>12 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_feed</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>245 lines</span>
+                    <span>3 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_filter</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>129 lines</span>
+                    <span>2 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_health</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>546 lines</span>
+                    <span>4 classes</span>
+                    <span>21 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_linker.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>7 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_linker.link</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>57 lines</span>
+                    <span>2 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_linker.linker</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>148 lines</span>
+                    <span>1 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_linker.similarity</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>59 lines</span>
+                    <span>1 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_merger</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>229 lines</span>
+                    <span>2 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_monitor.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>22 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_monitor.alert</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>137 lines</span>
+                    <span>3 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_monitor.health</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>121 lines</span>
+                    <span>3 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_monitor.info</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>261 lines</span>
+                    <span>4 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_monitor.monitor</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>273 lines</span>
+                    <span>1 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_notifications</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>239 lines</span>
+                    <span>5 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_pin</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>171 lines</span>
+                    <span>2 classes</span>
+                    <span>12 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_priority</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>454 lines</span>
+                    <span>6 classes</span>
+                    <span>29 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_rollback</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>48 lines</span>
+                    <span>2 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_router.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>12 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_router.handler</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>73 lines</span>
+                    <span>3 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_router.route</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>101 lines</span>
+                    <span>2 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_router.router</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>84 lines</span>
+                    <span>1 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_scheduler</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>257 lines</span>
+                    <span>4 classes</span>
+                    <span>12 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_scoring</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>316 lines</span>
+                    <span>4 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_search.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>13 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_search.search_engine</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>140 lines</span>
+                    <span>1 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_search.search_index</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>119 lines</span>
+                    <span>1 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_search.search_result</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>42 lines</span>
+                    <span>2 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_search.tokenizer</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>77 lines</span>
+                    <span>1 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_tagger.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>7 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_tagger.detector</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>158 lines</span>
+                    <span>2 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_tagger.tag</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>26 lines</span>
+                    <span>1 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_tagger.tagger</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>65 lines</span>
+                    <span>2 classes</span>
+                    <span>8 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_timeline</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>154 lines</span>
+                    <span>3 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_timeline.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>18 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_timeline.timeline</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>135 lines</span>
+                    <span>1 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_timeline.timeline_entry</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>70 lines</span>
+                    <span>2 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_timeline.timeline_event</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>82 lines</span>
+                    <span>2 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_timeline.timeline_view</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>102 lines</span>
+                    <span>3 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_transform</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>191 lines</span>
+                    <span>1 classes</span>
+                    <span>12 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_transform.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>11 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_transform.normalizer</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>83 lines</span>
+                    <span>1 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_transform.pipeline</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>70 lines</span>
+                    <span>1 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_transform.transformer</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>116 lines</span>
+                    <span>1 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_type</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>317 lines</span>
+                    <span>2 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_validation</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>208 lines</span>
+                    <span>3 classes</span>
+                    <span>8 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_validator.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>13 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_validator.quality</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>112 lines</span>
+                    <span>2 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_validator.rules</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>127 lines</span>
+                    <span>2 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_validator.schema</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>112 lines</span>
+                    <span>2 classes</span>
+                    <span>3 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_versioning</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>215 lines</span>
+                    <span>2 classes</span>
+                    <span>12 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.content_webhooks</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>269 lines</span>
+                    <span>4 classes</span>
+                    <span>14 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.crawler.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>254 lines</span>
+                    <span>3 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.crawler.main</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>178 lines</span>
+                    <span>2 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.crawler.robots</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>154 lines</span>
+                    <span>3 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>2 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.dashboard.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>23 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.dashboard.aggregator</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>207 lines</span>
+                    <span>3 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>3 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.dashboard.export</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>221 lines</span>
+                    <span>3 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>1 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.dashboard.stats</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>37 lines</span>
+                    <span>1 classes</span>
+                    <span>1 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.dashboard.views</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>216 lines</span>
+                    <span>3 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.dedup</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>35 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.docs_generator</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>676 lines</span>
+                    <span>4 classes</span>
+                    <span>14 functions</span>
+                    <span>0 tests</span>
+                    <span>3 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.domains</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>196 lines</span>
+                    <span>2 classes</span>
+                    <span>15 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.encoding</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>94 lines</span>
+                    <span>2 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.export</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>229 lines</span>
+                    <span>2 classes</span>
+                    <span>14 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.export_markdown</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>319 lines</span>
+                    <span>3 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.filter.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>10 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.filter.engine</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>119 lines</span>
+                    <span>2 classes</span>
+                    <span>8 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.filter.matcher</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>119 lines</span>
+                    <span>2 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.formatter</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>179 lines</span>
+                    <span>0 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.fuzzy_search</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>181 lines</span>
+                    <span>2 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.health</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>19 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.importer</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>249 lines</span>
+                    <span>2 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.index</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>182 lines</span>
+                    <span>1 classes</span>
+                    <span>15 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.interests</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>133 lines</span>
+                    <span>1 classes</span>
+                    <span>15 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.keyword_extractor</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>112 lines</span>
+                    <span>2 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.link_analyzer</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>135 lines</span>
+                    <span>3 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.link_preview</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>139 lines</span>
+                    <span>2 classes</span>
+                    <span>6 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.logging_config</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>47 lines</span>
+                    <span>0 classes</span>
+                    <span>2 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.metrics</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>162 lines</span>
+                    <span>2 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.migrations.001_initial_schema</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>54 lines</span>
+                    <span>0 classes</span>
+                    <span>2 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.migrations.002_add_indexes</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>44 lines</span>
+                    <span>0 classes</span>
+                    <span>2 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.migrations.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>1 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.migrations.base</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>218 lines</span>
+                    <span>5 classes</span>
+                    <span>21 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.migrations.runner</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>161 lines</span>
+                    <span>2 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.models</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>429 lines</span>
+                    <span>11 classes</span>
+                    <span>21 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.notifications</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>294 lines</span>
+                    <span>8 classes</span>
+                    <span>28 functions</span>
+                    <span>0 tests</span>
+                    <span>2 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.pagination</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>151 lines</span>
+                    <span>3 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.performance_monitor</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>141 lines</span>
+                    <span>4 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.pipeline</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>141 lines</span>
+                    <span>3 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.progress</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>275 lines</span>
+                    <span>4 classes</span>
+                    <span>26 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.queue</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>251 lines</span>
+                    <span>4 classes</span>
+                    <span>18 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.rate_limiter</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>153 lines</span>
+                    <span>4 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.results</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>157 lines</span>
+                    <span>3 classes</span>
+                    <span>8 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.robots_cache</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>131 lines</span>
+                    <span>2 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.robots_parser</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>131 lines</span>
+                    <span>2 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.rss</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>260 lines</span>
+                    <span>3 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.scheduler</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>266 lines</span>
+                    <span>5 classes</span>
+                    <span>17 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.scraper</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>184 lines</span>
+                    <span>3 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.search_facets.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>14 lines</span>
+                    <span>0 classes</span>
+                    <span>0 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.search_facets.facet</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>74 lines</span>
+                    <span>3 classes</span>
+                    <span>7 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.search_facets.facet_builder</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>112 lines</span>
+                    <span>1 classes</span>
+                    <span>4 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.search_facets.faceted_search</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>178 lines</span>
+                    <span>2 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.search_index</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>146 lines</span>
+                    <span>1 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.search_suggestions</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>189 lines</span>
+                    <span>2 classes</span>
+                    <span>16 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.serializer</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>126 lines</span>
+                    <span>4 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.session</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>319 lines</span>
+                    <span>4 classes</span>
+                    <span>25 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.sitemap</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>195 lines</span>
+                    <span>3 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.sitemap_builder</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>104 lines</span>
+                    <span>2 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.stats</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>130 lines</span>
+                    <span>3 classes</span>
+                    <span>2 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.storage</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>170 lines</span>
+                    <span>1 classes</span>
+                    <span>18 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.tags</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>158 lines</span>
+                    <span>2 classes</span>
+                    <span>17 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.text_utils</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>323 lines</span>
+                    <span>0 classes</span>
+                    <span>15 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.tfidf</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>109 lines</span>
+                    <span>1 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>4 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.throttle</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>146 lines</span>
+                    <span>3 classes</span>
+                    <span>10 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.url_classifier</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>199 lines</span>
+                    <span>3 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.url_dedup</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>209 lines</span>
+                    <span>2 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.url_filter</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>142 lines</span>
+                    <span>2 classes</span>
+                    <span>14 functions</span>
+                    <span>0 tests</span>
+                    <span>2 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.url_history</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>167 lines</span>
+                    <span>2 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.url_utils</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>383 lines</span>
+                    <span>0 classes</span>
+                    <span>23 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.utils.__init__</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>104 lines</span>
+                    <span>0 classes</span>
+                    <span>5 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.validator</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>173 lines</span>
+                    <span>3 classes</span>
+                    <span>11 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #22c55e;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.versioning</span>
+                    <span class="status-badge" style="background:#166534;color:#22c55e;">clean</span>
+                </div>
+                <div class="module-stats">
+                    <span>126 lines</span>
+                    <span>2 classes</span>
+                    <span>13 functions</span>
+                    <span>0 tests</span>
+                    <span>0 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+            <div class="module-card" style="border-left: 4px solid #ef4444;">
+                <div class="module-header">
+                    <span class="module-name">personal_index.webhook</span>
+                    <span class="status-badge" style="background:#991b1b;color:#ef4444;">error</span>
+                </div>
+                <div class="module-stats">
+                    <span>145 lines</span>
+                    <span>4 classes</span>
+                    <span>9 functions</span>
+                    <span>0 tests</span>
+                    <span>1 errors</span>
+                    <span>0 warnings</span>
+                </div>
+            </div>
+
+</div>
+
+<!-- Test Coverage -->
+<h2>Test Coverage</h2>
+<p style="color:var(--text-secondary)">No test data available.</p>
+
+<!-- Dependency Graph -->
+<h2>Dependency Graph</h2>
+<div class="dep-tree">
+<p>No cross-module dependencies detected.</p>
+</div>
+
+<!-- Test Results -->
+<h2>Test Results</h2>
+<div class="test-results">........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 15%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+........................................................................ [ 34%]
+........................................................................ [ 36%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 43%]
+........................................................................ [ 45%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 52%]
+........................................................................ [ 54%]
+........................................................................ [ 56%]
+.............................s.......................................... [ 58%]
+......................................s................................. [ 61%]
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 72%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 88%]
+........................................................................ [ 90%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 97%]
+........................................................................ [ 99%]
+.....                                                                    [100%]
+3171 passed, 2 skipped in 6.95s</div>
+
+<div class="footer">
+    Generated by personal_index.docs_generator &mdash; 188 modules analyzed
+</div>
+
+</body>
+</html>
