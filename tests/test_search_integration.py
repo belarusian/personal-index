@@ -47,8 +47,8 @@ class TestSearchIntegration:
         result = runner.invoke(main, ["search", "python", "-f", "json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
-        assert "results" in data
-        assert data["total"] >= 1
+        assert isinstance(data, list)
+        assert len(data) >= 1
 
     def test_search_json_format_output(self, tmp_path, monkeypatch):
         """Test search JSON format output structure."""
@@ -64,7 +64,9 @@ class TestSearchIntegration:
         result = runner.invoke(main, ["search", "python", "-f", "json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
-        assert "results" in data
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        assert "title" in data[0]
 
     def test_search_limit(self, tmp_path, monkeypatch):
         """Test search with result limit."""
