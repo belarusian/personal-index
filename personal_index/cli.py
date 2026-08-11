@@ -111,36 +111,15 @@ def search(query, limit):
         click.echo()
 
 
-@main.group()
-def crawl():
-    """Crawl and index web content."""
-    pass
-
-
-@crawl.command("url")
+@main.command()
 @click.argument("url")
-@click.option("-t", "--title", default="", help="Page title")
-@click.option("--content", default="", help="Raw content")
-@click.option("--file", "content_file", type=click.Path(exists=True), help="Content file")
-def crawl_url(url, title, content, content_file):
-    """Crawl and index a single URL."""
-    index = SearchIndex()
-    from personal_index.models import IndexedPage
-    if content_file:
-        with open(content_file) as f:
-            content = f.read()
-    page = IndexedPage(url=url, title=title or "Untitled", content=content)
-    index.add_page(page)
-    click.echo(f"Indexed: {url}")
-
-
-@crawl.command("run")
-@click.option("--depth", default=2, type=int, help="Crawl depth")
-@click.option("--delay", default=1.0, type=float, help="Delay between requests")
-def crawl_run(depth, delay):
-    """Run a crawl based on current interests."""
-    click.echo(f"Crawling with depth={depth}, delay={delay}s")
-    click.echo("Crawl completed.")
+@click.option("-d", "--depth", default=1, type=int, help="Crawl depth")
+def crawl(url, depth):
+    """Crawl and index a URL."""
+    from personal_index.crawler import Crawler
+    crawler = Crawler()
+    pages = crawler.crawl(url, max_depth=depth)
+    click.echo(f"Crawled {url} (depth={depth}): {len(pages)} pages")
 
 
 @main.group()
@@ -149,9 +128,9 @@ def index():
     pass
 
 
-@index.command("stats")
-def index_stats():
-    """Show index statistics."""
+@index.command("count")
+def index_count():
+    """Show number of indexed pages."""
     idx = SearchIndex()
     click.echo(f"Pages indexed: {idx.get_page_count()}")
 
