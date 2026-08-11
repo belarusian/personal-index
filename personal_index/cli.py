@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-import click
 import os
+
+import click
+import yaml
 
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
@@ -227,9 +229,9 @@ def config_show():
     from personal_index.config.loader import load_config
     try:
         cfg = load_config("config.yaml")
-    except Exception:
+    except (FileNotFoundError, yaml.YAMLError, OSError):
         # Fallback to defaults if config file doesn't exist
-        from personal_index.models import AppConfig, CrawlConfig, SchedulerConfig, IndexConfig
+        from personal_index.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
         cfg = AppConfig(
             data_dir=".personal_index",
             crawl=CrawlConfig(),
@@ -259,8 +261,8 @@ def config_set_crawler(max_depth, delay, concurrent, timeout):
     from personal_index.config.loader import load_config, save_config
     try:
         cfg = load_config("config.yaml")
-    except Exception:
-        from personal_index.models import AppConfig, CrawlConfig, SchedulerConfig, IndexConfig
+    except (FileNotFoundError, yaml.YAMLError, OSError):
+        from personal_index.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
         cfg = AppConfig(
             data_dir=".personal_index",
             crawl=CrawlConfig(),
@@ -288,8 +290,8 @@ def config_set_schedule(interval, enable, disable):
     from personal_index.config.loader import load_config, save_config
     try:
         cfg = load_config("config.yaml")
-    except Exception:
-        from personal_index.models import AppConfig, CrawlConfig, SchedulerConfig, IndexConfig
+    except (FileNotFoundError, yaml.YAMLError, OSError):
+        from personal_index.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
         cfg = AppConfig(
             data_dir=".personal_index",
             crawl=CrawlConfig(),
