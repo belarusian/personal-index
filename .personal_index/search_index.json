@@ -8,12 +8,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:00.900321+00:00",
+      "crawled_at": "2026-08-11T13:29:26.492053+00:00",
       "domain": "example.com",
       "status_code": 200,
       "content_length": 142,
       "language": "en",
-      "score": 0.4107,
+      "score": 0.4079,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -26,12 +26,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:01.047633+00:00",
+      "crawled_at": "2026-08-11T13:29:26.666519+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1286,
       "language": "en",
-      "score": 0.451,
+      "score": 0.4482,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -44,12 +44,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:01.946967+00:00",
+      "crawled_at": "2026-08-11T13:29:27.555401+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1296,
       "language": "en",
-      "score": 0.4509,
+      "score": 0.4481,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -62,12 +62,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:02.960216+00:00",
+      "crawled_at": "2026-08-11T13:29:28.560234+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2952,
       "language": "en",
-      "score": 0.4659,
+      "score": 0.4632,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -79,14 +79,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:03.962200+00:00",
+      "crawled_at": "2026-08-11T13:29:29.569246+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2145,
       "language": "en",
-      "score": 0.4878,
+      "score": 0.5073,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -98,14 +99,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:04.968407+00:00",
+      "crawled_at": "2026-08-11T13:29:30.576143+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2093,
       "language": "en",
-      "score": 0.4874,
+      "score": 0.5068,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -117,14 +119,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:06.118375+00:00",
+      "crawled_at": "2026-08-11T13:29:31.737595+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 68464,
       "language": "en",
-      "score": 0.5305,
+      "score": 0.55,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -136,14 +139,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:06.980857+00:00",
+      "crawled_at": "2026-08-11T13:29:32.595189+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1925,
       "language": "en",
-      "score": 0.4852,
+      "score": 0.5046,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -155,14 +159,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:07.993767+00:00",
+      "crawled_at": "2026-08-11T13:29:33.605566+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3136,
       "language": "en",
-      "score": 0.4946,
+      "score": 0.514,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -175,12 +180,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:10.223591+00:00",
+      "crawled_at": "2026-08-11T13:29:35.832522+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 100000,
       "language": "en",
-      "score": 0.5028,
+      "score": 0.5,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -193,12 +198,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:10.262729+00:00",
+      "crawled_at": "2026-08-11T13:29:35.873308+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2947,
       "language": "en",
-      "score": 0.4667,
+      "score": 0.4639,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -211,12 +216,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:11.282668+00:00",
+      "crawled_at": "2026-08-11T13:29:36.893182+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2867,
       "language": "en",
-      "score": 0.4682,
+      "score": 0.4655,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -229,14 +234,15 @@
       "matched_interests": [
         "programming",
         "technology",
-        "news"
+        "news",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:12.857221+00:00",
+      "crawled_at": "2026-08-11T13:29:38.479248+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 100000,
       "language": "en",
-      "score": 0.5583,
+      "score": 0.575,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -249,12 +255,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:13.302760+00:00",
+      "crawled_at": "2026-08-11T13:29:38.903141+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1941,
       "language": "en",
-      "score": 0.458,
+      "score": 0.4552,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -268,12 +274,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:14.302037+00:00",
+      "crawled_at": "2026-08-11T13:29:39.906480+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2221,
       "language": "en",
-      "score": 0.4898,
+      "score": 0.4843,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -286,12 +292,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:15.308189+00:00",
+      "crawled_at": "2026-08-11T13:29:40.909486+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2537,
       "language": "en",
-      "score": 0.463,
+      "score": 0.4602,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -304,12 +310,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:16.314539+00:00",
+      "crawled_at": "2026-08-11T13:29:41.916473+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1741,
       "language": "en",
-      "score": 0.4567,
+      "score": 0.4539,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -322,14 +328,15 @@
       "matched_interests": [
         "programming",
         "technology",
-        "news"
+        "news",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:17.362998+00:00",
+      "crawled_at": "2026-08-11T13:29:42.961768+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 38078,
       "language": "en",
-      "score": 0.5583,
+      "score": 0.575,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -342,12 +349,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:18.338880+00:00",
+      "crawled_at": "2026-08-11T13:29:43.942836+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2644,
       "language": "en",
-      "score": 0.4648,
+      "score": 0.462,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -360,12 +367,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:19.343955+00:00",
+      "crawled_at": "2026-08-11T13:29:44.944812+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1515,
       "language": "en",
-      "score": 0.4537,
+      "score": 0.451,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -378,12 +385,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:20.350334+00:00",
+      "crawled_at": "2026-08-11T13:29:45.952210+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1774,
       "language": "en",
-      "score": 0.4567,
+      "score": 0.454,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -396,12 +403,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:21.356146+00:00",
+      "crawled_at": "2026-08-11T13:29:46.958532+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 952,
       "language": "en",
-      "score": 0.4442,
+      "score": 0.4415,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -415,12 +422,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:23.235343+00:00",
+      "crawled_at": "2026-08-11T13:29:48.895023+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 21065,
       "language": "en",
-      "score": 0.5305,
+      "score": 0.525,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -434,12 +441,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:25.187688+00:00",
+      "crawled_at": "2026-08-11T13:29:49.885877+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 26436,
       "language": "en",
-      "score": 0.5305,
+      "score": 0.525,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -451,14 +458,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:25.286580+00:00",
+      "crawled_at": "2026-08-11T13:29:49.992447+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2473,
       "language": "en",
-      "score": 0.4895,
+      "score": 0.5089,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -472,12 +480,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:26.305645+00:00",
+      "crawled_at": "2026-08-11T13:29:50.944417+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2371,
       "language": "en",
-      "score": 0.4913,
+      "score": 0.4858,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -489,14 +497,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:27.250620+00:00",
+      "crawled_at": "2026-08-11T13:29:51.957871+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 8577,
       "language": "en",
-      "score": 0.5151,
+      "score": 0.5346,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -509,12 +518,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:28.299985+00:00",
+      "crawled_at": "2026-08-11T13:29:52.954554+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2329,
       "language": "en",
-      "score": 0.463,
+      "score": 0.4602,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -527,12 +536,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:29.270364+00:00",
+      "crawled_at": "2026-08-11T13:29:53.956680+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2187,
       "language": "en",
-      "score": 0.4619,
+      "score": 0.4591,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -545,12 +554,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:30.324717+00:00",
+      "crawled_at": "2026-08-11T13:29:54.967987+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4036,
       "language": "en",
-      "score": 0.4732,
+      "score": 0.4704,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -562,14 +571,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:31.540823+00:00",
+      "crawled_at": "2026-08-11T13:29:55.982585+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3392,
       "language": "en",
-      "score": 0.4965,
+      "score": 0.516,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -582,12 +592,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:32.339662+00:00",
+      "crawled_at": "2026-08-11T13:29:56.988297+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3301,
       "language": "en",
-      "score": 0.4694,
+      "score": 0.4666,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -601,12 +611,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:33.360781+00:00",
+      "crawled_at": "2026-08-11T13:29:58.009574+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 9096,
       "language": "en",
-      "score": 0.5158,
+      "score": 0.5102,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -620,12 +630,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:34.505830+00:00",
+      "crawled_at": "2026-08-11T13:29:59.009140+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4117,
       "language": "en",
-      "score": 0.5017,
+      "score": 0.4961,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -637,14 +647,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:35.354214+00:00",
+      "crawled_at": "2026-08-11T13:30:00.020514+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 13963,
       "language": "en",
-      "score": 0.5238,
+      "score": 0.5432,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -656,14 +667,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:36.541349+00:00",
+      "crawled_at": "2026-08-11T13:30:01.026939+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 13952,
       "language": "en",
-      "score": 0.5249,
+      "score": 0.5443,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -676,12 +688,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:37.528920+00:00",
+      "crawled_at": "2026-08-11T13:30:02.032378+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 6421,
       "language": "en",
-      "score": 0.4813,
+      "score": 0.4785,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -693,14 +705,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:38.363411+00:00",
+      "crawled_at": "2026-08-11T13:30:03.032095+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 8138,
       "language": "en",
-      "score": 0.5142,
+      "score": 0.5336,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -713,12 +726,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:39.358443+00:00",
+      "crawled_at": "2026-08-11T13:30:04.043397+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 6898,
       "language": "en",
-      "score": 0.4834,
+      "score": 0.4806,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -731,12 +744,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:40.392789+00:00",
+      "crawled_at": "2026-08-11T13:30:05.051186+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1197,
       "language": "en",
-      "score": 0.4494,
+      "score": 0.4466,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -749,12 +762,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:41.394870+00:00",
+      "crawled_at": "2026-08-11T13:30:06.047035+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2633,
       "language": "en",
-      "score": 0.4656,
+      "score": 0.4628,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -766,14 +779,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:42.400816+00:00",
+      "crawled_at": "2026-08-11T13:30:07.052490+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2748,
       "language": "en",
-      "score": 0.4942,
+      "score": 0.5137,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -785,14 +799,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:43.415421+00:00",
+      "crawled_at": "2026-08-11T13:30:08.065736+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4152,
       "language": "en",
-      "score": 0.502,
+      "score": 0.5215,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -804,14 +819,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:44.621893+00:00",
+      "crawled_at": "2026-08-11T13:30:09.078206+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5642,
       "language": "en",
-      "score": 0.5079,
+      "score": 0.5273,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -823,14 +839,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:45.579920+00:00",
+      "crawled_at": "2026-08-11T13:30:10.091565+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 9744,
       "language": "en",
-      "score": 0.5179,
+      "score": 0.5374,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -842,14 +859,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:46.473605+00:00",
+      "crawled_at": "2026-08-11T13:30:11.084943+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3504,
       "language": "en",
-      "score": 0.4993,
+      "score": 0.5188,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -861,14 +879,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:47.441782+00:00",
+      "crawled_at": "2026-08-11T13:30:12.096316+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5041,
       "language": "en",
-      "score": 0.5058,
+      "score": 0.5253,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -880,14 +899,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:48.444853+00:00",
+      "crawled_at": "2026-08-11T13:30:13.103661+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5836,
       "language": "en",
-      "score": 0.5081,
+      "score": 0.5276,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -899,14 +919,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:49.474004+00:00",
+      "crawled_at": "2026-08-11T13:30:14.109495+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2384,
       "language": "en",
-      "score": 0.4917,
+      "score": 0.5111,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -919,12 +940,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:50.594921+00:00",
+      "crawled_at": "2026-08-11T13:30:15.185168+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1608,
       "language": "en",
-      "score": 0.456,
+      "score": 0.4532,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -936,14 +957,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:51.647048+00:00",
+      "crawled_at": "2026-08-11T13:30:16.123488+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 874,
       "language": "en",
-      "score": 0.4704,
+      "score": 0.4899,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -955,14 +977,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:52.493792+00:00",
+      "crawled_at": "2026-08-11T13:30:17.139541+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 899,
       "language": "en",
-      "score": 0.4714,
+      "score": 0.4909,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -975,12 +998,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:53.493247+00:00",
+      "crawled_at": "2026-08-11T13:30:18.143402+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2544,
       "language": "en",
-      "score": 0.4641,
+      "score": 0.4613,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -994,12 +1017,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:54.466507+00:00",
+      "crawled_at": "2026-08-11T13:30:19.158832+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 6918,
       "language": "en",
-      "score": 0.5115,
+      "score": 0.5059,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1013,12 +1036,12 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T12:24:55.497381+00:00",
+      "crawled_at": "2026-08-11T13:30:20.168579+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 17322,
       "language": "en",
-      "score": 0.5279,
+      "score": 0.5224,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1030,14 +1053,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:24:56.522561+00:00",
+      "crawled_at": "2026-08-11T13:30:21.154484+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2818,
       "language": "en",
-      "score": 0.4942,
+      "score": 0.5137,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1050,12 +1074,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:57.555394+00:00",
+      "crawled_at": "2026-08-11T13:30:22.162705+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3298,
       "language": "en",
-      "score": 0.4701,
+      "score": 0.4673,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1068,12 +1092,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:58.674002+00:00",
+      "crawled_at": "2026-08-11T13:30:23.166515+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1449,
       "language": "en",
-      "score": 0.4548,
+      "score": 0.452,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1086,12 +1110,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:24:59.465521+00:00",
+      "crawled_at": "2026-08-11T13:30:24.174238+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1286,
       "language": "en",
-      "score": 0.451,
+      "score": 0.4482,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1104,12 +1128,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:00.511956+00:00",
+      "crawled_at": "2026-08-11T13:30:25.184843+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2524,
       "language": "en",
-      "score": 0.4644,
+      "score": 0.4616,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1122,12 +1146,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:01.554170+00:00",
+      "crawled_at": "2026-08-11T13:30:26.200613+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 8605,
       "language": "en",
-      "score": 0.4882,
+      "score": 0.4854,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1140,12 +1164,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:02.696880+00:00",
+      "crawled_at": "2026-08-11T13:30:27.207357+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7189,
       "language": "en",
-      "score": 0.4846,
+      "score": 0.4819,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1158,12 +1182,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:03.532715+00:00",
+      "crawled_at": "2026-08-11T13:30:28.214514+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3281,
       "language": "en",
-      "score": 0.4699,
+      "score": 0.4672,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1176,12 +1200,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:04.547783+00:00",
+      "crawled_at": "2026-08-11T13:30:29.217167+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2878,
       "language": "en",
-      "score": 0.4665,
+      "score": 0.4637,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1194,12 +1218,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:05.557395+00:00",
+      "crawled_at": "2026-08-11T13:30:30.224555+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4936,
       "language": "en",
-      "score": 0.4777,
+      "score": 0.4749,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1212,12 +1236,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:06.742999+00:00",
+      "crawled_at": "2026-08-11T13:30:31.234989+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7661,
       "language": "en",
-      "score": 0.4854,
+      "score": 0.4826,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1230,14 +1254,15 @@
       "matched_interests": [
         "programming",
         "technology",
-        "news"
+        "news",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:09.540046+00:00",
+      "crawled_at": "2026-08-11T13:30:34.246572+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2757,
       "language": "en",
-      "score": 0.5193,
+      "score": 0.536,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1250,14 +1275,15 @@
       "matched_interests": [
         "programming",
         "technology",
-        "news"
+        "news",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:10.137531+00:00",
+      "crawled_at": "2026-08-11T13:30:34.885046+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 13156,
       "language": "en",
-      "score": 0.5487,
+      "score": 0.5654,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1270,12 +1296,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:11.226967+00:00",
+      "crawled_at": "2026-08-11T13:30:35.539984+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 7892,
       "language": "en",
-      "score": 0.4848,
+      "score": 0.482,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1287,14 +1313,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:14.657863+00:00",
+      "crawled_at": "2026-08-11T13:30:39.515412+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 32858,
       "language": "en",
-      "score": 0.5305,
+      "score": 0.55,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1307,12 +1334,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:25:14.737108+00:00",
+      "crawled_at": "2026-08-11T13:30:39.601257+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1690,
       "language": "en",
-      "score": 0.455,
+      "score": 0.4522,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1324,14 +1351,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:15.715374+00:00",
+      "crawled_at": "2026-08-11T13:30:40.578817+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1747,
       "language": "en",
-      "score": 0.4848,
+      "score": 0.5042,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1343,14 +1371,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:16.721543+00:00",
+      "crawled_at": "2026-08-11T13:30:41.581879+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1553,
       "language": "en",
-      "score": 0.4816,
+      "score": 0.501,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1362,14 +1391,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:17.728287+00:00",
+      "crawled_at": "2026-08-11T13:30:42.585940+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1755,
       "language": "en",
-      "score": 0.4832,
+      "score": 0.5027,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1381,14 +1411,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:18.801765+00:00",
+      "crawled_at": "2026-08-11T13:30:43.596666+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1918,
       "language": "en",
-      "score": 0.4867,
+      "score": 0.5062,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1400,14 +1431,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:19.748577+00:00",
+      "crawled_at": "2026-08-11T13:30:44.598466+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4597,
       "language": "en",
-      "score": 0.5032,
+      "score": 0.5227,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1419,14 +1451,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:20.748189+00:00",
+      "crawled_at": "2026-08-11T13:30:45.608917+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2269,
       "language": "en",
-      "score": 0.4892,
+      "score": 0.5086,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1439,14 +1472,15 @@
       "matched_interests": [
         "programming",
         "technology",
-        "news"
+        "news",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:21.963215+00:00",
+      "crawled_at": "2026-08-11T13:30:46.616698+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5680,
       "language": "en",
-      "score": 0.5348,
+      "score": 0.5515,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1458,14 +1492,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:22.987836+00:00",
+      "crawled_at": "2026-08-11T13:30:47.631278+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5298,
       "language": "en",
-      "score": 0.506,
+      "score": 0.5254,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1477,14 +1512,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:23.789870+00:00",
+      "crawled_at": "2026-08-11T13:30:48.631673+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5623,
       "language": "en",
-      "score": 0.5055,
+      "score": 0.525,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1496,14 +1532,15 @@
       "keywords": [],
       "matched_interests": [
         "programming",
-        "technology"
+        "technology",
+        "rust"
       ],
-      "crawled_at": "2026-08-11T12:25:24.995316+00:00",
+      "crawled_at": "2026-08-11T13:30:49.636934+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7293,
       "language": "en",
-      "score": 0.5099,
+      "score": 0.5293,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
@@ -1516,12 +1553,12 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T12:02:00.651479+00:00",
+      "crawled_at": "2026-08-11T13:29:48.118540+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 7892,
       "language": "en",
-      "score": 0.4883,
+      "score": 0.482,
       "indexed_at": "",
       "source_interest": "",
       "word_count": 0
