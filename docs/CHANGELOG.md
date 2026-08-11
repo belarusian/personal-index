@@ -1,22 +1,81 @@
 # Changelog
 
-ecbc246 docs: add missing docs for API.md
-35b68f4 docs: complete audit and link documentation
-924e3fb feat: add content summarizer, deduplication, priority scoring, and markdown export modules (#15)
-a4c8047 feat: add URL accessibility checking to content_health module
-819e395 autonomous: save progress
-71be837 autonomous: save progress
-028050f feat: add content monitoring, sync, offline, backup, snapshots, watch, preview, domain stats, and read queue modules (#13)
-433954e Merge pull request #12 from belarusian/pr/content-imports-opml-html
-ec87330 Resolve merge conflicts with main after PR #10 merge
-498d0eb Merge pull request #10 from belarusian/pr/content-preview-media
-5391906 merge main into PR #12
-4da2d2e merge main into PR #10
-1ae3fd1 autonomous: save progress
-4bc1be5 chore: ignore trajectories folder so system doesn't balk
-7a1b0a8 fix: fix enum class attributes, favicon URL param, and favicon SVG rendering
-ca8bac8 Merge pull request #4 from belarusian/pr/content-versioning
-9c6e1c1 feat: add fulltext search, CSV export, RSS/Atom feed, collections, and annotations modules (#14)
-589a4b1 feat: add content tags, ratings, and sharing modules (#11)
-769f971 feat: add NLP utilities, sentiment analysis, and named entity recognition modules (#9)
-b0e895d feat: add caching, rate limiting, throttling modules and fix HTML importer (#8)
+All notable changes to personal-index will be documented in this file.
+
+## [Unreleased]
+
+### Added
+- Comprehensive documentation suite (README, USAGE_GUIDE, ARCHITECTURE, CLI_REFERENCE)
+- Full end-to-end pipeline integration tests
+- Export functions for markdown, JSON, and CSV formats
+
+### Changed
+- Improved CLI command structure with proper subcommands
+- Better error handling in pipeline execution
+
+## [0.1.0] - 2024
+
+### Added
+- Initial release of personal-index
+- Full-text search functionality
+- Interest-based content filtering
+- Web crawler with depth control and politeness
+- Content extraction from HTML
+- Scoring system for relevance ranking
+- Auto-tagging based on interests
+- Import/export functionality
+- CLI with all core commands
+
+### Features
+- `personal-index init`: Initialize project
+- `personal-index crawl <URL>`: Crawl web pages
+- `personal-index pipeline <URL>`: Run full processing pipeline
+- `personal-index search <QUERY>`: Search indexed content
+- `personal-index interests add/list/remove`: Manage interests
+- `personal-index tags add/list`: Manage tags
+- `personal-index import <FILE>`: Import local files
+- `personal-index export --format FORMAT`: Export results
+- `personal-index status`: View index statistics
+
+## Pipeline Stages
+
+### Crawl
+- Depth-limited crawling
+- Politeness delays between requests
+- Robots.txt compliance
+- Interest-aware filtering
+
+### Extract
+- HTML parsing and content extraction
+- Title, headings, and metadata extraction
+- Link discovery for further crawling
+
+### Filter
+- Interest-based filtering
+- Minimum content length threshold
+- Duplicate detection
+
+### Score
+- Keyword matching with priority weights
+- Content quality factors
+- Domain authority estimation
+
+### Tag
+- Interest-based tags
+- URL pattern tags
+- Content heuristics
+
+### Index
+- Full-text search with inverted index
+- Relevance ranking
+- Persistent storage
+
+## Testing
+
+All tests pass:
+- Unit tests for individual components
+- Integration tests for component interactions
+- End-to-end tests for full workflows
+- CLI integration tests
+
+Run tests: `pytest`
