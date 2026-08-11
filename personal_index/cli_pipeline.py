@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import click
 
 from personal_index.config.pipeline_config import load_pipeline_config
@@ -14,11 +15,14 @@ from personal_index.pipeline_runner import PipelineRunner
 @click.option("--config", default="config.yaml", help="Config file path")
 @click.option("--data-dir", default=".personal_index", help="Data directory")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without running")
+@click.option("-v", "--verbose", is_flag=True, help="Enable verbose logging")
 def pipeline(urls, depth, config, data_dir, dry_run):
     """Run the full pipeline: crawl → extract → filter → score → tag → index.
 
     URLs are the seed URLs to start crawling from.
     """
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG)
     pipeline_cfg = load_pipeline_config(config)
 
     if dry_run:
