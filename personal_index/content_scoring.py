@@ -1,192 +1,311 @@
-"""Content scoring module for ranking indexed content by quality."""
+"""Content scoring and ranking engine for personal-index.
+
+Provides algorithms to score content items based on multiple factors
+including recency, relevance, user engagement, and content quality.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, ClassVar
+import math
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any
+
+
+class ScoreFactor(Enum):
+    """Factors that contribute to content scoring."""
+
+    RECENCY = "recency"
+    RELEVANCE = "relevance"
+    ENGAGEMENT = "engagement"
+    QUALITY = "quality"
+    AUTHORITY = "authority"
+    FRESHNESS = "freshness"
 
 
 @dataclass
-class ScoreBreakdown:
-    """Detailed breakdown of content quality scores."""
+class ScoreWeights:
+    """Configurable weights for each scoring factor.
 
-    total_score: float = 0.0
-    content_length_score: float = 0.0
-    keyword_density_score: float = 0.0
-    heading_score: float = 0.0
-    link_score: float = 0.0
-    image_score: float = 0.0
-    readability_score: float = 0.0
-    freshness_score: float = 0.0
+    Attributes:
+        recency: Weight for how recent the content is (0.0-1.0).
+        relevance: Weight for keyword/topic relevance (0.0-1.0).
+        engagement: Weight for user engagement signals (0.0-1.0).
+        quality: Weight for content quality signals (0.0-1.0).
+        authority: Weight for source authority (0.0-1.0).
+        freshness: Weight for content freshness (0.0-1.0).
+    """
+
+    recency: float = 0.2
+    relevance: float = 0.25
+    engagement: float = 0.15
+    quality: float = 0.15
+    authority: float = 0.1
+    freshness: float = 0.15
+
+    def normalize(self) -> ScoreWeights:
+        """Normalize weights so they sum to 1.0."""
+        total = sum([
+            self.recency, self.relevance, self.engagement,
+            self.quality, self.authority, self.freshness,
+        ])
+        if total == 0:
+            return ScoreWeights()
+        return ScoreWeights(
+            recency=self.recency / total,
+            relevance=self.relevance / total,
+            engagement=self.engagement / total,
+            quality=self.quality / total,
+            authority=self.authority / total,
+            freshness=self.freshness / total,
+        )
+
+
+@dataclass
+class ContentScore:
+    """Result of scoring a content item.
+
+    Attributes:
+        total: Overall composite score (0.0-1.0).
+        recency: Score for recency factor.
+        relevance: Score for relevance factor.
+        engagement: Score for engagement factor.
+        quality: Score for quality factor.
+        authority: Score for authority factor.
+        freshness: Score for freshness factor.
+        factors: Dict mapping factor names to individual scores.
+    """
+
+    total: float = 0.0
+    recency: float = 0.0
+    relevance: float = 0.0
+    engagement: float = 0.0
+    quality: float = 0.0
+    authority: float = 0.0
+    freshness: float = 0.0
+    factors: dict[str, float] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert score to dictionary representation."""
+        return {
+            "total": round(self.total, 4),
+            "recency": round(self.recency, 4),
+            "relevance": round(self.relevance, 4),
+            "engagement": round(self.engagement, 4),
+            "quality": round(self.quality, 4),
+            "authority": round(self.authority, 4),
+            "freshness": round(self.freshness, 4),
+            "factors": self.factors,
+        }
 
 
 class ContentScorer:
-    """Multi-factor content quality scorer.
+    """Scores content items based on configurable factors.
 
-    Evaluates content based on length, keyword density, heading structure,
-    link quality, image presence, readability, and freshness.
+    Uses a weighted combination of multiple scoring factors to produce
+    a composite score for each content item.
     """
 
-    DEFAULT_WEIGHTS: ClassVar[dict[str, float]] = {
-        "content_length": 0.25,
-        "keyword_density": 0.20,
-        "headings": 0.15,
-        "links": 0.10,
-        "images": 0.10,
-        "readability": 0.15,
-        "freshness": 0.05,
-    }
+    def __init__(self, weights: ScoreWeights | None = None) -> None:
+        self.weights = (weights or ScoreWeights()).normalize()
 
-    def __init__(self, weights: dict[str, float] | None = None) -> None:
-        """Initialize scorer with optional custom weights.
+    def score(
+        self,
+        *,
+        published_at: datetime | None = None,
+        updated_at: datetime | None = None,
+        keyword_matches: int = 0,
+        total_keywords: int = 1,
+        view_count: int = 0,
+        bookmark_count: int = 0,
+        share_count: int = 0,
+        word_count: int = 0,
+        has_images: bool = False,
+        has_code: bool = False,
+        domain_authority: float = 0.5,
+        is_verified_source: bool = False,
+        last_crawled: datetime | None = None,
+        change_frequency: str = "monthly",
+    ) -> ContentScore:
+        """Calculate composite score for a content item.
 
         Args:
-            weights: Override default scoring weights. Must sum to ~1.0.
-        """
-        self.weights = dict(weights) if weights else dict(self.DEFAULT_WEIGHTS)
-
-    def score(self, content: dict[str, Any]) -> tuple[float, ScoreBreakdown]:
-        """Score a content item based on multiple factors.
-
-        Args:
-            content: Dict with keys like 'text', 'keywords', 'headings',
-                     'links', 'images', 'freshness_score'.
+            published_at: When the content was published.
+            updated_at: When the content was last updated.
+            keyword_matches: Number of matching keywords.
+            total_keywords: Total keywords searched.
+            view_count: Number of views.
+            bookmark_count: Number of bookmarks.
+            share_count: Number of shares.
+            word_count: Word count of the content.
+            has_images: Whether content has images.
+            has_code: Whether content has code blocks.
+            domain_authority: Authority score of the source domain.
+            is_verified_source: Whether the source is verified.
+            last_crawled: When the content was last crawled.
+            change_frequency: Expected change frequency of the source.
 
         Returns:
-            Tuple of (total_score, ScoreBreakdown).
+            ContentScore with total and per-factor scores.
         """
-        breakdown = ScoreBreakdown()
-
-        breakdown.content_length_score = self._score_content_length(content)
-        breakdown.keyword_density_score = self._score_keyword_density(content)
-        breakdown.heading_score = self._score_headings(content)
-        breakdown.link_score = self._score_links(content)
-        breakdown.image_score = self._score_images(content)
-        breakdown.readability_score = self._score_readability(content)
-        breakdown.freshness_score = self._score_freshness(content)
-
-        breakdown.total_score = (
-            breakdown.content_length_score * self.weights["content_length"]
-            + breakdown.keyword_density_score * self.weights["keyword_density"]
-            + breakdown.heading_score * self.weights["headings"]
-            + breakdown.link_score * self.weights["links"]
-            + breakdown.image_score * self.weights["images"]
-            + breakdown.readability_score * self.weights["readability"]
-            + breakdown.freshness_score * self.weights["freshness"]
+        recency = self._score_recency(published_at, updated_at)
+        relevance = self._score_relevance(keyword_matches, total_keywords)
+        engagement = self._score_engagement(
+            view_count, bookmark_count, share_count,
+        )
+        quality = self._score_quality(word_count, has_images, has_code)
+        authority = self._score_authority(domain_authority, is_verified_source)
+        freshness = self._score_freshness(
+            last_crawled, change_frequency, updated_at,
         )
 
-        return breakdown.total_score, breakdown
+        total = (
+            self.weights.recency * recency
+            + self.weights.relevance * relevance
+            + self.weights.engagement * engagement
+            + self.weights.quality * quality
+            + self.weights.authority * authority
+            + self.weights.freshness * freshness
+        )
 
-    def _score_content_length(self, content: dict[str, Any]) -> float:
-        """Score based on content length (0-1).
+        return ContentScore(
+            total=round(total, 4),
+            recency=round(recency, 4),
+            relevance=round(relevance, 4),
+            engagement=round(engagement, 4),
+            quality=round(quality, 4),
+            authority=round(authority, 4),
+            freshness=round(freshness, 4),
+            factors={
+                "recency": recency,
+                "relevance": relevance,
+                "engagement": engagement,
+                "quality": quality,
+                "authority": authority,
+                "freshness": freshness,
+            },
+        )
 
-        Optimal range: 300-2000 words. Penalizes very short and very long content.
+    def _score_recency(
+        self,
+        published_at: datetime | None,
+        updated_at: datetime | None,
+    ) -> float:
+        """Score based on how recent the content is.
+
+        Uses exponential decay: newer content scores higher.
         """
-        text = content.get("text", "") or content.get("content", "")
-        word_count = len(text.split()) if text else 0
-        if word_count < 100:
-            return min(word_count / 100, 0.5)
-        if word_count < 300:
-            return 0.5 + (word_count - 100) / 400
-        if word_count <= 2000:
-            return 1.0
-        return max(0.5, 1.0 - (word_count - 2000) / 5000)
+        now = datetime.now()
+        date = updated_at or published_at or now
+        age_days = max(0, (now - date).days)
+        # Exponential decay: half-life of 30 days
+        return round(math.exp(-math.log(2) * age_days / 30), 4)
 
-    def _score_keyword_density(self, content: dict[str, Any]) -> float:
-        """Score based on keyword density (0-1).
+    def _score_relevance(
+        self,
+        keyword_matches: int,
+        total_keywords: int,
+    ) -> float:
+        """Score based on keyword relevance."""
+        if total_keywords == 0:
+            return 0.0
+        return round(min(1.0, keyword_matches / total_keywords), 4)
 
-        Higher score when more provided keywords appear in the text.
+    def _score_engagement(
+        self,
+        view_count: int,
+        bookmark_count: int,
+        share_count: int,
+    ) -> float:
+        """Score based on engagement signals.
+
+        Uses logarithmic scaling to prevent high-volume items from
+        dominating.
         """
-        keywords = content.get("keywords", [])
-        if not keywords:
+        engagement = (
+            math.log1p(view_count) * 0.4
+            + math.log1p(bookmark_count) * 0.4
+            + math.log1p(share_count) * 0.2
+        )
+        # Normalize to 0-1 range (cap at log1p(1000) ~ 6.9)
+        max_engagement = math.log1p(1000)
+        return round(min(1.0, engagement / max_engagement), 4)
+
+    def _score_quality(
+        self,
+        word_count: int,
+        has_images: bool,
+        has_code: bool,
+    ) -> float:
+        """Score based on content quality signals."""
+        # Longer content tends to be higher quality (diminishing returns)
+        length_score = min(1.0, math.log1p(word_count) / math.log1p(3000))
+        # Bonus for rich media
+        media_bonus = 0.1 if has_images else 0.0
+        code_bonus = 0.05 if has_code else 0.0
+        return round(min(1.0, length_score + media_bonus + code_bonus), 4)
+
+    def _score_authority(
+        self,
+        domain_authority: float,
+        is_verified_source: bool,
+    ) -> float:
+        """Score based on source authority."""
+        score = domain_authority
+        if is_verified_source:
+            score = min(1.0, score + 0.1)
+        return round(score, 4)
+
+    def _score_freshness(
+        self,
+        last_crawled: datetime | None,
+        change_frequency: str,
+        updated_at: datetime | None,
+    ) -> float:
+        """Score based on content freshness."""
+        now = datetime.now()
+        if last_crawled is None:
             return 0.5
-        text = (content.get("text", "") or content.get("content", "")).lower()
-        if not text:
-            return 0.0
-        word_count = len(text.split())
-        if word_count == 0:
-            return 0.0
-        matches = sum(1 for kw in keywords if kw.lower() in text)
-        return min(matches / max(len(keywords), 1), 1.0)
 
-    def _score_headings(self, content: dict[str, Any]) -> float:
-        """Score based on heading structure (0-1).
+        age_hours = max(0, (now - last_crawled).total_seconds() / 3600)
 
-        Rewards well-structured content with heading hierarchy.
-        """
-        headings = content.get("headings", [])
-        if not headings:
-            return 0.0
-        score = min(len(headings) / 5, 1.0)
-        has_h1 = any(h.startswith("h1") for h in headings)
-        if has_h1:
-            score = min(score + 0.2, 1.0)
-        return score
+        # Expected update intervals by frequency
+        frequency_hours: dict[str, float] = {
+            "hourly": 1,
+            "daily": 24,
+            "weekly": 168,
+            "monthly": 720,
+            "yearly": 8760,
+            "never": float("inf"),
+        }
+        expected = frequency_hours.get(change_frequency, 720)
 
-    def _score_links(self, content: dict[str, Any]) -> float:
-        """Score based on link quality (0-1).
-
-        Penalizes pages with too many links (potential spam).
-        """
-        links = content.get("links", [])
-        if not links:
-            return 0.3
-        if len(links) > 100:
-            return 0.2
-        return min(len(links) / 20, 1.0)
-
-    def _score_images(self, content: dict[str, Any]) -> float:
-        """Score based on image presence and alt text (0-1).
-
-        Rewards images with descriptive alt text.
-        """
-        images = content.get("images", [])
-        if not images:
-            return 0.3
-        with_alt = sum(1 for img in images if img.get("alt", "").strip())
-        return min(with_alt / max(len(images), 1), 1.0)
-
-    def _score_readability(self, content: dict[str, Any]) -> float:
-        """Score based on text readability (0-1).
-
-        Uses average word length as a proxy. Optimal: 4-7 chars per word.
-        Short texts (< 5 words) get a neutral score.
-        """
-        text = content.get("text", "") or content.get("content", "")
-        if not text:
-            return 0.0
-        words = text.split()
-        if len(words) < 5:
-            return 0.5
-        avg_word_len = sum(len(w) for w in words) / len(words)
-        if 4 <= avg_word_len <= 7:
+        if expected == float("inf"):
             return 1.0
-        if avg_word_len < 4:
-            return 0.7
-        return max(0.3, 1.0 - (avg_word_len - 7) / 5)
 
-    def _score_freshness(self, content: dict[str, Any]) -> float:
-        """Score based on content freshness (0-1).
-
-        Currently reads from content dict; can be extended with date logic.
-        """
-        score = content.get("freshness_score", 0.5)
-        return float(score)
+        # Score decreases as we exceed expected update interval
+        ratio = age_hours / expected
+        return round(max(0.0, min(1.0, 1.0 - ratio * 0.5)), 4)
 
     def rank(
-        self, items: list[dict[str, Any]]
-    ) -> list[tuple[int, float, ScoreBreakdown]]:
-        """Rank a list of content items by score (highest first).
+        self,
+        items: list[dict[str, Any]],
+        *,
+        limit: int = 10,
+    ) -> list[tuple[dict[str, Any], ContentScore]]:
+        """Rank a list of content items by score.
 
         Args:
-            items: List of content dicts to score and rank.
+            items: List of content item dicts with scoring fields.
+            limit: Maximum number of items to return.
 
         Returns:
-            List of (original_index, score, breakdown) sorted by score desc.
+            List of (item, score) tuples sorted by score descending.
         """
         scored = []
-        for i, item in enumerate(items):
-            score, breakdown = self.score(item)
-            scored.append((i, score, breakdown))
-        scored.sort(key=lambda x: x[1], reverse=True)
-        return scored
+        for item in items:
+            score = self.score(**item)
+            scored.append((item, score))
+        scored.sort(key=lambda x: x[1].total, reverse=True)
+        return scored[:limit]
