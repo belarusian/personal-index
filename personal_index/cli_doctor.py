@@ -1,4 +1,4 @@
-"""Doctor command for diagnosing personal-index setup issues."""
+"""Doctor CLI command for personal-index diagnostics."""
 
 from __future__ import annotations
 
@@ -7,10 +7,6 @@ import sys
 
 import click
 
-from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
-from personal_index.tags import TagStore
-
 
 @click.command("doctor")
 @click.option("--data-dir", default=None, help="Data directory")
@@ -18,96 +14,124 @@ from personal_index.tags import TagStore
 def doctor(ctx, data_dir):
     """Diagnose issues with your personal-index setup.
 
-    Checks for common configuration and data issues.
+    Checks configuration, data directory, component health, and
+    provides actionable recommendations.
 
     Examples:
         personal-index doctor
+        personal-index doctor --data-dir ~/custom-index
     """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     issues = []
     warnings = []
-    ok = []
+    infos = []
 
     # Check data directory
-    if os.path.exists(dd):
-        ok.append(f"Data directory exists: {dd}")
+    if not os.path.exists(dd):
+        issues.append(f"Data directory '{dd}' does not exist. Run 'personal-index init'.")
     else:
-        issues.append(f"Data directory missing: {dd}")
-        issues.append("  Run 'personal-index init' to create it")
+        # Check subdirectories
+        for subdir in ["cache", "archive", "backups"]:
+            full_path = os.path.join(dd, subdir)
+            if not os.path.exists(full_path):
+                warnings.append(f"Missing subdirectory: {subdir}/ (will be created on next run)")
 
     # Check config
-    config_path = "config.yaml"
-    if os.path.exists(config_path):
-        ok.append(f"Config file exists: {config_path}")
-    else:
-        warnings.append(f"Config file missing: {config_path}")
-        warnings.append("  Run 'personal-index init' to create a default config")
+    config_found = False
+    for config_name in ["config.yaml", "config.yml", "my-config.yaml"]:
+        if os.path.exists(config_name):
+            config_found = True
+            infos.append(f"Config file found: {config_name}")
+            break
+    if not config_found:
+        warnings.append("No config.yaml found. Run 'personal-index init' to create one.")
 
-    # Check search index
-    db_path = os.path.join(dd, "search_index.json")
-    if os.path.exists(db_path):
+    # Check index
+    index_path = os.path.join(dd, "search_index.json")
+    if os.path.exists(index_path):
         try:
-            index = SearchIndex(db_path=db_path)
-            count = index.get_page_count()
-            ok.append(f"Search index: {count} pages")
-        except (OSError, ValueError) as e:
-            issues.append(f"Search index error: {e}")
+            from personal_index.index import SearchIndex
+            idx = SearchIndex(db_path=index_path)
+            page_count = idx.get_page_count()
+            infos.append(f"Search index contains {page_count} pages")
+            if page_count == 0:
+                warnings.append("Index is empty. Run 'personal-index pipeline' to index content.")
+        except Exception as e:
+            issues.append(f"Search index is corrupted: {e}")
     else:
-        warnings.append("No search index found")
-        warnings.append("  Run 'personal-index pipeline' or 'personal-index import' to create one")
+        infos.append("No search index yet (will be created on first pipeline run)")
 
     # Check interests
-    interest_path = os.path.join(dd, "interests.json")
-    if os.path.exists(interest_path):
+    interests_path = os.path.join(dd, "interests.json")
+    if os.path.exists(interests_path):
         try:
-            store = InterestStore(store_path=interest_path)
-            count = len(store.list_all())
-            ok.append(f"Interests: {count} configured")
-        except (OSError, ValueError) as e:
-            issues.append(f"Interests error: {e}")
+            from personal_index.interests import InterestStore
+            interest_store = InterestStore(store_path=interests_path)
+            interests = interest_store.list_all()
+            infos.append(f"Found {len(interests)} interest(s)")
+            if not interests:
+                warnings.append("No interests configured. Add interests for better scoring.")
+        except Exception as e:
+            issues.append(f"Interest store is corrupted: {e}")
     else:
-        warnings.append("No interests configured")
-        warnings.append("  Run 'personal-index interests add <name> -k keyword' to add interests")
+        warnings.append("No interests configured. Add interests for better scoring.")
 
-    # Check tags
-    tag_path = os.path.join(dd, "tags.json")
-    if os.path.exists(tag_path):
+    # Check tag store
+    tags_path = os.path.join(dd, "tags.json")
+    if os.path.exists(tags_path):
         try:
-            store = TagStore(store_path=tag_path)
-            count = store.get_tag_count()
-            ok.append(f"Tags: {count} defined")
-        except (OSError, ValueError) as e:
-            issues.append(f"Tags error: {e}")
+            from personal_index.tags import TagStore
+            tag_store = TagStore(store_path=tags_path)
+            tag_count = tag_store.get_tag_count()
+            infos.append(f"Found {tag_count} tag(s)")
+        except Exception as e:
+            issues.append(f"Tag store is corrupted: {e}")
     else:
-        warnings.append("No tags configured")
+        infos.append("No tags yet (will be created during pipeline run)")
 
-    # Check Python version
-    py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    ok.append(f"Python version: {py_ver} (compatible)")
+    # Check Python dependencies
+    missing_deps = []
+    for dep in ["click", "yaml", "requests", "bs4"]:
+        try:
+            if dep == "yaml":
+                __import__("yaml")
+            elif dep == "bs4":
+                __import__("bs4")
+            else:
+                __import__(dep)
+        except ImportError:
+            missing_deps.append(dep)
 
-    # Report
-    click.echo("Personal-Index Health Check")
+    if missing_deps:
+        issues.append(f"Missing Python dependencies: {', '.join(missing_deps)}")
+    else:
+        infos.append("All required dependencies are installed")
+
+    # Output report
+    click.echo("Personal Index Health Check")
     click.echo("=" * 50)
 
-    if ok:
-        click.echo("\n✓ OK:")
-        for item in ok:
-            click.echo(f"  ✓ {item}")
+    if issues:
+        click.echo(f"\n✗ Issues ({len(issues)}):")
+        for issue in issues:
+            click.echo(f"  • {issue}")
+    else:
+        click.echo("\n✓ No critical issues found")
 
     if warnings:
-        click.echo("\n⚠ Warnings:")
-        for item in warnings:
-            click.echo(f"  ⚠ {item}")
+        click.echo(f"\n⚠ Warnings ({len(warnings)}):")
+        for warning in warnings:
+            click.echo(f"  • {warning}")
+
+    if infos:
+        click.echo(f"\nℹ Info ({len(infos)}):")
+        for info in infos:
+            click.echo(f"  • {info}")
+
+    click.echo(f"\n{'=' * 50}")
 
     if issues:
-        click.echo("\n✗ Issues:")
-        for item in issues:
-            click.echo(f"  ✗ {item}")
-
-    if not issues and not warnings:
-        click.echo("\nAll checks passed!")
-    elif not issues:
-        click.echo("\nNo critical issues found.")
-    else:
-        click.echo("\nPlease fix the issues above.")
-        ctx.exit(1)
+        click.echo("\nRecommendation: Fix the issues above before running the pipeline.")
+        sys.exit(1)
+    elif warnings:
+        click.echo("\nYour setup is functional but could be improved.")
