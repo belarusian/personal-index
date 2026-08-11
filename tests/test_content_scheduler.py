@@ -1,197 +1,201 @@
-"""Tests for the content scheduler module."""
+"""Tests for content_scheduler module."""
 
-from datetime import datetime, timedelta
-
-from personal_index.content_scheduler import (
-    ScheduleType,
-    ScheduledTask,
-    TaskRunRecord,
-    TaskScheduler,
-)
+import pytest
+from datetime import datetime, timezone
+from personal_index.content_scheduler import TaskScheduler, ScheduledTask, TaskStatus
 
 
-class TestScheduledTask:
-    def test_create(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test Task",
-            schedule_type=ScheduleType.DAILY,
-        )
-        assert task.enabled is True
-        assert task.run_count == 0
-
-    def test_is_due_no_next_run(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test",
-        )
-        assert task.is_due() is True
-
-    def test_is_due_enabled(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test",
-            next_run=datetime(2024, 1, 1),
-        )
-        now = datetime(2024, 1, 2)
-        assert task.is_due(now) is True
-
-    def test_is_due_not_yet(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test",
-            next_run=datetime(2025, 1, 1),
-        )
-        now = datetime(2024, 1, 1)
-        assert task.is_due(now) is False
-
-    def test_is_due_disabled(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test",
-            enabled=False,
-            next_run=datetime(2020, 1, 1),
-        )
-        assert task.is_due() is False
-
-    def test_mark_run_daily(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test",
-            schedule_type=ScheduleType.DAILY,
-        )
-        now = datetime(2024, 1, 1)
-        task.mark_run(now)
-        assert task.run_count == 1
-        assert task.last_run == now
-        assert task.next_run == datetime(2024, 1, 2)
-
-    def test_mark_run_once(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test",
-            schedule_type=ScheduleType.ONCE,
-        )
-        task.mark_run(datetime(2024, 1, 1))
-        assert task.next_run is None
-
-    def test_max_runs(self) -> None:
-        task = ScheduledTask(
-            task_id="t1",
-            name="Test",
-            schedule_type=ScheduleType.DAILY,
-            max_runs=2,
-        )
-        task.mark_run(datetime(2024, 1, 1))
-        task.mark_run(datetime(2024, 1, 2))
-        assert task.next_run is None
+@pytest.fixture
+def scheduler():
+    return TaskScheduler()
 
 
-class TestTaskScheduler:
-    def setup_method(self) -> None:
-        self.scheduler = TaskScheduler()
+# --- Task Creation ---
 
-    def test_register_task(self) -> None:
-        task = self.scheduler.register(
-            "t1", "Test Task", ScheduleType.DAILY,
-        )
-        assert self.scheduler.get_task("t1") is task
+class TestTaskCreation:
+    def test_add_task(self, scheduler):
+        task = scheduler.add_task("My Crawl", "crawl", "* * * * *")
+        assert task.task_id.startswith("task_")
+        assert task.name == "My Crawl"
+        assert task.task_type == "crawl"
 
-    def test_remove_task(self) -> None:
-        self.scheduler.register("t1", "Test Task")
-        assert self.scheduler.remove("t1") is True
-        assert self.scheduler.get_task("t1") is None
-
-    def test_remove_nonexistent(self) -> None:
-        assert self.scheduler.remove("nonexistent") is False
-
-    def test_get_due_tasks(self) -> None:
-        self.scheduler.register(
-            "t1", "Due Task",
-            next_run=datetime(2024, 1, 1),
-        )
-        self.scheduler.register(
-            "t2", "Future Task",
-            next_run=datetime(2025, 1, 1),
-        )
-        due = self.scheduler.get_due_tasks(datetime(2024, 6, 1))
-        assert len(due) == 1
-        assert due[0].task_id == "t1"
-
-    def test_run_due(self) -> None:
+    def test_add_task_with_callback(self, scheduler):
         results = []
+        def cb(task):
+            results.append(task.name)
+        task = scheduler.add_task("Export", "export", "0 * * * *", callback=cb)
+        assert task.callback is not None
 
-        def callback():
-            results.append("executed")
-            return {"status": "ok"}
+    def test_add_task_with_config(self, scheduler):
+        task = scheduler.add_task("Cleanup", "cleanup", "0 0 * * *", config={"max_age": 30})
+        assert task.config["max_age"] == 30
 
-        self.scheduler.register(
-            "t1", "Test Task",
-            next_run=datetime(2024, 1, 1),
-            callback=callback,
-        )
-        records = self.scheduler.run_due(datetime(2024, 1, 2))
-        assert len(records) == 1
-        assert records[0].success is True
-        assert len(results) == 1
+    def test_add_multiple_tasks(self, scheduler):
+        scheduler.add_task("A", "crawl", "* * * * *")
+        scheduler.add_task("B", "export", "0 * * * *")
+        assert len(scheduler.list_tasks()) == 2
 
-    def test_run_due_callback_error(self) -> None:
-        def failing_callback():
-            raise ValueError("Task failed")
+    def test_task_default_enabled(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        assert task.enabled is True
 
-        self.scheduler.register(
-            "t1", "Failing Task",
-            next_run=datetime(2024, 1, 1),
-            callback=failing_callback,
-        )
-        records = self.scheduler.run_due(datetime(2024, 1, 2))
-        assert len(records) == 1
-        assert records[0].success is False
-        assert records[0].error == "Task failed"
+    def test_task_default_status(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        assert task.status == TaskStatus.PENDING
 
-    def test_run_due_no_callback(self) -> None:
-        self.scheduler.register(
-            "t1", "No Callback",
-            next_run=datetime(2024, 1, 1),
-        )
-        records = self.scheduler.run_due(datetime(2024, 1, 2))
-        assert len(records) == 1
-        assert records[0].success is True
 
-    def test_get_history(self) -> None:
-        self.scheduler.register(
-            "t1", "Test",
-            next_run=datetime(2024, 1, 1),
-        )
-        self.scheduler.run_due(datetime(2024, 1, 2))
-        history = self.scheduler.get_history("t1")
-        assert len(history) == 1
+# --- Cron Parsing ---
 
-    def test_get_history_limit(self) -> None:
-        for i in range(15):
-            self.scheduler.register(
-                f"t{i}", f"Task {i}",
-                next_run=datetime(2024, 1, 1),
-            )
-        self.scheduler.run_due(datetime(2024, 1, 2))
-        history = self.scheduler.get_history(limit=5)
-        assert len(history) == 5
+class TestCronParsing:
+    def test_cron_every_minute(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        assert task.next_run is not None
 
-    def test_get_stats(self) -> None:
-        self.scheduler.register("t1", "Enabled")
-        self.scheduler.register("t2", "Disabled", enabled=False)
-        stats = self.scheduler.get_stats()
+    def test_cron_hourly(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "0 * * * *")
+        assert task.next_run is not None
+
+    def test_cron_daily(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "0 0 * * *")
+        assert task.next_run is not None
+
+    def test_cron_weekly(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "0 0 * * 0")
+        assert task.next_run is not None
+
+    def test_cron_invalid(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "invalid")
+        assert task.next_run is None
+
+    def test_cron_step(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "*/5 * * * *")
+        assert task.next_run is not None
+
+    def test_cron_range(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "0 9-17 * * 1-5")
+        assert task.next_run is not None
+
+    def test_cron_multiple(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "0,30 * * * *")
+        assert task.next_run is not None
+
+
+# --- Task Management ---
+
+class TestTaskManagement:
+    def test_get_task(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        found = scheduler.get_task(task.task_id)
+        assert found is not None
+        assert found.name == "T"
+
+    def test_get_nonexistent_task(self, scheduler):
+        assert scheduler.get_task("nonexistent") is None
+
+    def test_list_tasks(self, scheduler):
+        scheduler.add_task("A", "crawl", "* * * * *")
+        scheduler.add_task("B", "export", "* * * * *")
+        assert len(scheduler.list_tasks()) == 2
+
+    def test_list_tasks_by_type(self, scheduler):
+        scheduler.add_task("A", "crawl", "* * * * *")
+        scheduler.add_task("B", "export", "* * * * *")
+        assert len(scheduler.list_tasks("crawl")) == 1
+
+    def test_remove_task(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        assert scheduler.remove_task(task.task_id) is True
+        assert scheduler.get_task(task.task_id) is None
+
+    def test_remove_nonexistent_task(self, scheduler):
+        assert scheduler.remove_task("nonexistent") is False
+
+    def test_enable_task(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        task.enabled = False
+        assert scheduler.enable_task(task.task_id) is True
+        assert task.enabled is True
+
+    def test_disable_task(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        assert scheduler.disable_task(task.task_id) is True
+        assert task.enabled is False
+
+    def test_enable_nonexistent(self, scheduler):
+        assert scheduler.enable_task("nonexistent") is False
+
+
+# --- Task Execution ---
+
+class TestTaskExecution:
+    def test_run_task_success(self, scheduler):
+        results = []
+        def cb(task):
+            results.append(task.name)
+        task = scheduler.add_task("Test", "crawl", "* * * * *", callback=cb)
+        assert task.run() is True
+        assert task.status == TaskStatus.COMPLETED
+        assert "Test" in results
+
+    def test_run_task_failure(self, scheduler):
+        def cb(task):
+            raise ValueError("boom")
+        task = scheduler.add_task("Fail", "crawl", "* * * * *", callback=cb)
+        assert task.run() is False
+        assert task.status == TaskStatus.FAILED
+        assert task.last_error == "boom"
+
+    def test_run_task_no_callback(self, scheduler):
+        task = scheduler.add_task("NoCB", "crawl", "* * * * *")
+        assert task.run() is True
+        assert task.status == TaskStatus.COMPLETED
+
+    def test_run_count(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        task.run()
+        task.run()
+        assert task.run_count == 2
+
+    def test_run_due_tasks(self, scheduler):
+        results = []
+        def cb(task):
+            results.append(task.name)
+        scheduler.add_task("A", "crawl", "* * * * *", callback=cb)
+        scheduler.add_task("B", "export", "* * * * *", callback=cb)
+        due_results = scheduler.run_due_tasks()
+        assert len(due_results) == 2
+
+
+# --- Task to_dict ---
+
+class TestTaskDict:
+    def test_to_dict(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        d = task.to_dict()
+        assert d["name"] == "T"
+        assert d["task_type"] == "crawl"
+        assert d["status"] == "pending"
+        assert d["run_count"] == 0
+
+
+# --- Stats ---
+
+class TestStats:
+    def test_stats_empty(self, scheduler):
+        stats = scheduler.get_stats()
+        assert stats["total_tasks"] == 0
+
+    def test_stats_with_tasks(self, scheduler):
+        scheduler.add_task("A", "crawl", "* * * * *")
+        scheduler.add_task("B", "export", "* * * * *")
+        stats = scheduler.get_stats()
         assert stats["total_tasks"] == 2
-        assert stats["enabled_tasks"] == 1
-        assert stats["disabled_tasks"] == 1
+        assert stats["enabled"] == 2
+        assert stats["by_type"]["crawl"] == 1
+        assert stats["by_type"]["export"] == 1
 
-    def test_task_schedules_next_run(self) -> None:
-        self.scheduler.register(
-            "t1", "Daily Task",
-            schedule_type=ScheduleType.DAILY,
-            next_run=datetime(2024, 1, 1),
-        )
-        self.scheduler.run_due(datetime(2024, 1, 1))
-        task = self.scheduler.get_task("t1")
-        assert task is not None
-        assert task.next_run == datetime(2024, 1, 2)
+    def test_stats_disabled(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        scheduler.disable_task(task.task_id)
+        stats = scheduler.get_stats()
+        assert stats["disabled"] == 1
