@@ -1,7 +1,5 @@
-# CLI Reference
+# Personal Index CLI Reference
 
-## Commands
+A complete reference for all personal-index commands.
 
-### `personal-index init`
-
-Initialize a new personal-index project.
+## Quick Start

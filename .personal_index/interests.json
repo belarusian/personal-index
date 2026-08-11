@@ -78,5 +78,20 @@
     "enabled": true,
     "topic": "",
     "match_mode": "any"
+  },
+  "NAME": {
+    "name": "NAME",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "KEYWORD..."
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T07:53:46.988253+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
   }
 }
