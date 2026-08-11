@@ -1,12 +1,5 @@
 # CLI Reference
 
-Complete command-line interface reference for personal-index.
-
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Commands](#commands)
-- [Options](#options)
-- [Examples](#examples)
+The `personal-index` CLI provides commands for managing your personal web search index.
 
 ## Quick Start
