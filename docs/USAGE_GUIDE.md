@@ -1,4 +1,4 @@
-# Personal Index Usage Guide
+# Personal Index - Usage Guide
 
 A comprehensive guide to using personal-index for indexing and searching web content.
 
@@ -6,10 +6,15 @@ A comprehensive guide to using personal-index for indexing and searching web con
 
 1. [Installation](#installation)
 2. [Quick Start](#quick-start)
-3. [Configuration](#configuration)
-4. [Core Concepts](#core-concepts)
-5. [CLI Commands](#cli-commands)
-6. [Advanced Usage](#advanced-usage)
-7. [Pipeline Details](#pipeline-details)
+3. [Basic Usage](#basic-usage)
+4. [Advanced Features](#advanced-features)
+5. [Command Reference](#command-reference)
 
 ## Installation
+
+### Prerequisites
+
+- Python 3.10 or higher
+- pip (Python package manager)
+
+### Install from PyPI
