@@ -1,7 +1,7 @@
-# Architecture
-
-This document explains how personal-index is structured and how its components interact.
+# Personal-Index Architecture
 
 ## Overview
 
-Personal-index processes content through a pipeline architecture:
+Personal-Index is a personal web search engine that crawls, filters, scores, tags, and indexes web content based on user-defined interests.
+
+## Pipeline Architecture
