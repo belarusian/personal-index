@@ -212,13 +212,15 @@ class PersonalIndexApp:
 
         if result.success and result.data.get("passes_filter", True):
             # Add to search index
-            from personal_index.models import IndexedPage
-            page = IndexedPage(
-                url=result.data.get("url", ""),
-                title=result.data.get("title", "Untitled"),
-                content=result.data.get("extracted_text", ""),
-            )
-            self.search_index.add_page(page)
+            item_id = result.data.get("url", "")
+            self.search_index.add_item({
+                "id": item_id,
+                "url": result.data.get("url", ""),
+                "title": result.data.get("title", "Untitled"),
+                "content": result.data.get("extracted_text", ""),
+                "score": result.data.get("score", 0),
+                "tags": result.data.get("tags", []),
+            })
 
         return result.data
 
@@ -246,7 +248,7 @@ class PersonalIndexApp:
         """Get application statistics."""
         self.initialize()
         return {
-            "indexed_items": len(self.search_index._pages),
+            "indexed_items": len(self.search_index._items),
             "interests": len(self.interest_store.list_all()),
             "scheduled_jobs": len(self.scheduler.list_jobs()),
             "pipeline_steps": self.pipeline.step_count,
