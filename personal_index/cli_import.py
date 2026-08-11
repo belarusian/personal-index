@@ -8,14 +8,13 @@ from pathlib import Path
 
 import click
 
+from personal_index.content_extractor import ContentExtractor
+from personal_index.content_filter import ContentFilter, FilterConfig
+from personal_index.content_scoring import ContentScorer, ScoreWeights
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage
 from personal_index.tags import TagStore
-from personal_index.content_filter import ContentFilter, FilterConfig
-from personal_index.content_scoring import ContentScorer, ScoreWeights
-from personal_index.content_extractor import ContentExtractor
-
 
 SUPPORTED_EXTENSIONS = {
     '.txt', '.md', '.html', '.htm', '.json', '.xml', '.rst',
@@ -178,15 +177,12 @@ def import_cmd(ctx, source, recursive, data_dir, min_content_length,
             click.echo(f"  ✓ {filepath}")
             imported += 1
 
-        except OSError as e:
-            click.echo(f"  ✗ {filepath}: {e}", err=True)
-            errors += 1
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             click.echo(f"  ✗ {filepath}: {e}", err=True)
             errors += 1
 
     # Summary
-    click.echo(f"\nImport complete:")
+    click.echo("\nImport complete:")
     click.echo(f"  Imported: {imported}")
     click.echo(f"  Skipped:  {skipped}")
     click.echo(f"  Errors:   {errors}")

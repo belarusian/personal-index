@@ -56,7 +56,7 @@ def doctor(ctx, data_dir):
             infos.append(f"Search index contains {page_count} pages")
             if page_count == 0:
                 warnings.append("Index is empty. Run 'personal-index pipeline' to index content.")
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             issues.append(f"Search index is corrupted: {e}")
     else:
         infos.append("No search index yet (will be created on first pipeline run)")
@@ -71,7 +71,7 @@ def doctor(ctx, data_dir):
             infos.append(f"Found {len(interests)} interest(s)")
             if not interests:
                 warnings.append("No interests configured. Add interests for better scoring.")
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             issues.append(f"Interest store is corrupted: {e}")
     else:
         warnings.append("No interests configured. Add interests for better scoring.")
@@ -84,7 +84,7 @@ def doctor(ctx, data_dir):
             tag_store = TagStore(store_path=tags_path)
             tag_count = tag_store.get_tag_count()
             infos.append(f"Found {tag_count} tag(s)")
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             issues.append(f"Tag store is corrupted: {e}")
     else:
         infos.append("No tags yet (will be created during pipeline run)")

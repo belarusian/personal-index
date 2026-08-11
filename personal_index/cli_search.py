@@ -100,6 +100,6 @@ def search(ctx, query, limit, data_dir, tag, sort, highlight, no_snippet, as_jso
             click.echo(f"   {snippet}")
         page_tags = tag_store.get_tags_for_page(result.url)
         if page_tags:
-            click.echo(f"   Tags: {', '.join(sorted(page_tags))}")
+            click.echo(f"   Tags: {', '.join(sorted(t.name for t in page_tags))}")
 
     click.echo(f"\n{'-' * 70}")

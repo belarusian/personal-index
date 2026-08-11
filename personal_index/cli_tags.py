@@ -37,7 +37,7 @@ def tags_add(ctx, tag_name, url, color, description, data_dir):
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     store = TagStore(store_path=os.path.join(dd, "tags.json"))
 
-    store.add_tag_to_page(url, tag_name, color=color, description=description)
+    store.add_tag_to_page(url, tag_name)
     click.echo(f"Added tag '{tag_name}' to {url}")
 
 
@@ -49,19 +49,17 @@ def tags_list(ctx, data_dir):
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     store = TagStore(store_path=os.path.join(dd, "tags.json"))
 
-    all_tags = store.get_all_tags()
-    if not all_tags:
+    tags = store.list_tags()
+    if not tags:
         click.echo("No tags configured.")
         return
 
-    click.echo(f"Tags ({len(all_tags)}):")
+    click.echo(f"Tags ({len(tags)}):")
     click.echo("-" * 50)
-    for tag_name in sorted(all_tags):
-        pages = store.get_pages_for_tag(tag_name)
-        tag = store.get_tag(tag_name)
-        color = tag.color if tag else "#3498db"
+    for tag in sorted(tags, key=lambda t: t.name):
+        pages = store.get_pages_for_tag(tag.name)
         desc = tag.description if tag else ""
-        click.echo(f"\n  {tag_name} ({len(pages)} pages)")
+        click.echo(f"\n  {tag.name} ({len(pages)} pages)")
         if desc:
             click.echo(f"    Description: {desc}")
         if len(pages) <= 5:

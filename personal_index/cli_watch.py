@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import sys
 import time
-from pathlib import Path
 
 import click
 
@@ -15,8 +14,9 @@ import click
 @click.option("--interval", "-i", default=30, type=int, help="Check interval in seconds")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.option("--recursive", "-r", is_flag=True, help="Watch directories recursively")
+@click.option("--once", "-o", is_flag=True, help="Run once and exit (no continuous monitoring)")
 @click.pass_context
-def watch(ctx, path, interval, data_dir, recursive):
+def watch(ctx, path, interval, data_dir, recursive, once):
     """Watch a directory for changes and re-index automatically.
 
     Monitors a directory for new or modified files and automatically
@@ -34,7 +34,10 @@ def watch(ctx, path, interval, data_dir, recursive):
         sys.exit(1)
 
     click.echo(f"Watching {path} for changes (interval: {interval}s)")
-    click.echo("Press Ctrl+C to stop.\n")
+    if once:
+        click.echo("Running once and exiting.\n")
+    else:
+        click.echo("Press Ctrl+C to stop.\n")
 
     # Track file modification times
     file_times: dict[str, float] = {}
@@ -53,6 +56,7 @@ def watch(ctx, path, interval, data_dir, recursive):
         return times
 
     try:
+        iterations = 0
         while True:
             current_times = scan_files(path)
             new_files = []
@@ -75,8 +79,9 @@ def watch(ctx, path, interval, data_dir, recursive):
                 changed = new_files + modified_files
                 if changed:
                     click.echo(f"\nRe-indexing {len(changed)} file(s)...")
-                    from personal_index.cli_pipeline_unified import run_pipeline
                     from click.testing import CliRunner
+
+                    from personal_index.cli_pipeline_unified import run_pipeline
                     runner = CliRunner()
                     import_args = ["--data-dir", dd]
                     for f in changed:
@@ -88,6 +93,12 @@ def watch(ctx, path, interval, data_dir, recursive):
                         click.echo("  Re-index complete.")
 
             file_times = current_times
+
+            if once:
+                click.echo("\nWatch completed (single run mode).")
+                break
+
+            iterations += 1
             time.sleep(interval)
 
     except KeyboardInterrupt:

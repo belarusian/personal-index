@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from datetime import datetime, timezone
 
 import click
@@ -87,7 +86,7 @@ def export_cmd(ctx, fmt, output, data_dir, tag, query, limit):
 
 def _export_markdown(pages, tag_store):
     """Export pages as markdown."""
-    lines = [f"# Personal Index Export", f"",
+    lines = ["# Personal Index Export", "",
              f"Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
              f"Total pages: {len(pages)}", ""]
 
@@ -143,12 +142,12 @@ def _export_html(pages, tag_store):
     lines = [
         "<!DOCTYPE html>",
         "<html><head><title>Personal Index Export</title>",
-        "<style>body{font-family:sans-serif;margin:2em;} table{border-collapse:collapse;} "
-        "th,td{border:1px solid #ddd;padding:8px;text-align:left;} th{background:#f5f5f5;}</style>",
+        ("<style>body{font-family:sans-serif;margin:2em;} table{border-collapse:collapse;} "
+        "th,td{border:1px solid #ddd;padding:8px;text-align:left;} th{background:#f5f5f5;}</style>"),
         "</head><body>",
-        f"<h1>Personal Index Export</h1>",
-        f"<p>Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')} "
-        f"| Total pages: {len(pages)}</p>",
+        "<h1>Personal Index Export</h1>",
+        (f"<p>Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')} "
+        f"| Total pages: {len(pages)}</p>"),
         "<table><tr><th>Title</th><th>URL</th><th>Score</th><th>Tags</th></tr>",
     ]
     for page in pages:

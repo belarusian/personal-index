@@ -222,7 +222,7 @@ class TestCLISearchJSON:
     def test_search_json_empty(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        result = runner.invoke(main, ["search", "--format", "json", "nonexistent"])
+        result = runner.invoke(main, ["search", "--json", "nonexistent"])
         # Should not crash even with no indexed content
         assert result.exit_code == 0 or "No indexed content" in result.output
 

@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import os
 import sys
-import tempfile
-from pathlib import Path
 
 import click
 
-from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer, ScoreWeights
 from personal_index.index import SearchIndex
@@ -70,7 +67,7 @@ def verify(ctx, data_dir, quick):
         check("Interest store works", len(interests) > 0, "Could not store interests")
         interest_store._interests.clear()
         interest_store._save()
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError) as e:
         check("Interest store works", False, str(e))
 
     # Check 3: Tag store works
@@ -78,10 +75,10 @@ def verify(ctx, data_dir, quick):
         tag_store = TagStore(store_path=os.path.join(dd, "verify_tags.json"))
         tag_store.add_tag_to_page("http://test.com", "verify")
         tags = tag_store.get_tags_for_page("http://test.com")
-        check("Tag store works", "verify" in tags, "Could not store tags")
+        check("Tag store works", any(t.name == "verify" for t in tags), "Could not store tags")
         tag_store._page_tags.clear()
         tag_store._save()
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError) as e:
         check("Tag store works", False, str(e))
 
     # Check 4: Search index works
@@ -97,7 +94,7 @@ def verify(ctx, data_dir, quick):
         check("Search index works", len(results) > 0, "Could not search index")
         search_index.remove_page("http://verify.test/page1")
         search_index._save()
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError) as e:
         check("Search index works", False, str(e))
 
     # Check 5: Content filter works
@@ -110,7 +107,7 @@ def verify(ctx, data_dir, quick):
         )
         included = content_filter.should_include(test_page)
         check("Content filter works", included, "Filter rejected valid content")
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError) as e:
         check("Content filter works", False, str(e))
 
     # Check 6: Content scorer works
@@ -123,7 +120,7 @@ def verify(ctx, data_dir, quick):
             domain_authority=0.5,
         )
         check("Content scorer works", score.total >= 0, "Scorer returned invalid score")
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError) as e:
         check("Content scorer works", False, str(e))
 
     # Full pipeline test (skip with --quick)
@@ -193,7 +190,7 @@ def verify(ctx, data_dir, quick):
             import shutil
             shutil.rmtree(test_data_dir, ignore_errors=True)
 
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             check("Full pipeline: all stages", False, str(e))
 
     # Cleanup verify files

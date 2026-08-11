@@ -34,11 +34,10 @@ class TestWatchCommand:
         article = tmp_path / "article.txt"
         article.write_text("Initial content about Python.")
 
-        # Run watch with quick timeout (would need signal handling in real test)
-        # For now just verify the command parses correctly
-        result = runner.invoke(main, ["watch", str(article), "--interval", "1"])
-        # Should start but we can't easily test continuous monitoring
-        assert result.exit_code == 0 or "Watching" in result.output
+        # Run watch once to verify it works
+        result = runner.invoke(main, ["watch", str(article), "--interval", "1", "--once"])
+        assert result.exit_code == 0
+        assert "Watching" in result.output
 
     def test_watch_directory(self, tmp_path, monkeypatch):
         """Test watching a directory."""
@@ -49,5 +48,5 @@ class TestWatchCommand:
         docs = tmp_path / "docs"
         docs.mkdir()
 
-        result = runner.invoke(main, ["watch", str(docs), "--interval", "1"])
+        result = runner.invoke(main, ["watch", str(docs), "--interval", "1", "--once"])
         assert result.exit_code == 0

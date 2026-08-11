@@ -132,7 +132,7 @@ def schedule_run(ctx, name, data_dir):
     click.echo(f"Running scheduled job '{name}'...")
     click.echo(f"  URLs: {', '.join(entry.config.seed_urls)}")
 
-    from personal_index.pipeline_runner import PipelineRunner, PipelineConfig
+    from personal_index.pipeline_runner import PipelineConfig, PipelineRunner
     config = PipelineConfig(
         max_depth=entry.config.crawl_depth,
         max_pages=entry.config.max_pages_per_run,
@@ -140,7 +140,7 @@ def schedule_run(ctx, name, data_dir):
     runner = PipelineRunner(data_dir=dd, pipeline_config=config)
     try:
         stats = runner.run(entry.config.seed_urls)
-        click.echo(f"\nJob complete:")
+        click.echo("\nJob complete:")
         click.echo(f"  Crawled: {stats.pages_crawled}")
         click.echo(f"  Indexed: {stats.pages_indexed}")
         click.echo(f"  Errors: {len(stats.errors)}")
