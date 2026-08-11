@@ -6,6 +6,7 @@ crawl → extract → filter → score → tag → index pipeline.
 
 from __future__ import annotations
 
+import os
 import sys
 
 import click
