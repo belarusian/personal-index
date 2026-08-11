@@ -25,6 +25,26 @@ index:
   enable_fuzzy_search: true # Enable fuzzy matching
   fuzzy_threshold: 0.8      # Fuzzy match similarity threshold
 
+
+# Pipeline settings
+pipeline:
+  enabled: true
+  steps:
+    - name: crawl
+      enabled: true
+    - name: extract
+      enabled: true
+    - name: filter
+      enabled: true
+    - name: score
+      enabled: true
+    - name: tag
+      enabled: true
+    - name: index
+      enabled: true
+  min_score_threshold: 0.0
+  min_content_length: 100
+
 # Scheduler settings
 scheduler:
   enabled: false            # Enable automatic scheduling
