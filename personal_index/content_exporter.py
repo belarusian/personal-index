@@ -161,6 +161,14 @@ class ContentExporter:
             f.write(content)
         return filepath
 
+    @staticmethod
+    def detect_format(filepath):
+        """Detect export format from file extension."""
+        ext = filepath.rsplit(".", 1)[-1].lower() if "." in filepath else ""
+        mapping = {"html": "html", "htm": "html", "json": "json", "md": "markdown", "markdown": "markdown", "rss": "rss", "xml": "rss"}
+        return mapping.get(ext)
+
+
 
     def _format_rss_date(self, date_val: Any) -> str:
         if date_val is None:
@@ -175,4 +183,12 @@ class ContentExporter:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
         return filepath
+
+    @staticmethod
+    def detect_format(filepath):
+        """Detect export format from file extension."""
+        ext = filepath.rsplit(".", 1)[-1].lower() if "." in filepath else ""
+        mapping = {"html": "html", "htm": "html", "json": "json", "md": "markdown", "markdown": "markdown", "rss": "rss", "xml": "rss"}
+        return mapping.get(ext)
+
 
