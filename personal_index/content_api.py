@@ -180,6 +180,7 @@ class ContentAPI:
 
 
 
+
 class RequestLogger:
     """Middleware that logs API requests."""
 
