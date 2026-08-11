@@ -76,7 +76,12 @@ def init(ctx, data_dir, config):
             yaml.dump(default_config, f, default_flow_style=False)
 
     click.echo(f"Initialized personal-index in {data_dir}")
-    click.echo("Run 'personal-index interests add' to start tracking topics.")
+    click.echo("")
+    click.echo("Next steps:")
+    click.echo("  1. Add interests: personal-index interests add -n python -k python -k programming")
+    click.echo("  2. Import files:  personal-index import ./my_files/")
+    click.echo("  3. Search:        personal-index search python")
+    click.echo("  4. Run pipeline:  personal-index pipeline https://example.com")
 
 
 @main.group()
