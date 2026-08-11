@@ -68,3 +68,46 @@ class TestJsonExport:
     def test_export_json_indent(self, exporter, sample_items):
         result = exporter.export(sample_items, "json")
         assert "  " in result  # indented
+
+
+# --- HTML Export Tests ---
+
+class TestHtmlExport:
+    def test_export_html_doctype(self, exporter, sample_items):
+        result = exporter.export(sample_items, "html")
+        assert "<!DOCTYPE html>" in result
+
+    def test_export_html_title(self, exporter, sample_items):
+        result = exporter.export(sample_items, "html")
+        assert "<title>My Index</title>" in result
+
+    def test_export_html_item_count(self, exporter, sample_items):
+        result = exporter.export(sample_items, "html")
+        assert result.count("<article>") == 2
+
+    def test_export_html_escaped_content(self, exporter):
+        items = [{"title": "<script>alert('xss')</script>", "description": "& < >"}]
+        result = exporter.export(items, "html")
+        assert "<script>" not in result
+        assert "&lt;script&gt;" in result
+
+    def test_export_html_links(self, exporter, sample_items):
+        result = exporter.export(sample_items, "html")
+        assert 'href="http://example.com/1"' in result
+
+    def test_export_html_tags(self, exporter, sample_items):
+        result = exporter.export(sample_items, "html")
+        assert 'class="tag"' in result
+        assert "python" in result
+        assert "tutorial" in result
+
+    def test_export_html_empty_items(self, exporter):
+        result = exporter.export([], "html")
+        assert "<html" in result
+        assert result.count("<article>") == 0
+
+    def test_export_html_no_link(self, exporter):
+        items = [{"title": "No Link Post", "description": "No link here"}]
+        result = exporter.export(items, "html")
+        assert "No Link Post" in result
+        assert 'href=""' not in result
