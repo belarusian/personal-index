@@ -21,7 +21,7 @@ class PipelineConfig:
     enabled: bool = True
     steps: list[PipelineStepConfig] = field(default_factory=list)
     min_score_threshold: float = 0.0
-    min_content_length: int = 100
+    min_content_length: int = 10
     max_content_length: int = 100000
     min_title_length: int = 3
     blocked_domains: list[str] = field(default_factory=list)

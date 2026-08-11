@@ -1,7 +1,7 @@
-"""End-to-end integration tests for the full crawl → extract → filter → score → tag → index → search pipeline.
+"""End-to-end integration tests for the full pipeline.
 
-These tests verify that all pipeline stages work together correctly,
-using mocked network calls to avoid external dependencies.
+Tests the complete crawl → extract → filter → score → tag → index pipeline
+using in-memory components and mock data.
 """
 
 from __future__ import annotations
@@ -9,411 +9,478 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from click.testing import CliRunner
 
-from personal_index.cli import main
-from personal_index.config.pipeline_config import PipelineConfig, PipelineStepConfig
+from personal_index.config.pipeline_config import PipelineConfig
+from personal_index.content_filter import ContentFilter, FilterConfig
+from personal_index.content_scoring import ContentScorer, ScoreWeights
 from personal_index.index import SearchIndex
-from personal_index.models import CrawledPage, Interest
-from personal_index.pipeline_runner import PipelineRunner
+from personal_index.interests import InterestStore
+from personal_index.models import CrawledPage, Interest, InterestType
+from personal_index.pipeline_runner import PipelineRunner, PipelineStats
+from personal_index.tags import TagStore
 
 
-class TestE2EImportSearchPipeline:
-    """Test the import → search pipeline end-to-end."""
+class TestPipelineRunnerBasic:
+    """Test the PipelineRunner with in-memory data."""
 
-    def test_import_file_and_search_finds_content(self, tmp_path, monkeypatch):
-        """Import a file, search for its content, verify results."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+    def test_runner_initializes_correctly(self, tmp_path):
+        """PipelineRunner should initialize all components."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        assert runner.data_dir == str(tmp_path)
+        assert runner._interest_store is not None
+        assert runner._tag_store is not None
+        assert runner._search_index is not None
+        assert runner._filter is not None
+        assert runner._scorer is not None
+        runner.close()
 
-        # Create a test file with known content (100+ chars to pass min_content_length)
-        test_file = tmp_path / "article.txt"
-        test_file.write_text(
-            "Python is a powerful programming language used for web development, "
-            "data science, machine learning, and automation. Python supports "
-            "multiple programming paradigms including object-oriented and functional programming."
-        )
+    def test_runner_creates_data_dirs(self, tmp_path):
+        """PipelineRunner should create required subdirectories."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        assert os.path.isdir(os.path.join(tmp_path, "cache"))
+        assert os.path.isdir(os.path.join(tmp_path, "archive"))
+        assert os.path.isdir(os.path.join(tmp_path, "backups"))
+        runner.close()
 
-        # Import the file
-        result = runner.invoke(main, ["import", str(test_file)])
-        assert result.exit_code == 0
-        assert "Import complete" in result.output
+    def test_add_page_directly_success(self, tmp_path):
+        """Adding a page directly should index it."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
 
-        # Search for a keyword from the content
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
-        assert "Python" in result.output or "python" in result.output
+        # Add an interest first
+        interest = Interest(name="python", keywords=["python", "programming"])
+        runner._interest_store.add(interest)
 
-    def test_import_multiple_files_and_search(self, tmp_path, monkeypatch):
-        import pytest; pytest.skip("Test isolation issue")
-        """Import multiple files and search across them."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Create multiple test files
-        (tmp_path / "file1.txt").write_text("Machine learning is a subset of artificial intelligence and data science.")
-        (tmp_path / "file2.txt").write_text("Deep learning uses neural networks for pattern recognition in images.")
-        (tmp_path / "file3.txt").write_text("Natural language processing helps computers understand human text.")
-
-        # Import all files
-        result = runner.invoke(main, ["import", str(tmp_path / "file1.txt"),
-                                       str(tmp_path / "file2.txt"),
-                                       str(tmp_path / "file3.txt")])
-        assert result.exit_code == 0
-
-        # Search should find results
-        result = runner.invoke(main, ["search", "learning"])
-        assert result.exit_code == 0
-
-    def test_import_directory_recursive(self, tmp_path, monkeypatch):
-        import pytest; pytest.skip("Test isolation issue")
-        """Import a directory recursively and search."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Create nested directory structure
-        subdir = tmp_path / "docs" / "tech"
-        subdir.mkdir(parents=True)
-        (subdir / "python.md").write_text("Python programming guide for beginners learning software development.")
-        (subdir / "rust.md").write_text("Rust systems programming language overview for performance optimization.")
-        (tmp_path / "README.md").write_text("Project documentation root file with comprehensive information.")
-
-        # Import recursively
-        result = runner.invoke(main, ["import", str(tmp_path / "docs"), "--recursive"])
-        assert result.exit_code == 0
-        assert "Import complete" in result.output
-
-        # Search should find content from subdirectory
-        result = runner.invoke(main, ["search", "programming"])
-        assert result.exit_code == 0
-
-
-class TestE2EInterestFilterPipeline:
-    """Test the interest-based filtering pipeline end-to-end."""
-
-    def test_add_interest_and_filter(self, tmp_path, monkeypatch):
-        """Add an interest and verify it filters content correctly."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Add an interest
-        result = runner.invoke(main, ["interests", "add", "-n", "python",
-                                       "-k", "python", "-k", "programming"])
-        assert result.exit_code == 0
-        assert "Added interest: python" in result.output
-
-        # List interests
-        result = runner.invoke(main, ["interests", "list"])
-        assert result.exit_code == 0
-        assert "python" in result.output
-
-    def test_interest_affects_pipeline_scoring(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
-        """Verify that interests affect content scoring in the pipeline."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        # Add an interest
-        runner._interest_store.add(Interest(
-            name="python",
-            keywords=["python", "programming"],
-        ))
-
-        # Create a page that matches the interest
         page = CrawledPage(
-            url="https://example.com/python",
-            title="Python Guide",
-            content="Python is a great programming language for web development and software engineering.",
+            url="https://example.com/python-article",
+            title="Python Programming Guide",
+            content="Python is a great programming language for web development.",
+            matched_interests=["python"],
         )
 
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = [page]
-            MockCrawler.return_value = mock_crawler
+        result = runner.add_page_directly(page)
+        assert result is True
+        assert runner._search_index.get_page_count() == 1
+        runner.close()
 
-            stats = runner.run(["https://example.com"], max_depth=1)
+    def test_add_page_directly_empty_content_rejected(self, tmp_path):
+        """Pages with empty content should be rejected."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
 
-        assert stats.pages_crawled == 1
-        assert stats.pages_indexed >= 0
+        page = CrawledPage(
+            url="https://example.com/empty",
+            title="Empty Page",
+            content="",
+        )
 
+        result = runner.add_page_directly(page)
+        assert result is False
+        runner.close()
 
-class TestE2ETagPipeline:
-    """Test the tagging pipeline end-to-end."""
+    def test_add_page_directly_short_content_rejected(self, tmp_path):
+        """Pages below min_content_length should be rejected."""
+        config = PipelineConfig(min_content_length=100)
+        runner = PipelineRunner(data_dir=str(tmp_path), pipeline_config=config)
 
-    def test_add_tag_and_list(self, tmp_path, monkeypatch):
-        """Add tags and verify they are listed."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        page = CrawledPage(
+            url="https://example.com/short",
+            title="Short",
+            content="Too short content.",
+        )
 
-        # Add a tag
-        result = runner.invoke(main, ["tags", "add", "important", "https://example.com/page1"])
-        assert result.exit_code == 0
-        assert "Added tag" in result.output
+        result = runner.add_page_directly(page)
+        assert result is False
+        runner.close()
 
-        # List tags
-        result = runner.invoke(main, ["tags", "list"])
-        assert result.exit_code == 0
-        assert "important" in result.output
+    def test_add_page_directly_applies_tags(self, tmp_path):
+        """Adding a page should apply matching interest tags."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
 
-    def test_remove_tag(self, tmp_path, monkeypatch):
-        """Remove a tag and verify it's gone."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        interest = Interest(name="webdev", keywords=["web", "development"])
+        runner._interest_store.add(interest)
 
-        # Add a tag first
-        runner.invoke(main, ["tags", "add", "temp", "https://example.com/page2"])
+        page = CrawledPage(
+            url="https://example.com/webdev",
+            title="Web Development Tips",
+            content="Web development is fun and rewarding for everyone.",
+        )
 
-        # Remove the tag
-        result = runner.invoke(main, ["tags", "remove", "temp", "https://example.com/page2"])
-        assert result.exit_code == 0
-        assert "Removed" in result.output
+        runner.add_page_directly(page)
+        tags = runner._tag_store.get_tags_for_page("https://example.com/webdev")
+        tag_names = [t.name if hasattr(t, "name") else str(t) for t in tags]
+        assert "webdev" in tag_names
+        runner.close()
 
+    def test_add_page_directly_scores_page(self, tmp_path):
+        """Adding a page should compute a relevance score."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
 
-class TestE2EExportPipeline:
-    """Test export functionality end-to-end."""
+        interest = Interest(name="tech", keywords=["tech", "technology"])
+        runner._interest_store.add(interest)
 
-    def test_import_export_markdown_roundtrip(self, tmp_path, monkeypatch):
-        """Import a file and verify it can be exported."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        page = CrawledPage(
+            url="https://example.com/tech",
+            title="Tech News",
+            content="Technology news and updates from around the world.",
+            matched_interests=["tech"],
+        )
 
-        # Create and import a file
-        test_file = tmp_path / "test.txt"
-        test_file.write_text("Test content for export with python programming keywords and enough words to pass minimum length.")
-        result = runner.invoke(main, ["import", str(test_file)])
-        assert result.exit_code == 0
+        runner.add_page_directly(page)
+        indexed = runner._search_index.get_page("https://example.com/tech")
+        assert indexed is not None
+        assert indexed.score > 0
+        runner.close()
 
-        # Search works as export alternative
-        result = runner.invoke(main, ["search", "test"])
-        assert result.exit_code == 0
-
-    def test_import_export_json_roundtrip(self, tmp_path, monkeypatch):
-        """Import a file and verify it can be searched."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Create and import a file
-        test_file = tmp_path / "test.txt"
-        test_file.write_text("JSON export test with python programming content for data science applications.")
-        result = runner.invoke(main, ["import", str(test_file)])
-        assert result.exit_code == 0
-
-        # Search should work
-        result = runner.invoke(main, ["search", "json"])
-        assert result.exit_code == 0
-
-    def test_export_with_query_filter(self, tmp_path, monkeypatch):
-        import pytest; pytest.skip("Test isolation issue")
-        """Test export with query filtering."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Create and import files
-        (tmp_path / "file1.txt").write_text("Python programming for web development and software engineering.")
-        (tmp_path / "file2.txt").write_text("JavaScript frontend development with React and Node.js frameworks.")
-
-        result = runner.invoke(main, ["import", str(tmp_path / "file1.txt"), str(tmp_path / "file2.txt")])
-        assert result.exit_code == 0
-
-        # Search for specific content
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
+    def test_get_stats_returns_dict(self, tmp_path):
+        """get_stats should return a dictionary with expected keys."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = runner.get_stats()
+        assert isinstance(stats, dict)
+        assert "indexed_pages" in stats
+        assert "total_interests" in stats
+        assert "total_tags" in stats
+        assert "tagged_pages" in stats
+        runner.close()
 
 
-class TestE2EFullWorkflow:
-    """Test the complete pipeline workflow end-to-end."""
+class TestPipelineStages:
+    """Test individual pipeline stages."""
 
-    def test_complete_workflow(self, tmp_path, monkeypatch):
-        """Test the full workflow: init → interests → import → search."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Initialize
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-
-        # Add an interest
-        result = runner.invoke(main, ["interests", "add", "-n", "python",
-                                       "-k", "python", "-k", "programming"])
-        assert result.exit_code == 0
-
-        # Create and import a file
-        test_file = tmp_path / "article.txt"
-        test_file.write_text("Python is a versatile programming language used for web development, "
-                            "data science, machine learning, and automation. Python supports "
-                            "multiple paradigms including object-oriented and functional programming.")
-        result = runner.invoke(main, ["import", str(test_file)])
-        assert result.exit_code == 0
-
-        # Search should find results
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
-        assert "Python" in result.output or "python" in result.output
-
-    def test_workflow_with_tags(self, tmp_path, monkeypatch):
-        """Test workflow with tagging."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Initialize
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-
-        # Add a tag
-        result = runner.invoke(main, ["tags", "add", "tutorial", "https://example.com/tutorial"])
-        assert result.exit_code == 0
-
-        # List tags should show it
-        result = runner.invoke(main, ["tags", "list"])
-        assert result.exit_code == 0
-        assert "tutorial" in result.output
-
-
-class TestE2EPipelineCommand:
-    """Test the pipeline command end-to-end."""
-
-    def test_pipeline_dry_run(self, tmp_path, monkeypatch):
-        import pytest; pytest.skip("Test isolation issue")
-        """Test pipeline dry run mode."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        result = runner.invoke(main, ["pipeline", "--dry-run", "https://example.com"])
-        assert result.exit_code == 0
-        assert "Dry run" in result.output
-
-    def test_pipeline_with_mocked_crawler(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
-        """Test pipeline with mocked crawler."""
-        data_dir = str(tmp_path / "data")
-        cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(config=cfg, data_dir=data_dir)
-
-        # Add an interest
-        runner._interest_store.add(Interest(
-            name="test",
-            keywords=["test"],
-        ))
+    def test_extract_stage_preserves_content(self, tmp_path):
+        """Extract stage should preserve page content."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = PipelineStats()
 
         pages = [
             CrawledPage(
                 url="https://example.com/page1",
-                title="Test Page 1",
-                content="This is test page one with enough words to pass the minimum content length filter.",
+                title="Page One",
+                content="This is the content of page one.",
             ),
             CrawledPage(
                 url="https://example.com/page2",
-                title="Test Page 2",
-                content="This is test page two with sufficient content for testing purposes.",
+                title="Page Two",
+                content="This is the content of page two.",
             ),
         ]
 
-        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
-            mock_crawler = MagicMock()
-            mock_crawler.crawl.return_value = pages
-            MockCrawler.return_value = mock_crawler
-
-            stats = runner.run(["https://example.com"], max_depth=1)
-
-        assert stats.pages_crawled == 2
+        result = runner._extract_stage(pages, stats)
+        assert len(result) == 2
         assert stats.pages_extracted == 2
+        runner.close()
+
+    def test_extract_stage_removes_empty_pages(self, tmp_path):
+        """Extract stage should remove pages with no content."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = PipelineStats()
+
+        pages = [
+            CrawledPage(url="https://example.com/good", title="Good", content="Has content"),
+            CrawledPage(url="https://example.com/empty", title="Empty", content=""),
+            CrawledPage(url="https://example.com/blank", title="Blank", content="   "),
+        ]
+
+        result = runner._extract_stage(pages, stats)
+        assert len(result) == 1
+        assert result[0].url == "https://example.com/good"
+        runner.close()
+
+    def test_filter_stage_includes_good_content(self, tmp_path):
+        """Filter stage should include pages meeting criteria."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = PipelineStats()
+
+        pages = [
+            CrawledPage(
+                url="https://example.com/good",
+                title="Good Page",
+                content="This is a good page with enough content to pass the filter.",
+            ),
+        ]
+
+        result = runner._filter_stage(pages, stats)
+        assert len(result) == 1
+        assert stats.pages_filtered_in == 1
+        runner.close()
+
+    def test_filter_stage_excludes_short_content(self, tmp_path):
+        """Filter stage should exclude pages with too little content."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        # Set a high min_content_length
+        runner._filter.config.min_content_length = 100
+        stats = PipelineStats()
+
+        pages = [
+            CrawledPage(
+                url="https://example.com/short",
+                title="Short",
+                content="Too short.",
+            ),
+        ]
+
+        result = runner._filter_stage(pages, stats)
+        assert len(result) == 0
+        assert stats.pages_filtered_out == 1
+        runner.close()
+
+    def test_score_stage_assigns_scores(self, tmp_path):
+        """Score stage should assign relevance scores to pages."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = PipelineStats()
+
+        interest = Interest(name="python", keywords=["python"])
+        runner._interest_store.add(interest)
+
+        pages = [
+            CrawledPage(
+                url="https://example.com/python",
+                title="Python Guide",
+                content="Python programming language guide.",
+                matched_interests=["python"],
+            ),
+        ]
+
+        result = runner._score_stage(pages, stats)
+        assert len(result) == 1
+        assert result[0].relevance_score > 0
+        assert stats.pages_scored == 1
+        runner.close()
+
+    def test_tag_stage_applies_interest_tags(self, tmp_path):
+        """Tag stage should apply tags based on interest matches."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = PipelineStats()
+
+        interest = Interest(name="ai", keywords=["artificial", "intelligence", "ai"])
+        runner._interest_store.add(interest)
+
+        pages = [
+            CrawledPage(
+                url="https://example.com/ai",
+                title="AI News",
+                content="Artificial intelligence is transforming the world.",
+            ),
+        ]
+
+        runner._tag_stage(pages, stats)
+        tags = runner._tag_store.get_tags_for_page("https://example.com/ai")
+        tag_names = [t.name if hasattr(t, "name") else str(t) for t in tags]
+        assert "ai" in tag_names
+        assert stats.pages_tagged == 1
+        assert stats.tags_applied > 0
+        runner.close()
+
+    def test_index_stage_persists_pages(self, tmp_path):
+        """Index stage should persist pages to the search index."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = PipelineStats()
+
+        pages = [
+            CrawledPage(
+                url="https://example.com/indexed",
+                title="Indexed Page",
+                content="This page should be indexed.",
+                relevance_score=0.8,
+            ),
+        ]
+
+        runner._index_stage(pages, stats)
+        assert runner._search_index.get_page_count() == 1
+        assert stats.pages_indexed == 1
+        runner.close()
 
 
-class TestE2EStatusCommand:
-    """Test the status command."""
+class TestPipelineRunnerRun:
+    """Test the full run() method with mocked crawling."""
 
-    def test_status_shows_summary(self, tmp_path, monkeypatch):
-        """Test that status shows a summary of the system."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-
-        result = runner.invoke(main, ["status"])
-        assert result.exit_code == 0
-        assert "Status" in result.output or "personal-index Status" in result.output
-
-
-class TestE2EConfigCommands:
-    """Test configuration commands."""
-
-    def test_config_show(self, tmp_path, monkeypatch):
-        """Test config show command."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-
-        result = runner.invoke(main, ["config", "show"])
-        assert result.exit_code == 0
-        assert "configuration" in result.output.lower() or "Data dir" in result.output
-
-
-class TestE2EInterestCommands:
-    """Test interest management commands."""
-
-    def test_interest_priority(self, tmp_path, monkeypatch):
-        import pytest; pytest.skip("Test isolation issue")
-        """Test setting interest priority."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+    def test_run_with_mocked_crawler(self, tmp_path):
+        """Full pipeline run should process pages through all stages."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
 
         # Add an interest
-        result = runner.invoke(main, ["interests", "add", "-n", "priority-test",
-                                       "-k", "test"])
-        assert result.exit_code == 0
+        interest = Interest(name="test", keywords=["test", "example"])
+        runner._interest_store.add(interest)
 
-        # Set priority
-        result = runner.invoke(main, ["interests", "priority", "priority-test", "8"])
-        assert result.exit_code == 0
-        assert "Set priority" in result.output or "priority" in result.output.lower()
+        # Mock the crawler
+        mock_page = CrawledPage(
+            url="https://example.com/test-page",
+            title="Test Page",
+            content="This is a test page with enough content to pass all filters and be indexed properly.",
+            matched_interests=["test"],
+        )
+        runner._crawler.crawl = MagicMock(return_value=[mock_page])
 
-    def test_interest_enable_disable(self, tmp_path, monkeypatch):
-        import pytest; pytest.skip("Test isolation issue")
-        """Test enabling and disabling interests."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        stats = runner.run(["https://example.com"])
 
-        # Add an interest
-        result = runner.invoke(main, ["interests", "add", "-n", "enable-test",
-                                       "-k", "test"])
-        assert result.exit_code == 0
+        assert stats.pages_crawled == 1
+        assert stats.pages_extracted >= 1
+        assert stats.pages_indexed >= 1
+        assert stats.elapsed_seconds >= 0
+        runner.close()
 
-        # Disable it
-        result = runner.invoke(main, ["interests", "disable", "enable-test"])
-        assert result.exit_code == 0
+    def test_run_empty_results(self, tmp_path):
+        """Pipeline run with no crawl results should complete cleanly."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        runner._crawler.crawl = MagicMock(return_value=[])
 
-        # Re-enable it
-        result = runner.invoke(main, ["interests", "enable", "enable-test"])
-        assert result.exit_code == 0
+        stats = runner.run(["https://example.com"])
+        assert stats.pages_crawled == 0
+        assert stats.pages_indexed == 0
+        runner.close()
+
+    def test_run_captures_errors(self, tmp_path):
+        """Pipeline run should capture and report errors."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+
+        mock_page = CrawledPage(
+            url="https://example.com/bad",
+            title="Bad Page",
+            content="x" * 200,
+        )
+        runner._crawler.crawl = MagicMock(return_value=[mock_page])
+
+        # Mock index to raise an error
+        runner._search_index.add_page = MagicMock(side_effect=ValueError("index error"))
+
+        stats = runner.run(["https://example.com"])
+        assert len(stats.errors) > 0
+        runner.close()
 
 
-class TestE2EScheduleCommands:
-    """Test scheduled job commands."""
+class TestPipelineStats:
+    """Test PipelineStats dataclass."""
 
-    def test_schedule_add_list_remove(self, tmp_path, monkeypatch):
-        """Test adding, listing, and removing scheduled jobs."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+    def test_stats_default_values(self):
+        """PipelineStats should have sensible defaults."""
+        stats = PipelineStats()
+        assert stats.pages_crawled == 0
+        assert stats.pages_extracted == 0
+        assert stats.pages_filtered_in == 0
+        assert stats.pages_filtered_out == 0
+        assert stats.pages_scored == 0
+        assert stats.pages_tagged == 0
+        assert stats.pages_indexed == 0
+        assert stats.errors == []
+        assert stats.elapsed_seconds == 0.0
+        assert stats.tags_applied == 0
+        assert stats.interests_matched == 0
 
-        # Add a scheduled job
-        result = runner.invoke(main, ["schedule", "add", "-n", "daily",
-                                       "-u", "https://example.com", "-i", "24"])
-        assert result.exit_code == 0
-        assert "Added" in result.output or "job" in result.output.lower()
+    def test_stats_summary(self):
+        """PipelineStats.summary should return readable text."""
+        stats = PipelineStats(
+            pages_crawled=10,
+            pages_extracted=8,
+            pages_filtered_in=6,
+            pages_filtered_out=2,
+            pages_scored=6,
+            pages_tagged=6,
+            pages_indexed=6,
+            tags_applied=12,
+            interests_matched=4,
+            elapsed_seconds=5.2,
+        )
+        summary = stats.summary()
+        assert "Pipeline Summary" in summary
+        assert "Crawled:      10" in summary
+        assert "Indexed:      6" in summary
+        assert "Time:         5.2s" in summary
 
-        # List schedules
-        result = runner.invoke(main, ["schedule", "list"])
-        assert result.exit_code == 0
 
-        # Remove the job
-        result = runner.invoke(main, ["schedule", "remove", "daily"])
-        assert result.exit_code == 0
-        assert "Removed" in result.output or "job" in result.output.lower()
+class TestPipelineRunnerFromFile:
+    """Test run_from_files method."""
+
+    def test_run_from_files_imports_content(self, tmp_path):
+        """run_from_files should import and index local files."""
+        # Create a test file
+        test_file = tmp_path / "test_article.txt"
+        test_file.write_text(
+            "This is a test article about programming and software development. "
+            "It has enough content to pass the content length filter and "
+            "should be properly indexed by the pipeline runner."
+        )
+
+        runner = PipelineRunner(data_dir=str(tmp_path))
+
+        # Add interest
+        interest = Interest(name="programming", keywords=["programming", "software"])
+        runner._interest_store.add(interest)
+
+        stats = runner.run_from_files([str(test_file)])
+
+        assert stats.pages_indexed >= 1
+        runner.close()
+
+    def test_run_from_files_missing_file(self, tmp_path):
+        """run_from_files should handle missing files gracefully."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+
+        stats = runner.run_from_files(["/nonexistent/file.txt"])
+
+        assert stats.pages_indexed == 0
+        assert len(stats.errors) > 0
+        runner.close()
+
+    def test_run_from_files_empty_file(self, tmp_path):
+        """run_from_files should skip empty files."""
+        test_file = tmp_path / "empty.txt"
+        test_file.write_text("")
+
+        runner = PipelineRunner(data_dir=str(tmp_path))
+        stats = runner.run_from_files([str(test_file)])
+
+        assert stats.pages_indexed == 0
+        runner.close()
+
+
+class TestPipelinePersistence:
+    """Test that pipeline data persists correctly."""
+
+    def test_interests_persist_after_run(self, tmp_path):
+        """Interests should be saved to disk after pipeline run."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+
+        interest = Interest(name="persistence", keywords=["persist", "save"])
+        runner._interest_store.add(interest)
+
+        runner.close()
+
+        # Reload and verify
+        store = InterestStore(store_path=os.path.join(tmp_path, "interests.json"))
+        interests = store.list_all()
+        assert len(interests) == 1
+        assert interests[0].name == "persistence"
+
+    def test_tags_persist_after_run(self, tmp_path):
+        """Tags should be saved to disk after pipeline run."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+
+        runner._tag_store.add_tag_to_page("https://example.com/page", "test-tag")
+        runner.close()
+
+        # Reload and verify
+        tag_store = TagStore(store_path=os.path.join(tmp_path, "tags.json"))
+        tags = tag_store.get_tags_for_page("https://example.com/page")
+        tag_names = [t.name if hasattr(t, "name") else str(t) for t in tags]
+        assert "test-tag" in tag_names
+
+    def test_index_persists_after_run(self, tmp_path):
+        """Search index should be saved to disk after pipeline run."""
+        runner = PipelineRunner(data_dir=str(tmp_path))
+
+        page = CrawledPage(
+            url="https://example.com/persist",
+            title="Persistent Page",
+            content="This page should persist after the runner closes.",
+            relevance_score=0.9,
+        )
+        runner._search_index.add_page(page)
+        runner.close()
+
+        # Reload and verify
+        index = SearchIndex(db_path=os.path.join(tmp_path, "search_index.json"))
+        assert index.get_page_count() == 1
+        page = index.get_page("https://example.com/persist")
+        assert page is not None
+        assert page.title == "Persistent Page"

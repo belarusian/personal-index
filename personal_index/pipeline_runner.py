@@ -250,7 +250,8 @@ class PipelineRunner:
     ) -> list[CrawledPage]:
         """Stage 2: Extract content (pages already have content from crawl)."""
         # Content is already extracted by the crawler
-        extracted = [p for p in pages if p.content]
+        # Strip whitespace and filter out empty/blank pages
+        extracted = [p for p in pages if p.content and p.content.strip()]
         stats.pages_extracted = len(extracted)
         self._emit_progress("extract", stats.pages_extracted)
         return extracted
