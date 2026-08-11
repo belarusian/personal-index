@@ -812,9 +812,11 @@ def schedule_remove(ctx, name, data_dir):
 # Import pipeline command
 from personal_index.cli_pipeline import pipeline
 from personal_index.cli_pipeline_unified import run_pipeline
+from personal_index.cli_verify import verify
 
 main.add_command(pipeline)
 main.add_command(run_pipeline)
+main.add_command(verify)
 
 # Doctor command
 @main.command()
