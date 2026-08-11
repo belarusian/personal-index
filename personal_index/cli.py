@@ -7,11 +7,11 @@ import os
 import click
 import yaml
 
+from personal_index.cli_pipeline import pipeline as pipeline_cmd
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import Interest
 from personal_index.scheduler import Scheduler, ScheduleStore
-from personal_index.cli_pipeline import pipeline as pipeline_cmd
 
 
 def get_interest_store() -> InterestStore:
@@ -201,7 +201,6 @@ def index_count():
 @click.option("--data-dir", default=".personal_index", help="Data directory")
 def index_rebuild(data_dir):
     """Rebuild the search index from stored data."""
-    import os
     from personal_index.index import SearchIndex
     idx = SearchIndex()
     count = idx.get_page_count()
@@ -456,7 +455,6 @@ def import_cmd(path, recursive, config, data_dir, tag):
 
     PATH can be a file or directory. Use --recursive for directories.
     """
-    import os
     from pathlib import Path
 
     from personal_index.content_extractor import ContentExtractor

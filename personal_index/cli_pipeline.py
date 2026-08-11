@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+
 import click
 
 from personal_index.config.pipeline_config import load_pipeline_config

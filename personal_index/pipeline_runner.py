@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 from personal_index.config.pipeline_config import PipelineConfig, load_pipeline_config
 from personal_index.content_extractor import ContentExtractor
 from personal_index.content_filter import ContentFilter, FilterConfig
-from personal_index.content_scoring import ContentScorer, ScoreWeights
+from personal_index.content_scoring import ContentScorer
 from personal_index.crawler.main import Crawler, CrawlerConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
@@ -34,7 +33,7 @@ class PipelineStats:
     def summary(self) -> str:
         """Return a human-readable summary."""
         lines = [
-            f"Pipeline complete:",
+            "Pipeline complete:",
             f"  Crawled:    {self.pages_crawled}",
             f"  Extracted:  {self.pages_extracted}",
             f"  Filtered in: {self.pages_filtered_in}",
@@ -157,7 +156,7 @@ class PipelineRunner:
             logger.info("Step 6/6: Indexing content")
             for page in pages:
                 try:
-                    self._search_index.add_page(page)
+                    self._search_index.add_page(page)  # type: ignore[arg-type]
                     stats.pages_indexed += 1
                 except Exception as e:
                     logger.warning("Failed to index %s: %s", page.url, e)

@@ -84,7 +84,12 @@ class PersonalIndexApp:
             return load_config(self.config_path)
         except (FileNotFoundError, OSError):
             logger.info("No config file found, using defaults")
-            from personal_index.config.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
+            from personal_index.config.models import (
+                AppConfig,
+                CrawlConfig,
+                IndexConfig,
+                SchedulerConfig,
+            )
             return AppConfig(
                 data_dir=self.data_dir,
                 crawl=CrawlConfig(),
