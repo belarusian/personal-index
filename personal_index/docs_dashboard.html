@@ -403,7 +403,7 @@ body::after {
             <div class="stat-label">Modules</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">29,540</div>
+            <div class="stat-value">29,590</div>
             <div class="stat-label">Lines</div>
         </div>
         <div class="stat-card">
@@ -411,7 +411,7 @@ body::after {
             <div class="stat-label">Classes</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">1707</div>
+            <div class="stat-value">1708</div>
             <div class="stat-label">Functions</div>
         </div>
         <div class="stat-card">
@@ -693,8 +693,8 @@ body::after {
         </div>
         <div class="mod-meta">
             <span>CLASSES: 0</span>
-            <span>FUNCS: 30</span>
-            <span>LINES: 610</span>
+            <span>FUNCS: 31</span>
+            <span>LINES: 614</span>
             <span>TESTS: 0</span>
         </div>
     </div>
@@ -2014,7 +2014,7 @@ body::after {
         <div class="mod-meta">
             <span>CLASSES: 1</span>
             <span>FUNCS: 15</span>
-            <span>LINES: 182</span>
+            <span>LINES: 202</span>
             <span>TESTS: 0</span>
         </div>
     </div>
@@ -2158,7 +2158,7 @@ body::after {
         <div class="mod-meta">
             <span>CLASSES: 11</span>
             <span>FUNCS: 21</span>
-            <span>LINES: 429</span>
+            <span>LINES: 441</span>
             <span>TESTS: 0</span>
         </div>
     </div>
@@ -2218,7 +2218,7 @@ body::after {
         <div class="mod-meta">
             <span>CLASSES: 2</span>
             <span>FUNCS: 4</span>
-            <span>LINES: 181</span>
+            <span>LINES: 194</span>
             <span>TESTS: 0</span>
         </div>
     </div>
@@ -2482,7 +2482,7 @@ body::after {
         <div class="mod-meta">
             <span>CLASSES: 2</span>
             <span>FUNCS: 17</span>
-            <span>LINES: 157</span>
+            <span>LINES: 158</span>
             <span>TESTS: 0</span>
         </div>
     </div>
@@ -4261,6 +4261,60 @@ body::after {
     <div class="commit-list">
 
     <div class="commit-row">
+        <span class="commit-sha">c344be3</span>
+        <span class="commit-msg">fix: ruff errors, skip flaky e2e tests for unimplemented CLI features</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">f395886</span>
+        <span class="commit-msg">autonomous: save progress</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">790d9f8</span>
+        <span class="commit-msg">fix: CLI uses persistent SearchIndex; fix CrawledPage conversion; fix URL glob matching</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">117bf5a</span>
+        <span class="commit-msg">test: add comprehensive end-to-end pipeline integration tests</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">f7d1769</span>
+        <span class="commit-msg">fix: update test for auto-creating tags in TagStore</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">759ee64</span>
+        <span class="commit-msg">fix: pipeline scoring uses interest keywords and filters by threshold</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">35b6d9b</span>
+        <span class="commit-msg">fix: TagStore auto-creates tags and fixes remove_tag_from_page</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">aec4a8d</span>
+        <span class="commit-msg">feat: SearchIndex accepts CrawledPage and converts to IndexedPage</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
+        <span class="commit-sha">c20e607</span>
+        <span class="commit-msg">docs: regenerate dashboard</span>
+        <span class="commit-author">Dev Agent</span>
+        <span class="commit-date">2026-08-11</span>
+    </div>
+    <div class="commit-row">
         <span class="commit-sha">cf185fe</span>
         <span class="commit-msg">fix: ruff errors, mypy arg-type, skip flaky integration test</span>
         <span class="commit-author">Dev Agent</span>
@@ -4323,60 +4377,6 @@ body::after {
     <div class="commit-row">
         <span class="commit-sha">e7ff094</span>
         <span class="commit-msg">test: add crawl command integration test with --no-index flag</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">f0893f5</span>
-        <span class="commit-msg">cli: fix crawl command to use CrawlerConfig and add --no-index flag</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">bcd572b</span>
-        <span class="commit-msg">cli: add --quiet flag to pipeline for minimal output</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">b85fbc2</span>
-        <span class="commit-msg">cli: add --tag and --sort options to search command</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">48c3e78</span>
-        <span class="commit-msg">test: add pipeline dry-run with custom config integration test</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">f27026b</span>
-        <span class="commit-msg">test: add export JSON format integration test</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">7638a78</span>
-        <span class="commit-msg">test: add import-then-search roundtrip integration test</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">2563247</span>
-        <span class="commit-msg">cli: add --json output format to status command</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">de79f84</span>
-        <span class="commit-msg">cli: add --json output format to search command</span>
-        <span class="commit-author">Dev Agent</span>
-        <span class="commit-date">2026-08-11</span>
-    </div>
-    <div class="commit-row">
-        <span class="commit-sha">a6d394e</span>
-        <span class="commit-msg">cli: add --output option to pipeline command for saving stats to file</span>
         <span class="commit-author">Dev Agent</span>
         <span class="commit-date">2026-08-11</span>
     </div>
@@ -5307,7 +5307,7 @@ body::after {
 </div>
 
 <div class="footer">
-    [ personal_index.docs_generator ] — 183 modules | 29,540 lines | 30 errors | 0 warnings
+    [ personal_index.docs_generator ] — 183 modules | 29,590 lines | 30 errors | 0 warnings
 </div>
 
 </div>
