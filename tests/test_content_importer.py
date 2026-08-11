@@ -1,5 +1,6 @@
 """Tests for content_importer module."""
 
+import json
 import pytest
 from personal_index.content_importer import ContentImporter
 
@@ -102,7 +103,7 @@ class TestHtmlImport:
 
 class TestMarkdownImport:
     def test_import_markdown_basic(self, importer):
-        data = "# Title\n\n## Post 1\n\nDescription here\n\n## Post 2\n\nAnother desc"
+        data = "## Post 1\n\nDescription here\n\n## Post 2\n\nAnother desc"
         items = importer.import_content(data, "markdown")
         assert len(items) == 2
         assert items[0]["title"] == "Post 1"
@@ -114,7 +115,7 @@ class TestMarkdownImport:
         assert items[0]["link"] == "http://example.com"
 
     def test_import_markdown_empty(self, importer):
-        items = importer.import_content("# Empty", "markdown")
+        items = importer.import_content("", "markdown")
         assert items == []
 
     def test_import_markdown_multiline_desc(self, importer):
@@ -122,6 +123,12 @@ class TestMarkdownImport:
         items = importer.import_content(data, "markdown")
         assert "Line 1" in items[0]["description"]
         assert "Line 3" in items[0]["description"]
+
+    def test_import_markdown_h1_heading(self, importer):
+        data = "# Main Title\n\n## Section 1\n\nContent"
+        items = importer.import_content(data, "markdown")
+        assert len(items) == 2
+        assert items[0]["title"] == "Main Title"
 
 
 # --- RSS Import Tests ---
