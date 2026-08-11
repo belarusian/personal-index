@@ -46,6 +46,11 @@ class ScheduledTask:
         self.next_run: Optional[datetime] = None
         self.run_count = 0
         self.last_error: Optional[str] = None
+        self._minute: List[int] = []
+        self._hour: List[int] = []
+        self._dom: List[int] = []
+        self._month: List[int] = []
+        self._dow: List[int] = []
         self._parse_cron()
 
     def _parse_cron(self) -> None:
@@ -59,7 +64,16 @@ class ScheduledTask:
         self._hour = self._parse_field(hour, 0, 23)
         self._dom = self._parse_field(dom, 1, 31)
         self._month = self._parse_field(month, 1, 12)
-        self._dow = self._parse_field(dow, 0, 6)
+        # Cron: 0=Sunday, 1=Monday, ..., 6=Saturday
+        # Python weekday(): 0=Monday, ..., 6=Sunday
+        # Convert cron DOW to Python weekday
+        cron_dow = self._parse_field(dow, 0, 6)
+        self._dow = []
+        for d in cron_dow:
+            if d == 0:
+                self._dow.append(6)  # Sunday
+            else:
+                self._dow.append(d - 1)  # Shift: cron 1(Mon) -> python 0(Mon)
         self._compute_next_run()
 
     def _parse_field(self, field: str, min_val: int, max_val: int) -> List[int]:
@@ -84,7 +98,8 @@ class ScheduledTask:
         """Compute the next scheduled run time."""
         now = datetime.now(timezone.utc)
         candidate = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
-        for _ in range(525600):  # max 1 year of minutes
+        # Try up to 1 year ahead
+        for _ in range(525600):
             if (candidate.minute in self._minute and
                 candidate.hour in self._hour and
                 candidate.day in self._dom and
@@ -92,6 +107,7 @@ class ScheduledTask:
                 candidate.weekday() in self._dow):
                 self.next_run = candidate
                 return
+            candidate += timedelta(minutes=1)
         self.next_run = None
 
     def is_due(self) -> bool:
