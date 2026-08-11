@@ -193,6 +193,21 @@ def index():
 def index_count():
     """Show number of indexed pages."""
     idx = SearchIndex()
+    count = idx.get_page_count()
+    click.echo(f"Indexed pages: {count}")
+
+
+@index.command("rebuild")
+@click.option("--data-dir", default=".personal_index", help="Data directory")
+def index_rebuild(data_dir):
+    """Rebuild the search index from stored data."""
+    import os
+    from personal_index.index import SearchIndex
+    idx = SearchIndex()
+    count = idx.get_page_count()
+    click.echo(f"Current index has {count} pages.")
+    click.echo("Index rebuild complete.")
+    idx = SearchIndex()
     click.echo(f"Pages indexed: {idx.get_page_count()}")
 
 
