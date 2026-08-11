@@ -243,3 +243,29 @@ class TestSearchAdvanced:
         r2 = search.search("python", limit=1, offset=1)
         if r2["total"] > 1:
             assert r1["results"][0]["item"]["id"] != r2["results"][0]["item"]["id"]
+
+
+# --- Index Persistence Tests ---
+
+class TestIndexPersistence:
+    def test_save_and_load_index(self, search, sample_items, tmp_path):
+        search.index_items(sample_items)
+        filepath = tmp_path / "index.json"
+        search.index.save_index(str(filepath))
+        new_search = ContentSearch()
+        new_search.index.load_index(str(filepath))
+        assert new_search.index.item_count == 5
+        result = new_search.search("python")
+        assert result["total"] > 0
+
+    def test_save_index_creates_file(self, search, sample_items, tmp_path):
+        search.index_items(sample_items)
+        filepath = tmp_path / "index.json"
+        search.index.save_index(str(filepath))
+        assert filepath.exists()
+
+    def test_load_empty_index(self, search, tmp_path):
+        search.index.save_index(str(tmp_path / "empty.json"))
+        new_search = ContentSearch()
+        new_search.index.load_index(str(tmp_path / "empty.json"))
+        assert new_search.index.item_count == 0
