@@ -177,3 +177,30 @@ class ContentAPI:
             errors.append("Title must be under 200 characters")
         return errors
 
+
+
+
+class RequestLogger:
+    """Middleware that logs API requests."""
+
+    def __init__(self, api):
+        self.api = api
+        self._log = []
+
+    def handle_request(self, method, path, body=None, query_string=""):
+        entry = {
+            "method": method,
+            "path": path,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        status, response = self.api.handle_request(method, path, body, query_string)
+        entry["status"] = status
+        self._log.append(entry)
+        return status, response
+
+    @property
+    def log(self):
+        return list(self._log)
+
+    def clear_log(self):
+        self._log.clear()
