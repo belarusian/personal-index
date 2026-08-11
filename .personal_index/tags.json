@@ -75,8 +75,8 @@
       "webdev"
     ],
     "https://iana.org/help/rzm-api": [
-      "api",
       "webdev",
+      "api",
       "Python",
       "python"
     ],
@@ -165,9 +165,7 @@
     "https://another-site.com/privacy-policy-2": [
       "webdev"
     ],
-    "https://example.com/page1": [
-      "important"
-    ],
+    "https://example.com/page1": [],
     "https://example.com/page2": [
       "reference"
     ],

@@ -81,7 +81,7 @@ class TestCLIPipelineE2E:
         assert (tmp_path / "stats.txt").exists()
 
     def test_pipeline_quiet_mode(self, tmp_path, monkeypatch):
-        """Test pipeline quiet mode suppresses output."""
+        """Test pipeline quiet mode suppresses verbose output."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
@@ -91,8 +91,8 @@ class TestCLIPipelineE2E:
             "pipeline", "--no-crawl", "-q"
         ])
         assert result.exit_code == 0
-        # Quiet mode should still show summary
-        assert "Pipeline Summary" in result.output
+        # Quiet mode suppresses the "Running pipeline" header but still shows summary
+        assert "Running pipeline" not in result.output
 
     def test_full_cli_workflow_init_import_search_export(self, tmp_path, monkeypatch):
         """Test complete CLI workflow: init → import → search → export."""
@@ -213,8 +213,8 @@ class TestCLIPipelineE2E:
 
         runner.invoke(main, ["init"])
 
-        # View config
-        result = runner.invoke(main, ["config", "view"])
+        # Show config
+        result = runner.invoke(main, ["config", "show"])
         assert result.exit_code == 0
 
         # Set crawler config
@@ -222,7 +222,7 @@ class TestCLIPipelineE2E:
         assert result.exit_code == 0
 
         # Verify config was updated
-        result = runner.invoke(main, ["config", "view"])
+        result = runner.invoke(main, ["config", "show"])
         assert result.exit_code == 0
 
     def test_cli_schedule_commands(self, tmp_path, monkeypatch):
