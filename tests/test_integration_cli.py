@@ -179,3 +179,27 @@ class TestCLIExportWithQuery:
         # Export as JSON
         result = runner.invoke(main, ["export", "--format", "json"])
         assert result.exit_code == 0
+
+
+class TestCLIPipelineConfig:
+    """Test pipeline with custom config."""
+
+    def test_pipeline_dry_run_with_config(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        # Create a config file
+        config_file = tmp_path / "test_config.yaml"
+        config_file.write_text("""
+pipeline:
+  enabled: true
+  steps:
+    - name: crawl
+      enabled: true
+    - name: extract
+      enabled: false
+  min_score_threshold: 0.5
+""")
+        result = runner.invoke(main, ["pipeline", "--dry-run", "--config", str(config_file), "https://example.com"])
+        assert result.exit_code == 0
+        assert "Dry run mode" in result.output
+        assert "extract" not in result.output or "crawl" in result.output
