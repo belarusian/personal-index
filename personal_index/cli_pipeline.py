@@ -77,6 +77,14 @@ def pipeline(ctx, urls, data_dir, depth, max_pages, timeout, delay,
     # Initialize pipeline
     pipe = Pipeline(data_dir=dd, config=config)
 
+    # Load existing interests from data directory
+    interest_count = len(pipe.interest_store.list_all())
+    if interest_count > 0:
+        click.echo(f"Loaded {interest_count} interest(s) from {dd}")
+    else:
+        click.echo("No interests configured. Adding content without interest filtering.")
+        click.echo("Add interests with: personal-index interests add <name> -k <keyword>")
+
     click.echo(f"Running pipeline in {dd}")
     click.echo(f"Steps: {', '.join(config.enabled_steps)}")
 
@@ -98,9 +106,12 @@ def pipeline(ctx, urls, data_dir, depth, max_pages, timeout, delay,
         # Import local files
         click.echo(f"Importing {len(import_files)} local file(s)...")
         imported = 0
+        filtered = 0
+        errors = 0
         for filepath in import_files:
             if not os.path.exists(filepath):
                 click.echo(f"  Warning: {filepath} not found, skipping", err=True)
+                errors += 1
                 continue
             try:
                 with open(filepath, "r", encoding="utf-8", errors="replace") as f:
@@ -115,10 +126,13 @@ def pipeline(ctx, urls, data_dir, depth, max_pages, timeout, delay,
                     imported += 1
                     click.echo(f"  Imported: {filepath}")
                 else:
+                    filtered += 1
                     click.echo(f"  Filtered out: {filepath}")
             except Exception as e:
                 click.echo(f"  Error importing {filepath}: {e}", err=True)
-        click.echo(f"Imported {imported}/{len(import_files)} files")
+                errors += 1
+        click.echo(f"Imported {imported}/{len(import_files)} files "
+                   f"({filtered} filtered, {errors} errors)")
     elif urls:
         # Run crawl pipeline
         click.echo(f"Crawling {len(urls)} seed URL(s)...")
