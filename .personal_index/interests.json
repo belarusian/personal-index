@@ -1,1 +1,52 @@
-{}
+{
+  "programming": {
+    "name": "programming",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "python",
+      "javascript",
+      "rust"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T11:57:56.389893+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "technology": {
+    "name": "technology",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "software",
+      "hardware",
+      "ai"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T11:57:56.498736+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "news": {
+    "name": "news",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "updates",
+      "release"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-08-11T11:57:56.607603+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  }
+}
