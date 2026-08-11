@@ -111,3 +111,64 @@ class TestHtmlExport:
         result = exporter.export(items, "html")
         assert "No Link Post" in result
         assert 'href=""' not in result
+
+
+# --- Markdown Export Tests ---
+
+class TestMarkdownExport:
+    def test_export_markdown_heading(self, exporter, sample_items):
+        result = exporter.export(sample_items, "markdown")
+        assert "# My Index" in result
+
+    def test_export_markdown_item_headings(self, exporter, sample_items):
+        result = exporter.export(sample_items, "markdown")
+        assert "## [First Post](http://example.com/1)" in result
+
+    def test_export_markdown_description(self, exporter, sample_items):
+        result = exporter.export(sample_items, "markdown")
+        assert "This is the first post." in result
+
+    def test_export_markdown_tags(self, exporter, sample_items):
+        result = exporter.export(sample_items, "markdown")
+        assert "python" in result
+        assert "tutorial" in result
+
+    def test_export_markdown_date(self, exporter, sample_items):
+        result = exporter.export(sample_items, "markdown")
+        assert "2024-01-15" in result
+
+    def test_export_markdown_empty(self, exporter):
+        result = exporter.export([], "markdown")
+        assert "# My Index" in result
+
+
+# --- RSS Export Tests ---
+
+class TestRssExport:
+    def test_export_rss_xml_declaration(self, exporter, sample_items):
+        result = exporter.export(sample_items, "rss")
+        assert '<?xml version="1.0" encoding="UTF-8"?>' in result
+
+    def test_export_rss_channel(self, exporter, sample_items):
+        result = exporter.export(sample_items, "rss")
+        assert "<rss version=\"2.0\">" in result
+        assert "<channel>" in result
+
+    def test_export_rss_items(self, exporter, sample_items):
+        result = exporter.export(sample_items, "rss")
+        assert result.count("<item>") == 2
+
+    def test_export_rss_escaped_content(self, exporter):
+        items = [{"title": "<b>Bold</b>", "description": "& < >"}]
+        result = exporter.export(items, "rss")
+        assert "<b>" not in result
+        assert "&lt;b&gt;" in result
+
+    def test_export_rss_guid(self, exporter, sample_items):
+        result = exporter.export(sample_items, "rss")
+        assert "<guid>1</guid>" in result
+
+    def test_export_rss_empty(self, exporter):
+        result = exporter.export([], "rss")
+        assert "<channel>" in result
+        assert result.count("<item>") == 0
