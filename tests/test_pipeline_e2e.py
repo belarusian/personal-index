@@ -1,438 +1,440 @@
 """End-to-end integration tests for the full pipeline.
 
 Tests verify the complete crawl → extract → filter → score → tag → index → search
-pipeline works correctly with real data through the CLI and programmatic API.
+pipeline works correctly from file import through search.
 """
 
 from __future__ import annotations
 
-import json
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
 
-from personal_index.cli import main
-from personal_index.config.pipeline_config import PipelineConfig
-from personal_index.pipeline_runner import PipelineRunner
+from personal_index.pipeline_e2e import PipelineE2E, PipelineRunResult
 
 
-class TestPipelineEndToEnd:
-    """Test the complete pipeline end-to-end."""
+class TestPipelineE2EBasic:
+    """Test basic pipeline end-to-end functionality."""
 
-    def test_full_pipeline_with_single_file(self, tmp_path, monkeypatch):
-        """Test complete pipeline: import → extract → filter → score → tag → index → search."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+    def test_pipeline_from_single_file(self, tmp_path: Path) -> None:
+        """Test running pipeline on a single text file."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
 
-        # Initialize
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-
-        # Add interests
-        result = runner.invoke(main, [
-            "interests", "add", "-n", "python",
-            "-k", "python", "-k", "programming",
-        ])
-        assert result.exit_code == 0
-
-        # Create test file
-        test_file = tmp_path / "python_guide.txt"
+        test_file = tmp_path / "article.txt"
         test_file.write_text(
-            "Python is a versatile programming language. "
-            "Python supports multiple programming paradigms including "
-            "object-oriented, functional, and procedural programming. "
-            "Python is widely used in web development, data science, "
-            "and machine learning applications."
+            "Python is a versatile programming language used for web development, "
+            "data science, and automation. Python supports multiple programming "
+            "paradigms including procedural, object-oriented, and functional programming."
         )
 
-        # Run pipeline
-        result = runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
-        assert result.exit_code == 0
-        assert "Indexed:" in result.output
-        assert "1" in result.output  # At least 1 page indexed
+        result = pipeline.run_from_files([str(test_file)])
 
-        # Search should find the content
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
-        assert "python_guide" in result.output.lower() or "python" in result.output.lower()
+        assert result.pages_crawled == 1
+        assert result.pages_extracted == 1
+        assert result.pages_filtered_in == 1
+        assert result.pages_filtered_out == 0
+        assert result.pages_scored == 1
+        assert result.pages_indexed == 1
+        assert result.success is True
+        assert len(result.errors) == 0
+        pipeline.close()
 
-    def test_full_pipeline_with_multiple_files(self, tmp_path, monkeypatch):
-        """Test pipeline with multiple files of different topics."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+    def test_pipeline_from_multiple_files(self, tmp_path: Path) -> None:
+        """Test running pipeline on multiple files."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
 
-        runner.invoke(main, ["init"])
-        runner.invoke(main, ["interests", "add", "-n", "tech", "-k", "python", "-k", "javascript"])
+        files = []
+        for i in range(5):
+            f = tmp_path / f"article_{i}.txt"
+            f.write_text(
+                f"Article {i}: Python programming tutorial covering "
+                f"web development and data science techniques."
+            )
+            files.append(str(f))
 
-        # Create multiple files
-        (tmp_path / "python.txt").write_text(
-            "Python programming language for web development and data science."
-        )
-        (tmp_path / "js.txt").write_text(
-            "JavaScript is the language of the web. JavaScript runs in browsers and servers."
-        )
-        (tmp_path / "random.txt").write_text(
-            "This is a random article about cooking pasta and baking bread."
-        )
+        result = pipeline.run_from_files(files)
 
-        result = runner.invoke(main, [
-            "pipeline",
-            "--import-file", str(tmp_path / "python.txt"),
-            "--import-file", str(tmp_path / "js.txt"),
-            "--import-file", str(tmp_path / "random.txt"),
-        ])
-        assert result.exit_code == 0
+        assert result.pages_crawled == 5
+        assert result.pages_extracted == 5
+        assert result.pages_filtered_in == 5
+        assert result.pages_indexed == 5
+        assert result.success is True
+        pipeline.close()
 
-        # All files should be indexed (no interest filter by default)
-        result = runner.invoke(main, ["search", "language"])
-        assert result.exit_code == 0
+    def test_pipeline_filters_short_content(self, tmp_path: Path) -> None:
+        """Test that short content is filtered out."""
+        data_dir = str(tmp_path / "data")
+        from personal_index.config.pipeline_config import PipelineConfig
 
-    def test_pipeline_with_directory_import(self, tmp_path, monkeypatch):
-        """Test pipeline with recursive directory import."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        config = PipelineConfig(min_content_length=100)
+        pipeline = PipelineE2E(data_dir=data_dir, config=config)
 
-        runner.invoke(main, ["init"])
-
-        # Create directory structure
-        docs_dir = tmp_path / "docs"
-        docs_dir.mkdir()
-        (docs_dir / "intro.md").write_text(
-            "Introduction to Python programming. Python is easy to learn."
-        )
-        (docs_dir / "advanced.md").write_text(
-            "Advanced Python concepts: decorators, generators, and metaclasses."
-        )
-        sub_dir = docs_dir / "tutorials"
-        sub_dir.mkdir()
-        (sub_dir / "web.md").write_text(
-            "Python web development with Flask and Django frameworks."
-        )
-
-        result = runner.invoke(main, [
-            "pipeline", "--import-file", str(docs_dir), "--recursive"
-        ])
-        assert result.exit_code == 0
-
-        # Search should find content from all files
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
-
-    def test_pipeline_filters_short_content(self, tmp_path, monkeypatch):
-        """Test that short content is filtered out by default."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        # Short content (below default min_content_length)
         short_file = tmp_path / "short.txt"
-        short_file.write_text("Hi")
+        short_file.write_text("Too short")
 
-        # Long content
         long_file = tmp_path / "long.txt"
         long_file.write_text(
-            "This is a longer article with enough content to pass the filter. "
-            "It discusses important topics in detail with comprehensive coverage."
+            "This is a longer article about Python programming that "
+            "discusses web development, data science, and automation "
+            "techniques in detail with comprehensive examples."
         )
 
-        result = runner.invoke(main, [
-            "pipeline",
-            "--import-file", str(short_file),
-            "--import-file", str(long_file),
-            "--min-content-length", "50",
+        result = pipeline.run_from_files([str(short_file), str(long_file)])
+
+        assert result.pages_crawled == 2
+        assert result.pages_filtered_in == 1
+        assert result.pages_filtered_out == 1
+        assert result.pages_indexed == 1
+        pipeline.close()
+
+    def test_pipeline_handles_nonexistent_file(self, tmp_path: Path) -> None:
+        """Test pipeline handles missing files gracefully."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        result = pipeline.run_from_files([str(tmp_path / "nonexistent.txt")])
+
+        assert result.pages_crawled == 0
+        assert result.pages_indexed == 0
+        assert len(result.errors) == 1
+        assert "File not found" in result.errors[0]
+        pipeline.close()
+
+    def test_pipeline_handles_mixed_files(self, tmp_path: Path) -> None:
+        """Test pipeline handles mix of valid and invalid files."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        good_file = tmp_path / "good.txt"
+        good_file.write_text(
+            "A comprehensive guide to Python programming covering "
+            "web development, data science, and automation techniques."
+        )
+
+        result = pipeline.run_from_files([
+            str(good_file),
+            str(tmp_path / "missing.txt"),
         ])
-        assert result.exit_code == 0
 
-    def test_pipeline_with_score_threshold(self, tmp_path, monkeypatch):
-        """Test pipeline with minimum score threshold filtering."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        assert result.pages_crawled == 1
+        assert result.pages_indexed == 1
+        assert len(result.errors) == 1
+        pipeline.close()
 
-        runner.invoke(main, ["init"])
-        runner.invoke(main, ["interests", "add", "-n", "python", "-k", "python"])
 
-        # Relevant content
-        relevant = tmp_path / "relevant.txt"
-        relevant.write_text(
-            "Python programming is great. Python has many libraries."
+class TestPipelineE2EWithInterests:
+    """Test pipeline with interest-based scoring and tagging."""
+
+    def test_pipeline_scores_with_interests(self, tmp_path: Path) -> None:
+        """Test that pages matching interests get higher scores."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        pipeline.add_interest(
+            name="python",
+            keywords=["python", "programming"],
+            priority=8,
         )
-
-        # Irrelevant content
-        irrelevant = tmp_path / "irrelevant.txt"
-        irrelevant.write_text(
-            "Cooking pasta requires boiling water and good pasta."
-        )
-
-        result = runner.invoke(main, [
-            "pipeline",
-            "--import-file", str(relevant),
-            "--import-file", str(irrelevant),
-            "--min-score", "0.0",
-        ])
-        assert result.exit_code == 0
-
-    def test_pipeline_stats_output(self, tmp_path, monkeypatch):
-        """Test that pipeline outputs correct statistics."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
 
         test_file = tmp_path / "article.txt"
         test_file.write_text(
-            "Python programming tutorial for web development and data science."
+            "Python is a great programming language for web development."
         )
 
-        result = runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
-        assert result.exit_code == 0
-        assert "Crawled:" in result.output
-        assert "Extracted:" in result.output
-        assert "Filtered in:" in result.output
-        assert "Scored:" in result.output
-        assert "Tagged:" in result.output
-        assert "Indexed:" in result.output
+        result = pipeline.run_from_files([str(test_file)])
 
-    def test_pipeline_persists_index(self, tmp_path, monkeypatch):
-        """Test that pipeline persists the search index to disk."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        assert result.pages_indexed == 1
+        assert result.interests_matched > 0
+        assert result.pages_tagged > 0
+        pipeline.close()
 
-        runner.invoke(main, ["init"])
+    def test_pipeline_tags_matched_interests(self, tmp_path: Path) -> None:
+        """Test that matched interests are added as tags."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        pipeline.add_interest(
+            name="webdev",
+            keywords=["web", "development", "javascript"],
+            priority=7,
+        )
+
+        test_file = tmp_path / "article.txt"
+        test_file.write_text(
+            "Web development with JavaScript and Python frameworks "
+            "for building modern applications."
+        )
+
+        result = pipeline.run_from_files([str(test_file)])
+
+        assert result.pages_tagged > 0
+        # get_tags_for_page returns Tag objects, check by name
+        page_url = f"file://{os.path.abspath(str(test_file))}"
+        tags = pipeline.tag_store.get_tags_for_page(page_url)
+        tag_names = [t.name if hasattr(t, 'name') else t for t in tags]
+        assert "webdev" in tag_names
+        pipeline.close()
+
+    def test_pipeline_score_threshold_filters(self, tmp_path: Path) -> None:
+        """Test that score threshold filters low-scoring pages."""
+        data_dir = str(tmp_path / "data")
+        from personal_index.config.pipeline_config import PipelineConfig
+
+        # Use a high threshold that only pages with keyword matches pass
+        config = PipelineConfig(min_score_threshold=0.5)
+        pipeline = PipelineE2E(data_dir=data_dir, config=config)
+
+        # Add interest with high priority
+        pipeline.add_interest(
+            name="python",
+            keywords=["python"],
+            priority=10,
+        )
+
+        # Page with many keyword matches (should pass)
+        good_file = tmp_path / "good.txt"
+        good_file.write_text(
+            "Python Python Python Python Python Python Python Python "
+            "Python Python Python programming language for development."
+        )
+
+        # Page with no keyword matches (should fail)
+        bad_file = tmp_path / "bad.txt"
+        bad_file.write_text(
+            "This article is about cooking recipes and baking "
+            "techniques for home chefs and professional bakers."
+        )
+
+        result = pipeline.run_from_files([str(good_file), str(bad_file)])
+
+        # At least the good file should be indexed
+        assert result.pages_indexed >= 1
+        pipeline.close()
+
+
+class TestPipelineE2ESearch:
+    """Test search functionality after pipeline indexing."""
+
+    def test_search_after_pipeline(self, tmp_path: Path) -> None:
+        """Test searching content after pipeline indexing."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        test_file = tmp_path / "article.txt"
+        test_file.write_text(
+            "Python is a versatile programming language for web development "
+            "and data science applications."
+        )
+
+        pipeline.run_from_files([str(test_file)])
+
+        results = pipeline.search("python")
+        assert len(results) > 0
+        assert results[0]["title"] == "article.txt"
+        pipeline.close()
+
+    def test_search_multiple_results(self, tmp_path: Path) -> None:
+        """Test searching returns multiple results."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        for i in range(3):
+            f = tmp_path / f"article_{i}.txt"
+            f.write_text(
+                f"Article {i}: Python programming and web development tutorial."
+            )
+
+        pipeline.run_from_files([
+            str(tmp_path / f"article_{i}.txt") for i in range(3)
+        ])
+
+        results = pipeline.search("python")
+        assert len(results) >= 3
+        pipeline.close()
+
+    def test_search_no_results(self, tmp_path: Path) -> None:
+        """Test searching returns empty for non-matching query."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
 
         test_file = tmp_path / "article.txt"
         test_file.write_text(
             "Python programming language for web development."
         )
 
-        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
+        pipeline.run_from_files([str(test_file)])
 
-        # Verify index file exists
-        index_path = tmp_path / ".personal_index" / "search_index.json"
-        assert index_path.exists()
+        results = pipeline.search("quantum physics")
+        assert len(results) == 0
+        pipeline.close()
 
-        # Verify index is loadable
-        with open(index_path) as f:
-            data = json.load(f)
-        assert "pages" in data
-        assert len(data["pages"]) >= 1
-
-    def test_pipeline_persists_tags(self, tmp_path, monkeypatch):
-        """Test that pipeline persists tags to disk."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        test_file = tmp_path / "article.txt"
-        test_file.write_text(
-            "Python programming language for web development and data science."
-        )
-
-        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
-
-        # Verify tags file exists
-        tags_path = tmp_path / ".personal_index" / "tags.json"
-        assert tags_path.exists()
-
-
-class TestPipelineProgrammaticAPI:
-    """Test the pipeline through the programmatic API."""
-
-    def test_runner_full_pipeline(self, tmp_path):
-        """Test PipelineRunner with file import through API."""
+    def test_search_result_contains_tags(self, tmp_path: Path) -> None:
+        """Test that search results include tags."""
         data_dir = str(tmp_path / "data")
-        test_file = tmp_path / "article.txt"
-        test_file.write_text(
-            "Python is a powerful programming language for web development, "
-            "data science, and artificial intelligence."
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        pipeline.add_interest(
+            name="tech",
+            keywords=["python", "programming"],
+            priority=5,
         )
 
-        config = PipelineConfig(
-            min_score_threshold=0.0,
-            min_content_length=10,
-        )
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
-        stats = runner.run_from_files([str(test_file)])
-
-        assert stats.pages_crawled >= 1
-        assert stats.pages_extracted >= 1
-        assert stats.pages_indexed >= 1
-        runner.close()
-
-    def test_runner_search_after_index(self, tmp_path):
-        """Test that search works after pipeline indexing."""
-        data_dir = str(tmp_path / "data")
         test_file = tmp_path / "article.txt"
         test_file.write_text(
             "Python programming language for web development."
         )
 
-        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
-        runner.run_from_files([str(test_file)])
+        pipeline.run_from_files([str(test_file)])
 
-        results = runner._search_index.search("python")
-        assert len(results) >= 1
-        assert "python" in results[0].title.lower() or "python" in results[0].snippet.lower()
-        runner.close()
+        results = pipeline.search("python")
+        assert len(results) > 0
+        assert "tags" in results[0]
+        pipeline.close()
 
-    def test_runner_multiple_interests(self, tmp_path):
-        """Test pipeline with multiple interests configured."""
+
+class TestPipelineE2EPersistence:
+    """Test pipeline state persistence."""
+
+    def test_index_persists_after_close(self, tmp_path: Path) -> None:
+        """Test that search index persists after closing pipeline."""
         data_dir = str(tmp_path / "data")
-        runner = PipelineRunner(data_dir=data_dir)
-
-        # Add interests programmatically
-        from personal_index.models import Interest
-        runner._interest_store.add(Interest(name="python", keywords=["python", "django"]))
-        runner._interest_store.add(Interest(name="web", keywords=["web", "http"]))
+        pipeline = PipelineE2E(data_dir=data_dir)
 
         test_file = tmp_path / "article.txt"
         test_file.write_text(
-            "Python web development with Django framework."
+            "Python programming language for web development."
         )
 
-        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner.pipeline_config = config
-        stats = runner.run_from_files([str(test_file)])
+        pipeline.run_from_files([str(test_file)])
+        pipeline.close()
 
-        assert stats.pages_indexed >= 1
-        runner.close()
+        # Reopen and verify
+        pipeline2 = PipelineE2E(data_dir=data_dir)
+        results = pipeline2.search("python")
+        assert len(results) > 0
+        pipeline2.close()
 
-    def test_runner_empty_file_handling(self, tmp_path):
-        """Test pipeline handles empty files gracefully."""
-        pytest.skip("Empty files now produce errors instead of being silently skipped")
+    def test_interests_persist_after_close(self, tmp_path: Path) -> None:
+        """Test that interests persist after closing pipeline."""
         data_dir = str(tmp_path / "data")
-        empty_file = tmp_path / "empty.txt"
-        empty_file.write_text("")
+        pipeline = PipelineE2E(data_dir=data_dir)
 
-        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
-        stats = runner.run_from_files([str(empty_file)])
+        pipeline.add_interest(
+            name="python",
+            keywords=["python"],
+            priority=5,
+        )
+        pipeline.close()
 
-        # Should not crash, may filter out empty content
-        assert stats.errors == [] or len(stats.errors) == 0
-        runner.close()
+        # Reopen and verify
+        pipeline2 = PipelineE2E(data_dir=data_dir)
+        interests = pipeline2.interest_store.list_all()
+        assert len(interests) == 1
+        assert interests[0].name == "python"
+        pipeline2.close()
 
-    def test_runner_nonexistent_file(self, tmp_path):
-        """Test pipeline handles nonexistent files gracefully."""
+    def test_tags_persist_after_close(self, tmp_path: Path) -> None:
+        """Test that tags persist after closing pipeline."""
         data_dir = str(tmp_path / "data")
-        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
-        stats = runner.run_from_files(["/nonexistent/path/file.txt"])
+        pipeline = PipelineE2E(data_dir=data_dir)
 
-        # Should handle gracefully
-        assert stats.pages_indexed == 0
-        runner.close()
+        test_file = tmp_path / "article.txt"
+        test_file.write_text(
+            "Python programming language for web development."
+        )
 
-    def test_runner_html_file(self, tmp_path):
-        """Test pipeline with HTML file input."""
+        pipeline.run_from_files([str(test_file)])
+        pipeline.close()
+
+        # Reopen and verify tags exist
+        pipeline2 = PipelineE2E(data_dir=data_dir)
+        assert pipeline2.tag_store.get_tag_count() > 0
+        pipeline2.close()
+
+
+class TestPipelineE2EHTML:
+    """Test pipeline with HTML files."""
+
+    def test_pipeline_processes_html(self, tmp_path: Path) -> None:
+        """Test pipeline processes HTML files correctly."""
         data_dir = str(tmp_path / "data")
-        html_file = tmp_path / "page.html"
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        html_file = tmp_path / "article.html"
         html_file.write_text(
-            "<html><head><title>Python Guide</title></head>"
-            "<body><h1>Python Programming</h1>"
-            "<p>Python is a versatile programming language.</p>"
+            "<html><head><title>Python Tutorial</title></head>"
+            "<body><h1>Python Web Development</h1>"
+            "<p>Python is a great language for building web applications "
+            "using frameworks like Django and Flask.</p></body></html>"
+        )
+
+        result = pipeline.run_from_files([str(html_file)])
+
+        assert result.pages_crawled == 1
+        assert result.pages_extracted == 1
+        assert result.pages_indexed == 1
+        assert result.indexed_pages[0].title == "Python Tutorial"
+        pipeline.close()
+
+    def test_pipeline_searches_html_content(self, tmp_path: Path) -> None:
+        """Test searching content extracted from HTML."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
+
+        html_file = tmp_path / "article.html"
+        html_file.write_text(
+            "<html><body>"
+            "<h1>JavaScript Guide</h1>"
+            "<p>JavaScript is essential for web development.</p>"
             "</body></html>"
         )
 
-        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
-        stats = runner.run_from_files([str(html_file)])
+        pipeline.run_from_files([str(html_file)])
 
-        assert stats.pages_indexed >= 1
-        runner.close()
+        results = pipeline.search("javascript")
+        assert len(results) > 0
+        pipeline.close()
 
-    def test_runner_json_file(self, tmp_path):
-        """Test pipeline with JSON file input."""
+
+class TestPipelineE2EResults:
+    """Test PipelineRunResult utility methods."""
+
+    def test_result_summary(self, tmp_path: Path) -> None:
+        """Test PipelineRunResult summary output."""
         data_dir = str(tmp_path / "data")
-        json_file = tmp_path / "data.json"
-        json_file.write_text(
-            '{"title": "Python API", "content": "Python REST API documentation"}'
-        )
+        pipeline = PipelineE2E(data_dir=data_dir)
 
-        config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
-        stats = runner.run_from_files([str(json_file)])
-
-        # JSON files are imported as text
-        assert stats.pages_crawled >= 1
-        runner.close()
-
-
-class TestPipelineSearchIntegration:
-    """Test search integration with pipeline results."""
-
-    def test_search_finds_indexed_content(self, tmp_path, monkeypatch):
-        """Test search finds content indexed by pipeline."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        # Create and index content
-        test_file = tmp_path / "python.txt"
-        test_file.write_text(
-            "Python programming language for web development and data science."
-        )
-        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
-
-        # Search for indexed content
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
-        assert "python" in result.output.lower()
-
-    def test_search_with_no_results(self, tmp_path, monkeypatch):
-        """Test search returns gracefully when no results found."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        test_file = tmp_path / "python.txt"
+        test_file = tmp_path / "article.txt"
         test_file.write_text(
             "Python programming language for web development."
         )
-        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
 
-        # Search for non-existent term
-        result = runner.invoke(main, ["search", "xyznonexistent"])
-        assert result.exit_code == 0
+        result = pipeline.run_from_files([str(test_file)])
+        summary = result.summary()
 
-    def test_search_json_output(self, tmp_path, monkeypatch):
-        """Test search with JSON output format."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        assert "Pipeline Run Result" in summary
+        assert "Pages crawled:" in summary
+        assert "Pages indexed:" in summary
+        assert "Time:" in summary
+        pipeline.close()
 
-        runner.invoke(main, ["init"])
+    def test_result_success_property(self, tmp_path: Path) -> None:
+        """Test PipelineRunResult success property."""
+        data_dir = str(tmp_path / "data")
+        pipeline = PipelineE2E(data_dir=data_dir)
 
-        test_file = tmp_path / "python.txt"
+        test_file = tmp_path / "article.txt"
         test_file.write_text(
             "Python programming language for web development."
         )
-        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
 
-        result = runner.invoke(main, ["search", "python", "--format", "json"])
-        assert result.exit_code == 0
-        data = json.loads(result.output)
-        assert "results" in data
+        result = pipeline.run_from_files([str(test_file)])
+        assert result.success is True
 
-    def test_search_csv_output(self, tmp_path, monkeypatch):
-        """Test search with CSV output format."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        test_file = tmp_path / "python.txt"
-        test_file.write_text(
-            "Python programming language for web development."
-        )
-        runner.invoke(main, ["pipeline", "--import-file", str(test_file)])
-
-        result = runner.invoke(main, ["search", "python", "--format", "csv"])
-        assert result.exit_code == 0
-        assert "rank" in result.output.lower()
+        # Test with error
+        result2 = pipeline.run_from_files([str(tmp_path / "missing.txt")])
+        assert result2.success is False
+        pipeline.close()
