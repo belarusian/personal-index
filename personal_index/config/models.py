@@ -3,12 +3,70 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class MatchMode(Enum):
+    """How keywords should be matched."""
+    ANY = "any"
+    ALL = "all"
+    REGEX = "regex"
 
 
 @dataclass
-class CrawlConfig:
+class Interest:
+    """Represents a user-defined interest to track."""
+    name: str
+    keywords: list[str] = field(default_factory=list)
+    url_patterns: list[str] = field(default_factory=list)
+    topics: list[str] = field(default_factory=list)
+    priority: int = 5
+    enabled: bool = True
+    match_mode: MatchMode = MatchMode.ANY
+
+    def __post_init__(self):
+        """Clamp priority to 1-10."""
+        self.priority = max(1, min(10, self.priority))
+        if not isinstance(self.keywords, list):
+            self.keywords = []
+        if not isinstance(self.url_patterns, list):
+            self.url_patterns = []
+        if not isinstance(self.topics, list):
+            self.topics = []
+
+    def to_dict(self) -> dict:
+        """Serialize to dictionary."""
+        return {
+            "name": self.name,
+            "keywords": self.keywords,
+            "url_patterns": self.url_patterns,
+            "topics": self.topics,
+            "priority": self.priority,
+            "enabled": self.enabled,
+            "match_mode": self.match_mode.value,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Interest:
+        """Create Interest from dictionary."""
+        match_mode = data.get("match_mode", "any")
+        if isinstance(match_mode, str):
+            match_mode = MatchMode(match_mode)
+        return cls(
+            name=data["name"],
+            keywords=data.get("keywords", []),
+            url_patterns=data.get("url_patterns", []),
+            topics=data.get("topics", []),
+            priority=data.get("priority", 5),
+            enabled=data.get("enabled", True),
+            match_mode=match_mode,
+        )
+
+
+@dataclass
+class CrawlerConfig:
     """Crawler configuration."""
-    max_depth: int = 5
+    max_depth: int = 3
     politeness_delay: float = 1.0
     rate_limit: int = 10
     respect_robots_txt: bool = True
@@ -31,6 +89,10 @@ class CrawlConfig:
         if self.timeout < 1:
             errors.append("timeout must be >= 1")
         return errors
+
+
+# Backward compat alias
+CrawlConfig = CrawlerConfig
 
 
 @dataclass
@@ -114,7 +176,7 @@ class AppConfig:
     """Top-level application configuration."""
     data_dir: str = ".personal_index"
     config_dir: str = ""
-    crawl: CrawlConfig = field(default_factory=CrawlConfig)
+    crawler: CrawlerConfig = field(default_factory=CrawlerConfig)
     index: IndexConfig = field(default_factory=IndexConfig)
     scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
@@ -122,10 +184,19 @@ class AppConfig:
     interests: list = field(default_factory=list)
     log_level: str = "INFO"
 
+    @property
+    def crawl(self) -> CrawlerConfig:
+        """Backward compat alias for crawler."""
+        return self.crawler
+
+    @crawl.setter
+    def crawl(self, value: CrawlerConfig) -> None:
+        self.crawler = value
+
     def validate(self) -> list[str]:
         """Validate all configuration sections."""
         errors = []
-        errors.extend(self.crawl.validate())
+        errors.extend(self.crawler.validate())
         errors.extend(self.index.validate())
         errors.extend(self.scheduler.validate())
         errors.extend(self.notifications.validate())
@@ -135,25 +206,36 @@ class AppConfig:
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         from dataclasses import asdict
-        return asdict(self)
+        result = asdict(self)
+        # Convert MatchMode enums to strings
+        for interest in result.get("interests", []):
+            if isinstance(interest.get("match_mode"), MatchMode):
+                interest["match_mode"] = interest["match_mode"].value
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> AppConfig:
         """Create AppConfig from dictionary."""
-        crawl_data = data.get("crawler", data.get("crawl", {}))
+        crawler_data = data.get("crawler", data.get("crawl", {}))
         index_data = data.get("index", {})
         scheduler_data = data.get("scheduler", {})
         notifications_data = data.get("notifications", {})
         export_data = data.get("export", {})
 
+        interests_data = data.get("interests", [])
+        interests = []
+        for item in interests_data:
+            if isinstance(item, dict):
+                interests.append(Interest.from_dict(item))
+
         return cls(
             data_dir=data.get("data_dir", ".personal_index"),
             config_dir=data.get("config_dir", ""),
-            crawl=CrawlConfig(**crawl_data),
+            crawler=CrawlerConfig(**crawler_data),
             index=IndexConfig(**index_data),
             scheduler=SchedulerConfig(**scheduler_data),
             notifications=NotificationConfig(**notifications_data),
             export=ExportConfig(**export_data),
-            interests=data.get("interests", []),
+            interests=interests,
             log_level=data.get("log_level", "INFO"),
         )
