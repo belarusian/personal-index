@@ -1,7 +1,7 @@
-# Personal Index - User Guide
+# Personal Index User Guide
 
-## What is Personal Index?
+## Overview
 
-Personal Index is a personal web content management toolkit that crawls, filters, scores, tags, and indexes web content based on your interests. Think of it as a personal search engine that you control.
+Personal Index is a personal web content management toolkit that crawls, filters, scores, tags, and indexes web content based on your interests. It provides a local search engine for content you care about.
 
-## Installation
+## Quick Start
