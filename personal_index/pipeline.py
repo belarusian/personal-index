@@ -9,7 +9,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 from personal_index.content_extractor import ContentExtractor
 from personal_index.content_filter import ContentFilter, FilterConfig
@@ -85,7 +85,7 @@ class PipelineResult:
 class PipelineStep:
     """A single step in a content processing pipeline."""
 
-    def __init__(self, name: str, handler: callable, enabled: bool = True, on_error: str = "raise"):
+    def __init__(self, name: str, handler: Callable[[dict], dict], enabled: bool = True, on_error: str = "raise"):
         self.name = name
         self.handler = handler
         self.enabled = enabled
@@ -113,9 +113,9 @@ class ContentPipeline:
 
     def __init__(self, name: str = "default"):
         self.name = name
-        self._steps: list[tuple[str, callable, str]] = []
+        self._steps: list[tuple[str, Callable[[dict], dict], str]] = []
 
-    def add_step(self, name: str, func: callable, on_error: str = "raise") -> None:
+    def add_step(self, name: str, func: Callable[[dict], dict], on_error: str = "raise") -> None:
         """Add a processing step to the pipeline."""
         self._steps.append((name, func, on_error))
 
@@ -309,22 +309,22 @@ class Pipeline:
     ) -> list[CrawledPage]:
         """Extract step: parse HTML and extract meaningful content."""
         logger.info("Step 2/6: Extracting content from %d pages", len(pages))
-        extracted = 0
+        extracted_count = 0
 
         for i, page in enumerate(pages):
             if page.raw_html:
-                extracted = self.extractor.extract(page.raw_html)
-                page.title = extracted.title or page.title
-                page.content = extracted.text
-                page.word_count = extracted.word_count
+                extracted_content = self.extractor.extract(page.raw_html)
+                page.title = extracted_content.title or page.title
+                page.content = extracted_content.text
+                page.word_count = extracted_content.word_count
                 stats.pages_extracted += 1
             elif page.content and len(page.content) > 500:
                 # Assume it's already raw HTML if very long
-                extracted = self.extractor.extract(page.content)
-                if extracted.text:
-                    page.title = extracted.title or page.title
-                    page.content = extracted.text
-                    page.word_count = extracted.word_count
+                extracted_content = self.extractor.extract(page.content)
+                if extracted_content.text:
+                    page.title = extracted_content.title or page.title
+                    page.content = extracted_content.text
+                    page.word_count = extracted_content.word_count
                     stats.pages_extracted += 1
                 else:
                     stats.pages_extracted += 1
@@ -373,10 +373,10 @@ class Pipeline:
 
         for i, page in enumerate(pages):
             score_result = self.scorer.score_page(page, self.interest_store)
-            score = score_result.total if hasattr(score_result, "total") else score_result
-            page.relevance_score = score
+            score_val: float = score_result.total if hasattr(score_result, "total") else float(score_result)
+            page.relevance_score = score_val
 
-            if score >= self.config.min_score_threshold:
+            if score_val >= self.config.min_score_threshold:
                 scored_pages.append(page)
                 stats.pages_scored += 1
             else:
@@ -493,10 +493,10 @@ class Pipeline:
             return False
 
         score_result = self.scorer.score_page(page, self.interest_store)
-        score = score_result.total if hasattr(score_result, "total") else score_result
-        page.relevance_score = score
+        score_val: float = score_result.total if hasattr(score_result, "total") else float(score_result)
+        page.relevance_score = score_val
 
-        if score < self.config.min_score_threshold:
+        if score_val < self.config.min_score_threshold:
             return False
 
         tags = self._auto_tag(page)
