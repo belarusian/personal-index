@@ -260,3 +260,40 @@ class TestContentValidation:
     def test_validate_title_too_long(self, api):
         errors = api._validate_content({"title": "x" * 201})
         assert any("200" in e for e in errors)
+
+
+# --- RequestLogger Tests ---
+
+class TestRequestLogger:
+    def test_logger_records_request(self, api):
+        logger = ContentAPI.RequestLogger(api)
+        logger.handle_request("GET", "/api/v1/health")
+        assert len(logger.log) == 1
+        assert logger.log[0]["method"] == "GET"
+
+    def test_logger_records_status(self, api):
+        logger = ContentAPI.RequestLogger(api)
+        logger.handle_request("GET", "/api/v1/health")
+        assert logger.log[0]["status"] == 200
+
+    def test_logger_multiple_requests(self, api):
+        logger = ContentAPI.RequestLogger(api)
+        logger.handle_request("GET", "/api/v1/health")
+        logger.handle_request("GET", "/api/v1/stats")
+        assert len(logger.log) == 2
+
+    def test_logger_clear(self, api):
+        logger = ContentAPI.RequestLogger(api)
+        logger.handle_request("GET", "/api/v1/health")
+        logger.clear_log()
+        assert len(logger.log) == 0
+
+    def test_logger_404(self, api):
+        logger = ContentAPI.RequestLogger(api)
+        logger.handle_request("GET", "/unknown")
+        assert logger.log[0]["status"] == 404
+
+    def test_logger_has_timestamp(self, api):
+        logger = ContentAPI.RequestLogger(api)
+        logger.handle_request("GET", "/api/v1/health")
+        assert "timestamp" in logger.log[0]
