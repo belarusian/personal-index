@@ -6,6 +6,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
+from typing import Callable
 
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
@@ -32,23 +33,41 @@ class PipelineStats:
     pages_indexed: int = 0
     errors: list[str] = field(default_factory=list)
     elapsed_seconds: float = 0.0
+    tags_applied: int = 0
+    interests_matched: int = 0
 
     def summary(self) -> str:
         """Return a human-readable summary of pipeline stats."""
         lines = [
             "Pipeline Summary",
             "-" * 40,
-            f"Crawled:    {self.pages_crawled}",
-            f"Extracted:  {self.pages_extracted}",
+            f"Crawled:      {self.pages_crawled}",
+            f"Extracted:    {self.pages_extracted}",
             f"Filtered in:  {self.pages_filtered_in}",
             f"Filtered out: {self.pages_filtered_out}",
-            f"Scored:     {self.pages_scored}",
-            f"Tagged:     {self.pages_tagged}",
-            f"Indexed:    {self.pages_indexed}",
-            f"Errors:     {len(self.errors)}",
-            f"Time:       {self.elapsed_seconds:.2f}s",
+            f"Scored:       {self.pages_scored}",
+            f"Tagged:       {self.pages_tagged}",
+            f"Tags applied: {self.tags_applied}",
+            f"Indexed:      {self.pages_indexed}",
+            f"Errors:       {len(self.errors)}",
+            f"Time:         {self.elapsed_seconds:.2f}s",
         ]
         return "\n".join(lines)
+
+    def to_dict(self) -> dict:
+        """Convert stats to dictionary."""
+        return {
+            "pages_crawled": self.pages_crawled,
+            "pages_extracted": self.pages_extracted,
+            "pages_filtered_in": self.pages_filtered_in,
+            "pages_filtered_out": self.pages_filtered_out,
+            "pages_scored": self.pages_scored,
+            "pages_tagged": self.pages_tagged,
+            "tags_applied": self.tags_applied,
+            "pages_indexed": self.pages_indexed,
+            "errors": self.errors,
+            "elapsed_seconds": self.elapsed_seconds,
+        }
 
 
 class PipelineRunner:
@@ -58,9 +77,11 @@ class PipelineRunner:
         self,
         config: PipelineConfig | None = None,
         data_dir: str = ".personal_index",
+        progress_callback: Callable[[str, int, int], None] | None = None,
     ):
         self.pipeline_config = config or PipelineConfig()
         self.data_dir = data_dir
+        self.progress_callback = progress_callback
         os.makedirs(data_dir, exist_ok=True)
 
         # Initialize sub-components
@@ -81,6 +102,11 @@ class PipelineRunner:
             ),
             interest_store=self._interest_store,
         )
+
+    def _progress(self, step: str, current: int, total: int) -> None:
+        """Emit progress update if callback is set."""
+        if self.progress_callback:
+            self.progress_callback(step, current, total)
 
     def run(self, seed_urls: list[str], max_depth: int = 3) -> PipelineStats:
         """Run the full pipeline on seed URLs.
@@ -113,17 +139,19 @@ class PipelineRunner:
                     logger.error("Crawl failed: %s", e)
                     stats.errors.append(f"Crawl error: {e}")
                 stats.pages_crawled = len(pages)
+                self._progress("crawl", stats.pages_crawled, stats.pages_crawled)
                 logger.info("  Crawled %d pages", stats.pages_crawled)
 
         # Step 2: Extract
         if self.pipeline_config.is_step_enabled("extract"):
             logger.info("Step 2/6: Extracting content from %d pages", len(pages))
             extracted_count = 0
-            for page in pages:
+            for i, page in enumerate(pages):
                 if page.content and len(page.content) > 0:
                     extracted_count += 1
                 else:
                     page.content = ""
+                self._progress("extract", i + 1, len(pages))
             stats.pages_extracted = extracted_count
             logger.info("  Extracted content from %d pages", stats.pages_extracted)
 
@@ -131,23 +159,21 @@ class PipelineRunner:
         if self.pipeline_config.is_step_enabled("filter"):
             logger.info("Step 3/6: Filtering %d pages", len(pages))
             filtered = []
-            for page in pages:
+            for i, page in enumerate(pages):
                 if self._filter.should_include(page):
                     filtered.append(page)
                     stats.pages_filtered_in += 1
                 else:
                     stats.pages_filtered_out += 1
+                self._progress("filter", i + 1, len(pages))
             pages = filtered
-            logger.info(
-                "  %d pages passed filter, %d filtered out",
-                stats.pages_filtered_in, stats.pages_filtered_out,
-            )
+            logger.info("  Filtered: %d in, %d out", stats.pages_filtered_in, stats.pages_filtered_out)
 
         # Step 4: Score
         if self.pipeline_config.is_step_enabled("score"):
             logger.info("Step 4/6: Scoring %d pages", len(pages))
             scored_pages = []
-            for page in pages:
+            for i, page in enumerate(pages):
                 word_count = len(page.content.split()) if page.content else 0
                 keyword_matches = 0
                 total_keywords = 0
@@ -169,6 +195,7 @@ class PipelineRunner:
                     stats.pages_scored += 1
                 else:
                     stats.pages_filtered_out += 1
+                self._progress("score", i + 1, len(pages))
             pages = scored_pages
             logger.info("  Scored %d pages above threshold", stats.pages_scored)
 
@@ -176,24 +203,30 @@ class PipelineRunner:
         if self.pipeline_config.is_step_enabled("tag"):
             logger.info("Step 5/6: Tagging %d pages", len(pages))
             tagged_count = 0
-            for page in pages:
+            total_tags = 0
+            for i, page in enumerate(pages):
                 tags = self._auto_tag(page)
                 for tag_name in tags:
                     self._tag_store.add_tag_to_page(page.url, tag_name)
+                    total_tags += 1
+                if tags:
                     tagged_count += 1
+                self._progress("tag", i + 1, len(pages))
             stats.pages_tagged = tagged_count
-            logger.info("  Applied %d tags", stats.pages_tagged)
+            stats.tags_applied = total_tags
+            logger.info("  Tagged %d pages with %d total tags", tagged_count, total_tags)
 
         # Step 6: Index
         if self.pipeline_config.is_step_enabled("index"):
             logger.info("Step 6/6: Indexing %d pages", len(pages))
-            for page in pages:
+            for i, page in enumerate(pages):
                 try:
                     self._search_index.add_page(page)
                     stats.pages_indexed += 1
                 except (OSError, ValueError) as e:
                     logger.warning("Failed to index %s: %s", page.url, e)
                     stats.errors.append(f"Index error for {page.url}: {e}")
+                self._progress("index", i + 1, len(pages))
             logger.info("  Indexed %d pages", stats.pages_indexed)
 
         stats.elapsed_seconds = time.time() - start_time
