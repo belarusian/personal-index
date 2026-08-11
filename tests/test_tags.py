@@ -74,7 +74,10 @@ class TestTagStore:
         assert self.store.add_tag_to_page("http://example.com", "important") is True
 
     def test_add_nonexistent_tag_to_page(self):
-        assert self.store.add_tag_to_page("http://example.com", "nonexistent") is False
+        # Auto-creates the tag if it doesn't exist
+        result = self.store.add_tag_to_page("http://example.com", "nonexistent")
+        assert result is True
+        assert self.store.get_tag("nonexistent") is not None
 
     def test_remove_tag_from_page(self):
         self.store.create_tag("important")
