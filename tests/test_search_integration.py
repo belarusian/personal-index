@@ -44,7 +44,7 @@ class TestSearchIntegration:
         article.write_text("Python programming tutorial for web development.")
         runner.invoke(main, ["import", str(article)])
 
-        result = runner.invoke(main, ["search", "python", "--format", "json"])
+        result = runner.invoke(main, ["search", "python", "-f", "json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert "results" in data
@@ -61,7 +61,7 @@ class TestSearchIntegration:
         article.write_text("Python programming tutorial.")
         runner.invoke(main, ["import", str(article)])
 
-        result = runner.invoke(main, ["search", "python", "--format", "csv"])
+        result = runner.invoke(main, ["search", "python", "-f", "csv"])
         assert result.exit_code == 0
         assert "rank" in result.output.lower()
 
