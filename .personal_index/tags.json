@@ -1114,709 +1114,709 @@
   "page_tags": {
     "https://example.com": [
       "examples",
-      "use",
-      "example",
+      "domain",
       "documentation",
       "technology",
-      "domain"
+      "use",
+      "example"
     ],
     "https://iana.org/domains/example": [
-      "example",
-      "are",
-      "technology",
+      "domains",
       "service",
       "number",
-      "domains"
+      "technology",
+      "are",
+      "example"
     ],
     "https://iana.org/": [
       "zone",
-      "internet",
+      "protocol",
+      "number",
       "technology",
       "registry",
-      "number",
-      "protocol"
+      "internet"
     ],
     "https://iana.org/about": [
-      "identifiers",
-      "internet",
+      "registries",
       "iana",
       "technology",
-      "registries",
+      "internet",
+      "identifiers",
       "are"
     ],
     "https://iana.org/domains": [
-      "zone",
-      "key",
       "domains",
-      "rust",
-      "technology",
+      "key",
       "domain",
-      "root"
+      "zone",
+      "technology",
+      "root",
+      "rust"
     ],
     "https://iana.org/domains/root": [
-      "zone",
       "top-level",
       "domains",
-      "rust",
+      "zone",
       "technology",
       "registry",
-      "root"
+      "root",
+      "rust"
     ],
     "https://iana.org/domains/root/db": [
-      "inc",
-      "llc",
       "generic",
       "country-code",
-      "rust",
+      "inc",
       "technology",
-      "registry"
+      "llc",
+      "registry",
+      "rust"
     ],
     "https://iana.org/domains/int": [
       "overview",
-      "rust",
+      "domains",
       "int",
-      "technology",
       "domain",
+      "technology",
       "registry",
-      "domains"
+      "rust"
     ],
     "https://iana.org/domains/arpa": [
-      "internet",
-      "rust",
-      "rfc",
-      "technology",
       "domain",
+      "technology",
       "registry",
-      "arpa"
+      "arpa",
+      "internet",
+      "rfc",
+      "rust"
     ],
     "https://iana.org/domains/idn-tables": [
       "limited",
-      "2024",
       "identity",
       "language",
-      "digital",
-      "technology"
+      "2024",
+      "technology",
+      "digital"
     ],
     "https://iana.org/numbers": [
-      "internet",
-      "are",
-      "technology",
-      "ipv6",
       "addresses",
-      "number"
+      "number",
+      "technology",
+      "internet",
+      "ipv6",
+      "are"
     ],
     "https://iana.org/help/abuse": [
       "iana",
-      "numbers",
-      "are",
-      "technology",
       "begins",
-      "network"
+      "technology",
+      "numbers",
+      "network",
+      "are"
     ],
     "https://iana.org/protocols": [
       "review",
-      "expert",
       "news",
-      "required",
-      "specification",
-      "rust",
       "technology",
-      "rfc"
+      "specification",
+      "required",
+      "expert",
+      "rfc",
+      "rust"
     ],
     "https://iana.org/protocols/apply": [
-      "request",
-      "technology",
       "assignment",
-      "registration",
+      "request",
+      "protocol",
+      "technology",
       "registry",
-      "protocol"
+      "registration"
     ],
     "https://iana.org/time-zones": [
-      "database",
-      "zones",
       "zone",
-      "time",
-      "data",
+      "database",
       "news",
-      "technology"
+      "technology",
+      "data",
+      "zones",
+      "time"
     ],
     "https://iana.org/numbers/registries": [
       "space",
-      "address",
+      "technology",
       "numbers",
       "ipv4",
-      "technology",
-      "ipv6"
+      "ipv6",
+      "address"
     ],
     "https://iana.org/numbers/allocations": [
-      "ipv6",
-      "allocation",
+      "number",
       "technology",
-      "utilization",
+      "allocation",
       "rir",
-      "number"
+      "utilization",
+      "ipv6"
     ],
     "https://iana.org/news": [
-      "update",
       "zone",
       "iana",
-      "icann",
       "news",
-      "rust",
       "technology",
-      "root"
+      "update",
+      "root",
+      "icann",
+      "rust"
     ],
     "https://iana.org/performance": [
+      "2026",
+      "100",
+      "technology",
       "performance",
       "june",
-      "100",
-      "2025",
-      "2026",
-      "technology"
+      "2025"
     ],
     "https://iana.org/about/organization": [
-      "performance",
-      "functions",
-      "identifiers",
-      "iana",
       "organization",
-      "technology"
+      "iana",
+      "functions",
+      "technology",
+      "performance",
+      "identifiers"
     ],
     "https://iana.org/archive": [
       "iana",
-      "reports",
       "documents",
-      "archive",
       "technology",
-      "are"
+      "reports",
+      "are",
+      "archive"
     ],
     "https://iana.org/contact": [
-      "contact",
       "iana",
-      "protocols",
       "technology",
+      "registry",
+      "protocols",
       "abuse",
-      "registry"
+      "contact"
     ],
     "https://www.icann.org/": [
-      "public",
       "2026",
-      "icann",
-      "policy",
+      "learn",
       "technology",
-      "learn"
+      "public",
+      "icann",
+      "policy"
     ],
     "https://www.icann.org/privacy/policy": [
-      "user",
-      "information",
       "personal",
       "privacy",
-      "policy",
       "news",
-      "technology"
+      "technology",
+      "information",
+      "policy",
+      "user"
     ],
     "https://www.icann.org/privacy/tos": [
+      "service",
       "platform",
-      "use",
       "news",
-      "terms",
       "technology",
       "content",
-      "service"
+      "terms",
+      "use"
     ],
     "https://iana.org/help": [
-      "zone",
       "top-level",
-      "management",
-      "rust",
-      "technology",
+      "zone",
       "domain",
-      "root"
+      "management",
+      "technology",
+      "root",
+      "rust"
     ],
     "https://iana.org/help/root-zone-process": [
-      "zone",
       "request",
-      "news",
+      "zone",
       "processing",
+      "news",
       "technology",
       "technical",
       "root"
     ],
     "https://iana.org/help/nameserver-requirements": [
-      "globally",
-      "servers",
-      "rust",
+      "name",
       "rfc",
       "technology",
-      "name",
-      "must"
+      "rust",
+      "globally",
+      "must",
+      "servers"
     ],
     "https://iana.org/help/rdap-requirements": [
-      "http",
-      "rdap",
+      "domain",
       "iana",
+      "http",
       "response",
       "technology",
-      "domain"
+      "rdap"
     ],
     "https://iana.org/help/obtaining-consent": [
-      "contacts",
-      "request",
-      "consent",
+      "domains",
       "change",
+      "request",
       "technology",
-      "domains"
+      "consent",
+      "contacts"
     ],
     "https://iana.org/help/eligible-tlds": [
-      "3166",
       "top-level",
-      "iso",
-      "technology",
+      "domain",
+      "3166",
       "standard",
-      "domain"
+      "iso",
+      "technology"
     ],
     "https://iana.org/help/id-verification": [
-      "zone",
       "identity",
+      "zone",
       "iana",
-      "rust",
-      "account",
       "technology",
-      "verification"
+      "account",
+      "verification",
+      "rust"
     ],
     "https://iana.org/help/rzm-api": [
-      "environment",
-      "production",
       "zone",
-      "api",
+      "environment",
       "technology",
-      "ote"
+      "ote",
+      "production",
+      "api"
     ],
     "https://iana.org/help/rzms-changelog": [
-      "issue",
-      "2025",
       "december",
       "news",
-      "2017",
       "technology",
-      "version"
+      "version",
+      "2017",
+      "issue",
+      "2025"
     ],
     "https://iana.org/help/gtld-delegation": [
-      "zone",
       "request",
+      "domain",
+      "delegation",
+      "zone",
       "news",
       "technology",
-      "domain",
-      "registry",
-      "delegation"
+      "registry"
     ],
     "https://iana.org/help/cctld-delegation": [
-      "manager",
       "request",
-      "transfer",
-      "rust",
-      "technology",
       "domain",
-      "delegation"
+      "delegation",
+      "technology",
+      "transfer",
+      "manager",
+      "rust"
     ],
     "https://iana.org/help/cctld-delegation-answers": [
-      "cctld",
       "request",
-      "transfer",
-      "rust",
+      "cctld",
       "technology",
+      "transfer",
+      "manager",
       "are",
-      "manager"
+      "rust"
     ],
     "https://iana.org/help/operational-plans": [
       "proposed",
-      "technology",
-      "are",
       "domain",
+      "technology",
       "registry",
-      "technical"
+      "technical",
+      "are"
     ],
     "https://iana.org/help/cctld-revocation": [
-      "cctld",
-      "manager",
+      "domain",
       "iana",
-      "revocation",
-      "rust",
+      "cctld",
       "technology",
-      "domain"
+      "manager",
+      "revocation",
+      "rust"
     ],
     "https://iana.org/help/cctld-retirement": [
-      "cctld",
-      "iana",
       "removal",
+      "domain",
+      "iana",
       "retirement",
-      "technology",
-      "domain"
+      "cctld",
+      "technology"
     ],
     "https://iana.org/help/caretaker-operations": [
-      "operations",
       "top-level",
-      "caretaker",
-      "technology",
       "domain",
-      "registry"
+      "technology",
+      "registry",
+      "operations",
+      "caretaker"
     ],
     "https://iana.org/help/complaint-procedure": [
-      "information",
-      "complaint",
+      "process",
       "management",
-      "resolution",
       "technology",
-      "process"
+      "information",
+      "resolution",
+      "complaint"
     ],
     "https://iana.org/help/key-ceremony-attendance": [
-      "external",
-      "rust",
-      "ceremony",
-      "technology",
       "press",
+      "number",
+      "technology",
+      "external",
+      "ceremony",
       "are",
-      "number"
+      "rust"
     ],
     "https://iana.org/help/key-ceremony-roles": [
       "script",
       "roles",
-      "rust",
       "role",
-      "ceremony",
       "technology",
-      "are"
+      "ceremony",
+      "are",
+      "rust"
     ],
     "https://iana.org/help/key-ceremony-schedule": [
-      "ksk",
+      "ceremonies",
       "key",
-      "ceremony",
-      "rust",
+      "ksk",
       "technology",
+      "ceremony",
       "are",
-      "ceremonies"
+      "rust"
     ],
     "https://iana.org/help/tcr-criteria": [
-      "criteria",
-      "tcrs",
-      "rust",
       "technology",
+      "tcrs",
       "tcr",
       "are",
-      "cos"
+      "criteria",
+      "cos",
+      "rust"
     ],
     "https://iana.org/help/tcr-application": [
-      "tcrs",
+      "community",
       "key",
-      "rust",
       "technology",
       "tcr",
       "are",
-      "community"
+      "tcrs",
+      "rust"
     ],
     "https://iana.org/help/tcr-roles": [
-      "rksh",
-      "key",
       "roles",
-      "rust",
-      "ceremony",
+      "key",
+      "technology",
       "travel",
-      "technology"
+      "ceremony",
+      "rksh",
+      "rust"
     ],
     "https://iana.org/help/tcr-travel-support": [
       "ksk",
+      "technology",
+      "travel",
+      "ceremony",
       "support",
       "icann",
-      "rust",
-      "ceremony",
-      "travel",
-      "technology"
+      "rust"
     ],
     "https://iana.org/help/tcr-changes": [
-      "tcrs",
-      "time",
-      "rust",
-      "changes",
+      "new",
       "technology",
+      "time",
       "process",
-      "new"
+      "changes",
+      "tcrs",
+      "rust"
     ],
     "https://iana.org/help/kmf-rules": [
-      "management",
       "key",
-      "facility",
+      "management",
+      "technology",
       "ceremony",
-      "are",
-      "technology"
+      "facility",
+      "are"
     ],
     "https://iana.org/help/kmf-east": [
+      "key",
       "zone",
       "management",
-      "key",
-      "rust",
       "technology",
       "registry",
-      "root"
+      "root",
+      "rust"
     ],
     "https://iana.org/help/kmf-west": [
-      "hotel",
-      "zone",
       "key",
-      "rust",
+      "zone",
       "technology",
       "registry",
-      "root"
+      "hotel",
+      "root",
+      "rust"
     ],
     "https://iana.org/help/int-eligibility": [
-      "int",
       "organization",
+      "int",
+      "domain",
       "technology",
       "treaty",
-      "domain",
       "must"
     ],
     "https://iana.org/help/idn-repository-procedure": [
       "script",
-      "contact",
-      "news",
       "language",
-      "lgr",
+      "news",
       "technology",
+      "lgr",
+      "contact",
       "are"
     ],
     "https://iana.org/help/protocol-registration": [
       "registrations",
-      "document",
-      "group",
       "iana",
       "news",
       "technology",
-      "registry"
+      "registry",
+      "document",
+      "group"
     ],
     "https://iana.org/help/licensing-terms": [
-      "ietf",
+      "protocol",
       "iana",
-      "rust",
-      "technology",
       "registries",
+      "technology",
       "are",
-      "protocol"
+      "ietf",
+      "rust"
     ],
     "https://iana.org/help/inr-request-procedure": [
       "address",
       "iana",
-      "numbers",
-      "allocations",
-      "technology",
-      "rir"
-    ],
-    "https://iana.org/help/updating-legacy-ipv4-space": [
-      "class",
-      "legacy",
-      "ipv4",
       "technology",
       "rir",
-      "registry"
+      "numbers",
+      "allocations"
+    ],
+    "https://iana.org/help/updating-legacy-ipv4-space": [
+      "technology",
+      "class",
+      "registry",
+      "rir",
+      "ipv4",
+      "legacy"
     ],
     "https://iana.org/help/example-domains": [
-      "example",
-      "are",
-      "technology",
+      "domains",
       "service",
       "number",
-      "domains"
+      "technology",
+      "are",
+      "example"
     ],
     "https://iana.org/help/whois": [
       "org",
       "server",
-      "whois",
-      "allocations",
       "technology",
-      "registry"
+      "whois",
+      "registry",
+      "allocations"
     ],
     "https://iana.org/help/abuse-answers": [
-      "255",
-      "internet",
-      "address",
-      "are",
+      "addresses",
       "technology",
-      "addresses"
+      "internet",
+      "255",
+      "address",
+      "are"
     ],
     "https://iana.org/help/dns-blackhole": [
       "queries",
-      "servers",
-      "blackhole",
+      "dns",
       "technology",
+      "blackhole",
       "are",
-      "dns"
+      "servers"
     ],
     "https://iana.org/help/rzms-answers": [
-      "password",
-      "their",
       "iana",
-      "account",
+      "technology",
+      "their",
       "are",
-      "technology"
+      "account",
+      "password"
     ],
     "https://iana.org/help/pti-transition": [
       "pti",
-      "functions",
-      "2016",
       "iana",
-      "icann",
-      "technology"
+      "2016",
+      "functions",
+      "technology",
+      "icann"
     ],
     "https://iana.org/help/rzm-system": [
-      "zone",
-      "requests",
       "top-level",
+      "zone",
       "technology",
+      "system",
       "root",
-      "system"
+      "requests"
     ],
     "https://iana.org/help/test-tld-procedure": [
       "zone",
-      "iana",
       "idn",
+      "iana",
       "technology",
-      "procedure",
-      "root"
+      "root",
+      "procedure"
     ],
     "https://iana.org/domains/reserved": [
       "overview",
-      "news",
-      "rust",
-      "are",
-      "technology",
+      "domains",
       "domain",
+      "news",
+      "technology",
       "registry",
-      "domains"
+      "are",
+      "rust"
     ],
     "http://www.icann.org/topics/idn": [
-      "icann",
-      "idn",
-      "policy",
-      "news",
-      "rust",
-      "technology",
       "domain",
-      "name"
+      "idn",
+      "name",
+      "news",
+      "technology",
+      "icann",
+      "policy",
+      "rust"
     ],
     "http://www.icann.org/": [
-      "public",
       "2026",
-      "icann",
-      "policy",
+      "learn",
       "technology",
-      "learn"
+      "public",
+      "icann",
+      "policy"
     ],
     "http://www.icann.org/en/registries/agreements.htm": [
       "limited",
       "inc",
-      "ltd",
-      "llc",
-      "rust",
       "technology",
-      "registry"
+      "llc",
+      "registry",
+      "ltd",
+      "rust"
     ],
     "https://iana.org/assignments/special-use-domain-names": [
       "rfc6762",
-      "rfc6761",
+      "in-addr",
       "technology",
       "arpa",
-      "172",
-      "in-addr"
+      "rfc6761",
+      "172"
     ],
     "https://iana.org/domains/root/files": [
-      "files",
       "overview",
       "zone",
-      "rust",
       "technology",
       "registry",
-      "root"
+      "files",
+      "root",
+      "rust"
     ],
     "https://iana.org/domains/root/manage": [
       "overview",
       "zone",
-      "rust",
-      "technology",
       "domain",
+      "technology",
       "registry",
-      "root"
+      "root",
+      "rust"
     ],
     "https://iana.org/domains/root/help": [
+      "top-level",
       "overview",
       "zone",
-      "top-level",
-      "rust",
-      "technology",
       "domain",
-      "root"
+      "technology",
+      "root",
+      "rust"
     ],
     "https://iana.org/domains/int/manage": [
       "overview",
-      "rust",
       "int",
-      "technology",
       "domain",
       "name",
-      "registry"
+      "technology",
+      "registry",
+      "rust"
     ],
     "https://iana.org/domains/int/policy": [
-      "rust",
       "organization",
       "int",
+      "domain",
       "technology",
       "treaty",
-      "domain",
-      "must"
+      "must",
+      "rust"
     ],
     "https://iana.org/dnssec": [
-      "zone",
       "key",
-      "signing",
-      "rust",
+      "zone",
       "technology",
+      "signing",
+      "root",
       "dnssec",
-      "root"
+      "rust"
     ],
     "https://iana.org/dnssec/files": [
-      "zone",
+      "anchors",
       "key",
+      "zone",
       "trust",
       "news",
-      "rust",
       "technology",
-      "anchors",
-      "root"
+      "root",
+      "rust"
     ],
     "https://iana.org/dnssec/ceremonies": [
-      "zsks",
-      "ksk",
       "replace",
-      "sign",
-      "rust",
+      "ksk",
+      "technology",
+      "zsks",
       "ceremony",
-      "technology"
+      "sign",
+      "rust"
     ],
     "https://iana.org/dnssec/procedures": [
-      "ksk",
-      "2025",
-      "operations",
-      "effective",
-      "rust",
       "describes",
-      "technology"
+      "ksk",
+      "technology",
+      "effective",
+      "operations",
+      "2025",
+      "rust"
     ],
     "https://iana.org/dnssec/tcrs": [
       "cryptographic",
-      "slot",
+      "officer",
       "key",
-      "rust",
+      "slot",
       "technology",
       "2010",
-      "officer"
+      "rust"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/index.html": [
       "technology"
@@ -1828,8 +1828,8 @@
       "news"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/API_OLD.md": [
-      "python",
-      "technology"
+      "technology",
+      "python"
     ],
     "file:///Users/av4nda/Research/autonomous-project/docs/QUICKSTART.md": [
       "python"

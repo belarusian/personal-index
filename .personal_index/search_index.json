@@ -8,7 +8,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:42.890868+00:00",
+      "crawled_at": "2026-08-11T20:53:32.529687+00:00",
       "domain": "example.com",
       "status_code": 200,
       "content_length": 142,
@@ -26,7 +26,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:43.045571+00:00",
+      "crawled_at": "2026-08-11T20:53:32.692484+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1286,
@@ -44,7 +44,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:43.941385+00:00",
+      "crawled_at": "2026-08-11T20:53:33.629032+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1296,
@@ -62,7 +62,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:44.939718+00:00",
+      "crawled_at": "2026-08-11T20:53:34.647400+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2952,
@@ -81,7 +81,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:00:45.944796+00:00",
+      "crawled_at": "2026-08-11T20:53:35.613341+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2145,
@@ -100,7 +100,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:00:46.960723+00:00",
+      "crawled_at": "2026-08-11T20:53:36.617371+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2093,
@@ -119,7 +119,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:00:48.097338+00:00",
+      "crawled_at": "2026-08-11T20:53:37.759623+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 68464,
@@ -138,7 +138,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:00:48.963154+00:00",
+      "crawled_at": "2026-08-11T20:53:38.621346+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1925,
@@ -157,7 +157,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:00:49.976395+00:00",
+      "crawled_at": "2026-08-11T20:53:39.635672+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3136,
@@ -175,7 +175,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:52.216235+00:00",
+      "crawled_at": "2026-08-11T20:53:41.864731+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 100000,
@@ -193,7 +193,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:52.254196+00:00",
+      "crawled_at": "2026-08-11T20:53:42.109367+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2947,
@@ -211,7 +211,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:53.265358+00:00",
+      "crawled_at": "2026-08-11T20:53:42.916719+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2867,
@@ -231,7 +231,7 @@
         "news",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:00:54.852814+00:00",
+      "crawled_at": "2026-08-11T20:53:44.495508+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 100000,
@@ -249,7 +249,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:55.283945+00:00",
+      "crawled_at": "2026-08-11T20:53:44.927739+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1941,
@@ -268,7 +268,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:00:56.289929+00:00",
+      "crawled_at": "2026-08-11T20:53:45.937212+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2221,
@@ -286,7 +286,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:57.299628+00:00",
+      "crawled_at": "2026-08-11T20:53:46.990215+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2537,
@@ -304,7 +304,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:00:58.310367+00:00",
+      "crawled_at": "2026-08-11T20:53:48.031133+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1741,
@@ -324,7 +324,7 @@
         "news",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:00:59.345556+00:00",
+      "crawled_at": "2026-08-11T20:53:49.285451+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 38078,
@@ -342,7 +342,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:00.325101+00:00",
+      "crawled_at": "2026-08-11T20:53:50.017242+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2644,
@@ -360,7 +360,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:01.319545+00:00",
+      "crawled_at": "2026-08-11T20:53:51.019052+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1515,
@@ -378,7 +378,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:02.320604+00:00",
+      "crawled_at": "2026-08-11T20:53:52.030436+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1774,
@@ -396,7 +396,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:03.321655+00:00",
+      "crawled_at": "2026-08-11T20:53:53.032180+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 952,
@@ -433,7 +433,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:01:05.457937+00:00",
+      "crawled_at": "2026-08-11T20:53:55.054958+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 21065,
@@ -452,7 +452,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:01:06.746242+00:00",
+      "crawled_at": "2026-08-11T20:53:55.922987+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 26436,
@@ -471,7 +471,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:06.845591+00:00",
+      "crawled_at": "2026-08-11T20:53:56.072087+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2473,
@@ -490,7 +490,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:01:07.796683+00:00",
+      "crawled_at": "2026-08-11T20:53:57.015903+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2371,
@@ -509,7 +509,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:08.805808+00:00",
+      "crawled_at": "2026-08-11T20:53:58.049782+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 8577,
@@ -527,7 +527,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:09.804337+00:00",
+      "crawled_at": "2026-08-11T20:53:59.043283+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2329,
@@ -545,7 +545,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:10.815318+00:00",
+      "crawled_at": "2026-08-11T20:54:00.256136+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2187,
@@ -563,7 +563,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:11.818137+00:00",
+      "crawled_at": "2026-08-11T20:54:01.078769+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4036,
@@ -582,7 +582,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:12.827595+00:00",
+      "crawled_at": "2026-08-11T20:54:02.251497+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3392,
@@ -600,7 +600,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:13.833086+00:00",
+      "crawled_at": "2026-08-11T20:54:03.048863+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3301,
@@ -619,7 +619,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:01:14.845284+00:00",
+      "crawled_at": "2026-08-11T20:54:04.083658+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 9096,
@@ -638,7 +638,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:01:15.839698+00:00",
+      "crawled_at": "2026-08-11T20:54:05.234435+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4117,
@@ -657,7 +657,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:16.853790+00:00",
+      "crawled_at": "2026-08-11T20:54:06.224993+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 13963,
@@ -676,7 +676,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:17.863740+00:00",
+      "crawled_at": "2026-08-11T20:54:07.280710+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 13952,
@@ -694,7 +694,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:18.873045+00:00",
+      "crawled_at": "2026-08-11T20:54:08.244140+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 6421,
@@ -713,7 +713,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:19.882537+00:00",
+      "crawled_at": "2026-08-11T20:54:09.109556+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 8138,
@@ -731,7 +731,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:20.894327+00:00",
+      "crawled_at": "2026-08-11T20:54:10.081487+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 6898,
@@ -749,7 +749,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:21.899720+00:00",
+      "crawled_at": "2026-08-11T20:54:11.161101+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1197,
@@ -767,7 +767,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:22.910836+00:00",
+      "crawled_at": "2026-08-11T20:54:12.289576+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2633,
@@ -786,7 +786,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:23.921143+00:00",
+      "crawled_at": "2026-08-11T20:54:13.126897+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2748,
@@ -805,7 +805,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:24.935336+00:00",
+      "crawled_at": "2026-08-11T20:54:14.131460+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4152,
@@ -824,7 +824,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:25.941589+00:00",
+      "crawled_at": "2026-08-11T20:54:15.296390+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5642,
@@ -843,7 +843,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:26.945746+00:00",
+      "crawled_at": "2026-08-11T20:54:16.349767+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 9744,
@@ -862,7 +862,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:27.945562+00:00",
+      "crawled_at": "2026-08-11T20:54:17.151381+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3504,
@@ -881,7 +881,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:28.962650+00:00",
+      "crawled_at": "2026-08-11T20:54:18.197870+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5041,
@@ -900,7 +900,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:29.958293+00:00",
+      "crawled_at": "2026-08-11T20:54:19.335117+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5836,
@@ -919,7 +919,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:30.960795+00:00",
+      "crawled_at": "2026-08-11T20:54:20.371944+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2384,
@@ -937,7 +937,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:31.969303+00:00",
+      "crawled_at": "2026-08-11T20:54:21.342885+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1608,
@@ -956,7 +956,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:32.973485+00:00",
+      "crawled_at": "2026-08-11T20:54:22.209759+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 874,
@@ -975,7 +975,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:33.975678+00:00",
+      "crawled_at": "2026-08-11T20:54:23.202902+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 899,
@@ -993,7 +993,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:34.975216+00:00",
+      "crawled_at": "2026-08-11T20:54:24.232690+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2544,
@@ -1012,7 +1012,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:01:35.990252+00:00",
+      "crawled_at": "2026-08-11T20:54:25.198667+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 6918,
@@ -1031,7 +1031,7 @@
         "technology",
         "news"
       ],
-      "crawled_at": "2026-08-11T20:01:37.001721+00:00",
+      "crawled_at": "2026-08-11T20:54:26.314748+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 17322,
@@ -1050,7 +1050,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:37.999638+00:00",
+      "crawled_at": "2026-08-11T20:54:27.239331+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2818,
@@ -1068,7 +1068,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:39.008529+00:00",
+      "crawled_at": "2026-08-11T20:54:28.245087+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3298,
@@ -1086,7 +1086,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:40.016467+00:00",
+      "crawled_at": "2026-08-11T20:54:29.398813+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1449,
@@ -1104,7 +1104,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:41.017847+00:00",
+      "crawled_at": "2026-08-11T20:54:30.190578+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1286,
@@ -1122,7 +1122,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:42.024118+00:00",
+      "crawled_at": "2026-08-11T20:54:31.247766+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2524,
@@ -1140,7 +1140,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:43.033975+00:00",
+      "crawled_at": "2026-08-11T20:54:32.255461+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 8605,
@@ -1158,7 +1158,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:44.041075+00:00",
+      "crawled_at": "2026-08-11T20:54:33.297828+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7189,
@@ -1176,7 +1176,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:45.052370+00:00",
+      "crawled_at": "2026-08-11T20:54:34.540724+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 3281,
@@ -1194,7 +1194,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:46.052700+00:00",
+      "crawled_at": "2026-08-11T20:54:35.294649+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2878,
@@ -1212,7 +1212,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:47.061109+00:00",
+      "crawled_at": "2026-08-11T20:54:36.448644+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4936,
@@ -1230,7 +1230,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:48.072056+00:00",
+      "crawled_at": "2026-08-11T20:54:37.308263+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7661,
@@ -1250,7 +1250,7 @@
         "news",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:51.092201+00:00",
+      "crawled_at": "2026-08-11T20:54:40.263647+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2757,
@@ -1270,7 +1270,7 @@
         "news",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:51.682170+00:00",
+      "crawled_at": "2026-08-11T20:54:40.844315+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 13156,
@@ -1288,7 +1288,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:52.712070+00:00",
+      "crawled_at": "2026-08-11T20:54:41.872569+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 7892,
@@ -1307,7 +1307,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:55.903638+00:00",
+      "crawled_at": "2026-08-11T20:54:45.465936+00:00",
       "domain": "www.icann.org",
       "status_code": 200,
       "content_length": 32858,
@@ -1325,7 +1325,7 @@
       "matched_interests": [
         "technology"
       ],
-      "crawled_at": "2026-08-11T20:01:55.996721+00:00",
+      "crawled_at": "2026-08-11T20:54:45.548533+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1690,
@@ -1344,7 +1344,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:56.956620+00:00",
+      "crawled_at": "2026-08-11T20:54:46.518543+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1747,
@@ -1363,7 +1363,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:57.966137+00:00",
+      "crawled_at": "2026-08-11T20:54:47.523339+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1553,
@@ -1382,7 +1382,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:58.971707+00:00",
+      "crawled_at": "2026-08-11T20:54:48.527467+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1755,
@@ -1401,7 +1401,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:01:59.973621+00:00",
+      "crawled_at": "2026-08-11T20:54:49.536133+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 1918,
@@ -1420,7 +1420,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:02:00.978102+00:00",
+      "crawled_at": "2026-08-11T20:54:50.533553+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 4597,
@@ -1439,7 +1439,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:02:01.979446+00:00",
+      "crawled_at": "2026-08-11T20:54:51.743351+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 2269,
@@ -1459,7 +1459,7 @@
         "news",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:02:02.990238+00:00",
+      "crawled_at": "2026-08-11T20:54:52.757831+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5680,
@@ -1478,7 +1478,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:02:04.006558+00:00",
+      "crawled_at": "2026-08-11T20:54:53.639277+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5298,
@@ -1497,7 +1497,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:02:04.998127+00:00",
+      "crawled_at": "2026-08-11T20:54:54.655102+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 5623,
@@ -1516,7 +1516,7 @@
         "technology",
         "rust"
       ],
-      "crawled_at": "2026-08-11T20:02:06.007331+00:00",
+      "crawled_at": "2026-08-11T20:54:55.794263+00:00",
       "domain": "iana.org",
       "status_code": 200,
       "content_length": 7293,
