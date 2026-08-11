@@ -7,7 +7,7 @@ import os
 import re
 from dataclasses import dataclass, field
 
-from personal_index.models import IndexedPage, SearchResult
+from personal_index.models import CrawledPage, IndexedPage, SearchResult
 
 # Common stop words to exclude from indexing
 STOP_WORDS = frozenset({
@@ -75,9 +75,26 @@ class SearchIndex:
         words = re.findall(r"[a-z0-9]+", text.lower())
         return [w for w in words if w not in STOP_WORDS and len(w) > 1]
 
-    def add_page(self, page: IndexedPage) -> int:
+    def add_page(self, page: IndexedPage | CrawledPage) -> int:
         """Add a page to the index. Returns page id."""
-        self._pages[page.url] = page
+        if isinstance(page, CrawledPage):
+            indexed = IndexedPage(
+                url=page.url,
+                title=page.title,
+                content=page.content or "",
+                score=getattr(page, "relevance_score", 0.0),
+                crawled_at=page.crawled_at,
+                domain=page.domain,
+                status_code=page.status_code,
+                content_length=page.content_length,
+                language=page.language,
+                keywords=page.keywords,
+                meta_description=page.meta_description,
+                matched_interests=page.matched_interests,
+            )
+        else:
+            indexed = page
+        self._pages[page.url] = indexed
         text = f"{page.title} {page.content}"
         tokens = self._tokenize(text)
         for token in set(tokens):
