@@ -55,7 +55,9 @@ class PersonalIndexApp:
     def content_search(self):
         """Get the content search singleton."""
         if self._content_search is None:
-            self._content_search = ContentSearch(self.search_index)
+            self._content_search = ContentSearch()
+            # Use our existing search index
+            self._content_search.index = self.search_index
         return self._content_search
 
     @property
