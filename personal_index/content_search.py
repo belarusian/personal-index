@@ -5,22 +5,19 @@ Full-text search with ranking, filtering, and relevance scoring.
 
 from __future__ import annotations
 
-import re
 import string
-from collections import Counter
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class SearchIndex:
     """In-memory inverted index for full-text search."""
 
     def __init__(self):
-        self._index: Dict[str, set] = {}  # term -> set of item_ids
-        self._items: Dict[str, Dict[str, Any]] = {}  # id -> item
-        self._term_freq: Dict[str, Dict[str, int]] = {}  # term -> {item_id: count}
+        self._index: dict[str, set] = {}  # term -> set of item_ids
+        self._items: dict[str, dict[str, Any]] = {}  # id -> item
+        self._term_freq: dict[str, dict[str, int]] = {}  # term -> {item_id: count}
 
-    def add_item(self, item: Dict[str, Any]) -> None:
+    def add_item(self, item: dict[str, Any]) -> None:
         """Add an item to the search index."""
         item_id = str(item.get("id", id(item)))
         self._items[item_id] = item
@@ -34,7 +31,7 @@ class SearchIndex:
                 self._term_freq[token] = {}
             self._term_freq[token][item_id] = self._term_freq[token].get(item_id, 0) + 1
 
-    def add_items(self, items: List[Dict[str, Any]]) -> None:
+    def add_items(self, items: list[dict[str, Any]]) -> None:
         for item in items:
             self.add_item(item)
 
@@ -59,17 +56,17 @@ class SearchIndex:
     def search(
         self,
         query: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Search the index and return ranked results."""
         tokens = self._tokenize(query)
         if not tokens:
             return {"results": [], "total": 0, "query": query}
 
         # Find candidate items matching any query token
-        candidates: Dict[str, float] = {}
+        candidates: dict[str, float] = {}
         for token in tokens:
             if token in self._index:
                 for item_id in self._index[token]:
@@ -102,8 +99,8 @@ class SearchIndex:
         return {"results": results, "total": total, "query": query}
 
     def _apply_filters(
-        self, candidates: Dict[str, float], filters: Dict[str, Any]
-    ) -> Dict[str, float]:
+        self, candidates: dict[str, float], filters: dict[str, Any]
+    ) -> dict[str, float]:
         filtered = {}
         for item_id, score in candidates.items():
             item = self._items.get(item_id)
@@ -113,7 +110,7 @@ class SearchIndex:
                 filtered[item_id] = score
         return filtered
 
-    def _matches_filters(self, item: Dict[str, Any], filters: Dict[str, Any]) -> bool:
+    def _matches_filters(self, item: dict[str, Any], filters: dict[str, Any]) -> bool:
         for key, value in filters.items():
             item_value = item.get(key)
             if isinstance(value, (list, set)):
@@ -137,7 +134,7 @@ class SearchIndex:
                     return False
         return True
 
-    def _extract_text(self, item: Dict[str, Any]) -> str:
+    def _extract_text(self, item: dict[str, Any]) -> str:
         parts = []
         for field in ("title", "description", "content", "tags"):
             val = item.get(field)
@@ -147,7 +144,7 @@ class SearchIndex:
                 parts.append(val)
         return " ".join(parts)
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         text = text.lower()
         text = text.translate(str.maketrans("", "", string.punctuation))
         tokens = text.split()
@@ -177,7 +174,7 @@ class SearchIndex:
     def term_count(self) -> int:
         return len(self._index)
 
-    def get_suggestions(self, prefix: str, limit: int = 5) -> List[str]:
+    def get_suggestions(self, prefix: str, limit: int = 5) -> list[str]:
         """Get autocomplete suggestions for a prefix."""
         prefix = prefix.lower()
         suggestions = []
@@ -229,20 +226,20 @@ class ContentSearch:
     def __init__(self):
         self.index = SearchIndex()
 
-    def index_items(self, items: List[Dict[str, Any]]) -> None:
+    def index_items(self, items: list[dict[str, Any]]) -> None:
         self.index.add_items(items)
 
     def search(
         self,
         query: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return self.index.search(query, filters=filters, limit=limit, offset=offset)
 
     def remove_item(self, item_id: str) -> None:
         self.index.remove_item(item_id)
 
-    def get_suggestions(self, prefix: str, limit: int = 5) -> List[str]:
+    def get_suggestions(self, prefix: str, limit: int = 5) -> list[str]:
         return self.index.get_suggestions(prefix, limit)

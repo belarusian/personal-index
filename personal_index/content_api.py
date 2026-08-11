@@ -8,21 +8,21 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 
 class ContentAPI:
     """REST API handler for content operations."""
 
-    def __init__(self, storage: Optional[Dict[str, Any]] = None):
-        self._store: Dict[str, Dict[str, Any]] = storage or {}
+    def __init__(self, storage: dict[str, Any] | None = None):
+        self._store: dict[str, dict[str, Any]] = storage or {}
         self._next_id = 1
 
     def handle_request(
-        self, method: str, path: str, body: Optional[str] = None,
+        self, method: str, path: str, body: str | None = None,
         query_string: str = ""
-    ) -> Tuple[int, Dict[str, Any]]:
+    ) -> tuple[int, dict[str, Any]]:
         """Route and handle an HTTP request."""
         parsed = urlparse(path)
         path_parts = [p for p in parsed.path.strip("/").split("/") if p]
@@ -44,14 +44,12 @@ class ContentAPI:
                 return self._create_content(body)
 
         # Route: /api/v1/content/search
-        if path_parts == ["api", "v1", "content", "search"]:
-            if method == "GET":
-                return self._search_content(params)
+        if path_parts == ["api", "v1", "content", "search"] and method == "GET":
+            return self._search_content(params)
 
         # Route: /api/v1/content/export
-        if path_parts == ["api", "v1", "content", "export"]:
-            if method == "GET":
-                return self._export_content(params)
+        if path_parts == ["api", "v1", "content", "export"] and method == "GET":
+            return self._export_content(params)
 
         # Route: /api/v1/content/{id}
         if len(path_parts) == 4 and path_parts[:3] == ["api", "v1", "content"]:
@@ -65,7 +63,7 @@ class ContentAPI:
 
         return 404, {"error": "Not found", "path": path}
 
-    def _list_content(self, params: Dict[str, List[str]]) -> Tuple[int, Dict[str, Any]]:
+    def _list_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
         items = list(self._store.values())
         # Pagination
         page = int(params.get("page", ["1"])[0])
@@ -81,13 +79,13 @@ class ContentAPI:
             "per_page": per_page,
         }
 
-    def _get_content(self, item_id: str) -> Tuple[int, Dict[str, Any]]:
+    def _get_content(self, item_id: str) -> tuple[int, dict[str, Any]]:
         item = self._store.get(item_id)
         if item is None:
             return 404, {"error": f"Content item '{item_id}' not found"}
         return 200, {"item": item}
 
-    def _create_content(self, body: Optional[str]) -> Tuple[int, Dict[str, Any]]:
+    def _create_content(self, body: str | None) -> tuple[int, dict[str, Any]]:
         if not body:
             return 400, {"error": "Request body is required"}
         try:
@@ -110,7 +108,7 @@ class ContentAPI:
         self._store[item_id] = item
         return 201, {"item": item}
 
-    def _update_content(self, item_id: str, body: Optional[str]) -> Tuple[int, Dict[str, Any]]:
+    def _update_content(self, item_id: str, body: str | None) -> tuple[int, dict[str, Any]]:
         if item_id not in self._store:
             return 404, {"error": f"Content item '{item_id}' not found"}
         if not body:
@@ -126,13 +124,13 @@ class ContentAPI:
         item["updated_at"] = datetime.now(timezone.utc).isoformat()
         return 200, {"item": item}
 
-    def _delete_content(self, item_id: str) -> Tuple[int, Dict[str, Any]]:
+    def _delete_content(self, item_id: str) -> tuple[int, dict[str, Any]]:
         if item_id not in self._store:
             return 404, {"error": f"Content item '{item_id}' not found"}
-        deleted = self._store.pop(item_id)
+        self._store.pop(item_id)
         return 200, {"deleted": True, "id": item_id}
 
-    def _search_content(self, params: Dict[str, List[str]]) -> Tuple[int, Dict[str, Any]]:
+    def _search_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
         q = params.get("q", [""])[0]
         if not q:
             return 400, {"error": "Search query parameter 'q' is required"}
@@ -144,22 +142,22 @@ class ContentAPI:
                 results.append(item)
         return 200, {"results": results, "total": len(results), "query": q}
 
-    def _export_content(self, params: Dict[str, List[str]]) -> Tuple[int, Dict[str, Any]]:
+    def _export_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
         fmt = params.get("format", ["json"])[0]
         items = list(self._store.values())
         return 200, {"format": fmt, "items": items, "total": len(items)}
 
-    def _health_check(self) -> Tuple[int, Dict[str, Any]]:
+    def _health_check(self) -> tuple[int, dict[str, Any]]:
         return 200, {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
-    def _get_stats(self) -> Tuple[int, Dict[str, Any]]:
+    def _get_stats(self) -> tuple[int, dict[str, Any]]:
         return 200, {
             "total_items": len(self._store),
             "tags": self._collect_tags(),
         }
 
-    def _collect_tags(self) -> Dict[str, int]:
-        tag_counts: Dict[str, int] = {}
+    def _collect_tags(self) -> dict[str, int]:
+        tag_counts: dict[str, int] = {}
         for item in self._store.values():
             for tag in item.get("tags", []):
                 tag_counts[tag] = tag_counts.get(tag, 0) + 1

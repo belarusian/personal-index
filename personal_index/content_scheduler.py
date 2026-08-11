@@ -5,11 +5,10 @@ Schedule crawls, exports, and cleanup tasks with cron-like expressions.
 
 from __future__ import annotations
 
-import re
-import time
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional, Tuple
 from enum import Enum
+from typing import Any
 
 
 class TaskStatus(str, Enum):
@@ -29,8 +28,8 @@ class ScheduledTask:
         name: str,
         task_type: str,
         cron_expr: str,
-        callback: Optional[Callable] = None,
-        config: Optional[Dict[str, Any]] = None,
+        callback: Callable | None = None,
+        config: dict[str, Any] | None = None,
         enabled: bool = True,
     ):
         self.task_id = task_id
@@ -42,15 +41,15 @@ class ScheduledTask:
         self.enabled = enabled
         self.status = TaskStatus.PENDING
         self.created_at = datetime.now(timezone.utc)
-        self.last_run: Optional[datetime] = None
-        self.next_run: Optional[datetime] = None
+        self.last_run: datetime | None = None
+        self.next_run: datetime | None = None
         self.run_count = 0
-        self.last_error: Optional[str] = None
-        self._minute: List[int] = []
-        self._hour: List[int] = []
-        self._dom: List[int] = []
-        self._month: List[int] = []
-        self._dow: List[int] = []
+        self.last_error: str | None = None
+        self._minute: list[int] = []
+        self._hour: list[int] = []
+        self._dom: list[int] = []
+        self._month: list[int] = []
+        self._dow: list[int] = []
         self._parse_cron()
 
     def _parse_cron(self) -> None:
@@ -76,7 +75,7 @@ class ScheduledTask:
                 self._dow.append(d - 1)  # Shift: cron 1(Mon) -> python 0(Mon)
         self._compute_next_run()
 
-    def _parse_field(self, field: str, min_val: int, max_val: int) -> List[int]:
+    def _parse_field(self, field: str, min_val: int, max_val: int) -> list[int]:
         """Parse a cron field into a list of valid values."""
         if field == "*":
             return list(range(min_val, max_val + 1))
@@ -132,7 +131,7 @@ class ScheduledTask:
             self.last_error = str(e)
             return False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "task_id": self.task_id,
             "name": self.name,
@@ -153,7 +152,7 @@ class TaskScheduler:
     """Manages scheduled tasks."""
 
     def __init__(self):
-        self._tasks: Dict[str, ScheduledTask] = {}
+        self._tasks: dict[str, ScheduledTask] = {}
         self._task_counter = 0
 
     def add_task(
@@ -161,8 +160,8 @@ class TaskScheduler:
         name: str,
         task_type: str,
         cron_expr: str,
-        callback: Optional[Callable] = None,
-        config: Optional[Dict[str, Any]] = None,
+        callback: Callable | None = None,
+        config: dict[str, Any] | None = None,
     ) -> ScheduledTask:
         """Add a new scheduled task."""
         self._task_counter += 1
@@ -178,10 +177,10 @@ class TaskScheduler:
         self._tasks[task_id] = task
         return task
 
-    def get_task(self, task_id: str) -> Optional[ScheduledTask]:
+    def get_task(self, task_id: str) -> ScheduledTask | None:
         return self._tasks.get(task_id)
 
-    def list_tasks(self, task_type: Optional[str] = None) -> List[ScheduledTask]:
+    def list_tasks(self, task_type: str | None = None) -> list[ScheduledTask]:
         if task_type:
             return [t for t in self._tasks.values() if t.task_type == task_type]
         return list(self._tasks.values())
@@ -206,7 +205,7 @@ class TaskScheduler:
             return True
         return False
 
-    def run_due_tasks(self) -> List[Dict[str, Any]]:
+    def run_due_tasks(self) -> list[dict[str, Any]]:
         """Run all tasks that are due."""
         results = []
         for task in self._tasks.values():
@@ -220,7 +219,7 @@ class TaskScheduler:
                 })
         return results
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_tasks": len(self._tasks),
             "enabled": sum(1 for t in self._tasks.values() if t.enabled),
@@ -228,8 +227,8 @@ class TaskScheduler:
             "by_type": self._count_by_type(),
         }
 
-    def _count_by_type(self) -> Dict[str, int]:
-        counts: Dict[str, int] = {}
+    def _count_by_type(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
         for task in self._tasks.values():
             counts[task.task_type] = counts.get(task.task_type, 0) + 1
         return counts

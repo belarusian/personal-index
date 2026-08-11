@@ -6,10 +6,7 @@ Remove duplicate content items.
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Dict, List
-
-
-
+from typing import Any
 
 
 class DocumentHash:
@@ -34,7 +31,7 @@ class ContentDeduplicator:
     def __init__(self):
         self._seen_hashes: set = set()
 
-    def _compute_hash(self, item: Dict[str, Any]) -> str:
+    def _compute_hash(self, item: dict[str, Any]) -> str:
         """Compute hash for an item based on title and description."""
         title = str(item.get("title", "")).strip().lower()
         desc = str(item.get("description", "")).strip().lower()
@@ -59,7 +56,7 @@ class ContentDeduplicator:
             self._seen_hashes.add(content_hash)
         return CheckResult(is_duplicate=is_dup, url=url)
 
-    def deduplicate(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def deduplicate(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Remove duplicates from a list of items."""
         unique = []
         for item in items:
@@ -69,12 +66,12 @@ class ContentDeduplicator:
                 unique.append(item)
         return unique
 
-    def is_duplicate(self, item: Dict[str, Any]) -> bool:
+    def is_duplicate(self, item: dict[str, Any]) -> bool:
         """Check if an item is a duplicate."""
         item_hash = self._compute_hash(item)
         return item_hash in self._seen_hashes
 
-    def mark_seen(self, item: Dict[str, Any]) -> None:
+    def mark_seen(self, item: dict[str, Any]) -> None:
         """Mark an item as seen."""
         self._seen_hashes.add(self._compute_hash(item))
 
@@ -92,7 +89,7 @@ class DedupFilter:
     def __init__(self):
         self._seen: set = set()
 
-    def filter(self, items: List[Dict[str, Any]], key: str = "id") -> List[Dict[str, Any]]:
+    def filter(self, items: list[dict[str, Any]], key: str = "id") -> list[dict[str, Any]]:
         """Remove duplicates based on a key field."""
         unique = []
         for item in items:

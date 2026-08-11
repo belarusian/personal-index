@@ -5,25 +5,25 @@ Aggregates content from multiple sources.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 class ContentAggregator:
     """Aggregates content from multiple sources."""
 
     def __init__(self):
-        self._sources: Dict[str, List[Dict[str, Any]]] = {}
-        self._merged: List[Dict[str, Any]] = []
+        self._sources: dict[str, list[dict[str, Any]]] = {}
+        self._merged: list[dict[str, Any]] = []
 
-    def add_source(self, name: str, items: List[Dict[str, Any]]) -> None:
+    def add_source(self, name: str, items: list[dict[str, Any]]) -> None:
         """Add a content source."""
         self._sources[name] = list(items)
 
-    def get_source(self, name: str) -> List[Dict[str, Any]]:
+    def get_source(self, name: str) -> list[dict[str, Any]]:
         """Get items from a specific source."""
         return self._sources.get(name, [])
 
-    def merge_all(self, deduplicate: bool = True) -> List[Dict[str, Any]]:
+    def merge_all(self, deduplicate: bool = True) -> list[dict[str, Any]]:
         """Merge all sources into a single list."""
         merged = []
         for items in self._sources.values():
@@ -39,11 +39,11 @@ class ContentAggregator:
             return unique
         return merged
 
-    def filter_by_source(self, source_name: str) -> List[Dict[str, Any]]:
+    def filter_by_source(self, source_name: str) -> list[dict[str, Any]]:
         """Get items from a specific source."""
         return self._sources.get(source_name, [])
 
-    def get_source_names(self) -> List[str]:
+    def get_source_names(self) -> list[str]:
         """Get all source names."""
         return list(self._sources.keys())
 

@@ -9,8 +9,7 @@ import csv
 import io
 import json
 import re
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 from xml.etree import ElementTree as ET
 
 
@@ -22,7 +21,7 @@ class ContentImporter:
     def __init__(self):
         self._id_counter = 0
 
-    def import_content(self, data: str, fmt: str) -> List[Dict[str, Any]]:
+    def import_content(self, data: str, fmt: str) -> list[dict[str, Any]]:
         """Import content from the given string data in the specified format."""
         fmt = fmt.lower().strip()
         if fmt not in self.SUPPORTED_FORMATS:
@@ -30,13 +29,13 @@ class ContentImporter:
         handler = getattr(self, f"_import_{fmt}")
         return handler(data)
 
-    def _import_json(self, data: str) -> List[Dict[str, Any]]:
+    def _import_json(self, data: str) -> list[dict[str, Any]]:
         parsed = json.loads(data)
         if isinstance(parsed, dict):
             parsed = [parsed]
         return self._normalize_items(parsed)
 
-    def _import_html(self, data: str) -> List[Dict[str, Any]]:
+    def _import_html(self, data: str) -> list[dict[str, Any]]:
         items = []
         # Extract articles
         article_pattern = re.compile(r"<article[^>]*>(.*?)</article>", re.DOTALL | re.IGNORECASE)
@@ -56,7 +55,7 @@ class ContentImporter:
                 items.append({"title": clean, "description": desc, "id": str(self._next_id())})
         return items
 
-    def _parse_html_article(self, html_str: str) -> Dict[str, Any]:
+    def _parse_html_article(self, html_str: str) -> dict[str, Any]:
         h2 = re.search(r"<h2[^>]*>(.*?)</h2>", html_str, re.DOTALL | re.IGNORECASE)
         p = re.search(r"<p[^>]*>(.*?)</p>", html_str, re.DOTALL | re.IGNORECASE)
         a = re.search(r'<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>', html_str, re.DOTALL | re.IGNORECASE)
@@ -65,10 +64,10 @@ class ContentImporter:
         link = a.group(1) if a else ""
         return {"title": title, "description": desc, "link": link, "id": str(self._next_id())}
 
-    def _import_markdown(self, data: str) -> List[Dict[str, Any]]:
+    def _import_markdown(self, data: str) -> list[dict[str, Any]]:
         items = []
         lines = data.split("\n")
-        current_item: Optional[Dict[str, Any]] = None
+        current_item: dict[str, Any] | None = None
         desc_lines = []
 
         for line in lines:
@@ -92,7 +91,7 @@ class ContentImporter:
             items.append(current_item)
         return items
 
-    def _import_rss(self, data: str) -> List[Dict[str, Any]]:
+    def _import_rss(self, data: str) -> list[dict[str, Any]]:
         items = []
         root = ET.fromstring(data)
         for channel in root.findall(".//channel"):
@@ -101,7 +100,7 @@ class ContentImporter:
                 link_el = item.find("link")
                 desc_el = item.find("description")
                 guid_el = item.find("guid")
-                pub_el = item.find("pubDate")
+                item.find("pubDate")
                 title = title_el.text if title_el is not None and title_el.text else "Untitled"
                 link = link_el.text if link_el is not None and link_el.text else ""
                 desc = desc_el.text if desc_el is not None and desc_el.text else ""
@@ -114,7 +113,7 @@ class ContentImporter:
                 })
         return items
 
-    def _import_csv(self, data: str) -> List[Dict[str, Any]]:
+    def _import_csv(self, data: str) -> list[dict[str, Any]]:
         reader = csv.DictReader(io.StringIO(data))
         items = []
         for row in reader:
@@ -123,7 +122,7 @@ class ContentImporter:
             items.append(item)
         return items
 
-    def _normalize_items(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _normalize_items(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         result = []
         for item in items:
             if not isinstance(item, dict):

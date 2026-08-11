@@ -5,10 +5,10 @@ Exports content to multiple formats: HTML, JSON, Markdown, RSS
 
 from __future__ import annotations
 
-import json
 import html
+import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 from xml.sax.saxutils import escape as xml_escape
 
 
@@ -21,7 +21,7 @@ class ContentExporter:
         self.title = title
         self.base_url = base_url.rstrip("/")
 
-    def export(self, items: List[Dict[str, Any]], fmt: str) -> str:
+    def export(self, items: list[dict[str, Any]], fmt: str) -> str:
         """Export a list of content items to the specified format."""
         fmt = fmt.lower().strip()
         if fmt not in self.SUPPORTED_FORMATS:
@@ -29,21 +29,21 @@ class ContentExporter:
         handler = getattr(self, f"_export_{fmt}")
         return handler(items)
 
-    def _export_json(self, items: List[Dict[str, Any]]) -> str:
+    def _export_json(self, items: list[dict[str, Any]]) -> str:
         return json.dumps(items, indent=2, default=str)
 
-    def _export_html(self, items: List[Dict[str, Any]]) -> str:
+    def _export_html(self, items: list[dict[str, Any]]) -> str:
         return self._render_html(items)
 
-    def _export_markdown(self, items: List[Dict[str, Any]]) -> str:
+    def _export_markdown(self, items: list[dict[str, Any]]) -> str:
         return self._render_markdown(items)
 
-    def _export_rss(self, items: List[Dict[str, Any]]) -> str:
+    def _export_rss(self, items: list[dict[str, Any]]) -> str:
         return self._render_rss(items)
 
     # --- HTML rendering ---
 
-    def _render_html(self, items: List[Dict[str, Any]]) -> str:
+    def _render_html(self, items: list[dict[str, Any]]) -> str:
         parts = [
             "<!DOCTYPE html>",
             "<html lang=\"en\">",
@@ -62,7 +62,7 @@ class ContentExporter:
         parts.append("</body></html>")
         return "\n".join(parts)
 
-    def _html_item(self, item: Dict[str, Any]) -> str:
+    def _html_item(self, item: dict[str, Any]) -> str:
         title = html.escape(item.get("title", "Untitled"))
         desc = html.escape(item.get("description", ""))
         link = item.get("link", "")
@@ -80,13 +80,13 @@ class ContentExporter:
 
     # --- Markdown rendering ---
 
-    def _render_markdown(self, items: List[Dict[str, Any]]) -> str:
+    def _render_markdown(self, items: list[dict[str, Any]]) -> str:
         lines = [f"# {self.title}", ""]
         for item in items:
             lines.append(self._md_item(item))
         return "\n".join(lines)
 
-    def _md_item(self, item: Dict[str, Any]) -> str:
+    def _md_item(self, item: dict[str, Any]) -> str:
         title = item.get("title", "Untitled")
         link = item.get("link", "")
         desc = item.get("description", "")
@@ -113,7 +113,7 @@ class ContentExporter:
 
     # --- RSS rendering ---
 
-    def _render_rss(self, items: List[Dict[str, Any]]) -> str:
+    def _render_rss(self, items: list[dict[str, Any]]) -> str:
         now = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
         lines = [
             '<?xml version="1.0" encoding="UTF-8"?>',
@@ -129,7 +129,7 @@ class ContentExporter:
         lines.append("</channel></rss>")
         return "\n".join(lines)
 
-    def _rss_item(self, item: Dict[str, Any]) -> str:
+    def _rss_item(self, item: dict[str, Any]) -> str:
         title = xml_escape(item.get("title", "Untitled"))
         desc = xml_escape(item.get("description", ""))
         link = xml_escape(item.get("link", self.base_url))
