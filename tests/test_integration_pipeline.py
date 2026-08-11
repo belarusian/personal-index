@@ -93,17 +93,16 @@ class TestPipelineRunner:
         assert stats.pages_crawled == 0
 
     def test_run_with_mocked_crawler(self, tmp_path):
-        import pytest; pytest.skip("Test isolation issue")
         data_dir = str(tmp_path / "data")
         runner = PipelineRunner(data_dir=data_dir)
 
         page = CrawledPage(
             url="https://example.com/test",
             title="Test Page",
-            content="This is a test page about python programming and software development that has enough words to pass the minimum content length filter for the pipeline runner.",
+            content="This is a test page about python programming and software development that has enough words to pass the minimum content length filter for the pipeline runner to work correctly.",
         )
 
-        with patch('personal_index.pipeline_runner.Crawler') as MockCrawler:
+        with patch("personal_index.pipeline_runner.Crawler") as MockCrawler:
             mock_crawler = MagicMock()
             mock_crawler.crawl.return_value = [page]
             MockCrawler.return_value = mock_crawler
