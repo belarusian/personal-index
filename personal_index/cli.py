@@ -631,3 +631,7 @@ def config_set_schedule(ctx, interval, data_dir):
     with open(config_path, "w") as f:
         yaml.dump(data, f, default_flow_style=False)
     click.echo("Scheduler configuration updated.")
+
+
+# Register config group with main
+main.add_command(config)
