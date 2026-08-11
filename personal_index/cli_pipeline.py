@@ -31,10 +31,11 @@ from personal_index.tags import TagStore
 @click.option("--steps", default=None, help="Comma-separated list of steps to run")
 @click.option("--skip-crawl", is_flag=True, help="Skip crawl step (use with --import)")
 @click.option("--import-file", "import_files", multiple=True, help="Import local files instead of crawling")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.pass_context
 def pipeline(ctx, urls, data_dir, depth, max_pages, timeout, delay,
-             min_score, min_content_length, steps, skip_crawl, import_files, verbose):
+             min_score, min_content_length, steps, skip_crawl, import_files, dry_run, verbose):
     """Run the full pipeline: crawl → extract → filter → score → tag → index.
 
     Processes URLs through the complete pipeline, optionally importing local files.
@@ -65,6 +66,16 @@ def pipeline(ctx, urls, data_dir, depth, max_pages, timeout, delay,
     )
     if enabled_steps:
         config.enabled_steps = enabled_steps
+
+    # Handle dry-run mode
+    if dry_run:
+        click.echo("Dry run mode - no changes will be made")
+        click.echo(f"Would process {len(urls) if urls else 0} URL(s) and {len(import_files)} file(s)")
+        click.echo(f"Steps: {', '.join(config.enabled_steps)}")
+        click.echo(f"Data dir: {dd}")
+        click.echo(f"Min score: {min_score}")
+        click.echo(f"Min content length: {min_content_length}")
+        return
 
     # Initialize pipeline
     pipe = Pipeline(data_dir=dd, config=config)

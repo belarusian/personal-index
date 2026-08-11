@@ -71,6 +71,80 @@ class PipelineConfig:
         return config
 
 
+
+
+@dataclass
+class PipelineResult:
+    """Result from executing a pipeline step."""
+    success: bool = True
+    data: dict = field(default_factory=dict)
+    error: str = ""
+    step_name: str = ""
+
+
+class PipelineStep:
+    """A single step in a content processing pipeline."""
+
+    def __init__(self, name: str, handler: callable, enabled: bool = True, on_error: str = "raise"):
+        self.name = name
+        self.handler = handler
+        self.enabled = enabled
+        self.on_error = on_error
+
+    def execute(self, data: dict) -> dict:
+        """Execute this step on the data."""
+        if not self.enabled:
+            return data
+        try:
+            return self.handler(data)
+        except Exception as e:
+            if self.on_error == "continue":
+                return data
+            elif self.on_error == "skip":
+                return data
+            else:
+                raise
+
+
+class ContentPipeline:
+    """Generic content processing pipeline used by PersonalIndexApp.
+
+    Provides add_step(), run(), step_count, and enabled_steps interface.
+    """
+
+    def __init__(self, name: str = "default"):
+        self.name = name
+        self._steps: list[tuple[str, callable, str]] = []
+
+    def add_step(self, name: str, func: callable, on_error: str = "raise") -> None:
+        """Add a processing step to the pipeline."""
+        self._steps.append((name, func, on_error))
+
+    @property
+    def step_count(self) -> int:
+        """Number of steps in the pipeline."""
+        return len(self._steps)
+
+    @property
+    def enabled_steps(self) -> list[str]:
+        """List of enabled step names."""
+        return [name for name, _, _ in self._steps]
+
+    def run(self, data: dict) -> dict:
+        """Run all pipeline steps on the data dict."""
+        for name, func, on_error in self._steps:
+            try:
+                data = func(data)
+            except Exception as e:
+                if on_error == "continue":
+                    pass
+                elif on_error == "skip":
+                    pass
+                else:
+                    raise
+        return data
+
+
 class Pipeline:
     """Full pipeline orchestrator: crawl → extract → filter → score → tag → index → search.
 
