@@ -815,12 +815,14 @@ from personal_index.cli_pipeline_unified import run_pipeline
 from personal_index.cli_verify import verify
 from personal_index.cli_watch import watch
 from personal_index.cli_interests import interests as interests_cmd
+from personal_index.cli_tags import tags as tags_cmd
 
 main.add_command(pipeline)
 main.add_command(run_pipeline)
 main.add_command(verify)
 main.add_command(watch)
 main.add_command(interests_cmd)
+main.add_command(tags_cmd)
 
 # Doctor command
 @main.command()
