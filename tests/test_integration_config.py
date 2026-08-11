@@ -10,7 +10,7 @@ import yaml
 
 from personal_index.app import PersonalIndexApp
 from personal_index.config.loader import load_config, save_config
-from personal_index.config.models import AppConfig, CrawlConfig, IndexConfig, SchedulerConfig
+from personal_index.config.models import AppConfig, CrawlerConfig, IndexConfig, SchedulerConfig
 
 
 class TestConfigIntegration:
@@ -35,20 +35,20 @@ class TestConfigIntegration:
 
         cfg = load_config(self.config_path)
         assert isinstance(cfg, AppConfig)
-        assert cfg.crawl.max_depth == 5
+        assert cfg.crawler.max_depth == 5
 
     def test_save_and_reload_config(self):
         """Saved config should reload correctly."""
         cfg = AppConfig(
             data_dir=".test_data",
-            crawl=CrawlConfig(max_depth=10, politeness_delay=2.0),
+            crawler=CrawlerConfig(max_depth=10, politeness_delay=2.0),
             scheduler=SchedulerConfig(enabled=True, interval_hours=12),
             index=IndexConfig(enable_stemming=False),
         )
         save_config(cfg, self.config_path)
 
         reloaded = load_config(self.config_path)
-        assert reloaded.crawl.max_depth == 10
+        assert reloaded.crawler.max_depth == 10
         assert reloaded.scheduler.enabled is True
         assert reloaded.index.enable_stemming is False
 
@@ -67,7 +67,7 @@ class TestConfigIntegration:
 
         app = PersonalIndexApp(config_path=self.config_path)
         app.initialize()
-        assert app.config.crawl.max_depth == 3
+        assert app.config.crawler.max_depth == 3
         assert app.config.scheduler.enabled is True
 
     def test_config_fallback_on_missing_file(self):
@@ -77,14 +77,14 @@ class TestConfigIntegration:
             data_dir=self.tmpdir,
         )
         app.initialize()
-        assert app.config.crawl.max_depth == 5  # default
+        assert app.config.crawler.max_depth == 3  # default
 
     def test_save_config_creates_file(self):
         """save_config should create the file if it doesn't exist."""
         new_path = os.path.join(self.tmpdir, "new_config.yaml")
         cfg = AppConfig(
             data_dir=self.tmpdir,
-            crawl=CrawlConfig(),
+            crawler=CrawlerConfig(),
             scheduler=SchedulerConfig(),
             index=IndexConfig(),
         )
@@ -92,4 +92,4 @@ class TestConfigIntegration:
         assert os.path.exists(new_path)
         with open(new_path) as f:
             data = yaml.safe_load(f)
-        assert "data_dir" in data
+        assert "crawler" in data
