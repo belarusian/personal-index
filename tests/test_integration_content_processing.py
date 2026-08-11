@@ -10,7 +10,6 @@ import pytest
 from personal_index.app import PersonalIndexApp
 
 
-@pytest.mark.skip(reason="Test isolation issue")
 class TestContentProcessingIntegration:
     """Test content processing through the pipeline."""
 
