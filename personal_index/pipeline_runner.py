@@ -200,8 +200,9 @@ class PipelineRunner:
             tagged_pages = []
             for i, page in enumerate(scored_pages):
                 try:
-                    tags = self._auto_tag_page(page)
+                    tags, interests_matched = self._auto_tag_page(page)
                     stats.tags_applied += len(tags)
+                    stats.interests_matched += interests_matched
                     tagged_pages.append(page)
                     stats.pages_tagged += 1
                     self._emit_progress("tag", i + 1, len(scored_pages))
@@ -310,8 +311,9 @@ class PipelineRunner:
             tagged_pages = []
             for i, page in enumerate(scored_pages):
                 try:
-                    tags = self._auto_tag_page(page)
+                    tags, interests_matched = self._auto_tag_page(page)
                     stats.tags_applied += len(tags)
+                    stats.interests_matched += interests_matched
                     tagged_pages.append(page)
                     stats.pages_tagged += 1
                     self._emit_progress("tag", i + 1, len(scored_pages))
@@ -401,21 +403,27 @@ class PipelineRunner:
         )
         return score_result
 
-    def _auto_tag_page(self, page: CrawledPage) -> list[str]:
-        """Auto-tag a page based on interest matching."""
+    def _auto_tag_page(self, page: CrawledPage) -> tuple[list[str], int]:
+        """Auto-tag a page based on interest matching.
+
+        Returns:
+            Tuple of (tags list, number of interests matched)
+        """
         text = f'{page.title} {page.content}'
         matches = self._interest_store.matches_any(text, page.url)
         tags = []
+        interests_matched = 0
         for interest in matches:
             self._tag_store.add_tag_to_page(page.url, interest.name)
             tags.append(interest.name)
+            interests_matched += 1
         # Add keyword-based tags
         from personal_index.keyword_extractor import extract_keywords
         keywords = extract_keywords(page.content, max_keywords=5)
         for kw in keywords:
             self._tag_store.add_tag_to_page(page.url, kw)
             tags.append(kw)
-        return tags
+        return tags, interests_matched
 
     def add_page_directly(self, page: CrawledPage) -> bool:
         """Add a page directly through the pipeline (skip crawl)."""
@@ -447,7 +455,7 @@ class PipelineRunner:
         if score_val < self.pipeline_config.min_score_threshold:
             return False
 
-        tags = self._auto_tag_page(page)
+        tags, _ = self._auto_tag_page(page)
         for tag_name in tags:
             self._tag_store.add_tag_to_page(page.url, tag_name)
 
