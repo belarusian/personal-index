@@ -147,3 +147,20 @@ class TestCLITag:
         result = runner.invoke(main, ["tag", "add", "important", "--color", "#ff0000"])
         assert result.exit_code == 0
         assert "Added tag: important" in result.output
+
+
+class TestCLIImportSearchRoundtrip:
+    """Test import then search round-trip."""
+
+    def test_import_then_search(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        # Create a test file with searchable content
+        test_file = tmp_path / "article.txt"
+        test_file.write_text("Python is a great programming language for web development.")
+        # Import the file
+        result = runner.invoke(main, ["import", str(test_file)])
+        assert result.exit_code == 0
+        # Search for content
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
