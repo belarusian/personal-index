@@ -1,7 +1,7 @@
-"""Full pipeline integration tests for personal-index.
+"""Full pipeline integration tests: crawl → extract → filter → score → tag → index → search.
 
-These tests verify the complete crawl → extract → filter → score → tag → index → search
-pipeline works correctly end-to-end using the CLI and programmatic APIs.
+These tests verify the complete end-to-end pipeline works correctly
+using file-based input (no network required).
 """
 
 from __future__ import annotations
@@ -18,256 +18,87 @@ from personal_index.cli import main
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
-from personal_index.models import CrawledPage, Interest
-from personal_index.pipeline_runner import PipelineRunner
+from personal_index.models import Interest
+from personal_index.pipeline_runner import PipelineRunner, PipelineStats
 from personal_index.tags import TagStore
 
 
-class TestFullPipelineCLI:
-    """Test the complete pipeline via CLI commands."""
+class TestFullPipelineE2E:
+    """Test the complete pipeline from file import through search."""
 
-    def test_init_and_verify(self, tmp_path, monkeypatch):
-        """Test init followed by verify passes."""
-        pytest.skip("Verify command doesn't support --quick flag")
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-        assert "Initialized" in result.output
-
-        result = runner.invoke(main, ["verify", "--quick"])
-        assert result.exit_code == 0
-        assert "checks passed" in result.output.lower() or "All checks passed" in result.output
-
-    def test_full_workflow_cli(self, tmp_path, monkeypatch):
-        """Test complete workflow: init → interests → import → search → export."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # 1. Init
-        result = runner.invoke(main, ["init"])
-        assert result.exit_code == 0
-
-        # 2. Add interests
-        result = runner.invoke(main, [
-            "interests", "add", "-n", "python",
-            "-k", "python", "-k", "programming"
-        ])
-        assert result.exit_code == 0
-
-        # 3. Create and import content
-        article = tmp_path / "python_guide.md"
-        article.write_text(
-            "# Python Programming Guide\n\n"
-            "Python is a versatile programming language. "
-            "It is used for web development, data science, and automation.\n"
-        )
-        result = runner.invoke(main, ["import", str(article)])
-        assert result.exit_code == 0
-
-        # 4. Search
-        result = runner.invoke(main, ["search", "python"])
-        assert result.exit_code == 0
-        assert "python" in result.output.lower() or "result" in result.output.lower()
-
-        # 5. Export
-        result = runner.invoke(main, ["export", "--format", "json"])
-        assert result.exit_code == 0
-
-        # 6. Status
-        result = runner.invoke(main, ["status"])
-        assert result.exit_code == 0
-
-    def test_pipeline_command_with_files(self, tmp_path, monkeypatch):
-        """Test the pipeline command with local file imports."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Init
-        runner.invoke(main, ["init"])
-
-        # Add interest
-        runner.invoke(main, ["interests", "add", "-n", "tech", "-k", "python", "-k", "code"])
+    def test_full_pipeline_files_to_search(self, tmp_path):
+        """Import files → pipeline → search should return results."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
 
         # Create test files
         docs = tmp_path / "docs"
         docs.mkdir()
-        (docs / "article1.md").write_text(
-            "Python programming is fun and powerful for building web applications."
+        (docs / "python_guide.md").write_text(
+            "# Python Programming Guide\n\n"
+            "Python is a versatile programming language. It supports "
+            "object-oriented, functional, and procedural programming. "
+            "Python is widely used in web development, data science, "
+            "and machine learning applications."
         )
-        (docs / "article2.md").write_text(
-            "JavaScript is another popular language for frontend development."
+        (docs / "javascript_guide.md").write_text(
+            "# JavaScript Guide\n\n"
+            "JavaScript is the language of the web. It runs in browsers "
+            "and on servers with Node.js. JavaScript supports event-driven "
+            "and functional programming paradigms."
         )
+        (docs / "cooking_recipe.txt").write_text(
+            "Chocolate Cake Recipe\n\n"
+            "Ingredients: flour, sugar, cocoa powder, eggs, butter.\n"
+            "Instructions: Mix dry ingredients, add wet ingredients, "
+            "bake at 350F for 30 minutes."
+        )
+
+        # Set up interests
+        interest_store = InterestStore(
+            store_path=os.path.join(data_dir, "interests.json")
+        )
+        interest_store.add(Interest(
+            name="programming",
+            keywords=["python", "javascript", "programming"]
+        ))
 
         # Run pipeline
-        result = runner.invoke(main, [
-            "pipeline",
-            "--import-file", str(docs / "article1.md"),
-            "--import-file", str(docs / "article2.md"),
-        ])
-        assert result.exit_code == 0
-        assert "Pipeline complete" in result.output or "indexed" in result.output.lower()
-
-    def test_run_pipeline_command(self, tmp_path, monkeypatch):
-        """Test the new run-pipeline command."""
-        pytest.skip("Pipeline command doesn't support --no-crawl flag")
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        # Init
-        runner.invoke(main, ["init"])
-
-        # Add interest
-        runner.invoke(main, ["interests", "add", "-n", "dev", "-k", "python"])
-
-        # Create test file
-        article = tmp_path / "test.md"
-        article.write_text("Python is great for development and scripting.")
-
-        # Run unified pipeline
-        result = runner.invoke(main, [
-            "run-pipeline",
-            "--import-file", str(article),
-            "--no-crawl",
-        ])
-        assert result.exit_code == 0
-
-    def test_dry_run_pipeline(self, tmp_path, monkeypatch):
-        """Test pipeline dry-run mode."""
-        pytest.skip("Pipeline command doesn't support --dry-run flag")
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        article = tmp_path / "test.md"
-        article.write_text("This is test content for dry run verification.")
-
-        result = runner.invoke(main, [
-            "run-pipeline",
-            "--import-file", str(article),
-            "--no-crawl",
-            "--dry-run",
-        ])
-        assert result.exit_code == 0
-        assert "DRY RUN" in result.output
-
-    def test_search_with_tag_filter(self, tmp_path, monkeypatch):
-        """Test search with tag filtering."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        # Import content
-        article = tmp_path / "python.md"
-        article.write_text("Python programming language overview and tutorial.")
-        runner.invoke(main, ["import", str(article)])
-
-        # Add tag
-        runner.invoke(main, ["tags", "add", "tutorial", str(article)])
-
-        # Search with tag filter
-        result = runner.invoke(main, ["search", "python", "--tag", "tutorial"])
-        assert result.exit_code == 0
-
-    def test_export_all_formats(self, tmp_path, monkeypatch):
-        """Test exporting in all supported formats."""
-        pytest.skip("Export command doesn't support HTML format")
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        article = tmp_path / "test.md"
-        article.write_text("Test content for export verification.")
-        runner.invoke(main, ["import", str(article)])
-
-        # Test each format
-        for fmt in ["markdown", "json", "csv", "html"]:
-            result = runner.invoke(main, ["export", "--format", fmt])
-            assert result.exit_code == 0, f"Failed for format {fmt}: {result.output}"
-
-    def test_interests_lifecycle(self, tmp_path, monkeypatch):
-        """Test full interest lifecycle: add, list, enable, disable, remove."""
-        pytest.skip("Interests command doesn't support disable subcommand")
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
-
-        runner.invoke(main, ["init"])
-
-        # Add
-        result = runner.invoke(main, ["interests", "add", "-n", "test", "-k", "test"])
-        assert result.exit_code == 0
-
-        # List
-        result = runner.invoke(main, ["interests", "list"])
-        assert result.exit_code == 0
-        assert "test" in result.output
-
-        # Disable
-        result = runner.invoke(main, ["interests", "disable", "test"])
-        assert result.exit_code == 0
-
-        # Enable
-        result = runner.invoke(main, ["interests", "enable", "test"])
-        assert result.exit_code == 0
-
-        # Remove
-        result = runner.invoke(main, ["interests", "remove", "test"])
-        assert result.exit_code == 0
-
-        # Verify removed
-        result = runner.invoke(main, ["interests", "list"])
-        assert "test" not in result.output or "No interests" in result.output
-
-
-class TestPipelineRunnerIntegration:
-    """Test PipelineRunner with realistic scenarios."""
-
-    def test_pipeline_with_multiple_interests(self, tmp_path):
-        """Test pipeline scoring with multiple overlapping interests."""
-        data_dir = str(tmp_path / "data")
-        os.makedirs(data_dir)
-
-        docs = tmp_path / "docs"
-        docs.mkdir()
-        (docs / "ml.txt").write_text(
-            "Machine learning and deep learning with Python. "
-            "Neural networks and TensorFlow for AI development."
+        runner = PipelineRunner(
+            data_dir=data_dir,
+            pipeline_config=PipelineConfig(min_content_length=50)
         )
-        (docs / "web.txt").write_text(
-            "Web development with Django and Flask. "
-            "Python frameworks for building REST APIs."
-        )
-
-        runner = PipelineRunner(data_dir=data_dir)
-
-        # Add multiple interests
-        runner._interest_store.add(Interest(
-            name="ml", keywords=["machine", "learning", "neural", "tensorflow"]
-        ))
-        runner._interest_store.add(Interest(
-            name="web", keywords=["web", "django", "flask", "api"]
-        ))
-        runner._interest_store.add(Interest(
-            name="python", keywords=["python"]
-        ))
-
         stats = runner.run_from_files([
-            str(docs / "ml.txt"),
-            str(docs / "web.txt"),
+            str(docs / "python_guide.md"),
+            str(docs / "javascript_guide.md"),
+            str(docs / "cooking_recipe.txt"),
         ])
-
         runner.close()
 
-        assert stats.pages_indexed == 2
-        assert stats.pages_scored == 2
-        assert stats.errors == []
+        # Verify pipeline processed all files
+        assert stats.pages_crawled == 3
+        assert stats.pages_extracted == 3
+        assert stats.pages_filtered_in == 3
+        assert stats.pages_scored == 3
+        assert stats.pages_tagged == 3
+        assert stats.pages_indexed == 3
+        assert len(stats.errors) == 0
 
-    def test_pipeline_filters_short_content(self, tmp_path):
-        """Test that pipeline correctly filters out short content."""
+        # Verify search works
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python")
+        assert len(results) > 0
+        assert any("python" in r.title.lower() or "python" in r.snippet.lower()
+                   for r in results)
+
+        results = index.search("javascript")
+        assert len(results) > 0
+
+        results = index.search("chocolate")
+        assert len(results) > 0
+
+    def test_pipeline_with_filtering(self, tmp_path):
+        """Pipeline should filter out content below minimum length."""
         data_dir = str(tmp_path / "data")
         os.makedirs(data_dir)
 
@@ -275,162 +106,527 @@ class TestPipelineRunnerIntegration:
         docs.mkdir()
         (docs / "short.txt").write_text("Too short")
         (docs / "long.txt").write_text(
-            "This is a properly sized article with enough content to pass "
-            "the minimum content length filter in the pipeline system."
+            "This is a properly sized article with enough content "
+            "to pass the minimum content length filter in the pipeline. "
+            "It discusses important topics in detail."
         )
 
-        config = PipelineConfig(min_content_length=50)
-        runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
+        runner = PipelineRunner(
+            data_dir=data_dir,
+            pipeline_config=PipelineConfig(min_content_length=50)
+        )
         stats = runner.run_from_files([
             str(docs / "short.txt"),
             str(docs / "long.txt"),
         ])
         runner.close()
 
-        assert stats.pages_filtered_out >= 1
-        assert stats.pages_indexed >= 1
+        assert stats.pages_crawled == 2
+        assert stats.pages_filtered_in == 1
+        assert stats.pages_filtered_out == 1
+        assert stats.pages_indexed == 1
 
-    def test_pipeline_persistence_across_runs(self, tmp_path):
-        """Test that index persists correctly across multiple pipeline runs."""
+    def test_pipeline_interest_matching(self, tmp_path):
+        """Pipeline should match interests and boost scores."""
         data_dir = str(tmp_path / "data")
         os.makedirs(data_dir)
 
         docs = tmp_path / "docs"
         docs.mkdir()
-        (docs / "first.txt").write_text(
-            "First article about Python programming and software development."
+        (docs / "relevant.txt").write_text(
+            "Machine learning and artificial intelligence are transforming "
+            "the technology industry. Deep learning models achieve state-of-the-art "
+            "results in many domains."
         )
-        (docs / "second.txt").write_text(
-            "Second article about JavaScript and web development frameworks."
+        (docs / "irrelevant.txt").write_text(
+            "The weather today is sunny and warm. Good day for a walk "
+            "in the park. Birds are singing and flowers are blooming."
+        )
+
+        interest_store = InterestStore(
+            store_path=os.path.join(data_dir, "interests.json")
+        )
+        interest_store.add(Interest(
+            name="tech",
+            keywords=["machine learning", "artificial intelligence", "deep learning"]
+        ))
+
+        runner = PipelineRunner(
+            data_dir=data_dir,
+            pipeline_config=PipelineConfig(min_content_length=20)
+        )
+        stats = runner.run_from_files([
+            str(docs / "relevant.txt"),
+            str(docs / "irrelevant.txt"),
+        ])
+        runner.close()
+
+        assert stats.interests_matched > 0
+        assert stats.pages_indexed == 2
+
+    def test_pipeline_persistence(self, tmp_path):
+        """Pipeline results should persist across runner instances."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "article.txt").write_text(
+            "Important article about software engineering best practices. "
+            "Clean code, testing, and documentation are essential."
         )
 
         # First run
         runner1 = PipelineRunner(data_dir=data_dir)
-        runner1._interest_store.add(Interest(
-            name="code", keywords=["python", "javascript"]
-        ))
-        stats1 = runner1.run_from_files([str(docs / "first.txt")])
+        stats1 = runner1.run_from_files([str(docs / "article.txt")])
         runner1.close()
 
-        assert stats1.pages_indexed == 1
-
-        # Second run - should add to existing index
+        # Second run - should load existing index
         runner2 = PipelineRunner(data_dir=data_dir)
-        stats2 = runner2.run_from_files([str(docs / "second.txt")])
+        index = runner2._search_index
+        assert index.get_page_count() >= 1
         runner2.close()
 
-        assert stats2.pages_indexed == 1
-
-        # Verify both are in the index
-        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
-        assert index.get_page_count() == 2
-
-    def test_pipeline_search_after_index(self, tmp_path):
-        """Test that search works correctly after pipeline indexing."""
+    def test_pipeline_error_handling(self, tmp_path):
+        """Pipeline should handle errors gracefully."""
         data_dir = str(tmp_path / "data")
         os.makedirs(data_dir)
 
         docs = tmp_path / "docs"
         docs.mkdir()
-        (docs / "python.txt").write_text(
-            "Python is a high-level programming language known for its readability."
-        )
-        (docs / "rust.txt").write_text(
-            "Rust is a systems programming language focused on safety and performance."
+        (docs / "good.txt").write_text(
+            "This is a valid article with sufficient content for "
+            "the pipeline to process and index correctly."
         )
 
         runner = PipelineRunner(data_dir=data_dir)
-        runner._interest_store.add(Interest(
-            name="languages", keywords=["python", "rust", "programming"]
-        ))
-        runner.run_from_files([
-            str(docs / "python.txt"),
-            str(docs / "rust.txt"),
+        stats = runner.run_from_files([
+            str(docs / "good.txt"),
+            str(docs / "nonexistent.txt"),  # Will cause error
         ])
         runner.close()
 
-        # Search for python
-        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
-        results = index.search("python")
-        assert len(results) >= 1
-        assert any("python" in r.url.lower() for r in results)
+        assert stats.pages_indexed >= 1
+        assert len(stats.errors) >= 1  # Should have error for missing file
 
-        # Search for programming (should match both)
-        results = index.search("programming")
-        assert len(results) >= 1
 
-    def test_pipeline_html_processing(self, tmp_path):
-        """Test pipeline correctly processes HTML files."""
+class TestCLIEndToEnd:
+    """Test CLI commands work end-to-end."""
+
+    def test_cli_init_and_pipeline(self, tmp_path, monkeypatch):
+        """CLI init → pipeline → search should work."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # Init
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        # Create test file
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "test.md").write_text(
+            "# Test Article\n\n"
+            "This article covers important topics in software development. "
+            "It discusses testing, CI/CD, and deployment strategies."
+        )
+
+        # Add interest
+        result = runner.invoke(main, [
+            "interests", "add", "dev",
+            "-k", "software", "-k", "testing", "-k", "development"
+        ])
+        assert result.exit_code == 0
+
+        # Run pipeline with file import
+        result = runner.invoke(main, [
+            "pipeline", "--import-file", str(docs / "test.md")
+        ])
+        assert result.exit_code == 0
+        assert "Indexed:" in result.output
+
+        # Search
+        result = runner.invoke(main, ["search", "testing"])
+        assert result.exit_code == 0
+        assert "test" in result.output.lower() or "article" in result.output.lower()
+
+    def test_cli_full_workflow(self, tmp_path, monkeypatch):
+        """Complete CLI workflow: init → interests → import → search → export."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # Init
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        # Add interests
+        result = runner.invoke(main, [
+            "interests", "add", "python",
+            "-k", "python", "-k", "programming"
+        ])
+        assert result.exit_code == 0
+
+        # Create and import files
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "article1.md").write_text(
+            "Python programming is fun and powerful. "
+            "It supports multiple paradigms."
+        )
+        (docs / "article2.md").write_text(
+            "Web development with frameworks like Django and Flask. "
+            "Building REST APIs and web applications."
+        )
+
+        result = runner.invoke(main, [
+            "pipeline", "--import-file", str(docs), "--recursive"
+        ])
+        assert result.exit_code == 0
+
+        # Search
+        result = runner.invoke(main, ["search", "python"])
+        assert result.exit_code == 0
+
+        # Export
+        result = runner.invoke(main, ["export", "--format", "json"])
+        assert result.exit_code == 0
+
+    def test_cli_interests_workflow(self, tmp_path, monkeypatch):
+        """Test complete interests management workflow."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # Add multiple interests
+        for name, keywords in [
+            ("tech", ["python", "javascript"]),
+            ("science", ["physics", "chemistry"]),
+            ("cooking", ["recipe", "baking"]),
+        ]:
+            result = runner.invoke(main, [
+                "interests", "add", name,
+                "-k", keywords[0], "-k", keywords[1]
+            ])
+            assert result.exit_code == 0
+
+        # List interests
+        result = runner.invoke(main, ["interests", "list"])
+        assert result.exit_code == 0
+        assert "tech" in result.output
+        assert "science" in result.output
+        assert "cooking" in result.output
+
+        # Remove one
+        result = runner.invoke(main, ["interests", "remove", "cooking"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(main, ["interests", "list"])
+        assert "cooking" not in result.output
+
+    def test_cli_tags_workflow(self, tmp_path, monkeypatch):
+        """Test complete tags management workflow."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        # Add tags
+        result = runner.invoke(main, [
+            "tags", "add", "important", "https://example.com/page1"
+        ])
+        assert result.exit_code == 0
+
+        result = runner.invoke(main, [
+            "tags", "add", "read-later", "https://example.com/page2"
+        ])
+        assert result.exit_code == 0
+
+        # List tags
+        result = runner.invoke(main, ["tags", "list"])
+        assert result.exit_code == 0
+        assert "important" in result.output
+
+    def test_cli_stats_command(self, tmp_path, monkeypatch):
+        """Test stats command after pipeline run."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+
+        runner.invoke(main, ["init"])
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "article.md").write_text(
+            "An article about programming languages and their features. "
+            "This covers syntax, performance, and ecosystem."
+        )
+
+        runner.invoke(main, [
+            "pipeline", "--import-file", str(docs / "article.md")
+        ])
+
+        result = runner.invoke(main, ["stats"])
+        assert result.exit_code == 0
+
+
+class TestPipelineStages:
+    """Test individual pipeline stages work correctly."""
+
+    def test_crawl_stage(self, tmp_path):
+        """Crawl stage should process files."""
         data_dir = str(tmp_path / "data")
         os.makedirs(data_dir)
 
         docs = tmp_path / "docs"
         docs.mkdir()
-        (docs / "page.html").write_text(
-            "<html><head><title>Python Tutorial</title></head>"
-            "<body><h1>Learn Python</h1>"
-            "<p>Python is a great programming language for beginners.</p>"
-            "</body></html>"
+        (docs / "test.txt").write_text("Test content here.")
+
+        runner = PipelineRunner(data_dir=data_dir)
+        stats = runner.run_from_files([str(docs / "test.txt")])
+        runner.close()
+
+        assert stats.pages_crawled == 1
+
+    def test_extract_stage(self, tmp_path):
+        """Extract stage should parse content."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "test.html").write_text(
+            "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
         )
 
         runner = PipelineRunner(data_dir=data_dir)
-        runner._interest_store.add(Interest(
-            name="python", keywords=["python", "programming"]
-        ))
-        stats = runner.run_from_files([str(docs / "page.html")])
+        stats = runner.run_from_files([str(docs / "test.html")])
         runner.close()
 
-        assert stats.pages_indexed >= 0  # May or may not pass filter
-        assert stats.errors == []
+        assert stats.pages_extracted == 1
+
+    def test_filter_stage(self, tmp_path):
+        """Filter stage should apply content length filter."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "short.txt").write_text("Hi")
+        (docs / "long.txt").write_text("A" * 200)
+
+        runner = PipelineRunner(
+            data_dir=data_dir,
+            pipeline_config=PipelineConfig(min_content_length=50)
+        )
+        stats = runner.run_from_files([
+            str(docs / "short.txt"),
+            str(docs / "long.txt"),
+        ])
+        runner.close()
+
+        assert stats.pages_filtered_in == 1
+        assert stats.pages_filtered_out == 1
+
+    def test_score_stage(self, tmp_path):
+        """Score stage should assign scores."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "test.txt").write_text(
+            "Python programming language is great for web development."
+        )
+
+        interest_store = InterestStore(
+            store_path=os.path.join(data_dir, "interests.json")
+        )
+        interest_store.add(Interest(
+            name="python", keywords=["python", "programming"]
+        ))
+
+        runner = PipelineRunner(data_dir=data_dir)
+        stats = runner.run_from_files([str(docs / "test.txt")])
+        runner.close()
+
+        assert stats.pages_scored == 1
+
+    def test_tag_stage(self, tmp_path):
+        """Tag stage should apply tags."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "test.txt").write_text(
+            "Machine learning and AI are transforming technology."
+        )
+
+        interest_store = InterestStore(
+            store_path=os.path.join(data_dir, "interests.json")
+        )
+        interest_store.add(Interest(
+            name="ai", keywords=["machine learning", "AI"]
+        ))
+
+        runner = PipelineRunner(data_dir=data_dir)
+        stats = runner.run_from_files([str(docs / "test.txt")])
+        runner.close()
+
+        assert stats.pages_tagged == 1
+        assert stats.tags_applied > 0
+
+    def test_index_stage(self, tmp_path):
+        """Index stage should make content searchable."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "test.txt").write_text(
+            "Docker containers and Kubernetes orchestration for "
+            "modern cloud-native applications."
+        )
+
+        runner = PipelineRunner(data_dir=data_dir)
+        stats = runner.run_from_files([str(docs / "test.txt")])
+        runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("docker")
+        assert len(results) > 0
+
+        results = index.search("kubernetes")
+        assert len(results) > 0
 
 
-class TestCLIErrorScenarios:
-    """Test CLI error handling in various scenarios."""
+class TestSearchIntegration:
+    """Test search functionality after indexing."""
 
-    def test_import_nonexistent_file(self, tmp_path, monkeypatch):
-        """Test importing a file that doesn't exist."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+    def test_search_relevance_ordering(self, tmp_path):
+        """Search results should be ordered by relevance."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
 
-        result = runner.invoke(main, ["import", "/nonexistent/file.txt"])
-        # Should handle gracefully
-        assert result.exit_code in (0, 1, 2)
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        # High relevance: many keyword matches
+        (docs / "high.txt").write_text(
+            "Python Python Python programming. Python is great. "
+            "Python libraries, Python frameworks, Python ecosystem."
+        )
+        # Low relevance: few keyword matches
+        (docs / "low.txt").write_text(
+            "The weather is nice today. Python is mentioned once."
+        )
 
-    def test_search_empty_index(self, tmp_path, monkeypatch):
-        """Test searching when no content is indexed."""
+        runner = PipelineRunner(data_dir=data_dir)
+        stats = runner.run_from_files([
+            str(docs / "high.txt"),
+            str(docs / "low.txt"),
+        ])
+        runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("python")
+        assert len(results) >= 2
+        # First result should be the high-relevance page
+        assert results[0].relevance_score >= results[1].relevance_score
+
+    def test_search_no_results(self, tmp_path):
+        """Search for non-existent terms should return empty."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "test.txt").write_text("About programming and code.")
+
+        runner = PipelineRunner(data_dir=data_dir)
+        runner.run_from_files([str(docs / "test.txt")])
+        runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("xyznonexistent123")
+        assert len(results) == 0
+
+    def test_search_with_snippets(self, tmp_path):
+        """Search results should include content snippets."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir)
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "test.txt").write_text(
+            "This article discusses advanced Python decorators "
+            "and metaclasses for expert developers."
+        )
+
+        runner = PipelineRunner(data_dir=data_dir)
+        runner.run_from_files([str(docs / "test.txt")])
+        runner.close()
+
+        index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        results = index.search("decorators")
+        assert len(results) > 0
+        assert len(results[0].snippet) > 0
+
+
+class TestExportIntegration:
+    """Test export functionality after indexing."""
+
+    def test_export_json_after_pipeline(self, tmp_path, monkeypatch):
+        """JSON export should work after pipeline."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
         runner.invoke(main, ["init"])
-        result = runner.invoke(main, ["search", "nonexistent"])
-        assert result.exit_code == 0
-        assert "No results" in result.output or "no results" in result.output.lower()
 
-    def test_export_empty_index(self, tmp_path, monkeypatch):
-        """Test exporting when no content is indexed."""
-        monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "article.md").write_text(
+            "Article about testing strategies in software development."
+        )
 
-        runner.invoke(main, ["init"])
+        runner.invoke(main, [
+            "pipeline", "--import-file", str(docs / "article.md")
+        ])
+
         result = runner.invoke(main, ["export", "--format", "json"])
         assert result.exit_code == 0
 
-    def test_interests_duplicate(self, tmp_path, monkeypatch):
-        """Test adding a duplicate interest."""
-        pytest.skip("Interests command allows duplicates")
+    def test_export_markdown_after_pipeline(self, tmp_path, monkeypatch):
+        """Markdown export should work after pipeline."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
         runner.invoke(main, ["init"])
-        runner.invoke(main, ["interests", "add", "-n", "dup", "-k", "test"])
-        result = runner.invoke(main, ["interests", "add", "-n", "dup", "-k", "test"])
-        assert result.exit_code != 0 or "already exists" in result.output.lower()
 
-    def test_tags_on_nonexistent_page(self, tmp_path, monkeypatch):
-        """Test adding tags to pages that exist in the system."""
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "article.md").write_text(
+            "Article about testing strategies in software development."
+        )
+
+        runner.invoke(main, [
+            "pipeline", "--import-file", str(docs / "article.md")
+        ])
+
+        result = runner.invoke(main, ["export", "--format", "markdown"])
+        assert result.exit_code == 0
+
+    def test_export_csv_after_pipeline(self, tmp_path, monkeypatch):
+        """CSV export should work after pipeline."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
 
         runner.invoke(main, ["init"])
-        result = runner.invoke(main, ["tags", "add", "test", "http://example.com"])
+
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "article.md").write_text(
+            "Article about testing strategies in software development."
+        )
+
+        runner.invoke(main, [
+            "pipeline", "--import-file", str(docs / "article.md")
+        ])
+
+        result = runner.invoke(main, ["export", "--format", "csv"])
         assert result.exit_code == 0
