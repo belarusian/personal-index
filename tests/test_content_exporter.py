@@ -264,3 +264,34 @@ class TestFileExport:
         exporter.export_to_file(sample_items, "rss", str(filepath))
         assert filepath.exists()
         assert "<rss" in filepath.read_text()
+
+
+# --- Format Detection Tests ---
+
+class TestFormatDetection:
+    def test_detect_json(self):
+        assert ContentExporter.detect_format("file.json") == "json"
+
+    def test_detect_html(self):
+        assert ContentExporter.detect_format("file.html") == "html"
+
+    def test_detect_htm(self):
+        assert ContentExporter.detect_format("file.htm") == "html"
+
+    def test_detect_markdown(self):
+        assert ContentExporter.detect_format("file.md") == "markdown"
+
+    def test_detect_markdown_full(self):
+        assert ContentExporter.detect_format("file.markdown") == "markdown"
+
+    def test_detect_rss(self):
+        assert ContentExporter.detect_format("file.rss") == "rss"
+
+    def test_detect_xml_as_rss(self):
+        assert ContentExporter.detect_format("file.xml") == "rss"
+
+    def test_detect_unknown(self):
+        assert ContentExporter.detect_format("file.txt") is None
+
+    def test_detect_no_extension(self):
+        assert ContentExporter.detect_format("file") is None
