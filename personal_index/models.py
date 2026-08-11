@@ -197,6 +197,11 @@ class CrawledPage:
     crawled_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
+    word_count: int = 0
+    raw_html: str = ""
+    domain_authority: float = 0.5
+    language: str = "en"
+    keywords: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Serialize the crawled page to a dictionary.
