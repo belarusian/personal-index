@@ -106,10 +106,9 @@ class TestCLIPipelineWithMockedCrawler:
             ),
         ]
 
-        with patch.object(pr_module.Crawler, "crawl", return_value=pages):
-            with patch.object(pr_module.Crawler, "close"):
-                result = runner.invoke(main, ["pipeline", "https://example.com"])
-                assert result.exit_code == 0
+        with patch.object(pr_module.Crawler, "crawl", return_value=pages), patch.object(pr_module.Crawler, "close"):
+            result = runner.invoke(main, ["pipeline", "https://example.com"])
+            assert result.exit_code == 0
 
 
 class TestCLIPipelineEndToEnd:

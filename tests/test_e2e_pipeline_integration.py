@@ -171,9 +171,8 @@ class TestPipelineRunnerWithMockedCrawler:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 2
         assert stats.pages_extracted == 2
@@ -198,9 +197,8 @@ class TestPipelineRunnerWithMockedCrawler:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 1
         assert stats.pages_indexed == 1
@@ -212,9 +210,8 @@ class TestPipelineRunnerWithMockedCrawler:
         config = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
         runner = PipelineRunner(data_dir=data_dir, pipeline_config=config)
 
-        with patch.object(runner._crawler, "crawl", return_value=[]):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=[]), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_crawled == 0
         assert stats.pages_indexed == 0
@@ -248,9 +245,8 @@ class TestPipelineRunnerTagging:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_tagged == 1
         assert stats.tags_applied >= 1
@@ -280,9 +276,8 @@ class TestPipelineRunnerTagging:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
 
         # Reload tag store and verify
@@ -319,9 +314,8 @@ class TestPipelineRunnerScoring:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.pages_scored == 2
         runner.close()
@@ -350,9 +344,8 @@ class TestPipelineRunnerScoring:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         # At least the relevant page should be indexed
         assert stats.pages_indexed >= 1
@@ -381,9 +374,8 @@ class TestPipelineRunnerIndexing:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
 
         # Search the index
@@ -411,9 +403,8 @@ class TestPipelineRunnerIndexing:
                 content="Python is great for programming.",
             ),
         ]
-        with patch.object(runner1._crawler, "crawl", return_value=pages1):
-            with patch.object(runner1._crawler, "close"):
-                runner1.run(["https://example.com"], max_depth=1)
+        with patch.object(runner1._crawler, "crawl", return_value=pages1), patch.object(runner1._crawler, "close"):
+            runner1.run(["https://example.com"], max_depth=1)
         runner1.close()
 
         # Second run
@@ -425,9 +416,8 @@ class TestPipelineRunnerIndexing:
                 content="JavaScript is also popular.",
             ),
         ]
-        with patch.object(runner2._crawler, "crawl", return_value=pages2):
-            with patch.object(runner2._crawler, "close"):
-                runner2.run(["https://example.com"], max_depth=1)
+        with patch.object(runner2._crawler, "crawl", return_value=pages2), patch.object(runner2._crawler, "close"):
+            runner2.run(["https://example.com"], max_depth=1)
         runner2.close()
 
         # Both pages should be in index
@@ -467,9 +457,8 @@ class TestPipelineRunnerProgress:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
 
         # Should have received updates for multiple stages

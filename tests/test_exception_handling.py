@@ -20,10 +20,9 @@ def _find_except_blocks(source):
             for child in ast.walk(node):
                 if isinstance(child, ast.Call):
                     func = child.func
-                    if isinstance(func, ast.Attribute):
-                        if isinstance(func.value, ast.Name) and func.value.id == "logger":
-                            if func.attr in ("error", "warning", "exception", "critical"):
-                                has_logging = True
+                    if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name) and func.value.id == "logger":
+                        if func.attr in ("error", "warning", "exception", "critical"):
+                            has_logging = True
                         if func.attr == "append":
                             has_error_recording = True
 

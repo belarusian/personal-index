@@ -19,6 +19,7 @@ class TestTicket105InvalidType:
              "--no-error-summary"],
             capture_output=True,
             text=True,
+            check=False,
         )
         assert "valid-type" not in result.stdout, (
             f"tagger.py still has valid-type errors:\n{result.stdout}"

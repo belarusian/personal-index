@@ -60,6 +60,7 @@ class TestTicket103SortedImports:
              "--select", "I"],
             capture_output=True,
             text=True,
+            check=False,
         )
         assert result.returncode == 0, f"ruff found import sorting errors:\n{result.stdout}\n{result.stderr}"
 
