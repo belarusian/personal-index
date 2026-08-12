@@ -7,7 +7,7 @@ New code should import from personal_index.content_health directly.
 from __future__ import annotations
 
 from personal_index.content_health import (
-    HealthChecker,
+    ContentHealthChecker as HealthChecker,
     HealthCheckResult,
     HealthReport,
 )

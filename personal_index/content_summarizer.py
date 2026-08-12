@@ -136,7 +136,7 @@ def summarize(
         score = _score_sentence(sentence, word_freq)
         # Boost first and last sentences slightly
         if i == 0:
-            score *= 1.2
+            score *= 2.5
         if i == len(sentences) - 1:
             score *= 1.1
         scored.append((i, score, sentence))
@@ -179,6 +179,16 @@ def summarize_page(
     Returns:
         SummaryResult with the page summary.
     """
+    # If content is empty, return empty summary
+    if not content:
+        return SummaryResult(
+            original_text=title,
+            summary="",
+            sentences=[],
+            ratio=0.0,
+            word_count_original=len(_tokenize(title)),
+            word_count_summary=0,
+        )
     # Combine title with content for scoring
     combined = f"{title}. {content}"
     return summarize(combined, max_sentences=max_sentences)

@@ -138,6 +138,10 @@ class TagStore:
         tag_names = self._page_tags.get(url, set())
         return [self._tags[name] for name in tag_names if name in self._tags]
 
+    def get_tags_for_url(self, url: str) -> list[Tag]:
+        """Get all tags for a URL (alias for get_tags_for_page)."""
+        return self.get_tags_for_page(url)
+
     def get_pages_for_tag(self, tag_name: str) -> list[str]:
         """Get all pages with a specific tag."""
         if tag_name not in self._tags:
