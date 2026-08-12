@@ -82,13 +82,13 @@ class TestCLIConfigValidation:
 class TestCommandRouting:
     """Test that all subcommands are registered and accessible."""
 
-    EXPECTED_COMMANDS = [
+    EXPECTED_COMMANDS = (
         "init", "interests", "tags", "import", "search",
         "export", "status", "crawl", "pipeline", "stats",
         "list", "top", "remove", "clear", "doctor",
         "schedule", "config", "verify", "watch",
         "dedup", "health", "recommend",
-    ]
+    )
 
     def test_all_commands_registered(self, runner):
         """Test all expected commands appear in --help output."""

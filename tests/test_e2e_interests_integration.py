@@ -191,9 +191,8 @@ class TestInterestPipelineIntegration:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         # At least one page should be filtered in
         assert stats.pages_filtered_in >= 1
@@ -219,9 +218,8 @@ class TestInterestPipelineIntegration:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         assert stats.interests_matched >= 1
         runner.close()
@@ -246,9 +244,8 @@ class TestInterestPipelineIntegration:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                stats = runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            stats = runner.run(["https://example.com"], max_depth=1)
 
         # Page should still be indexed (require_interest_match=False by default in pipeline)
         assert stats.pages_indexed == 1

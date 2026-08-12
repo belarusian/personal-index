@@ -146,8 +146,8 @@ class TestCSVExporter:
         assert isinstance(result, str)
 
     def test_export_with_datetime_values(self):
-        from datetime import datetime
-        items = [{"id": "1", "title": "Test", "created_at": datetime(2024, 1, 1)}]
+        from datetime import datetime, timezone
+        items = [{"id": "1", "title": "Test", "created_at": datetime(2024, 1, 1, tzinfo=timezone.utc)}]
         result = self.exporter.export(items)
         assert "2024" in result
 

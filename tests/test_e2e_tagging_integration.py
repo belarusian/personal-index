@@ -146,9 +146,8 @@ class TestTagPipelineIntegration:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
 
         # Verify tag was created
@@ -180,9 +179,8 @@ class TestTagPipelineIntegration:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
 
         tag_store = TagStore(store_path=os.path.join(data_dir, "tags.json"))
@@ -210,9 +208,8 @@ class TestTagPipelineIntegration:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
 
         tag_store = TagStore(store_path=os.path.join(data_dir, "tags.json"))
@@ -247,9 +244,8 @@ class TestTagSearchIntegration:
             ),
         ]
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
 
         # Search and filter by tag

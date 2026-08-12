@@ -21,11 +21,11 @@ class TestSitemapBuilderSyntaxFix(unittest.TestCase):
 
     def test_add_entry_with_all_params(self):
         """add_entry should accept all optional parameters."""
-        from datetime import datetime
+        from datetime import datetime, timezone
         builder = SitemapBuilder(domain="example.com")
         builder.add_entry(
             url="http://example.com/page2",
-            last_modified=datetime(2024, 1, 1),
+            last_modified=datetime(2024, 1, 1, tzinfo=timezone.utc),
             change_frequency="weekly",
             priority=0.8,
         )

@@ -34,9 +34,8 @@ class TestSearchIntegration:
             keywords=["web", "development", "frontend", "backend"],
         ))
 
-        with patch.object(runner._crawler, "crawl", return_value=pages):
-            with patch.object(runner._crawler, "close"):
-                runner.run(["https://example.com"], max_depth=1)
+        with patch.object(runner._crawler, "crawl", return_value=pages), patch.object(runner._crawler, "close"):
+            runner.run(["https://example.com"], max_depth=1)
         runner.close()
         return data_dir
 

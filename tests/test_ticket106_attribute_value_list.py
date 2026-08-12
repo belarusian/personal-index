@@ -12,6 +12,7 @@ def _check_mypy_union_attr(paths: list[str]) -> list[str]:
         [sys.executable, "-m", "mypy"] + paths + ["--no-error-summary"],
         capture_output=True,
         text=True,
+        check=False,
     )
     errors = [line for line in result.stdout.split("\n") if "union-attr" in line]
     return errors

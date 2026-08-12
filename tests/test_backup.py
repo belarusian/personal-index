@@ -121,7 +121,8 @@ class TestBackupManager:
         result = manager.restore_backup(manifest.backup_id, target)
         assert result["files_restored"] == 3
         assert os.path.exists(os.path.join(target, "file1.txt"))
-        assert open(os.path.join(target, "file1.txt")).read() == "content 1"
+        with open(os.path.join(target, "file1.txt")) as f:
+            assert f.read() == "content 1"
 
     def test_restore_nonexistent_backup(self, tmp_path):
         backup_dir = str(tmp_path / "backups")

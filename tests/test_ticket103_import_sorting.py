@@ -36,6 +36,7 @@ def _ruff_check_i001(path: str) -> bool:
         [sys.executable, "-m", "ruff", "check", full_path, "--select", "I001"],
         capture_output=True,
         text=True,
+        check=False,
     )
     # Return True if clean (no I001 errors)
     return result.returncode == 0

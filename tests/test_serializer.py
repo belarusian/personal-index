@@ -1,7 +1,7 @@
 """Tests for data serialization utilities."""
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -46,7 +46,7 @@ class TestSerializer:
 
     def test_to_json_dataclass(self):
         s = Serializer()
-        item = _TestItem(name="test", value=42, timestamp=datetime(2024, 1, 1))
+        item = _TestItem(name="test", value=42, timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc))
         result = s.to_json(item)
         assert "test" in result
         assert "42" in result
@@ -119,6 +119,6 @@ class TestSerializer:
 
     def test_datetime_serialization(self):
         s = Serializer()
-        dt = datetime(2024, 6, 15, 12, 30, 0)
+        dt = datetime(2024, 6, 15, 12, 30, 0, tzinfo=timezone.utc)
         result = s.to_json({"time": dt})
         assert "2024-06-15" in result

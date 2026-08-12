@@ -123,12 +123,11 @@ class TestWebhookSender:
         sender.add_endpoint(config)
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("urllib.request.urlopen", side_effect=URLError("fail")):
-            with patch("personal_index.webhook.time.sleep"):
-                results = sender.send(payload)
-                assert len(results) == 1
-                assert results[0]["success"] is False
-                assert results[0]["attempts"] == 3
+        with patch("urllib.request.urlopen", side_effect=URLError("fail")), patch("personal_index.webhook.time.sleep"):
+            results = sender.send(payload)
+            assert len(results) == 1
+            assert results[0]["success"] is False
+            assert results[0]["attempts"] == 3
 
     def test_send_disabled_endpoint(self):
         sender = WebhookSender()
@@ -173,12 +172,11 @@ class TestWebhookSenderExceptionHandling:
         sender.add_endpoint(config)
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("urllib.request.urlopen", side_effect=URLError("dns fail")):
-            with patch("personal_index.webhook.time.sleep"):
-                results = sender.send(payload)
-                assert len(results) == 1
-                assert results[0]["success"] is False
-                assert results[0]["attempts"] == 2
+        with patch("urllib.request.urlopen", side_effect=URLError("dns fail")), patch("personal_index.webhook.time.sleep"):
+            results = sender.send(payload)
+            assert len(results) == 1
+            assert results[0]["success"] is False
+            assert results[0]["attempts"] == 2
 
     def test_catches_oserror(self):
         """WebhookSender catches OSError and retries."""
@@ -191,12 +189,11 @@ class TestWebhookSenderExceptionHandling:
         sender.add_endpoint(config)
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("urllib.request.urlopen", side_effect=OSError("connection reset")):
-            with patch("personal_index.webhook.time.sleep"):
-                results = sender.send(payload)
-                assert len(results) == 1
-                assert results[0]["success"] is False
-                assert results[0]["attempts"] == 2
+        with patch("urllib.request.urlopen", side_effect=OSError("connection reset")), patch("personal_index.webhook.time.sleep"):
+            results = sender.send(payload)
+            assert len(results) == 1
+            assert results[0]["success"] is False
+            assert results[0]["attempts"] == 2
 
     def test_catches_timeout_error(self):
         """WebhookSender catches TimeoutError and retries."""
@@ -209,12 +206,11 @@ class TestWebhookSenderExceptionHandling:
         sender.add_endpoint(config)
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("urllib.request.urlopen", side_effect=TimeoutError("timed out")):
-            with patch("personal_index.webhook.time.sleep"):
-                results = sender.send(payload)
-                assert len(results) == 1
-                assert results[0]["success"] is False
-                assert results[0]["attempts"] == 2
+        with patch("urllib.request.urlopen", side_effect=TimeoutError("timed out")), patch("personal_index.webhook.time.sleep"):
+            results = sender.send(payload)
+            assert len(results) == 1
+            assert results[0]["success"] is False
+            assert results[0]["attempts"] == 2
 
     def test_does_not_catch_generic_exception(self):
         """WebhookSender does NOT catch generic Exception (TICKET-45 fix)."""
@@ -227,6 +223,5 @@ class TestWebhookSenderExceptionHandling:
         sender.add_endpoint(config)
         payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
 
-        with patch("urllib.request.urlopen", side_effect=ValueError("unexpected")):
-            with pytest.raises(ValueError, match="unexpected"):
-                sender.send(payload)
+        with patch("urllib.request.urlopen", side_effect=ValueError("unexpected")), pytest.raises(ValueError, match="unexpected"):
+            sender.send(payload)
