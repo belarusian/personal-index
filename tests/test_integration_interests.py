@@ -191,20 +191,21 @@ class TestInterestsWorkflow:
         """Interests with URL patterns should match relevant URLs."""
         store = InterestStore(store_path=os.path.join(self.data_dir, "interests.json"))
 
+        # Use a unique keyword to avoid false matches from text matching
         store.add(Interest(
             name="tech_news",
-            keywords=["tech"],
+            keywords=["unique_tech_keyword_12345"],
             url_patterns=["https://techcrunch.com/*"],
             priority=5,
         ))
 
-        # Should match URL pattern
+        # Should match URL pattern (text doesn't contain the unique keyword)
         interest = store.get("tech_news")
         assert interest is not None
-        assert interest.matches("Tech article", url="https://techcrunch.com/ai-news")
+        assert interest.matches("Some text", url="https://techcrunch.com/ai-news")
 
-        # Should not match different URL
-        assert not interest.matches("Tech article", url="https://example.com/article")
+        # Should not match different URL (and text doesn't have the keyword)
+        assert not interest.matches("Some other text", url="https://example.com/article")
 
     def test_disabled_interest_does_not_affect_scoring(self):
         """Disabled interests should not contribute to scoring or tagging."""
