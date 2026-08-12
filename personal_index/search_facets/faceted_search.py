@@ -258,9 +258,8 @@ class FacetedSearch:
         # Handle $in
         if "$in" in filter_spec:
             in_list = filter_spec["$in"]
-            if isinstance(in_list, (list, set)):
-                if parsed_value not in in_list:
-                    return False
+            if isinstance(in_list, (list, set)) and parsed_value not in in_list:
+                return False
 
         # Handle $not
         if "$not" in filter_spec:

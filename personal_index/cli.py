@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import sys
 
 import click
@@ -128,7 +127,6 @@ def init(ctx, data_dir, config):
 @main.group()
 def interests():
     """Manage your content interests."""
-    pass
 
 
 @interests.command("add")
@@ -199,7 +197,6 @@ def interests_remove(ctx, name, data_dir):
 @main.group()
 def tags():
     """Manage content tags."""
-    pass
 
 
 @tags.command("add")
@@ -773,10 +770,10 @@ def stats(ctx, output_format, data_dir):
 
     click.echo("Personal Index Statistics")
     click.echo("=" * 40)
-    click.echo("  indexed_pages:  {}".format(page_count))
-    click.echo("  interests:      {}".format(interest_count))
-    click.echo("  tags:           {}".format(tag_count))
-    click.echo("  tagged_pages:   {}".format(tag_store.get_tagged_page_count()))
+    click.echo(f"  indexed_pages:  {page_count}")
+    click.echo(f"  interests:      {interest_count}")
+    click.echo(f"  tags:           {tag_count}")
+    click.echo(f"  tagged_pages:   {tag_store.get_tagged_page_count()}")
 
     if interests:
         click.echo("")
@@ -786,11 +783,11 @@ def stats(ctx, output_format, data_dir):
 
     if total_size > 0:
         if total_size < 1024 * 1024:
-            size_str = "{:.1f} KB".format(total_size / 1024)
+            size_str = f"{total_size / 1024:.1f} KB"
         else:
-            size_str = "{:.1f} MB".format(total_size / (1024 * 1024))
+            size_str = f"{total_size / (1024 * 1024):.1f} MB"
         click.echo("")
-        click.echo("storage: {}".format(size_str))
+        click.echo(f"storage: {size_str}")
 
 
 # ── list (legacy - list indexed pages) ────────────────────────────────
@@ -845,9 +842,9 @@ def list_pages(ctx, output_format, limit, sort, data_dir):
         click.echo("Indexed Pages")
         click.echo("=" * 60)
         for i, page in enumerate(pages, 1):
-            click.echo("{}. {}".format(i, page.title))
-            click.echo("   {}".format(page.url))
-            click.echo("   Score: {:.4f}".format(page.relevance_score))
+            click.echo(f"{i}. {page.title}")
+            click.echo(f"   {page.url}")
+            click.echo(f"   Score: {page.relevance_score:.4f}")
             click.echo("")
 
 
@@ -990,7 +987,6 @@ def doctor(ctx, data_dir):
 @main.group()
 def schedule():
     """Manage scheduled crawling jobs."""
-    pass
 
 
 @schedule.command("add")
@@ -1008,8 +1004,9 @@ def schedule_add(ctx, name, urls, interval, data_dir, depth, max_pages):
         personal-index schedule add -n daily -u https://example.com -i 24
     """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    from personal_index.scheduler import ScheduleStore, ScheduleConfig, ScheduleEntry
     from datetime import datetime, timedelta, timezone
+
+    from personal_index.scheduler import ScheduleConfig, ScheduleEntry, ScheduleStore
     
     store_path = os.path.join(dd, "schedules.json")
     store = ScheduleStore(path=store_path)
@@ -1129,8 +1126,8 @@ def schedule_run(ctx, name, data_dir):
     click.echo(f"Running scheduled job '{name}'...")
     click.echo(f"  URLs: {', '.join(entry.config.seed_urls)}")
 
-    from personal_index.pipeline_runner import PipelineRunner
     from personal_index.config.pipeline_config import PipelineConfig
+    from personal_index.pipeline_runner import PipelineRunner
     config = PipelineConfig(
         max_depth=getattr(entry.config, 'crawl_depth', 2),
         max_pages=getattr(entry.config, 'max_pages_per_run', 50),
@@ -1139,7 +1136,7 @@ def schedule_run(ctx, name, data_dir):
     try:
         stats = runner.run(entry.config.seed_urls)
         click.echo(f"Job complete: {stats.pages_crawled} pages crawled")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         click.echo(f"Job failed: {e}", err=True)
         sys.exit(1)
     finally:
@@ -1150,7 +1147,6 @@ def schedule_run(ctx, name, data_dir):
 @main.group()
 def config():
     """Manage personal-index configuration."""
-    pass
 
 
 @config.command("show")
@@ -1162,7 +1158,7 @@ def config_show(ctx, data_dir):
     Examples:
         personal-index config show
     """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    data_dir or ctx.obj.get("data_dir", ".personal_index")
     
     from personal_index.config.loader import load_config
     config = load_config("config.yaml")
@@ -1268,7 +1264,7 @@ def verify(ctx, quick, data_dir):
         count = idx.get_page_count()
         click.echo(f"  ✓ Search index: {count} pages")
         checks_passed += 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         click.echo(f"  ✗ Search index: {e}")
         checks_failed += 1
 
@@ -1278,7 +1274,7 @@ def verify(ctx, quick, data_dir):
         tag_count = tag_store.get_tag_count()
         click.echo(f"  ✓ Tag store: {tag_count} tags")
         checks_passed += 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         click.echo(f"  ✗ Tag store: {e}")
         checks_failed += 1
 
@@ -1288,7 +1284,7 @@ def verify(ctx, quick, data_dir):
         interest_count = len(interest_store.list_all())
         click.echo(f"  ✓ Interest store: {interest_count} interests")
         checks_passed += 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         click.echo(f"  ✗ Interest store: {e}")
         checks_failed += 1
 
@@ -1361,7 +1357,7 @@ def watch(ctx, paths, interval, once, data_dir):
                             idx = get_search_index(dd)
                             idx.add_page(page)
                             click.echo(f"  ✓ Indexed: {fp}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     click.echo(f"  ✗ Error: {e}", err=True)
             elif os.path.isdir(path):
                 files = _collect_files(path, True)
@@ -1379,7 +1375,7 @@ def watch(ctx, paths, interval, once, data_dir):
                             idx = get_search_index(dd)
                             idx.add_page(page)
                             click.echo(f"  ✓ Indexed: {fp}")
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         click.echo(f"  ✗ Error: {e}", err=True)
         click.echo("Watch complete (once mode)")
         return
@@ -1392,6 +1388,7 @@ def watch(ctx, paths, interval, once, data_dir):
 from personal_index.cli_dedup import dedup
 from personal_index.cli_health import health
 from personal_index.cli_recommend import recommend
+
 main.add_command(dedup)
 main.add_command(health)
 main.add_command(recommend)

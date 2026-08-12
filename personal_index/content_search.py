@@ -147,7 +147,7 @@ class SnippetExtractor:
         snippet_text = text[window_start:window_end]
 
         # Find matched terms in this snippet
-        matched_terms = list(set(term for _, _, term in positions))
+        matched_terms = list({term for _, _, term in positions})
 
         # Highlight matches in the snippet
         highlighted = self._highlight_terms(snippet_text, matched_terms)
@@ -416,8 +416,8 @@ class SearchIndex:
 
     def _extract_text(self, item: dict[str, Any]) -> str:
         parts = []
-        for field in ("title", "description", "content", "tags"):
-            val = item.get(field)
+        for key in ("title", "description", "content", "tags"):
+            val = item.get(key)
             if isinstance(val, list):
                 for v in val:
                     if isinstance(v, str):
