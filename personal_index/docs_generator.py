@@ -74,6 +74,7 @@ class DashboardData:
     modules: list[ModuleInfo] = field(default_factory=list)
     total_modules: int = 0
     total_lines: int = 0
+    total_test_lines: int = 0
     total_classes: int = 0
     total_functions: int = 0
     total_tests: int = 0
@@ -83,6 +84,7 @@ class DashboardData:
     dependency_graph: dict[str, list[str]] = field(default_factory=dict)
     test_results: str = ""
     commits: list[CommitInfo] = field(default_factory=list)
+    test_module_names: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-friendly dict for AI consumption."""
@@ -423,6 +425,8 @@ def generate_metadata_json(data: DashboardData, output_path: str) -> str:
         "summary": {
             "total_modules": data.total_modules,
             "total_lines": data.total_lines,
+            "total_source_lines": data.total_lines - data.total_test_lines,
+            "total_test_lines": data.total_test_lines,
             "total_classes": data.total_classes,
             "total_functions": data.total_functions,
             "total_tests": data.total_tests,
@@ -442,10 +446,86 @@ def generate_metadata_json(data: DashboardData, output_path: str) -> str:
     return json_path
 
 
+def _compute_signals(data: DashboardData) -> dict:
+    """Compute cycle signals from dashboard data (mirrors cycle_signals.py logic)."""
+    modules = data.modules
+    dep_graph = data.dependency_graph
+    test_names = set(data.test_module_names)
+
+    # S1: modules without tests (exclude CLI, __init__, __main__)
+    skip_prefixes = ("cli_", "test_")
+    skip_names = ("__init__", "__main__")
+    no_tests = []
+    for m in modules:
+        short = m.module_name.rpartition(".")[2] if "." in m.module_name else m.module_name
+        if short in skip_names or any(short.startswith(p) for p in skip_prefixes):
+            continue
+        if m.test_count == 0 and m.functions:
+            no_tests.append({
+                "module": m.module_name,
+                "lines": m.line_count,
+                "functions": len(m.functions),
+                "severity": "high" if m.line_count > 100 else "medium",
+            })
+    no_tests.sort(key=lambda x: x["lines"], reverse=True)
+
+    # S2: oversized modules (>200 lines, >15 functions)
+    oversized = []
+    for m in modules:
+        fc = len(m.functions) + sum(len(c.methods) for c in m.classes)
+        if m.line_count >= 200 and fc >= 15:
+            oversized.append({
+                "module": m.module_name,
+                "lines": m.line_count,
+                "functions": fc,
+                "severity": "critical" if m.line_count > 400 else "high",
+            })
+    oversized.sort(key=lambda x: x["lines"], reverse=True)
+
+    # S5: error hotspots
+    errors = []
+    for m in modules:
+        total = len(m.ruff_errors) + len(m.mypy_errors) + len(m.ruff_warnings)
+        if total > 0:
+            errors.append({
+                "module": m.module_name,
+                "ruff_errors": len(m.ruff_errors),
+                "mypy_errors": len(m.mypy_errors),
+                "ruff_warnings": len(m.ruff_warnings),
+                "total": total,
+            })
+    errors.sort(key=lambda x: x["total"], reverse=True)
+
+    # S6: coverage estimate
+    covered = set()
+    for tn in test_names:
+        stem = tn.replace("test_", "", 1)
+        for m in modules:
+            short = m.module_name.rpartition(".")[2]
+            if short == stem:
+                covered.add(m.module_name)
+    total = len(modules)
+    cov_pct = round(len(covered) / total * 100, 1) if total else 0
+
+    return {
+        "S1_no_tests": no_tests,
+        "S2_oversized": oversized,
+        "S5_errors": errors,
+        "S6_coverage": {
+            "total_modules": total,
+            "covered": len(covered),
+            "uncovered": total - len(covered),
+            "pct": cov_pct,
+        },
+    }
+
+
 def generate_dashboard(data: DashboardData, output_path: str) -> None:
     """Generate the dark terminal-style HTML dashboard with embedded codemap metadata."""
     total_errors = data.total_ruff_errors + data.total_mypy_errors
     total_warnings = data.total_ruff_warnings
+    signals = _compute_signals(data)
+    total_source = data.total_lines - data.total_test_lines
 
     # ---- MODULE MAP rows ----
     module_rows = ""
@@ -538,6 +618,8 @@ def generate_dashboard(data: DashboardData, output_path: str) -> None:
         "summary": {
             "total_modules": data.total_modules,
             "total_lines": data.total_lines,
+            "total_source_lines": total_source,
+            "total_test_lines": data.total_test_lines,
             "total_classes": data.total_classes,
             "total_functions": data.total_functions,
             "total_tests": data.total_tests,
@@ -546,11 +628,50 @@ def generate_dashboard(data: DashboardData, output_path: str) -> None:
         },
         "modules": [_module_to_dict(m) for m in data.modules],
         "dependency_graph": data.dependency_graph,
+        "signals": signals,
         "commits": [
             {"sha": c.sha_short, "message": c.message, "author": c.author, "date": c.date}
             for c in data.commits
         ],
     })
+
+    # ---- SIGNAL SECTIONS ----
+    # S1: No tests (top 10)
+    no_tests_rows = ""
+    for m in signals["S1_no_tests"][:10]:
+        sev_color = "#f0a030" if m["severity"] == "high" else "#5a9e7a"
+        no_tests_rows += f"""
+    <div class="signal-row">
+        <span class="signal-name">{_escape_html(m['module'])}</span>
+        <span class="signal-meta">{m['lines']}L / {m['functions']}f</span>
+        <span class="signal-severity" style="color: {sev_color};">[{m['severity']}]</span>
+    </div>"""
+
+    # S2: Oversized (top 10)
+    oversized_rows = ""
+    for m in signals["S2_oversized"][:10]:
+        sev_color = "#ff4444" if m["severity"] == "critical" else "#f0a030"
+        oversized_rows += f"""
+    <div class="signal-row">
+        <span class="signal-name">{_escape_html(m['module'])}</span>
+        <span class="signal-meta">{m['lines']}L / {m['functions']}f</span>
+        <span class="signal-severity" style="color: {sev_color};">[{m['severity']}]</span>
+    </div>"""
+
+    # S5: Error hotspots
+    error_rows = ""
+    for e in signals["S5_errors"]:
+        error_rows += f"""
+    <div class="signal-row">
+        <span class="signal-name">{_escape_html(e['module'])}</span>
+        <span class="signal-meta">R:{e['ruff_errors']} M:{e['mypy_errors']} W:{e['ruff_warnings']}</span>
+        <span class="signal-severity" style="color: #ff4444;">[{e['total']}]</span>
+    </div>"""
+
+    # S6: Coverage
+    cov = signals["S6_coverage"]
+    cov_bar_width = cov["pct"]
+    cov_color = "#86f7ad" if cov["pct"] >= 50 else "#f0a030" if cov["pct"] >= 30 else "#ff4444"
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -939,6 +1060,49 @@ body::after {{
     background: rgba(134, 247, 173, 0.3);
     color: #86f7ad;
 }}
+
+/* ---- SIGNAL ROWS ---- */
+.signal-row {{
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    gap: 0.5rem;
+}}
+
+.signal-name {{
+    flex: 1;
+    color: #5a9e7a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}}
+
+.signal-meta {{
+    font-size: 0.72rem;
+    color: #3a6e5a;
+    min-width: 80px;
+    text-align: right;
+}}
+
+.signal-severity {{
+    font-size: 0.72rem;
+    min-width: 50px;
+    text-align: right;
+    letter-spacing: 1px;
+}}
+
+.signal-summary {{
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    color: #5a9e7a;
+}}
+
+.signal-summary span {{
+    color: #86f7ad;
+}}
 </style>
 </head>
 <body>
@@ -959,8 +1123,16 @@ body::after {{
             <div class="stat-label">Modules</div>
         </div>
         <div class="stat-card">
+            <div class="stat-value">{total_source:,}</div>
+            <div class="stat-label">Source Lines</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{data.total_test_lines:,}</div>
+            <div class="stat-label">Test Lines</div>
+        </div>
+        <div class="stat-card">
             <div class="stat-value">{data.total_lines:,}</div>
-            <div class="stat-label">Lines</div>
+            <div class="stat-label">Total Lines</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">{data.total_classes}</div>
@@ -1025,8 +1197,42 @@ body::after {{
     </div>
 </div>
 
+<!-- 7. CYCLE SIGNALS -->
+<div class="section">
+    <div class="section-title">Cycle Signals</div>
+
+    <div class="signal-summary">
+        <span>S1: {len(signals['S1_no_tests'])} modules without tests</span>
+        <span>S2: {len(signals['S2_oversized'])} oversized</span>
+        <span>S5: {len(signals['S5_errors'])} error hotspots</span>
+        <span>S6: {cov['pct']}% coverage</span>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <div style="font-size: 0.75rem; color: #5a9e7a; margin-bottom: 0.4rem;">S1 — NO TESTS (top 10 by lines)</div>
+        {no_tests_rows if no_tests_rows else '<div style="color: #3a6e5a; font-size: 0.75rem;">All modules covered.</div>'}
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <div style="font-size: 0.75rem; color: #5a9e7a; margin-bottom: 0.4rem;">S2 — OVERSIZED (top 10 by lines)</div>
+        {oversized_rows if oversized_rows else '<div style="color: #3a6e5a; font-size: 0.75rem;">No oversized modules.</div>'}
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <div style="font-size: 0.75rem; color: #5a9e7a; margin-bottom: 0.4rem;">S5 — ERROR HOTSPOTS</div>
+        {error_rows if error_rows else '<div style="color: #3a6e5a; font-size: 0.75rem;">No errors.</div>'}
+    </div>
+
+    <div>
+        <div style="font-size: 0.75rem; color: #5a9e7a; margin-bottom: 0.4rem;">S6 — COVERAGE ({cov['covered']}/{cov['total_modules']} modules = {cov['pct']}%)</div>
+        <div class="test-bar-track" style="max-width: 400px;">
+            <div class="test-bar-fill" style="width: {cov_bar_width}%; background: {cov_color};"></div>
+        </div>
+    </div>
+</div>
+
 <div class="footer">
-    [ personal_index.docs_generator ] — {data.total_modules} modules | {data.total_lines:,} lines | {total_errors} errors | {total_warnings} warnings
+    [ personal_index.docs_generator ] — {data.total_modules} modules | {total_source:,} src / {data.total_test_lines:,} test = {data.total_lines:,} total | {total_errors} errors | {total_warnings} warnings | {signals['S6_coverage']['pct']}% coverage
 </div>
 
 </div>
@@ -1070,10 +1276,15 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
     commits = fetch_recent_commits(20)
 
     # Aggregate
+    total_source_lines = sum(m.line_count for m in modules)
+    total_test_lines = sum(m.line_count for m in test_modules) if test_modules else 0
+    test_module_names = [m.module_name for m in test_modules] if test_modules else []
+
     data = DashboardData(
         modules=modules,
         total_modules=len(modules),
-        total_lines=sum(m.line_count for m in modules),
+        total_lines=total_source_lines + total_test_lines,
+        total_test_lines=total_test_lines,
         total_classes=sum(len(m.classes) for m in modules),
         total_functions=sum(len(m.functions) + sum(len(c.methods) for c in m.classes) for m in modules),
         total_tests=total_tests,
@@ -1083,6 +1294,7 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
         dependency_graph=dep_graph,
         test_results=test_summary,
         commits=commits,
+        test_module_names=test_module_names,
     )
 
     print(f"[docs_generator] Generating dashboard → {output}")
