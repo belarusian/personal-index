@@ -22,6 +22,243 @@ from collections import defaultdict
 from pathlib import Path
 
 
+# ---------------------------------------------------------------------------
+# Tree summary — hierarchical grouping for LLM-friendly consumption
+# ---------------------------------------------------------------------------
+
+def build_tree(modules: list[dict]) -> dict:
+    """Group modules into a hierarchical tree by package path.
+
+    Returns a tree node with aggregate stats. Each node has:
+      - name: package/module name
+      - children: nested package nodes (sorted by error count desc, then name)
+      - modules: leaf module names (only modules with signals, to keep it compact)
+      - stats: {lines, functions, classes, errors, warnings, modules}
+      - signals: list of active signal tags [S1, S2, S5, ...]
+    """
+    tree: dict[str, dict] = {}
+
+    for m in modules:
+        name = m.get("name", "")
+        parts = name.split(".")
+        # Skip the root package name (e.g., "personal_index")
+        if len(parts) <= 1:
+            continue
+
+        # Walk the path and create/update nodes
+        current_path = []
+        for i, part in enumerate(parts):
+            current_path.append(part)
+            key = ".".join(current_path)
+
+            if key not in tree:
+                tree[key] = {
+                    "name": part,
+                    "full_path": key,
+                    "children": {},
+                    "modules": [],
+                    "stats": {
+                        "lines": 0,
+                        "functions": 0,
+                        "classes": 0,
+                        "errors": 0,
+                        "warnings": 0,
+                        "modules": 0,
+                    },
+                    "signals": set(),
+                }
+
+            node = tree[key]
+            is_leaf = i == len(parts) - 1
+
+            if is_leaf:
+                node["modules"].append(name)
+                node["stats"]["modules"] += 1
+                node["stats"]["lines"] += m.get("lines", 0)
+                node["stats"]["functions"] += m.get("functions", 0)
+                node["stats"]["classes"] += m.get("classes", 0)
+                node["stats"]["errors"] += m.get("ruff_errors", 0) + m.get("mypy_errors", 0)
+                node["stats"]["warnings"] += m.get("ruff_warnings", 0)
+
+                # Detect signals on leaf modules
+                if m.get("tests", 0) == 0 and m.get("functions", 0) > 0:
+                    short = part
+                    if short not in ("__init__", "__main__") and not short.startswith("cli_") and not short.startswith("test_"):
+                        node["signals"].add("S1")
+                if m.get("lines", 0) >= 200 and m.get("functions", 0) >= 15:
+                    node["signals"].add("S2")
+                total_err = m.get("ruff_errors", 0) + m.get("mypy_errors", 0) + m.get("ruff_warnings", 0)
+                if total_err > 0:
+                    node["signals"].add("S5")
+            else:
+                # Accumulate stats up the tree
+                node["stats"]["lines"] += m.get("lines", 0)
+                node["stats"]["functions"] += m.get("functions", 0)
+                node["stats"]["classes"] += m.get("classes", 0)
+                node["stats"]["errors"] += m.get("ruff_errors", 0) + m.get("mypy_errors", 0)
+                node["stats"]["warnings"] += m.get("ruff_warnings", 0)
+                node["stats"]["modules"] += 1
+
+    # Propagate signals up the tree
+    for key, node in tree.items():
+        parts = key.split(".")
+        for i in range(len(parts) - 1):
+            parent_key = ".".join(parts[:i + 1])
+            if parent_key in tree:
+                tree[parent_key]["signals"].update(node["signals"])
+
+    # Convert to final tree structure
+    root = _build_tree_root(tree)
+    return root
+
+
+def _build_tree_root(tree: dict[str, dict]) -> dict:
+    """Build the root node from flat tree dict."""
+    # Find top-level keys (direct children of root)
+    top_level = set()
+    for key in tree:
+        parts = key.split(".")
+        top_level.add(parts[0])
+
+    children = {}
+    for tl in sorted(top_level):
+        if tl in tree:
+            children[tl] = _node_to_dict(tl, tree)
+
+    # Compute root stats from all top-level children
+    root_stats = {"lines": 0, "functions": 0, "classes": 0, "errors": 0, "warnings": 0, "modules": 0}
+    root_signals: set[str] = set()
+    for child in children.values():
+        for k in root_stats:
+            root_stats[k] += child["stats"].get(k, 0)
+        root_signals.update(child.get("signals", []))
+
+    return {
+        "name": "root",
+        "stats": root_stats,
+        "signals": sorted(root_signals),
+        "children": children,
+    }
+
+
+def _node_to_dict(key: str, tree: dict[str, dict]) -> dict:
+    """Convert a tree node to its final dict representation."""
+    node = tree[key]
+    name = node["name"]
+    children = {}
+
+    # Find direct children
+    prefix = key + "."
+    for child_key in tree:
+        if child_key.startswith(prefix) and child_key != key:
+            child_parts = child_key[len(prefix):].split(".")
+            if child_parts and child_parts[0]:
+                tl = child_parts[0]
+                if tl not in children:
+                    children[tl] = _node_to_dict(child_key, tree)
+
+    # Only include modules that have signals (keep it compact)
+    signal_modules = []
+    if not children:  # leaf node
+        for mod_name in node["modules"]:
+            signal_modules.append(mod_name)
+
+    # Convert signals set to sorted list
+    signals = sorted(node["signals"])
+
+    result = {
+        "name": name,
+        "stats": node["stats"],
+        "signals": signals,
+    }
+
+    if children:
+        result["children"] = _sort_children(children)
+
+    if signal_modules:
+        result["modules"] = signal_modules
+
+    return result
+
+
+def _sort_children(children: dict[str, dict]) -> dict[str, dict]:
+    """Sort children: nodes with errors/signals first, then by module count desc."""
+    def sort_key(item: tuple[str, dict]) -> tuple[int, int, str]:
+        name, node = item
+        has_signals = 0 if node.get("signals") else 1
+        errors = -(node.get("stats", {}).get("errors", 0))
+        modules = -(node.get("stats", {}).get("modules", 0))
+        return (has_signals, errors, modules, name)
+
+    return dict(sorted(children.items(), key=sort_key))
+
+
+def format_tree(tree: dict, max_lines: int = 30) -> str:
+    """Pruned tree summary for LLM consumption.
+
+    Strategy: show top-level packages, collapse clean subtrees into
+    a single line, only expand nodes that carry signals.
+    Target: ~15-30 lines total, so the LLM sees the shape without noise.
+
+    Args:
+        tree: tree from build_tree()
+        max_lines: hard cap on output lines
+    """
+    lines = []
+    root = tree.get("children", {})
+    if not root:
+        return "no packages found"
+
+    children = list(root.items())
+    flagged = [(n, c) for n, c in children if c.get("signals")]
+    clean = [(n, c) for n, c in children if not c.get("signals")]
+
+    for name, node in flagged:
+        _render_summary_node(name, node, lines, "")
+
+    if clean and len(lines) < max_lines - 3:
+        total_mods = sum(c["stats"]["modules"] for _, c in clean)
+        total_lines_count = sum(c["stats"]["lines"] for _, c in clean)
+        total_funcs = sum(c["stats"]["functions"] for _, c in clean)
+        clean_names = [n for n, _ in clean]
+        if len(clean_names) <= 8:
+            for name, node in clean:
+                _render_summary_node(name, node, lines, "")
+        else:
+            lines.append(f"  [{len(clean)} clean packages: {', '.join(clean_names[:5])}... — {total_mods}m {total_lines_count:,}L {total_funcs}f]")
+
+    return "\n".join(lines)
+
+
+def _render_summary_node(name: str, node: dict, lines: list[str], prefix: str) -> None:
+    """Render one node line with signal annotations."""
+    stats = node.get("stats", {})
+    signals = node.get("signals", [])
+
+    stat_str = f"{stats['modules']}m {stats['lines']:,}L {stats['functions']}f"
+    signal_str = ""
+    if signals:
+        signal_str = f" [{','.join(signals)}]"
+
+    lines.append(f"{prefix}{name}: {stat_str}{signal_str}")
+
+    # Only expand children if this node has signals AND has children
+    children = node.get("children", {})
+    if children and signals:
+        child_items = list(children.items())
+        child_flagged = [(n, c) for n, c in child_items if c.get("signals")]
+        child_clean = [(n, c) for n, c in child_items if not c.get("signals")]
+
+        for cn, cn_node in child_flagged:
+            _render_summary_node(cn, cn_node, lines, f"  └ ")
+
+        if child_clean:
+            cm = sum(c["stats"]["modules"] for _, c in child_clean)
+            cl = sum(c["stats"]["lines"] for _, c in child_clean)
+            cf = sum(c["stats"]["functions"] for _, c in child_clean)
+            lines.append(f"  └ [{len(child_clean)} clean: {cm}m {cl:,}L {cf}f]")
+
+
 def load_codemap(path: str) -> dict:
     p = Path(path)
     if not p.exists():
@@ -226,10 +463,13 @@ def extract(codemap_path: str, prev_codemap_path: str | None = None, test_dir: s
                 test_dir = str(p)
                 break
 
+    tree = build_tree(modules)
+
     signals = {
         "generated_from": codemap_path,
         "codemap_generated_at": codemap.get("generated_at", "unknown"),
         "summary": summary,
+        "tree_summary": tree,
         "S1_no_tests": signal_no_tests(modules),
         "S2_oversized": signal_oversized(modules),
         "S3_dead_code": signal_dead_code(modules, dep_graph),
@@ -255,6 +495,11 @@ def extract(codemap_path: str, prev_codemap_path: str | None = None, test_dir: s
 def format_for_auditor(signals: dict) -> str:
     """Format signals as a scoped auditor prompt."""
     lines = ["Auditor scope for next cycle (from signal extractor):"]
+
+    tree = signals.get("tree_summary")
+    if tree:
+        lines.append("\n## Package Tree (hierarchical overview)")
+        lines.append(format_tree(tree, max_depth=2))
 
     errors = signals.get("S5_errors", [])
     if errors:
@@ -300,14 +545,27 @@ def main() -> None:
     parser.add_argument("codemap", help="Path to codemap.json")
     parser.add_argument("--prev", help="Previous codemap for delta comparison")
     parser.add_argument("--test-dir", help="Path to tests/ directory for coverage estimation")
-    parser.add_argument("--format", choices=["json", "auditor"], default="json",
+    parser.add_argument("--format", choices=["json", "auditor", "tree"], default="json",
                         help="Output format")
+    parser.add_argument("--lines", type=int, default=30, help="Max output lines for tree (default: 30)")
     args = parser.parse_args()
 
     signals = extract(args.codemap, args.prev, args.test_dir)
 
     if args.format == "json":
-        print(json.dumps(signals, indent=2))
+        # Convert sets to lists for JSON serialization
+        def _serialize(obj):
+            if isinstance(obj, set):
+                return sorted(obj)
+            if isinstance(obj, dict):
+                return {k: _serialize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [_serialize(i) for i in obj]
+            return obj
+        print(json.dumps(_serialize(signals), indent=2))
+    elif args.format == "tree":
+        tree = signals.get("tree_summary", {})
+        print(format_tree(tree, max_lines=args.lines))
     else:
         print(format_for_auditor(signals))
 

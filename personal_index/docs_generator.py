@@ -417,6 +417,11 @@ def _module_to_dict(mod: ModuleInfo) -> dict:
 
 def generate_metadata_json(data: DashboardData, output_path: str) -> str:
     """Generate a machine-readable codemap JSON for AI consumption."""
+    from personal_index.cycle_signals import build_tree
+
+    module_dicts = [_module_to_dict(m) for m in data.modules]
+    tree = build_tree(module_dicts)
+
     metadata = {
         "generated_at": subprocess.run(
             ["date", "-u", "+%Y-%m-%dT%H:%M:%SZ"],
@@ -433,7 +438,8 @@ def generate_metadata_json(data: DashboardData, output_path: str) -> str:
             "total_errors": data.total_ruff_errors + data.total_mypy_errors,
             "total_warnings": data.total_ruff_warnings,
         },
-        "modules": [_module_to_dict(m) for m in data.modules],
+        "tree_summary": tree,
+        "modules": module_dicts,
         "dependency_graph": data.dependency_graph,
         "commits": [
             {"sha": c.sha_short, "message": c.message, "author": c.author, "date": c.date}
