@@ -20,7 +20,7 @@ class PriorityLevel(Enum):
     ARCHIVE = "archive"
 
     @classmethod
-    def from_score(cls, score: float) -> "PriorityLevel":
+    def from_score(cls, score: float) -> PriorityLevel:
         """Determine priority level from a normalized score (0-1)."""
         if score >= 0.8:
             return cls.CRITICAL

@@ -187,7 +187,7 @@ class Recommender:
         Returns:
             List of Recommendation objects.
         """
-        keyword_set = set(kw.lower() for kw in keywords if kw)
+        keyword_set = {kw.lower() for kw in keywords if kw}
         if not keyword_set:
             return []
 

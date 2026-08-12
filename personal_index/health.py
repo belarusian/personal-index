@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from personal_index.content_health import (
     ContentHealthChecker as HealthChecker,
+)
+from personal_index.content_health import (
     HealthCheckResult,
     HealthReport,
 )

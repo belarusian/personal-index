@@ -250,13 +250,9 @@ class ContentHealthChecker:
         score_val = (checks_passed / checks_total * 100) if checks_total > 0 else 0.0
 
         # Determine status
-        if any(i.severity == IssueSeverity.CRITICAL for i in issues):
+        if any(i.severity == IssueSeverity.CRITICAL for i in issues) or any(i.severity == IssueSeverity.HIGH for i in issues):
             status = HealthStatus.UNHEALTHY
-        elif any(i.severity == IssueSeverity.HIGH for i in issues):
-            status = HealthStatus.UNHEALTHY
-        elif any(i.severity == IssueSeverity.MEDIUM for i in issues):
-            status = HealthStatus.WARNING
-        elif issues:
+        elif any(i.severity == IssueSeverity.MEDIUM for i in issues) or issues:
             status = HealthStatus.WARNING
         else:
             status = HealthStatus.HEALTHY

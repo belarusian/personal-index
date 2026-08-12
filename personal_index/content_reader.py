@@ -143,10 +143,10 @@ class ContentReader:
         if not tags:
             return list(self._items)
 
-        tag_set = set(t.lower() for t in tags)
+        tag_set = {t.lower() for t in tags}
         results = []
         for item in self._items:
-            item_tags = set(t.lower() for t in item.tags)
+            item_tags = {t.lower() for t in item.tags}
             if match_all:
                 if tag_set.issubset(item_tags):
                     results.append(item)
@@ -171,9 +171,8 @@ class ContentReader:
         """
         results = []
         for item in self._items:
-            if item.score >= min_score:
-                if max_score is None or item.score <= max_score:
-                    results.append(item)
+            if item.score >= min_score and (max_score is None or item.score <= max_score):
+                results.append(item)
         return results
 
     def search_titles(self, query: str) -> list[ReadResult]:

@@ -7,7 +7,7 @@ sentence scoring based on keyword frequency and TF-IDF-like metrics.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
@@ -56,12 +56,10 @@ STOPWORDS = frozenset({
     "very", "just", "about", "above", "after", "again", "also", "any",
     "because", "before", "between", "during", "if", "into", "like", "new",
     "now", "old", "over", "then", "there", "here", "up", "out", "off",
-    "as", "into", "through", "during", "before", "after", "above", "below",
-    "between", "under", "again", "further", "once", "here", "there",
-    "when", "where", "why", "how", "all", "both", "each", "few", "many",
-    "much", "some", "any", "no", "nor", "not", "only", "own", "same",
-    "so", "than", "too", "very", "s", "t", "can", "will", "just", "don",
-    "should", "now", "d", "ll", "m", "o", "re", "ve", "y", "ain", "aren",
+    "as", "through", "below",
+    "under", "further", "once", "many",
+    "much", "nor", "s", "t", "don",
+    "d", "ll", "m", "o", "re", "ve", "y", "ain", "aren",
     "couldn", "didn", "doesn", "hadn", "hasn", "haven", "isn", "ma",
     "mightn", "mustn", "needn", "shan", "shouldn", "wasn", "weren",
     "won", "wouldn",

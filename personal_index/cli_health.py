@@ -7,7 +7,6 @@ import click
 from personal_index.content_health import (
     ContentHealthCheck,
     ContentHealthChecker,
-    HealthStatus,
 )
 
 

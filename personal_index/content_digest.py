@@ -7,7 +7,7 @@ grouped by topics and interests.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 
@@ -74,7 +74,7 @@ class ContentDigest:
         """Format the digest as markdown."""
         lines = [
             f"# {self.title}",
-            f"",
+            "",
             f"**Generated:** {self.generated_at}",
             f"**Period:** {self.period_start} to {self.period_end}",
             f"**Total entries:** {self.total_entries}",

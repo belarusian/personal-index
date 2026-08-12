@@ -23,9 +23,13 @@ import yaml
 
 from personal_index.cli_clear import clear as clear_cmd
 from personal_index.cli_crawl import crawl as crawl_cmd
+from personal_index.cli_dedup import dedup as dedup_cmd
 from personal_index.cli_doctor import doctor as doctor_cmd
 from personal_index.cli_extract import extract as extract_cmd
+from personal_index.cli_health import health as health_cmd
 from personal_index.cli_list import list_pages as list_cmd
+from personal_index.cli_merge import merge as merge_cmd
+from personal_index.cli_recommend import recommend as recommend_cmd
 from personal_index.cli_remove import remove_page as remove_cmd
 from personal_index.cli_score import score as score_cmd
 from personal_index.cli_search import search as search_cmd
@@ -34,10 +38,6 @@ from personal_index.cli_status import status as status_cmd
 from personal_index.cli_top import top_pages as top_cmd
 from personal_index.cli_verify import verify as verify_cmd
 from personal_index.cli_watch import watch as watch_cmd
-from personal_index.cli_recommend import recommend as recommend_cmd
-from personal_index.cli_health import health as health_cmd
-from personal_index.cli_dedup import dedup as dedup_cmd
-from personal_index.cli_merge import merge as merge_cmd
 from personal_index.index import SearchIndex
 from personal_index.tags import TagStore
 

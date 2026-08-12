@@ -68,6 +68,15 @@ def content_hash(text: str) -> str:
     return hashlib.sha256(normalized.encode()).hexdigest()
 
 
+class DocumentHash:
+    """Content fingerprinting using sha256."""
+
+    @staticmethod
+    def compute_fingerprint(content: str) -> str:
+        """Compute a 16-char fingerprint for content."""
+        return content_hash(content)[:16]
+
+
 def url_hash(url: str) -> str:
     """Generate a hash of a normalized URL."""
     return hashlib.sha256(normalize_url(url).encode()).hexdigest()
@@ -100,6 +109,7 @@ class DedupResult:
     duplicate_groups: list[DuplicateGroup] = field(default_factory=list)
     removed_count: int = 0
     method: str = "hash"
+    is_duplicate: bool = False
 
     @property
     def dedup_ratio(self) -> float:
@@ -302,6 +312,7 @@ class ContentDeduplicator:
                 )],
                 removed_count=1,
                 method="hash",
+                is_duplicate=True,
             )
 
         self._seen_hashes[h] = url
@@ -311,6 +322,7 @@ class ContentDeduplicator:
             duplicate_groups=[],
             removed_count=0,
             method="hash",
+            is_duplicate=False,
         )
 
     def dedup_all(
