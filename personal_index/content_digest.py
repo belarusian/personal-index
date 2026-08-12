@@ -1,290 +1,266 @@
-"""Content digest module for generating content summaries and digests.
+"""Content digest module for personal-index.
 
-Creates daily/weekly/monthly digest emails and reports from
-indexed content, highlighting new and important items.
+Generates daily/weekly digests of new and updated content,
+grouped by topics and interests.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from enum import Enum
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
 
-class DigestFrequency(Enum):
-    """How often digests should be generated."""
-
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-
-
 @dataclass
-class DigestConfig:
-    """Configuration for digest generation.
-
-    Attributes:
-        frequency: How often to generate digests.
-        max_items: Maximum items per digest.
-        min_score: Minimum content score to include.
-        include_tags: Whether to include tag information.
-        include_preview: Whether to include content previews.
-        preview_length: Character limit for previews.
-        group_by: How to group items (tag, domain, date).
-        sort_by: How to sort items (score, date, title).
-    """
-
-    frequency: DigestFrequency = DigestFrequency.DAILY
-    max_items: int = 20
-    min_score: float = 0.0
-    include_tags: bool = True
-    include_preview: bool = True
-    preview_length: int = 200
-    group_by: str = "date"
-    sort_by: str = "score"
-
-
-@dataclass
-class DigestItem:
-    """A single item in a digest.
-
-    Attributes:
-        title: Content title.
-        url: Content URL.
-        preview: Content preview text.
-        tags: Content tags.
-        score: Content score.
-        published_at: Publication date.
-        domain: Source domain.
-    """
-
-    title: str
+class DigestEntry:
+    """A single entry in a content digest."""
     url: str
-    preview: str = ""
+    title: str
+    summary: str
     tags: list[str] = field(default_factory=list)
     score: float = 0.0
-    published_at: datetime | None = None
-    domain: str = ""
+    timestamp: str = ""
+    source: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "url": self.url,
+            "title": self.title,
+            "summary": self.summary,
+            "tags": self.tags,
+            "score": self.score,
+            "timestamp": self.timestamp,
+            "source": self.source,
+        }
+
+
+@dataclass
+class DigestSection:
+    """A section of the digest grouped by topic/tag."""
+    topic: str
+    entries: list[DigestEntry] = field(default_factory=list)
+
+    @property
+    def count(self) -> int:
+        return len(self.entries)
 
 
 @dataclass
 class ContentDigest:
-    """A complete content digest.
-
-    Attributes:
-        title: Digest title.
-        period_start: Start of the digest period.
-        period_end: End of the digest period.
-        items: Items included in the digest.
-        total_new: Total new items in period.
-        top_tags: Most common tags.
-        top_domains: Most common source domains.
-    """
-
+    """A complete content digest."""
     title: str
-    period_start: datetime
-    period_end: datetime
-    items: list[DigestItem] = field(default_factory=list)
-    total_new: int = 0
-    top_tags: list[str] = field(default_factory=list)
-    top_domains: list[str] = field(default_factory=list)
+    generated_at: str
+    period_start: str
+    period_end: str
+    sections: list[DigestSection] = field(default_factory=list)
+    total_entries: int = 0
+    summary: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert digest to dictionary."""
         return {
             "title": self.title,
-            "period_start": self.period_start.isoformat(),
-            "period_end": self.period_end.isoformat(),
-            "items": [
-                {
-                    "title": i.title,
-                    "url": i.url,
-                    "preview": i.preview,
-                    "tags": i.tags,
-                    "score": i.score,
-                }
-                for i in self.items
+            "generated_at": self.generated_at,
+            "period_start": self.period_start,
+            "period_end": self.period_end,
+            "sections": [
+                {"topic": s.topic, "entries": [e.to_dict() for e in s.entries]}
+                for s in self.sections
             ],
-            "total_new": self.total_new,
-            "top_tags": self.top_tags,
-            "top_domains": self.top_domains,
+            "total_entries": self.total_entries,
+            "summary": self.summary,
         }
+
+    def format_markdown(self) -> str:
+        """Format the digest as markdown."""
+        lines = [
+            f"# {self.title}",
+            f"",
+            f"**Generated:** {self.generated_at}",
+            f"**Period:** {self.period_start} to {self.period_end}",
+            f"**Total entries:** {self.total_entries}",
+            "",
+        ]
+
+        if self.summary:
+            lines.append(f"> {self.summary}")
+            lines.append("")
+
+        for section in self.sections:
+            lines.append(f"## {section.topic}")
+            lines.append("")
+            for entry in section.entries:
+                lines.append(f"### [{entry.title}]({entry.url})")
+                if entry.summary:
+                    lines.append(f"{entry.summary}")
+                if entry.tags:
+                    lines.append(f"Tags: {', '.join(entry.tags)}")
+                lines.append("")
+
+        return "\n".join(lines)
+
+    def format_text(self) -> str:
+        """Format the digest as plain text."""
+        lines = [
+            f"{self.title}",
+            "=" * len(self.title),
+            f"Generated: {self.generated_at}",
+            f"Period: {self.period_start} to {self.period_end}",
+            f"Total entries: {self.total_entries}",
+            "",
+        ]
+
+        if self.summary:
+            lines.append(self.summary)
+            lines.append("")
+
+        for section in self.sections:
+            lines.append(f"[{section.topic}]")
+            lines.append("-" * len(section.topic))
+            for entry in section.entries:
+                lines.append(f"  • {entry.title}")
+                lines.append(f"    {entry.url}")
+                if entry.summary:
+                    lines.append(f"    {entry.summary[:100]}")
+                lines.append("")
+
+        return "\n".join(lines)
 
 
 class DigestGenerator:
-    """Generates content digests from indexed items.
+    """Generates content digests from indexed content.
 
-    Filters, sorts, and formats content items into digest
-    reports based on configurable criteria.
+    Groups content by topics/tags and generates formatted
+    digest reports.
     """
 
-    def __init__(self, config: DigestConfig | None = None) -> None:
-        self.config = config or DigestConfig()
+    def __init__(self):
+        self._entries: list[DigestEntry] = []
+
+    def add_entry(self, entry: DigestEntry) -> None:
+        """Add an entry to the digest."""
+        self._entries.append(entry)
+
+    def add_entries(self, entries: list[DigestEntry]) -> None:
+        """Add multiple entries."""
+        self._entries.extend(entries)
 
     def generate(
         self,
-        items: list[dict[str, Any]],
-        period_start: datetime | None = None,
-        period_end: datetime | None = None,
+        title: str = "Content Digest",
+        period_start: str | None = None,
+        period_end: str | None = None,
+        group_by: str = "tags",
+        max_entries_per_section: int = 10,
     ) -> ContentDigest:
-        """Generate a digest from content items.
+        """Generate a content digest.
 
         Args:
-            items: List of content items.
-            period_start: Start of digest period.
-            period_end: End of digest period.
+            title: Digest title.
+            period_start: Start of the digest period.
+            period_end: End of the digest period.
+            group_by: How to group entries ('tags', 'source', 'none').
+            max_entries_per_section: Max entries per section.
 
         Returns:
-            ContentDigest with filtered and formatted items.
+            ContentDigest with grouped entries.
         """
-        if period_end is None:
-            period_end = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).isoformat()
+
         if period_start is None:
-            delta = self._get_period_delta()
-            period_start = period_end - delta
+            period_start = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        if period_end is None:
+            period_end = now
 
-        # Filter items by period and score
-        filtered = self._filter_items(items, period_start, period_end)
+        entries = sorted(self._entries, key=lambda e: e.score, reverse=True)
 
-        # Sort items
-        sorted_items = self._sort_items(filtered)
+        if group_by == "none":
+            sections = [DigestSection(
+                topic="All Content",
+                entries=entries[:max_entries_per_section],
+            )]
+        elif group_by == "source":
+            sections = self._group_by_source(entries, max_entries_per_section)
+        else:  # tags
+            sections = self._group_by_tags(entries, max_entries_per_section)
 
-        # Limit items
-        sorted_items = sorted_items[: self.config.max_items]
-
-        # Convert to digest items
-        digest_items = [self._to_digest_item(item) for item in sorted_items]
-
-        # Compute statistics
-        top_tags = self._compute_top_tags(filtered, 5)
-        top_domains = self._compute_top_domains(filtered, 5)
-
-        title = self._generate_title(period_start, period_end)
+        # Generate summary
+        summary = self._generate_summary(sections)
 
         return ContentDigest(
             title=title,
+            generated_at=now,
             period_start=period_start,
             period_end=period_end,
-            items=digest_items,
-            total_new=len(filtered),
-            top_tags=top_tags,
-            top_domains=top_domains,
+            sections=sections,
+            total_entries=len(entries),
+            summary=summary,
         )
 
-    def _get_period_delta(self) -> timedelta:
-        """Get the time delta for the digest period."""
-        deltas = {
-            DigestFrequency.DAILY: timedelta(days=1),
-            DigestFrequency.WEEKLY: timedelta(weeks=1),
-            DigestFrequency.MONTHLY: timedelta(days=30),
-        }
-        return deltas.get(self.config.frequency, timedelta(days=1))
-
-    def _filter_items(
+    def _group_by_tags(
         self,
-        items: list[dict[str, Any]],
-        start: datetime,
-        end: datetime,
-    ) -> list[dict[str, Any]]:
-        """Filter items by date range and minimum score."""
-        filtered = []
-        for item in items:
-            score = item.get("score", 0.0)
-            if score < self.config.min_score:
-                continue
+        entries: list[DigestEntry],
+        max_per_section: int,
+    ) -> list[DigestSection]:
+        """Group entries by their tags."""
+        tag_entries: dict[str, list[DigestEntry]] = {}
+        untagged: list[DigestEntry] = []
 
-            pub_date = item.get("published_at")
-            if pub_date:
-                if isinstance(pub_date, str):
-                    pub_date = datetime.fromisoformat(pub_date)
-                if not (start <= pub_date <= end):
-                    continue
+        for entry in entries:
+            if entry.tags:
+                for tag in entry.tags:
+                    tag_entries.setdefault(tag, []).append(entry)
+            else:
+                untagged.append(entry)
 
-            filtered.append(item)
-        return filtered
+        sections = []
+        for tag in sorted(tag_entries.keys()):
+            section_entries = tag_entries[tag][:max_per_section]
+            if section_entries:
+                sections.append(DigestSection(topic=tag, entries=section_entries))
 
-    def _sort_items(
+        if untagged:
+            sections.append(DigestSection(
+                topic="Uncategorized",
+                entries=untagged[:max_per_section],
+            ))
+
+        return sections
+
+    def _group_by_source(
         self,
-        items: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        """Sort items by configured sort field."""
-        sort_keys = {
-            "score": lambda x: x.get("score", 0.0),
-            "date": lambda x: x.get("published_at") or datetime.min.replace(tzinfo=timezone.utc),
-            "title": lambda x: x.get("title", ""),
-        }
-        key_func = sort_keys.get(self.config.sort_by, sort_keys["score"])
-        reverse = self.config.sort_by != "title"
-        return sorted(items, key=key_func, reverse=reverse)
+        entries: list[DigestEntry],
+        max_per_section: int,
+    ) -> list[DigestSection]:
+        """Group entries by their source."""
+        source_entries: dict[str, list[DigestEntry]] = {}
 
-    def _to_digest_item(self, item: dict[str, Any]) -> DigestItem:
-        """Convert a content item to a digest item."""
-        preview = ""
-        if self.config.include_preview:
-            desc = item.get("description", item.get("content", ""))
-            if isinstance(desc, str):
-                preview = desc[: self.config.preview_length]
+        for entry in entries:
+            source = entry.source or "Unknown"
+            source_entries.setdefault(source, []).append(entry)
 
-        tags = item.get("tags", [])
-        if not self.config.include_tags:
-            tags = []
+        sections = []
+        for source in sorted(source_entries.keys()):
+            section_entries = source_entries[source][:max_per_section]
+            if section_entries:
+                sections.append(DigestSection(topic=source, entries=section_entries))
 
-        url = item.get("url", "")
-        domain = ""
-        if "://" in url:
-            domain = url.split("://")[1].split("/")[0]
+        return sections
 
-        return DigestItem(
-            title=item.get("title", "Untitled"),
-            url=url,
-            preview=preview,
-            tags=tags if isinstance(tags, list) else [],
-            score=item.get("score", 0.0),
-            published_at=item.get("published_at"),
-            domain=domain,
+    def _generate_summary(self, sections: list[DigestSection]) -> str:
+        """Generate a summary of the digest."""
+        total = sum(s.count for s in sections)
+        if total == 0:
+            return "No new content found."
+
+        section_names = [s.topic for s in sections[:5]]
+        if len(sections) > 5:
+            section_names.append(f"...and {len(sections) - 5} more")
+
+        return (
+            f"{total} new items across {len(sections)} topics: "
+            + ", ".join(section_names)
         )
 
-    def _compute_top_tags(
-        self,
-        items: list[dict[str, Any]],
-        limit: int = 5,
-    ) -> list[str]:
-        """Compute the most common tags."""
-        tag_count: dict[str, int] = {}
-        for item in items:
-            for tag in item.get("tags", []):
-                tag_count[tag] = tag_count.get(tag, 0) + 1
-        sorted_tags = sorted(tag_count.items(), key=lambda x: x[1], reverse=True)
-        return [tag for tag, _ in sorted_tags[:limit]]
-
-    def _compute_top_domains(
-        self,
-        items: list[dict[str, Any]],
-        limit: int = 5,
-    ) -> list[str]:
-        """Compute the most common source domains."""
-        domain_count: dict[str, int] = {}
-        for item in items:
-            url = item.get("url", "")
-            if "://" in url:
-                domain = url.split("://")[1].split("/")[0]
-                domain_count[domain] = domain_count.get(domain, 0) + 1
-        sorted_domains = sorted(
-            domain_count.items(), key=lambda x: x[1], reverse=True,
-        )
-        return [domain for domain, _ in sorted_domains[:limit]]
-
-    def _generate_title(
-        self,
-        start: datetime,
-        end: datetime,
-    ) -> str:
-        """Generate a title for the digest."""
-        freq_label = {
-            DigestFrequency.DAILY: "Daily",
-            DigestFrequency.WEEKLY: "Weekly",
-            DigestFrequency.MONTHLY: "Monthly",
-        }
-        label = freq_label.get(self.config.frequency, "Content")
-        return f"{label} Digest: {start.strftime('%b %d')} - {end.strftime('%b %d, %Y')}"
+    def clear(self) -> None:
+        """Clear all entries."""
+        self._entries.clear()

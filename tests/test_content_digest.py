@@ -1,207 +1,148 @@
-"""Tests for the content digest module."""
+"""Tests for content digest module."""
 
-from datetime import datetime, timedelta
+from __future__ import annotations
+
+import pytest
 
 from personal_index.content_digest import (
     ContentDigest,
-    DigestConfig,
-    DigestFrequency,
+    DigestEntry,
     DigestGenerator,
-    DigestItem,
+    DigestSection,
 )
 
 
-class TestDigestConfig:
-    def test_defaults(self) -> None:
-        config = DigestConfig()
-        assert config.frequency == DigestFrequency.DAILY
-        assert config.max_items == 20
-        assert config.min_score == 0.0
-        assert config.include_tags is True
+def make_entry(
+    url: str = "https://example.com",
+    title: str = "Test",
+    summary: str = "Summary",
+    tags: list[str] | None = None,
+    score: float = 0.0,
+    source: str = "",
+) -> DigestEntry:
+    return DigestEntry(
+        url=url,
+        title=title,
+        summary=summary,
+        tags=tags or [],
+        score=score,
+        source=source,
+    )
 
 
-class TestDigestItem:
-    def test_create(self) -> None:
-        item = DigestItem(
-            title="Test",
-            url="https://example.com/test",
-            tags=["python"],
-            score=0.8,
+class TestDigestEntry:
+    def test_to_dict(self):
+        entry = make_entry(tags=["python"], score=8.0)
+        d = entry.to_dict()
+        assert d["url"] == "https://example.com"
+        assert d["tags"] == ["python"]
+        assert d["score"] == 8.0
+
+
+class TestDigestSection:
+    def test_count(self):
+        section = DigestSection(
+            topic="Python",
+            entries=[make_entry(), make_entry()],
         )
-        assert item.title == "Test"
-        assert item.tags == ["python"]
+        assert section.count == 2
 
 
 class TestContentDigest:
-    def test_to_dict(self) -> None:
+    def test_to_dict(self):
         digest = ContentDigest(
-            title="Test Digest",
-            period_start=datetime(2024, 1, 1),
-            period_end=datetime(2024, 1, 2),
-            items=[
-                DigestItem(title="Item 1", url="https://example.com/1"),
-            ],
-            total_new=1,
-            top_tags=["python"],
-            top_domains=["example.com"],
+            title="Daily Digest",
+            generated_at="2024-01-15T10:00:00",
+            period_start="2024-01-14",
+            period_end="2024-01-15",
+            sections=[DigestSection(topic="Python", entries=[make_entry()])],
+            total_entries=1,
         )
         d = digest.to_dict()
-        assert d["title"] == "Test Digest"
-        assert len(d["items"]) == 1
-        assert d["total_new"] == 1
+        assert d["title"] == "Daily Digest"
+        assert d["total_entries"] == 1
+        assert len(d["sections"]) == 1
+
+    def test_format_markdown(self):
+        digest = ContentDigest(
+            title="Daily Digest",
+            generated_at="2024-01-15T10:00:00",
+            period_start="2024-01-14",
+            period_end="2024-01-15",
+            sections=[DigestSection(topic="Python", entries=[make_entry(title="Python Tips")])],
+            total_entries=1,
+            summary="1 new item",
+        )
+        md = digest.format_markdown()
+        assert "# Daily Digest" in md
+        assert "Python Tips" in md
+        assert "1 new item" in md
+
+    def test_format_text(self):
+        digest = ContentDigest(
+            title="Daily Digest",
+            generated_at="2024-01-15T10:00:00",
+            period_start="2024-01-14",
+            period_end="2024-01-15",
+            sections=[DigestSection(topic="Python", entries=[make_entry(title="Python Tips")])],
+            total_entries=1,
+        )
+        text = digest.format_text()
+        assert "Daily Digest" in text
+        assert "Python Tips" in text
 
 
 class TestDigestGenerator:
-    def setup_method(self) -> None:
-        self.now = datetime(2024, 1, 15, 12, 0)
-        self.items = [
-            {
-                "title": "Article 1",
-                "url": "https://example.com/1",
-                "description": "First article description.",
-                "tags": ["python", "web"],
-                "score": 0.9,
-                "published_at": datetime(2024, 1, 14),
-            },
-            {
-                "title": "Article 2",
-                "url": "https://example.com/2",
-                "description": "Second article description.",
-                "tags": ["javascript"],
-                "score": 0.7,
-                "published_at": datetime(2024, 1, 13),
-            },
-            {
-                "title": "Article 3",
-                "url": "https://other.com/3",
-                "description": "Third article.",
-                "tags": ["python", "data"],
-                "score": 0.5,
-                "published_at": datetime(2024, 1, 14),
-            },
-            {
-                "title": "Low Score",
-                "url": "https://example.com/low",
-                "tags": ["spam"],
-                "score": 0.1,
-                "published_at": datetime(2024, 1, 14),
-            },
-        ]
+    def setup_method(self):
+        self.generator = DigestGenerator()
+        self.generator.add_entries([
+            make_entry(url="https://a.com", title="Python 1", tags=["python"], score=8.0, source="blog"),
+            make_entry(url="https://b.com", title="Python 2", tags=["python", "tutorial"], score=7.0, source="blog"),
+            make_entry(url="https://c.com", title="JS Guide", tags=["javascript"], score=6.0, source="docs"),
+            make_entry(url="https://d.com", title="No Tags", score=5.0, source="blog"),
+        ])
 
-    def test_generate_basic(self) -> None:
-        gen = DigestGenerator()
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        assert digest.title
-        assert len(digest.items) > 0
+    def test_generate_by_tags(self):
+        digest = self.generator.generate(group_by="tags")
+        assert digest.total_entries == 4
+        topics = [s.topic for s in digest.sections]
+        assert "python" in topics
+        assert "javascript" in topics
 
-    def test_generate_min_score_filter(self) -> None:
-        config = DigestConfig(min_score=0.6)
-        gen = DigestGenerator(config=config)
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        for item in digest.items:
-            assert item.score >= 0.6
+    def test_generate_by_source(self):
+        digest = self.generator.generate(group_by="source")
+        topics = [s.topic for s in digest.sections]
+        assert "blog" in topics
+        assert "docs" in topics
 
-    def test_generate_max_items(self) -> None:
-        config = DigestConfig(max_items=1)
-        gen = DigestGenerator(config=config)
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        assert len(digest.items) <= 1
+    def test_generate_no_grouping(self):
+        digest = self.generator.generate(group_by="none")
+        assert len(digest.sections) == 1
+        assert digest.sections[0].topic == "All Content"
 
-    def test_generate_sort_by_score(self) -> None:
-        config = DigestConfig(sort_by="score")
-        gen = DigestGenerator(config=config)
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        scores = [i.score for i in digest.items]
+    def test_generate_max_entries(self):
+        digest = self.generator.generate(group_by="tags", max_entries_per_section=1)
+        for section in digest.sections:
+            assert section.count <= 1
+
+    def test_generate_summary(self):
+        digest = self.generator.generate()
+        assert digest.summary
+        assert "new items" in digest.summary
+
+    def test_generate_empty(self):
+        empty = DigestGenerator()
+        digest = empty.generate()
+        assert digest.total_entries == 0
+        assert "No new content found" in digest.summary
+
+    def test_clear(self):
+        self.generator.clear()
+        digest = self.generator.generate()
+        assert digest.total_entries == 0
+
+    def test_entries_sorted_by_score(self):
+        digest = self.generator.generate(group_by="none")
+        entries = digest.sections[0].entries
+        scores = [e.score for e in entries]
         assert scores == sorted(scores, reverse=True)
-
-    def test_generate_top_tags(self) -> None:
-        gen = DigestGenerator()
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        assert "python" in digest.top_tags
-
-    def test_generate_top_domains(self) -> None:
-        gen = DigestGenerator()
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        assert "example.com" in digest.top_domains
-
-    def test_generate_no_preview(self) -> None:
-        config = DigestConfig(include_preview=False)
-        gen = DigestGenerator(config=config)
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        for item in digest.items:
-            assert item.preview == ""
-
-    def test_generate_no_tags(self) -> None:
-        config = DigestConfig(include_tags=False)
-        gen = DigestGenerator(config=config)
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        for item in digest.items:
-            assert item.tags == []
-
-    def test_generate_empty_items(self) -> None:
-        gen = DigestGenerator()
-        digest = gen.generate([])
-        assert len(digest.items) == 0
-        assert digest.total_new == 0
-
-    def test_generate_title(self) -> None:
-        gen = DigestGenerator()
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 14),
-            period_end=datetime(2024, 1, 15),
-        )
-        assert "Daily Digest" in digest.title
-
-    def test_generate_weekly_title(self) -> None:
-        config = DigestConfig(frequency=DigestFrequency.WEEKLY)
-        gen = DigestGenerator(config=config)
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 8),
-            period_end=datetime(2024, 1, 15),
-        )
-        assert "Weekly Digest" in digest.title
-
-    def test_preview_truncation(self) -> None:
-        config = DigestConfig(preview_length=10)
-        gen = DigestGenerator(config=config)
-        digest = gen.generate(
-            self.items,
-            period_start=datetime(2024, 1, 13),
-            period_end=datetime(2024, 1, 15),
-        )
-        for item in digest.items:
-            assert len(item.preview) <= 10
