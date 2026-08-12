@@ -7,10 +7,7 @@ crawling, indexing, searching, and exporting content.
 from __future__ import annotations
 
 import json
-import os
-from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main

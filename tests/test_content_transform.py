@@ -1,6 +1,5 @@
 """Tests for content transform module."""
 
-import pytest
 
 from personal_index.content_transform.normalizer import ContentNormalizer
 from personal_index.content_transform.pipeline import TransformPipeline

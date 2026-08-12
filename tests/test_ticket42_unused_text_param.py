@@ -1,5 +1,6 @@
 """Test for TICKET-42: text parameter in _build_reasons() is unused."""
 import inspect
+
 from personal_index.content_categorizer import ContentCategorizer, TopicScore
 
 

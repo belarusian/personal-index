@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 
-import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main

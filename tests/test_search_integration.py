@@ -7,13 +7,9 @@ verifying indexing, retrieval, and ranking work correctly.
 from __future__ import annotations
 
 import os
-import tempfile
-
-import pytest
 
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
-from personal_index.models import CrawledPage, Interest
 from personal_index.pipeline_runner import PipelineRunner
 
 

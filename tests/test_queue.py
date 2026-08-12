@@ -1,8 +1,6 @@
 """Tests for the priority task queue."""
 
-import pytest
-import time
-from personal_index.queue import TaskQueue, TaskPriority, TaskStatus, Task
+from personal_index.queue import Task, TaskPriority, TaskQueue, TaskStatus
 
 
 class TestTask:
@@ -40,7 +38,7 @@ class TestTask:
 class TestTaskQueue:
     def test_enqueue_dequeue(self):
         q = TaskQueue()
-        task = q.enqueue("t1", "test task")
+        q.enqueue("t1", "test task")
         assert q.size == 1
         result = q.dequeue()
         assert result is not None

@@ -3,11 +3,9 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from personal_index.content_export.json_export import (
-    JsonExportOptions,
     JsonExporter,
+    JsonExportOptions,
 )
 
 
@@ -152,4 +150,4 @@ class TestJsonExporter:
         exporter = JsonExporter(options=opts)
         result = exporter.export_item(self.items[0])
         data = json.loads(result)
-        assert list(data.keys())[0] == "id"
+        assert next(iter(data.keys())) == "id"

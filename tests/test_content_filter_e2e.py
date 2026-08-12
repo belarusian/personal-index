@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.models import CrawledPage
 

@@ -1,7 +1,6 @@
 """Test TICKET-104: Remove unused TYPE_CHECKING import in content_tagger/tagger.py"""
 
 import ast
-import sys
 
 
 def test_no_type_checking_import_in_tagger():

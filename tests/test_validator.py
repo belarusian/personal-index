@@ -1,7 +1,6 @@
 """Tests for URL and content validation."""
 
-import pytest
-from personal_index.validator import URLValidator, ContentValidator, ValidationResult
+from personal_index.validator import ContentValidator, URLValidator, ValidationResult
 
 
 class TestValidationResult:

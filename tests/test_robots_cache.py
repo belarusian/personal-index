@@ -1,7 +1,7 @@
 """Tests for the robots.txt cache module."""
 
 import time
-import pytest
+
 from personal_index.robots_cache import RobotsCache, RobotsCacheEntry
 
 

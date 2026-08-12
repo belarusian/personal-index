@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import os
 
-import pytest
-
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore

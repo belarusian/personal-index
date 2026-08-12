@@ -1,19 +1,15 @@
 """Tests for configuration loader."""
 
-import os
-import tempfile
 from pathlib import Path
 
-import pytest
 import yaml
 
 from personal_index.config.loader import (
-    load_config,
-    save_config,
-    create_default_config,
     _parse_interest,
     _parse_match_mode,
-    DEFAULT_CONFIG_FILENAME,
+    create_default_config,
+    load_config,
+    save_config,
 )
 from personal_index.config.models import (
     AppConfig,

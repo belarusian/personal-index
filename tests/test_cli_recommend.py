@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from click.testing import CliRunner
 
 from personal_index.cli import main
-from personal_index.content_recommender import ContentItem, Recommender
 
 
 class TestRecommendCLI:
@@ -29,7 +26,6 @@ class TestRecommendCLI:
     def test_recommend_with_content(self, tmp_path):
         """Test recommend with indexed content."""
         import os
-        import json
 
         dd = str(tmp_path)
         os.makedirs(dd, exist_ok=True)

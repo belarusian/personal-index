@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import pytest
-from pathlib import Path
 from unittest.mock import MagicMock
 
 from personal_index.notifications import (

@@ -1,18 +1,17 @@
 """Tests for the formatter module."""
 
-import pytest
 from personal_index.formatter import (
-    format_search_results,
-    format_interest,
     format_crawl_stats,
-    format_index_page,
-    format_schedule_job,
-    format_table,
     format_duration,
     format_file_size,
+    format_index_page,
+    format_interest,
+    format_schedule_job,
+    format_search_results,
+    format_table,
     format_timestamp,
-    truncate,
     highlight,
+    truncate,
 )
 from personal_index.index import SearchResult
 from personal_index.interests import Interest

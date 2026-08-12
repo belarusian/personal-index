@@ -1,7 +1,6 @@
 """Tests for the domain management module."""
 
-import pytest
-from personal_index.domains import DomainRule, DomainManager
+from personal_index.domains import DomainManager, DomainRule
 
 
 class TestDomainRule:

@@ -1,5 +1,4 @@
 """Test that str.removeprefix() is used instead of conditional slice in url_dedup.py."""
-import ast
 import unittest
 
 

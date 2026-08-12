@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 import tempfile
 
-import pytest
-
 from personal_index.app import PersonalIndexApp
 
 
@@ -84,7 +82,6 @@ class TestAppFactory:
 
     def test_config_property(self):
         """config property should return AppConfig."""
-        from personal_index.config.models import AppConfig
         self.app.initialize()
         assert self.app.config.__class__.__name__ == "AppConfig"
 

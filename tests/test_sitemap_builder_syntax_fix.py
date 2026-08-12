@@ -1,5 +1,6 @@
 """Tests for TICKET-8: Verify sitemap_builder.py syntax is fixed."""
 import unittest
+
 from personal_index.sitemap_builder import SitemapBuilder, SitemapEntry
 
 

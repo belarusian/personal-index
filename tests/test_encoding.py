@@ -1,6 +1,5 @@
 """Tests for text encoding utilities."""
 
-import pytest
 from personal_index.encoding import EncodingDetector, EncodingResult
 
 
@@ -34,7 +33,7 @@ class TestEncodingDetector:
 
     def test_detect_utf8(self):
         d = EncodingDetector()
-        data = "héllo wörld".encode("utf-8")
+        data = "héllo wörld".encode()
         result = d.detect(data)
         assert result.encoding == "utf-8"
 
@@ -51,7 +50,7 @@ class TestEncodingDetector:
 
     def test_decode_explicit(self):
         d = EncodingDetector()
-        text = d.decode("café".encode("utf-8"), "utf-8")
+        text = d.decode("café".encode(), "utf-8")
         assert text == "café"
 
     def test_decode_fallback(self):
@@ -68,7 +67,7 @@ class TestEncodingDetector:
         d = EncodingDetector()
         original = "hello".encode("ascii")
         converted = d.convert(original, "ascii", "utf-8")
-        assert converted == "hello".encode("utf-8")
+        assert converted == b"hello"
 
     def test_normalize_whitespace(self):
         d = EncodingDetector()

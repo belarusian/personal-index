@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
 from personal_index.rate_limiter import (
-    RateLimiter,
     RateLimitConfig,
+    RateLimiter,
     RateLimitStatus,
     TokenBucket,
 )

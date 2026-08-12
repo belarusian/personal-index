@@ -10,15 +10,10 @@ import os
 import shutil
 import tempfile
 
-import pytest
-
-from personal_index.content_extractor import ContentExtractor
 from personal_index.content_scoring import ContentScorer, ScoreWeights
-from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
 from personal_index.pipeline import Pipeline, PipelineConfig
-from personal_index.tags import TagStore
 
 
 class TestInterestsWorkflow:

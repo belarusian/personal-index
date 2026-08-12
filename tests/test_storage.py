@@ -1,11 +1,12 @@
 """Tests for storage layer."""
 
-import pytest
-import tempfile
 import shutil
-from pathlib import Path
+import tempfile
+
+import pytest
+
+from personal_index.models import CrawlConfig, IndexedPage, Interest
 from personal_index.storage import Storage
-from personal_index.models import Interest, CrawlConfig, IndexedPage
 
 
 @pytest.fixture

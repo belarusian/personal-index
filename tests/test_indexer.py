@@ -1,8 +1,8 @@
 """Tests for search index module (consolidated from indexer.py into search_index.py)."""
 
-import pytest
 import tempfile
 from pathlib import Path
+
 from personal_index.models import CrawledPage
 from personal_index.search_index import SearchIndex
 

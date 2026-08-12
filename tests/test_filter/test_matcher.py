@@ -1,6 +1,5 @@
 """Tests for content matching and filtering."""
 
-import pytest
 
 from personal_index.config.models import Interest, MatchMode
 from personal_index.filter.matcher import ContentMatcher, InterestFilter

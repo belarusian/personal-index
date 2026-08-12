@@ -5,10 +5,8 @@ from __future__ import annotations
 import os
 import tempfile
 
-import pytest
-
 from personal_index.app import PersonalIndexApp
-from personal_index.scheduler import ScheduleConfig, Scheduler, ScheduleStore
+from personal_index.scheduler import Scheduler, ScheduleStore
 
 
 class TestSchedulerIntegration:

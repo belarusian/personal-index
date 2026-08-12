@@ -7,11 +7,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
-import sys
-import tempfile
-
-import pytest
 
 from personal_index.cli import main
 
@@ -22,7 +17,7 @@ class TestCLIInit:
     def test_init_creates_data_dir(self, tmp_path, monkeypatch):
         """init should create the data directory structure."""
         monkeypatch.chdir(tmp_path)
-        result = main(['init'], standalone_mode=False)
+        main(['init'], standalone_mode=False)
         assert os.path.isdir(str(tmp_path / ".personal_index"))
         assert os.path.isdir(str(tmp_path / ".personal_index" / "cache"))
         assert os.path.isdir(str(tmp_path / ".personal_index" / "archive"))

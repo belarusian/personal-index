@@ -1,6 +1,5 @@
 """Test TICKET-111: Fix accessing private _bookmarks attribute in export.py"""
 
-import ast
 
 
 def test_no_private_bookmarks_access_in_export():

@@ -2,16 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import os
-import tempfile
-from pathlib import Path
-from unittest.mock import patch
 
-import pytest
-from click.testing import CliRunner
-
-from personal_index.cli import main
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -44,18 +43,18 @@ class TestAPIKeyStore:
         assert metadata.key_id is not None
 
     def test_create_key_with_permissions(self, store):
-        raw_key, metadata = store.create_key(
+        _raw_key, metadata = store.create_key(
             "user1", permissions=["read:index", "write:index"]
         )
         assert metadata.permissions == ["read:index", "write:index"]
 
     def test_create_key_with_expiry(self, store):
         expires = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-        raw_key, metadata = store.create_key("user1", expires_at=expires)
+        _raw_key, metadata = store.create_key("user1", expires_at=expires)
         assert metadata.expires_at == expires
 
     def test_create_key_custom_prefix(self, store):
-        raw_key, metadata = store.create_key("user1", prefix="sk_")
+        raw_key, _metadata = store.create_key("user1", prefix="sk_")
         assert raw_key.startswith("sk_")
 
     def test_validate_valid_key(self, store):

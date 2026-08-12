@@ -1,12 +1,10 @@
 """Tests for content_linker module - find related saved items."""
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from personal_index.content_linker.link import Link, LinkType
-from personal_index.content_linker.similarity import SimilarityEngine
 from personal_index.content_linker.linker import ContentLinker
-
+from personal_index.content_linker.similarity import SimilarityEngine
 
 # ── Link model tests ───────────────────────────────────────
 

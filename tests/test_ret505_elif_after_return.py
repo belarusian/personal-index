@@ -1,7 +1,7 @@
 """Tests for TICKET-72: RET505 - unnecessary elif/else after return."""
 
 from personal_index.bookmark_export import BookmarkExporter
-from personal_index.content_archive.compressor import Compressor, CompressionFormat
+from personal_index.content_archive.compressor import CompressionFormat, Compressor
 from personal_index.content_priority import PriorityLevel
 
 

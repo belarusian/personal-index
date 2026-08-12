@@ -2,14 +2,6 @@
 
 from __future__ import annotations
 
-import os
-import tempfile
-from unittest.mock import MagicMock, patch
-
-import pytest
-from click.testing import CliRunner
-
-from personal_index.cli import main
 from personal_index.content_extractor import ContentExtractor
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.interests import InterestStore

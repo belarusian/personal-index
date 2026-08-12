@@ -5,11 +5,11 @@ from __future__ import annotations
 import pytest
 
 from personal_index.auth.permissions import (
-    Permission,
-    Role,
-    PermissionChecker,
-    User,
     ROLE_PERMISSIONS,
+    Permission,
+    PermissionChecker,
+    Role,
+    User,
 )
 
 

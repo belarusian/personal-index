@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.content_reader import (
     ContentReader,
     PageView,

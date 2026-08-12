@@ -1,18 +1,17 @@
 """Tests for personal_index.scheduler."""
 
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
 
 import pytest
 
+from personal_index.interests import InterestStore
+from personal_index.models import Interest, InterestType
 from personal_index.scheduler import (
     ScheduleConfig,
     ScheduleEntry,
-    ScheduleStore,
     Scheduler,
+    ScheduleStore,
 )
-from personal_index.interests import InterestStore
-from personal_index.models import Interest, InterestType
 from personal_index.search_index import SearchIndex
 
 

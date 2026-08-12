@@ -11,12 +11,9 @@ import os
 import shutil
 import tempfile
 
-import pytest
-
-from personal_index.content_export import JsonExporter, CsvExporter, MarkdownExporter
-from personal_index.content_export.json_export import JsonExportOptions
+from personal_index.content_export import CsvExporter, JsonExporter, MarkdownExporter
 from personal_index.content_export.csv_export import CsvExportOptions
-from personal_index.index import IndexedPage, SearchResult
+from personal_index.content_export.json_export import JsonExportOptions
 from personal_index.tags import TagStore
 
 
@@ -406,7 +403,7 @@ class TestExportIntegration:
         # JSON export with tags
         exporter = JsonExporter()
         json_str = exporter.export_items(items)
-        parsed = json.loads(json_str)
+        json.loads(json_str)
 
         # Note: The current implementation doesn't automatically fetch from TagStore
         # This test documents the expected behavior when tag_store integration is added

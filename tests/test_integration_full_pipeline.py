@@ -6,12 +6,8 @@ using file-based input (no network required).
 
 from __future__ import annotations
 
-import json
 import os
-import tempfile
-from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main
@@ -19,8 +15,7 @@ from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
 from personal_index.interests import InterestStore
 from personal_index.models import Interest
-from personal_index.pipeline_runner import PipelineRunner, PipelineStats
-from personal_index.tags import TagStore
+from personal_index.pipeline_runner import PipelineRunner
 
 
 class TestFullPipelineE2E:
@@ -178,7 +173,7 @@ class TestFullPipelineE2E:
 
         # First run
         runner1 = PipelineRunner(data_dir=data_dir)
-        stats1 = runner1.run_from_files([str(docs / "article.txt")])
+        runner1.run_from_files([str(docs / "article.txt")])
         runner1.close()
 
         # Second run - should load existing index
@@ -485,7 +480,7 @@ class TestPipelineStages:
         )
 
         runner = PipelineRunner(data_dir=data_dir)
-        stats = runner.run_from_files([str(docs / "test.txt")])
+        runner.run_from_files([str(docs / "test.txt")])
         runner.close()
 
         index = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
@@ -517,7 +512,7 @@ class TestSearchIntegration:
         )
 
         runner = PipelineRunner(data_dir=data_dir)
-        stats = runner.run_from_files([
+        runner.run_from_files([
             str(docs / "high.txt"),
             str(docs / "low.txt"),
         ])

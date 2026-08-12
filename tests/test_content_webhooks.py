@@ -4,7 +4,6 @@ from personal_index.content_webhooks import (
     WebhookEndpoint,
     WebhookEventType,
     WebhookManager,
-    WebhookPayload,
 )
 
 

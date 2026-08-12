@@ -1,5 +1,6 @@
 """Test for TICKET-43: page variable in remove() is assigned but never used."""
 import inspect
+
 from personal_index.search_index import SearchIndex
 
 

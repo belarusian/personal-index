@@ -5,8 +5,6 @@ from __future__ import annotations
 import subprocess
 import sys
 
-import pytest
-
 
 def _check_mypy_union_attr(paths: list[str]) -> list[str]:
     """Run mypy on given files and return union-attr errors."""
@@ -25,27 +23,27 @@ class TestTicket106AttributeValueList:
     def test_content_extractor_no_union_attr(self):
         """content_extractor.py should have no union-attr errors."""
         errors = _check_mypy_union_attr(["personal_index/content_extractor.py"])
-        assert not errors, f"content_extractor.py has union-attr errors:\n" + "\n".join(errors)
+        assert not errors, "content_extractor.py has union-attr errors:\n" + "\n".join(errors)
 
     def test_content_no_union_attr(self):
         """content.py should have no union-attr errors."""
         errors = _check_mypy_union_attr(["personal_index/content.py"])
-        assert not errors, f"content.py has union-attr errors:\n" + "\n".join(errors)
+        assert not errors, "content.py has union-attr errors:\n" + "\n".join(errors)
 
     def test_utils_no_union_attr(self):
         """utils/__init__.py should have no union-attr errors."""
         errors = _check_mypy_union_attr(["personal_index/utils/__init__.py"])
-        assert not errors, f"utils/__init__.py has union-attr errors:\n" + "\n".join(errors)
+        assert not errors, "utils/__init__.py has union-attr errors:\n" + "\n".join(errors)
 
     def test_crawler_init_no_union_attr(self):
         """crawler/__init__.py should have no union-attr errors."""
         errors = _check_mypy_union_attr(["personal_index/crawler/__init__.py"])
-        assert not errors, f"crawler/__init__.py has union-attr errors:\n" + "\n".join(errors)
+        assert not errors, "crawler/__init__.py has union-attr errors:\n" + "\n".join(errors)
 
     def test_url_utils_no_union_attr(self):
         """url_utils.py should have no union-attr errors."""
         errors = _check_mypy_union_attr(["personal_index/url_utils.py"])
-        assert not errors, f"url_utils.py has union-attr errors:\n" + "\n".join(errors)
+        assert not errors, "url_utils.py has union-attr errors:\n" + "\n".join(errors)
 
     def test_content_extractor_strips_attributes(self):
         """ContentExtractor should properly strip attribute values."""

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.content_enricher import ContentEnricher, EnrichedContent
 
 
@@ -155,6 +153,7 @@ class TestEnrichedContentDatetime:
     def test_enriched_at_is_utc(self):
         """enriched_at should be in UTC timezone."""
         from datetime import timezone
+
         from personal_index.content_enricher import EnrichedContent
         content = EnrichedContent(title="Test", text="Hello world")
         assert content.enriched_at.tzinfo == timezone.utc, "enriched_at should be UTC"
@@ -162,6 +161,7 @@ class TestEnrichedContentDatetime:
     def test_enriched_at_no_deprecation_warning(self):
         """Creating EnrichedContent should not trigger deprecation warnings."""
         import warnings
+
         from personal_index.content_enricher import EnrichedContent
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")

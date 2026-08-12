@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.content_categorizer import (
     BUILTIN_TOPICS,
     CategorizationResult,
@@ -11,7 +9,6 @@ from personal_index.content_categorizer import (
     TopicCategory,
     TopicScore,
 )
-
 
 # ---------------------------------------------------------------------------
 # Data structure tests

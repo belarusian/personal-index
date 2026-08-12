@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
-import pytest
+
 from personal_index.content_export_csv import (
     CSVExporter,
     ExportFormat,
@@ -245,7 +245,7 @@ class TestCSVExporter:
 
     def test_export_get_stats(self):
         items = [{"id": str(i), "title": f"T{i}"} for i in range(10)]
-        result = self.exporter.export(items)
+        self.exporter.export(items)
         stats = self.exporter.get_stats(items)
         assert stats["total_items"] == 10
         assert stats["columns"] > 0

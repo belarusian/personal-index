@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-from personal_index.content_search import SearchIndex, ContentSearch, Snippet, SnippetExtractor
+from personal_index.content_search import ContentSearch, SearchIndex, Snippet, SnippetExtractor
 
 
 class TestTFIDFRanking:

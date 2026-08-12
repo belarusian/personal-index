@@ -27,10 +27,9 @@ class TestTicket97SuppressImport(unittest.TestCase):
         # Check that suppress is imported
         imports = set()
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom):
-                if node.module == "contextlib":
-                    for alias in node.names:
-                        imports.add(alias.name)
+            if isinstance(node, ast.ImportFrom) and node.module == "contextlib":
+                for alias in node.names:
+                    imports.add(alias.name)
         self.assertIn("suppress", imports)
 
 

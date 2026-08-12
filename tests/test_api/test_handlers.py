@@ -3,23 +3,18 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
 from personal_index.api.handlers import (
-    APIError,
     ContentTypeMiddleware,
     ErrorHandler,
     TimingMiddleware,
     handle_api_error,
 )
 from personal_index.api.models import (
-    APIResponse,
-    ForbiddenError,
     NotFoundError,
-    UnauthorizedError,
-    ValidationError,
 )
 
 

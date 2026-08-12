@@ -2,11 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
-import pytest
-
-from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_extractor import ContentExtractor
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer, ScoreWeights

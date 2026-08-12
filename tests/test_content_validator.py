@@ -1,15 +1,13 @@
 """Tests for content validator module."""
 
-import pytest
 
 from personal_index.content_validator.quality import QualityChecker, QualityScore
 from personal_index.content_validator.rules import (
-    RuleResult,
     ValidationRule,
-    has_required_fields,
     has_min_length,
-    has_valid_url,
+    has_required_fields,
     has_valid_score,
+    has_valid_url,
 )
 from personal_index.content_validator.schema import (
     ContentSchema,

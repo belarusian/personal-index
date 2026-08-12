@@ -6,7 +6,6 @@ import pytest
 
 from personal_index.api.pagination import (
     PageInfo,
-    PaginatedResult,
     paginate,
     paginate_with_offset,
 )
@@ -37,7 +36,7 @@ class TestPaginate:
     def test_first_page(self):
         items = list(range(25))
         result = paginate(items, page=1, page_size=10)
-        assert result.items == list(range(0, 10))
+        assert result.items == list(range(10))
         assert result.page_info.total_items == 25
         assert result.page_info.total_pages == 3
         assert result.page_info.has_next is True
@@ -104,7 +103,7 @@ class TestPaginateWithOffset:
     def test_offset_zero(self):
         items = list(range(25))
         result = paginate_with_offset(items, offset=0, limit=10)
-        assert result.items == list(range(0, 10))
+        assert result.items == list(range(10))
         assert result.page_info.has_next is True
         assert result.page_info.has_prev is False
 

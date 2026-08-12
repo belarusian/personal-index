@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import os
+
 import pytest
 
 from personal_index.backup import (
-    BackupManifest,
     BackupManager,
+    BackupManifest,
 )
 
 
@@ -234,10 +234,11 @@ class TestBackupTarFilter:
 
     def test_restore_uses_filter_argument(self):
         """tar.extractall should use filter='data' to prevent path traversal."""
-        import warnings
-        from personal_index.backup import BackupManager
-        import tempfile
         import os
+        import tempfile
+        import warnings
+
+        from personal_index.backup import BackupManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a source directory with a file

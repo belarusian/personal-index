@@ -4,16 +4,15 @@ from __future__ import annotations
 
 import json
 import os
-import pytest
-from datetime import datetime, timezone
 from xml.etree import ElementTree as ET
 
+import pytest
+
 from personal_index.bookmark_export import (
-    BookmarkExportResult,
     BookmarkExporter,
+    BookmarkExportResult,
 )
 from personal_index.bookmarks import Bookmark
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

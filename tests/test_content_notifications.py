@@ -2,8 +2,6 @@
 
 from datetime import datetime, timedelta
 
-import pytest
-
 from personal_index.content_notifications import (
     Notification,
     NotificationChannel,

@@ -1,13 +1,12 @@
 """Tests for configuration models."""
 
-import pytest
 from personal_index.config.models import (
-    Interest,
-    CrawlerConfig,
-    SchedulerConfig,
-    IndexConfig,
     AppConfig,
+    CrawlerConfig,
+    IndexConfig,
+    Interest,
     MatchMode,
+    SchedulerConfig,
 )
 
 

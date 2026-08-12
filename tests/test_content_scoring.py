@@ -7,7 +7,6 @@ import pytest
 from personal_index.content_scoring import (
     ContentScore,
     ContentScorer,
-    ScoreFactor,
     ScoreWeights,
 )
 

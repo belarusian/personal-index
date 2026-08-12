@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from personal_index.content_annotations import (
     Annotation,
     AnnotationManager,

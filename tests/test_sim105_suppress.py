@@ -27,7 +27,8 @@ class TestContentFilter:
 class TestInterestStore:
     def test_load_from_invalid_json(self):
         """Invalid JSON should be silently ignored via suppress."""
-        import tempfile, os
+        import os
+        import tempfile
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             f.write("not valid json")
             f.flush()

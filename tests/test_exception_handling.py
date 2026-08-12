@@ -2,7 +2,6 @@
 
 import ast
 import inspect
-from pathlib import Path
 
 
 def _get_source_lines(module):

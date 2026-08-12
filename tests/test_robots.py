@@ -1,6 +1,5 @@
 """Tests for robots.txt parser."""
 
-import pytest
 from personal_index.crawler.robots import RobotsParser
 
 

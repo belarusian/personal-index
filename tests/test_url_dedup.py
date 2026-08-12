@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.url_dedup import DedupResult, URLDeduplicator
 
 
@@ -217,7 +215,7 @@ class TestURLDeduplicatorFuzzyThreshold:
     def test_custom_threshold(self):
         dedup = URLDeduplicator(fuzzy_threshold=0.95)
         dedup.add_url("http://a.com/page-one")
-        result = dedup.check_duplicate("http://a.com/page_one")
+        dedup.check_duplicate("http://a.com/page_one")
         assert dedup._fuzzy_threshold == 0.95
 
     def test_low_threshold_catches_more(self):

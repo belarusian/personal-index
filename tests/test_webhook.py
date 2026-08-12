@@ -1,14 +1,16 @@
 """Tests for the webhook notification system."""
 
 import json
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 from urllib.error import URLError
+
+import pytest
+
 from personal_index.webhook import (
-    WebhookSender,
     WebhookConfig,
-    WebhookPayload,
     WebhookEvent,
+    WebhookPayload,
+    WebhookSender,
 )
 
 

@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import os
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -17,7 +15,6 @@ from personal_index.content_monitor import (
     HealthReport,
     SourceFreshness,
 )
-
 
 # ---------------------------------------------------------------------------
 # DiskUsageInfo tests
@@ -539,7 +536,7 @@ class TestContentMonitor:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a large file to exceed threshold
             large_file = Path(tmpdir, "big.bin")
-            large_file.write_bytes(b"x" * int(2048 * 1024 * 1024))  # 2GB virtual
+            large_file.write_bytes(b"x" * (2048 * 1024 * 1024))  # 2GB virtual
 
             # We can't actually write 2GB, so we mock getsize
             monitor = ContentMonitor(index_dir=tmpdir, max_disk_mb=0.001)

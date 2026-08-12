@@ -6,15 +6,11 @@ the filter and pipeline components.
 
 from __future__ import annotations
 
-import os
 from unittest.mock import patch
 
-import pytest
-
 from personal_index.config.pipeline_config import PipelineConfig
-from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.interests import InterestStore
-from personal_index.models import CrawledPage, Interest, InterestType, MatchMode
+from personal_index.models import CrawledPage, Interest
 from personal_index.pipeline_runner import PipelineRunner
 
 

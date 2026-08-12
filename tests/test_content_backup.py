@@ -3,11 +3,9 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import pytest
-
-from personal_index.content_backup.backup_manager import BackupConfig, BackupManager
-from personal_index.content_backup.backup_store import BackupEntry, BackupStore
-from personal_index.content_backup.restore import RestoreManager, RestoreResult
+from personal_index.content_backup.backup_manager import BackupManager
+from personal_index.content_backup.backup_store import BackupStore
+from personal_index.content_backup.restore import RestoreManager
 
 
 class TestBackupStore:

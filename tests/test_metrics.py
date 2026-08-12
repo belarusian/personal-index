@@ -1,7 +1,7 @@
 """Tests for system metrics collection."""
 
 import time
-import pytest
+
 from personal_index.metrics import MetricsCollector, SystemMetrics
 
 

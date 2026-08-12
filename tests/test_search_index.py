@@ -2,8 +2,8 @@
 
 import pytest
 
-from personal_index.search_index import SearchIndex
 from personal_index.models import CrawledPage
+from personal_index.search_index import SearchIndex
 
 
 @pytest.fixture

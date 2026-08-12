@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.migrations.base import (
     BaseMigration,
     MigrationRecord,

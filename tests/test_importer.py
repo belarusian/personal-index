@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import json
 import os
-import pytest
 
+from personal_index.bookmarks import BookmarkManager
 from personal_index.importer import Importer, ImportResult
-from personal_index.bookmarks import Bookmark, BookmarkManager
 
 
 class TestImportResult:
@@ -243,7 +242,6 @@ class TestImporterContent:
 
 def test_importer_uses_defusedxml():
     """Verify importer.py uses defusedxml for safe XML parsing (TICKET-62)."""
-    import os
     importer_path = os.path.join(os.path.dirname(__file__), "..", "personal_index", "importer.py")
     with open(importer_path) as f:
         source = f.read()
@@ -253,7 +251,6 @@ def test_importer_uses_defusedxml():
 
 def test_rss_uses_defusedxml():
     """Verify rss.py uses defusedxml for safe XML parsing (TICKET-62)."""
-    import os
     rss_path = os.path.join(os.path.dirname(__file__), "..", "personal_index", "rss.py")
     with open(rss_path) as f:
         source = f.read()
@@ -262,7 +259,6 @@ def test_rss_uses_defusedxml():
 
 def test_sitemap_uses_defusedxml():
     """Verify sitemap.py uses defusedxml for safe XML parsing (TICKET-62)."""
-    import os
     sitemap_path = os.path.join(os.path.dirname(__file__), "..", "personal_index", "sitemap.py")
     with open(sitemap_path) as f:
         source = f.read()

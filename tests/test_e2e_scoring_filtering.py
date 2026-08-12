@@ -6,8 +6,6 @@ throughout the pipeline, including interest matching and threshold filtering.
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer, ScoreWeights
 from personal_index.interests import InterestStore

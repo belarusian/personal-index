@@ -1,15 +1,14 @@
 """Tests for URL utility functions."""
 
-import pytest
 
 from personal_index.url_utils import (
+    extract_domain,
+    get_url_depth,
+    is_excluded_url,
+    is_same_domain,
     is_valid_url,
     normalize_url,
     resolve_relative_url,
-    extract_domain,
-    is_excluded_url,
-    get_url_depth,
-    is_same_domain,
 )
 
 

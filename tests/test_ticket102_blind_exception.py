@@ -5,8 +5,6 @@ from __future__ import annotations
 import ast
 import os
 
-import pytest
-
 
 def _read_file(path: str) -> str:
     """Read file content."""

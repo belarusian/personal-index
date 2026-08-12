@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.content_scoring import ContentScorer
 from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
@@ -21,7 +19,7 @@ class TestScoringIntegrationE2E:
             priority=10,
         ))
         
-        scorer = ContentScorer()
+        ContentScorer()
         
         # Page with high keyword match
         page1 = CrawledPage(

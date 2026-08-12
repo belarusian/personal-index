@@ -1,14 +1,11 @@
 """Tests for configuration management."""
 
-import json
-import pytest
-from pathlib import Path
 from personal_index.config import (
-    Interest,
-    CrawlConfig,
-    SchedulerConfig,
     AppConfig,
     ConfigManager,
+    CrawlConfig,
+    Interest,
+    SchedulerConfig,
 )
 
 

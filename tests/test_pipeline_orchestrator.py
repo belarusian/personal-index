@@ -7,17 +7,9 @@ using local files (no network required).
 from __future__ import annotations
 
 import os
-import tempfile
-from pathlib import Path
-
-import pytest
 
 from personal_index.config.pipeline_config import PipelineConfig
-from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
-from personal_index.models import CrawledPage
 from personal_index.pipeline_orchestrator import PipelineOrchestrator, PipelineResult
-from personal_index.tags import TagStore
 
 
 class TestPipelineOrchestratorInit:

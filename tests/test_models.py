@@ -1,7 +1,6 @@
 """Tests for data models."""
 
-import pytest
-from personal_index.models import Interest, CrawlConfig, IndexedPage, SearchResult
+from personal_index.models import CrawlConfig, IndexedPage, Interest, SearchResult
 
 
 class TestInterest:

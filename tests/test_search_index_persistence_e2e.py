@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import json
 import os
-import tempfile
-
-import pytest
 
 from personal_index.index import SearchIndex
-from personal_index.models import CrawledPage, IndexedPage
+from personal_index.models import CrawledPage
 
 
 class TestSearchIndexPersistenceE2E:

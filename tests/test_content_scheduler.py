@@ -1,8 +1,10 @@
 """Tests for content_scheduler module."""
 
-import pytest
 from datetime import datetime, timedelta, timezone
-from personal_index.content_scheduler import TaskScheduler, ScheduledTask, TaskStatus
+
+import pytest
+
+from personal_index.content_scheduler import TaskScheduler, TaskStatus
 
 
 @pytest.fixture
@@ -178,7 +180,7 @@ class TestTaskExecution:
         assert len(due_results) == 0
 
     def test_run_due_tasks_skips_not_due(self, scheduler):
-        task = scheduler.add_task("T", "crawl", "* * * * *")
+        scheduler.add_task("T", "crawl", "* * * * *")
         # next_run is in the future (default)
         due_results = scheduler.run_due_tasks()
         assert len(due_results) == 0

@@ -32,9 +32,10 @@ class TestDeadCodeRemoved(unittest.TestCase):
 
     def test_remaining_functions_still_work(self):
         """Ensure pin_content and unpin_content still work after removal."""
-        from personal_index.content_pin import pin_content, unpin_content, ContentPinner
-        import tempfile
         import os
+        import tempfile
+
+        from personal_index.content_pin import ContentPinner
 
         # Use a temp file to avoid polluting the default storage
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
