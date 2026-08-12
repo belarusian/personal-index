@@ -1,454 +1,225 @@
-"""Content priority scoring - score content importance."""
+"""Content priority scoring for personal-index.
+
+Assigns priority levels to content based on multiple factors
+including recency, score, interest match, and user engagement.
+"""
 
 from __future__ import annotations
 
-import logging
-import math
-from contextlib import suppress
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-logger = logging.getLogger(__name__)
 
-
-class PriorityLevel(str, Enum):
-    """Priority levels for content."""
-
+class PriorityLevel(Enum):
+    """Priority level for content items."""
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-
-    @property
-    def numeric_value(self) -> int:
-        """Numeric value for ordering."""
-        return {
-            "critical": 4,
-            "high": 3,
-            "medium": 2,
-            "low": 1,
-        }.get(self.value, 0)
-
-    def __gt__(self, other: object) -> bool:  # type: ignore[override]
-        """Compare priority levels (greater than)."""
-        if not isinstance(other, PriorityLevel):
-            return NotImplemented
-        return self.numeric_value > other.numeric_value
-
-    def __lt__(self, other: object) -> bool:  # type: ignore[override]
-        """Compare priority levels (less than)."""
-        if not isinstance(other, PriorityLevel):
-            return NotImplemented
-        return self.numeric_value < other.numeric_value
-
-    @classmethod
-    def from_score(cls, score: float) -> PriorityLevel:
-        """Convert a numeric score to a priority level."""
-        if score >= 0.8:
-            return cls.CRITICAL
-        if score >= 0.6:
-            return cls.HIGH
-        if score >= 0.3:
-            return cls.MEDIUM
-        return cls.LOW
-
-
-@dataclass
-class PriorityScore:
-    """Detailed priority score breakdown."""
-
-    total: float
-    relevance: float
-    freshness: float
-    authority: float
-    engagement: float
-    topical: float
-
-    @property
-    def level(self) -> PriorityLevel:
-        """Get the priority level for this score."""
-        return PriorityLevel.from_score(self.total)
-
-    def __gt__(self, other: PriorityScore) -> bool:
-        """Compare priority levels (greater than)."""
-        return self.total > other.total
-
-    def __lt__(self, other: PriorityScore) -> bool:
-        """Compare priority levels (less than)."""
-        return self.total < other.total
-
-    def __ge__(self, other: PriorityScore) -> bool:
-        """Compare priority scores (greater or equal)."""
-        return self.total >= other.total
-
-    def __le__(self, other: PriorityScore) -> bool:
-        """Compare priority scores (less or equal)."""
-        return self.total <= other.total
-
-
-@dataclass
-class ContentPriority:
-    """A content item with its priority score."""
-
-    score: PriorityScore
-    url: str = ""
-    title: str = ""
-    metadata: dict = field(default_factory=dict, compare=False)
-
-    def __gt__(self, other: ContentPriority) -> bool:
-        """Compare priority levels (greater than)."""
-        return self.score.total > other.score.total
-
-    def __lt__(self, other: ContentPriority) -> bool:
-        """Compare priority levels (less than)."""
-        return self.score.total < other.score.total
-
-    def __ge__(self, other: ContentPriority) -> bool:
-        """Compare priority scores (greater or equal)."""
-        return self.score.total >= other.score.total
-
-    def __le__(self, other: ContentPriority) -> bool:
-        """Compare priority scores (less or equal)."""
-        return self.score.total <= other.score.total
+    ARCHIVE = "archive"
 
 
 @dataclass
 class PriorityConfig:
-    """Configuration for priority scoring weights."""
+    """Configuration for priority scoring."""
+    recency_weight: float = 0.2
+    score_weight: float = 0.3
+    interest_weight: float = 0.3
+    engagement_weight: float = 0.2
+    critical_threshold: float = 0.8
+    high_threshold: float = 0.6
+    medium_threshold: float = 0.4
+    low_threshold: float = 0.2
 
-    relevance_weight: float = 0.3
-    freshness_weight: float = 0.2
-    authority_weight: float = 0.2
-    engagement_weight: float = 0.15
-    topical_weight: float = 0.15
+
+@dataclass
+class PriorityResult:
+    """Result of priority calculation."""
+    url: str
+    title: str
+    priority: PriorityLevel
+    score: float
+    breakdown: dict[str, float] = field(default_factory=dict)
+    factors: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "url": self.url,
+            "title": self.title,
+            "priority": self.priority.value,
+            "score": round(self.score, 4),
+            "breakdown": {k: round(v, 4) for k, v in self.breakdown.items()},
+            "factors": self.factors,
+        }
 
 
-class PriorityScorer:
-    """Score content importance based on multiple factors.
+class PriorityCalculator:
+    """Calculates content priority based on multiple factors.
 
-    Evaluates content based on relevance (keyword matching),
-    freshness (publication date), authority (domain trust),
-    engagement (views, likes, shares), and topical relevance
-    (user interest alignment).
+    Considers recency, content score, interest match, and
+    engagement metrics to determine priority level.
     """
 
-    def __init__(self, config: PriorityConfig | None = None) -> None:
-        """Initialize PriorityScorer with optional config.
-
-        Args:
-            config: Priority scoring configuration.
-        """
+    def __init__(self, config: PriorityConfig | None = None):
         self.config = config or PriorityConfig()
 
-    def score(self, content: dict[str, Any]) -> PriorityScore:
-        """Score a single content item.
+    def calculate(
+        self,
+        url: str,
+        title: str,
+        content_score: float = 0.0,
+        interest_matches: list[str] | None = None,
+        view_count: int = 0,
+        days_since_indexed: float = 0.0,
+        tags: list[str] | None = None,
+    ) -> PriorityResult:
+        """Calculate priority for a content item.
 
         Args:
-            content: Dict with content metadata.
+            url: Content URL.
+            title: Content title.
+            content_score: Base content score (0-10).
+            interest_matches: List of matched interest names.
+            view_count: Number of times content has been viewed.
+            days_since_indexed: Days since content was indexed.
+            tags: Content tags.
 
         Returns:
-            PriorityScore with total and breakdown.
+            PriorityResult with calculated priority and breakdown.
         """
-        relevance = self._score_relevance(content)
-        freshness = self._score_freshness(content)
-        authority = self._score_authority(content)
-        engagement = self._score_engagement(content)
-        topical = self._score_topical(content)
+        factors = []
+        breakdown: dict[str, float] = {}
 
+        # Factor 1: Recency score (newer = higher)
+        recency_score = self._recency_score(days_since_indexed)
+        breakdown["recency"] = recency_score
+        if recency_score > 0.7:
+            factors.append("recently indexed")
+
+        # Factor 2: Content score (normalized to 0-1)
+        score_normalized = min(content_score / 10.0, 1.0)
+        breakdown["content_score"] = score_normalized
+        if score_normalized > 0.7:
+            factors.append("high content score")
+
+        # Factor 3: Interest match
+        interest_score = self._interest_score(interest_matches or [])
+        breakdown["interest_match"] = interest_score
+        if interest_matches:
+            factors.append(f"matches interests: {', '.join(interest_matches[:3])}")
+
+        # Factor 4: Engagement
+        engagement_score = self._engagement_score(view_count)
+        breakdown["engagement"] = engagement_score
+        if view_count > 10:
+            factors.append(f"high engagement ({view_count} views)")
+
+        # Weighted combination
         total = (
-            relevance * self.config.relevance_weight
-            + freshness * self.config.freshness_weight
-            + authority * self.config.authority_weight
-            + engagement * self.config.engagement_weight
-            + topical * self.config.topical_weight
+            recency_score * self.config.recency_weight
+            + score_normalized * self.config.score_weight
+            + interest_score * self.config.interest_weight
+            + engagement_score * self.config.engagement_weight
         )
 
-        return PriorityScore(
-            total=round(total, 4),
-            relevance=round(relevance, 4),
-            freshness=round(freshness, 4),
-            authority=round(authority, 4),
-            engagement=round(engagement, 4),
-            topical=round(topical, 4),
+        # Determine priority level
+        priority = self._level_for_score(total)
+
+        return PriorityResult(
+            url=url,
+            title=title,
+            priority=priority,
+            score=total,
+            breakdown=breakdown,
+            factors=factors,
         )
 
-    def score_batch(self, items: list[dict[str, Any]]) -> list[PriorityScore]:
-        """Score multiple content items.
+    def _recency_score(self, days_since_indexed: float) -> float:
+        """Calculate recency score (0-1, higher = more recent).
 
-        Args:
-            items: List of content dicts.
-
-        Returns:
-            List of PriorityScore objects.
+        Uses exponential decay: score = e^(-days/30)
         """
-        return [self.score(item) for item in items]
+        import math
+        return math.exp(-days_since_indexed / 30.0)
 
-    def rank(
-        self, items: list[dict[str, Any]]
-    ) -> list[ContentPriority]:
-        """Score and rank content items by priority.
+    def _interest_score(self, matches: list[str]) -> float:
+        """Calculate interest match score (0-1).
 
-        Args:
-            items: List of content dicts.
-
-        Returns:
-            List of ContentPriority sorted by score descending.
+        Score increases with number of matches, capped at 1.0.
         """
-        priorities: list[ContentPriority] = []
-        for item in items:
-            score = self.score(item)
-            priorities.append(
-                ContentPriority(
-                    score=score,
-                    url=item.get("url", ""),
-                    title=item.get("title", ""),
-                    metadata={k: v for k, v in item.items() if k not in ("url", "title")},
-                )
-            )
-        priorities.sort(key=lambda p: p.score.total, reverse=True)
-        return priorities
-
-    def _score_relevance(self, content: dict[str, Any]) -> float:
-        """Score based on keyword relevance (0-1)."""
-        keywords = content.get("keywords", [])
-        if not keywords:
-            return 0.1
-
-        text = (
-            (content.get("title", "") or "")
-            + " "
-            + (content.get("content", "") or "")
-        ).lower()
-
-        if not text:
+        if not matches:
             return 0.0
+        # Each match adds 0.25, capped at 1.0
+        return min(len(matches) * 0.25, 1.0)
 
-        matches = sum(1 for kw in keywords if kw.lower() in text)
-        return min(matches / max(len(keywords), 1), 1.0)
+    def _engagement_score(self, view_count: int) -> float:
+        """Calculate engagement score (0-1).
 
-    def _score_freshness(self, content: dict[str, Any]) -> float:
-        """Score based on content freshness (0-1).
-
-        Recent content scores higher. Content older than 1 year
-        gets minimal freshness score.
+        Uses logarithmic scaling: score = log(1 + views) / log(101)
         """
-        date_str = content.get("published_date")
-        if not date_str:
-            return 0.3  # Default for unknown dates
+        import math
+        if view_count <= 0:
+            return 0.0
+        return math.log(1 + view_count) / math.log(101)
 
-        try:
-            if isinstance(date_str, str):
-                published = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-            else:
-                published = date_str
-        except (ValueError, TypeError):
-            return 0.3
+    def _level_for_score(self, score: float) -> PriorityLevel:
+        """Determine priority level from score."""
+        if score >= self.config.critical_threshold:
+            return PriorityLevel.CRITICAL
+        elif score >= self.config.high_threshold:
+            return PriorityLevel.HIGH
+        elif score >= self.config.medium_threshold:
+            return PriorityLevel.MEDIUM
+        elif score >= self.config.low_threshold:
+            return PriorityLevel.LOW
+        else:
+            return PriorityLevel.ARCHIVE
 
-        now = datetime.now(timezone.utc)
-        if published.tzinfo is None:
-            published = published.replace(tzinfo=timezone.utc)
-
-        age_days = (now - published).total_seconds() / 86400
-
-        if age_days < 0:
-            return 1.0  # Future-dated content
-
-        # Exponential decay: half-life of 30 days
-        freshness = max(0.0, 2 ** (-age_days / 30))
-        return min(freshness, 1.0)
-
-    def _score_authority(self, content: dict[str, Any]) -> float:
-        """Score based on domain authority (0-1)."""
-        authority = content.get("domain_authority")
-        if authority is None:
-            # Infer from URL patterns
-            url = content.get("url", "")
-            authority = self._estimate_domain_authority(url)
-
-        return min(max(authority / 100, 0.0), 1.0)
-
-    def _estimate_domain_authority(self, url: str) -> float:
-        """Estimate domain authority from URL patterns."""
-        known_high_authority = {
-            "wikipedia.org", "github.com", "stackoverflow.com",
-            "medium.com", "nytimes.com", "bbc.com", "reuters.com",
-            "arxiv.org", "nature.com", "ieee.org",
-        }
-        known_medium = {
-            "dev.to", "hashnode.com", "substack.com",
-            "linkedin.com", "twitter.com",
-        }
-
-        domain = ""
-        with suppress(IndexError):
-            domain = url.split("//")[-1].split("/")[0].split(":")[0]
-
-        if domain in known_high_authority:
-            return 85
-        if domain in known_medium:
-            return 60
-        if domain:
-            return 30  # Default for unknown domains
-        return 10
-
-    def _score_engagement(self, content: dict[str, Any]) -> float:
-        """Score based on engagement metrics (0-1)."""
-        views = content.get("views", 0) or 0
-        likes = content.get("likes", 0) or 0
-        shares = content.get("shares", 0) or 0
-
-        if views == 0 and likes == 0 and shares == 0:
-            return 0.1  # Default for no engagement data
-
-        # Normalize: log scale to handle wide ranges
-        view_score = min(math.log1p(views) / math.log1p(10000), 1.0)
-        like_score = min(math.log1p(likes) / math.log1p(1000), 1.0)
-        share_score = min(math.log1p(shares) / math.log1p(500), 1.0)
-
-        # Weighted average
-        engagement = (
-            view_score * 0.4
-            + like_score * 0.35
-            + share_score * 0.25
-        )
-        return min(engagement, 1.0)
-
-    def _score_topical(self, content: dict[str, Any]) -> float:
-        """Score based on topical relevance to user interests (0-1)."""
-        user_interests = content.get("user_interests", [])
-        if not user_interests:
-            return 0.5  # Neutral when no interests defined
-
-        tags = [t.lower() for t in (content.get("tags", []) or [])]
-        title = (content.get("title", "") or "").lower()
-        content_text = (content.get("content", "") or "").lower()
-
-        interests_lower = [i.lower() for i in user_interests]
-        matches: float = 0.0
-
-        for interest in interests_lower:
-            # Check tags
-            if interest in tags:
-                matches += 2  # Tags are strong signals
-            # Check title
-            elif interest in title:
-                matches += 1.5
-            # Check content
-            elif interest in content_text:
-                matches += 1
-
-        if not interests_lower:
-            return 0.5
-
-        max_possible = len(interests_lower) * 2
-        return min(matches / max(max_possible, 1), 1.0)
-
-
-class PriorityFilter:
-    """Filter and sort content by priority level."""
-
-    def __init__(self, scorer: PriorityScorer | None = None) -> None:
-        """Initialize PriorityScorer with optional config.
-
-        Args:
-            config: Priority scoring configuration.
-        """
-        self.scorer = scorer or PriorityScorer()
-
-    def filter_by_level(
+    def batch_calculate(
         self,
         items: list[dict[str, Any]],
-        min_level: PriorityLevel,
-    ) -> list[ContentPriority]:
-        """Filter items to only those meeting minimum priority level.
+    ) -> list[PriorityResult]:
+        """Calculate priority for multiple items.
 
         Args:
-            items: List of content dicts.
-            min_level: Minimum priority level to include.
+            items: List of item dicts with keys:
+                url, title, content_score, interest_matches,
+                view_count, days_since_indexed, tags.
 
         Returns:
-            List of ContentPriority items meeting the threshold.
+            List of PriorityResult objects sorted by score descending.
         """
-        ranked = self.scorer.rank(items)
-        return [
-            p for p in ranked
-            if p.score.level.numeric_value >= min_level.numeric_value
-        ]
-
-    def get_top_n(
-        self,
-        items: list[dict[str, Any]],
-        n: int = 10,
-    ) -> list[ContentPriority]:
-        """Get top N highest priority content items.
-
-        Args:
-            items: List of content dicts.
-            n: Number of items to return.
-
-        Returns:
-            List of top N ContentPriority items.
-        """
-        ranked = self.scorer.rank(items)
-        return ranked[:n]
-
-    def group_by_level(
-        self, items: list[dict[str, Any]]
-    ) -> dict[PriorityLevel, list[ContentPriority]]:
-        """Group items by their priority level.
-
-        Args:
-            items: List of content dicts.
-
-        Returns:
-            Dict mapping PriorityLevel to list of ContentPriority items.
-        """
-        ranked = self.scorer.rank(items)
-        groups: dict[PriorityLevel, list[ContentPriority]] = {
-            level: [] for level in PriorityLevel
-        }
-        for item in ranked:
-            groups[item.score.level].append(item)
-        return groups
-# Convenience functions for backward compatibility
-
-
-def calculate_priority(item_id: str, content_text: str | None = None) -> float:
-    """Calculate priority score for an item.
-
-    Args:
-        item_id: ID of the item.
-        content_text: Optional content text to analyze.
-
-    Returns:
-        Priority score as a float.
-    """
-    scorer = PriorityScorer()
-    content_data = {"url": item_id, "title": item_id}
-    if content_text:
-        content_data["content"] = content_text
-    score = scorer.score(content_data)
-    return score.total
-
-
-def sort_by_priority(items: list[str], scores: dict[str, float] | None = None) -> list[str]:
-    """Sort items by priority score.
-
-    Args:
-        items: List of item IDs to sort.
-        scores: Optional dict mapping item IDs to scores.
-
-    Returns:
-        Items sorted by priority (highest first).
-    """
-    if scores is None:
-        scorer = PriorityScorer()
-        scores = {}
+        results = []
         for item in items:
-            content_data = {"url": item, "title": item}
-            score_obj = scorer.score(content_data)
-            scores[item] = score_obj.total
-    
-    return sorted(items, key=lambda x: scores.get(x, 0.0), reverse=True)
+            result = self.calculate(
+                url=item.get("url", ""),
+                title=item.get("title", ""),
+                content_score=item.get("content_score", 0.0),
+                interest_matches=item.get("interest_matches", []),
+                view_count=item.get("view_count", 0),
+                days_since_indexed=item.get("days_since_indexed", 0.0),
+                tags=item.get("tags", []),
+            )
+            results.append(result)
+
+        results.sort(key=lambda r: r.score, reverse=True)
+        return results
+
+    def get_summary(
+        self,
+        results: list[PriorityResult],
+    ) -> dict[str, int]:
+        """Get a summary of priority distribution.
+
+        Args:
+            results: List of PriorityResult objects.
+
+        Returns:
+            Dict mapping priority level names to counts.
+        """
+        summary: dict[str, int] = {}
+        for result in results:
+            level = result.priority.value
+            summary[level] = summary.get(level, 0) + 1
+        return summary
