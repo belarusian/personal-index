@@ -1,6 +1,6 @@
 """Tests for the content notification module."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from personal_index.content_notifications import (
     Notification,
@@ -57,7 +57,7 @@ class TestNotification:
             notification_type=NotificationType.NEW_BOOKMARK,
             title="New Bookmark",
             message="A new bookmark was added.",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(tz=timezone.utc),
         )
         assert n.delivered is False
 
@@ -67,7 +67,7 @@ class TestNotification:
             notification_type=NotificationType.NEW_BOOKMARK,
             title="Test",
             message="Message",
-            timestamp=datetime(2024, 1, 1),
+            timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
             channels=[NotificationChannel.LOG],
         )
         d = n.to_dict()
@@ -207,7 +207,7 @@ class TestNotificationManager:
         assert recent[0].notification_type == NotificationType.NEW_BOOKMARK
 
     def test_clear_old(self) -> None:
-        old_time = datetime.now() - timedelta(hours=1)
+        old_time = datetime.now(tz=timezone.utc) - timedelta(hours=1)
         self.manager.notifications.append(Notification(
             notification_id="old",
             notification_type=NotificationType.NEW_BOOKMARK,
@@ -220,8 +220,8 @@ class TestNotificationManager:
             notification_type=NotificationType.NEW_BOOKMARK,
             title="New",
             message="New notification",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(tz=timezone.utc),
         ))
-        cleared = self.manager.clear_old(datetime.now() - timedelta(minutes=30))
+        cleared = self.manager.clear_old(datetime.now(tz=timezone.utc) - timedelta(minutes=30))
         assert cleared == 1
         assert len(self.manager.notifications) == 1

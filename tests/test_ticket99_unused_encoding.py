@@ -16,9 +16,8 @@ class TestUnusedEncoding(unittest.TestCase):
         for node in ast.walk(tree):
             if isinstance(node, ast.Assign):
                 for target in node.targets:
-                    if isinstance(target, ast.Tuple) and len(target.elts) == 2:
+                    if isinstance(target, ast.Tuple) and len(target.elts) == 2 and isinstance(node.value, ast.Call):
                         # Check if the value is a call to mimetypes.guess_type
-                        if isinstance(node.value, ast.Call):
                             func = node.value.func
                             if isinstance(func, ast.Attribute) and func.attr == "guess_type":
                                 # Second element should be underscore (unused)

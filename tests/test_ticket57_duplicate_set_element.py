@@ -4,15 +4,15 @@ import ast
 
 def test_negative_words_no_duplicates_in_source():
     """NEGATIVE_WORDS set should have no duplicate elements in source code."""
-    source = open("personal_index/content_enricher.py").read()
+    with open("personal_index/content_enricher.py") as f:
+        source = f.read()
     tree = ast.parse(source)
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "ContentEnricher":
             for item in node.body:
                 if isinstance(item, ast.Assign):
                     for target in item.targets:
-                        if isinstance(target, ast.Name) and target.id == "NEGATIVE_WORDS":
-                            if isinstance(item.value, ast.Set):
+                        if isinstance(target, ast.Name) and target.id == "NEGATIVE_WORDS" and isinstance(item.value, ast.Set):
                                 elts = [
                                     e.value for e in item.value.elts
                                     if isinstance(e, ast.Constant)
@@ -25,7 +25,8 @@ def test_negative_words_no_duplicates_in_source():
 
 def test_negative_words_no_wrong_duplicate():
     """Verify 'wrong' appears only once in NEGATIVE_WORDS source."""
-    source = open("personal_index/content_enricher.py").read()
+    with open("personal_index/content_enricher.py") as f:
+        source = f.read()
     # Count occurrences of "wrong" in the NEGATIVE_WORDS set definition
     lines = source.split("\n")
     in_negative = False

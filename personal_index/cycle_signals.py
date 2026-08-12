@@ -142,7 +142,7 @@ def signal_duplicates(modules: list[dict]) -> list[dict]:
     results = []
     for stem, names in stems.items():
         if len(names) >= 2:
-            unique_stems = set(n.rpartition(".")[2] for n in names)
+            unique_stems = {n.rpartition(".")[2] for n in names}
             if len(unique_stems) >= 2:
                 results.append({
                     "stem": stem,

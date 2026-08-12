@@ -1,6 +1,6 @@
 """Tests for the content batch processing module."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from personal_index.content_batch import BatchProcessor, BatchResult
 
@@ -23,8 +23,8 @@ class TestBatchResult:
             batch_id="b1",
             total_items=10,
             processed=8,
-            started_at=datetime(2024, 1, 1),
-            completed_at=datetime(2024, 1, 1, 0, 0, 5),
+            started_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 1, 1, 0, 0, 5, tzinfo=timezone.utc),
         )
         d = result.to_dict()
         assert d["batch_id"] == "b1"

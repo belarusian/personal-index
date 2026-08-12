@@ -13,9 +13,8 @@ def _find_fstring_violations(tree: ast.AST):
     # First, collect all JoinedStr nodes that are format specs (nested)
     format_spec_lines = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.FormattedValue) and node.format_spec:
-            if isinstance(node.format_spec, ast.JoinedStr):
-                format_spec_lines.add(id(node.format_spec))
+        if isinstance(node, ast.FormattedValue) and node.format_spec and isinstance(node.format_spec, ast.JoinedStr):
+            format_spec_lines.add(id(node.format_spec))
 
     violations = []
     for node in ast.walk(tree):

@@ -140,15 +140,15 @@ class TestScheduleStore:
         entry = ScheduleEntry(
             name="daily",
             config=config,
-            last_run=datetime(2024, 1, 1, 12, 0),
-            next_run=datetime(2024, 1, 2, 12, 0),
+            last_run=datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc),
+            next_run=datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc),
         )
         store1.add(entry)
 
         store2 = ScheduleStore(path=schedule_store_path)
         loaded = store2.get("daily")
-        assert loaded.last_run == datetime(2024, 1, 1, 12, 0)
-        assert loaded.next_run == datetime(2024, 1, 2, 12, 0)
+        assert loaded.last_run == datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
+        assert loaded.next_run == datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
 
 
 class TestScheduler:
@@ -201,12 +201,12 @@ class TestScheduler:
     def test_update_next_run_times(self, scheduler):
         scheduler.add_schedule("test", ["https://example.com"])
         entry = scheduler.schedule_store.get("test")
-        entry.last_run = datetime(2024, 1, 1, 12, 0)
+        entry.last_run = datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
         scheduler.schedule_store.update(entry)
 
         scheduler.update_next_run_times()
         updated = scheduler.schedule_store.get("test")
-        assert updated.next_run == datetime(2024, 1, 2, 12, 0)
+        assert updated.next_run == datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
 
     def test_run_schedule_disabled(self, scheduler):
         scheduler.add_schedule("test", ["https://example.com"])

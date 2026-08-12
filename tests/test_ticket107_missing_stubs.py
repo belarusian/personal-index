@@ -20,6 +20,7 @@ class TestTicket107MissingStubs:
              "--no-error-summary"],
             capture_output=True,
             text=True,
+            check=False,
         )
         assert "defusedxml" not in result.stdout or "stub" not in result.stdout, (
             f"defusedxml stub errors found:\n{result.stdout}"
@@ -35,6 +36,7 @@ class TestTicket107MissingStubs:
              "--no-error-summary"],
             capture_output=True,
             text=True,
+            check=False,
         )
         assert "requests" not in result.stdout or "stub" not in result.stdout, (
             f"requests stub errors found:\n{result.stdout}"
@@ -48,6 +50,7 @@ class TestTicket107MissingStubs:
              "--no-error-summary"],
             capture_output=True,
             text=True,
+            check=False,
         )
         assert "yaml" not in result.stdout or "stub" not in result.stdout, (
             f"yaml stub errors found:\n{result.stdout}"

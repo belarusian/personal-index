@@ -4,7 +4,8 @@ import ast
 
 def test_importlib_util_imported():
     """migrations/base.py should import importlib.util, not just importlib."""
-    source = open("personal_index/migrations/base.py").read()
+    with open("personal_index/migrations/base.py") as f:
+        source = f.read()
     tree = ast.parse(source)
     imports = []
     for node in ast.walk(tree):

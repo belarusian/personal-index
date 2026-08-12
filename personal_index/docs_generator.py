@@ -1312,8 +1312,32 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
     # Fetch recent commits
     commits = fetch_recent_commits(20)
 
+<<<<<<< HEAD
     data = _build_dashboard_data(modules, test_modules, test_summary, dep_graph, commits)
     return _write_dashboard(data, output)
+=======
+    # Aggregate
+    total_source_lines = sum(m.line_count for m in modules)
+    total_test_lines = sum(m.line_count for m in test_modules) if test_modules else 0
+    test_module_names = [m.module_name for m in test_modules] if test_modules else []
+
+    data = DashboardData(
+        modules=modules,
+        total_modules=len(modules),
+        total_lines=total_source_lines + total_test_lines,
+        total_test_lines=total_test_lines,
+        total_classes=sum(len(m.classes) for m in modules),
+        total_functions=sum(len(m.functions) + sum(len(c.methods) for c in m.classes) for m in modules),
+        total_tests=total_tests,
+        total_ruff_errors=sum(len(m.ruff_errors) for m in modules),
+        total_ruff_warnings=sum(len(m.ruff_warnings) for m in modules),
+        total_mypy_errors=sum(len(m.mypy_errors) for m in modules),
+        dependency_graph=dep_graph,
+        test_results=test_summary,
+        commits=commits,
+        test_module_names=test_module_names,
+    )
+>>>>>>> origin/main
 
 
 def generate_fast(root: str = "personal_index", output: str = "personal_index/docs_dashboard.html") -> str:

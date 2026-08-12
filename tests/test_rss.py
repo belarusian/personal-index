@@ -234,6 +234,5 @@ def test_rss_no_ambiguous_variable_names():
         source = f.read()
     tree = ast.parse(source)
     for node in ast.walk(tree):
-        if isinstance(node, ast.For):
-            if isinstance(node.target, ast.Name) and node.target.id == "l":
-                raise AssertionError("Ambiguous variable name 'l' found in for-loop")
+        if isinstance(node, ast.For) and isinstance(node.target, ast.Name) and node.target.id == "l":
+            raise AssertionError("Ambiguous variable name 'l' found in for-loop")

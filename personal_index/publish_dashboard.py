@@ -122,7 +122,7 @@ def publish(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool =
             )
             if result.returncode == 0:
                 signals_path.write_text(result.stdout, encoding="utf-8")
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             print(f"[publish] WARNING: signal extraction failed: {e}", file=sys.stderr)
 
     # Git commit + push
@@ -151,7 +151,7 @@ def publish(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool =
     run(["git", "commit", "-m", msg], cwd=search_repo)
     run(["git", "push", "origin", "HEAD"], cwd=search_repo)
 
-    print(f"[publish] Done. Dashboard live at: https://belarusian.github.io/search/")
+    print("[publish] Done. Dashboard live at: https://belarusian.github.io/search/")
 
 
 def main() -> None:
