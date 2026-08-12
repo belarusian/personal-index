@@ -1,0 +1,44 @@
+data_dir: .personal_index
+config_dir: ''
+crawler:
+  max_depth: 5
+  politeness_delay: 1.0
+  rate_limit: 10
+  respect_robots_txt: true
+  timeout: 30
+  user_agent: personal-index/0.1.0
+  max_pages_per_domain: 100
+  allowed_extensions:
+  - .html
+  - .htm
+  - .xml
+  follow_redirects: true
+  max_redirects: 5
+index:
+  enable_stemming: true
+  index_path: .personal_index
+  min_term_length: 2
+  max_index_size: 100000
+  enable_fuzzy_search: true
+  fuzzy_threshold: 0.8
+scheduler:
+  enabled: false
+  interval_hours: 24
+  max_concurrent_jobs: 3
+  retry_count: 3
+  retry_delay_seconds: 60
+  log_file: .personal_index/scheduler.log
+notifications:
+  enabled: false
+  email: ''
+  webhook_url: ''
+  min_score: 0.5
+  digest_interval_hours: 24
+export:
+  default_format: markdown
+  output_dir: exports
+  include_scores: true
+  include_tags: true
+  max_items: 1000
+interests: []
+log_level: INFO
