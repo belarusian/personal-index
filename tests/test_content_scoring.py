@@ -113,12 +113,12 @@ class TestContentScorer:
         ).authority
 
     def test_score_recency_new_content(self) -> None:
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         result = self.scorer.score(published_at=now)
         assert result.recency > 0.9
 
     def test_score_recency_old_content(self) -> None:
-        old = datetime.now() - timedelta(days=365)
+        old = datetime.now(tz=timezone.utc) - timedelta(days=365)
         result = self.scorer.score(published_at=old)
         assert result.recency < 0.1
 
@@ -146,18 +146,18 @@ class TestContentScorer:
 
     def test_score_freshness_never(self) -> None:
         result = self.scorer.score(
-            last_crawled=datetime.now(), change_frequency="never",
+            last_crawled=datetime.now(tz=timezone.utc), change_frequency="never",
         )
         assert result.freshness == 1.0
 
     def test_score_freshness_recent(self) -> None:
         result = self.scorer.score(
-            last_crawled=datetime.now(), change_frequency="daily",
+            last_crawled=datetime.now(tz=timezone.utc), change_frequency="daily",
         )
         assert result.freshness > 0.9
 
     def test_score_freshness_stale(self) -> None:
-        old = datetime.now() - timedelta(days=100)
+        old = datetime.now(tz=timezone.utc) - timedelta(days=100)
         result = self.scorer.score(
             last_crawled=old, change_frequency="daily",
         )
