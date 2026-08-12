@@ -18,6 +18,54 @@ class FuzzyMatch:
             self.matched_indices = []
 
 
+def levenshtein_distance(s1: str, s2: str) -> int:
+    """Compute the Levenshtein edit distance between two strings.
+
+    Uses the Wagner-Fischer algorithm with O(min(len(s1), len(s2))) space.
+    """
+    if s1 == s2:
+        return 0
+    if not s1:
+        return len(s2)
+    if not s2:
+        return len(s1)
+
+    # Ensure s1 is the shorter string for memory efficiency
+    if len(s1) > len(s2):
+        s1, s2 = s2, s1
+
+    prev_row = list(range(len(s1) + 1))
+    for j, c2 in enumerate(s2, 1):
+        curr_row = [j]
+        for i, c1 in enumerate(s1, 1):
+            if c1 == c2:
+                curr_row.append(prev_row[i - 1])
+            else:
+                curr_row.append(1 + min(
+                    prev_row[i],      # deletion
+                    curr_row[i - 1],  # insertion
+                    prev_row[i - 1],  # substitution
+                ))
+        prev_row = curr_row
+
+    return prev_row[-1]
+
+
+def levenshtein_similarity(s1: str, s2: str) -> float:
+    """Compute similarity score (0.0 to 1.0) based on Levenshtein distance.
+
+    Returns 1.0 for identical strings, 0.0 for completely different strings.
+    """
+    if not s1 and not s2:
+        return 1.0
+    if not s1 or not s2:
+        return 0.0
+
+    distance = levenshtein_distance(s1, s2)
+    max_len = max(len(s1), len(s2))
+    return 1.0 - (distance / max_len)
+
+
 class FuzzySearcher:
     """Perform fuzzy string matching for search queries."""
 
@@ -85,14 +133,20 @@ class FuzzySearcher:
         if char_score > 0:
             return char_score
 
+        # Use Levenshtein similarity for edit-distance based scoring
+        lev_score = levenshtein_similarity(query, text)
+
         # Use SequenceMatcher for overall similarity
         ratio = SequenceMatcher(None, query, text).ratio()
 
+        # Take the better of Levenshtein and SequenceMatcher
+        score = max(lev_score, ratio)
+
         # Boost if query starts match text
         if text.startswith(query[:max(1, len(query) // 2)]):
-            ratio = max(ratio, 0.7)
+            score = max(score, 0.7)
 
-        return ratio
+        return score
 
     def _char_match_score(self, query: str, text: str) -> float:
         """Score based on character-by-character matching (handles typos)."""
