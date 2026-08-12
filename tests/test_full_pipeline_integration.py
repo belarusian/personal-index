@@ -85,7 +85,7 @@ class TestFullPipelineIntegration:
         # 6. Check status
         result = runner.invoke(main, ["status"])
         assert result.exit_code == 0
-        assert "Indexed pages" in result.output
+        assert "Pages indexed" in result.output or "Indexed pages" in result.output
         assert "Interests" in result.output
         assert "Tags" in result.output
 

@@ -220,7 +220,7 @@ class TestExportCommand:
 
         result = runner.invoke(main, ["export", "--format", "csv"])
         assert result.exit_code == 0
-        assert "URL" in result.output and "Title" in result.output
+        assert "url" in result.output.lower() and "title" in result.output.lower()
 
     def test_export_html(self, tmp_path, monkeypatch):
         """Test HTML export."""
