@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-12T03:37:06Z",
+  "generated_at": "2026-08-12T04:59:47Z",
   "summary": {
     "total_modules": 212,
-    "total_lines": 35900,
+    "total_lines": 35901,
     "total_classes": 411,
     "total_functions": 1853,
     "total_tests": 4100,
@@ -13,14 +13,14 @@
     {
       "name": "personal_index.__init__",
       "filepath": "personal_index/__init__.py",
-      "status": "error",
+      "status": "clean",
       "lines": 18,
       "classes": 0,
       "functions": 0,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
-      "mypy_errors": 1,
+      "mypy_errors": 0,
       "imports": [
         "personal_index.content_api.ContentAPI",
         "personal_index.content_exporter.ContentExporter",
@@ -354,7 +354,7 @@
       "name": "personal_index.cli",
       "filepath": "personal_index/cli.py",
       "status": "clean",
-      "lines": 1400,
+      "lines": 1401,
       "classes": 0,
       "functions": 44,
       "tests": 0,
@@ -699,7 +699,7 @@
         },
         {
           "name": "config_set_crawler",
-          "line": 1192,
+          "line": 1193,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -707,7 +707,7 @@
         },
         {
           "name": "config_set_schedule",
-          "line": 1224,
+          "line": 1225,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -715,7 +715,7 @@
         },
         {
           "name": "verify",
-          "line": 1249,
+          "line": 1250,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -723,7 +723,7 @@
         },
         {
           "name": "watch",
-          "line": 1315,
+          "line": 1316,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5443,14 +5443,14 @@
     {
       "name": "personal_index.search_suggestions",
       "filepath": "personal_index/search_suggestions.py",
-      "status": "clean",
+      "status": "error",
       "lines": 398,
       "classes": 3,
       "functions": 21,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
-      "mypy_errors": 0,
+      "mypy_errors": 1,
       "imports": [
         "__future__.annotations",
         "re",
@@ -10553,122 +10553,122 @@
   },
   "commits": [
     {
-      "sha": "8898fb8",
+      "sha": "d508007",
+      "message": "remove self-referencing personal-index submodule",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "ecbcf64",
+      "message": "fix: build cleanup after codemap analysis",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "05cdb4f",
+      "message": "fix: resolve f-string syntax error in cli.py for Python 3.10",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "eaa738d",
       "message": "autonomous: save progress",
-      "author": "Dev Agent",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "14b88f2",
+      "message": "autonomous: save progress",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "7c834b3",
+      "sha": "c1a26f6",
       "message": "fix: build cleanup - 4264 tests passing, 22 skipped",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "0eb539c",
+      "sha": "1e180b4",
       "message": "autonomous: save progress",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "62c0474",
+      "sha": "99e703c",
       "message": "fix: build cleanup - 4239 tests passing, 31 failing",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "4518479",
+      "sha": "8e0bfa5",
       "message": "autonomous: save progress",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "665c093",
+      "sha": "cd31a3e",
       "message": "autonomous: save progress",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "14e084f",
+      "sha": "c4ffbe9",
       "message": "fix: remove unnecessary skips from test_tag_search_integration.py - tests use unique tmp_path and pass in isolation",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "576b908",
+      "sha": "daa4219",
       "message": "feat: add trending decay and time-based scoring to suggestions",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "0dffd10",
+      "sha": "94fd252",
       "message": "feat: add fuzzy matching to search suggestions",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "19c28f3",
+      "sha": "523d112",
       "message": "feat: add content highlighting with snippet extraction",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "0328b43",
+      "sha": "7a81c16",
       "message": "feat: add TF-IDF and BM25 ranking to content search",
-      "author": "Dev Agent",
+      "author": "belarusian",
       "date": "2026-08-11"
     },
     {
-      "sha": "103727c",
+      "sha": "9324131",
       "message": "feat: expand search and indexing capabilities",
       "author": "Sasha Malahov",
       "date": "2026-08-11"
     },
     {
-      "sha": "2563866",
+      "sha": "4f66d41",
       "message": "test: add comprehensive tests for TF-IDF, BM25, and snippet extraction",
       "author": "Sasha Malahov",
       "date": "2026-08-11"
     },
     {
-      "sha": "33fba97",
+      "sha": "0527d8f",
       "message": "fix: update test files to use correct API and fix URL pattern matching test",
       "author": "Sasha Malahov",
       "date": "2026-08-11"
     },
     {
-      "sha": "cde6af3",
+      "sha": "0e524c0",
       "message": "feat: add integration tests for export formats (JSON, HTML, CSV, Markdown)",
       "author": "Sasha Malahov",
       "date": "2026-08-11"
     },
     {
-      "sha": "048fc75",
+      "sha": "ea9b607",
       "message": "feat: add integration tests for interests workflow (add->crawl->verify scoring)",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "4a6b2b8",
-      "message": "feat: add integration tests for full pipeline end-to-end (init->crawl->extract->filter->score->tag->index->search)",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "609d729",
-      "message": "Add CLI subcommand tests for interests, tags, status",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "dcefaf0",
-      "message": "Add CLI tests with custom data directory",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "774238e",
-      "message": "Add CLI error handling tests",
       "author": "Sasha Malahov",
       "date": "2026-08-11"
     }
