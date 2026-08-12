@@ -149,7 +149,7 @@ class SearchSuggestions:
             return float(entry.count)
         age = entry.age_seconds
         decay_factor = 0.5 ** (age / self.decay_half_life)
-        return entry.count * decay_factor
+        return float(entry.count * decay_factor)
 
     def _get_trending_counts(self) -> Counter:
         """Get trending counts as a Counter for backward compatibility."""
