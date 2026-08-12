@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 from personal_index.search_facets.facet import Facet
@@ -79,6 +80,10 @@ class FacetedSearch:
                 facets.add(key)
         return sorted(facets)
 
+    def clear(self) -> None:
+        """Clear all documents."""
+        self._documents.clear()
+
     def _extract_text(self, doc: dict[str, Any]) -> str:
         """Extract searchable text from a document."""
         parts: list[str] = []
@@ -119,22 +124,7 @@ class FacetedSearch:
         if filters:
             filtered: list[dict[str, Any]] = []
             for doc in docs:
-                match = True
-                for field_name, filter_value in filters.items():
-                    doc_value = self._get_nested_value(doc, field_name)
-                    if isinstance(filter_value, list):
-                        if doc_value not in filter_value:
-                            match = False
-                            break
-                    elif isinstance(doc_value, list):
-                        if filter_value not in doc_value:
-                            match = False
-                            break
-                    else:
-                        if str(doc_value).lower() != str(filter_value).lower():
-                            match = False
-                            break
-                if match:
+                if self._matches_all_filters(doc, filters):
                     filtered.append(doc)
             docs = filtered
 
@@ -149,10 +139,6 @@ class FacetedSearch:
         facets: dict[str, Facet] = {}
         if facet_fields:
             facets = self._facet_builder.build(docs, facet_fields)
-        else:
-            available = self.get_available_facets()
-            if available:
-                facets = self._facet_builder.build(docs, available)
 
         return SearchResults(
             results=paginated,
@@ -162,12 +148,8 @@ class FacetedSearch:
             page_size=page_size,
         )
 
-    def clear(self) -> None:
-        """Clear all documents."""
-        self._documents.clear()
-
     def _get_nested_value(self, doc: dict[str, Any], field_name: str) -> Any:
-        """Get a nested value from a document."""
+        """Get a value from a document, supporting nested dot notation."""
         parts = field_name.split(".")
         current: Any = doc
         for part in parts:
@@ -176,3 +158,132 @@ class FacetedSearch:
             else:
                 return None
         return current
+
+    def _matches_all_filters(
+        self, doc: dict[str, Any], filters: dict[str, Any]
+    ) -> bool:
+        """Check if a document matches all filters."""
+        for field_name, filter_value in filters.items():
+            doc_value = self._get_nested_value(doc, field_name)
+
+            if isinstance(filter_value, dict):
+                # Range or special filter operators
+                if not self._matches_range_filter(doc_value, filter_value):
+                    return False
+            elif isinstance(filter_value, list):
+                # List filter: doc value must be in the list
+                if isinstance(doc_value, list):
+                    if not set(doc_value) & set(filter_value):
+                        return False
+                else:
+                    if doc_value not in filter_value:
+                        return False
+            else:
+                # Exact match (case-insensitive for strings)
+                if isinstance(doc_value, str) and isinstance(filter_value, str):
+                    if doc_value.lower() != filter_value.lower():
+                        return False
+                elif doc_value != filter_value:
+                    return False
+        return True
+
+    def _matches_range_filter(
+        self, doc_value: Any, filter_spec: dict[str, Any]
+    ) -> bool:
+        """Check if a value matches a range filter specification.
+
+        Supports:
+        - $gte, $lte, $gt, $lt: numeric/date comparisons
+        - $between: inclusive range [min, max]
+        - $in: membership in a list
+        - Date strings (ISO format) are parsed for comparison
+        """
+        if doc_value is None:
+            return False
+
+        # Parse date values if needed
+        parsed_value = self._parse_date_value(doc_value)
+        if parsed_value is None:
+            parsed_value = doc_value
+
+        # Handle $between
+        if "$between" in filter_spec:
+            between = filter_spec["$between"]
+            if isinstance(between, (list, tuple)) and len(between) == 2:
+                low, high = between
+                low_parsed = self._parse_date_value(low)
+                high_parsed = self._parse_date_value(high)
+                if low_parsed is not None and high_parsed is not None:
+                    if not (low_parsed <= parsed_value <= high_parsed):
+                        return False
+                elif not (low <= parsed_value <= high):
+                    return False
+
+        # Handle $gte
+        if "$gte" in filter_spec:
+            gte_val = self._parse_date_value(filter_spec["$gte"])
+            if gte_val is not None:
+                if parsed_value < gte_val:
+                    return False
+            elif parsed_value < filter_spec["$gte"]:
+                return False
+
+        # Handle $lte
+        if "$lte" in filter_spec:
+            lte_val = self._parse_date_value(filter_spec["$lte"])
+            if lte_val is not None:
+                if parsed_value > lte_val:
+                    return False
+            elif parsed_value > filter_spec["$lte"]:
+                return False
+
+        # Handle $gt
+        if "$gt" in filter_spec:
+            gt_val = self._parse_date_value(filter_spec["$gt"])
+            if gt_val is not None:
+                if parsed_value <= gt_val:
+                    return False
+            elif parsed_value <= filter_spec["$gt"]:
+                return False
+
+        # Handle $lt
+        if "$lt" in filter_spec:
+            lt_val = self._parse_date_value(filter_spec["$lt"])
+            if lt_val is not None:
+                if parsed_value >= lt_val:
+                    return False
+            elif parsed_value >= filter_spec["$lt"]:
+                return False
+
+        # Handle $in
+        if "$in" in filter_spec:
+            in_list = filter_spec["$in"]
+            if isinstance(in_list, (list, set)):
+                if parsed_value not in in_list:
+                    return False
+
+        # Handle $not
+        if "$not" in filter_spec:
+            not_val = filter_spec["$not"]
+            if parsed_value == not_val:
+                return False
+
+        return True
+
+    def _parse_date_value(self, value: Any) -> Any:
+        """Parse a value as a date if it's a date-like string.
+
+        Returns a datetime object for ISO format strings, or the original
+        value if it's already a number or not parseable as a date.
+        """
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, (int, float)):
+            return value
+        if isinstance(value, str):
+            # Try ISO format date parsing
+            try:
+                return datetime.fromisoformat(value)
+            except (ValueError, TypeError):
+                pass
+        return None
