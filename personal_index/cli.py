@@ -34,6 +34,7 @@ from personal_index.cli_status import status as status_cmd
 from personal_index.cli_top import top_pages as top_cmd
 from personal_index.cli_verify import verify as verify_cmd
 from personal_index.cli_watch import watch as watch_cmd
+from personal_index.cli_recommend import recommend as recommend_cmd
 from personal_index.index import SearchIndex
 from personal_index.tags import TagStore
 
@@ -938,6 +939,7 @@ main.add_command(watch_cmd)
 main.add_command(crawl_cmd)
 main.add_command(extract_cmd)
 main.add_command(score_cmd)
+main.add_command(recommend_cmd)
 
 
 if __name__ == "__main__":
