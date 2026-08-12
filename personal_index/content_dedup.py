@@ -1,104 +1,310 @@
-"""
-Content Deduplication Module
-Remove duplicate content items.
+"""Content deduplication for personal-index.
+
+Detects and removes duplicate content using hash-based comparison,
+similarity scoring, and URL normalization.
 """
 
 from __future__ import annotations
 
 import hashlib
+import re
+from dataclasses import dataclass, field
 from typing import Any
 
 
-class DocumentHash:
-    """Computes document fingerprints using SHA256."""
+@dataclass
+class DuplicateGroup:
+    """A group of duplicate content items."""
+    representative: str  # URL of the representative (best) item
+    duplicates: list[str] = field(default_factory=list)
+    similarity_score: float = 1.0
+    dedup_method: str = "exact"
 
-    @staticmethod
-    def compute_fingerprint(content: str) -> str:
-        """Compute a 16-char fingerprint for content."""
-        import hashlib
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
+    @property
+    def total_count(self) -> int:
+        return 1 + len(self.duplicates)
 
-class CheckResult:
-    """Result of a single item check."""
-    def __init__(self, is_duplicate: bool, url: str):
-        self.is_duplicate = is_duplicate
-        self.url = url
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "representative": self.representative,
+            "duplicates": self.duplicates,
+            "similarity_score": self.similarity_score,
+            "dedup_method": self.dedup_method,
+            "total_count": self.total_count,
+        }
+
+
+def normalize_url(url: str) -> str:
+    """Normalize a URL for comparison.
+
+    Removes trailing slashes, fragments, and normalizes case.
+    """
+    if not url:
+        return url
+    # Remove fragment
+    url = url.split("#")[0]
+    # Remove trailing slash (but keep root /)
+    if len(url) > 1 and url.endswith("/"):
+        url = url.rstrip("/")
+    # Normalize scheme and host to lowercase
+    parts = url.split("://", 1)
+    if len(parts) == 2:
+        scheme, rest = parts
+        host_path = rest.split("/", 1)
+        if len(host_path) == 2:
+            rest = host_path[0].lower() + "/" + host_path[1]
+        else:
+            rest = host_path[0].lower()
+        url = scheme.lower() + "://" + rest
+    return url
+
+
+def content_hash(text: str) -> str:
+    """Generate a hash of content text."""
+    if not text:
+        return ""
+    # Normalize whitespace
+    normalized = re.sub(r'\s+', ' ', text.lower().strip())
+    return hashlib.sha256(normalized.encode()).hexdigest()
+
+
+def url_hash(url: str) -> str:
+    """Generate a hash of a normalized URL."""
+    return hashlib.sha256(normalize_url(url).encode()).hexdigest()
+
+
+def text_similarity(text_a: str, text_b: str) -> float:
+    """Calculate similarity between two texts using word overlap.
+
+    Uses Jaccard similarity on word sets.
+    """
+    if not text_a or not text_b:
+        return 0.0
+
+    words_a = set(re.findall(r'[a-z0-9]+', text_a.lower()))
+    words_b = set(re.findall(r'[a-z0-9]+', text_b.lower()))
+
+    if not words_a or not words_b:
+        return 0.0
+
+    intersection = words_a & words_b
+    union = words_a | words_b
+    return len(intersection) / len(union)
+
+
+@dataclass
+class DedupResult:
+    """Result of a deduplication operation."""
+    total_items: int = 0
+    unique_items: int = 0
+    duplicate_groups: list[DuplicateGroup] = field(default_factory=list)
+    removed_count: int = 0
+    method: str = "hash"
+
+    @property
+    def dedup_ratio(self) -> float:
+        """Ratio of duplicates to total items."""
+        if self.total_items == 0:
+            return 0.0
+        return self.removed_count / self.total_items
+
+    def summary(self) -> str:
+        """Generate a human-readable summary."""
+        return (
+            f"Deduplication Results:\n"
+            f"  Total items: {self.total_items}\n"
+            f"  Unique items: {self.unique_items}\n"
+            f"  Duplicates found: {self.removed_count}\n"
+            f"  Duplicate groups: {len(self.duplicate_groups)}\n"
+            f"  Dedup ratio: {self.dedup_ratio:.1%}\n"
+            f"  Method: {self.method}"
+        )
 
 
 class ContentDeduplicator:
-    """Removes duplicates from content items."""
+    """Deduplicates content items using various strategies.
 
-    def __init__(self):
-        self._seen_hashes: set = set()
+    Supports exact hash matching, URL normalization, and
+    similarity-based deduplication.
+    """
 
-    def _compute_hash(self, item: dict[str, Any]) -> str:
-        """Compute hash for an item based on title and description."""
-        title = str(item.get("title", "")).strip().lower()
-        desc = str(item.get("description", "")).strip().lower()
-        content = f"{title}:{desc}"
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
+    def __init__(self, similarity_threshold: float = 0.9):
+        self.similarity_threshold = similarity_threshold
 
-    def _check_single_item(self, url: str, _title: str, content: str) -> CheckResult:
-        """Check a single item for duplicates.
-        
+    def dedup_by_hash(
+        self,
+        items: list[dict[str, Any]],
+        hash_field: str = "content",
+    ) -> DedupResult:
+        """Deduplicate items by content hash.
+
         Args:
-            url: The URL of the item
-            _title: Unused parameter (kept for compatibility)
-            content: The content to check
-            
+            items: List of content item dicts.
+            hash_field: Field to hash for comparison.
+
         Returns:
-            CheckResult with is_duplicate flag
+            DedupResult with duplicate groups.
         """
-        # Compute hash from content only
-        content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
-        is_dup = content_hash in self._seen_hashes
-        if not is_dup:
-            self._seen_hashes.add(content_hash)
-        return CheckResult(is_duplicate=is_dup, url=url)
+        hash_groups: dict[str, list[dict[str, Any]]] = {}
 
-    def deduplicate(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Remove duplicates from a list of items."""
-        unique = []
         for item in items:
-            item_hash = self._compute_hash(item)
-            if item_hash not in self._seen_hashes:
-                self._seen_hashes.add(item_hash)
-                unique.append(item)
-        return unique
+            text = item.get(hash_field, "")
+            h = content_hash(text)
+            if h:
+                hash_groups.setdefault(h, []).append(item)
 
-    def is_duplicate(self, item: dict[str, Any]) -> bool:
-        """Check if an item is a duplicate."""
-        item_hash = self._compute_hash(item)
-        return item_hash in self._seen_hashes
+        groups = []
+        removed = 0
+        for h, group in hash_groups.items():
+            if len(group) > 1:
+                representative = group[0].get("url", "")
+                duplicates = [g.get("url", "") for g in group[1:]]
+                groups.append(DuplicateGroup(
+                    representative=representative,
+                    duplicates=duplicates,
+                    similarity_score=1.0,
+                    dedup_method="exact_hash",
+                ))
+                removed += len(duplicates)
 
-    def mark_seen(self, item: dict[str, Any]) -> None:
-        """Mark an item as seen."""
-        self._seen_hashes.add(self._compute_hash(item))
+        return DedupResult(
+            total_items=len(items),
+            unique_items=len(items) - removed,
+            duplicate_groups=groups,
+            removed_count=removed,
+            method="hash",
+        )
 
-    def clear_seen(self) -> None:
-        """Clear the seen hashes."""
-        self._seen_hashes.clear()
+    def dedup_by_url(
+        self,
+        items: list[dict[str, Any]],
+    ) -> DedupResult:
+        """Deduplicate items by normalized URL.
 
-    @property
-    def seen_count(self) -> int:
-        return len(self._seen_hashes)
+        Args:
+            items: List of content item dicts.
 
-class DedupFilter:
-    """Filter that removes duplicates from content streams."""
+        Returns:
+            DedupResult with duplicate groups.
+        """
+        url_groups: dict[str, list[dict[str, Any]]] = {}
 
-    def __init__(self):
-        self._seen: set = set()
-
-    def filter(self, items: list[dict[str, Any]], key: str = "id") -> list[dict[str, Any]]:
-        """Remove duplicates based on a key field."""
-        unique = []
         for item in items:
-            k = item.get(key)
-            if k is not None and k not in self._seen:
-                self._seen.add(k)
-                unique.append(item)
-        return unique
+            url = item.get("url", "")
+            normalized = normalize_url(url)
+            url_groups.setdefault(normalized, []).append(item)
 
-    def clear(self) -> None:
-        """Clear seen values."""
-        self._seen.clear()
+        groups = []
+        removed = 0
+        for normalized, group in url_groups.items():
+            if len(group) > 1:
+                representative = group[0].get("url", "")
+                duplicates = [g.get("url", "") for g in group[1:]]
+                groups.append(DuplicateGroup(
+                    representative=representative,
+                    duplicates=duplicates,
+                    similarity_score=1.0,
+                    dedup_method="normalized_url",
+                ))
+                removed += len(duplicates)
+
+        return DedupResult(
+            total_items=len(items),
+            unique_items=len(items) - removed,
+            duplicate_groups=groups,
+            removed_count=removed,
+            method="url",
+        )
+
+    def dedup_by_similarity(
+        self,
+        items: list[dict[str, Any]],
+        compare_field: str = "content",
+    ) -> DedupResult:
+        """Deduplicate items by content similarity.
+
+        Args:
+            items: List of content item dicts.
+            compare_field: Field to compare for similarity.
+
+        Returns:
+            DedupResult with duplicate groups.
+        """
+        n = len(items)
+        visited = set()
+        groups = []
+        removed = 0
+
+        for i in range(n):
+            if i in visited:
+                continue
+            group_urls = [items[i].get("url", "")]
+            visited.add(i)
+
+            for j in range(i + 1, n):
+                if j in visited:
+                    continue
+
+                text_a = items[i].get(compare_field, "")
+                text_b = items[j].get(compare_field, "")
+                similarity = text_similarity(text_a, text_b)
+
+                if similarity >= self.similarity_threshold:
+                    group_urls.append(items[j].get("url", ""))
+                    visited.add(j)
+
+            if len(group_urls) > 1:
+                groups.append(DuplicateGroup(
+                    representative=group_urls[0],
+                    duplicates=group_urls[1:],
+                    similarity_score=self.similarity_threshold,
+                    dedup_method="similarity",
+                ))
+                removed += len(group_urls) - 1
+
+        return DedupResult(
+            total_items=len(items),
+            unique_items=len(items) - removed,
+            duplicate_groups=groups,
+            removed_count=removed,
+            method="similarity",
+        )
+
+    def dedup_all(
+        self,
+        items: list[dict[str, Any]],
+    ) -> DedupResult:
+        """Run all deduplication strategies and combine results.
+
+        Args:
+            items: List of content item dicts.
+
+        Returns:
+            Combined DedupResult.
+        """
+        # First dedup by URL (exact matches)
+        url_result = self.dedup_by_url(items)
+
+        # Get unique items after URL dedup
+        seen_urls = set()
+        unique_items = []
+        for item in items:
+            normalized = normalize_url(item.get("url", ""))
+            if normalized not in seen_urls:
+                seen_urls.add(normalized)
+                unique_items.append(item)
+
+        # Then dedup by content hash
+        hash_result = self.dedup_by_hash(unique_items)
+
+        # Combine groups
+        all_groups = url_result.duplicate_groups + hash_result.duplicate_groups
+        total_removed = url_result.removed_count + hash_result.removed_count
+
+        return DedupResult(
+            total_items=len(items),
+            unique_items=len(items) - total_removed,
+            duplicate_groups=all_groups,
+            removed_count=total_removed,
+            method="combined",
+        )
