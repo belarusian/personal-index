@@ -250,10 +250,18 @@ class IndexedPage:
     content_length: int = 0
     language: str = "en"
     score: float = 1.0
-    relevance_score: float = 0.0
     indexed_at: str = ""
     source_interest: str = ""
     word_count: int = 0
+
+    @property
+    def relevance_score(self) -> float:
+        """Alias for score."""
+        return self.score
+
+    @relevance_score.setter
+    def relevance_score(self, value: float) -> None:
+        self.score = value
 
     def to_dict(self) -> dict:
         """Serialize the indexed page to a dictionary.

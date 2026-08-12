@@ -23,7 +23,7 @@ index:
   fuzzy_threshold: 0.8
 scheduler:
   enabled: false
-  interval_hours: 12
+  interval_hours: 24
   max_concurrent_jobs: 3
   retry_count: 3
   retry_delay_seconds: 60
