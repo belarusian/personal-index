@@ -1,229 +1,201 @@
-"""Content merging utilities for personal-index.
+"""Content merging for personal-index.
 
-Provides functionality to merge content from multiple sources,
-deduplicate entries, and resolve conflicts.
+Merges content from multiple sources, combining text, tags,
+and metadata while avoiding duplication.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any
 
 
 @dataclass
-class MergeResult:
-    """Result of a content merge operation.
-
-    Attributes:
-        total_input: Total items across all sources.
-        merged_count: Number of items in merged output.
-        duplicates_removed: Number of duplicates removed.
-        conflicts_resolved: Number of conflicts resolved.
-        source_counts: Items per source.
-        merge_time_ms: Time taken to merge.
-    """
-
-    total_input: int = 0
-    merged_count: int = 0
-    duplicates_removed: int = 0
-    conflicts_resolved: int = 0
-    source_counts: dict[str, int] = field(default_factory=dict)
-    merge_time_ms: float = 0.0
+class MergeSource:
+    """A source of content to merge."""
+    url: str
+    title: str = ""
+    content: str = ""
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    priority: int = 0  # Higher = more authoritative
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
         return {
-            "total_input": self.total_input,
-            "merged_count": self.merged_count,
-            "duplicates_removed": self.duplicates_removed,
-            "conflicts_resolved": self.conflicts_resolved,
-            "source_counts": self.source_counts,
-            "merge_time_ms": round(self.merge_time_ms, 2),
+            "url": self.url,
+            "title": self.title,
+            "content": self.content,
+            "tags": self.tags,
+            "metadata": self.metadata,
+            "priority": self.priority,
+        }
+
+
+@dataclass
+class MergedContent:
+    """Result of merging multiple content sources."""
+    url: str
+    title: str
+    content: str
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    source_count: int = 0
+    sources: list[str] = field(default_factory=list)
+    merge_strategy: str = "concatenate"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "url": self.url,
+            "title": self.title,
+            "content": self.content,
+            "tags": self.tags,
+            "metadata": self.metadata,
+            "source_count": self.source_count,
+            "sources": self.sources,
+            "merge_strategy": self.merge_strategy,
         }
 
 
 class ContentMerger:
-    """Merges content from multiple sources with deduplication.
+    """Merges content from multiple sources.
 
-    Supports merging by URL, by ID, or by content hash,
-    with configurable conflict resolution strategies.
+    Supports different merge strategies:
+    - concatenate: Join content with separators
+    - longest: Use the longest content
+    - highest_priority: Use content from highest priority source
+    - unique_paragraphs: Merge unique paragraphs from all sources
     """
 
-    def __init__(
-        self,
-        dedup_key: str = "url",
-        conflict_strategy: str = "newest",
-    ) -> None:
-        self.dedup_key = dedup_key
-        self.conflict_strategy = conflict_strategy
+    def __init__(self, strategy: str = "concatenate"):
+        self.strategy = strategy
 
-    def merge(
-        self,
-        sources: dict[str, list[dict[str, Any]]],
-    ) -> tuple[list[dict[str, Any]], MergeResult]:
-        """Merge content from multiple sources.
+    def merge(self, sources: list[MergeSource]) -> MergedContent | None:
+        """Merge multiple content sources.
 
         Args:
-            sources: Dict mapping source names to item lists.
-            conflict_strategy: How to resolve conflicts.
+            sources: List of MergeSource objects to merge.
 
         Returns:
-            Tuple of (merged items, MergeResult).
+            MergedContent or None if no sources provided.
         """
-        import time
+        if not sources:
+            return None
 
-        start = time.time()
-        result = MergeResult()
-        result.source_counts = {
-            name: len(items) for name, items in sources.items()
-        }
-        result.total_input = sum(result.source_counts.values())
+        # Sort by priority descending
+        sorted_sources = sorted(sources, key=lambda s: s.priority, reverse=True)
 
-        merged: dict[str, dict[str, Any]] = {}
-        conflicts = 0
+        if self.strategy == "longest":
+            return self._merge_longest(sorted_sources)
+        elif self.strategy == "highest_priority":
+            return self._merge_highest_priority(sorted_sources)
+        elif self.strategy == "unique_paragraphs":
+            return self._merge_unique_paragraphs(sorted_sources)
+        else:  # concatenate (default)
+            return self._merge_concatenate(sorted_sources)
 
-        for source_name, items in sources.items():
-            for item in items:
-                key = item.get(self.dedup_key, "")
-                if not key:
-                    # No dedup key, just add
-                    item_id = item.get("id", f"merged-{len(merged)}")
-                    merged[item_id] = {**item, "_source": source_name}
-                    continue
+    def _merge_concatenate(self, sources: list[MergeSource]) -> MergedContent:
+        """Merge by concatenating content with separators."""
+        primary = sources[0]
+        contents = []
+        all_tags: set[str] = set()
+        all_sources = []
 
+        for source in sources:
+            if source.content:
+                contents.append(source.content.strip())
+            all_tags.update(t.lower() for t in source.tags)
+            all_sources.append(source.url)
+
+        merged_content = "\n\n---\n\n".join(contents) if contents else ""
+
+        return MergedContent(
+            url=primary.url,
+            title=primary.title or self._best_title(sources),
+            content=merged_content,
+            tags=sorted(all_tags),
+            metadata=self._merge_metadata(sources),
+            source_count=len(sources),
+            sources=all_sources,
+            merge_strategy="concatenate",
+        )
+
+    def _merge_longest(self, sources: list[MergeSource]) -> MergedContent:
+        """Use the longest content as the merged result."""
+        longest = max(sources, key=lambda s: len(s.content))
+        all_tags: set[str] = set()
+        for source in sources:
+            all_tags.update(t.lower() for t in source.tags)
+
+        return MergedContent(
+            url=longest.url,
+            title=longest.title or self._best_title(sources),
+            content=longest.content,
+            tags=sorted(all_tags),
+            metadata=self._merge_metadata(sources),
+            source_count=len(sources),
+            sources=[s.url for s in sources],
+            merge_strategy="longest",
+        )
+
+    def _merge_highest_priority(self, sources: list[MergeSource]) -> MergedContent:
+        """Use content from the highest priority source."""
+        primary = sources[0]  # Already sorted by priority
+        all_tags: set[str] = set()
+        for source in sources:
+            all_tags.update(t.lower() for t in source.tags)
+
+        return MergedContent(
+            url=primary.url,
+            title=primary.title or self._best_title(sources),
+            content=primary.content,
+            tags=sorted(all_tags),
+            metadata=self._merge_metadata(sources),
+            source_count=len(sources),
+            sources=[s.url for s in sources],
+            merge_strategy="highest_priority",
+        )
+
+    def _merge_unique_paragraphs(self, sources: list[MergeSource]) -> MergedContent:
+        """Merge unique paragraphs from all sources."""
+        primary = sources[0]
+        seen_paragraphs: set[str] = set()
+        merged_paragraphs: list[str] = []
+        all_tags: set[str] = set()
+
+        for source in sources:
+            paragraphs = source.content.split("\n\n")
+            for para in paragraphs:
+                normalized = para.strip().lower()
+                if normalized and normalized not in seen_paragraphs:
+                    seen_paragraphs.add(normalized)
+                    merged_paragraphs.append(para.strip())
+            all_tags.update(t.lower() for t in source.tags)
+
+        merged_content = "\n\n".join(merged_paragraphs)
+
+        return MergedContent(
+            url=primary.url,
+            title=primary.title or self._best_title(sources),
+            content=merged_content,
+            tags=sorted(all_tags),
+            metadata=self._merge_metadata(sources),
+            source_count=len(sources),
+            sources=[s.url for s in sources],
+            merge_strategy="unique_paragraphs",
+        )
+
+    def _best_title(self, sources: list[MergeSource]) -> str:
+        """Get the best title from sources (longest non-empty)."""
+        titled = [s for s in sources if s.title]
+        if not titled:
+            return ""
+        return max(titled, key=lambda s: len(s.title)).title
+
+    def _merge_metadata(self, sources: list[MergeSource]) -> dict[str, Any]:
+        """Merge metadata from all sources, higher priority wins."""
+        merged: dict[str, Any] = {}
+        for source in sources:
+            for key, value in source.metadata.items():
                 if key not in merged:
-                    merged[key] = {**item, "_source": source_name}
-                else:
-                    conflicts += 1
-                    existing = merged[key]
-                    winner = self._resolve_conflict(
-                        existing, item, source_name,
-                    )
-                    merged[key] = winner
-
-        result.conflicts_resolved = conflicts
-        result.merged_count = len(merged)
-        result.duplicates_removed = result.total_input - result.merged_count
-        result.merge_time_ms = (time.time() - start) * 1000
-
-        return list(merged.values()), result
-
-    def merge_with_priority(
-        self,
-        sources: dict[str, list[dict[str, Any]]],
-        priority_order: list[str] | None = None,
-    ) -> tuple[list[dict[str, Any]], MergeResult]:
-        """Merge sources with priority ordering.
-
-        Higher priority sources win conflicts.
-
-        Args:
-            sources: Dict mapping source names to item lists.
-            priority_order: List of source names in priority order.
-
-        Returns:
-            Tuple of (merged items, MergeResult).
-        """
-        if priority_order is None:
-            priority_order = list(sources.keys())
-
-        # Process sources in reverse priority order
-        # so higher priority sources overwrite lower priority ones
-        ordered_sources = {}
-        for name in reversed(priority_order):
-            if name in sources:
-                ordered_sources[name] = sources[name]
-
-        # Add any sources not in priority order
-        for name, items in sources.items():
-            if name not in ordered_sources:
-                ordered_sources[name] = items
-
-        # Temporarily set conflict strategy to "newest" which will
-        # prefer the later-inserted (higher priority) source when
-        # dates are absent
-        old_strategy = self.conflict_strategy
-        self.conflict_strategy = "priority"
-        try:
-            return self.merge(ordered_sources)
-        finally:
-            self.conflict_strategy = old_strategy
-
-    def merge_tags(
-        self,
-        items: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        """Merge duplicate tags within each item.
-
-        Args:
-            items: List of content items.
-
-        Returns:
-            Items with deduplicated tags.
-        """
-        result = []
-        for item in items:
-            new_item = dict(item)
-            tags = item.get("tags", [])
-            if isinstance(tags, list):
-                seen: set[str] = set()
-                unique_tags = []
-                for tag in tags:
-                    if tag not in seen:
-                        seen.add(tag)
-                        unique_tags.append(tag)
-                new_item["tags"] = unique_tags
-            result.append(new_item)
-        return result
-
-    def _resolve_conflict(
-        self,
-        existing: dict[str, Any],
-        new_item: dict[str, Any],
-        new_source: str,
-    ) -> dict[str, Any]:
-        """Resolve a conflict between two items with the same key."""
-        if self.conflict_strategy == "newest":
-            existing_date = self._get_date(existing)
-            new_date = self._get_date(new_item)
-            if new_date and (not existing_date or new_date > existing_date):
-                return {**new_item, "_source": new_source}
-            return existing
-
-        elif self.conflict_strategy == "highest_score":
-            existing_score = existing.get("score", 0.0)
-            new_score = new_item.get("score", 0.0)
-            if new_score > existing_score:
-                return {**new_item, "_source": new_source}
-            return existing
-
-        elif self.conflict_strategy == "merge_tags":
-            existing_tags = set(existing.get("tags", []))
-            new_tags = set(new_item.get("tags", []))
-            merged_tags = list(existing_tags | new_tags)
-            result = dict(new_item)
-            result["tags"] = merged_tags
-            result["_source"] = f"{existing.get('_source', '')},{new_source}"
-            return result
-
-        elif self.conflict_strategy == "priority":
-            # In priority mode, the new item (processed later = higher priority) wins
-            return {**new_item, "_source": new_source}
-
-        # Default: keep existing
-        return existing
-
-    def _get_date(
-        self,
-        item: dict[str, Any],
-    ) -> datetime | None:
-        """Get the date from an item."""
-        for key in ("updated_at", "published_at", "date"):
-            value = item.get(key)
-            if value:
-                if isinstance(value, str):
-                    return datetime.fromisoformat(value)
-                if isinstance(value, datetime):
-                    return value
-        return None
+                    merged[key] = value
+        return merged
