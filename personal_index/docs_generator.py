@@ -417,6 +417,11 @@ def _module_to_dict(mod: ModuleInfo) -> dict:
 
 def generate_metadata_json(data: DashboardData, output_path: str) -> str:
     """Generate a machine-readable codemap JSON for AI consumption."""
+    from personal_index.cycle_signals import build_tree
+
+    module_dicts = [_module_to_dict(m) for m in data.modules]
+    tree = build_tree(module_dicts)
+
     metadata = {
         "generated_at": subprocess.run(
             ["date", "-u", "+%Y-%m-%dT%H:%M:%SZ"],
@@ -433,7 +438,8 @@ def generate_metadata_json(data: DashboardData, output_path: str) -> str:
             "total_errors": data.total_ruff_errors + data.total_mypy_errors,
             "total_warnings": data.total_ruff_warnings,
         },
-        "modules": [_module_to_dict(m) for m in data.modules],
+        "tree_summary": tree,
+        "modules": module_dicts,
         "dependency_graph": data.dependency_graph,
         "commits": [
             {"sha": c.sha_short, "message": c.message, "author": c.author, "date": c.date}
@@ -1244,6 +1250,45 @@ body::after {{
 # Main entry point
 # ---------------------------------------------------------------------------
 
+def _build_dashboard_data(modules, test_modules, test_summary, dep_graph, commits):
+    """Build DashboardData from scanned modules and test modules."""
+    total_source_lines = sum(m.line_count for m in modules)
+    total_test_lines = sum(m.line_count for m in test_modules) if test_modules else 0
+    total_tests = sum(m.test_count for m in test_modules) if test_modules else 0
+    test_module_names = [m.module_name for m in test_modules] if test_modules else []
+
+    return DashboardData(
+        modules=modules,
+        total_modules=len(modules),
+        total_lines=total_source_lines + total_test_lines,
+        total_test_lines=total_test_lines,
+        total_classes=sum(len(m.classes) for m in modules),
+        total_functions=sum(len(m.functions) + sum(len(c.methods) for c in m.classes) for m in modules),
+        total_tests=total_tests,
+        total_ruff_errors=sum(len(m.ruff_errors) for m in modules),
+        total_ruff_warnings=sum(len(m.ruff_warnings) for m in modules),
+        total_mypy_errors=sum(len(m.mypy_errors) for m in modules),
+        dependency_graph=dep_graph,
+        test_results=test_summary,
+        commits=commits,
+        test_module_names=test_module_names,
+    )
+
+
+def _write_dashboard(data, output):
+    """Generate HTML + JSON from DashboardData."""
+    print(f"[docs_generator] Generating dashboard → {output}")
+    generate_dashboard(data, output)
+
+    json_path = generate_metadata_json(data, output)
+    print(f"[docs_generator] Generating codemap JSON → {json_path}")
+
+    print(f"[docs_generator] Done. {data.total_modules} modules, {data.total_lines:,} lines, "
+          f"{data.total_ruff_errors + data.total_mypy_errors} errors, "
+          f"{data.total_ruff_warnings} warnings")
+    return output
+
+
 def generate(root: str = "personal_index", output: str = "personal_index/docs_dashboard.html") -> str:
     """Full pipeline: scan → lint → type-check → test → generate HTML."""
     print(f"[docs_generator] Scanning modules in {root} ...")
@@ -1265,8 +1310,7 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
         test_root = "tests"
     print(f"[docs_generator] Scanning tests in {test_root} ...")
     test_modules = scan_modules(test_root) if os.path.isdir(test_root) else []
-    total_tests = sum(m.test_count for m in test_modules)
-    print(f"[docs_generator] Found {total_tests} tests in {len(test_modules)} test files")
+    print(f"[docs_generator] Found {sum(m.test_count for m in test_modules)} tests in {len(test_modules)} test files")
 
     # Build dependency graph
     dep_graph = detect_dependencies(modules)
@@ -1274,39 +1318,38 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
     # Fetch recent commits
     commits = fetch_recent_commits(20)
 
-    # Aggregate
-    total_source_lines = sum(m.line_count for m in modules)
-    total_test_lines = sum(m.line_count for m in test_modules) if test_modules else 0
-    test_module_names = [m.module_name for m in test_modules] if test_modules else []
+    data = _build_dashboard_data(modules, test_modules, test_summary, dep_graph, commits)
+    return _write_dashboard(data, output)
 
-    data = DashboardData(
-        modules=modules,
-        total_modules=len(modules),
-        total_lines=total_source_lines + total_test_lines,
-        total_test_lines=total_test_lines,
-        total_classes=sum(len(m.classes) for m in modules),
-        total_functions=sum(len(m.functions) + sum(len(c.methods) for c in m.classes) for m in modules),
-        total_tests=total_tests,
-        total_ruff_errors=sum(len(m.ruff_errors) for m in modules),
-        total_ruff_warnings=sum(len(m.ruff_warnings) for m in modules),
-        total_mypy_errors=sum(len(m.mypy_errors) for m in modules),
-        dependency_graph=dep_graph,
-        test_results=test_summary,
-        commits=commits,
-        test_module_names=test_module_names,
-    )
 
-    print(f"[docs_generator] Generating dashboard → {output}")
-    generate_dashboard(data, output)
+def generate_fast(root: str = "personal_index", output: str = "personal_index/docs_dashboard.html") -> str:
+    """Fast pipeline: scan → generate HTML (skip linting and testing).
 
-    json_path = generate_metadata_json(data, output)
-    print(f"[docs_generator] Generating codemap JSON → {json_path}")
+    Uses AST-only scan. Error counts will be from whatever state the
+    module metadata was last in. Suitable for dashboard refresh between
+    full audit cycles.
+    """
+    print(f"[docs_generator] Fast scan of {root} (skipping ruff/mypy/pytest) ...")
+    modules = scan_modules(root)
+    print(f"[docs_generator] Found {len(modules)} modules")
 
-    print(f"[docs_generator] Done. {data.total_modules} modules, {data.total_lines:,} lines, "
-          f"{data.total_ruff_errors + data.total_mypy_errors} errors, "
-          f"{data.total_ruff_warnings} warnings")
-    return output
+    # Scan tests/ directory for line counts
+    test_root = os.path.join(os.path.dirname(root) if root != "." else ".", "tests")
+    if not os.path.isdir(test_root):
+        test_root = "tests"
+    test_modules = scan_modules(test_root) if os.path.isdir(test_root) else []
+    print(f"[docs_generator] Found {len(test_modules)} test files")
+
+    dep_graph = detect_dependencies(modules)
+    commits = fetch_recent_commits(20)
+
+    data = _build_dashboard_data(modules, test_modules, "", dep_graph, commits)
+    return _write_dashboard(data, output)
 
 
 if __name__ == "__main__":
-    generate()
+    import argparse as _ap
+    _p = _ap.ArgumentParser()
+    _p.add_argument("--fast", action="store_true", help="Skip ruff/mypy/pytest (AST scan only)")
+    _a = _p.parse_args()
+    generate_fast() if _a.fast else generate()
