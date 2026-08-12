@@ -1,12 +1,14 @@
 {
-  "generated_at": "2026-08-12T04:59:47Z",
+  "generated_at": "2026-08-12T22:42:59Z",
   "summary": {
-    "total_modules": 212,
-    "total_lines": 35901,
-    "total_classes": 411,
-    "total_functions": 1853,
-    "total_tests": 4100,
-    "total_errors": 1,
+    "total_modules": 191,
+    "total_lines": 79443,
+    "total_source_lines": 33898,
+    "total_test_lines": 45545,
+    "total_classes": 402,
+    "total_functions": 1790,
+    "total_tests": 4219,
+    "total_errors": 0,
     "total_warnings": 0
   },
   "modules": [
@@ -354,7 +356,7 @@
       "name": "personal_index.cli",
       "filepath": "personal_index/cli.py",
       "status": "clean",
-      "lines": 1401,
+      "lines": 1398,
       "classes": 0,
       "functions": 44,
       "tests": 0,
@@ -365,7 +367,6 @@
         "__future__.annotations",
         "json",
         "os",
-        "shutil",
         "sys",
         "click",
         "yaml",
@@ -379,7 +380,7 @@
       "function_details": [
         {
           "name": "get_search_index",
-          "line": 28,
+          "line": 27,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -387,7 +388,7 @@
         },
         {
           "name": "get_tag_store",
-          "line": 34,
+          "line": 33,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -395,7 +396,7 @@
         },
         {
           "name": "get_interest_store",
-          "line": 40,
+          "line": 39,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -403,7 +404,7 @@
         },
         {
           "name": "load_config",
-          "line": 47,
+          "line": 46,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -411,7 +412,7 @@
         },
         {
           "name": "main",
-          "line": 61,
+          "line": 60,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -419,7 +420,7 @@
         },
         {
           "name": "init",
-          "line": 83,
+          "line": 82,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -427,7 +428,7 @@
         },
         {
           "name": "interests",
-          "line": 129,
+          "line": 128,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -435,7 +436,7 @@
         },
         {
           "name": "interests_add",
-          "line": 140,
+          "line": 138,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -443,7 +444,7 @@
         },
         {
           "name": "interests_list",
-          "line": 158,
+          "line": 156,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -451,7 +452,7 @@
         },
         {
           "name": "interests_remove",
-          "line": 183,
+          "line": 181,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -459,7 +460,7 @@
         },
         {
           "name": "tags",
-          "line": 200,
+          "line": 198,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -467,7 +468,7 @@
         },
         {
           "name": "tags_add",
-          "line": 210,
+          "line": 207,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -475,7 +476,7 @@
         },
         {
           "name": "tags_list",
-          "line": 225,
+          "line": 222,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -483,7 +484,7 @@
         },
         {
           "name": "tags_remove",
-          "line": 248,
+          "line": 245,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -491,7 +492,7 @@
         },
         {
           "name": "import_cmd",
-          "line": 268,
+          "line": 265,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -499,7 +500,7 @@
         },
         {
           "name": "_collect_files",
-          "line": 324,
+          "line": 321,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -507,7 +508,7 @@
         },
         {
           "name": "search",
-          "line": 357,
+          "line": 354,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -515,7 +516,7 @@
         },
         {
           "name": "_output_search_text",
-          "line": 390,
+          "line": 387,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -523,7 +524,7 @@
         },
         {
           "name": "_output_search_json",
-          "line": 405,
+          "line": 402,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -531,7 +532,7 @@
         },
         {
           "name": "_output_search_csv",
-          "line": 419,
+          "line": 416,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -539,7 +540,7 @@
         },
         {
           "name": "export",
-          "line": 438,
+          "line": 435,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -547,7 +548,7 @@
         },
         {
           "name": "_export_markdown",
-          "line": 474,
+          "line": 471,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -555,7 +556,7 @@
         },
         {
           "name": "_export_json",
-          "line": 491,
+          "line": 488,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -563,7 +564,7 @@
         },
         {
           "name": "_export_csv",
-          "line": 509,
+          "line": 506,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -571,7 +572,7 @@
         },
         {
           "name": "status",
-          "line": 529,
+          "line": 526,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -579,7 +580,7 @@
         },
         {
           "name": "crawl",
-          "line": 585,
+          "line": 582,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -587,7 +588,7 @@
         },
         {
           "name": "pipeline",
-          "line": 647,
+          "line": 644,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -595,7 +596,7 @@
         },
         {
           "name": "stats",
-          "line": 735,
+          "line": 732,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -603,7 +604,7 @@
         },
         {
           "name": "list_pages",
-          "line": 804,
+          "line": 801,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -611,7 +612,7 @@
         },
         {
           "name": "top",
-          "line": 860,
+          "line": 857,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -619,7 +620,7 @@
         },
         {
           "name": "remove",
-          "line": 883,
+          "line": 880,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -627,7 +628,7 @@
         },
         {
           "name": "clear",
-          "line": 908,
+          "line": 905,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -635,7 +636,7 @@
         },
         {
           "name": "doctor",
-          "line": 933,
+          "line": 930,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -643,7 +644,7 @@
         },
         {
           "name": "schedule",
-          "line": 991,
+          "line": 988,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -651,7 +652,7 @@
         },
         {
           "name": "schedule_add",
-          "line": 1004,
+          "line": 1000,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -659,7 +660,7 @@
         },
         {
           "name": "schedule_list",
-          "line": 1043,
+          "line": 1040,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -667,7 +668,7 @@
         },
         {
           "name": "schedule_remove",
-          "line": 1080,
+          "line": 1077,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -675,7 +676,7 @@
         },
         {
           "name": "schedule_run",
-          "line": 1107,
+          "line": 1104,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -683,7 +684,7 @@
         },
         {
           "name": "config",
-          "line": 1151,
+          "line": 1148,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -691,7 +692,7 @@
         },
         {
           "name": "config_show",
-          "line": 1159,
+          "line": 1155,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -699,7 +700,7 @@
         },
         {
           "name": "config_set_crawler",
-          "line": 1193,
+          "line": 1189,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -707,7 +708,7 @@
         },
         {
           "name": "config_set_schedule",
-          "line": 1225,
+          "line": 1221,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -715,7 +716,7 @@
         },
         {
           "name": "verify",
-          "line": 1250,
+          "line": 1246,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -723,73 +724,11 @@
         },
         {
           "name": "watch",
-          "line": 1316,
+          "line": 1312,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
           "docstring": "Watch files or directories for changes and re-index.\n\nMonitors specified paths and automatically re-indexes when changes\nare detected.\n\nExamples:\n    personal-index watch ./docs --interval 30\n    pers"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_clear",
-      "filepath": "personal_index/cli_clear.py",
-      "status": "clean",
-      "lines": 47,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "click",
-        "personal_index.index.SearchIndex",
-        "personal_index.interests.InterestStore",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "clear",
-          "line": 20,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Clear index data.\n\nRemoves indexed pages, tags, and optionally interests.\n\nExamples:\n    personal-index clear\n    personal-index clear --index --tags --no-interests"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_crawl",
-      "filepath": "personal_index/cli_crawl.py",
-      "status": "clean",
-      "lines": 86,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "click",
-        "personal_index.crawler.main.Crawler",
-        "personal_index.crawler.main.CrawlerConfig"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "crawl",
-          "line": 26,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Crawl web pages from the given URLs.\n\nDownloads and extracts content from web pages. Results can be\nsaved to the data directory for later processing.\n\nExamples:\n    personal-index crawl https://exampl"
         }
       ]
     },
@@ -818,35 +757,6 @@
           "is_method": false,
           "parent_class": "",
           "docstring": "Find and remove duplicate content.\n\nAnalyzes indexed content for duplicates using hash matching,\nURL normalization, or similarity scoring.\n\nExamples:\n    personal-index dedup\n    personal-index dedup "
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_doctor",
-      "filepath": "personal_index/cli_doctor.py",
-      "status": "clean",
-      "lines": 137,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "click"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "doctor",
-          "line": 14,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Diagnose issues with your personal-index setup.\n\nChecks configuration, data directory, component health, and\nprovides actionable recommendations.\n\nExamples:\n    personal-index doctor\n    personal-inde"
         }
       ]
     },
@@ -916,35 +826,6 @@
       ]
     },
     {
-      "name": "personal_index.cli_extract",
-      "filepath": "personal_index/cli_extract.py",
-      "status": "clean",
-      "lines": 61,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "sys",
-        "click",
-        "personal_index.content_extractor.ContentExtractor"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "extract",
-          "line": 24,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Extract content from URLs or local files.\n\nDownloads and extracts readable content from web pages or reads\nlocal files, outputting in the specified format.\n\nExamples:\n    personal-index extract https:"
-        }
-      ]
-    },
-    {
       "name": "personal_index.cli_health",
       "filepath": "personal_index/cli_health.py",
       "status": "clean",
@@ -974,282 +855,6 @@
       ]
     },
     {
-      "name": "personal_index.cli_import",
-      "filepath": "personal_index/cli_import.py",
-      "status": "clean",
-      "lines": 192,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "pathlib.Path",
-        "click",
-        "personal_index.content_extractor.ContentExtractor",
-        "personal_index.content_filter.ContentFilter",
-        "personal_index.content_filter.FilterConfig",
-        "personal_index.content_scoring.ContentScorer",
-        "personal_index.content_scoring.ScoreWeights",
-        "personal_index.index.SearchIndex",
-        "personal_index.interests.InterestStore",
-        "personal_index.models.CrawledPage",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "import_cmd",
-          "line": 36,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Import local files into the index.\n\nImports text files, markdown, HTML, and other supported formats\ninto the search index. Supports recursive directory imports.\n\nSupported formats: .txt, .md, .html, ."
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_interests",
-      "filepath": "personal_index/cli_interests.py",
-      "status": "clean",
-      "lines": 151,
-      "classes": 0,
-      "functions": 6,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "click",
-        "personal_index.interests.InterestStore",
-        "personal_index.models.Interest",
-        "personal_index.models.InterestType",
-        "personal_index.models.MatchMode"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "interests",
-          "line": 16,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Manage your content interests.\n\nInterests define what topics and keywords you care about.\nThe pipeline uses interests to score and prioritize content.\n\nExamples:\n    personal-index interests add pytho"
-        },
-        {
-          "name": "interests_add",
-          "line": 42,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Add a new interest."
-        },
-        {
-          "name": "interests_list",
-          "line": 76,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "List all configured interests."
-        },
-        {
-          "name": "interests_remove",
-          "line": 104,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Remove an interest by name."
-        },
-        {
-          "name": "interests_enable",
-          "line": 120,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Enable a disabled interest."
-        },
-        {
-          "name": "interests_disable",
-          "line": 139,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Disable an interest without removing it."
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_list",
-      "filepath": "personal_index/cli_list.py",
-      "status": "clean",
-      "lines": 102,
-      "classes": 0,
-      "functions": 4,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "csv",
-        "io",
-        "json",
-        "os",
-        "click",
-        "personal_index.index.SearchIndex",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "list_pages",
-          "line": 25,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "List indexed pages.\n\nShows all indexed pages with their scores and metadata.\n\nExamples:\n    personal-index list\n    personal-index list --limit 10 --sort date\n    personal-index list --tag tutorial --"
-        },
-        {
-          "name": "_output_text",
-          "line": 66,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": ""
-        },
-        {
-          "name": "_output_json",
-          "line": 79,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": ""
-        },
-        {
-          "name": "_output_csv",
-          "line": 96,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": ""
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_merge",
-      "filepath": "personal_index/cli_merge.py",
-      "status": "clean",
-      "lines": 94,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "click",
-        "personal_index.content_merger.ContentMerger",
-        "personal_index.content_merger.MergeSource"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "merge",
-          "line": 20,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Merge content from multiple URLs.\n\nCombines content from multiple sources using the specified\nmerge strategy and outputs in the requested format.\n\nExamples:\n    personal-index merge https://a.com http"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_pipeline",
-      "filepath": "personal_index/cli_pipeline.py",
-      "status": "clean",
-      "lines": 160,
-      "classes": 0,
-      "functions": 2,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "click",
-        "personal_index.pipeline_runner.PipelineRunner"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "progress_callback",
-          "line": 17,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Click-compatible progress callback."
-        },
-        {
-          "name": "pipeline",
-          "line": 45,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Run the full content pipeline.\n\nProcesses content through all stages: crawl \u2192 extract \u2192 filter \u2192\nscore \u2192 tag \u2192 index. Can work with URLs (web crawling) or local\nfiles (import mode).\n\nExamples:\n    # C"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_pipeline_unified",
-      "filepath": "personal_index/cli_pipeline_unified.py",
-      "status": "clean",
-      "lines": 293,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "pathlib.Path",
-        "click",
-        "personal_index.content_filter.ContentFilter",
-        "personal_index.content_filter.FilterConfig",
-        "personal_index.content_scoring.ContentScorer",
-        "personal_index.content_scoring.ScoreWeights",
-        "personal_index.crawler.main.Crawler",
-        "personal_index.crawler.main.CrawlerConfig",
-        "personal_index.index.SearchIndex",
-        "personal_index.interests.InterestStore",
-        "personal_index.models.CrawledPage",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "run_pipeline",
-          "line": 44,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Run the full content pipeline end-to-end.\n\nProcesses content through all stages: crawl \u2192 extract \u2192 filter \u2192\nscore \u2192 tag \u2192 index. Works with URLs (web crawling) or local files.\n\nExamples:\n    # Crawl a"
-        }
-      ]
-    },
-    {
       "name": "personal_index.cli_recommend",
       "filepath": "personal_index/cli_recommend.py",
       "status": "clean",
@@ -1275,293 +880,6 @@
           "is_method": false,
           "parent_class": "",
           "docstring": "Get content recommendations based on a query or seed content.\n\nAnalyzes indexed content and recommends related pages based on\nkeyword overlap, tag similarity, and content scores.\n\nExamples:\n    person"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_remove",
-      "filepath": "personal_index/cli_remove.py",
-      "status": "clean",
-      "lines": 35,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "click",
-        "personal_index.index.SearchIndex",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "remove_page",
-          "line": 17,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Remove a page from the index by URL.\n\nExamples:\n    personal-index remove https://example.com/page"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_schedule",
-      "filepath": "personal_index/cli_schedule.py",
-      "status": "clean",
-      "lines": 148,
-      "classes": 0,
-      "functions": 5,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "click"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "schedule",
-          "line": 13,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Manage scheduled crawl jobs.\n\nSet up periodic crawling of websites to keep your index fresh.\n\nExamples:\n    personal-index schedule add daily --url https://example.com --interval 24\n    personal-index"
-        },
-        {
-          "name": "schedule_add",
-          "line": 33,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Add a new scheduled crawl job."
-        },
-        {
-          "name": "schedule_list",
-          "line": 67,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "List all scheduled crawl jobs."
-        },
-        {
-          "name": "schedule_remove",
-          "line": 99,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Remove a scheduled crawl job."
-        },
-        {
-          "name": "schedule_run",
-          "line": 118,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Manually run a scheduled job now."
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_score",
-      "filepath": "personal_index/cli_score.py",
-      "status": "clean",
-      "lines": 77,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "click",
-        "personal_index.content_scoring.ContentScorer",
-        "personal_index.content_scoring.ScoreWeights",
-        "personal_index.index.SearchIndex",
-        "personal_index.interests.InterestStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "score",
-          "line": 26,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Score and rank indexed content.\n\nRe-scores all indexed pages based on current interests and\nscoring weights. Useful for re-ranking after adding new interests.\n\nExamples:\n    personal-index score\n    p"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_search",
-      "filepath": "personal_index/cli_search.py",
-      "status": "clean",
-      "lines": 105,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "click",
-        "personal_index.index.SearchIndex",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "search",
-          "line": 25,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Search the indexed content.\n\nSearches through all indexed pages and returns matching results\nsorted by relevance score.\n\nExamples:\n    personal-index search \"python tutorial\"\n    personal-index search"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_stats",
-      "filepath": "personal_index/cli_stats.py",
-      "status": "clean",
-      "lines": 53,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "json",
-        "os",
-        "click",
-        "personal_index.index.SearchIndex",
-        "personal_index.interests.InterestStore",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "stats",
-          "line": 20,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Show index statistics.\n\nDisplays statistics about the current index including page counts,\ntag counts, and interest counts.\n\nExamples:\n    personal-index stats\n    personal-index stats --format json"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_status",
-      "filepath": "personal_index/cli_status.py",
-      "status": "clean",
-      "lines": 83,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "click",
-        "personal_index.index.SearchIndex",
-        "personal_index.interests.InterestStore",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "status",
-          "line": 17,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Show the current status of your personal-index.\n\nDisplays statistics about indexed pages, tags, interests, and\nstorage usage.\n\nExamples:\n    personal-index status"
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_tags",
-      "filepath": "personal_index/cli_tags.py",
-      "status": "clean",
-      "lines": 124,
-      "classes": 0,
-      "functions": 6,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "click",
-        "personal_index.tags.TagStore"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "tags",
-          "line": 15,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Manage tags for indexed pages.\n\nTags help organize and categorize your indexed content.\nThey can be used to filter search results.\n\nExamples:\n    personal-index tags add important https://example.com/"
-        },
-        {
-          "name": "tags_add",
-          "line": 35,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Add a tag to a page."
-        },
-        {
-          "name": "tags_list",
-          "line": 47,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "List all tags and their page counts."
-        },
-        {
-          "name": "tags_remove",
-          "line": 79,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Remove a tag from a page."
-        },
-        {
-          "name": "tags_delete",
-          "line": 95,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Delete a tag entirely (removes from all pages)."
-        },
-        {
-          "name": "tags_pages",
-          "line": 112,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "List all pages with a specific tag."
         }
       ]
     },
@@ -1630,36 +948,6 @@
           "is_method": false,
           "parent_class": "",
           "docstring": "Verify that the personal-index pipeline works end-to-end.\n\nRuns a self-test that creates temporary content and processes it\nthrough all pipeline stages to verify everything is working.\n\nExamples:\n    "
-        }
-      ]
-    },
-    {
-      "name": "personal_index.cli_watch",
-      "filepath": "personal_index/cli_watch.py",
-      "status": "clean",
-      "lines": 105,
-      "classes": 0,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "os",
-        "sys",
-        "time",
-        "click"
-      ],
-      "class_details": [],
-      "function_details": [
-        {
-          "name": "watch",
-          "line": 19,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Watch a directory for changes and re-index automatically.\n\nMonitors a directory for new or modified files and automatically\nruns the pipeline on changes.\n\nExamples:\n    personal-index watch ./docs\n   "
         }
       ]
     },
@@ -1895,60 +1183,6 @@
       "function_details": []
     },
     {
-      "name": "personal_index.content_cache",
-      "filepath": "personal_index/content_cache.py",
-      "status": "clean",
-      "lines": 271,
-      "classes": 4,
-      "functions": 19,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "hashlib",
-        "json",
-        "time",
-        "collections.OrderedDict",
-        "dataclasses.dataclass",
-        "pathlib.Path",
-        "typing.Any",
-        "typing.TypeVar"
-      ],
-      "class_details": [
-        {
-          "name": "CacheEntry",
-          "line": 21,
-          "bases": [],
-          "methods": 0,
-          "docstring": "A single cache entry with metadata.\n\nAttributes:\n    key: Cache key.\n    value: Cached value.\n    created_at: When the entry was created.\n    expires_at: When the entry expires (None for no expiry).\n "
-        },
-        {
-          "name": "CacheStats",
-          "line": 42,
-          "bases": [],
-          "methods": 1,
-          "docstring": "Statistics about cache performance.\n\nAttributes:\n    hits: Number of cache hits.\n    misses: Number of cache misses.\n    evictions: Number of entries evicted.\n    size: Current number of entries.\n    "
-        },
-        {
-          "name": "MemoryCache",
-          "line": 65,
-          "bases": [],
-          "methods": 11,
-          "docstring": "In-memory LRU cache with TTL support.\n\nProvides fast caching with configurable maximum size\nand time-to-live for entries."
-        },
-        {
-          "name": "FileCache",
-          "line": 197,
-          "bases": [],
-          "methods": 7,
-          "docstring": "File-based cache for persisting cached data.\n\nStores cache entries as JSON files on disk with\nautomatic cleanup of expired entries."
-        }
-      ],
-      "function_details": []
-    },
-    {
       "name": "personal_index.content_categorizer",
       "filepath": "personal_index/content_categorizer.py",
       "status": "clean",
@@ -2152,44 +1386,6 @@
           "is_method": false,
           "parent_class": "",
           "docstring": "Calculate similarity between two texts using word overlap.\n\nUses Jaccard similarity on word sets."
-        }
-      ]
-    },
-    {
-      "name": "personal_index.content_diff",
-      "filepath": "personal_index/content_diff.py",
-      "status": "clean",
-      "lines": 40,
-      "classes": 1,
-      "functions": 1,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "dataclasses.dataclass",
-        "dataclasses.field",
-        "difflib.unified_diff",
-        "typing.Any"
-      ],
-      "class_details": [
-        {
-          "name": "DiffResult",
-          "line": 11,
-          "bases": [],
-          "methods": 0,
-          "docstring": "Result of comparing two content versions."
-        }
-      ],
-      "function_details": [
-        {
-          "name": "compute_diff",
-          "line": 22,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Compute the diff between two content versions."
         }
       ]
     },
@@ -3179,154 +2375,6 @@
       ]
     },
     {
-      "name": "personal_index.content_timeline",
-      "filepath": "personal_index/content_timeline.py",
-      "status": "clean",
-      "lines": 201,
-      "classes": 3,
-      "functions": 14,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "dataclasses.dataclass",
-        "dataclasses.field",
-        "datetime.datetime",
-        "datetime.timezone",
-        "typing.Any"
-      ],
-      "class_details": [
-        {
-          "name": "TimelineEntry",
-          "line": 15,
-          "bases": [],
-          "methods": 2,
-          "docstring": "A single entry in the content timeline."
-        },
-        {
-          "name": "TimelineGroup",
-          "line": 46,
-          "bases": [],
-          "methods": 1,
-          "docstring": "A group of timeline entries for a time period."
-        },
-        {
-          "name": "ContentTimeline",
-          "line": 58,
-          "bases": [],
-          "methods": 11,
-          "docstring": "Timeline for browsing content chronologically.\n\nOrganizes content entries by time and supports grouping\nby day, week, month, or custom periods."
-        }
-      ],
-      "function_details": []
-    },
-    {
-      "name": "personal_index.content_transform",
-      "filepath": "personal_index/content_transform.py",
-      "status": "clean",
-      "lines": 191,
-      "classes": 1,
-      "functions": 12,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "collections.abc.Callable",
-        "dataclasses.dataclass",
-        "dataclasses.field",
-        "datetime.datetime",
-        "datetime.timezone",
-        "typing.Any"
-      ],
-      "class_details": [
-        {
-          "name": "TransformPipeline",
-          "line": 19,
-          "bases": [],
-          "methods": 3,
-          "docstring": "A pipeline of content transformations.\n\nAttributes:\n    name: Pipeline name.\n    transforms: Ordered list of transformation functions.\n    metadata: Pipeline metadata."
-        }
-      ],
-      "function_details": [
-        {
-          "name": "normalize_url",
-          "line": 86,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Normalize URL by removing trailing slashes and fragments."
-        },
-        {
-          "name": "normalize_title",
-          "line": 97,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Normalize title by stripping whitespace and lowercasing."
-        },
-        {
-          "name": "normalize_tags",
-          "line": 105,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Normalize tags by lowercasing and stripping."
-        },
-        {
-          "name": "add_domain",
-          "line": 115,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Extract and add domain from URL."
-        },
-        {
-          "name": "add_word_count",
-          "line": 124,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Add word count from content or description."
-        },
-        {
-          "name": "add_timestamp",
-          "line": 132,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Add processing timestamp."
-        },
-        {
-          "name": "filter_by_score",
-          "line": 138,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Create a transform that filters items below min_score.\n\nArgs:\n    min_score: Minimum score threshold.\n\nReturns:\n    Transform function."
-        },
-        {
-          "name": "enrich_with_defaults",
-          "line": 157,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Add default values for missing fields."
-        },
-        {
-          "name": "create_standard_pipeline",
-          "line": 171,
-          "is_async": false,
-          "is_method": false,
-          "parent_class": "",
-          "docstring": "Create a standard transformation pipeline.\n\nReturns:\n    Configured TransformPipeline."
-        }
-      ]
-    },
-    {
       "name": "personal_index.content_type",
       "filepath": "personal_index/content_type.py",
       "status": "clean",
@@ -3526,12 +2574,114 @@
       "function_details": []
     },
     {
+      "name": "personal_index.cycle_signals",
+      "filepath": "personal_index/cycle_signals.py",
+      "status": "clean",
+      "lines": 316,
+      "classes": 0,
+      "functions": 10,
+      "tests": 0,
+      "ruff_errors": 0,
+      "ruff_warnings": 0,
+      "mypy_errors": 0,
+      "imports": [
+        "__future__.annotations",
+        "json",
+        "sys",
+        "collections.defaultdict",
+        "pathlib.Path"
+      ],
+      "class_details": [],
+      "function_details": [
+        {
+          "name": "load_codemap",
+          "line": 25,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "signal_no_tests",
+          "line": 37,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Live modules with 0 tests, excluding scaffolding and CLI entry points."
+        },
+        {
+          "name": "signal_oversized",
+          "line": 67,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "signal_dead_code",
+          "line": 85,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Modules with no static incoming imports.\n\nIMPORTANT: these are candidates only \u2014 dynamic dispatch (cli.py, __init__.py\nre-exports, API routing) means many unimported modules are still live.\nConfidence"
+        },
+        {
+          "name": "signal_duplicates",
+          "line": 133,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Modules sharing the same base stem (e.g., content_export, content_exporter)."
+        },
+        {
+          "name": "signal_errors",
+          "line": 160,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "signal_coverage",
+          "line": 179,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Estimate coverage by matching test files to source module names.\n\ne.g., tests/test_analytics.py \u2192 personal_index.analytics\nFalls back to codemap `tests` field if no test directory found."
+        },
+        {
+          "name": "extract",
+          "line": 214,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "format_for_auditor",
+          "line": 255,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Format signals as a scoped auditor prompt."
+        },
+        {
+          "name": "main",
+          "line": 296,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        }
+      ]
+    },
+    {
       "name": "personal_index.docs_generator",
       "filepath": "personal_index/docs_generator.py",
       "status": "clean",
-      "lines": 1101,
+      "lines": 1350,
       "classes": 5,
-      "functions": 19,
+      "functions": 23,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -3588,7 +2738,7 @@
       "function_details": [
         {
           "name": "_extract_docstring",
-          "line": 96,
+          "line": 98,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3596,7 +2746,7 @@
         },
         {
           "name": "_ast_name",
-          "line": 103,
+          "line": 105,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3604,7 +2754,7 @@
         },
         {
           "name": "_filepath_to_module",
-          "line": 112,
+          "line": 114,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3612,7 +2762,7 @@
         },
         {
           "name": "scan_modules",
-          "line": 122,
+          "line": 124,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3620,7 +2770,7 @@
         },
         {
           "name": "_parse_module",
-          "line": 134,
+          "line": 136,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3628,7 +2778,7 @@
         },
         {
           "name": "run_ruff",
-          "line": 216,
+          "line": 218,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3636,7 +2786,7 @@
         },
         {
           "name": "run_mypy",
-          "line": 245,
+          "line": 247,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3644,7 +2794,7 @@
         },
         {
           "name": "run_pytest",
-          "line": 268,
+          "line": 270,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3652,7 +2802,7 @@
         },
         {
           "name": "detect_dependencies",
-          "line": 291,
+          "line": 293,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3660,7 +2810,7 @@
         },
         {
           "name": "fetch_recent_commits",
-          "line": 310,
+          "line": 312,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3668,7 +2818,7 @@
         },
         {
           "name": "_escape_html",
-          "line": 338,
+          "line": 340,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3676,7 +2826,7 @@
         },
         {
           "name": "_status_color",
-          "line": 348,
+          "line": 350,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3684,7 +2834,7 @@
         },
         {
           "name": "_status_bg",
-          "line": 358,
+          "line": 360,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3692,7 +2842,7 @@
         },
         {
           "name": "_status_indicator",
-          "line": 369,
+          "line": 371,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3700,7 +2850,7 @@
         },
         {
           "name": "_module_to_dict",
-          "line": 378,
+          "line": 380,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -3708,27 +2858,59 @@
         },
         {
           "name": "generate_metadata_json",
-          "line": 416,
+          "line": 418,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
           "docstring": "Generate a machine-readable codemap JSON for AI consumption."
         },
         {
+          "name": "_compute_signals",
+          "line": 449,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Compute cycle signals from dashboard data (mirrors cycle_signals.py logic)."
+        },
+        {
           "name": "generate_dashboard",
-          "line": 445,
+          "line": 523,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
           "docstring": "Generate the dark terminal-style HTML dashboard with embedded codemap metadata."
         },
         {
+          "name": "_build_dashboard_data",
+          "line": 1248,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Build DashboardData from scanned modules and test modules."
+        },
+        {
+          "name": "_write_dashboard",
+          "line": 1273,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Generate HTML + JSON from DashboardData."
+        },
+        {
           "name": "generate",
-          "line": 1042,
+          "line": 1287,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
           "docstring": "Full pipeline: scan \u2192 lint \u2192 type-check \u2192 test \u2192 generate HTML."
+        },
+        {
+          "name": "generate_fast",
+          "line": 1320,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Fast pipeline: scan \u2192 generate HTML (skip linting and testing).\n\nUses AST-only scan. Error counts will be from whatever state the\nmodule metadata was last in. Suitable for dashboard refresh between\nfu"
         }
       ]
     },
@@ -4082,26 +3264,6 @@
           "docstring": "Compute similarity score (0.0 to 1.0) based on Levenshtein distance.\n\nReturns 1.0 for identical strings, 0.0 for completely different strings."
         }
       ]
-    },
-    {
-      "name": "personal_index.health",
-      "filepath": "personal_index/health.py",
-      "status": "clean",
-      "lines": 21,
-      "classes": 0,
-      "functions": 0,
-      "tests": 0,
-      "ruff_errors": 0,
-      "ruff_warnings": 0,
-      "mypy_errors": 0,
-      "imports": [
-        "__future__.annotations",
-        "personal_index.content_health.HealthChecker",
-        "personal_index.content_health.HealthCheckResult",
-        "personal_index.content_health.HealthReport"
-      ],
-      "class_details": [],
-      "function_details": []
     },
     {
       "name": "personal_index.importer",
@@ -5002,6 +4164,70 @@
       "function_details": []
     },
     {
+      "name": "personal_index.publish_dashboard",
+      "filepath": "personal_index/publish_dashboard.py",
+      "status": "clean",
+      "lines": 213,
+      "classes": 0,
+      "functions": 5,
+      "tests": 0,
+      "ruff_errors": 0,
+      "ruff_warnings": 0,
+      "mypy_errors": 0,
+      "imports": [
+        "__future__.annotations",
+        "argparse",
+        "json",
+        "shutil",
+        "subprocess",
+        "sys",
+        "pathlib.Path"
+      ],
+      "class_details": [],
+      "function_details": [
+        {
+          "name": "run",
+          "line": 26,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run a command, printing it for visibility."
+        },
+        {
+          "name": "regenerate",
+          "line": 40,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run docs_generator to produce fresh HTML + JSON."
+        },
+        {
+          "name": "validate_sync",
+          "line": 58,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Validate that HTML embedded metadata and JSON codemap are in sync."
+        },
+        {
+          "name": "publish",
+          "line": 96,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Copy dashboard files to search repo and optionally push."
+        },
+        {
+          "name": "main",
+          "line": 157,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        }
+      ]
+    },
+    {
       "name": "personal_index.queue",
       "filepath": "personal_index/queue.py",
       "status": "clean",
@@ -5443,14 +4669,14 @@
     {
       "name": "personal_index.search_suggestions",
       "filepath": "personal_index/search_suggestions.py",
-      "status": "error",
+      "status": "clean",
       "lines": 398,
       "classes": 3,
       "functions": 21,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
-      "mypy_errors": 1,
+      "mypy_errors": 0,
       "imports": [
         "__future__.annotations",
         "re",
@@ -8077,7 +7303,7 @@
       "name": "personal_index.search_facets.faceted_search",
       "filepath": "personal_index/search_facets/faceted_search.py",
       "status": "clean",
-      "lines": 289,
+      "lines": 288,
       "classes": 2,
       "functions": 16,
       "tests": 0,
@@ -10068,89 +9294,18 @@
       "personal_index.index",
       "personal_index.tags"
     ],
-    "personal_index.cli_clear": [
-      "personal_index.index",
-      "personal_index.interests",
-      "personal_index.tags"
-    ],
-    "personal_index.cli_crawl": [
-      "personal_index.crawler.main"
-    ],
     "personal_index.cli_dedup": [
       "personal_index.content_dedup"
     ],
-    "personal_index.cli_doctor": [],
     "personal_index.cli_export": [
       "personal_index.index",
       "personal_index.tags"
     ],
-    "personal_index.cli_extract": [
-      "personal_index.content_extractor"
-    ],
     "personal_index.cli_health": [
       "personal_index.content_health"
     ],
-    "personal_index.cli_import": [
-      "personal_index.content_extractor",
-      "personal_index.content_filter",
-      "personal_index.content_scoring",
-      "personal_index.index",
-      "personal_index.interests",
-      "personal_index.models",
-      "personal_index.tags"
-    ],
-    "personal_index.cli_interests": [
-      "personal_index.interests",
-      "personal_index.models"
-    ],
-    "personal_index.cli_list": [
-      "personal_index.index",
-      "personal_index.tags"
-    ],
-    "personal_index.cli_merge": [
-      "personal_index.content_merger"
-    ],
-    "personal_index.cli_pipeline": [
-      "personal_index.pipeline_runner"
-    ],
-    "personal_index.cli_pipeline_unified": [
-      "personal_index.content_filter",
-      "personal_index.content_scoring",
-      "personal_index.crawler.main",
-      "personal_index.index",
-      "personal_index.interests",
-      "personal_index.models",
-      "personal_index.tags"
-    ],
     "personal_index.cli_recommend": [
       "personal_index.content_recommender"
-    ],
-    "personal_index.cli_remove": [
-      "personal_index.index",
-      "personal_index.tags"
-    ],
-    "personal_index.cli_schedule": [],
-    "personal_index.cli_score": [
-      "personal_index.content_scoring",
-      "personal_index.index",
-      "personal_index.interests"
-    ],
-    "personal_index.cli_search": [
-      "personal_index.index",
-      "personal_index.tags"
-    ],
-    "personal_index.cli_stats": [
-      "personal_index.index",
-      "personal_index.interests",
-      "personal_index.tags"
-    ],
-    "personal_index.cli_status": [
-      "personal_index.index",
-      "personal_index.interests",
-      "personal_index.tags"
-    ],
-    "personal_index.cli_tags": [
-      "personal_index.tags"
     ],
     "personal_index.cli_top": [
       "personal_index.index"
@@ -10163,21 +9318,18 @@
       "personal_index.models",
       "personal_index.tags"
     ],
-    "personal_index.cli_watch": [],
     "personal_index.content": [],
     "personal_index.content_aggregator": [],
     "personal_index.content_analytics": [],
     "personal_index.content_annotations": [],
     "personal_index.content_api": [],
     "personal_index.content_batch": [],
-    "personal_index.content_cache": [],
     "personal_index.content_categorizer": [
       "personal_index.text_utils"
     ],
     "personal_index.content_changelog": [],
     "personal_index.content_collections": [],
     "personal_index.content_dedup": [],
-    "personal_index.content_diff": [],
     "personal_index.content_digest": [],
     "personal_index.content_enricher": [
       "personal_index.text_utils"
@@ -10203,12 +9355,11 @@
     "personal_index.content_scoring": [],
     "personal_index.content_search": [],
     "personal_index.content_summarizer": [],
-    "personal_index.content_timeline": [],
-    "personal_index.content_transform": [],
     "personal_index.content_type": [],
     "personal_index.content_validation": [],
     "personal_index.content_versioning": [],
     "personal_index.content_webhooks": [],
+    "personal_index.cycle_signals": [],
     "personal_index.docs_generator": [],
     "personal_index.domains": [],
     "personal_index.encoding": [],
@@ -10220,9 +9371,6 @@
       "personal_index.scheduler"
     ],
     "personal_index.fuzzy_search": [],
-    "personal_index.health": [
-      "personal_index.content_health"
-    ],
     "personal_index.importer": [],
     "personal_index.index": [
       "personal_index.models"
@@ -10283,6 +9431,7 @@
       "personal_index.tags"
     ],
     "personal_index.progress": [],
+    "personal_index.publish_dashboard": [],
     "personal_index.queue": [],
     "personal_index.rate_limiter": [],
     "personal_index.results": [
@@ -10468,7 +9617,6 @@
     "personal_index.dashboard.stats": [],
     "personal_index.dashboard.views": [],
     "personal_index.content_cache.__init__": [
-      "personal_index.content_cache",
       "personal_index.content_cache.cache_policy",
       "personal_index.content_cache.cache_stats",
       "personal_index.content_cache.cache_store"
@@ -10477,13 +9625,11 @@
     "personal_index.content_cache.cache_stats": [],
     "personal_index.content_cache.cache_store": [],
     "personal_index.content_diff.__init__": [
-      "personal_index.content_diff",
       "personal_index.content_diff.changes",
       "personal_index.content_diff.snapshot"
     ],
     "personal_index.content_diff.changes": [],
     "personal_index.content_diff.snapshot": [
-      "personal_index.content_diff",
       "personal_index.content_diff.changes"
     ],
     "personal_index.api.__init__": [],
@@ -10520,38 +9666,129 @@
     ],
     "personal_index.content_linker.similarity": [],
     "personal_index.content_transform.__init__": [
-      "personal_index.content_transform",
       "personal_index.content_transform.normalizer",
       "personal_index.content_transform.pipeline",
       "personal_index.content_transform.transformer"
     ],
     "personal_index.content_transform.normalizer": [],
     "personal_index.content_transform.pipeline": [
-      "personal_index.content_transform",
       "personal_index.content_transform.transformer"
     ],
     "personal_index.content_transform.transformer": [],
     "personal_index.content_timeline.__init__": [
-      "personal_index.content_timeline",
       "personal_index.content_timeline.timeline",
       "personal_index.content_timeline.timeline_entry",
       "personal_index.content_timeline.timeline_event",
       "personal_index.content_timeline.timeline_view"
     ],
     "personal_index.content_timeline.timeline": [
-      "personal_index.content_timeline",
       "personal_index.content_timeline.timeline_entry",
       "personal_index.content_timeline.timeline_event"
     ],
     "personal_index.content_timeline.timeline_entry": [],
     "personal_index.content_timeline.timeline_event": [],
     "personal_index.content_timeline.timeline_view": [
-      "personal_index.content_timeline",
       "personal_index.content_timeline.timeline",
       "personal_index.content_timeline.timeline_entry"
     ]
   },
   "commits": [
+    {
+      "sha": "beba9d9",
+      "message": "dashboard: add cycle signals section + split source/test line counts",
+      "author": "Sasha Malahov",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "c4b0747",
+      "message": "tooling: add cycle signal extractor and dashboard publish script",
+      "author": "Sasha Malahov",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "da70132",
+      "message": "Merge pull request #227 from belarusian/lint/clean-tests",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "3fd625c",
+      "message": "lint: auto-fix 773 ruff errors in tests/",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "f2f8feb",
+      "message": "Merge pull request #226 from belarusian/test/add-missing-coverage",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "c125be8",
+      "message": "test: add coverage for cli_top, cli_verify, pipeline_runner",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "9c0aee1",
+      "message": "ticket: add tickets for duplicates, missing tests, long functions, bare except",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "d05ae34",
+      "message": "Merge pull request #213 from belarusian/refactor/remove-dead-modules",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "8690203",
+      "message": "refactor: remove 23 dead modules (18 CLI, 5 non-CLI)",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "50c2482",
+      "message": "audit: deep audit of personal_index/ \u2014 found dead code, duplicates, missing tests, long functions",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "de9a022",
+      "message": "chore: remove __pycache__ from tracking, add to .gitignore",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "1aeedd0",
+      "message": "type: fix mypy no-any-return in search_suggestions.py",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "91e9049",
+      "message": "autonomous: save progress",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "433fbc7",
+      "message": "autonomous: save progress",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "1b95dfe",
+      "message": "autonomous: save progress",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "e37fc50",
+      "message": "test: add 61 core CLI tests for personal_index/cli.py",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
     {
       "sha": "d508007",
       "message": "remove self-referencing personal-index submodule",
@@ -10575,102 +9812,6 @@
       "message": "autonomous: save progress",
       "author": "belarusian",
       "date": "2026-08-12"
-    },
-    {
-      "sha": "14b88f2",
-      "message": "autonomous: save progress",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "c1a26f6",
-      "message": "fix: build cleanup - 4264 tests passing, 22 skipped",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "1e180b4",
-      "message": "autonomous: save progress",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "99e703c",
-      "message": "fix: build cleanup - 4239 tests passing, 31 failing",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "8e0bfa5",
-      "message": "autonomous: save progress",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "cd31a3e",
-      "message": "autonomous: save progress",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "c4ffbe9",
-      "message": "fix: remove unnecessary skips from test_tag_search_integration.py - tests use unique tmp_path and pass in isolation",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "daa4219",
-      "message": "feat: add trending decay and time-based scoring to suggestions",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "94fd252",
-      "message": "feat: add fuzzy matching to search suggestions",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "523d112",
-      "message": "feat: add content highlighting with snippet extraction",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "7a81c16",
-      "message": "feat: add TF-IDF and BM25 ranking to content search",
-      "author": "belarusian",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "9324131",
-      "message": "feat: expand search and indexing capabilities",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "4f66d41",
-      "message": "test: add comprehensive tests for TF-IDF, BM25, and snippet extraction",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "0527d8f",
-      "message": "fix: update test files to use correct API and fix URL pattern matching test",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "0e524c0",
-      "message": "feat: add integration tests for export formats (JSON, HTML, CSV, Markdown)",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
-    },
-    {
-      "sha": "ea9b607",
-      "message": "feat: add integration tests for interests workflow (add->crawl->verify scoring)",
-      "author": "Sasha Malahov",
-      "date": "2026-08-11"
     }
   ]
 }
