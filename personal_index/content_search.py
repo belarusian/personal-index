@@ -6,207 +6,8 @@ Full-text search with ranking, filtering, and relevance scoring.
 from __future__ import annotations
 
 import math
-import re
 import string
-from dataclasses import dataclass, field
 from typing import Any
-
-
-@dataclass
-class Snippet:
-    """A highlighted text snippet from a search result."""
-
-    text: str
-    highlighted: str
-    start_offset: int = 0
-    end_offset: int = 0
-    matched_terms: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "text": self.text,
-            "highlighted": self.highlighted,
-            "start_offset": self.start_offset,
-            "end_offset": self.end_offset,
-            "matched_terms": self.matched_terms,
-        }
-
-
-class SnippetExtractor:
-    """Extracts and highlights relevant snippets from search results."""
-
-    def __init__(
-        self,
-        max_snippet_length: int = 200,
-        max_snippets: int = 3,
-        ellipsis: str = "...",
-        marker_open: str = "<mark>",
-        marker_close: str = "</mark>",
-    ):
-        self.max_snippet_length = max_snippet_length
-        self.max_snippets = max_snippets
-        self.ellipsis = ellipsis
-        self.marker_open = marker_open
-        self.marker_close = marker_close
-
-    def extract(
-        self,
-        text: str,
-        query_terms: list[str],
-    ) -> list[Snippet]:
-        """Extract highlighted snippets from text matching query terms.
-
-        Finds the most relevant portions of text containing query terms
-        and returns them as highlighted snippets.
-        """
-        if not text or not query_terms:
-            return []
-
-        text_lower = text.lower()
-        # Find all positions of all query terms
-        all_positions: list[tuple[int, int, str]] = []  # (start, end, term)
-        for term in query_terms:
-            term_lower = term.lower()
-            start = 0
-            while start < len(text_lower):
-                pos = text_lower.find(term_lower, start)
-                if pos == -1:
-                    break
-                all_positions.append((pos, pos + len(term), term))
-                start = pos + 1
-
-        if not all_positions:
-            # No matches found, return first portion of text
-            return self._make_fallback_snippet(text)
-
-        # Sort by position
-        all_positions.sort(key=lambda x: x[0])
-
-        # Group nearby matches into snippet windows
-        snippets = self._group_into_windows(text, all_positions)
-
-        return snippets[: self.max_snippets]
-
-    def _group_into_windows(
-        self,
-        text: str,
-        positions: list[tuple[int, int, str]],
-    ) -> list[Snippet]:
-        """Group match positions into snippet windows."""
-        if not positions:
-            return []
-
-        # Calculate half window size
-        half_window = self.max_snippet_length // 2
-
-        # Group positions that are within the window of each other
-        groups: list[list[tuple[int, int, str]]] = []
-        current_group: list[tuple[int, int, str]] = [positions[0]]
-
-        for pos in positions[1:]:
-            # If this position is within window of the last in group
-            if pos[0] - current_group[-1][0] <= self.max_snippet_length:
-                current_group.append(pos)
-            else:
-                groups.append(current_group)
-                current_group = [pos]
-        groups.append(current_group)
-
-        snippets = []
-        for group in groups:
-            snippet = self._make_snippet(text, group, half_window)
-            if snippet:
-                snippets.append(snippet)
-
-        return snippets
-
-    def _make_snippet(
-        self,
-        text: str,
-        positions: list[tuple[int, int, str]],
-        half_window: int,
-    ) -> Snippet | None:
-        """Create a single snippet from a group of match positions."""
-        first_start = positions[0][0]
-        last_end = positions[-1][1]
-
-        # Calculate window boundaries
-        window_start = max(0, first_start - half_window)
-        window_end = min(len(text), last_end + half_window)
-
-        # Try to break at word boundaries
-        if window_start > 0:
-            next_space = text.rfind(" ", 0, window_start)
-            if next_space != -1:
-                window_start = next_space + 1
-        if window_end < len(text):
-            next_space = text.find(" ", window_end)
-            if next_space != -1:
-                window_end = next_space
-
-        snippet_text = text[window_start:window_end]
-
-        # Find matched terms in this snippet
-        matched_terms = list(set(term for _, _, term in positions))
-
-        # Highlight matches in the snippet
-        highlighted = self._highlight_terms(snippet_text, matched_terms)
-
-        # Add ellipsis if truncated
-        prefix = self.ellipsis if window_start > 0 else ""
-        suffix = self.ellipsis if window_end < len(text) else ""
-
-        return Snippet(
-            text=snippet_text,
-            highlighted=f"{prefix}{highlighted}{suffix}",
-            start_offset=window_start,
-            end_offset=window_end,
-            matched_terms=matched_terms,
-        )
-
-    def _highlight_terms(self, text: str, terms: list[str]) -> str:
-        """Highlight query terms in text."""
-        if not terms:
-            return text
-
-        # Sort terms by length (longest first) to avoid partial replacements
-        sorted_terms = sorted(terms, key=len, reverse=True)
-        result = text
-
-        for term in sorted_terms:
-            pattern = re.compile(re.escape(term), re.IGNORECASE)
-            result = pattern.sub(
-                f"{self.marker_open}\\g<0>{self.marker_close}",
-                result,
-            )
-
-        return result
-
-    def _make_fallback_snippet(self, text: str) -> list[Snippet]:
-        """Create a fallback snippet when no terms match."""
-        if len(text) <= self.max_snippet_length:
-            return [Snippet(text=text, highlighted=text)]
-
-        snippet_text = text[:self.max_snippet_length]
-        # Try to break at word boundary
-        last_space = snippet_text.rfind(" ")
-        if last_space > self.max_snippet_length * 0.5:
-            snippet_text = snippet_text[:last_space]
-
-        return [
-            Snippet(
-                text=snippet_text,
-                highlighted=f"{snippet_text}{self.ellipsis}",
-            )
-        ]
-
-    def highlight_text(
-        self,
-        text: str,
-        terms: list[str],
-    ) -> str:
-        """Simply highlight terms in text without snippet extraction."""
-        return self._highlight_terms(text, terms)
 
 
 class SearchIndex:
@@ -217,7 +18,6 @@ class SearchIndex:
         self._items: dict[str, dict[str, Any]] = {}  # id -> item
         self._term_freq: dict[str, dict[str, int]] = {}  # term -> {item_id: count}
         self._doc_lengths: dict[str, int] = {}  # item_id -> total token count
-        self._snippet_extractor = SnippetExtractor()
 
     def add_item(self, item: dict[str, Any]) -> None:
         """Add an item to the search index."""
@@ -264,7 +64,6 @@ class SearchIndex:
         limit: int = 20,
         offset: int = 0,
         ranking: str = "tf",
-        highlight: bool = False,
     ) -> dict[str, Any]:
         """Search the index and return ranked results.
 
@@ -274,7 +73,6 @@ class SearchIndex:
             limit: Max results to return.
             offset: Pagination offset.
             ranking: Ranking algorithm - "tf", "tfidf", or "bm25".
-            highlight: Whether to include highlighted snippets in results.
         """
         tokens = self._tokenize(query)
         if not tokens:
@@ -315,15 +113,10 @@ class SearchIndex:
         for item_id, score in page:
             item = self._items.get(item_id)
             if item:
-                result_entry: dict[str, Any] = {
+                results.append({
                     "item": {k: v for k, v in item.items() if k != "content"},
                     "score": round(score, 4),
-                }
-                if highlight:
-                    content = item.get("content", "") or item.get("description", "") or ""
-                    snippets = self._snippet_extractor.extract(content, tokens)
-                    result_entry["snippets"] = [s.to_dict() for s in snippets]
-                results.append(result_entry)
+                })
 
         return {"results": results, "total": total, "query": query}
 
@@ -332,7 +125,12 @@ class SearchIndex:
         candidates: dict[str, float],
         query_tokens: list[str],
     ) -> dict[str, float]:
-        """Score candidates using TF-IDF."""
+        """Score candidates using TF-IDF.
+
+        TF-IDF = TF * IDF where:
+        - TF = term frequency in document
+        - IDF = log(N / df) where N = total docs, df = doc frequency of term
+        """
         n_docs = max(len(self._items), 1)
         scores: dict[str, float] = {item_id: 0.0 for item_id in candidates}
 
@@ -347,6 +145,7 @@ class SearchIndex:
                     continue
                 tf = self._term_freq.get(token, {}).get(item_id, 0)
                 doc_len = max(self._doc_lengths.get(item_id, 1), 1)
+                # Normalized TF: tf / doc_length
                 norm_tf = tf / doc_len
                 scores[item_id] += norm_tf * idf
 
@@ -359,7 +158,16 @@ class SearchIndex:
         k1: float = 1.5,
         b: float = 0.75,
     ) -> dict[str, float]:
-        """Score candidates using BM25 algorithm."""
+        """Score candidates using BM25 algorithm.
+
+        BM25 = IDF * (TF * (k1 + 1)) / (TF + k1 * (1 - b + b * avgdl))
+
+        Args:
+            candidates: Candidate item IDs.
+            query_tokens: Tokenized query.
+            k1: Term frequency saturation parameter (default 1.5).
+            b: Document length normalization parameter (default 0.75).
+        """
         n_docs = max(len(self._items), 1)
         avgdl = sum(self._doc_lengths.values()) / n_docs if self._doc_lengths else 1.0
         scores: dict[str, float] = {item_id: 0.0 for item_id in candidates}
@@ -376,6 +184,7 @@ class SearchIndex:
                 tf = self._term_freq.get(token, {}).get(item_id, 0)
                 doc_len = self._doc_lengths.get(item_id, avgdl)
 
+                # BM25 scoring formula
                 numerator = tf * (k1 + 1)
                 denominator = tf + k1 * (1 - b + b * (doc_len / avgdl))
                 scores[item_id] += idf * (numerator / denominator)
@@ -398,6 +207,7 @@ class SearchIndex:
         for key, value in filters.items():
             item_value = item.get(key)
             if isinstance(value, (list, set)):
+                # For list filters: check if any item value matches any filter value
                 if isinstance(item_value, (list, set)):
                     if not set(item_value) & set(value):
                         return False
@@ -405,6 +215,7 @@ class SearchIndex:
                     if item_value not in value:
                         return False
             elif isinstance(value, dict):
+                # Range filter: {"$gte": ..., "$lte": ...}
                 if "$gte" in value and item_value is not None and item_value < value["$gte"]:
                     return False
                 if "$lte" in value and item_value is not None and item_value > value["$lte"]:
@@ -434,6 +245,7 @@ class SearchIndex:
         text = text.lower()
         text = text.translate(str.maketrans("", "", string.punctuation))
         tokens = text.split()
+        # Remove stop words
         stop_words = {
             "a", "an", "the", "is", "are", "was", "were", "be", "been",
             "being", "have", "has", "had", "do", "does", "did", "will",
@@ -490,6 +302,7 @@ class SearchIndex:
         self._index = {k: set(v) for k, v in data["index"].items()}
         self._term_freq = data["term_freq"]
         self._doc_lengths = data.get("doc_lengths", {})
+        # Rebuild doc_lengths if not present
         if not self._doc_lengths:
             for item_id, item in self._items.items():
                 text = self._extract_text(item)
@@ -502,7 +315,8 @@ class SearchIndex:
         result = text
         for token in tokens:
             if token in result.lower():
-                pattern = re.compile(re.escape(token), re.IGNORECASE)
+                import re as _re
+                pattern = _re.compile(_re.escape(token), _re.IGNORECASE)
                 result = pattern.sub(f"{marker}{token}{marker}", result)
         return result
 
@@ -523,11 +337,9 @@ class ContentSearch:
         limit: int = 20,
         offset: int = 0,
         ranking: str = "tf",
-        highlight: bool = False,
     ) -> dict[str, Any]:
         result: dict[str, Any] = self.index.search(
-            query, filters=filters, limit=limit, offset=offset,
-            ranking=ranking, highlight=highlight,
+            query, filters=filters, limit=limit, offset=offset, ranking=ranking
         )
         return result
 
