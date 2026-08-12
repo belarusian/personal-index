@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12T23:30:54Z",
+  "generated_at": "2026-08-12T23:48:58Z",
   "summary": {
     "total_modules": 191,
     "total_lines": 79687,
@@ -13329,6 +13329,18 @@
   },
   "commits": [
     {
+      "sha": "a4cc177",
+      "message": "Merge pull request #238 from belarusian/fix/fast-dashboard-publish",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "1b46cf7",
+      "message": "feat: add hierarchical tree summary for LLM-friendly codemap consumption",
+      "author": "Sasha Malahov",
+      "date": "2026-08-12"
+    },
+    {
       "sha": "75dd8d4",
       "message": "fix: resolve merge conflict in docs_generator.py",
       "author": "Sasha Malahov",
@@ -13434,18 +13446,6 @@
       "sha": "f2f8feb",
       "message": "Merge pull request #226 from belarusian/test/add-missing-coverage",
       "author": "kodep",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "c125be8",
-      "message": "test: add coverage for cli_top, cli_verify, pipeline_runner",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "9c0aee1",
-      "message": "ticket: add tickets for duplicates, missing tests, long functions, bare except",
-      "author": "belarusian",
       "date": "2026-08-12"
     }
   ]
