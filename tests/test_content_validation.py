@@ -1,6 +1,6 @@
 """Tests for the content validation module."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from personal_index.content_validation import (
     ContentValidator,
@@ -114,7 +114,7 @@ class TestContentValidator:
         item = {
             "id": "1",
             "url": "https://example.com",
-            "published_at": datetime(2024, 1, 1),
+            "published_at": datetime(2024, 1, 1, tzinfo=timezone.utc),
         }
         result = self.validator.validate([item])
         assert result.is_valid is True

@@ -1,6 +1,6 @@
 """Tests for the content scoring and ranking module."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 

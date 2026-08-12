@@ -1,6 +1,6 @@
 """Tests for the content notification module."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from personal_index.content_notifications import (
     Notification,
@@ -67,7 +67,7 @@ class TestNotification:
             notification_type=NotificationType.NEW_BOOKMARK,
             title="Test",
             message="Message",
-            timestamp=datetime(2024, 1, 1),
+            timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
             channels=[NotificationChannel.LOG],
         )
         d = n.to_dict()

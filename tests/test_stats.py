@@ -1,6 +1,6 @@
 """Tests for personal_index.stats."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -158,14 +158,14 @@ class TestStatsCollector:
             url="https://a.com",
             title="A",
             content="Content",
-            crawled_at=datetime(2024, 1, 1),
+            crawled_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
         ))
         collector.search_index.add(CrawledPage(
             url="https://b.com",
             title="B",
             content="Content",
-            crawled_at=datetime(2024, 6, 1),
+            crawled_at=datetime(2024, 6, 1, tzinfo=timezone.utc),
         ))
         stats = collector.get_index_stats()
-        assert stats.oldest_page == datetime(2024, 1, 1)
-        assert stats.newest_page == datetime(2024, 6, 1)
+        assert stats.oldest_page == datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert stats.newest_page == datetime(2024, 6, 1, tzinfo=timezone.utc)

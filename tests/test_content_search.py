@@ -1,6 +1,6 @@
 """Tests for content_search module."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -129,20 +129,20 @@ class TestFilters:
 
     def test_filter_range_gte(self, search):
         items = [
-            {"id": "1", "title": "Old", "date": datetime(2023, 1, 1)},
-            {"id": "2", "title": "New", "date": datetime(2024, 6, 1)},
+            {"id": "1", "title": "Old", "date": datetime(2023, 1, 1, tzinfo=timezone.utc)},
+            {"id": "2", "title": "New", "date": datetime(2024, 6, 1, tzinfo=timezone.utc)},
         ]
         search.index_items(items)
-        result = search.search("old", filters={"date": {"$gte": datetime(2024, 1, 1)}})
+        result = search.search("old", filters={"date": {"$gte": datetime(2024, 1, 1, tzinfo=timezone.utc)}})
         assert result["total"] == 0
 
     def test_filter_range_lte(self, search):
         items = [
-            {"id": "1", "title": "Old", "date": datetime(2023, 1, 1)},
-            {"id": "2", "title": "New", "date": datetime(2024, 6, 1)},
+            {"id": "1", "title": "Old", "date": datetime(2023, 1, 1, tzinfo=timezone.utc)},
+            {"id": "2", "title": "New", "date": datetime(2024, 6, 1, tzinfo=timezone.utc)},
         ]
         search.index_items(items)
-        result = search.search("old", filters={"date": {"$lte": datetime(2023, 6, 1)}})
+        result = search.search("old", filters={"date": {"$lte": datetime(2023, 6, 1, tzinfo=timezone.utc)}})
         assert result["total"] == 1
 
 
