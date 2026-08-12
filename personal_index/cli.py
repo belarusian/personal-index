@@ -37,6 +37,7 @@ from personal_index.cli_watch import watch as watch_cmd
 from personal_index.cli_recommend import recommend as recommend_cmd
 from personal_index.cli_health import health as health_cmd
 from personal_index.cli_dedup import dedup as dedup_cmd
+from personal_index.cli_merge import merge as merge_cmd
 from personal_index.index import SearchIndex
 from personal_index.tags import TagStore
 
@@ -944,6 +945,7 @@ main.add_command(score_cmd)
 main.add_command(recommend_cmd)
 main.add_command(health_cmd)
 main.add_command(dedup_cmd)
+main.add_command(merge_cmd)
 
 
 if __name__ == "__main__":
