@@ -10,10 +10,11 @@ self-contained HTML dashboard with dark terminal aesthetic.
 from __future__ import annotations
 
 import ast
+import json
 import os
 import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -82,6 +83,10 @@ class DashboardData:
     dependency_graph: dict[str, list[str]] = field(default_factory=dict)
     test_results: str = ""
     commits: list[CommitInfo] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        """Serialize to a JSON-friendly dict for AI consumption."""
+        return asdict(self)
 
 
 # ---------------------------------------------------------------------------
@@ -370,11 +375,71 @@ def _status_indicator(status: str) -> str:
     return "OK"
 
 
-def generate_dashboard(data: DashboardData, output_path: str) -> None:
-    """Generate the dark terminal-style HTML dashboard."""
+def _module_to_dict(mod: ModuleInfo) -> dict:
+    """Convert ModuleInfo to a JSON-serializable dict."""
+    return {
+        "name": mod.module_name,
+        "filepath": mod.filepath,
+        "status": mod.status,
+        "lines": mod.line_count,
+        "classes": len(mod.classes),
+        "functions": len(mod.functions) + sum(len(c.methods) for c in mod.classes),
+        "tests": mod.test_count,
+        "ruff_errors": len(mod.ruff_errors),
+        "ruff_warnings": len(mod.ruff_warnings),
+        "mypy_errors": len(mod.mypy_errors),
+        "imports": mod.imports,
+        "class_details": [
+            {
+                "name": c.name,
+                "line": c.line,
+                "bases": c.bases,
+                "methods": len(c.methods),
+                "docstring": c.docstring[:200] if c.docstring else "",
+            }
+            for c in mod.classes
+        ],
+        "function_details": [
+            {
+                "name": f.name,
+                "line": f.line,
+                "is_async": f.is_async,
+                "is_method": f.is_method,
+                "parent_class": f.parent_class,
+                "docstring": f.docstring[:200] if f.docstring else "",
+            }
+            for f in mod.functions
+        ],
+    }
 
-    total_errors = data.total_ruff_errors + data.total_mypy_errors
-    total_warnings = data.total_ruff_warnings
+
+def generate_metadata_json(data: DashboardData, output_path: str) -> str:
+    """Generate a machine-readable codemap JSON for AI consumption."""
+    metadata = {
+        "generated_at": subprocess.run(
+            ["date", "-u", "+%Y-%m-%dT%H:%M:%SZ"],
+            capture_output=True, text=True, check=False,
+        ).stdout.strip() or "",
+        "summary": {
+            "total_modules": data.total_modules,
+            "total_lines": data.total_lines,
+            "total_classes": data.total_classes,
+            "total_functions": data.total_functions,
+            "total_tests": data.total_tests,
+            "total_errors": data.total_ruff_errors + data.total_mypy_errors,
+            "total_warnings": data.total_ruff_warnings,
+        },
+        "modules": [_module_to_dict(m) for m in data.modules],
+        "dependency_graph": data.dependency_graph,
+        "commits": [
+            {"sha": c.sha_short, "message": c.message, "author": c.author, "date": c.date}
+            for c in data.commits
+        ],
+    }
+
+    json_path = os.path.splitext(output_path)[0] + "_metadata.json"
+    Path(json_path).write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    return json_path
 
     # ---- MODULE MAP rows ----
     module_rows = ""
@@ -461,12 +526,34 @@ def generate_dashboard(data: DashboardData, output_path: str) -> None:
         <span class="heat-errs" style="color: {heat_color};">E:{err_count} W:{warn_count}</span>
     </div>"""
 
+    # ---- EMBEDDED METADATA for AI consumption ----
+    import json as _json
+    metadata_payload = _json.dumps({
+        "summary": {
+            "total_modules": data.total_modules,
+            "total_lines": data.total_lines,
+            "total_classes": data.total_classes,
+            "total_functions": data.total_functions,
+            "total_tests": data.total_tests,
+            "total_errors": total_errors,
+            "total_warnings": total_warnings,
+        },
+        "modules": [_module_to_dict(m) for m in data.modules],
+        "dependency_graph": data.dependency_graph,
+        "commits": [
+            {"sha": c.sha_short, "message": c.message, "author": c.author, "date": c.date}
+            for c in data.commits
+        ],
+    })
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>personal-index // TERMINAL DASHBOARD</title>
+<!-- CODMAP METADATA — machine-readable projection for AI orchestrator -->
+<script type="application/json" id="codemap-metadata">{_escape_html(metadata_payload)}</script>
 <style>
 /* ============================================================
    DARK TERMINAL AESTHETIC
@@ -994,6 +1081,10 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
 
     print(f"[docs_generator] Generating dashboard → {output}")
     generate_dashboard(data, output)
+
+    json_path = generate_metadata_json(data, output)
+    print(f"[docs_generator] Generating codemap JSON → {json_path}")
+
     print(f"[docs_generator] Done. {data.total_modules} modules, {data.total_lines:,} lines, "
           f"{data.total_ruff_errors + data.total_mypy_errors} errors, "
           f"{data.total_ruff_warnings} warnings")
