@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
+import time
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from typing import Any
 
@@ -26,6 +27,26 @@ class Suggestion:
             "source": self.source,
             "category": self.category,
         }
+
+
+@dataclass
+class TrendingEntry:
+    """A single trending query entry with timestamps."""
+
+    query: str
+    count: int = 1
+    first_seen: float = field(default_factory=time.time)
+    last_seen: float = field(default_factory=time.time)
+
+    @property
+    def age_seconds(self) -> float:
+        """How long ago this entry was last seen."""
+        return time.time() - self.last_seen
+
+    def record(self) -> None:
+        """Record another occurrence."""
+        self.count += 1
+        self.last_seen = time.time()
 
 
 def _fuzzy_match_score(query: str, candidate: str) -> float:
@@ -50,7 +71,6 @@ def _fuzzy_match_score(query: str, candidate: str) -> float:
 
     # Prefix match (strong signal for autocomplete)
     if c_lower.startswith(q_lower):
-        # Longer prefix = higher score
         prefix_ratio = len(q_lower) / max(len(c_lower), 1)
         return max(0.9, 0.7 + prefix_ratio * 0.3)
 
@@ -79,14 +99,16 @@ class SearchSuggestions:
         max_suggestions: int = 10,
         min_prefix_length: int = 2,
         fuzzy_threshold: float = 0.3,
+        decay_half_life: float = 3600.0,
     ):
         self.max_suggestions = max_suggestions
         self.min_prefix_length = min_prefix_length
         self.fuzzy_threshold = fuzzy_threshold
+        self.decay_half_life = decay_half_life  # seconds for half-life decay
         self._search_history: list[str] = []
         self._tags: list[str] = []
         self._keywords: list[str] = []
-        self._trending: Counter = Counter()
+        self._trending: dict[str, TrendingEntry] = {}
 
     def add_search_history(self, queries: list[str]) -> None:
         """Add queries to search history."""
@@ -101,13 +123,40 @@ class SearchSuggestions:
         self._keywords.extend(keywords)
 
     def record_search(self, query: str) -> None:
-        """Record a single search query."""
+        """Record a single search query with timestamp for trending."""
         self._search_history.append(query)
-        self._trending[query.lower()] += 1
+        key = query.lower()
+        if key in self._trending:
+            self._trending[key].record()
+        else:
+            self._trending[key] = TrendingEntry(query=query)
 
     def get_trending(self, n: int = 10) -> list[str]:
-        """Get the most trending search queries."""
-        return [q for q, _ in self._trending.most_common(n)]
+        """Get the most trending search queries, sorted by decayed score."""
+        scored = []
+        for entry in self._trending.values():
+            decayed_score = self._apply_decay(entry)
+            scored.append((entry.query, decayed_score))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [q for q, _ in scored[:n]]
+
+    def _apply_decay(self, entry: TrendingEntry) -> float:
+        """Apply exponential decay to a trending entry's score.
+
+        Uses half-life decay: score = count * (0.5 ^ (age / half_life))
+        """
+        if self.decay_half_life <= 0:
+            return float(entry.count)
+        age = entry.age_seconds
+        decay_factor = 0.5 ** (age / self.decay_half_life)
+        return entry.count * decay_factor
+
+    def _get_trending_counts(self) -> Counter:
+        """Get trending counts as a Counter for backward compatibility."""
+        return Counter(
+            (entry.query, int(self._apply_decay(entry)))
+            for entry in self._trending.values()
+        )
 
     def suggest(
         self,
@@ -171,7 +220,7 @@ class SearchSuggestions:
                     seen.add(query)
                     candidates[query] = Suggestion(
                         text=query,
-                        score=score * 0.7,  # Lower priority than prefix matches
+                        score=score * 0.7,
                         source="history",
                         category="fuzzy_history",
                     )
@@ -245,10 +294,14 @@ class SearchSuggestions:
     def _suggest_from_trending(
         self, prefix: str, candidates: dict[str, Suggestion], fuzzy: bool = False
     ) -> None:
-        """Generate suggestions from trending queries."""
-        for query, count in self._trending.most_common(self.max_suggestions):
+        """Generate suggestions from trending queries with decay."""
+        for entry in self._trending.values():
+            query = entry.query
             if query.startswith(prefix):
-                score = min(count / max(sum(self._trending.values()), 1) * 10, 1.0)
+                decayed = self._apply_decay(entry)
+                score = min(decayed / max(sum(
+                    self._apply_decay(e) for e in self._trending.values()
+                ), 1) * 10, 1.0)
                 if query not in candidates or score > candidates[query].score:
                     candidates[query] = Suggestion(
                         text=query,
@@ -259,14 +312,18 @@ class SearchSuggestions:
 
         if fuzzy:
             seen = set(candidates.keys())
-            for query, count in self._trending.most_common(self.max_suggestions * 2):
+            for entry in self._trending.values():
+                query = entry.query
                 if query in seen:
                     continue
                 score = _fuzzy_match_score(prefix, query)
                 if score >= self.fuzzy_threshold:
                     seen.add(query)
+                    decayed = self._apply_decay(entry)
                     trending_score = min(
-                        count / max(sum(self._trending.values()), 1) * 10, 1.0
+                        decayed / max(sum(
+                            self._apply_decay(e) for e in self._trending.values()
+                        ), 1) * 10, 1.0
                     )
                     candidates[query] = Suggestion(
                         text=query,
@@ -301,11 +358,19 @@ class SearchSuggestions:
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize suggestion data."""
+        trending_data = {}
+        for key, entry in self._trending.items():
+            trending_data[key] = {
+                "query": entry.query,
+                "count": entry.count,
+                "first_seen": entry.first_seen,
+                "last_seen": entry.last_seen,
+            }
         return {
             "search_history": self._search_history,
             "tags": self._tags,
             "keywords": self._keywords,
-            "trending": dict(self._trending),
+            "trending": trending_data,
         }
 
     @classmethod
@@ -315,5 +380,19 @@ class SearchSuggestions:
         instance._search_history = data.get("search_history", [])
         instance._tags = data.get("tags", [])
         instance._keywords = data.get("keywords", [])
-        instance._trending = Counter(data.get("trending", {}))
+        trending_data = data.get("trending", {})
+        for key, value in trending_data.items():
+            if isinstance(value, dict):
+                instance._trending[key] = TrendingEntry(
+                    query=value.get("query", key),
+                    count=value.get("count", 1),
+                    first_seen=value.get("first_seen", time.time()),
+                    last_seen=value.get("last_seen", time.time()),
+                )
+            elif isinstance(value, (int, float)):
+                # Backward compat: old format was just {query: count}
+                instance._trending[key] = TrendingEntry(
+                    query=key,
+                    count=int(value),
+                )
         return instance
