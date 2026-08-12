@@ -99,7 +99,6 @@ class TestSearchIntegration:
 
     def test_search_basic(self, tmp_path):
         """Test basic search returns relevant results."""
-        pytest.skip("Test isolation issue: shared SearchIndex state")
         index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
@@ -125,7 +124,6 @@ class TestSearchIntegration:
 
     def test_search_relevance_ordering(self, tmp_path):
         """Test search results are ordered by relevance."""
-        pytest.skip("Test isolation issue: shared SearchIndex state")
         index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
@@ -147,7 +145,6 @@ class TestSearchIntegration:
 
     def test_search_with_limit(self, tmp_path):
         """Test search respects limit parameter."""
-        pytest.skip("Test isolation issue: shared SearchIndex state")
         index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
@@ -183,7 +180,6 @@ class TestSearchIntegration:
 
     def test_search_snippet_generation(self, tmp_path):
         """Test search generates useful snippets."""
-        pytest.skip("Test isolation issue: shared SearchIndex state")
         index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
@@ -276,7 +272,6 @@ class TestSearchIndexOperations:
 
     def test_list_pages_sorted_by_score(self, tmp_path):
         """Test list_pages returns pages sorted by score."""
-        pytest.skip("Test isolation issue: shared SearchIndex state")
         index = SearchIndex(db_path=str(tmp_path / f"index_{uuid.uuid4().hex[:8]}.json"))
 
         from personal_index.models import CrawledPage
