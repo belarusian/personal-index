@@ -441,6 +441,12 @@ def generate_metadata_json(data: DashboardData, output_path: str) -> str:
     Path(json_path).write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     return json_path
 
+
+def generate_dashboard(data: DashboardData, output_path: str) -> None:
+    """Generate the dark terminal-style HTML dashboard with embedded codemap metadata."""
+    total_errors = data.total_ruff_errors + data.total_mypy_errors
+    total_warnings = data.total_ruff_warnings
+
     # ---- MODULE MAP rows ----
     module_rows = ""
     for mod in sorted(data.modules, key=lambda m: m.module_name):
