@@ -1,17 +1,28 @@
-# TICKET-1: Tests import from non-existent modules
-
-## Title
-Five test files import from modules that do not exist in the codebase
+# TICKET-1: Dead CLI modules — 20 separate cli_*.py files never imported
 
 ## Evidence
-The following test files import from modules that are not present in `personal_index/`:
 
-| Test File | Import Target | Status |
-|---|---|---|
-| `tests/test_content_changelog.py` | `personal_index.content_changelog` | Module not found |
-| `tests/test_content_diff.py` | `personal_index.content_diff` | Module not found |
-| `tests/test_content_pin.py` | `personal_index.content_pin` | Module not found |
-| `tests/test_content_rollback.py` | `personal_index.content_rollback` | Module not found |
-| `tests/test_content_versioning.py` | `personal_index.content_versioning` | Module not found |
+The following `cli_*.py` modules exist in `personal_index/` but are **never imported** by any other source module or test file:
 
-Confirmed by:
+- `cli_clear.py`
+- `cli_crawl.py`
+- `cli_doctor.py`
+- `cli_export.py`
+- `cli_extract.py`
+- `cli_import.py`
+- `cli_interests.py`
+- `cli_list.py`
+- `cli_merge.py`
+- `cli_pipeline.py`
+- `cli_remove.py`
+- `cli_schedule.py`
+- `cli_score.py`
+- `cli_search.py`
+- `cli_stats.py`
+- `cli_status.py`
+- `cli_tags.py`
+- `cli_top.py`
+- `cli_verify.py`
+- `cli_watch.py`
+
+Only 3 CLI modules are imported in `cli.py` (lines 1390-1395):
