@@ -4,10 +4,10 @@ from datetime import datetime
 
 import pytest
 
-from personal_index.stats import IndexStats, CrawlStats, StatsCollector
 from personal_index.interests import InterestStore
-from personal_index.search_index import SearchIndex
 from personal_index.models import CrawledPage, Interest, InterestType
+from personal_index.search_index import SearchIndex
+from personal_index.stats import CrawlStats, IndexStats, StatsCollector
 
 
 @pytest.fixture

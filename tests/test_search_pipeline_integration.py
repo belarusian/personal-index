@@ -6,13 +6,8 @@ through the full crawl→extract→filter→score→tag→index pipeline.
 
 from __future__ import annotations
 
-import pytest
-
-from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
-from personal_index.pipeline_runner import PipelineRunner, PipelineConfig
-from personal_index.tags import TagStore
+from personal_index.pipeline_runner import PipelineConfig, PipelineRunner
 
 
 class TestSearchAfterPipeline:

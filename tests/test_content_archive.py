@@ -1,16 +1,12 @@
 """Tests for content_archive module - compress old content."""
 
 import os
-import gzip
 import tempfile
-import pytest
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 from personal_index.content_archive.archive_entry import ArchiveEntry, ArchiveStatus
-from personal_index.content_archive.compressor import Compressor, CompressionFormat
 from personal_index.content_archive.archiver import ContentArchiver
-
+from personal_index.content_archive.compressor import CompressionFormat, Compressor
 
 # ── ArchiveEntry tests ─────────────────────────────────────
 

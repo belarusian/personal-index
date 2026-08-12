@@ -1,7 +1,5 @@
 """Test TICKET-61: No md5 usage for content fingerprinting."""
 
-import ast
-import re
 
 
 def test_content_dedup_no_md5():

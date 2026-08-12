@@ -10,8 +10,6 @@ not the underlying business logic (which is tested elsewhere).
 from __future__ import annotations
 
 import os
-import tempfile
-from pathlib import Path
 
 import pytest
 from click.testing import CliRunner

@@ -6,20 +6,12 @@ using file-based content to simulate crawled pages.
 
 from __future__ import annotations
 
-import json
-import os
-import tempfile
-from pathlib import Path
-
-import pytest
-
-from personal_index.config.pipeline_config import PipelineConfig, PipelineStepConfig
+from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer
 from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
-from personal_index.pipeline_runner import PipelineRunner, PipelineStats
+from personal_index.pipeline_runner import PipelineRunner
 from personal_index.tags import TagStore
 
 
@@ -245,7 +237,7 @@ class TestPipelineStepIsolation:
     def test_extract_step_preserves_content(self, tmp_path):
         """Test that extraction preserves meaningful content."""
         data_dir = str(tmp_path / "data")
-        runner = PipelineRunner(data_dir=data_dir)
+        PipelineRunner(data_dir=data_dir)
 
         page = CrawledPage(
             url="https://example.com/extract",

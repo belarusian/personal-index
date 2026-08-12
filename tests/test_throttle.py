@@ -1,8 +1,8 @@
 """Tests for request throttling."""
 
 import time
-import pytest
 from unittest.mock import patch
+
 from personal_index.throttle import ThrottleManager, ThrottleRule, ThrottleState
 
 
@@ -56,7 +56,7 @@ class TestThrottleManager:
     def test_wait_if_needed_no_wait(self):
         mgr = ThrottleManager()
         with patch("personal_index.throttle.time.sleep") as mock_sleep:
-            wait = mgr.wait_if_needed("http://example.com/page")
+            mgr.wait_if_needed("http://example.com/page")
             mock_sleep.assert_not_called()
 
     def test_wait_records_request(self):

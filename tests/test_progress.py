@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import time
-import pytest
-from pathlib import Path
 
 from personal_index.progress import (
     ProgressState,

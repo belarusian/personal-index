@@ -2,22 +2,21 @@
 
 from __future__ import annotations
 
-import pytest
 from personal_index.text_utils import (
-    normalize_whitespace,
-    remove_html_tags,
-    truncate_text,
-    extract_sentences,
-    extract_paragraphs,
-    word_frequency,
+    count_characters,
+    count_words,
     extract_keywords,
+    extract_paragraphs,
+    extract_sentences,
+    highlight_text,
     levenshtein_distance,
+    normalize_whitespace,
+    read_time_minutes,
+    remove_html_tags,
     similarity_ratio,
     slugify,
-    highlight_text,
-    count_words,
-    count_characters,
-    read_time_minutes,
+    truncate_text,
+    word_frequency,
 )
 
 

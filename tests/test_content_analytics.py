@@ -1,6 +1,7 @@
 """Tests for content_analytics module."""
 
 import pytest
+
 from personal_index.content_analytics import ContentAnalytics
 
 

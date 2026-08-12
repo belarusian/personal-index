@@ -1,7 +1,9 @@
 """Tests for content_importer module."""
 
 import json
+
 import pytest
+
 from personal_index.content_importer import ContentImporter
 
 

@@ -2,6 +2,7 @@
 
 import pytest
 
+from personal_index.models import CrawledPage
 from personal_index.results import (
     ResultsExporter,
     ResultsFormatter,
@@ -9,7 +10,6 @@ from personal_index.results import (
     search_and_format,
 )
 from personal_index.search_index import SearchIndex
-from personal_index.models import CrawledPage
 
 
 @pytest.fixture

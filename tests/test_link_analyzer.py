@@ -1,7 +1,6 @@
 """Tests for link analyzer module."""
 
-import pytest
-from personal_index.link_analyzer import LinkAnalyzer, LinkStats, LinkAnalysisResult
+from personal_index.link_analyzer import LinkAnalyzer
 
 
 class TestLinkAnalyzer:

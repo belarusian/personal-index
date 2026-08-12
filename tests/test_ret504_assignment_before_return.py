@@ -1,8 +1,8 @@
 """Tests for TICKET-73: RET504 - unnecessary assignment before return."""
 
 from personal_index.encoding import EncodingDetector
-from personal_index.utils import extract_text_content
 from personal_index.text_utils import tokenize
+from personal_index.utils import extract_text_content
 
 
 class TestEncodingDetector:

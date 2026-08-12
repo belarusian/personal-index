@@ -1,7 +1,9 @@
 """Tests for content_api module."""
 
 import json
+
 import pytest
+
 import personal_index.content_api as api_module
 from personal_index.content_api import ContentAPI
 
@@ -58,7 +60,7 @@ class TestListContent:
         assert body["page"] == 1
 
     def test_list_per_page_max(self, api_with_data):
-        status, body = api_with_data.handle_request(
+        _status, body = api_with_data.handle_request(
             "GET", "/api/v1/content", query_string="per_page=999"
         )
         assert body["per_page"] == 100
@@ -80,16 +82,16 @@ class TestCreateContent:
         assert "required" in resp["error"]
 
     def test_create_invalid_json(self, api):
-        status, resp = api.handle_request("POST", "/api/v1/content", body="not json")
+        status, _resp = api.handle_request("POST", "/api/v1/content", body="not json")
         assert status == 400
 
     def test_create_not_dict(self, api):
-        status, resp = api.handle_request("POST", "/api/v1/content", body='["list"]')
+        status, _resp = api.handle_request("POST", "/api/v1/content", body='["list"]')
         assert status == 400
 
     def test_create_with_tags(self, api):
         body = json.dumps({"title": "T", "tags": ["x", "y"]})
-        status, resp = api.handle_request("POST", "/api/v1/content", body=body)
+        _status, resp = api.handle_request("POST", "/api/v1/content", body=body)
         assert resp["item"]["tags"] == ["x", "y"]
 
     def test_create_increments_id(self, api):
@@ -108,7 +110,7 @@ class TestGetContent:
         assert body["item"]["title"] == "First"
 
     def test_get_not_found(self, api):
-        status, body = api.handle_request("GET", "/api/v1/content/999")
+        status, _body = api.handle_request("GET", "/api/v1/content/999")
         assert status == 404
 
 
@@ -122,16 +124,16 @@ class TestUpdateContent:
         assert resp["item"]["title"] == "Updated"
 
     def test_update_not_found(self, api):
-        status, resp = api.handle_request("PUT", "/api/v1/content/999", body='{}')
+        status, _resp = api.handle_request("PUT", "/api/v1/content/999", body='{}')
         assert status == 404
 
     def test_update_no_body(self, api_with_data):
-        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1")
+        status, _resp = api_with_data.handle_request("PUT", "/api/v1/content/1")
         assert status == 400
 
     def test_update_preserves_other_fields(self, api_with_data):
         body = json.dumps({"title": "New Title"})
-        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
+        _status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
         assert resp["item"]["description"] == "Desc 1"
 
 
@@ -145,7 +147,7 @@ class TestDeleteContent:
         assert "1" not in api_with_data._store
 
     def test_delete_not_found(self, api):
-        status, resp = api.handle_request("DELETE", "/api/v1/content/999")
+        status, _resp = api.handle_request("DELETE", "/api/v1/content/999")
         assert status == 404
 
 
@@ -160,13 +162,13 @@ class TestSearch:
         assert body["total"] == 1
 
     def test_search_no_query(self, api_with_data):
-        status, body = api_with_data.handle_request(
+        status, _body = api_with_data.handle_request(
             "GET", "/api/v1/content/search"
         )
         assert status == 400
 
     def test_search_no_results(self, api_with_data):
-        status, body = api_with_data.handle_request(
+        _status, body = api_with_data.handle_request(
             "GET", "/api/v1/content/search", query_string="q=nonexistent"
         )
         assert body["total"] == 0
@@ -188,7 +190,7 @@ class TestExport:
 
 class TestNotFound:
     def test_unknown_route(self, api):
-        status, body = api.handle_request("GET", "/unknown")
+        status, _body = api.handle_request("GET", "/unknown")
         assert status == 404
 
 
@@ -202,22 +204,22 @@ class TestApiErrorHandling:
         assert resp["item"]["title"] == ""
 
     def test_update_invalid_json(self, api_with_data):
-        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body="bad")
+        status, _resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body="bad")
         assert status == 400
 
     def test_list_page_2_empty(self, api_with_data):
-        status, body = api_with_data.handle_request(
+        _status, body = api_with_data.handle_request(
             "GET", "/api/v1/content", query_string="page=2&per_page=1"
         )
         assert len(body["items"]) == 1
 
     def test_stats_tags(self, api_with_data):
-        status, body = api_with_data.handle_request("GET", "/api/v1/stats")
+        _status, body = api_with_data.handle_request("GET", "/api/v1/stats")
         assert "tags" in body
         assert body["tags"]["a"] == 1
 
     def test_export_default_format(self, api_with_data):
-        status, body = api_with_data.handle_request("GET", "/api/v1/content/export")
+        _status, body = api_with_data.handle_request("GET", "/api/v1/content/export")
         assert body["format"] == "json"
 
     def test_multiple_creates(self, api):
@@ -230,12 +232,12 @@ class TestApiErrorHandling:
 
     def test_update_tags(self, api_with_data):
         body = json.dumps({"tags": ["new", "tags"]})
-        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
+        _status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
         assert resp["item"]["tags"] == ["new", "tags"]
 
     def test_update_link(self, api_with_data):
         body = json.dumps({"link": "http://new-url.com"})
-        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
+        _status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body=body)
         assert resp["item"]["link"] == "http://new-url.com"
 
 

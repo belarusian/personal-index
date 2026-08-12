@@ -7,8 +7,6 @@ crawl → extract → filter → score → tag → index → search
 from __future__ import annotations
 
 import os
-import tempfile
-from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -215,7 +213,7 @@ class TestFullPipelineIntegration:
         # Search without tag filter
         result = runner.invoke(main, ["search", "tutorial"])
         assert result.exit_code == 0
-        total_results = len([line for line in result.output.split('\n') if 'tutorial' in line.lower() or 'blog' in line.lower()])
+        len([line for line in result.output.split('\n') if 'tutorial' in line.lower() or 'blog' in line.lower()])
 
         # Search with tag filter would require manual tagging first
         # This is tested in separate tests

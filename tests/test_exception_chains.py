@@ -1,11 +1,12 @@
 """Tests for TICKET-63: exception chain preservation (raise ... from err)."""
 
 import pytest
+
 from personal_index.serializer import (
-    Serializer,
+    DeserializationError,
     SerializationConfig,
     SerializationError,
-    DeserializationError,
+    Serializer,
 )
 
 

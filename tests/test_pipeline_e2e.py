@@ -9,9 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import pytest
-
-from personal_index.pipeline_e2e import PipelineE2E, PipelineRunResult
+from personal_index.pipeline_e2e import PipelineE2E
 
 
 class TestPipelineE2EBasic:

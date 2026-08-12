@@ -1,5 +1,4 @@
 """Test for TICKET-39: remove_query_params() return type mismatch fix."""
-import pytest
 from personal_index.url_utils import remove_query_params
 
 

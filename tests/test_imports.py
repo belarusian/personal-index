@@ -2,6 +2,7 @@
 
 import importlib
 import sys
+
 import pytest
 
 
@@ -41,28 +42,9 @@ def test_module_imports(mod_name):
 def test_url_utils_imports():
     """Test that url_utils module imports all expected functions."""
     from personal_index.url_utils import (
-        normalize_url,
         extract_domain,
         get_domain,
-        get_path,
-        get_query_string,
-        get_fragment,
-        is_canonical,
-        urls_are_equivalent,
-        strip_tracking_params,
-        resolve_relative_url,
-        is_valid_url,
-        extract_subdomain,
-        get_tld,
-        is_same_domain,
-        is_internal_link,
-        remove_query_params,
-        url_to_path,
-        join_urls,
-        extract_all_urls,
-        is_robotstxt,
-        is_sitemap,
-        is_excluded_url,
+        normalize_url,
     )
     assert callable(normalize_url)
     assert callable(extract_domain)

@@ -1,8 +1,8 @@
 """Tests for the search index module."""
 
-import os
 import pytest
-from personal_index.index import SearchIndex, IndexedPage, SearchResult
+
+from personal_index.index import IndexedPage, SearchIndex
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def search_index(tmp_path):
     idx.close()
 
 
-def _make_page(url: str, title: str, content: str, keywords: list = None, score: float = 1.0) -> IndexedPage:
+def _make_page(url: str, title: str, content: str, keywords: list | None = None, score: float = 1.0) -> IndexedPage:
     return IndexedPage(
         url=url,
         title=title,

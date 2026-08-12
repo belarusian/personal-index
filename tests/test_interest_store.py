@@ -1,7 +1,5 @@
 """Tests for personal_index.interest_store."""
 
-import json
-import tempfile
 from pathlib import Path
 
 import pytest

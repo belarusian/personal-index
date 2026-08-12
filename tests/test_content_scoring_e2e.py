@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from personal_index.content_scoring import ContentScorer, ContentScore
+from personal_index.content_scoring import ContentScore, ContentScorer
 
 
 class TestContentScoringE2E:

@@ -1,7 +1,6 @@
 """Tests for pagination utilities."""
 
-import pytest
-from personal_index.pagination import Paginator, PageParams, PageResult
+from personal_index.pagination import PageParams, PageResult, Paginator
 
 
 class TestPageParams:

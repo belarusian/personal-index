@@ -7,10 +7,8 @@ import json
 import os
 from io import StringIO
 
-import pytest
-
-from personal_index.export import Exporter, ExportResult
 from personal_index.bookmarks import Bookmark, BookmarkManager
+from personal_index.export import Exporter, ExportResult
 
 
 class TestExportResult:

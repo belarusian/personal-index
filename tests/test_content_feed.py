@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
 from personal_index.content_feed import (
-    FeedItem,
-    FeedGenerator,
     FeedFormat,
+    FeedGenerator,
+    FeedItem,
 )
 
 

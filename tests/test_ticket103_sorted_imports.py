@@ -15,10 +15,9 @@ def _get_imports(filepath: str) -> list[tuple[str, str]]:
         tree = ast.parse(f.read())
     imports = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom):
-            if node.module:
-                for alias in node.names:
-                    imports.append((node.module, alias.name))
+        if isinstance(node, ast.ImportFrom) and node.module:
+            for alias in node.names:
+                imports.append((node.module, alias.name))
     return imports
 
 
@@ -47,7 +46,7 @@ class TestTicket103SortedImports:
 
     def test_sitemap_imports_work(self):
         """sitemap.py imports should still work after sorting."""
-        from personal_index.sitemap import SitemapParser, Sitemap
+        from personal_index.sitemap import Sitemap, SitemapParser
         assert SitemapParser is not None
         assert Sitemap is not None
 

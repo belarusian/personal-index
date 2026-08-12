@@ -1,8 +1,10 @@
 """Tests for content_search module."""
 
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timezone
-from personal_index.content_search import SearchIndex, ContentSearch
+
+from personal_index.content_search import ContentSearch
 
 
 @pytest.fixture

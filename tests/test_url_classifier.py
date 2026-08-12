@@ -1,7 +1,6 @@
 """Tests for URL classification."""
 
-import pytest
-from personal_index.url_classifier import URLClassifier, URLCategory, ClassificationResult
+from personal_index.url_classifier import ClassificationResult, URLCategory, URLClassifier
 
 
 class TestClassificationResult:

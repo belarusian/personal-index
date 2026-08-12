@@ -9,11 +9,8 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-import pytest
-
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
 from personal_index.pipeline_runner import PipelineRunner
 from personal_index.tags import TagStore
@@ -260,7 +257,7 @@ class TestTagSearchIntegration:
         tag_store = TagStore(store_path=os.path.join(data_dir, "tags.json"))
 
         results = index.search("programming")
-        all_urls = {r.url for r in results}
+        {r.url for r in results}
 
         # Filter by python tag
         python_pages = tag_store.get_pages_for_tag("python")

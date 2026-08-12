@@ -1,8 +1,5 @@
 """Tests for the interest management module."""
 
-import json
-import os
-import pytest
 from personal_index.interests import Interest, InterestStore
 
 

@@ -3,19 +3,12 @@
 from __future__ import annotations
 
 import ast
-import os
-import sys
 import textwrap
-import tempfile
 from pathlib import Path
 from unittest import mock
 
-import pytest
-
 from personal_index.docs_generator import (
-    ClassInfo,
     DashboardData,
-    FunctionInfo,
     ModuleInfo,
     _ast_name,
     _escape_html,
@@ -32,7 +25,6 @@ from personal_index.docs_generator import (
     run_ruff,
     scan_modules,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

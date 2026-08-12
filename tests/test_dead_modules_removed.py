@@ -1,6 +1,6 @@
 """Tests for TICKET-9: Verify dead modules have been removed."""
-import unittest
 import os
+import unittest
 
 
 class TestDeadModulesRemoved(unittest.TestCase):
@@ -61,9 +61,7 @@ class TestDeadModulesRemoved(unittest.TestCase):
 
     def test_remaining_modules_import(self):
         """Core modules should still import correctly."""
-        from personal_index import config
-        from personal_index import formatter
-        from personal_index import cli
+        from personal_index import cli, config, formatter
         self.assertIsNotNone(config)
         self.assertIsNotNone(formatter)
         self.assertIsNotNone(cli)

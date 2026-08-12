@@ -1,10 +1,9 @@
 """Tests for content router module."""
 
-import pytest
 
-from personal_index.content_router.handler import ContentHandler, PassThroughHandler, TypeHandler
-from personal_index.content_router.router import ContentRouter
+from personal_index.content_router.handler import PassThroughHandler, TypeHandler
 from personal_index.content_router.route import Route, RouteMatcher
+from personal_index.content_router.router import ContentRouter
 
 
 class TestRouteMatcher:

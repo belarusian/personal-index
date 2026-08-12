@@ -1,14 +1,12 @@
 """Tests for content extraction module."""
 
-import pytest
 from personal_index.content import (
     ExtractedContent,
+    compute_tf,
     extract_content,
     remove_stopwords,
-    compute_tf,
 )
 from personal_index.text_utils import tokenize
-
 
 SAMPLE_HTML = """
 <!DOCTYPE html>

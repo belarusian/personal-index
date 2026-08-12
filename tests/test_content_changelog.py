@@ -1,6 +1,7 @@
 """Tests for content_changelog module."""
 
 import unittest
+
 from personal_index.content_changelog import ChangeEntry, ContentChangelog
 
 

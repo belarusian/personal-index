@@ -121,7 +121,7 @@ class TestCrawler:
             body=requests.Timeout("timeout"),
         )
         # Just test that it doesn't crash
-        resp = crawler._fetch("https://example.com/slow")
+        crawler._fetch("https://example.com/slow")
 
     def test_extract_links(self, crawler):
         html = """

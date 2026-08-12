@@ -1,7 +1,8 @@
 """Tests for content processing pipeline."""
 
 import pytest
-from personal_index.pipeline import ContentPipeline, PipelineStep, PipelineResult
+
+from personal_index.pipeline import ContentPipeline, PipelineStep
 
 
 class TestPipelineStep:

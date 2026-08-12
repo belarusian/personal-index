@@ -1,13 +1,14 @@
 """Integration tests across all content modules."""
 
 import json
+
 import pytest
-from datetime import datetime, timezone
+
+from personal_index.content_api import ContentAPI
 from personal_index.content_exporter import ContentExporter
 from personal_index.content_importer import ContentImporter
-from personal_index.content_search import ContentSearch
-from personal_index.content_api import ContentAPI
 from personal_index.content_scheduler import TaskScheduler
+from personal_index.content_search import ContentSearch
 
 
 @pytest.fixture
@@ -96,7 +97,7 @@ class TestAPIWithSearch:
 class TestSchedulerWithAPI:
     def test_schedule_export_task(self):
         scheduler = TaskScheduler()
-        api = ContentAPI()
+        ContentAPI()
         results = []
         def export_cb(task):
             results.append("exported")

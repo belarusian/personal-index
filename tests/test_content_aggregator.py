@@ -1,6 +1,7 @@
 """Tests for content_aggregator module."""
 
 import pytest
+
 from personal_index.content_aggregator import ContentAggregator
 
 

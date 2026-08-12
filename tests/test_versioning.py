@@ -1,7 +1,6 @@
 """Tests for content versioning module."""
 
-import pytest
-from personal_index.versioning import VersionTracker, ContentVersion
+from personal_index.versioning import ContentVersion, VersionTracker
 
 
 class TestContentVersion:

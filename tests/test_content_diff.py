@@ -1,9 +1,8 @@
 """Tests for content diff module."""
 
-import pytest
 
-from personal_index.content_diff.changes import Change, ChangeType, ContentDiff
-from personal_index.content_diff.snapshot import Snapshot, SnapshotManager
+from personal_index.content_diff.changes import ChangeType, ContentDiff
+from personal_index.content_diff.snapshot import SnapshotManager
 
 
 class TestContentDiff:

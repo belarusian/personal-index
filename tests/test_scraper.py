@@ -1,7 +1,6 @@
 """Tests for the HTML scraper module."""
 
-import pytest
-from personal_index.scraper import HTMLScraper, ScraperConfig, ScrapedContent
+from personal_index.scraper import HTMLScraper, ScraperConfig
 
 
 class TestScraperConfig:

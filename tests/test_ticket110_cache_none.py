@@ -11,7 +11,6 @@ def test_cache_decorator_handles_none_return():
     def returns_none(x):
         nonlocal call_count
         call_count += 1
-        return None
 
     # First call should execute the function
     result1 = returns_none(1)
@@ -48,7 +47,6 @@ def test_cache_decorator_different_args():
     def returns_none(x):
         nonlocal call_count
         call_count += 1
-        return None
 
     returns_none(1)
     assert call_count == 1

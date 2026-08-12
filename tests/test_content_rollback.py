@@ -1,7 +1,8 @@
 """Tests for content_rollback module."""
 
 import unittest
-from personal_index.content_rollback import RollbackPoint, ContentRollback
+
+from personal_index.content_rollback import ContentRollback, RollbackPoint
 
 
 class TestRollbackPoint(unittest.TestCase):

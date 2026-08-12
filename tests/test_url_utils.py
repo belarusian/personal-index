@@ -1,6 +1,5 @@
 """Tests for personal_index.url_utils (merged from url_utils + url_normalizer)."""
 
-import pytest
 
 from personal_index.url_utils import (
     extract_all_urls,
@@ -25,7 +24,6 @@ from personal_index.url_utils import (
     url_to_path,
     urls_are_equivalent,
 )
-
 
 # ── Tests from original test_url_utils.py ──
 

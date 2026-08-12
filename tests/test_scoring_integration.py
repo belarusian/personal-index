@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
-
-import pytest
+from datetime import datetime, timedelta, timezone
 
 from personal_index.content_scoring import (
-    ContentScorer,
     ContentScore,
+    ContentScorer,
     ScoreWeights,
-    ScoreFactor,
 )
 
 
@@ -168,7 +165,7 @@ class TestScoringIntegration:
         """Test freshness scoring with different change frequencies."""
         scorer = ContentScorer()
         now = datetime.now(timezone.utc)
-        hourly = scorer.score(last_crawled=now, change_frequency="hourly")
+        scorer.score(last_crawled=now, change_frequency="hourly")
         never = scorer.score(last_crawled=now - timedelta(days=30), change_frequency="never")
         assert never.freshness == 1.0  # Never changes = always fresh
 
@@ -178,9 +175,9 @@ class TestScoringPipelineIntegration:
 
     def test_scorer_in_pipeline(self, tmp_path):
         """Test that scorer is used correctly in pipeline."""
-        from personal_index.pipeline_runner import PipelineRunner
         from personal_index.config.pipeline_config import PipelineConfig
-        from personal_index.models import Interest, CrawledPage
+        from personal_index.models import CrawledPage, Interest
+        from personal_index.pipeline_runner import PipelineRunner
 
         data_dir = str(tmp_path / "data")
         cfg = PipelineConfig(min_score_threshold=0.0, min_content_length=10)
@@ -202,9 +199,9 @@ class TestScoringPipelineIntegration:
 
     def test_score_threshold_filtering(self, tmp_path):
         """Test that score threshold filters pages correctly."""
-        from personal_index.pipeline_runner import PipelineRunner
         from personal_index.config.pipeline_config import PipelineConfig
-        from personal_index.models import Interest, CrawledPage
+        from personal_index.models import CrawledPage, Interest
+        from personal_index.pipeline_runner import PipelineRunner
 
         data_dir = str(tmp_path / "data")
         # Very high threshold

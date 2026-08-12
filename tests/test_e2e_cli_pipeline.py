@@ -7,8 +7,6 @@ These tests use the Click test runner to verify the CLI works end-to-end.
 from __future__ import annotations
 
 import json
-import os
-from pathlib import Path
 
 import pytest
 from click.testing import CliRunner

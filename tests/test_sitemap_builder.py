@@ -1,7 +1,7 @@
 """Tests for the sitemap builder module."""
 
-import pytest
 from datetime import datetime, timezone
+
 from personal_index.sitemap_builder import SitemapBuilder, SitemapEntry
 
 

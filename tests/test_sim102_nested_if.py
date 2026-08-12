@@ -2,7 +2,7 @@
 
 from personal_index.api.rate_limit_middleware import RateLimitRule
 from personal_index.auth.sessions import SessionStore
-from personal_index.crawler.robots import RobotsPolicy, RobotsRule, RobotsParser
+from personal_index.crawler.robots import RobotsParser, RobotsPolicy, RobotsRule
 
 
 class TestRateLimitRuleMatches:

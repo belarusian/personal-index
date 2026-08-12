@@ -1,8 +1,6 @@
 """Test TICKET-109: Fix _save when rules_file has no directory component"""
 
 import os
-import tempfile
-import pytest
 
 from personal_index.domains import DomainManager
 

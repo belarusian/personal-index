@@ -9,9 +9,6 @@ Verifies that different components work together correctly:
 from __future__ import annotations
 
 import os
-import tempfile
-
-import pytest
 
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer, ScoreWeights
@@ -75,7 +72,7 @@ class TestInterestFilterScoringIntegration:
         interest_store = InterestStore(store_path=str(tmp_path / "interests.json"))
         interest_store.add(Interest(name="tech", keywords=["python", "docker"]))
 
-        scorer = ContentScorer(weights=ScoreWeights())
+        ContentScorer(weights=ScoreWeights())
 
         high_match = CrawledPage(
             url="https://example.com/a",
@@ -91,7 +88,7 @@ class TestInterestFilterScoringIntegration:
         # Score pages
         for page in [high_match, low_match]:
             text = f"{page.title} {page.content}"
-            matches = interest_store.matches_any(text, page.url)
+            interest_store.matches_any(text, page.url)
             score = interest_store.total_score(text)
             page.relevance_score = score
 
@@ -198,7 +195,7 @@ class TestFullPipelineDataFlow:
             config=FilterConfig(min_content_length=10, require_interest_match=False),
             interest_store=interest_store,
         )
-        scorer = ContentScorer(weights=ScoreWeights())
+        ContentScorer(weights=ScoreWeights())
 
         # Simulate pipeline
         page = CrawledPage(

@@ -1,6 +1,5 @@
 """Tests for search suggestions module."""
 
-import pytest
 from personal_index.search_suggestions import SearchSuggestions, Suggestion
 
 

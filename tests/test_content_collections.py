@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-from datetime import datetime, timezone
 from personal_index.content_collections import (
     Collection,
     CollectionManager,

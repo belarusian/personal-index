@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestTokenizeRemovedFromContent:
     """Verify tokenize() was removed from personal_index.content."""
@@ -16,7 +14,6 @@ class TestTokenizeRemovedFromContent:
 
     def test_content_module_imports_cleanly(self):
         """personal_index.content should still import without errors."""
-        import personal_index.content
         # Should not raise
         assert True
 
@@ -44,7 +41,6 @@ class TestTokenizeRemovedFromUtils:
 
     def test_utils_module_imports_cleanly(self):
         """personal_index.utils should still import without errors."""
-        import personal_index.utils
         assert True
 
     def test_utils_other_functions_still_exist(self):

@@ -6,15 +6,11 @@ pipeline, including indexing, scoring, and result formatting.
 
 from __future__ import annotations
 
-import json
 import os
 from unittest.mock import patch
 
-import pytest
-
 from personal_index.config.pipeline_config import PipelineConfig
 from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
 from personal_index.pipeline_runner import PipelineRunner
 from personal_index.tags import TagStore

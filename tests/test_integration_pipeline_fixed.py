@@ -5,20 +5,11 @@ These tests verify the full pipeline: crawl → extract → filter → score →
 
 from __future__ import annotations
 
-import os
-import tempfile
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from personal_index.config.pipeline_config import PipelineConfig
-from personal_index.content_filter import ContentFilter, FilterConfig
-from personal_index.content_scoring import ContentScorer
-from personal_index.index import SearchIndex
-from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest
-from personal_index.pipeline_runner import PipelineRunner, PipelineStats
-from personal_index.tags import TagStore
+from personal_index.pipeline_runner import PipelineRunner
 
 
 class TestPipelineRunnerDirect:

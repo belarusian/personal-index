@@ -25,10 +25,7 @@ def _docstring_before_future_imports(path: str) -> bool:
 
     first_stmt = tree.body[0]
 
-    if isinstance(first_stmt, ast.Expr) and isinstance(first_stmt.value, ast.Constant) and isinstance(first_stmt.value.value, str):
-        return True
-
-    return False
+    return bool(isinstance(first_stmt, ast.Expr) and isinstance(first_stmt.value, ast.Constant) and isinstance(first_stmt.value.value, str))
 
 
 def _ruff_check_i001(path: str) -> bool:

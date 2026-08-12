@@ -1,18 +1,17 @@
 """Tests for utility functions."""
 
-import pytest
 # Re-export from root url_utils
+from personal_index.text_utils import tokenize
 from personal_index.utils import (
-    normalize_url,
+    compute_relevance_score,
     extract_domain,
-    is_same_domain,
     extract_links,
-    extract_title,
     extract_meta_description,
     extract_text_content,
-    compute_relevance_score,
+    extract_title,
+    is_same_domain,
+    normalize_url,
 )
-from personal_index.text_utils import tokenize
 
 
 class TestNormalizeUrl:

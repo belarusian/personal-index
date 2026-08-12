@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-from personal_index.link_preview import LinkPreview, LinkPreviewGenerator
-from personal_index.scraper import HTMLScraper, ScraperConfig, ScrapedContent
+from personal_index.link_preview import LinkPreviewGenerator
+from personal_index.scraper import HTMLScraper, ScraperConfig
 
 
 class TestLinkPreviewWithScraper:

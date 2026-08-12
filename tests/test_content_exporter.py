@@ -1,10 +1,11 @@
 """Tests for content_exporter module."""
 
 import json
-import pytest
 from datetime import datetime, timezone
-from personal_index.content_exporter import ContentExporter
 
+import pytest
+
+from personal_index.content_exporter import ContentExporter
 
 # --- Fixtures ---
 

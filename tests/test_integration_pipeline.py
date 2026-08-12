@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import os
-import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from personal_index.config.pipeline_config import PipelineConfig, PipelineStepConfig
-from personal_index.content_extractor import ContentExtractor, ExtractedContent
+from personal_index.content_extractor import ContentExtractor
 from personal_index.content_filter import ContentFilter, FilterConfig
 from personal_index.content_scoring import ContentScorer
 from personal_index.index import SearchIndex

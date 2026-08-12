@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from personal_index.keyword_extractor import KeywordExtractor, Keyword
+from personal_index.keyword_extractor import Keyword, KeywordExtractor
 
 
 class TestKeywordExtractor:

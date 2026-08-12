@@ -1,6 +1,5 @@
 """Tests for content search functionality."""
 
-import pytest
 
 
 class TestContentSearch:

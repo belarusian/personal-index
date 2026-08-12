@@ -1,10 +1,15 @@
 """Tests for data serialization utilities."""
 
-import pytest
 from dataclasses import dataclass
 from datetime import datetime
+
+import pytest
+
 from personal_index.serializer import (
-    Serializer, SerializationConfig, SerializationError, DeserializationError,
+    DeserializationError,
+    SerializationConfig,
+    SerializationError,
+    Serializer,
 )
 
 

@@ -1,18 +1,16 @@
 """Tests for personal_index.api.handlers."""
 
-import json
-import logging
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from personal_index.api.handlers import (
+    ContentTypeMiddleware,
     ErrorHandler,
     TimingMiddleware,
-    ContentTypeMiddleware,
     handle_api_error,
 )
-from personal_index.api.models import APIError, APIResponse, ErrorResponse
+from personal_index.api.models import APIError, APIResponse
 
 
 class TestErrorHandler:

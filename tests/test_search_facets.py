@@ -1,12 +1,9 @@
 """Tests for search_facets module - filterable search dimensions."""
 
-import pytest
-from datetime import datetime, timezone
 
 from personal_index.search_facets.facet import Facet, FacetType, FacetValue
 from personal_index.search_facets.facet_builder import FacetBuilder
 from personal_index.search_facets.faceted_search import FacetedSearch
-
 
 # ── Facet model tests ──────────────────────────────────────
 

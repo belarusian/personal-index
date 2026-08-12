@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.sitemap import (
-    Sitemap,
     SitemapEntry,
     SitemapParser,
 )

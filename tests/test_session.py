@@ -1,11 +1,14 @@
 """Tests for crawl session tracking."""
 
-import json
-import pytest
 import time
-from pathlib import Path
+
+import pytest
+
 from personal_index.session import (
-    CrawlSession, SessionManager, SessionStats, SessionStatus,
+    CrawlSession,
+    SessionManager,
+    SessionStats,
+    SessionStatus,
 )
 
 

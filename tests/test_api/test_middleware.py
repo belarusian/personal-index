@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import pytest
 
 from personal_index.api.middleware import (
     CORSHeadersMiddleware,
@@ -39,7 +38,6 @@ class TestRequestLoggingMiddleware:
         middleware = RequestLoggingMiddleware(app)
 
         scope = {"type": "http", "path": "/test", "method": "GET"}
-        received_messages = []
         sent_messages = []
 
         async def receive():
@@ -92,10 +90,10 @@ class TestCORSHeadersMiddleware:
         import asyncio
         asyncio.run(middleware(scope, receive, send))
 
-        headers = dict(
-            (k.decode(), v.decode())
+        headers = {
+            k.decode(): v.decode()
             for k, v in sent_messages[0]["headers"]
-        )
+        }
         assert "Access-Control-Allow-Origin" in headers
 
     def test_options_returns_204(self):
@@ -148,10 +146,10 @@ class TestRequestIdMiddleware:
         import asyncio
         asyncio.run(middleware(scope, receive, send))
 
-        headers = dict(
-            (k.decode(), v.decode())
+        headers = {
+            k.decode(): v.decode()
             for k, v in sent_messages[0]["headers"]
-        )
+        }
         assert "x-request-id" in headers
         assert len(headers["x-request-id"]) == 8
 

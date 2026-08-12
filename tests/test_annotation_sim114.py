@@ -1,6 +1,6 @@
 """Tests for TICKET-69: SIM114 fix in annotation.py."""
 
-from personal_index.annotation import AnnotationStore, Annotation, AnnotationType
+from personal_index.annotation import Annotation, AnnotationStore, AnnotationType
 
 
 class TestAnnotationSearch:

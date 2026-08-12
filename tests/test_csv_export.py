@@ -2,11 +2,9 @@
 
 from pathlib import Path
 
-import pytest
-
 from personal_index.content_export.csv_export import (
-    CsvExportOptions,
     CsvExporter,
+    CsvExportOptions,
 )
 
 

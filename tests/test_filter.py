@@ -1,8 +1,9 @@
 """Tests for content filtering."""
 
 import pytest
-from personal_index.filter.engine import ContentFilter, FilterResult
+
 from personal_index.config.models import Interest
+from personal_index.filter.engine import ContentFilter, FilterResult
 
 
 @pytest.fixture

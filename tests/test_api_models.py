@@ -1,17 +1,14 @@
 """Tests for personal_index.api.models."""
 
-import pytest
 from personal_index.api.models import (
+    APIError,
     APIResponse,
+    ForbiddenError,
+    NotFoundError,
     PaginatedResponse,
     SearchRequest,
-    SearchResponse,
-    ErrorResponse,
-    APIError,
-    NotFoundError,
-    ValidationError,
     UnauthorizedError,
-    ForbiddenError,
+    ValidationError,
 )
 
 

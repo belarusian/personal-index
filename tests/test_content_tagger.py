@@ -1,10 +1,8 @@
 """Tests for content_tagger module."""
 
-import pytest
-from personal_index.content_tagger.tag import Tag
 from personal_index.content_tagger.detector import TopicDetector
+from personal_index.content_tagger.tag import Tag
 from personal_index.content_tagger.tagger import ContentTagger, TagResult
-
 
 # ── Tag tests ──────────────────────────────────────────────
 

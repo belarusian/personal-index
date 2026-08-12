@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import pytest
-from pathlib import Path
-
 from personal_index.url_history import URLHistory, URLVisit
 
 

@@ -1,14 +1,12 @@
 """Tests for the CLI interface."""
 
-import json
 import os
+
 import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main
-from personal_index.interests import InterestStore
 from personal_index.index import SearchIndex
-from personal_index.models import Interest
 
 
 @pytest.fixture

@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import os
-import tempfile
-
-import pytest
 
 from personal_index.interests import InterestStore
 from personal_index.models import Interest

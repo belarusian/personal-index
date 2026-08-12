@@ -1,12 +1,11 @@
 """Tests for the performance monitor module."""
 
 import time
-import pytest
+
 from personal_index.performance_monitor import (
-    PerformanceMonitor,
     MetricSample,
     MetricStats,
-    TimerContext,
+    PerformanceMonitor,
 )
 
 

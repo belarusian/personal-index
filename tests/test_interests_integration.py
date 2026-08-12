@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.interests import InterestStore
-from personal_index.models import CrawledPage, Interest, InterestType, MatchMode
+from personal_index.models import CrawledPage, Interest, MatchMode
 
 
 class TestInterestStoreIntegration:

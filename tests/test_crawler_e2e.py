@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 from personal_index.crawler.main import Crawler, CrawlerConfig
-from personal_index.models import CrawledPage
 
 
 class TestCrawlerE2E:

@@ -1,7 +1,6 @@
 """Tests for content annotation system."""
 
-import pytest
-from personal_index.annotation import AnnotationStore, Annotation, AnnotationType
+from personal_index.annotation import Annotation, AnnotationStore, AnnotationType
 
 
 class TestAnnotation:

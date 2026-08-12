@@ -6,11 +6,8 @@ These tests verify the CLI pipeline command works end-to-end.
 from __future__ import annotations
 
 import json
-import os
-from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main

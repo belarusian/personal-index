@@ -1,5 +1,6 @@
 """Test for TICKET-41: title parameter in _check_single_item() is unused."""
 import inspect
+
 from personal_index.content_dedup import ContentDeduplicator
 
 

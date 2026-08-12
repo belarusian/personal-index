@@ -5,7 +5,6 @@ from __future__ import annotations
 import subprocess
 import sys
 
-import pytest
 from personal_index.content_tagger.tagger import ContentTagger, TagResult
 
 

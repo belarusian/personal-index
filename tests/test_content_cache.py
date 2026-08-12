@@ -2,8 +2,6 @@
 
 import time
 
-import pytest
-
 from personal_index.content_cache.cache_policy import CachePolicy, EvictionPolicy
 from personal_index.content_cache.cache_stats import CacheStats
 from personal_index.content_cache.cache_store import CacheStore

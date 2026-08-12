@@ -1,6 +1,5 @@
 """Tests for personal_index.robots_parser."""
 
-import pytest
 
 from personal_index.robots_parser import (
     RobotsPolicy,

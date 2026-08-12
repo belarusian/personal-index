@@ -1,5 +1,6 @@
 """Test for TICKET-44: 'format' parameter shadows Python builtin."""
 import inspect
+
 from personal_index.content_export_csv import CSVExporter
 from personal_index.export_markdown import MarkdownExporter
 

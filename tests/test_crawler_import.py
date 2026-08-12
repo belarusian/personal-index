@@ -1,11 +1,9 @@
 """Tests for crawler package import and self-import fix."""
 
-import pytest
 
 
 def test_crawler_package_imports():
     """Test that the crawler package can be imported without circular import errors."""
-    import importlib
     import sys
     
     # Clear cached modules
@@ -30,7 +28,7 @@ def test_crawler_config_class():
 
 def test_webcrawler_uses_local_crawlerconfig():
     """Test that WebCrawler correctly references CrawlerConfig without self-import."""
-    from personal_index.crawler import WebCrawler, CrawlerConfig
+    from personal_index.crawler import CrawlerConfig, WebCrawler
     
     config = CrawlerConfig(max_depth=2)
     crawler = WebCrawler(config=config)
