@@ -1,154 +1,201 @@
-"""Content timeline module for tracking content history and events.
+"""Content timeline module for personal-index.
 
-Provides functionality to build and query timelines of content-related
-events such as creation, updates, bookmarks, and crawls.
+Provides chronological organization and browsing of indexed content
+with support for time-based filtering and grouping.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
+from datetime import datetime, timezone
 from typing import Any
 
 
-class TimelineEventType(Enum):
-    """Types of events that can appear in a content timeline."""
+@dataclass
+class TimelineEntry:
+    """A single entry in the content timeline."""
+    url: str
+    title: str
+    timestamp: str
+    content_preview: str = ""
+    tags: list[str] = field(default_factory=list)
+    score: float = 0.0
+    event_type: str = "indexed"  # indexed, updated, removed
 
-    CREATED = "created"
-    UPDATED = "updated"
-    BOOKMARKED = "bookmarked"
-    UNBOOKMARKED = "unbookmarked"
-    CRAWLED = "crawled"
-    INDEXED = "indexed"
-    TAGGED = "tagged"
-    CATEGORIZED = "categorized"
-    SHARED = "shared"
-    VIEWED = "viewed"
-    DELETED = "deleted"
-    RESTORED = "restored"
-    SCORE_CHANGED = "score_changed"
+    @property
+    def datetime(self) -> datetime:
+        """Parse timestamp to datetime."""
+        try:
+            return datetime.fromisoformat(self.timestamp)
+        except (ValueError, TypeError):
+            return datetime.now(timezone.utc)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "url": self.url,
+            "title": self.title,
+            "timestamp": self.timestamp,
+            "content_preview": self.content_preview,
+            "tags": self.tags,
+            "score": self.score,
+            "event_type": self.event_type,
+        }
 
 
 @dataclass
-class TimelineEvent:
-    """A single event in the content timeline.
+class TimelineGroup:
+    """A group of timeline entries for a time period."""
+    period: str  # e.g., "2024-01-15", "2024-W03", "2024-Q1"
+    entries: list[TimelineEntry] = field(default_factory=list)
+    period_start: str = ""
+    period_end: str = ""
 
-    Attributes:
-        event_id: Unique identifier for the event.
-        event_type: Type of the event.
-        timestamp: When the event occurred.
-        content_id: ID of the content item this event relates to.
-        metadata: Additional event-specific data.
-        source: Origin of the event (e.g., 'crawler', 'user', 'system').
+    @property
+    def count(self) -> int:
+        return len(self.entries)
+
+
+class ContentTimeline:
+    """Timeline for browsing content chronologically.
+
+    Organizes content entries by time and supports grouping
+    by day, week, month, or custom periods.
     """
 
-    event_id: str
-    event_type: TimelineEventType
-    timestamp: datetime
-    content_id: str
-    metadata: dict[str, Any] = field(default_factory=dict)
-    source: str = "system"
+    def __init__(self):
+        self._entries: list[TimelineEntry] = []
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert event to dictionary."""
+    def add_entry(self, entry: TimelineEntry) -> None:
+        """Add an entry to the timeline."""
+        self._entries.append(entry)
+
+    def add_entries(self, entries: list[TimelineEntry]) -> None:
+        """Add multiple entries."""
+        self._entries.extend(entries)
+
+    def get_entries(
+        self,
+        start: str | None = None,
+        end: str | None = None,
+        event_type: str | None = None,
+    ) -> list[TimelineEntry]:
+        """Get entries filtered by time range and event type.
+
+        Args:
+            start: Start timestamp (inclusive, ISO format).
+            end: End timestamp (inclusive, ISO format).
+            event_type: Filter by event type.
+
+        Returns:
+            Filtered list of TimelineEntry objects.
+        """
+        results = list(self._entries)
+
+        if start:
+            results = [e for e in results if e.timestamp >= start]
+        if end:
+            results = [e for e in results if e.timestamp <= end]
+        if event_type:
+            results = [e for e in results if e.event_type == event_type]
+
+        # Sort by timestamp descending (newest first)
+        results.sort(key=lambda e: e.timestamp, reverse=True)
+        return results
+
+    def group_by_day(self) -> list[TimelineGroup]:
+        """Group entries by day."""
+        groups: dict[str, list[TimelineEntry]] = {}
+        for entry in self._entries:
+            day = entry.timestamp[:10] if len(entry.timestamp) >= 10 else "unknown"
+            groups.setdefault(day, []).append(entry)
+
+        result = []
+        for day in sorted(groups.keys(), reverse=True):
+            entries = sorted(groups[day], key=lambda e: e.timestamp, reverse=True)
+            result.append(TimelineGroup(
+                period=day,
+                entries=entries,
+                period_start=f"{day}T00:00:00",
+                period_end=f"{day}T23:59:59",
+            ))
+        return result
+
+    def group_by_week(self) -> list[TimelineGroup]:
+        """Group entries by ISO week."""
+        groups: dict[str, list[TimelineEntry]] = {}
+        for entry in self._entries:
+            try:
+                dt = entry.datetime
+                iso_cal = dt.isocalendar()
+                week_key = f"{iso_cal[0]}-W{iso_cal[1]:02d}"
+            except (ValueError, TypeError):
+                week_key = "unknown"
+            groups.setdefault(week_key, []).append(entry)
+
+        result = []
+        for week in sorted(groups.keys(), reverse=True):
+            entries = sorted(groups[week], key=lambda e: e.timestamp, reverse=True)
+            result.append(TimelineGroup(
+                period=week,
+                entries=entries,
+            ))
+        return result
+
+    def group_by_month(self) -> list[TimelineGroup]:
+        """Group entries by month."""
+        groups: dict[str, list[TimelineEntry]] = {}
+        for entry in self._entries:
+            month = entry.timestamp[:7] if len(entry.timestamp) >= 7 else "unknown"
+            groups.setdefault(month, []).append(entry)
+
+        result = []
+        for month in sorted(groups.keys(), reverse=True):
+            entries = sorted(groups[month], key=lambda e: e.timestamp, reverse=True)
+            result.append(TimelineGroup(
+                period=month,
+                entries=entries,
+            ))
+        return result
+
+    def get_recent(self, count: int = 10) -> list[TimelineEntry]:
+        """Get the most recent entries.
+
+        Args:
+            count: Number of entries to return.
+
+        Returns:
+            List of most recent TimelineEntry objects.
+        """
+        sorted_entries = sorted(self._entries, key=lambda e: e.timestamp, reverse=True)
+        return sorted_entries[:count]
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get timeline statistics."""
+        if not self._entries:
+            return {
+                "total_entries": 0,
+                "event_types": {},
+                "earliest": None,
+                "latest": None,
+            }
+
+        event_counts: dict[str, int] = {}
+        for entry in self._entries:
+            event_counts[entry.event_type] = event_counts.get(entry.event_type, 0) + 1
+
+        timestamps = [e.timestamp for e in self._entries]
         return {
-            "event_id": self.event_id,
-            "event_type": self.event_type.value,
-            "timestamp": self.timestamp.isoformat(),
-            "content_id": self.content_id,
-            "metadata": self.metadata,
-            "source": self.source,
+            "total_entries": len(self._entries),
+            "event_types": event_counts,
+            "earliest": min(timestamps),
+            "latest": max(timestamps),
         }
 
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> TimelineEvent:
-        """Create event from dictionary."""
-        return cls(
-            event_id=data["event_id"],
-            event_type=TimelineEventType(data["event_type"]),
-            timestamp=datetime.fromisoformat(data["timestamp"]),
-            content_id=data["content_id"],
-            metadata=data.get("metadata", {}),
-            source=data.get("source", "system"),
-        )
+    def clear(self) -> None:
+        """Clear all entries."""
+        self._entries.clear()
 
-
-@dataclass
-class Timeline:
-    """A collection of timeline events for one or more content items.
-
-    Attributes:
-        events: List of timeline events.
-        content_ids: Set of content IDs in this timeline.
-    """
-
-    events: list[TimelineEvent] = field(default_factory=list)
-    content_ids: set[str] = field(default_factory=set)
-
-    def add_event(self, event: TimelineEvent) -> None:
-        """Add an event to the timeline."""
-        self.events.append(event)
-        self.content_ids.add(event.content_id)
-        self.events.sort(key=lambda e: e.timestamp)
-
-    def get_events_for_content(
-        self,
-        content_id: str,
-    ) -> list[TimelineEvent]:
-        """Get all events for a specific content item."""
-        return [e for e in self.events if e.content_id == content_id]
-
-    def get_events_by_type(
-        self,
-        event_type: TimelineEventType,
-    ) -> list[TimelineEvent]:
-        """Get all events of a specific type."""
-        return [e for e in self.events if e.event_type == event_type]
-
-    def get_events_in_range(
-        self,
-        start: datetime,
-        end: datetime,
-    ) -> list[TimelineEvent]:
-        """Get events within a time range."""
-        return [
-            e for e in self.events
-            if start <= e.timestamp <= end
-        ]
-
-    def get_latest_event(
-        self,
-        content_id: str | None = None,
-    ) -> TimelineEvent | None:
-        """Get the most recent event, optionally filtered by content."""
-        events = (
-            self.get_events_for_content(content_id)
-            if content_id
-            else self.events
-        )
-        return events[-1] if events else None
-
-    def get_event_count(self) -> int:
-        """Get total number of events."""
-        return len(self.events)
-
-    def get_content_event_count(self, content_id: str) -> int:
-        """Get number of events for a specific content item."""
-        return len(self.get_events_for_content(content_id))
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert timeline to dictionary."""
-        return {
-            "events": [e.to_dict() for e in self.events],
-            "content_ids": list(self.content_ids),
-            "event_count": len(self.events),
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Timeline:
-        """Create timeline from dictionary."""
-        timeline = cls()
-        for event_data in data.get("events", []):
-            timeline.add_event(TimelineEvent.from_dict(event_data))
-        return timeline
+    @property
+    def count(self) -> int:
+        """Number of entries in the timeline."""
+        return len(self._entries)
