@@ -250,6 +250,7 @@ class IndexedPage:
     content_length: int = 0
     language: str = "en"
     score: float = 1.0
+    relevance_score: float = 0.0
     indexed_at: str = ""
     source_interest: str = ""
     word_count: int = 0

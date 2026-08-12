@@ -707,16 +707,20 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
 
 # ── stats (legacy alias for status) ───────────────────────────────────
 @main.command()
+@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]),
+              help="Output format")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
-def stats(ctx, data_dir):
+def stats(ctx, data_dir, fmt):
     """Show statistics about your personal-index.
 
     Displays counts of indexed pages, interests, tags, and storage usage.
 
     Examples:
         personal-index stats
+        personal-index stats --format json
     """
+    import json
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
     tag_store = get_tag_store(dd)
@@ -737,26 +741,37 @@ def stats(ctx, data_dir):
                 except OSError:
                     pass
 
-    click.echo("Personal Index Statistics")
-    click.echo("=" * 40)
-    click.echo("  Indexed pages:  {}".format(page_count))
-    click.echo("  Interests:      {}".format(interest_count))
-    click.echo("  Tags:           {}".format(tag_count))
-    click.echo("  Tagged pages:   {}".format(tag_store.get_tagged_page_count()))
+    if fmt == "json":
+        data = {
+            "indexed_pages": page_count,
+            "total_interests": interest_count,
+            "total_tags": tag_count,
+            "tagged_pages": tag_store.get_tagged_page_count(),
+        }
+        if total_size > 0:
+            data["storage_bytes"] = total_size
+        click.echo(json.dumps(data, indent=2))
+    else:
+        click.echo("Personal Index Statistics")
+        click.echo("=" * 40)
+        click.echo("  Indexed pages:  {}".format(page_count))
+        click.echo("  Interests:      {}".format(interest_count))
+        click.echo("  Tags:           {}".format(tag_count))
+        click.echo("  Tagged pages:   {}".format(tag_store.get_tagged_page_count()))
 
-    if interests:
-        click.echo("")
-        click.echo("Interests:")
-        for interest in interests:
-            click.echo("  - {}: {}".format(interest.name, ", ".join(interest.keywords[:5])))
+        if interests:
+            click.echo("")
+            click.echo("Interests:")
+            for interest in interests:
+                click.echo("  - {}: {}".format(interest.name, ", ".join(interest.keywords[:5])))
 
-    if total_size > 0:
-        if total_size < 1024 * 1024:
-            size_str = "{:.1f} KB".format(total_size / 1024)
-        else:
-            size_str = "{:.1f} MB".format(total_size / (1024 * 1024))
-        click.echo("")
-        click.echo("Storage: {}".format(size_str))
+        if total_size > 0:
+            if total_size < 1024 * 1024:
+                size_str = "{:.1f} KB".format(total_size / 1024)
+            else:
+                size_str = "{:.1f} MB".format(total_size / (1024 * 1024))
+            click.echo("")
+            click.echo("Storage: {}".format(size_str))
 
 
 # ── list (legacy - list indexed pages) ────────────────────────────────
@@ -764,9 +779,11 @@ def stats(ctx, data_dir):
 @click.option("--limit", "-l", default=20, type=int, help="Maximum pages to show")
 @click.option("--sort", "-s", default="score", type=click.Choice(["score", "date", "title"]),
               help="Sort order")
+@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json", "csv"]),
+              help="Output format")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
-def list_pages(ctx, limit, sort, data_dir):
+def list_pages(ctx, limit, sort, data_dir, fmt):
     """List all indexed pages.
 
     Shows all pages currently in the search index.
@@ -775,7 +792,11 @@ def list_pages(ctx, limit, sort, data_dir):
         personal-index list
         personal-index list --limit 50
         personal-index list --sort date
+        personal-index list --format json
     """
+    import csv
+    import io
+    import json
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
 
@@ -789,16 +810,42 @@ def list_pages(ctx, limit, sort, data_dir):
     pages = pages[:limit]
 
     if not pages:
-        click.echo("No indexed pages found. Run 'personal-index pipeline' to add content.")
+        if fmt == "json":
+            click.echo(json.dumps({"pages": [], "total": 0}, indent=2))
+        else:
+            click.echo("No indexed pages found. Run 'personal-index pipeline' to add content.")
         return
 
-    click.echo("Indexed Pages")
-    click.echo("=" * 60)
-    for i, page in enumerate(pages, 1):
-        click.echo("{}. {}".format(i, page.title))
-        click.echo("   {}".format(page.url))
-        click.echo("   Score: {:.4f}".format(page.relevance_score))
-        click.echo("")
+    if fmt == "json":
+        data = {
+            "pages": [
+                {
+                    "url": p.url,
+                    "title": p.title,
+                    "score": p.score,
+                    "crawled_at": p.crawled_at,
+                    "content_length": p.content_length,
+                }
+                for p in pages
+            ],
+            "total": len(pages),
+        }
+        click.echo(json.dumps(data, indent=2))
+    elif fmt == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["rank", "title", "url", "score", "crawled_at", "content_length"])
+        for i, p in enumerate(pages, 1):
+            writer.writerow([i, p.title, p.url, f"{p.score:.4f}", p.crawled_at or "", p.content_length])
+        click.echo(output.getvalue().strip())
+    else:
+        click.echo("Indexed Pages")
+        click.echo("=" * 60)
+        for i, page in enumerate(pages, 1):
+            click.echo("{}. {}".format(i, page.title))
+            click.echo("   {}".format(page.url))
+            click.echo("   Score: {:.4f}".format(page.score))
+            click.echo("")
 
 
 # ── doctor ────────────────────────────────────────────────────────────
@@ -1005,6 +1052,7 @@ def config_show(ctx, data_dir):
 @click.option("--max-pages", "-m", type=int, help="Max pages per domain")
 @click.option("--timeout", "-t", type=int, help="Request timeout in seconds")
 @click.option("--politeness-delay", "-p", type=float, help="Delay between requests")
+@click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def config_set_crawler(ctx, max_depth, max_pages, timeout, politeness_delay, data_dir):
     """Configure crawler settings.
@@ -1033,6 +1081,7 @@ def config_set_crawler(ctx, max_depth, max_pages, timeout, politeness_delay, dat
 @config.command("set-schedule")
 @click.option("--interval", "-i", type=int, help="Default interval in hours")
 @click.option("--enabled/--disabled", default=None, help="Enable or disable scheduler")
+@click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def config_set_schedule(ctx, interval, enabled, data_dir):
     """Configure scheduler settings.
@@ -1052,6 +1101,565 @@ def config_set_schedule(ctx, interval, enabled, data_dir):
     
     save_config(config, "config.yaml")
     click.echo("Scheduler configuration updated")
+
+
+
+# ── top (show highest-scored pages) ───────────────────────────────────
+@main.command()
+@click.option("--limit", "-l", default=10, type=int, help="Number of top pages to show")
+@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]),
+              help="Output format")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def top(ctx, limit, fmt, data_dir):
+    """Show the highest-scored indexed pages.
+
+    Displays pages ranked by their relevance score.
+
+    Examples:
+        personal-index top
+        personal-index top --limit 20
+        personal-index top --format json
+    """
+    import json
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    idx = get_search_index(dd)
+    pages = idx.list_pages()[:limit]
+
+    if not pages:
+        click.echo("No indexed pages found. Run 'personal-index pipeline' first.")
+        return
+
+    if fmt == "json":
+        data = {
+            "top_pages": [
+                {
+                    "rank": i + 1,
+                    "url": p.url,
+                    "title": p.title,
+                    "score": p.score,
+                    "crawled_at": p.crawled_at,
+                    "tags": [],
+                }
+                for i, p in enumerate(pages)
+            ],
+            "total": len(pages),
+        }
+        click.echo(json.dumps(data, indent=2))
+    else:
+        click.echo(f"
+Top {len(pages)} pages by score:")
+        click.echo("=" * 60)
+        for i, p in enumerate(pages, 1):
+            click.echo(f"
+{i}. {p.title}")
+            click.echo(f"   Score: {p.score:.4f}")
+            click.echo(f"   URL:   {p.url}")
+            click.echo(f"   Date:  {p.crawled_at or 'N/A'}")
+
+
+# ── dedup (find and remove duplicates) ────────────────────────────────
+@main.command()
+@click.option("--data-dir", default=None, help="Data directory")
+@click.option("--method", "-m", default="all",
+              type=click.Choice(["hash", "url", "similarity", "all"]),
+              help="Deduplication method")
+@click.option("--similarity-threshold", type=float, default=0.9,
+              help="Similarity threshold (0.0-1.0)")
+@click.option("--dry-run", is_flag=True, help="Show duplicates without removing")
+@click.pass_context
+def dedup(ctx, data_dir, method, similarity_threshold, dry_run):
+    """Find and remove duplicate content.
+
+    Analyzes indexed content for duplicates using hash matching,
+    URL normalization, or similarity scoring.
+
+    Examples:
+        personal-index dedup
+        personal-index dedup --method hash
+        personal-index dedup --method similarity --similarity-threshold 0.8
+        personal-index dedup --dry-run
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    from personal_index.content_dedup import ContentDeduplicator
+    idx = get_search_index(dd)
+    pages = idx.list_pages()
+    if not pages:
+        click.echo("No indexed content found.")
+        return
+
+    items = []
+    for page in pages:
+        items.append({
+            "url": page.url,
+            "title": page.title,
+            "content": page.content or "",
+        })
+
+    dedup_obj = ContentDeduplicator(similarity_threshold=similarity_threshold)
+
+    if method == "hash":
+        result = dedup_obj.dedup_by_hash(items)
+    elif method == "url":
+        result = dedup_obj.dedup_by_url(items)
+    elif method == "similarity":
+        result = dedup_obj.dedup_by_similarity(items)
+    else:
+        result = dedup_obj.dedup_all(items)
+
+    click.echo(result.summary())
+    click.echo()
+
+    if result.duplicate_groups:
+        click.echo("Duplicate Groups:")
+        click.echo("-" * 40)
+        for group in result.duplicate_groups:
+            click.echo(f"
+  Representative: {group.representative}")
+            click.echo(f"  Method: {group.dedup_method}")
+            click.echo(f"  Score: {group.similarity_score:.2f}")
+            for dup in group.duplicates:
+                click.echo(f"    Duplicate: {dup}")
+
+        if not dry_run:
+            click.echo(f"
+Removing {result.removed_count} duplicates...")
+            urls_to_remove = set()
+            for group in result.duplicate_groups:
+                urls_to_remove.update(group.duplicates)
+            removed = 0
+            for url in urls_to_remove:
+                if idx.remove_page(url):
+                    removed += 1
+            idx._save()
+            click.echo(f"Removed {removed} duplicate pages.")
+        else:
+            click.echo("
+(Dry run - no changes made)")
+    else:
+        click.echo("No duplicates found!")
+
+
+# ── health (content health check) ─────────────────────────────────────
+@main.command()
+@click.option("--data-dir", default=None, help="Data directory")
+@click.option("--min-content-length", type=int, default=50, help="Minimum content length")
+@click.option("--min-title-length", type=int, default=3, help="Minimum title length")
+@click.option("--require-tags", is_flag=True, help="Require tags on all items")
+@click.option("--min-score", type=float, default=0.0, help="Minimum score threshold")
+@click.pass_context
+def health(ctx, data_dir, min_content_length, min_title_length, require_tags, min_score):
+    """Check the health of indexed content.
+
+    Analyzes all indexed pages for quality issues including
+    missing titles, short content, and bad status codes.
+
+    Examples:
+        personal-index health
+        personal-index health --require-tags --min-score 5.0
+        personal-index health --min-content-length 100
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    from personal_index.content_health import ContentHealthCheck, ContentHealthChecker
+    idx = get_search_index(dd)
+    tag_store = get_tag_store(dd)
+    pages = idx.list_pages()
+    if not pages:
+        click.echo("No indexed content found. Run 'personal-index pipeline' first.")
+        return
+
+    items = []
+    for page in pages:
+        page_tags = list(tag_store.get_tags_for_url(page.url))
+        items.append({
+            "url": page.url,
+            "title": page.title,
+            "content": page.content or "",
+            "tags": page_tags,
+            "score": page.score,
+            "status_code": getattr(page, "status_code", 200),
+        })
+
+    config = ContentHealthCheck(
+        min_content_length=min_content_length,
+        min_title_length=min_title_length,
+        require_tags=require_tags,
+        require_score=min_score > 0,
+        min_score=min_score,
+    )
+    checker = ContentHealthChecker(config=config)
+    report = checker.check_all(items)
+
+    click.echo(report.summary())
+    click.echo()
+
+    if report.total_issues > 0:
+        click.echo(f"Issues Found ({report.total_issues}):")
+        click.echo("-" * 40)
+        for result in report.results:
+            if result.issues:
+                click.echo(f"
+  {result.url}")
+                for issue in result.issues:
+                    click.echo(f"    [{issue.severity.value}] {issue.message}")
+                    if issue.suggestion:
+                        click.echo(f"       -> {issue.suggestion}")
+    else:
+        click.echo("All content is healthy!")
+
+
+# ── recommend (content recommendations) ───────────────────────────────
+@main.command()
+@click.argument("query", required=False)
+@click.option("--top-n", "-n", default=5, help="Number of recommendations")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.option("--keyword-weight", default=0.6, help="Keyword overlap weight")
+@click.option("--tag-weight", default=0.3, help="Tag similarity weight")
+@click.option("--score-weight", default=0.1, help="Score weight")
+@click.pass_context
+def recommend(ctx, query, top_n, data_dir, keyword_weight, tag_weight, score_weight):
+    """Get content recommendations based on a query or seed content.
+
+    Analyzes indexed content and recommends related pages based on
+    keyword overlap, tag similarity, and content scores.
+
+    Examples:
+        personal-index recommend "python tutorial"
+        personal-index recommend "python tutorial" --top-n 10
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    from personal_index.content_recommender import ContentItem, Recommender
+    idx = get_search_index(dd)
+    tag_store = get_tag_store(dd)
+    recommender = Recommender(min_score=0.0)
+    pages = idx.list_pages()
+    for page in pages:
+        page_tags = list(tag_store.get_tags_for_url(page.url))
+        item = ContentItem(
+            url=page.url,
+            title=page.title,
+            content=page.content or "",
+            keywords=getattr(page, "keywords", []) or [],
+            tags=page_tags,
+            score=page.score,
+        )
+        recommender.add_item(item)
+
+    if not recommender.item_count:
+        click.echo("No indexed content found. Run 'personal-index pipeline' first.")
+        return
+
+    if query:
+        recs = recommender.recommend_for_keywords(query.split(), top_n=top_n)
+    else:
+        recs = recommender.recommend_for_keywords([], top_n=top_n)
+
+    if not recs:
+        click.echo("No recommendations found.")
+        return
+
+    click.echo(f"Top {top_n} Recommendations:")
+    click.echo("=" * 50)
+    for i, rec in enumerate(recs, 1):
+        click.echo(f"
+{i}. {rec.title}")
+        click.echo(f"   URL: {rec.url}")
+        click.echo(f"   Score: {rec.score:.3f}")
+        click.echo(f"   Reason: {rec.reason}")
+
+
+# ── verify (pipeline verification) ────────────────────────────────────
+@main.command()
+@click.option("--data-dir", default=None, help="Data directory")
+@click.option("--quick", "-q", is_flag=True, help="Quick verification (skip full pipeline test)")
+@click.pass_context
+def verify(ctx, data_dir, quick):
+    """Verify that the personal-index pipeline works end-to-end.
+
+    Runs a self-test that creates temporary content and processes it
+    through all pipeline stages to verify everything is working.
+
+    Examples:
+        personal-index verify
+        personal-index verify --quick
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    os.makedirs(dd, exist_ok=True)
+
+    click.echo("Verifying personal-index pipeline...")
+    click.echo("=" * 50)
+
+    errors = []
+    checks_passed = 0
+    checks_total = 0
+
+    def check(name, condition, detail=""):
+        nonlocal checks_passed, checks_total
+        checks_total += 1
+        if condition:
+            checks_passed += 1
+            click.echo(f"  ✓ {name}")
+        else:
+            errors.append(f"✗ {name}: {detail}")
+            click.echo(f"  ✗ {name}: {detail}")
+
+    # Check 1: Data directory writable
+    test_file = os.path.join(dd, ".verify_test")
+    try:
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.remove(test_file)
+        check("Data directory is writable", True)
+    except OSError as e:
+        check("Data directory is writable", False, str(e))
+
+    # Check 2: Interest store works
+    try:
+        from personal_index.interests import InterestStore
+        from personal_index.models import Interest
+        interest_store = InterestStore(store_path=os.path.join(dd, "verify_interests.json"))
+        interest_store.add(Interest(name="verify_test", keywords=["verify"]))
+        interests = interest_store.list_all()
+        check("Interest store works", len(interests) > 0, "Could not store interests")
+        interest_store._interests.clear()
+        interest_store._save()
+    except (RuntimeError, OSError, ValueError) as e:
+        check("Interest store works", False, str(e))
+
+    # Check 3: Tag store works
+    try:
+        tag_store = TagStore(store_path=os.path.join(dd, "verify_tags.json"))
+        tag_store.add_tag_to_page("http://test.com", "verify")
+        tags = tag_store.get_tags_for_page("http://test.com")
+        check("Tag store works", any(t.name == "verify" for t in tags), "Could not store tags")
+        tag_store._page_tags.clear()
+        tag_store._save()
+    except (RuntimeError, OSError, ValueError) as e:
+        check("Tag store works", False, str(e))
+
+    # Check 4: Search index works
+    try:
+        from personal_index.models import CrawledPage
+        search_index = SearchIndex(db_path=os.path.join(dd, "verify_index.json"))
+        test_page = CrawledPage(
+            url="http://verify.test/page1",
+            title="Verify Test Page",
+            content="This is a verification test page for the pipeline.",
+        )
+        search_index.add_page(test_page)
+        results = search_index.search("verification")
+        check("Search index works", len(results) > 0, "Could not search index")
+        search_index.remove_page("http://verify.test/page1")
+        search_index._save()
+    except (RuntimeError, OSError, ValueError) as e:
+        check("Search index works", False, str(e))
+
+    # Check 5: Content filter works
+    try:
+        from personal_index.content_filter import ContentFilter, FilterConfig
+        content_filter = ContentFilter(config=FilterConfig(min_content_length=10))
+        test_page = CrawledPage(
+            url="http://test.com",
+            title="Test",
+            content="This is test content for verification.",
+        )
+        included = content_filter.should_include(test_page)
+        check("Content filter works", included, "Filter rejected valid content")
+    except (RuntimeError, OSError, ValueError) as e:
+        check("Content filter works", False, str(e))
+
+    # Check 6: Content scorer works
+    try:
+        from personal_index.content_scoring import ContentScorer, ScoreWeights
+        scorer = ContentScorer(weights=ScoreWeights())
+        score = scorer.score(
+            keyword_matches=1,
+            total_keywords=2,
+            word_count=10,
+            domain_authority=0.5,
+        )
+        check("Content scorer works", score.total >= 0, "Scorer returned invalid score")
+    except (RuntimeError, OSError, ValueError) as e:
+        check("Content scorer works", False, str(e))
+
+    # Full pipeline test (skip with --quick)
+    if not quick:
+        click.echo("
+Running full pipeline self-test...")
+        try:
+            test_data_dir = os.path.join(dd, ".verify_pipeline")
+            os.makedirs(test_data_dir, exist_ok=True)
+
+            test_file_path = os.path.join(test_data_dir, "test_article.txt")
+            with open(test_file_path, "w") as f:
+                f.write(
+                    "Python is a versatile programming language used for web development, "
+                    "data science, and machine learning. Python has a clean and readable syntax "
+                    "that makes it popular among beginners and experts alike."
+                )
+
+            mini_interest_store = InterestStore(store_path=os.path.join(test_data_dir, "interests.json"))
+            mini_interest_store.add(Interest(name="python", keywords=["python", "programming"]))
+
+            mini_tag_store = TagStore(store_path=os.path.join(test_data_dir, "tags.json"))
+            mini_search_index = SearchIndex(db_path=os.path.join(test_data_dir, "search_index.json"))
+            mini_filter = ContentFilter(
+                config=FilterConfig(min_content_length=10),
+                interest_store=mini_interest_store,
+            )
+            mini_scorer = ContentScorer(weights=ScoreWeights())
+
+            with open(test_file_path, "r") as f:
+                content = f.read()
+            page = CrawledPage(
+                url=test_file_path,
+                title="Python Overview",
+                content=content,
+            )
+
+            if not mini_filter.should_include(page):
+                check("Full pipeline: filter stage", False, "Content was filtered out")
+            else:
+                score = mini_scorer.score(
+                    keyword_matches=2,
+                    total_keywords=2,
+                    word_count=len(content.split()),
+                    domain_authority=0.5,
+                )
+                page.relevance_score = score.total
+
+                mini_tag_store.add_tag_to_page(page.url, "python")
+                mini_tag_store.add_tag_to_page(page.url, "programming")
+
+                mini_search_index.add_page(page)
+
+                results = mini_search_index.search("python")
+
+                check("Full pipeline: all stages", len(results) > 0,
+                      "Pipeline did not produce searchable results")
+
+            import shutil
+            shutil.rmtree(test_data_dir, ignore_errors=True)
+
+        except (RuntimeError, OSError, ValueError) as e:
+            check("Full pipeline: all stages", False, str(e))
+
+    # Cleanup verify files
+    for f in ["verify_interests.json", "verify_tags.json", "verify_index.json"]:
+        path = os.path.join(dd, f)
+        if os.path.exists(path):
+            os.remove(path)
+
+    # Summary
+    click.echo(f"
+{'=' * 50}")
+    click.echo(f"Results: {checks_passed}/{checks_total} checks passed")
+
+    if errors:
+        click.echo(f"
+Failed checks ({len(errors)}):")
+        for error in errors:
+            click.echo(f"  {error}")
+        sys.exit(1)
+    else:
+        click.echo("
+✓ All checks passed! Your pipeline is working correctly.")
+
+
+# ── watch (watch directory for changes) ───────────────────────────────
+@main.command()
+@click.argument("path")
+@click.option("--interval", "-i", default=30, type=int, help="Check interval in seconds")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.option("--recursive", "-r", is_flag=True, help="Watch directories recursively")
+@click.option("--once", "-o", is_flag=True, help="Run once and exit (no continuous monitoring)")
+@click.pass_context
+def watch(ctx, path, interval, data_dir, recursive, once):
+    """Watch a directory for changes and re-index automatically.
+
+    Monitors a directory for new or modified files and automatically
+    runs the pipeline on changes.
+
+    Examples:
+        personal-index watch ./docs
+        personal-index watch ./content --interval 60 --recursive
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    os.makedirs(dd, exist_ok=True)
+
+    if not os.path.exists(path):
+        click.echo(f"Error: Path '{path}' does not exist.", err=True)
+        sys.exit(1)
+
+    click.echo(f"Watching {path} for changes (interval: {interval}s)")
+    if once:
+        click.echo("Running once and exiting.")
+    else:
+        click.echo("Press Ctrl+C to stop.")
+
+    import time
+    file_times = {}
+
+    def scan_files(target_path):
+        times = {}
+        if os.path.isfile(target_path):
+            times[target_path] = os.path.getmtime(target_path)
+        elif os.path.isdir(target_path):
+            for root, dirs, files in os.walk(target_path):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    if fp.endswith((".txt", ".md", ".html", ".htm", ".json", ".xml", ".rst")):
+                        times[fp] = os.path.getmtime(fp)
+        return times
+
+    try:
+        while True:
+            current_times = scan_files(path)
+            new_files = []
+            modified_files = []
+
+            for fp, mtime in current_times.items():
+                if fp not in file_times:
+                    new_files.append(fp)
+                elif mtime > file_times[fp]:
+                    modified_files.append(fp)
+
+            if new_files or modified_files:
+                click.echo(f"
+[{time.strftime('%H:%M:%S')}] Changes detected:")
+                for f in new_files:
+                    click.echo(f"  + {f}")
+                for f in modified_files:
+                    click.echo(f"  ~ {f}")
+
+                changed = new_files + modified_files
+                if changed:
+                    click.echo(f"
+Re-indexing {len(changed)} file(s)...")
+                    from click.testing import CliRunner
+                    from personal_index.cli_pipeline_unified import run_pipeline
+                    runner = CliRunner()
+                    import_args = ["--data-dir", dd]
+                    for f in changed:
+                        import_args.extend(["--import-file", f])
+                    result = runner.invoke(run_pipeline, import_args)
+                    if result.exit_code != 0:
+                        click.echo(f"  Warning: Pipeline had issues: {result.output}", err=True)
+                    else:
+                        click.echo("  Re-index complete.")
+
+            file_times = current_times
+
+            if once:
+                click.echo("
+Watch completed (single run mode).")
+                break
+
+            time.sleep(interval)
+
+    except KeyboardInterrupt:
+        click.echo("
+Watch stopped.")
 
 
 if __name__ == "__main__":
