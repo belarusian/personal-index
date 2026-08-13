@@ -207,7 +207,7 @@ class TestParseDirective:
         from personal_index.robots_parser import _parse_directive
 
         policy = RobotsPolicy(domain="example.com")
-        agent, rules = _parse_directive(
+        _, _ = _parse_directive(
             "Crawl-delay: 10", "*", policy, []
         )
         assert policy.crawl_delay == 10.0
@@ -216,7 +216,7 @@ class TestParseDirective:
         from personal_index.robots_parser import _parse_directive
 
         policy = RobotsPolicy(domain="example.com")
-        agent, rules = _parse_directive(
+        _, _ = _parse_directive(
             "Sitemap: https://example.com/sitemap.xml", "*", policy, []
         )
         assert "https://example.com/sitemap.xml" in policy.sitemap_urls

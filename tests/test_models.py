@@ -17,8 +17,6 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
-
 from personal_index.models import (
     AppConfig,
     CrawlConfig,
@@ -31,7 +29,6 @@ from personal_index.models import (
     PipelineStats,
     SchedulerConfig,
 )
-
 
 # ---------------------------------------------------------------------------
 # InterestType enum tests
@@ -189,7 +186,6 @@ class TestInterest:
         assert interest.matches("content", "https://docs.python.org/3/tutorial")
 
     def test_interest_matches_url_pattern_regex(self):
-        import re
         interest = Interest(
             name="python",
             url_patterns=[r"https://github\.com/.*"],

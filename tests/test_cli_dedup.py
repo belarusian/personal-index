@@ -107,7 +107,7 @@ class TestDedupHelpers:
         ))
         idx._save()
 
-        pages, loaded_idx = _load_indexed_content(dd)
+        pages, _ = _load_indexed_content(dd)
         assert len(pages) == 1
         assert pages[0].url == "https://example.com"
 

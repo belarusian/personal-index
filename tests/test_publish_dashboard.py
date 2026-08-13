@@ -55,12 +55,12 @@ class TestRun:
         mock_result.stdout = ""
         mock_result.stderr = "error\n"
 
-        with patch("subprocess.run", return_value=mock_result):
-            with patch.object(publish_dashboard.sys, "exit") as mock_exit:
-                mock_exit.side_effect = SystemExit(1)
-                with pytest.raises(SystemExit):
-                    publish_dashboard.run(["false"], check=True)
-                mock_exit.assert_called_once_with(1)
+        with patch("subprocess.run", return_value=mock_result), \
+             patch.object(publish_dashboard.sys, "exit") as mock_exit:
+            mock_exit.side_effect = SystemExit(1)
+            with pytest.raises(SystemExit):
+                publish_dashboard.run(["false"], check=True)
+            mock_exit.assert_called_once_with(1)
 
     def test_run_failure_no_check(self):
         """run() does not exit when check=False."""
@@ -69,10 +69,10 @@ class TestRun:
         mock_result.stdout = ""
         mock_result.stderr = "error\n"
 
-        with patch("subprocess.run", return_value=mock_result):
-            with patch.object(publish_dashboard.sys, "exit") as mock_exit:
-                publish_dashboard.run(["false"], check=False)
-                mock_exit.assert_not_called()
+        with patch("subprocess.run", return_value=mock_result), \
+             patch.object(publish_dashboard.sys, "exit") as mock_exit:
+            publish_dashboard.run(["false"], check=False)
+            mock_exit.assert_not_called()
 
 
 class TestRegenerate:

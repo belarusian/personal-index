@@ -14,10 +14,6 @@ Covers:
 
 from __future__ import annotations
 
-import json
-import tempfile
-from datetime import datetime, timezone
-
 import pytest
 
 from personal_index.content_search import (
@@ -26,7 +22,6 @@ from personal_index.content_search import (
     Snippet,
     SnippetExtractor,
 )
-
 
 # ---------------------------------------------------------------------------
 # Snippet dataclass tests
