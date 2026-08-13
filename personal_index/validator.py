@@ -56,29 +56,36 @@ class URLValidator:
         self.max_url_length = max_url_length
 
     def validate(self, url: str) -> ValidationResult:
-        """Process validate.
-
-        Args:
-        url.
-        """
+        """Process validate."""
         result = ValidationResult(valid=True)
-
         if not url or not url.strip():
             result.add_error("URL is empty")
             return result
-
         url = url.strip()
+        self._check_length(url, result)
+        parsed = urlparse(url)
+        self._check_scheme(parsed, result)
+        self._check_domain(parsed, result)
+        self._check_path(parsed, result)
+        self._check_fragment(parsed, result)
+        if not result.errors:
+            result.valid = True
+        return result
 
+    def _check_length(self, url: str, result: ValidationResult) -> None:
+        """Check URL length."""
         if len(url) > self.max_url_length:
             result.add_error(f"URL exceeds max length of {self.max_url_length}")
 
-        parsed = urlparse(url)
-
+    def _check_scheme(self, parsed, result: ValidationResult) -> None:
+        """Check URL scheme."""
         if not parsed.scheme:
             result.add_error("URL missing scheme")
         elif parsed.scheme.lower() not in self.allowed_schemes:
             result.add_error(f"Scheme '{parsed.scheme}' not allowed")
 
+    def _check_domain(self, parsed, result: ValidationResult) -> None:
+        """Check URL domain."""
         if not parsed.netloc:
             result.add_error("URL missing domain")
         else:
@@ -87,16 +94,15 @@ class URLValidator:
             if self._is_blocked_domain(parsed.netloc):
                 result.add_error(f"Domain '{parsed.netloc}' is blocked")
 
+    def _check_path(self, parsed, result: ValidationResult) -> None:
+        """Check URL path."""
         if self._is_blocked_path(parsed.path):
             result.add_error(f"Path '{parsed.path}' is blocked")
 
+    def _check_fragment(self, parsed, result: ValidationResult) -> None:
+        """Check URL fragment."""
         if parsed.fragment:
             result.add_warning("URL contains fragment identifier")
-
-        if not result.errors:
-            result.valid = True
-
-        return result
 
     def _is_blocked_domain(self, domain: str) -> bool:
         domain = domain.lower().rstrip(".")
