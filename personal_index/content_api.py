@@ -7,6 +7,7 @@ Uses a lightweight approach compatible with any WSGI/ASGI framework.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -27,41 +28,50 @@ class ContentAPI:
         parsed = urlparse(path)
         path_parts = [p for p in parsed.path.strip("/").split("/") if p]
         params = parse_qs(query_string)
-
-        # Route: /api/v1/health
-        if path_parts == ["api", "v1", "health"]:
-            return self._health_check()
-
-        # Route: /api/v1/stats
-        if path_parts == ["api", "v1", "stats"]:
-            return self._get_stats()
-
-        # Route: /api/v1/content
-        if path_parts == ["api", "v1", "content"]:
-            if method == "GET":
-                return self._list_content(params)
-            elif method == "POST":
-                return self._create_content(body)
-
-        # Route: /api/v1/content/search
-        if path_parts == ["api", "v1", "content", "search"] and method == "GET":
-            return self._search_content(params)
-
-        # Route: /api/v1/content/export
-        if path_parts == ["api", "v1", "content", "export"] and method == "GET":
-            return self._export_content(params)
-
-        # Route: /api/v1/content/{id}
-        if len(path_parts) == 4 and path_parts[:3] == ["api", "v1", "content"]:
-            item_id = path_parts[3]
-            if method == "GET":
-                return self._get_content(item_id)
-            elif method == "PUT":
-                return self._update_content(item_id, body)
-            elif method == "DELETE":
-                return self._delete_content(item_id)
-
+        handler = self._match_route(method, path_parts, params, body)
+        if handler:
+            return handler()
         return 404, {"error": "Not found", "path": path}
+
+    def _match_route(
+        self, method: str, parts: list[str], params: dict, body: str | None
+    ) -> Callable[..., Any] | None:
+        """Match path parts to a route handler."""
+        if parts == ["api", "v1", "health"]:
+            return self._health_check
+        if parts == ["api", "v1", "stats"]:
+            return self._get_stats
+        if parts == ["api", "v1", "content"]:
+            return self._route_content(method, params, body)
+        if parts == ["api", "v1", "content", "search"] and method == "GET":
+            return lambda: self._search_content(params)
+        if parts == ["api", "v1", "content", "export"] and method == "GET":
+            return lambda: self._export_content(params)
+        if len(parts) == 4 and parts[:3] == ["api", "v1", "content"]:
+            return self._route_content_item(method, parts[3], body)
+        return None
+
+    def _route_content(
+        self, method: str, params: dict, body: str | None
+    ) -> Callable[..., Any] | None:
+        """Route /api/v1/content requests."""
+        if method == "GET":
+            return lambda: self._list_content(params)
+        if method == "POST":
+            return lambda: self._create_content(body)
+        return None
+
+    def _route_content_item(
+        self, method: str, item_id: str, body: str | None
+    ) -> Callable[..., Any] | None:
+        """Route /api/v1/content/{id} requests."""
+        if method == "GET":
+            return lambda: self._get_content(item_id)
+        if method == "PUT":
+            return lambda: self._update_content(item_id, body)
+        if method == "DELETE":
+            return lambda: self._delete_content(item_id)
+        return None
 
     def _list_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
         items = list(self._store.values())

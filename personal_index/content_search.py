@@ -129,33 +129,12 @@ class SnippetExtractor:
         """Create a single snippet from a group of match positions."""
         first_start = positions[0][0]
         last_end = positions[-1][1]
-
-        # Calculate window boundaries
-        window_start = max(0, first_start - half_window)
-        window_end = min(len(text), last_end + half_window)
-
-        # Try to break at word boundaries
-        if window_start > 0:
-            next_space = text.rfind(" ", 0, window_start)
-            if next_space != -1:
-                window_start = next_space + 1
-        if window_end < len(text):
-            next_space = text.find(" ", window_end)
-            if next_space != -1:
-                window_end = next_space
-
+        window_start, window_end = self._calc_window(text, first_start, last_end, half_window)
         snippet_text = text[window_start:window_end]
-
-        # Find matched terms in this snippet
         matched_terms = list({term for _, _, term in positions})
-
-        # Highlight matches in the snippet
         highlighted = self._highlight_terms(snippet_text, matched_terms)
-
-        # Add ellipsis if truncated
         prefix = self.ellipsis if window_start > 0 else ""
         suffix = self.ellipsis if window_end < len(text) else ""
-
         return Snippet(
             text=snippet_text,
             highlighted=f"{prefix}{highlighted}{suffix}",
@@ -163,6 +142,21 @@ class SnippetExtractor:
             end_offset=window_end,
             matched_terms=matched_terms,
         )
+
+    @staticmethod
+    def _calc_window(text: str, first_start: int, last_end: int, half: int) -> tuple[int, int]:
+        """Calculate window boundaries with word boundary adjustment."""
+        ws = max(0, first_start - half)
+        we = min(len(text), last_end + half)
+        if ws > 0:
+            sp = text.rfind(" ", 0, ws)
+            if sp != -1:
+                ws = sp + 1
+        if we < len(text):
+            sp = text.find(" ", we)
+            if sp != -1:
+                we = sp
+        return ws, we
 
     def _highlight_terms(self, text: str, terms: list[str]) -> str:
         """Highlight query terms in text."""
