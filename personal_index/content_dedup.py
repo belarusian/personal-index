@@ -286,43 +286,35 @@ class ContentDeduplicator:
         _title: str,
         content: str,
     ) -> DedupResult:
-        """Check a single item for duplication.
-
-        Args:
-            url: Content URL.
-            _title: Content title (unused, kept for API compatibility).
-            content: Content text to check for duplicates.
-
-        Returns:
-            DedupResult indicating whether the item is a duplicate.
-        """
-        h = content_hash(content)
+        """Check a single item for duplication."""
         if not hasattr(self, '_seen_hashes'):
             self._seen_hashes: dict[str, str] = {}
-
+        h = content_hash(content)
         if h in self._seen_hashes:
-            return DedupResult(
-                total_items=1,
-                unique_items=0,
-                duplicate_groups=[DuplicateGroup(
-                    representative=self._seen_hashes[h],
-                    duplicates=[url],
-                    similarity_score=1.0,
-                    dedup_method="exact_hash",
-                )],
-                removed_count=1,
-                method="hash",
-                is_duplicate=True,
-            )
-
+            return self._dup_result(url, h)
         self._seen_hashes[h] = url
+        return self._unique_result()
+
+    def _dup_result(self, url: str, h: str) -> DedupResult:
+        """Build DedupResult for a duplicate item."""
         return DedupResult(
-            total_items=1,
-            unique_items=1,
-            duplicate_groups=[],
-            removed_count=0,
-            method="hash",
-            is_duplicate=False,
+            total_items=1, unique_items=0,
+            duplicate_groups=[DuplicateGroup(
+                representative=self._seen_hashes[h],
+                duplicates=[url],
+                similarity_score=1.0,
+                dedup_method="exact_hash",
+            )],
+            removed_count=1, method="hash", is_duplicate=True,
+        )
+
+    @staticmethod
+    def _unique_result() -> DedupResult:
+        """Build DedupResult for a unique item."""
+        return DedupResult(
+            total_items=1, unique_items=1,
+            duplicate_groups=[], removed_count=0,
+            method="hash", is_duplicate=False,
         )
 
     def dedup_all(
