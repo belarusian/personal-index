@@ -86,78 +86,65 @@ def _score_sentence(sentence: str, word_freq: dict[str, int]) -> float:
     return score / len(words)
 
 
-def summarize(
-    text: str,
-    max_sentences: int = 3,
-    min_length: int = 50,
-) -> SummaryResult:
-    """Generate an extractive summary of the given text.
-
-    Uses sentence scoring based on keyword frequency to select
-    the most informative sentences.
-
-    Args:
-        text: The text to summarize.
-        max_sentences: Maximum number of sentences in the summary.
-        min_length: Minimum character length to attempt summarization.
-
-    Returns:
-        SummaryResult containing the summary and metadata.
-    """
-    if not text or len(text) < min_length:
-        return SummaryResult(
-            original_text=text or "",
-            summary=text or "",
-            sentences=[text] if text else [],
-            ratio=1.0,
-            word_count_original=len(_tokenize(text)),
-            word_count_summary=len(_tokenize(text)),
-        )
-
-    sentences = _split_sentences(text)
-    if len(sentences) <= max_sentences:
-        return SummaryResult(
-            original_text=text,
-            summary=text,
-            sentences=sentences,
-            ratio=1.0,
-            word_count_original=len(_tokenize(text)),
-            word_count_summary=len(_tokenize(text)),
-        )
-
-    # Calculate word frequencies
-    word_freq = _word_frequency(text)
-
-    # Score each sentence
+def _score_and_select(sentences: list[str], word_freq: dict[str, int], max_sentences: int) -> list[str]:
     scored: list[tuple[int, float, str]] = []
     for i, sentence in enumerate(sentences):
         score = _score_sentence(sentence, word_freq)
-        # Boost first and last sentences slightly
         if i == 0:
             score *= 2.5
         if i == len(sentences) - 1:
             score *= 1.1
         scored.append((i, score, sentence))
 
-    # Sort by score descending, take top N
     scored.sort(key=lambda x: x[1], reverse=True)
     selected = scored[:max_sentences]
-
-    # Re-sort by original order
     selected.sort(key=lambda x: x[0])
+    return [s[2] for s in selected]
 
-    summary = " ".join(s[2] for s in selected)
+
+def _build_summary_result(text: str, summary_sentences: list[str]) -> SummaryResult:
+    summary = " ".join(summary_sentences)
     original_words = len(_tokenize(text))
     summary_words = len(_tokenize(summary))
-
     return SummaryResult(
         original_text=text,
         summary=summary,
-        sentences=[s[2] for s in selected],
+        sentences=summary_sentences,
         ratio=summary_words / max(original_words, 1),
         word_count_original=original_words,
         word_count_summary=summary_words,
     )
+
+
+def _no_op_result(text: str | None) -> SummaryResult:
+    t = text or ""
+    wc = len(_tokenize(t))
+    return SummaryResult(
+        original_text=t,
+        summary=t,
+        sentences=[t] if t else [],
+        ratio=1.0,
+        word_count_original=wc,
+        word_count_summary=wc,
+    )
+
+
+def summarize(
+    text: str,
+    max_sentences: int = 3,
+    min_length: int = 50,
+) -> SummaryResult:
+    """Generate an extractive summary of the given text."""
+    if not text or len(text) < min_length:
+        return _no_op_result(text)
+
+    sentences = _split_sentences(text)
+    if len(sentences) <= max_sentences:
+        return _build_summary_result(text, sentences)
+
+    word_freq = _word_frequency(text)
+    selected = _score_and_select(sentences, word_freq, max_sentences)
+    return _build_summary_result(text, selected)
 
 
 def summarize_page(

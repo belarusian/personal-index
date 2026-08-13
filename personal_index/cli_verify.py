@@ -136,7 +136,7 @@ def _check_content_scorer() -> tuple[bool, str]:
 
 
 def _create_test_content(data_dir: str) -> tuple[str, str]:
-    """Create temporary directory and test file for pipeline verification.
+    """Create temporary test content for pipeline verification.
 
     Args:
         data_dir: Base data directory.
@@ -187,6 +187,78 @@ def _setup_mini_pipeline(test_data_dir: str) -> dict:
     }
 
 
+def _create_test_page(data_dir: str) -> CrawledPage:
+    """Read the test article file and return a CrawledPage.
+
+    Args:
+        data_dir: Directory containing test_article.txt.
+
+    Returns:
+        A CrawledPage populated from the test file.
+    """
+    test_file_path = os.path.join(data_dir, "test_article.txt")
+    with open(test_file_path, "r") as f:
+        content = f.read()
+    return CrawledPage(
+        url=test_file_path,
+        title="Python Overview",
+        content=content,
+    )
+
+
+def _run_filter(filter: ContentFilter, page: CrawledPage) -> tuple[bool, str]:
+    """Run the content filter on a page.
+
+    Args:
+        filter: The ContentFilter instance.
+        page: The CrawledPage to filter.
+
+    Returns:
+        Tuple of (passed, message).
+    """
+    if not filter.should_include(page):
+        return False, "Content was filtered out"
+    return True, ""
+
+
+def _run_score(scorer: ContentScorer, page: CrawledPage, content: str) -> float:
+    """Run the content scorer on a page and set its relevance score.
+
+    Args:
+        scorer: The ContentScorer instance.
+        page: The CrawledPage to score.
+        content: The page content string.
+
+    Returns:
+        The computed relevance score.
+    """
+    score = scorer.score(
+        keyword_matches=2,
+        total_keywords=2,
+        word_count=len(content.split()),
+        domain_authority=0.5,
+    )
+    page.relevance_score = score.total
+    return score.total
+
+
+def _run_tag_index(tag_store: TagStore, search_index: SearchIndex, page: CrawledPage) -> list:
+    """Tag a page, index it, and search for results.
+
+    Args:
+        tag_store: The TagStore instance.
+        search_index: The SearchIndex instance.
+        page: The CrawledPage to tag and index.
+
+    Returns:
+        List of search results for "python".
+    """
+    tag_store.add_tag_to_page(page.url, "python")
+    tag_store.add_tag_to_page(page.url, "programming")
+    search_index.add_page(page)
+    return search_index.search("python")
+
+
 def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
     """Run a full pipeline self-test.
 
@@ -201,7 +273,7 @@ def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
     """
     import shutil
 
-    test_data_dir, test_file_path = _create_test_content(data_dir)
+    test_data_dir, _ = _create_test_content(data_dir)
 
     try:
         components = _setup_mini_pipeline(test_data_dir)
@@ -211,36 +283,18 @@ def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
         mini_scorer = components["scorer"]
 
         # Process
-        with open(test_file_path, "r") as f:
-            content = f.read()
-        page = CrawledPage(
-            url=test_file_path,
-            title="Python Overview",
-            content=content,
-        )
+        page = _create_test_page(test_data_dir)
 
         # Filter
-        if not mini_filter.should_include(page):
-            return False, "Content was filtered out"
+        passed, msg = _run_filter(mini_filter, page)
+        if not passed:
+            return False, msg
 
         # Score
-        score = mini_scorer.score(
-            keyword_matches=2,
-            total_keywords=2,
-            word_count=len(content.split()),
-            domain_authority=0.5,
-        )
-        page.relevance_score = score.total
+        _run_score(mini_scorer, page, page.content)
 
-        # Tag
-        mini_tag_store.add_tag_to_page(page.url, "python")
-        mini_tag_store.add_tag_to_page(page.url, "programming")
-
-        # Index
-        mini_search_index.add_page(page)
-
-        # Search
-        results = mini_search_index.search("python")
+        # Tag and Index
+        results = _run_tag_index(mini_tag_store, mini_search_index, page)
 
         if len(results) > 0:
             return True, ""

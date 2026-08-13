@@ -69,3 +69,66 @@ class TestVerifyFull:
         result = runner.invoke(verify, ["--data-dir", str(tmp_path)])
         assert result.exit_code == 0
         assert "checks passed" in result.output
+
+
+class TestPipelineHelpers:
+    """Tests for the extracted _check_full_pipeline helper functions."""
+
+    def test_create_test_page(self, tmp_path):
+        """_create_test_page reads file and returns CrawledPage."""
+        from personal_index.cli_verify import _create_test_page, _create_test_content
+
+        test_data_dir, _ = _create_test_content(str(tmp_path))
+        page = _create_test_page(test_data_dir)
+        assert page.title == "Python Overview"
+        assert "Python" in page.content
+        assert page.url.endswith("test_article.txt")
+
+    def test_run_filter_passes(self, tmp_path):
+        """_run_filter returns True for valid content."""
+        from personal_index.cli_verify import _run_filter
+        from personal_index.content_filter import ContentFilter, FilterConfig
+        from personal_index.models import CrawledPage
+
+        f = ContentFilter(config=FilterConfig(min_content_length=10, min_title_length=1))
+        page = CrawledPage(url="http://x.com", title="T", content="This is enough content")
+        passed, msg = _run_filter(f, page)
+        assert passed is True
+        assert msg == ""
+
+    def test_run_filter_fails(self, tmp_path):
+        """_run_filter returns False for short content."""
+        from personal_index.cli_verify import _run_filter
+        from personal_index.content_filter import ContentFilter, FilterConfig
+        from personal_index.models import CrawledPage
+
+        f = ContentFilter(config=FilterConfig(min_content_length=100, min_title_length=1))
+        page = CrawledPage(url="http://x.com", title="T", content="short")
+        passed, msg = _run_filter(f, page)
+        assert passed is False
+        assert "filtered out" in msg
+
+    def test_run_score_sets_relevance(self, tmp_path):
+        """_run_score sets page.relevance_score and returns it."""
+        from personal_index.cli_verify import _run_score
+        from personal_index.content_scoring import ContentScorer, ScoreWeights
+        from personal_index.models import CrawledPage
+
+        scorer = ContentScorer(weights=ScoreWeights())
+        page = CrawledPage(url="http://x.com", title="T", content="hello world")
+        score = _run_score(scorer, page, page.content)
+        assert score > 0
+        assert page.relevance_score == score
+
+    def test_run_tag_index(self, tmp_path):
+        """_run_tag_index tags, indexes, and returns search results."""
+        from personal_index.cli_verify import _run_tag_index
+        from personal_index.index import SearchIndex
+        from personal_index.models import CrawledPage
+        from personal_index.tags import TagStore
+
+        tag_store = TagStore(store_path=str(tmp_path / "tags.json"))
+        search_index = SearchIndex(db_path=str(tmp_path / "index.json"))
+        page = CrawledPage(url="http://x.com", title="Python", content="python programming")
+        results = _run_tag_index(tag_store, search_index, page)
+        assert len(results) > 0
