@@ -8,7 +8,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 
 class ExportFormat(Enum):
@@ -98,7 +98,7 @@ class DashboardExporter:
     def _page_to_dict(page: Any, fields: list[str] | None) -> dict[str, Any]:
         """Convert a page object to a dict, optionally filtering fields."""
         if hasattr(page, "to_dict"):
-            row = page.to_dict()
+            row = cast(dict[str, Any], page.to_dict())
         elif isinstance(page, dict):
             row = page
         else:

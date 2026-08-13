@@ -646,7 +646,7 @@ def _expand_import_files(import_files: list[str], recursive: bool) -> list[str]:
     return expanded_files
 
 
-def _print_pipeline_stats(stats: "PipelineStats") -> None:
+def _print_pipeline_stats(stats) -> None:  # type: ignore[no-untyped-def]
     """Print pipeline run statistics to stdout."""
     click.echo(f"\nPipeline complete in {stats.elapsed_seconds:.1f}s:")
     click.echo(f"  Crawled:      {stats.pages_crawled}")
