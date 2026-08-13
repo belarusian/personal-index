@@ -100,6 +100,40 @@ class URLClassifier:
         self._static_re = [re.compile(p, re.IGNORECASE) for p in self.STATIC_PATTERNS]
         self._redirect_re = [re.compile(p, re.IGNORECASE) for p in self.REDIRECT_PATTERNS]
 
+    def _match_category(
+        self,
+        url: str,
+        path: str,
+        full_url: str,
+        patterns: list[re.Pattern],
+        category: URLCategory,
+        confidence: float,
+        reason: str,
+    ) -> ClassificationResult | None:
+        """Generic pattern match helper for URL classification.
+
+        Args:
+            url: Original URL string.
+            path: Lowercased URL path.
+            full_url: Lowercased full URL.
+            patterns: Compiled regex patterns to match against.
+            category: Category to assign if a match is found.
+            confidence: Confidence score for the classification.
+            reason: Reason string for the classification.
+
+        Returns:
+            ClassificationResult if a pattern matches, None otherwise.
+        """
+        for pattern in patterns:
+            if pattern.search(full_url) or pattern.search(path):
+                return ClassificationResult(
+                    url=url,
+                    category=category,
+                    confidence=confidence,
+                    reasons=[reason],
+                )
+        return None
+
     def classify(self, url: str) -> ClassificationResult:
         """Classify a URL into a category."""
         parsed = urlparse(url)
@@ -107,52 +141,52 @@ class URLClassifier:
         full_url = url.lower()
 
         # Check redirects first
-        for pattern in self.redirect_re:
-            if pattern.search(full_url):
-                return ClassificationResult(
-                    url=url, category=URLCategory.REDIRECT, confidence=0.8,
-                    reasons=["matches redirect pattern"],
-                )
+        result = self._match_category(
+            url, path, full_url, self._redirect_re,
+            URLCategory.REDIRECT, 0.8, "matches redirect pattern",
+        )
+        if result:
+            return result
 
         # Check feeds
-        for pattern in self.feed_re:
-            if pattern.search(path):
-                return ClassificationResult(
-                    url=url, category=URLCategory.FEED, confidence=0.9,
-                    reasons=["matches feed pattern"],
-                )
+        result = self._match_category(
+            url, path, full_url, self._feed_re,
+            URLCategory.FEED, 0.9, "matches feed pattern",
+        )
+        if result:
+            return result
 
         # Check API
-        for pattern in self._api_re:
-            if pattern.search(path):
-                return ClassificationResult(
-                    url=url, category=URLCategory.API, confidence=0.85,
-                    reasons=["matches API pattern"],
-                )
+        result = self._match_category(
+            url, path, full_url, self._api_re,
+            URLCategory.API, 0.85, "matches API pattern",
+        )
+        if result:
+            return result
 
         # Check static assets
-        for pattern in self._static_re:
-            if pattern.search(path):
-                return ClassificationResult(
-                    url=url, category=URLCategory.STATIC, confidence=0.9,
-                    reasons=["matches static asset pattern"],
-                )
+        result = self._match_category(
+            url, path, full_url, self._static_re,
+            URLCategory.STATIC, 0.9, "matches static asset pattern",
+        )
+        if result:
+            return result
 
         # Check media
-        for pattern in self._media_re:
-            if pattern.search(path):
-                return ClassificationResult(
-                    url=url, category=URLCategory.MEDIA, confidence=0.85,
-                    reasons=["matches media pattern"],
-                )
+        result = self._match_category(
+            url, path, full_url, self._media_re,
+            URLCategory.MEDIA, 0.85, "matches media pattern",
+        )
+        if result:
+            return result
 
         # Check documents
-        for pattern in self._doc_re:
-            if pattern.search(path):
-                return ClassificationResult(
-                    url=url, category=URLCategory.DOCUMENT, confidence=0.85,
-                    reasons=["matches document pattern"],
-                )
+        result = self._match_category(
+            url, path, full_url, self._doc_re,
+            URLCategory.DOCUMENT, 0.85, "matches document pattern",
+        )
+        if result:
+            return result
 
         # Default to page
         return ClassificationResult(
