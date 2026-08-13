@@ -120,15 +120,84 @@ class PipelineE2E:
 
     def add_interest(self, name: str, keywords: list[str] | None = None,
                      priority: int = 5) -> None:
-        """Add an interest to the pipeline's interest store.
-
-        Args:
-            name: Interest name.
-            keywords: List of keywords to match.
-            priority: Priority level (1-10).
-        """
+        """Add an interest to track."""
         interest = Interest(name=name, keywords=keywords or [], priority=priority)
         self.interest_store.add(interest)
+
+    # ------------------------------------------------------------------
+    # Stage methods (private)
+    # ------------------------------------------------------------------
+
+    def _stage_read(self, file_path: str) -> str | None:
+        """Read a file and return its raw content, or None if not found."""
+        if not os.path.exists(file_path):
+            return None
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            return f.read()
+
+    def _stage_extract(self, raw_content: str, file_path: str) -> CrawledPage:
+        """Extract structured content from raw file content."""
+        page = CrawledPage(
+            url=f"file://{os.path.abspath(file_path)}",
+            title=os.path.basename(file_path),
+            content=raw_content,
+            raw_html=raw_content if file_path.endswith((".html", ".htm")) else "",
+        )
+        if page.raw_html:
+            extracted = self.extractor.extract(page.raw_html)
+            if extracted.title:
+                page.title = extracted.title
+            if extracted.text:
+                page.content = extracted.text
+            page.word_count = extracted.word_count
+        else:
+            page.word_count = len(page.content.split())
+        return page
+
+    def _stage_filter(self, page: CrawledPage) -> bool:
+        """Return True if the page passes the content filter."""
+        return self.content_filter.should_include(page)
+
+    def _stage_score(self, page: CrawledPage) -> float:
+        """Score the page against interests and store matched interests."""
+        keyword_matches = 0
+        total_keywords = 0
+        matched_interests: list[str] = []
+        for interest in self.interest_store.list_all():
+            for kw in interest.keywords:
+                total_keywords += 1
+                if kw.lower() in page.content.lower():
+                    keyword_matches += 1
+                    matched_interests.append(interest.name)
+
+        page.matched_interests = matched_interests
+
+        score_result = self.scorer.score(
+            keyword_matches=keyword_matches,
+            total_keywords=max(total_keywords, 1),
+            word_count=page.word_count,
+            domain_authority=0.5,
+        )
+        page.relevance_score = score_result.total
+        return score_result.total
+
+    def _stage_tag(self, page: CrawledPage) -> list[str]:
+        """Tag the page with matched interests and extracted keywords."""
+        tags = list(page.matched_interests)
+        from personal_index.keyword_extractor import extract_keywords
+        keywords = extract_keywords(page.content, max_keywords=5)
+        tags.extend(keywords)
+        for tag_name in tags:
+            self.tag_store.add_tag_to_page(page.url, tag_name)
+        return tags
+
+    def _stage_index(self, page: CrawledPage) -> None:
+        """Add the page to the search index."""
+        self.search_index.add_page(page)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def run_from_files(self, file_paths: list[str]) -> PipelineRunResult:
         """Run the full pipeline on local files.
@@ -144,77 +213,35 @@ class PipelineE2E:
 
         for file_path in file_paths:
             try:
-                if not os.path.exists(file_path):
+                raw_content = self._stage_read(file_path)
+                if raw_content is None:
                     result.errors.append(f"File not found: {file_path}")
                     continue
 
-                # Stage 1: Read file (equivalent to crawl)
-                with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-                    raw_content = f.read()
                 result.pages_crawled += 1
 
-                # Stage 2: Extract content
-                page = CrawledPage(
-                    url=f"file://{os.path.abspath(file_path)}",
-                    title=os.path.basename(file_path),
-                    content=raw_content,
-                    raw_html=raw_content if file_path.endswith((".html", ".htm")) else "",
-                )
-                if page.raw_html:
-                    extracted = self.extractor.extract(page.raw_html)
-                    if extracted.title:
-                        page.title = extracted.title
-                    if extracted.text:
-                        page.content = extracted.text
-                    page.word_count = extracted.word_count
-                else:
-                    page.word_count = len(page.content.split())
+                page = self._stage_extract(raw_content, file_path)
                 result.pages_extracted += 1
 
-                # Stage 3: Filter
-                if not self.content_filter.should_include(page):
+                if not self._stage_filter(page):
                     result.pages_filtered_out += 1
                     continue
                 result.pages_filtered_in += 1
 
-                # Stage 4: Score
-                keyword_matches = 0
-                total_keywords = 0
-                matched_interests = []
-                for interest in self.interest_store.list_all():
-                    for kw in interest.keywords:
-                        total_keywords += 1
-                        if kw.lower() in page.content.lower():
-                            keyword_matches += 1
-                            matched_interests.append(interest.name)
-
-                score_result = self.scorer.score(
-                    keyword_matches=keyword_matches,
-                    total_keywords=max(total_keywords, 1),
-                    word_count=page.word_count,
-                    domain_authority=0.5,
-                )
-                page.relevance_score = score_result.total
+                score = self._stage_score(page)
                 result.pages_scored += 1
 
-                if page.relevance_score < self.config.min_score_threshold:
+                if score < self.config.min_score_threshold:
                     continue
 
-                # Stage 5: Tag
-                tags = list(matched_interests)
-                from personal_index.keyword_extractor import extract_keywords
-                keywords = extract_keywords(page.content, max_keywords=5)
-                tags.extend(keywords)
-                for tag_name in tags:
-                    self.tag_store.add_tag_to_page(page.url, tag_name)
+                tags = self._stage_tag(page)
                 if tags:
                     result.pages_tagged += 1
                     result.tags_applied += len(tags)
-                result.interests_matched += len(matched_interests)
+                result.interests_matched += len(page.matched_interests)
 
-                # Stage 6: Index
                 try:
-                    self.search_index.add_page(page)
+                    self._stage_index(page)
                     result.pages_indexed += 1
                     result.indexed_pages.append(page)
                 except (OSError, ValueError) as e:

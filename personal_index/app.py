@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Callable
 
 from personal_index.config.loader import load_config
 from personal_index.content_search import ContentSearch, SearchIndex
@@ -97,34 +98,43 @@ class PersonalIndexApp:
                 index=IndexConfig(),
             )
 
-    def _build_pipeline(self):
-        """Build the default content processing pipeline."""
+    # ------------------------------------------------------------------
+    # Pipeline step builders (private)
+    # ------------------------------------------------------------------
+
+    def _build_extract_step(self) -> Callable[[dict], dict]:
+        """Build the extract pipeline step.
+
+        Returns:
+            A callable that extracts text content from raw data.
+        """
         from personal_index.content_extractor import ContentExtractor
-        from personal_index.content_filter import ContentFilter, FilterConfig
-        from personal_index.content_scoring import ContentScorer, ScoreWeights
-        from personal_index.content_tagger import ContentTagger
 
-        pipeline = ContentPipeline(name="default")
-
-        # Step 1: Extract text content
         extractor = ContentExtractor()
 
         def extract_step(data: dict) -> dict:
-
             raw = data.get("raw_content", data.get("content", ""))
             extracted = extractor.extract(raw)
             data["extracted_text"] = extracted.text
             data["title"] = data.get("title") or extracted.title or "Untitled"
             return data
 
-        pipeline.add_step("extract", extract_step, on_error="continue")
+        return extract_step
 
-        # Step 2: Filter content
+    def _build_filter_step(self) -> Callable[[dict], dict]:
+        """Build the filter pipeline step.
+
+        Returns:
+            A callable that filters content based on configured rules.
+        """
+        from personal_index.content_filter import ContentFilter, FilterConfig
+
         filter_config = FilterConfig()
         content_filter = ContentFilter(config=filter_config)
 
         def filter_step(data: dict) -> dict:
             from personal_index.models import CrawledPage
+
             page = CrawledPage(
                 url=data.get("url", ""),
                 title=data.get("title", ""),
@@ -133,14 +143,22 @@ class PersonalIndexApp:
             data["passes_filter"] = content_filter.should_include(page)
             return data
 
-        pipeline.add_step("filter", filter_step, on_error="continue")
+        return filter_step
 
-        # Step 3: Score content
+    def _build_score_step(self) -> Callable[[dict], dict]:
+        """Build the score pipeline step.
+
+        Returns:
+            A callable that scores content against tracked interests.
+        """
+        from personal_index.content_scoring import ContentScorer, ScoreWeights
+
         scorer = ContentScorer(weights=ScoreWeights())
 
         def score_step(data: dict) -> dict:
-            text = data.get("extracted_text", data.get("text", ""))
+            from datetime import datetime, timezone
 
+            text = data.get("extracted_text", data.get("text", ""))
             word_count = len(text.split()) if text else 0
             # Count keyword matches (simplified)
             keywords = []
@@ -148,8 +166,7 @@ class PersonalIndexApp:
                 if interest.enabled:
                     keywords.extend(interest.keywords)
             keyword_matches = sum(1 for kw in keywords if kw.lower() in text.lower())
-            
-            from datetime import datetime, timezone
+
             score = scorer.score(
                 published_at=None,
                 updated_at=datetime.now(timezone.utc),
@@ -163,9 +180,16 @@ class PersonalIndexApp:
             data["score"] = score.total
             return data
 
-        pipeline.add_step("score", score_step, on_error="continue")
+        return score_step
 
-        # Step 4: Tag content
+    def _build_tag_step(self) -> Callable[[dict], dict]:
+        """Build the tag pipeline step.
+
+        Returns:
+            A callable that tags content based on extracted text.
+        """
+        from personal_index.content_tagger import ContentTagger
+
         tagger = ContentTagger()
 
         def tag_step(data: dict) -> dict:
@@ -173,7 +197,27 @@ class PersonalIndexApp:
             data["tags"] = tagger.tag(text, min_confidence=0.5).tags
             return data
 
-        pipeline.add_step("tag", tag_step, on_error="continue")
+        return tag_step
+
+    # ------------------------------------------------------------------
+    # Pipeline orchestrator
+    # ------------------------------------------------------------------
+
+    def _build_pipeline(self) -> ContentPipeline:
+        """Build the default content processing pipeline.
+
+        Orchestrates the individual step builders to construct
+        a complete ContentPipeline instance.
+
+        Returns:
+            A fully configured ContentPipeline.
+        """
+        pipeline = ContentPipeline(name="default")
+
+        pipeline.add_step("extract", self._build_extract_step(), on_error="continue")
+        pipeline.add_step("filter", self._build_filter_step(), on_error="continue")
+        pipeline.add_step("score", self._build_score_step(), on_error="continue")
+        pipeline.add_step("tag", self._build_tag_step(), on_error="continue")
 
         return pipeline
 
