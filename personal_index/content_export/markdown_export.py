@@ -19,53 +19,39 @@ class MarkdownExporter:
     """
 
     def export_item(self, item: dict[str, Any]) -> str:
-        """Export a single content item to Markdown.
-
-        Args:
-            item: Content item dictionary.
-
-        Returns:
-            Markdown string for the item.
-        """
-        lines = []
-        title = item.get("title", "Untitled")
+        """Export a single content item to Markdown."""
+        lines = [f"## {item.get('title', 'Untitled')}", ""]
         url = item.get("url", "")
-        lines.append(f"## {title}")
-        lines.append("")
-
         if url:
-            lines.append(f"[{title}]({url})")
-            lines.append("")
-
+            lines.extend([f"[{item.get('title', 'Untitled')}]({url})", ""])
         if item.get("description"):
-            lines.append(item["description"])
-            lines.append("")
-
-        if item.get("tags"):
-            tags = item["tags"]
-            if isinstance(tags, list):
-                tag_str = ", ".join(f"`{t}`" for t in tags)
-            else:
-                tag_str = str(tags)
-            lines.append(f"**Tags:** {tag_str}")
-            lines.append("")
-
+            lines.extend([item["description"], ""])
+        self._render_tags(item, lines)
         if item.get("bookmarked"):
-            lines.append("*Bookmarked*")
-            lines.append("")
-
+            lines.extend(["*Bookmarked*", ""])
         if item.get("score") is not None:
-            lines.append(f"**Score:** {item['score']:.2f}")
-            lines.append("")
-
-        if item.get("metadata"):
-            lines.append("### Metadata")
-            lines.append("")
-            for key, value in item["metadata"].items():
-                lines.append(f"- **{key}:** {value}")
-            lines.append("")
-
+            lines.extend([f"**Score:** {item['score']:.2f}", ""])
+        self._render_metadata(item, lines)
         return "\n".join(lines)
+
+    @staticmethod
+    def _render_tags(item: dict[str, Any], lines: list[str]) -> None:
+        """Render tags section to lines."""
+        if not item.get("tags"):
+            return
+        tags = item["tags"]
+        tag_str = ", ".join(f"`{t}`" for t in tags) if isinstance(tags, list) else str(tags)
+        lines.extend([f"**Tags:** {tag_str}", ""])
+
+    @staticmethod
+    def _render_metadata(item: dict[str, Any], lines: list[str]) -> None:
+        """Render metadata section to lines."""
+        if not item.get("metadata"):
+            return
+        lines.extend(["### Metadata", ""])
+        for key, value in item["metadata"].items():
+            lines.append(f"- **{key}:** {value}")
+        lines.append("")
 
     def export_items(
         self,
@@ -121,44 +107,29 @@ class MarkdownExporter:
         items: list[dict[str, Any]],
         columns: list[str] | None = None,
     ) -> str:
-        """Export items as a Markdown table.
-
-        Args:
-            items: List of content items.
-            columns: Columns to include (None for common ones).
-
-        Returns:
-            Markdown table string.
-        """
+        """Export items as a Markdown table."""
         if not items:
             return ""
-
         if columns is None:
             columns = ["title", "url", "tags", "score", "bookmarked"]
-
-        # Filter to available columns
-        available: set[str] = set()
-        for item in items:
-            available.update(item.keys())
+        available = {k for item in items for k in item}
         columns = [c for c in columns if c in available]
-
-        # Header
-        header = "| " + " | ".join(columns) + " |"
-        separator = "| " + " | ".join("---" for _ in columns) + " |"
-
-        lines = [header, separator]
-
+        lines = [
+            "| " + " | ".join(columns) + " |",
+            "| " + " | ".join("---" for _ in columns) + " |",
+        ]
         for item in items:
-            row_parts = []
-            for col in columns:
-                value = item.get(col, "")
-                if isinstance(value, list):
-                    value = ", ".join(str(v) for v in value)
-                elif isinstance(value, bool):
-                    value = "Yes" if value else "No"
-                elif isinstance(value, float):
-                    value = f"{value:.2f}"
-                row_parts.append(str(value))
-            lines.append("| " + " | ".join(row_parts) + " |")
-
+            row = [self._format_value(item.get(col, "")) for col in columns]
+            lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
+
+    @staticmethod
+    def _format_value(value: Any) -> str:
+        """Format a cell value for markdown table."""
+        if isinstance(value, list):
+            return ", ".join(str(v) for v in value)
+        if isinstance(value, bool):
+            return "Yes" if value else "No"
+        if isinstance(value, float):
+            return f"{value:.2f}"
+        return str(value)

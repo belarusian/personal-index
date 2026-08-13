@@ -286,38 +286,29 @@ class ContentHealthChecker:
         self,
         items: list[dict[str, Any]],
     ) -> HealthReport:
-        """Check health of all content items.
+        """Check health of all content items."""
+        results = [self._check_from_dict(item) for item in items]
+        return self._build_report(results)
 
-        Args:
-            items: List of content item dicts with keys:
-                url, title, content, tags, score, status_code.
+    def _check_from_dict(self, item: dict[str, Any]) -> HealthCheckResult:
+        """Check health from a content item dict."""
+        return self.check_item(
+            url=item.get("url", ""),
+            title=item.get("title", ""),
+            content=item.get("content", ""),
+            tags=item.get("tags", []),
+            score=item.get("score", 0.0),
+            status_code=item.get("status_code", 200),
+        )
 
-        Returns:
-            HealthReport with overall health status.
-        """
-        results = []
-        for item in items:
-            result = self.check_item(
-                url=item.get("url", ""),
-                title=item.get("title", ""),
-                content=item.get("content", ""),
-                tags=item.get("tags", []),
-                score=item.get("score", 0.0),
-                status_code=item.get("status_code", 200),
-            )
-            results.append(result)
-
+    def _build_report(self, results: list[HealthCheckResult]) -> HealthReport:
+        """Build HealthReport from check results."""
         healthy = sum(1 for r in results if r.status == HealthStatus.HEALTHY)
         warnings = sum(1 for r in results if r.status == HealthStatus.WARNING)
         unhealthy = sum(1 for r in results if r.status == HealthStatus.UNHEALTHY)
         unknown = sum(1 for r in results if r.status == HealthStatus.UNKNOWN)
         total_issues = sum(len(r.issues) for r in results)
-
-        avg_score = (
-            sum(r.score for r in results) / len(results)
-            if results else 100.0
-        )
-
+        avg_score = sum(r.score for r in results) / len(results) if results else 100.0
         return HealthReport(
             total_items=len(results),
             healthy_count=healthy,
