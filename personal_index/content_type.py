@@ -157,7 +157,7 @@ class ContentTypeDetector:
             if ext == ".zip":
                 return "archive", "application/zip"
             return "archive", "application/x-archive"
-        return None, None
+        return "unknown", "application/octet-stream"
 
     def detect_from_extension(self, ext: str) -> ContentTypeInfo:
         """Detect content type from a file extension.
@@ -175,18 +175,14 @@ class ContentTypeDetector:
 
         category, mime_type = self._classify_category_from_ext(ext)
 
-        if category is not None:
-            info = ContentTypeInfo(
-                mime_type=mime_type,
-                category=category,
-                extension=ext,
-                is_text=category == "text",
-                is_media=category in ("image", "video", "audio", "media"),
-                is_document=category == "document",
-            )
-        else:
-            mime_type, _ = mimetypes.guess_type(f"file{ext}")
-            info = self._make_info(mime_type or "application/octet-stream", ext)
+        info = ContentTypeInfo(
+            mime_type=mime_type,
+            category=category,
+            extension=ext,
+            is_text=category == "text",
+            is_media=category in ("image", "video", "audio", "media"),
+            is_document=category == "document",
+        )
 
         self._mime_cache[cache_key] = info
         return info
