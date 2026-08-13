@@ -1333,12 +1333,30 @@ def generate_fast(root: str = "personal_index", output: str = "personal_index/do
     modules = scan_modules(root)
     print(f"[docs_generator] Found {len(modules)} modules")
 
-    # Scan tests/ directory for line counts
+    # Scan tests/ directory for line counts and test attribution
     test_root = os.path.join(os.path.dirname(root) if root != "." else ".", "tests")
     if not os.path.isdir(test_root):
         test_root = "tests"
     test_modules = scan_modules(test_root) if os.path.isdir(test_root) else []
     print(f"[docs_generator] Found {len(test_modules)} test files")
+
+    # Attribute test counts to source modules based on test file names
+    # e.g., test_bookmarks.py -> personal_index.bookmarks
+    for tm in test_modules:
+        # Extract the tested module name from test file name
+        test_stem = tm.module_name.rpartition(".")[2]  # e.g., test_bookmarks
+        if test_stem.startswith("test_"):
+            source_stem = test_stem[5:]  # e.g., bookmarks
+            # Find matching source module
+            for mod in modules:
+                mod_short = mod.module_name.rpartition(".")[2]
+                if mod_short == source_stem:
+                    mod.test_count += tm.test_count
+                    break
+
+    # Print attribution summary
+    modules_with_tests = sum(1 for m in modules if m.test_count > 0)
+    print(f"[docs_generator] Attributed tests to {modules_with_tests} source modules")
 
     dep_graph = detect_dependencies(modules)
     commits = fetch_recent_commits(20)

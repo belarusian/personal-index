@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-08-13T00:12:28Z",
+  "generated_at": "2026-08-13T02:58:44Z",
   "summary": {
     "total_modules": 191,
-    "total_lines": 79703,
-    "total_source_lines": 34177,
-    "total_test_lines": 45526,
+    "total_lines": 81946,
+    "total_source_lines": 34274,
+    "total_test_lines": 47672,
     "total_classes": 402,
-    "total_functions": 1796,
-    "total_tests": 4219,
+    "total_functions": 1809,
+    "total_tests": 4394,
     "total_errors": 0,
     "total_warnings": 0
   },
   "tree_summary": {
     "name": "root",
     "stats": {
-      "lines": 34177,
-      "functions": 1796,
+      "lines": 34274,
+      "functions": 1809,
       "classes": 402,
       "errors": 0,
       "warnings": 0,
@@ -29,8 +29,8 @@
       "personal_index": {
         "name": "personal_index",
         "stats": {
-          "lines": 34177,
-          "functions": 1796,
+          "lines": 34274,
+          "functions": 1809,
           "classes": 402,
           "errors": 0,
           "warnings": 0,
@@ -52,7 +52,6 @@
               "modules": 5
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "children": {
@@ -67,7 +66,6 @@
                   "modules": 1
                 },
                 "signals": [
-                  "S1",
                   "S2"
                 ],
                 "modules": [
@@ -290,7 +288,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -308,7 +305,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -326,7 +322,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -344,7 +339,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -362,7 +356,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -380,7 +373,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -398,7 +390,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -416,7 +407,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -434,7 +424,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -452,7 +441,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -470,7 +458,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -488,7 +475,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -498,7 +484,7 @@
           "cycle_signals": {
             "name": "cycle_signals",
             "stats": {
-              "lines": 590,
+              "lines": 588,
               "functions": 16,
               "classes": 0,
               "errors": 0,
@@ -506,7 +492,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -516,7 +501,7 @@
           "docs_generator": {
             "name": "docs_generator",
             "stats": {
-              "lines": 1355,
+              "lines": 1373,
               "functions": 23,
               "classes": 5,
               "errors": 0,
@@ -524,7 +509,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -542,7 +526,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -560,7 +543,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -578,7 +560,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -596,11 +577,27 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
               "personal_index.pipeline"
+            ]
+          },
+          "pipeline_runner": {
+            "name": "pipeline_runner",
+            "stats": {
+              "lines": 477,
+              "functions": 16,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [
+              "S2"
+            ],
+            "modules": [
+              "personal_index.pipeline_runner"
             ]
           },
           "progress": {
@@ -614,7 +611,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -632,7 +628,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -650,7 +645,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -668,7 +662,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -686,7 +679,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -704,7 +696,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -722,7 +713,6 @@
               "modules": 1
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "modules": [
@@ -2260,8 +2250,8 @@
           "cli_verify": {
             "name": "cli_verify",
             "stats": {
-              "lines": 212,
-              "functions": 1,
+              "lines": 293,
+              "functions": 8,
               "classes": 0,
               "errors": 0,
               "warnings": 0,
@@ -2902,21 +2892,6 @@
               "personal_index.pipeline_orchestrator"
             ]
           },
-          "pipeline_runner": {
-            "name": "pipeline_runner",
-            "stats": {
-              "lines": 477,
-              "functions": 10,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [],
-            "modules": [
-              "personal_index.pipeline_runner"
-            ]
-          },
           "publish_dashboard": {
             "name": "publish_dashboard",
             "stats": {
@@ -3344,7 +3319,7 @@
       "lines": 267,
       "classes": 4,
       "functions": 14,
-      "tests": 0,
+      "tests": 28,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3398,7 +3373,7 @@
       "lines": 205,
       "classes": 3,
       "functions": 13,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3446,7 +3421,7 @@
       "lines": 274,
       "classes": 1,
       "functions": 15,
-      "tests": 0,
+      "tests": 35,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3480,7 +3455,7 @@
       "lines": 250,
       "classes": 2,
       "functions": 12,
-      "tests": 0,
+      "tests": 24,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3522,7 +3497,7 @@
       "lines": 204,
       "classes": 2,
       "functions": 9,
-      "tests": 0,
+      "tests": 65,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3561,7 +3536,7 @@
       "lines": 162,
       "classes": 2,
       "functions": 18,
-      "tests": 0,
+      "tests": 28,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3599,7 +3574,7 @@
       "lines": 273,
       "classes": 3,
       "functions": 23,
-      "tests": 0,
+      "tests": 29,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3643,7 +3618,7 @@
       "lines": 1398,
       "classes": 0,
       "functions": 44,
-      "tests": 0,
+      "tests": 25,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4023,7 +3998,7 @@
       "lines": 92,
       "classes": 0,
       "functions": 1,
-      "tests": 0,
+      "tests": 4,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4051,7 +4026,7 @@
       "lines": 160,
       "classes": 0,
       "functions": 5,
-      "tests": 0,
+      "tests": 5,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4116,7 +4091,7 @@
       "lines": 101,
       "classes": 0,
       "functions": 1,
-      "tests": 0,
+      "tests": 4,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4145,7 +4120,7 @@
       "lines": 93,
       "classes": 0,
       "functions": 1,
-      "tests": 0,
+      "tests": 4,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4174,7 +4149,7 @@
       "lines": 63,
       "classes": 0,
       "functions": 1,
-      "tests": 0,
+      "tests": 4,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4201,10 +4176,10 @@
       "name": "personal_index.cli_verify",
       "filepath": "personal_index/cli_verify.py",
       "status": "clean",
-      "lines": 212,
+      "lines": 293,
       "classes": 0,
-      "functions": 1,
-      "tests": 0,
+      "functions": 8,
+      "tests": 6,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4226,8 +4201,64 @@
       "class_details": [],
       "function_details": [
         {
+          "name": "_check_data_dir",
+          "line": 18,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Check that the data directory is writable.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
+          "name": "_check_interest_store",
+          "line": 34,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Check that the interest store works.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
+          "name": "_check_tag_store",
+          "line": 53,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Check that the tag store works.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
+          "name": "_check_search_index",
+          "line": 72,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Check that the search index works.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
+          "name": "_check_content_filter",
+          "line": 96,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Check that the content filter works.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
+          "name": "_check_content_scorer",
+          "line": 117,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Check that the content scorer works.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
+          "name": "_check_full_pipeline",
+          "line": 138,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run a full pipeline self-test.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
           "name": "verify",
-          "line": 22,
+          "line": 217,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4242,7 +4273,7 @@
       "lines": 149,
       "classes": 1,
       "functions": 5,
-      "tests": 0,
+      "tests": 25,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4296,7 +4327,7 @@
       "lines": 69,
       "classes": 1,
       "functions": 10,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4322,7 +4353,7 @@
       "lines": 84,
       "classes": 1,
       "functions": 14,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4349,7 +4380,7 @@
       "lines": 276,
       "classes": 3,
       "functions": 25,
-      "tests": 0,
+      "tests": 36,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4397,7 +4428,7 @@
       "lines": 206,
       "classes": 2,
       "functions": 17,
-      "tests": 0,
+      "tests": 44,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4435,7 +4466,7 @@
       "lines": 239,
       "classes": 2,
       "functions": 7,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4473,7 +4504,7 @@
       "lines": 590,
       "classes": 4,
       "functions": 16,
-      "tests": 0,
+      "tests": 50,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4524,7 +4555,7 @@
       "lines": 37,
       "classes": 2,
       "functions": 4,
-      "tests": 0,
+      "tests": 5,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4559,7 +4590,7 @@
       "lines": 292,
       "classes": 2,
       "functions": 31,
-      "tests": 0,
+      "tests": 46,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4596,7 +4627,7 @@
       "lines": 365,
       "classes": 4,
       "functions": 15,
-      "tests": 0,
+      "tests": 40,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4680,7 +4711,7 @@
       "lines": 266,
       "classes": 4,
       "functions": 13,
-      "tests": 0,
+      "tests": 13,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4732,7 +4763,7 @@
       "lines": 187,
       "classes": 2,
       "functions": 9,
-      "tests": 0,
+      "tests": 24,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4774,7 +4805,7 @@
       "lines": 221,
       "classes": 3,
       "functions": 9,
-      "tests": 0,
+      "tests": 36,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4825,7 +4856,7 @@
       "lines": 177,
       "classes": 1,
       "functions": 16,
-      "tests": 0,
+      "tests": 50,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4856,7 +4887,7 @@
       "lines": 163,
       "classes": 2,
       "functions": 12,
-      "tests": 0,
+      "tests": 20,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4891,7 +4922,7 @@
       "lines": 245,
       "classes": 3,
       "functions": 16,
-      "tests": 0,
+      "tests": 46,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4939,7 +4970,7 @@
       "lines": 129,
       "classes": 2,
       "functions": 9,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4977,7 +5008,7 @@
       "lines": 315,
       "classes": 7,
       "functions": 7,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5052,7 +5083,7 @@
       "lines": 156,
       "classes": 1,
       "functions": 11,
-      "tests": 0,
+      "tests": 32,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5083,7 +5114,7 @@
       "lines": 201,
       "classes": 3,
       "functions": 10,
-      "tests": 0,
+      "tests": 12,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5125,7 +5156,7 @@
       "lines": 239,
       "classes": 5,
       "functions": 13,
-      "tests": 0,
+      "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5188,7 +5219,7 @@
       "lines": 171,
       "classes": 2,
       "functions": 12,
-      "tests": 0,
+      "tests": 2,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5252,7 +5283,7 @@
       "lines": 239,
       "classes": 4,
       "functions": 10,
-      "tests": 0,
+      "tests": 11,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5304,7 +5335,7 @@
       "lines": 270,
       "classes": 3,
       "functions": 17,
-      "tests": 0,
+      "tests": 23,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5346,7 +5377,7 @@
       "lines": 220,
       "classes": 3,
       "functions": 12,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5398,7 +5429,7 @@
       "lines": 48,
       "classes": 2,
       "functions": 5,
-      "tests": 0,
+      "tests": 7,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5433,7 +5464,7 @@
       "lines": 234,
       "classes": 3,
       "functions": 17,
-      "tests": 0,
+      "tests": 42,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5481,7 +5512,7 @@
       "lines": 353,
       "classes": 4,
       "functions": 12,
-      "tests": 0,
+      "tests": 36,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5537,7 +5568,7 @@
       "lines": 539,
       "classes": 4,
       "functions": 30,
-      "tests": 0,
+      "tests": 44,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5589,7 +5620,7 @@
       "lines": 192,
       "classes": 1,
       "functions": 7,
-      "tests": 0,
+      "tests": 23,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5665,7 +5696,7 @@
       "lines": 317,
       "classes": 2,
       "functions": 10,
-      "tests": 0,
+      "tests": 44,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5700,7 +5731,7 @@
       "lines": 208,
       "classes": 3,
       "functions": 8,
-      "tests": 0,
+      "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5743,7 +5774,7 @@
       "lines": 215,
       "classes": 2,
       "functions": 12,
-      "tests": 0,
+      "tests": 2,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5806,7 +5837,7 @@
       "lines": 269,
       "classes": 4,
       "functions": 14,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5861,10 +5892,10 @@
       "name": "personal_index.cycle_signals",
       "filepath": "personal_index/cycle_signals.py",
       "status": "clean",
-      "lines": 590,
+      "lines": 588,
       "classes": 0,
       "functions": 16,
-      "tests": 0,
+      "tests": 38,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5879,7 +5910,7 @@
       "function_details": [
         {
           "name": "build_tree",
-          "line": 29,
+          "line": 28,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5887,7 +5918,7 @@
         },
         {
           "name": "_build_tree_root",
-          "line": 122,
+          "line": 121,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5895,7 +5926,7 @@
         },
         {
           "name": "_node_to_dict",
-          "line": 151,
+          "line": 150,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5903,7 +5934,7 @@
         },
         {
           "name": "_sort_children",
-          "line": 191,
+          "line": 189,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5911,7 +5942,7 @@
         },
         {
           "name": "format_tree",
-          "line": 203,
+          "line": 201,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5919,7 +5950,7 @@
         },
         {
           "name": "_render_summary_node",
-          "line": 241,
+          "line": 239,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5927,7 +5958,7 @@
         },
         {
           "name": "load_codemap",
-          "line": 277,
+          "line": 275,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5935,7 +5966,7 @@
         },
         {
           "name": "signal_no_tests",
-          "line": 289,
+          "line": 287,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5943,7 +5974,7 @@
         },
         {
           "name": "signal_oversized",
-          "line": 319,
+          "line": 317,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5951,7 +5982,7 @@
         },
         {
           "name": "signal_dead_code",
-          "line": 337,
+          "line": 335,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5959,7 +5990,7 @@
         },
         {
           "name": "signal_duplicates",
-          "line": 385,
+          "line": 383,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5967,7 +5998,7 @@
         },
         {
           "name": "signal_errors",
-          "line": 412,
+          "line": 410,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5975,7 +6006,7 @@
         },
         {
           "name": "signal_coverage",
-          "line": 431,
+          "line": 429,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5983,7 +6014,7 @@
         },
         {
           "name": "extract",
-          "line": 466,
+          "line": 464,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5991,7 +6022,7 @@
         },
         {
           "name": "format_for_auditor",
-          "line": 510,
+          "line": 508,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5999,7 +6030,7 @@
         },
         {
           "name": "main",
-          "line": 556,
+          "line": 554,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6011,10 +6042,10 @@
       "name": "personal_index.docs_generator",
       "filepath": "personal_index/docs_generator.py",
       "status": "clean",
-      "lines": 1355,
+      "lines": 1373,
       "classes": 5,
       "functions": 23,
-      "tests": 0,
+      "tests": 39,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6253,7 +6284,7 @@
       "lines": 196,
       "classes": 2,
       "functions": 15,
-      "tests": 0,
+      "tests": 20,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6289,7 +6320,7 @@
       "lines": 94,
       "classes": 2,
       "functions": 11,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6325,7 +6356,7 @@
       "lines": 229,
       "classes": 2,
       "functions": 14,
-      "tests": 0,
+      "tests": 25,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6367,7 +6398,7 @@
       "lines": 352,
       "classes": 3,
       "functions": 12,
-      "tests": 0,
+      "tests": 2,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6441,7 +6472,7 @@
       "lines": 179,
       "classes": 0,
       "functions": 11,
-      "tests": 0,
+      "tests": 28,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6552,7 +6583,7 @@
       "lines": 235,
       "classes": 2,
       "functions": 12,
-      "tests": 0,
+      "tests": 30,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6604,7 +6635,7 @@
       "lines": 249,
       "classes": 2,
       "functions": 11,
-      "tests": 0,
+      "tests": 28,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6649,7 +6680,7 @@
       "lines": 210,
       "classes": 1,
       "functions": 15,
-      "tests": 0,
+      "tests": 23,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6682,7 +6713,7 @@
       "lines": 139,
       "classes": 1,
       "functions": 16,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6714,7 +6745,7 @@
       "lines": 127,
       "classes": 2,
       "functions": 8,
-      "tests": 0,
+      "tests": 20,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6759,7 +6790,7 @@
       "lines": 135,
       "classes": 3,
       "functions": 6,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6803,7 +6834,7 @@
       "lines": 139,
       "classes": 2,
       "functions": 6,
-      "tests": 0,
+      "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6839,7 +6870,7 @@
       "lines": 47,
       "classes": 0,
       "functions": 2,
-      "tests": 0,
+      "tests": 5,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6875,7 +6906,7 @@
       "lines": 162,
       "classes": 2,
       "functions": 9,
-      "tests": 0,
+      "tests": 17,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -6913,7 +6944,7 @@
       "lines": 485,
       "classes": 12,
       "functions": 24,
-      "tests": 0,
+      "tests": 101,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7026,7 +7057,7 @@
       "lines": 294,
       "classes": 8,
       "functions": 28,
-      "tests": 0,
+      "tests": 28,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7127,7 +7158,7 @@
       "lines": 151,
       "classes": 3,
       "functions": 16,
-      "tests": 0,
+      "tests": 37,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7169,7 +7200,7 @@
       "lines": 141,
       "classes": 4,
       "functions": 16,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7221,7 +7252,7 @@
       "lines": 519,
       "classes": 5,
       "functions": 23,
-      "tests": 0,
+      "tests": 35,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7292,7 +7323,7 @@
       "lines": 255,
       "classes": 2,
       "functions": 7,
-      "tests": 0,
+      "tests": 19,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7341,7 +7372,7 @@
       "lines": 352,
       "classes": 2,
       "functions": 10,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7391,8 +7422,8 @@
       "status": "clean",
       "lines": 477,
       "classes": 2,
-      "functions": 10,
-      "tests": 0,
+      "functions": 16,
+      "tests": 13,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7431,7 +7462,7 @@
           "name": "PipelineRunner",
           "line": 59,
           "bases": [],
-          "methods": 9,
+          "methods": 15,
           "docstring": "Orchestrates the full pipeline: crawl \u2192 extract \u2192 filter \u2192 score \u2192 tag \u2192 index.\n\nThis is the main entry point for running the complete pipeline.\nIt manages all components and coordinates data flow bet"
         }
       ],
@@ -7444,7 +7475,7 @@
       "lines": 275,
       "classes": 4,
       "functions": 26,
-      "tests": 0,
+      "tests": 29,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7502,7 +7533,7 @@
       "lines": 213,
       "classes": 0,
       "functions": 5,
-      "tests": 0,
+      "tests": 13,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7566,7 +7597,7 @@
       "lines": 251,
       "classes": 4,
       "functions": 18,
-      "tests": 0,
+      "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7626,7 +7657,7 @@
       "lines": 153,
       "classes": 4,
       "functions": 16,
-      "tests": 0,
+      "tests": 21,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7675,7 +7706,7 @@
       "lines": 157,
       "classes": 3,
       "functions": 8,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7729,7 +7760,7 @@
       "lines": 131,
       "classes": 2,
       "functions": 11,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7765,7 +7796,7 @@
       "lines": 131,
       "classes": 2,
       "functions": 4,
-      "tests": 0,
+      "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7819,7 +7850,7 @@
       "lines": 260,
       "classes": 3,
       "functions": 9,
-      "tests": 0,
+      "tests": 22,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7864,7 +7895,7 @@
       "lines": 266,
       "classes": 5,
       "functions": 17,
-      "tests": 0,
+      "tests": 21,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7928,7 +7959,7 @@
       "lines": 184,
       "classes": 3,
       "functions": 11,
-      "tests": 0,
+      "tests": 17,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7973,7 +8004,7 @@
       "lines": 146,
       "classes": 1,
       "functions": 11,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8005,7 +8036,7 @@
       "lines": 398,
       "classes": 3,
       "functions": 21,
-      "tests": 0,
+      "tests": 45,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8060,7 +8091,7 @@
       "lines": 126,
       "classes": 4,
       "functions": 10,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8119,7 +8150,7 @@
       "lines": 319,
       "classes": 4,
       "functions": 25,
-      "tests": 0,
+      "tests": 25,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8175,7 +8206,7 @@
       "lines": 195,
       "classes": 3,
       "functions": 10,
-      "tests": 0,
+      "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8224,7 +8255,7 @@
       "lines": 104,
       "classes": 2,
       "functions": 10,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8262,7 +8293,7 @@
       "lines": 130,
       "classes": 3,
       "functions": 2,
-      "tests": 0,
+      "tests": 11,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8307,7 +8338,7 @@
       "lines": 170,
       "classes": 1,
       "functions": 18,
-      "tests": 0,
+      "tests": 25,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8336,7 +8367,7 @@
       "lines": 180,
       "classes": 2,
       "functions": 21,
-      "tests": 0,
+      "tests": 27,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8375,7 +8406,7 @@
       "lines": 323,
       "classes": 0,
       "functions": 15,
-      "tests": 0,
+      "tests": 64,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8516,7 +8547,7 @@
       "lines": 109,
       "classes": 1,
       "functions": 10,
-      "tests": 0,
+      "tests": 23,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8544,7 +8575,7 @@
       "lines": 146,
       "classes": 3,
       "functions": 10,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8588,7 +8619,7 @@
       "lines": 199,
       "classes": 3,
       "functions": 9,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8637,7 +8668,7 @@
       "lines": 209,
       "classes": 2,
       "functions": 13,
-      "tests": 0,
+      "tests": 33,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8673,7 +8704,7 @@
       "lines": 142,
       "classes": 2,
       "functions": 14,
-      "tests": 0,
+      "tests": 20,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8708,7 +8739,7 @@
       "lines": 167,
       "classes": 2,
       "functions": 13,
-      "tests": 0,
+      "tests": 17,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8747,7 +8778,7 @@
       "lines": 383,
       "classes": 0,
       "functions": 23,
-      "tests": 0,
+      "tests": 123,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8955,7 +8986,7 @@
       "lines": 173,
       "classes": 3,
       "functions": 11,
-      "tests": 0,
+      "tests": 23,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8999,7 +9030,7 @@
       "lines": 126,
       "classes": 2,
       "functions": 13,
-      "tests": 0,
+      "tests": 21,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -9037,7 +9068,7 @@
       "lines": 156,
       "classes": 4,
       "functions": 9,
-      "tests": 0,
+      "tests": 19,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -9431,7 +9462,7 @@
       "lines": 218,
       "classes": 5,
       "functions": 21,
-      "tests": 0,
+      "tests": 19,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -9498,7 +9529,7 @@
       "lines": 161,
       "classes": 2,
       "functions": 5,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -9853,7 +9884,7 @@
       "lines": 193,
       "classes": 2,
       "functions": 7,
-      "tests": 0,
+      "tests": 13,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -9901,7 +9932,7 @@
       "lines": 206,
       "classes": 2,
       "functions": 8,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -9949,7 +9980,7 @@
       "lines": 164,
       "classes": 1,
       "functions": 4,
-      "tests": 0,
+      "tests": 13,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -10024,7 +10055,7 @@
       "lines": 171,
       "classes": 0,
       "functions": 9,
-      "tests": 0,
+      "tests": 16,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -10275,7 +10306,7 @@
       "lines": 187,
       "classes": 2,
       "functions": 10,
-      "tests": 0,
+      "tests": 22,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -10324,7 +10355,7 @@
       "lines": 106,
       "classes": 1,
       "functions": 5,
-      "tests": 0,
+      "tests": 20,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -10393,7 +10424,7 @@
       "lines": 143,
       "classes": 4,
       "functions": 7,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -10446,7 +10477,7 @@
       "lines": 188,
       "classes": 2,
       "functions": 11,
-      "tests": 0,
+      "tests": 20,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -10483,7 +10514,7 @@
       "lines": 189,
       "classes": 2,
       "functions": 14,
-      "tests": 0,
+      "tests": 19,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -10771,7 +10802,7 @@
       "lines": 154,
       "classes": 3,
       "functions": 7,
-      "tests": 0,
+      "tests": 11,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -11386,7 +11417,7 @@
       "lines": 216,
       "classes": 3,
       "functions": 7,
-      "tests": 0,
+      "tests": 14,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -11703,7 +11734,7 @@
       "lines": 136,
       "classes": 3,
       "functions": 8,
-      "tests": 0,
+      "tests": 10,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -11757,7 +11788,7 @@
       "lines": 156,
       "classes": 3,
       "functions": 8,
-      "tests": 0,
+      "tests": 10,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -11970,7 +12001,7 @@
       "lines": 220,
       "classes": 4,
       "functions": 12,
-      "tests": 0,
+      "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -12023,7 +12054,7 @@
       "lines": 60,
       "classes": 0,
       "functions": 2,
-      "tests": 0,
+      "tests": 5,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -12119,7 +12150,7 @@
       "lines": 119,
       "classes": 2,
       "functions": 9,
-      "tests": 0,
+      "tests": 21,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -13026,6 +13057,84 @@
   },
   "commits": [
     {
+      "sha": "996e6b7",
+      "message": "Merge pull request #247 from belarusian/cycle8/refactor-oversized-functions",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "ceb1dc1",
+      "message": "refactor: extract verification checks and pipeline stages into private helpers",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "bfd54c6",
+      "message": "type: fix mypy errors in cycle_signals.py (var-annotated, no-any-return)",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "10ff044",
+      "message": "Merge branch 'main' of github.com:belarusian/personal-index",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "adfd250",
+      "message": "Merge pull request #244 from belarusian/cycle7/test-coverage-publish-dashboard-cycle-signals-fix-mypy",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "487da6f",
+      "message": "test: add coverage for publish_dashboard, cycle_signals; fix mypy in docs_generator, cycle_signals",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "c7b896b",
+      "message": "ticket: 226-228 \u2014 publish_dashboard/cycle_signals test gaps + docs_generator mypy errors",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "f0f77e5",
+      "message": "fix: use patch.object on pipeline instance to avoid cross-test mock contamination",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "f69580b",
+      "message": "Merge pull request #240 from belarusian/cycle6/test-coverage-categorizer-search-pipeline-models",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "575f7c0",
+      "message": "test: add coverage for categorizer, search, pipeline, models (188 tests)",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "235bf22",
+      "message": "autonomous: save progress",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "de27fc1",
+      "message": "autonomous: save progress",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "644fe4a",
+      "message": "docs: regenerate dashboard with improved tree (depth=2, S1 noise reduced)",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
       "sha": "6c82eb4",
       "message": "feat: add --depth control and reduce S1 noise in tree output (#239)",
       "author": "kodep",
@@ -13065,84 +13174,6 @@
       "sha": "a51fa67",
       "message": "dashboard: add --fast mode, signals section, split source/test lines",
       "author": "Sasha Malahov",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "4049286",
-      "message": "Merge pull request #237 from belarusian/tooling/signals-on-dashboard",
-      "author": "kodep",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "e70be16",
-      "message": "dashboard: add cycle signals section + split source/test line counts",
-      "author": "Sasha Malahov",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "beba9d9",
-      "message": "dashboard: add cycle signals section + split source/test line counts",
-      "author": "Sasha Malahov",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "9690f77",
-      "message": "Merge pull request #236 from belarusian/tooling/dashboard-publish-signals",
-      "author": "kodep",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "bb07bc3",
-      "message": "tooling: add cycle signal extractor and dashboard publish script",
-      "author": "Sasha Malahov",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "c4b0747",
-      "message": "tooling: add cycle signal extractor and dashboard publish script",
-      "author": "Sasha Malahov",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "f04423c",
-      "message": "Merge pull request #235 from belarusian/lint/fix-all-test-errors",
-      "author": "kodep",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "91a670b",
-      "message": "lint: fix all 76 ruff errors in tests/ (DTZ001, DTZ005, PLW1510, RUF012, SIM102, SIM115, SIM117)",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "e27b6b6",
-      "message": "autonomous: save progress",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "46f752a",
-      "message": "autonomous: save progress",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "6ed87e9",
-      "message": "autonomous: save progress",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "695d0c9",
-      "message": "ticket: add 7 ruff audit tickets for DTZ001, DTZ005, PLW1510, RUF012, SIM102, SIM115, SIM117",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "da70132",
-      "message": "Merge pull request #227 from belarusian/lint/clean-tests",
-      "author": "kodep",
       "date": "2026-08-12"
     }
   ]
