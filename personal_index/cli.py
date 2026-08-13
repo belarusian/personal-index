@@ -622,6 +622,58 @@ def crawl(ctx, url, depth, max_pages, data_dir):
 
 
 # ── pipeline ──────────────────────────────────────────────────────────
+
+def _expand_import_files(import_files: list[str], recursive: bool) -> list[str]:
+    """Expand import file paths, walking directories recursively if requested.
+
+    Args:
+        import_files: List of file or directory paths.
+        recursive: If True, walk directories for supported extensions.
+
+    Returns:
+        Flattened list of file paths.
+    """
+    expanded_files = []
+    for f in import_files:
+        if os.path.isdir(f) and recursive:
+            for root, dirs, files in os.walk(f):
+                for filename in files:
+                    filepath = os.path.join(root, filename)
+                    if filepath.endswith(('.txt', '.md', '.html', '.htm', '.json', '.xml', '.rst')):
+                        expanded_files.append(filepath)
+        else:
+            expanded_files.append(f)
+    return expanded_files
+
+
+def _print_pipeline_stats(stats: "PipelineStats") -> None:
+    """Print pipeline run statistics to stdout."""
+    click.echo(f"\nPipeline complete in {stats.elapsed_seconds:.1f}s:")
+    click.echo(f"  Crawled:      {stats.pages_crawled}")
+    click.echo(f"  Extracted:    {stats.pages_extracted}")
+    click.echo(f"  Filtered in:  {stats.pages_filtered_in}")
+    click.echo(f"  Filtered out: {stats.pages_filtered_out}")
+    click.echo(f"  Scored:       {stats.pages_scored}")
+    click.echo(f"  Tagged:       {stats.pages_tagged}")
+    click.echo(f"  Tags applied: {stats.tags_applied}")
+    click.echo(f"  Indexed:      {stats.pages_indexed}")
+    click.echo(f"  Errors:       {len(stats.errors)}")
+    if stats.errors:
+        for err in stats.errors[:5]:
+            click.echo(f"    - {err}")
+
+
+def _print_index_stats(data_dir: str) -> None:
+    """Print index statistics (pages, interests, tags) to stdout."""
+    idx = get_search_index(data_dir)
+    tag_store = get_tag_store(data_dir)
+    interest_store = get_interest_store(data_dir)
+    click.echo("\nIndex stats:")
+    click.echo(f"  Total indexed pages: {idx.get_page_count()}")
+    click.echo(f"  Total interests:     {len(interest_store.list_all())}")
+    click.echo(f"  Total tags:          {tag_store.get_tag_count()}")
+    click.echo(f"  Tagged pages:        {tag_store.get_tagged_page_count()}")
+
 @main.command()
 @click.argument("urls", nargs=-1)
 @click.option("--import-file", "-i", "import_files", multiple=True,
@@ -725,6 +777,45 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
 
 
 # ── stats (legacy alias for status) ───────────────────────────────────
+
+def _compute_storage_bytes(data_dir: str) -> int:
+    """Compute total storage bytes used by the data directory."""
+    total_size = 0
+    if os.path.exists(data_dir):
+        for dirpath, dirnames, filenames in os.walk(data_dir):
+            for fn in filenames:
+                fp = os.path.join(dirpath, fn)
+                try:
+                    total_size += os.path.getsize(fp)
+                except OSError:
+                    pass
+    return total_size
+
+
+def _format_stats_text(page_count: int, interest_count: int, tag_count: int,
+                      tagged_count: int, interests: list, storage_bytes: int) -> None:
+    """Format and print statistics in text format."""
+    click.echo("Personal Index Statistics")
+    click.echo("=" * 40)
+    click.echo(f"  indexed_pages:  {page_count}")
+    click.echo(f"  interests:      {interest_count}")
+    click.echo(f"  tags:           {tag_count}")
+    click.echo(f"  tagged_pages:   {tagged_count}")
+
+    if interests:
+        click.echo("")
+        click.echo("Interests:")
+        for interest in interests:
+            click.echo("  - {}: {}".format(interest.name, ", ".join(interest.keywords[:5])))
+
+    if storage_bytes > 0:
+        if storage_bytes < 1024 * 1024:
+            size_str = f"{storage_bytes / 1024:.1f} KB"
+        else:
+            size_str = f"{storage_bytes / (1024 * 1024):.1f} MB"
+        click.echo("")
+        click.echo(f"storage: {size_str}")
+
 @main.command()
 @click.option("--format", "output_format", default="text", type=click.Choice(["text", "json"]), help="Output format")
 @click.option("--data-dir", default=None, help="Data directory")
@@ -1303,6 +1394,27 @@ def verify(ctx, quick, data_dir):
 
 
 # ── watch ─────────────────────────────────────────────────────────────
+
+def _index_file(fp: str, data_dir: str) -> None:
+    """Read a single file and add it to the search index.
+
+    Args:
+        fp: File path to index.
+        data_dir: Data directory for the search index.
+    """
+    with open(fp, "r", errors="replace") as f:
+        content = f.read()
+    if len(content.strip()) >= 10:
+        from personal_index.models import CrawledPage
+        page = CrawledPage(
+            url=f"file://{os.path.abspath(fp)}",
+            title=os.path.basename(fp),
+            content=content,
+        )
+        idx = get_search_index(data_dir)
+        idx.add_page(page)
+        click.echo(f"  \u2713 Indexed: {fp}")
+
 @main.command()
 @click.argument("paths", nargs=-1)
 @click.option("--interval", "-i", default=60, type=int, help="Check interval in seconds")

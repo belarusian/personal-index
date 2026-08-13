@@ -80,46 +80,25 @@ def _parse_directive(
     policy: RobotsPolicy,
     current_rules: list[RobotsRule],
 ) -> tuple[str | None, list[RobotsRule]]:
-    """Handle one line's directive parsing.
+    """Handle one line's directive parsing."""
+    key, value = (line.split(":", 1) + ["", ""])[:2]
+    key_lower = key.lower().strip()
+    value = value.strip()
 
-    Args:
-        line: A stripped, non-empty, non-comment line from robots.txt.
-        current_agent: The current user-agent being parsed, or None.
-        policy: The RobotsPolicy being built.
-        current_rules: Accumulated rules for the current user-agent.
-
-    Returns:
-        Tuple of (updated_agent, updated_rules).
-    """
-    if line.lower().startswith("user-agent:"):
-        # Save previous agent's rules
+    if key_lower == "user-agent":
         if current_agent:
             policy.rules.extend(current_rules)
             current_rules = []
-        current_agent = line.split(":", 1)[1].strip()
-    elif line.lower().startswith("disallow:"):
-        pattern = line.split(":", 1)[1].strip()
-        if current_agent and pattern:
-            current_rules.append(RobotsRule(
-                user_agent=current_agent,
-                allowed=False,
-                pattern=pattern,
-            ))
-    elif line.lower().startswith("allow:"):
-        pattern = line.split(":", 1)[1].strip()
-        if current_agent and pattern:
-            current_rules.append(RobotsRule(
-                user_agent=current_agent,
-                allowed=True,
-                pattern=pattern,
-            ))
-    elif line.lower().startswith("crawl-delay:"):
+        current_agent = value
+    elif key_lower == "disallow" and current_agent and value:
+        current_rules.append(RobotsRule(current_agent, False, value))
+    elif key_lower == "allow" and current_agent and value:
+        current_rules.append(RobotsRule(current_agent, True, value))
+    elif key_lower == "crawl-delay":
         with suppress(ValueError):
-            policy.crawl_delay = float(line.split(":", 1)[1].strip())
-    elif line.lower().startswith("sitemap:"):
-        sitemap_url = line.split(":", 1)[1].strip()
-        if sitemap_url:
-            policy.sitemap_urls.append(sitemap_url)
+            policy.crawl_delay = float(value)
+    elif key_lower == "sitemap" and value:
+        policy.sitemap_urls.append(value)
 
     return current_agent, current_rules
 

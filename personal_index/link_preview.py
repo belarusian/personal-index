@@ -46,52 +46,39 @@ class LinkPreviewGenerator:
     """
 
     def generate(self, html: str, base_url: str = "") -> LinkPreview:
-        """Generate a LinkPreview from HTML content.
-
-        Args:
-            html: Raw HTML string to parse.
-            base_url: Base URL for resolving relative image URLs.
-
-        Returns:
-            A LinkPreview with extracted metadata.
-        """
+        """Generate a LinkPreview from HTML content."""
         if not html:
             return LinkPreview()
 
         soup = BeautifulSoup(html, "html.parser")
         preview = LinkPreview()
-
-        # Priority: og:title > twitter:title > <title> tag
         preview.title = (
             self._extract_og_tag(soup, "og:title")
             or self._extract_twitter_tag(soup, "twitter:title")
             or self._extract_title_tag(soup)
         )
-
-        # Priority: og:description > twitter:description > meta description
-        preview.description = (
-            self._extract_og_tag(soup, "og:description")
-            or self._extract_twitter_tag(soup, "twitter:description")
-            or self._extract_meta(soup, "description")
-        )
-
-        # Priority: og:image > twitter:image
+        preview.description = self._fallback_chain(soup, "description", "og:description", "twitter:description")
         preview.image_url = self._resolve_image_url(
-            self._extract_og_tag(soup, "og:image")
-            or self._extract_twitter_tag(soup, "twitter:image"),
-            base_url,
+            self._og_or_twitter(soup, "image"), base_url
+        )
+        for field in ("site_name", "type", "url", "locale"):
+            setattr(preview, field, self._extract_og_tag(soup, f"og:{field}"))
+        preview.twitter_card = self._extract_twitter_tag(soup, "twitter:card")
+        return preview
+
+    def _fallback_chain(
+        self, soup: BeautifulSoup, meta_name: str, og_name: str, tw_name: str
+    ) -> str:
+        """Extract value via og > twitter > standard meta fallback chain."""
+        return (
+            self._extract_og_tag(soup, og_name)
+            or self._extract_twitter_tag(soup, tw_name)
+            or self._extract_meta(soup, meta_name)
         )
 
-        # Other OG fields
-        preview.site_name = self._extract_og_tag(soup, "og:site_name")
-        preview.type = self._extract_og_tag(soup, "og:type")
-        preview.url = self._extract_og_tag(soup, "og:url")
-        preview.locale = self._extract_og_tag(soup, "og:locale")
-
-        # Twitter card type (always extracted, even if OG is present)
-        preview.twitter_card = self._extract_twitter_tag(soup, "twitter:card")
-
-        return preview
+    def _og_or_twitter(self, soup: BeautifulSoup, name: str) -> str:
+        """Extract value from og or twitter tag."""
+        return self._extract_og_tag(soup, f"og:{name}") or self._extract_twitter_tag(soup, f"twitter:{name}")
 
     def _extract_og_tag(self, soup: BeautifulSoup, property_name: str) -> str:
         """Extract an Open Graph meta tag value."""
