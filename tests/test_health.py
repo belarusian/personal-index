@@ -1,0 +1,78 @@
+"""Tests for health checking."""
+
+from personal_index.content_monitor.health import (
+    HealthChecker,
+    HealthCheck,
+    HealthStatus,
+)
+
+
+class TestHealthCheck:
+    def test_creation(self):
+        hc = HealthCheck(check_name="test", healthy=True)
+        assert hc.healthy is True
+        assert hc.message == ""
+        assert hc.details == {}
+
+
+class TestHealthChecker:
+    def test_healthy_items(self):
+        checker = HealthChecker()
+        items = [{"id": "1", "score": 0.9}]
+        status = checker.check(items)
+        assert status.healthy is True
+        assert status.score == 1.0
+
+    def test_empty_items(self):
+        checker = HealthChecker(min_items=1)
+        status = checker.check([])
+        assert status.healthy is False
+
+    def test_enough_items(self):
+        checker = HealthChecker(min_items=2)
+        items = [{"id": "1", "score": 0.5}, {"id": "2", "score": 0.6}]
+        status = checker.check(items)
+        checks = {c.check_name: c for c in status.checks}
+        assert checks["item_count"].healthy is True
+
+    def test_not_enough_items(self):
+        checker = HealthChecker(min_items=5)
+        items = [{"id": "1", "score": 0.5}]
+        status = checker.check(items)
+        checks = {c.check_name: c for c in status.checks}
+        assert checks["item_count"].healthy is False
+
+    def test_unscored_items(self):
+        checker = HealthChecker()
+        items = [{"id": "1"}]
+        status = checker.check(items)
+        checks = {c.check_name: c for c in status.checks}
+        assert checks["scores"].healthy is False
+
+    def test_no_duplicates(self):
+        checker = HealthChecker()
+        items = [{"id": "1", "score": 0.5}, {"id": "2", "score": 0.6}]
+        status = checker.check(items)
+        checks = {c.check_name: c for c in status.checks}
+        assert checks["duplicates"].healthy is True
+
+    def test_duplicates_detected(self):
+        checker = HealthChecker()
+        items = [{"id": "1", "score": 0.5}, {"id": "1", "score": 0.6}]
+        status = checker.check(items)
+        checks = {c.check_name: c for c in status.checks}
+        assert checks["duplicates"].healthy is False
+
+    def test_score_calculation(self):
+        checker = HealthChecker()
+        items = [{"id": "1"}]
+        status = checker.check(items)
+        assert 0.0 <= status.score <= 1.0
+
+    def test_all_checks_present(self):
+        checker = HealthChecker()
+        status = checker.check([{"id": "1", "score": 0.5}])
+        names = [c.check_name for c in status.checks]
+        assert "item_count" in names
+        assert "scores" in names
+        assert "duplicates" in names
