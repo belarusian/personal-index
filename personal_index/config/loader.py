@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
 import yaml
 
@@ -43,21 +44,14 @@ def _parse_interest(data: dict) -> Interest:
 
 
 def load_config(path: str) -> AppConfig:
-    """Load configuration from a YAML file.
-
-    Args:
-        path: Path to the YAML configuration file.
-
-    Returns:
-        AppConfig instance with loaded values.
-    """
+    """Load configuration from a YAML file."""
     if not os.path.exists(path):
         logger.info("Config file not found: %s, using defaults", path)
         return AppConfig()
 
     try:
         with open(path) as f:
-            data = yaml.safe_load(f)
+            data: dict | None = yaml.safe_load(f)
     except yaml.YAMLError as e:
         logger.error("Failed to parse config: %s", e)
         return AppConfig()
@@ -65,36 +59,44 @@ def load_config(path: str) -> AppConfig:
     if data is None:
         data = {}
 
-    # Parse interests
-    interests_data = data.get("interests", [])
-    interests = []
-    for item in interests_data:
-        if isinstance(item, dict):
-            interests.append(_parse_interest(item))
-
-    # Parse crawler config (support both 'crawler' and 'crawl')
-    crawler_data = data.get("crawler", data.get("crawl", {}))
-    from personal_index.config.models import CrawlerConfig
-    crawler = CrawlerConfig(**crawler_data) if crawler_data else CrawlerConfig()
-
-    # Parse index config
-    index_data = data.get("index", {})
-    from personal_index.config.models import IndexConfig
-    index = IndexConfig(**index_data) if index_data else IndexConfig()
-
-    # Parse scheduler config
-    scheduler_data = data.get("scheduler", {})
-    from personal_index.config.models import SchedulerConfig
-    scheduler = SchedulerConfig(**scheduler_data) if scheduler_data else SchedulerConfig()
-
     return AppConfig(
         data_dir=data.get("data_dir", ".personal_index"),
-        crawler=crawler,
-        index=index,
-        scheduler=scheduler,
-        interests=interests,
+        crawler=_parse_crawler(data),
+        index=_parse_index(data),
+        scheduler=_parse_scheduler(data),
+        interests=_parse_interests(data),
         log_level=data.get("log_level", "INFO"),
     )
+
+
+def _parse_interests(data: dict) -> list[Interest]:
+    """Parse interests from config data."""
+    interests = []
+    for item in data.get("interests", []):
+        if isinstance(item, dict):
+            interests.append(_parse_interest(item))
+    return interests
+
+
+def _parse_crawler(data: dict) -> Any:
+    """Parse crawler config section."""
+    from personal_index.config.models import CrawlerConfig
+    crawler_data = data.get("crawler", data.get("crawl", {}))
+    return CrawlerConfig(**crawler_data) if crawler_data else CrawlerConfig()
+
+
+def _parse_index(data: dict) -> Any:
+    """Parse index config section."""
+    from personal_index.config.models import IndexConfig
+    index_data = data.get("index", {})
+    return IndexConfig(**index_data) if index_data else IndexConfig()
+
+
+def _parse_scheduler(data: dict) -> Any:
+    """Parse scheduler config section."""
+    from personal_index.config.models import SchedulerConfig
+    scheduler_data = data.get("scheduler", {})
+    return SchedulerConfig(**scheduler_data) if scheduler_data else SchedulerConfig()
 
 
 def save_config(config: AppConfig, path: str) -> None:

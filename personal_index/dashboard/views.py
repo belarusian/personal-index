@@ -72,18 +72,37 @@ def escape(text: str) -> str:
     return html.escape(str(text))
 
 
+DASHBOARD_CSS = """
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: #f5f5f5; color: #333; padding: 20px; }
+        .header { background: #1a1a2e; color: white; padding: 20px 30px;
+                   border-radius: 8px; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; }
+        .header .meta { color: #aaa; font-size: 12px; margin-top: 5px; }
+        .section { background: white; border-radius: 8px; padding: 20px;
+                   margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .section h2 { font-size: 18px; margin-bottom: 16px; color: #1a1a2e; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                  gap: 12px; margin-bottom: 16px; }
+        .stat { background: #f8f9fa; padding: 16px; border-radius: 6px; text-align: center; }
+        .stat .value { font-size: 28px; font-weight: bold; color: #1a1a2e; }
+        .stat .label { font-size: 12px; color: #666; margin-top: 4px; }
+        .stat .trend { font-size: 11px; margin-top: 4px; }
+        .trend.up { color: #28a745; }
+        .trend.down { color: #dc3545; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-size: 12px; text-transform: uppercase; color: #666; }
+        td { font-size: 14px; }
+        tr:hover { background: #f8f9fa; }
+"""
+
+
 def render_dashboard_html(data: DashboardData) -> str:
-    """Render dashboard data as HTML.
-
-    Args:
-        data: Dashboard data to render.
-
-    Returns:
-        Complete HTML document string.
-    """
-    sections_html = ""
-    for section in data.sections:
-        sections_html += _render_section(section)
+    """Render dashboard data as HTML."""
+    sections_html = "".join(_render_section(s) for s in data.sections)
+    header = _render_header(data)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -92,39 +111,25 @@ def render_dashboard_html(data: DashboardData) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{escape(data.title)}</title>
     <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: #f5f5f5; color: #333; padding: 20px; }}
-        .header {{ background: #1a1a2e; color: white; padding: 20px 30px;
-                   border-radius: 8px; margin-bottom: 20px; }}
-        .header h1 {{ font-size: 24px; }}
-        .header .meta {{ color: #aaa; font-size: 12px; margin-top: 5px; }}
-        .section {{ background: white; border-radius: 8px; padding: 20px;
-                   margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
-        .section h2 {{ font-size: 18px; margin-bottom: 16px; color: #1a1a2e; }}
-        .stats {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                  gap: 12px; margin-bottom: 16px; }}
-        .stat {{ background: #f8f9fa; padding: 16px; border-radius: 6px; text-align: center; }}
-        .stat .value {{ font-size: 28px; font-weight: bold; color: #1a1a2e; }}
-        .stat .label {{ font-size: 12px; color: #666; margin-top: 4px; }}
-        .stat .trend {{ font-size: 11px; margin-top: 4px; }}
-        .trend.up {{ color: #28a745; }}
-        .trend.down {{ color: #dc3545; }}
-        table {{ width: 100%; border-collapse: collapse; }}
-        th, td {{ padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }}
-        th {{ background: #f8f9fa; font-size: 12px; text-transform: uppercase; color: #666; }}
-        td {{ font-size: 14px; }}
-        tr:hover {{ background: #f8f9fa; }}
+{DASHBOARD_CSS}
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>{escape(data.title)}</h1>
-        <div class="meta">Generated: {escape(data.generated_at)} | v{escape(data.version)}</div>
-    </div>
+    {header}
     {sections_html}
 </body>
 </html>"""
+
+
+def _render_header(data: DashboardData) -> str:
+    """Render the dashboard header section."""
+    return (
+        f'<div class="header">\n'
+        f"    <h1>{escape(data.title)}</h1>\n"
+        f"    <div class=\"meta\">Generated: {escape(data.generated_at)} "
+        f"| v{escape(data.version)}</div>\n"
+        f"</div>"
+    )
 
 
 def _render_section(section: DashboardSection) -> str:

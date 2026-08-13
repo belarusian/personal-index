@@ -192,50 +192,51 @@ class Pipeline:
         seed_urls: list[str],
         callback: Any = None,
     ) -> PipelineStats:
-        """Run the full pipeline on seed URLs.
-
-        Args:
-            seed_urls: List of URLs to start crawling from.
-            callback: Optional callback for progress updates.
-
-        Returns:
-            PipelineStats with results summary.
-        """
+        """Run the full pipeline on seed URLs."""
         stats = PipelineStats()
         start_time = time.time()
-
         logger.info("Starting pipeline with %d seed URLs", len(seed_urls))
 
-        # Step 1: Crawl
-        if self.config.is_step_enabled("crawl"):
-            pages = self._crawl_step(seed_urls, stats, callback)
-        else:
-            pages = []
-            logger.info("Crawl step disabled")
+        pages = self._run_crawl(seed_urls, stats, callback)
+        pages = self._run_mutation_steps(pages, stats, callback)
 
-        # Step 2: Extract
-        if self.config.is_step_enabled("extract") and pages:
-            pages = self._extract_step(pages, stats, callback)
-
-        # Step 3: Filter
-        if self.config.is_step_enabled("filter") and pages:
-            pages = self._filter_step(pages, stats, callback)
-
-        # Step 4: Score
-        if self.config.is_step_enabled("score") and pages:
-            pages = self._score_step(pages, stats, callback)
-
-        # Step 5: Tag
         if self.config.is_step_enabled("tag") and pages:
             self._tag_step(pages, stats, callback)
-
-        # Step 6: Index
         if self.config.is_step_enabled("index") and pages:
             self._index_step(pages, stats, callback)
 
         stats.elapsed_seconds = time.time() - start_time
         logger.info("Pipeline complete: %s", stats.summary())
         return stats
+
+    def _run_crawl(
+        self,
+        seed_urls: list[str],
+        stats: PipelineStats,
+        callback: Any,
+    ) -> list[CrawledPage]:
+        """Execute crawl step if enabled."""
+        if self.config.is_step_enabled("crawl"):
+            return self._crawl_step(seed_urls, stats, callback)
+        logger.info("Crawl step disabled")
+        return []
+
+    def _run_mutation_steps(
+        self,
+        pages: list[CrawledPage],
+        stats: PipelineStats,
+        callback: Any,
+    ) -> list[CrawledPage]:
+        """Run extract, filter, score steps sequentially."""
+        step_map = [
+            ("extract", self._extract_step),
+            ("filter", self._filter_step),
+            ("score", self._score_step),
+        ]
+        for step_name, handler in step_map:
+            if self.config.is_step_enabled(step_name) and pages:
+                pages = handler(pages, stats, callback)
+        return pages
 
     def _crawl_step(
         self,

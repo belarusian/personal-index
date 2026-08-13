@@ -85,18 +85,10 @@ class BatchProcessor:
         self,
         items: list[dict[str, Any]],
     ) -> BatchResult:
-        """Process all items in batches.
-
-        Args:
-            items: List of content items to process.
-
-        Returns:
-            BatchResult with processing statistics.
-        """
+        """Process all items in batches."""
         self._batch_counter += 1
-        batch_id = f"batch-{self._batch_counter}"
         result = BatchResult(
-            batch_id=batch_id,
+            batch_id=f"batch-{self._batch_counter}",
             total_items=len(items),
             started_at=datetime.now(timezone.utc),
         )
@@ -106,29 +98,33 @@ class BatchProcessor:
 
         for i in range(0, total, self.batch_size):
             batch = items[i : i + self.batch_size]
-            try:
-                output = self.processor(batch)
-                result.output.extend(output)
-                result.processed += len(batch)
-            except ValueError as e:
-                result.failed += len(batch)
-                result.errors.append({
-                    "batch_start": i,
-                    "batch_size": len(batch),
-                    "error": str(e),
-                })
+            self._process_single_batch(batch, i, result)
 
             processed_count += len(batch)
             if self.on_progress:
                 self.on_progress(processed_count, total)
 
-        result.completed_at = datetime.now(timezone.utc)
-        if result.started_at:
-            result.duration_seconds = (
-                result.completed_at - result.started_at
-            ).total_seconds()
-
+        self._finalize_result(result)
         return result
+
+    def _process_single_batch(
+        self,
+        batch: list[dict[str, Any]],
+        batch_start: int,
+        result: BatchResult,
+    ) -> None:
+        """Process a single batch, catching ValueError on failure."""
+        try:
+            output = self.processor(batch)
+            result.output.extend(output)
+            result.processed += len(batch)
+        except ValueError as e:
+            result.failed += len(batch)
+            result.errors.append({
+                "batch_start": batch_start,
+                "batch_size": len(batch),
+                "error": str(e),
+            })
 
     def process_with_retry(
         self,
