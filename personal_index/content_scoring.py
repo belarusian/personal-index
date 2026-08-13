@@ -111,6 +111,38 @@ class ContentScorer:
     def __init__(self, weights: ScoreWeights | None = None) -> None:
         self.weights = (weights or ScoreWeights()).normalize()
 
+    def _compute_total(
+        self, recency: float, relevance: float, engagement: float,
+        quality: float, authority: float, freshness: float,
+    ) -> float:
+        return (
+            self.weights.recency * recency
+            + self.weights.relevance * relevance
+            + self.weights.engagement * engagement
+            + self.weights.quality * quality
+            + self.weights.authority * authority
+            + self.weights.freshness * freshness
+        )
+
+    def _build_score(
+        self, total: float, recency: float, relevance: float,
+        engagement: float, quality: float, authority: float, freshness: float,
+    ) -> ContentScore:
+        return ContentScore(
+            total=round(total, 4),
+            recency=round(recency, 4),
+            relevance=round(relevance, 4),
+            engagement=round(engagement, 4),
+            quality=round(quality, 4),
+            authority=round(authority, 4),
+            freshness=round(freshness, 4),
+            factors={
+                "recency": recency, "relevance": relevance,
+                "engagement": engagement, "quality": quality,
+                "authority": authority, "freshness": freshness,
+            },
+        )
+
     def score(
         self,
         *,
@@ -129,64 +161,15 @@ class ContentScorer:
         last_crawled: datetime | None = None,
         change_frequency: str = "monthly",
     ) -> ContentScore:
-        """Calculate composite score for a content item.
-
-        Args:
-            published_at: When the content was published.
-            updated_at: When the content was last updated.
-            keyword_matches: Number of matching keywords.
-            total_keywords: Total keywords searched.
-            view_count: Number of views.
-            bookmark_count: Number of bookmarks.
-            share_count: Number of shares.
-            word_count: Word count of the content.
-            has_images: Whether content has images.
-            has_code: Whether content has code blocks.
-            domain_authority: Authority score of the source domain.
-            is_verified_source: Whether the source is verified.
-            last_crawled: When the content was last crawled.
-            change_frequency: Expected change frequency of the source.
-
-        Returns:
-            ContentScore with total and per-factor scores.
-        """
+        """Calculate composite score for a content item."""
         recency = self._score_recency(published_at, updated_at)
         relevance = self._score_relevance(keyword_matches, total_keywords)
-        engagement = self._score_engagement(
-            view_count, bookmark_count, share_count,
-        )
+        engagement = self._score_engagement(view_count, bookmark_count, share_count)
         quality = self._score_quality(word_count, has_images, has_code)
         authority = self._score_authority(domain_authority, is_verified_source)
-        freshness = self._score_freshness(
-            last_crawled, change_frequency, updated_at,
-        )
-
-        total = (
-            self.weights.recency * recency
-            + self.weights.relevance * relevance
-            + self.weights.engagement * engagement
-            + self.weights.quality * quality
-            + self.weights.authority * authority
-            + self.weights.freshness * freshness
-        )
-
-        return ContentScore(
-            total=round(total, 4),
-            recency=round(recency, 4),
-            relevance=round(relevance, 4),
-            engagement=round(engagement, 4),
-            quality=round(quality, 4),
-            authority=round(authority, 4),
-            freshness=round(freshness, 4),
-            factors={
-                "recency": recency,
-                "relevance": relevance,
-                "engagement": engagement,
-                "quality": quality,
-                "authority": authority,
-                "freshness": freshness,
-            },
-        )
+        freshness = self._score_freshness(last_crawled, change_frequency, updated_at)
+        total = self._compute_total(recency, relevance, engagement, quality, authority, freshness)
+        return self._build_score(total, recency, relevance, engagement, quality, authority, freshness)
 
     def _score_recency(
         self,

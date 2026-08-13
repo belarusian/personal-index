@@ -61,6 +61,55 @@ class DashboardAggregator:
         self._cache_time: float = 0.0
         self._cache_ttl: float = 30.0  # 30 second cache
 
+    def _compute_avg_relevance(self, pages: list) -> float:
+        scores = [p.relevance_score for p in pages if hasattr(p, "relevance_score")]
+        return sum(scores) / len(scores) if scores else 0.0
+
+    def _compute_total_domains(self, pages: list) -> int:
+        domains = {p.domain for p in pages if hasattr(p, "domain") and p.domain}
+        return len(domains)
+
+    def _compute_total_keywords(self, pages: list) -> int:
+        keywords: set = set()
+        for p in pages:
+            if hasattr(p, "keywords") and p.keywords:
+                keywords.update(p.keywords)
+        return len(keywords)
+
+    def _compute_pages_per_day(self, pages: list) -> float:
+        if len(pages) < 2:
+            return 0.0
+        dates = []
+        for p in pages:
+            if hasattr(p, "crawled_at") and p.crawled_at:
+                try:
+                    dates.append(
+                        datetime.fromisoformat(p.crawled_at) if isinstance(p.crawled_at, str) else p.crawled_at
+                    )
+                except (ValueError, TypeError):
+                    pass
+        if len(dates) < 2:
+            return 0.0
+        span = (max(dates) - min(dates)).total_seconds()
+        if span > 0:
+            return len(pages) / max(span / 86400, 1)
+        return 0.0
+
+    def _compute_success_rate(self, pages: list) -> float:
+        if not pages:
+            return 100.0
+        success = sum(1 for p in pages if hasattr(p, "status_code") and 200 <= (p.status_code or 0) < 300)
+        return success / len(pages) * 100
+
+    def _apply_page_stats(self, stats: AggregatedStats, pages: list) -> None:
+        if not pages:
+            return
+        stats.avg_relevance_score = self._compute_avg_relevance(pages)
+        stats.total_domains = self._compute_total_domains(pages)
+        stats.total_keywords = self._compute_total_keywords(pages)
+        stats.pages_per_day = self._compute_pages_per_day(pages)
+        stats.crawl_success_rate = self._compute_success_rate(pages)
+
     def aggregate(
         self,
         index_instance=None,
@@ -68,17 +117,7 @@ class DashboardAggregator:
         config=None,
         force_refresh: bool = False,
     ) -> AggregatedStats:
-        """Aggregate statistics from available data sources.
-
-        Args:
-            index_instance: Optional index instance.
-            search_index: Optional search index instance.
-            config: Optional configuration.
-            force_refresh: Skip cache if True.
-
-        Returns:
-            AggregatedStats with computed metrics.
-        """
+        """Aggregate statistics from available data sources."""
         import time
         now = time.time()
         if not force_refresh and self._cached_stats and (now - self._cache_time) < self._cache_ttl:
@@ -93,45 +132,7 @@ class DashboardAggregator:
             stats.status_breakdown = self._compute_status_breakdown(pages)
             stats.content_type_breakdown = self._compute_content_types(pages)
             stats.recent_activity = self._compute_recent_activity(pages)
-
-            if pages:
-                scores = [p.relevance_score for p in pages if hasattr(p, "relevance_score")]
-                if scores:
-                    stats.avg_relevance_score = sum(scores) / len(scores)
-
-                domains = set()
-                for p in pages:
-                    if hasattr(p, "domain") and p.domain:
-                        domains.add(p.domain)
-                stats.total_domains = len(domains)
-
-                keywords = set()
-                for p in pages:
-                    if hasattr(p, "keywords") and p.keywords:
-                        keywords.update(p.keywords)
-                stats.total_keywords = len(keywords)
-
-                # Pages per day estimate
-                if len(pages) >= 2:
-                    dates = []
-                    for p in pages:
-                        if hasattr(p, "crawled_at") and p.crawled_at:
-                            try:
-                                if isinstance(p.crawled_at, str):
-                                    dates.append(datetime.fromisoformat(p.crawled_at))
-                                else:
-                                    dates.append(p.crawled_at)
-                            except (ValueError, TypeError):
-                                pass
-                    if len(dates) >= 2:
-                        span = (max(dates) - min(dates)).total_seconds()
-                        if span > 0:
-                            days = max(span / 86400, 1)
-                            stats.pages_per_day = len(pages) / days
-
-                # Success rate
-                success = sum(1 for p in pages if hasattr(p, "status_code") and 200 <= (p.status_code or 0) < 300)
-                stats.crawl_success_rate = (success / len(pages) * 100) if pages else 100.0
+            self._apply_page_stats(stats, pages)
 
         if index_instance and hasattr(index_instance, "interests"):
             stats.total_interests = len(index_instance.interests)
