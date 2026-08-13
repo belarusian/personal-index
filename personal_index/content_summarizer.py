@@ -86,7 +86,7 @@ def _score_sentence(sentence: str, word_freq: dict[str, int]) -> float:
     return score / len(words)
 
 
-def _score_and_select(sentences: list[str], word_freq: dict[str, float], max_sentences: int) -> list[str]:
+def _score_and_select(sentences: list[str], word_freq: dict[str, int], max_sentences: int) -> list[str]:
     scored: list[tuple[int, float, str]] = []
     for i, sentence in enumerate(sentences):
         score = _score_sentence(sentence, word_freq)

@@ -100,3 +100,42 @@ def test_url_classifier_module_docstring_and_imports():
     # Verify the module imports correctly without E402 issues
     assert hasattr(mod, "URLClassifier")
     assert hasattr(mod, "URLCategory")
+
+
+class TestClassifyDataDriven:
+    """Tests verifying the data-driven classify refactor."""
+
+    def test_classify_iterates_all_rules(self):
+        """classify() should try all rules in order and return first match."""
+        c = URLClassifier()
+        # Redirect rule is first — should match before others
+        result = c.classify("http://example.com/redirect?url=http://other.com")
+        assert result.category == URLCategory.REDIRECT
+
+        # Feed rule is second
+        result = c.classify("http://example.com/feed.rss")
+        assert result.category == URLCategory.FEED
+
+        # API rule is third
+        result = c.classify("http://example.com/api/users")
+        assert result.category == URLCategory.API
+
+        # Static rule is fourth
+        result = c.classify("http://example.com/style.css")
+        assert result.category == URLCategory.STATIC
+
+        # Media rule is fifth
+        result = c.classify("http://example.com/photo.jpg")
+        assert result.category == URLCategory.MEDIA
+
+        # Document rule is sixth
+        result = c.classify("http://example.com/report.pdf")
+        assert result.category == URLCategory.DOCUMENT
+
+    def test_classify_default_page(self):
+        """classify() returns PAGE with 0.5 confidence when no rule matches."""
+        c = URLClassifier()
+        result = c.classify("http://example.com/about")
+        assert result.category == URLCategory.PAGE
+        assert result.confidence == 0.5
+        assert "no specific pattern matched" in result.reasons
