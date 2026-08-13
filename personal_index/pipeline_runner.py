@@ -124,6 +124,156 @@ class PipelineRunner:
         else:
             self._progress_callback(stage, count)
 
+    def _stage_crawl(
+        self,
+        seed_urls: list[str],
+        max_depth: int | None,
+        stats: PipelineStats,
+        progress_cb: Callable,
+    ) -> list[CrawledPage]:
+        """Stage 1: Crawl seed URLs and return crawled pages.
+
+        Returns:
+            List of crawled pages.
+        """
+        logger.info("Stage 1/6: Crawling %d seed URLs", len(seed_urls))
+        progress_cb("crawl", 0, len(seed_urls))
+        crawled_pages: list[CrawledPage] = []
+        for i, url in enumerate(seed_urls):
+            try:
+                pages = self._crawler.crawl([url], max_depth=max_depth)
+                crawled_pages.extend(pages)
+                stats.pages_crawled += len(pages)
+                progress_cb("crawl", i + 1, len(seed_urls))
+            except (RuntimeError, OSError) as e:
+                stats.errors.append(f"Crawl error for {url}: {e}")
+                logger.error("Crawl error for %s: %s", url, e)
+        return crawled_pages
+
+    def _stage_extract(
+        self,
+        pages: list[CrawledPage],
+        stats: PipelineStats,
+        progress_cb: Callable,
+    ) -> list[CrawledPage]:
+        """Stage 2: Extract content from crawled pages.
+
+        Returns:
+            List of pages that have content.
+        """
+        logger.info("Stage 2/6: Extracting content from %d pages", len(pages))
+        progress_cb("extract", 0, len(pages))
+        extracted_pages: list[CrawledPage] = []
+        for i, page in enumerate(pages):
+            try:
+                # Count as extracted even if content is empty
+                stats.pages_extracted += 1
+                # Only add to extracted_pages if it has content
+                if page.content:
+                    extracted_pages.append(page)
+                progress_cb("extract", i + 1, len(pages))
+            except (RuntimeError, OSError) as e:
+                stats.errors.append(f"Extract error for {page.url}: {e}")
+        return extracted_pages
+
+    def _stage_filter(
+        self,
+        pages: list[CrawledPage],
+        stats: PipelineStats,
+        progress_cb: Callable,
+    ) -> list[CrawledPage]:
+        """Stage 3: Filter pages based on content criteria.
+
+        Returns:
+            List of pages that passed the filter.
+        """
+        logger.info("Stage 3/6: Filtering %d pages", len(pages))
+        progress_cb("filter", 0, len(pages))
+        filtered_pages: list[CrawledPage] = []
+        for i, page in enumerate(pages):
+            try:
+                if self._filter.should_include(page):
+                    filtered_pages.append(page)
+                    stats.pages_filtered_in += 1
+                else:
+                    stats.pages_filtered_out += 1
+                progress_cb("filter", i + 1, len(pages))
+            except (RuntimeError, OSError) as e:
+                stats.errors.append(f"Filter error for {page.url}: {e}")
+        return filtered_pages
+
+    def _stage_score(
+        self,
+        pages: list[CrawledPage],
+        stats: PipelineStats,
+        progress_cb: Callable,
+    ) -> list[CrawledPage]:
+        """Stage 4: Score filtered pages based on relevance.
+
+        Returns:
+            List of scored pages.
+        """
+        logger.info("Stage 4/6: Scoring %d pages", len(pages))
+        progress_cb("score", 0, len(pages))
+        scored_pages: list[CrawledPage] = []
+        for i, page in enumerate(pages):
+            try:
+                score_result = self._score_page(page)
+                page.relevance_score = score_result.total
+                scored_pages.append(page)
+                stats.pages_scored += 1
+                progress_cb("score", i + 1, len(pages))
+            except (RuntimeError, OSError) as e:
+                stats.errors.append(f"Score error for {page.url}: {e}")
+        return scored_pages
+
+    def _stage_tag(
+        self,
+        pages: list[CrawledPage],
+        stats: PipelineStats,
+        progress_cb: Callable,
+    ) -> list[CrawledPage]:
+        """Stage 5: Tag scored pages based on interests and keywords.
+
+        Returns:
+            List of tagged pages.
+        """
+        logger.info("Stage 5/6: Tagging %d pages", len(pages))
+        progress_cb("tag", 0, len(pages))
+        tagged_pages: list[CrawledPage] = []
+        for i, page in enumerate(pages):
+            try:
+                tags, interests_matched = self._auto_tag_page(page)
+                stats.tags_applied += len(tags)
+                stats.interests_matched += interests_matched
+                tagged_pages.append(page)
+                stats.pages_tagged += 1
+                progress_cb("tag", i + 1, len(pages))
+            except (RuntimeError, OSError) as e:
+                stats.errors.append(f"Tag error for {page.url}: {e}")
+        return tagged_pages
+
+    def _stage_index(
+        self,
+        pages: list[CrawledPage],
+        stats: PipelineStats,
+        progress_cb: Callable,
+    ) -> None:
+        """Stage 6: Index tagged pages into the search index."""
+        logger.info("Stage 6/6: Indexing %d pages", len(pages))
+        progress_cb("index", 0, len(pages))
+        for i, page in enumerate(pages):
+            try:
+                # Enforce minimum score threshold before indexing
+                if page.relevance_score < self.pipeline_config.min_score_threshold:
+                    stats.pages_filtered_out += 1
+                    continue
+                self._search_index.add_page(page)
+                stats.pages_indexed += 1
+                progress_cb("index", i + 1, len(pages))
+            except (RuntimeError, OSError) as e:
+                stats.errors.append(f"Index error for {page.url}: {e}")
+
     def run(self, seed_urls: list[str], max_depth: int | None = None) -> PipelineStats:
         """Run the full pipeline on the given seed URLs.
 
@@ -138,94 +288,12 @@ class PipelineRunner:
         start_time = time.time()
 
         try:
-            # Stage 1: Crawl
-            logger.info("Stage 1/6: Crawling %d seed URLs", len(seed_urls))
-            self._emit_progress("crawl", 0, len(seed_urls))
-            crawled_pages = []
-            for i, url in enumerate(seed_urls):
-                try:
-                    pages = self._crawler.crawl([url], max_depth=max_depth)
-                    crawled_pages.extend(pages)
-                    stats.pages_crawled += len(pages)
-                    self._emit_progress("crawl", i + 1, len(seed_urls))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Crawl error for {url}: {e}")
-                    logger.error("Crawl error for %s: %s", url, e)
-
-            # Stage 2: Extract
-            logger.info("Stage 2/6: Extracting content from %d pages", len(crawled_pages))
-            self._emit_progress("extract", 0, len(crawled_pages))
-            extracted_pages = []
-            for i, page in enumerate(crawled_pages):
-                try:
-                    # Count as extracted even if content is empty
-                    stats.pages_extracted += 1
-                    # Only add to extracted_pages if it has content
-                    if page.content:
-                        extracted_pages.append(page)
-                    self._emit_progress("extract", i + 1, len(crawled_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Extract error for {page.url}: {e}")
-
-            # Stage 3: Filter
-            logger.info("Stage 3/6: Filtering %d pages", len(extracted_pages))
-            self._emit_progress("filter", 0, len(extracted_pages))
-            filtered_pages = []
-            for i, page in enumerate(extracted_pages):
-                try:
-                    if self._filter.should_include(page):
-                        filtered_pages.append(page)
-                        stats.pages_filtered_in += 1
-                    else:
-                        stats.pages_filtered_out += 1
-                    self._emit_progress("filter", i + 1, len(extracted_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Filter error for {page.url}: {e}")
-
-            # Stage 4: Score
-            logger.info("Stage 4/6: Scoring %d pages", len(filtered_pages))
-            self._emit_progress("score", 0, len(filtered_pages))
-            scored_pages = []
-            for i, page in enumerate(filtered_pages):
-                try:
-                    score_result = self._score_page(page)
-                    page.relevance_score = score_result.total
-                    scored_pages.append(page)
-                    stats.pages_scored += 1
-                    self._emit_progress("score", i + 1, len(filtered_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Score error for {page.url}: {e}")
-
-            # Stage 5: Tag
-            logger.info("Stage 5/6: Tagging %d pages", len(scored_pages))
-            self._emit_progress("tag", 0, len(scored_pages))
-            tagged_pages = []
-            for i, page in enumerate(scored_pages):
-                try:
-                    tags, interests_matched = self._auto_tag_page(page)
-                    stats.tags_applied += len(tags)
-                    stats.interests_matched += interests_matched
-                    tagged_pages.append(page)
-                    stats.pages_tagged += 1
-                    self._emit_progress("tag", i + 1, len(scored_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Tag error for {page.url}: {e}")
-
-            # Stage 6: Index
-            logger.info("Stage 6/6: Indexing %d pages", len(tagged_pages))
-            self._emit_progress("index", 0, len(tagged_pages))
-            for i, page in enumerate(tagged_pages):
-                try:
-                    # Enforce minimum score threshold before indexing
-                    if page.relevance_score < self.pipeline_config.min_score_threshold:
-                        stats.pages_filtered_out += 1
-                        continue
-                    self._search_index.add_page(page)
-                    stats.pages_indexed += 1
-                    self._emit_progress("index", i + 1, len(tagged_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Index error for {page.url}: {e}")
-
+            pages = self._stage_crawl(seed_urls, max_depth, stats, self._emit_progress)
+            pages = self._stage_extract(pages, stats, self._emit_progress)
+            pages = self._stage_filter(pages, stats, self._emit_progress)
+            pages = self._stage_score(pages, stats, self._emit_progress)
+            pages = self._stage_tag(pages, stats, self._emit_progress)
+            self._stage_index(pages, stats, self._emit_progress)
         finally:
             stats.elapsed_seconds = time.time() - start_time
 
@@ -265,80 +333,12 @@ class PipelineRunner:
                 except (RuntimeError, OSError) as e:
                     stats.errors.append(f"Read error for {filepath}: {e}")
 
-            # Stage 2: Extract
-            logger.info("Stage 2/6: Extracting content from %d pages", len(crawled_pages))
-            self._emit_progress("extract", 0, len(crawled_pages))
-            extracted_pages = []
-            for i, page in enumerate(crawled_pages):
-                try:
-                    # Count as extracted even if content is empty
-                    stats.pages_extracted += 1
-                    # Only add to extracted_pages if it has content
-                    if page.content:
-                        extracted_pages.append(page)
-                    self._emit_progress("extract", i + 1, len(crawled_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Extract error for {page.url}: {e}")
-
-            # Stage 3: Filter
-            logger.info("Stage 3/6: Filtering %d pages", len(extracted_pages))
-            self._emit_progress("filter", 0, len(extracted_pages))
-            filtered_pages = []
-            for i, page in enumerate(extracted_pages):
-                try:
-                    if self._filter.should_include(page):
-                        filtered_pages.append(page)
-                        stats.pages_filtered_in += 1
-                    else:
-                        stats.pages_filtered_out += 1
-                    self._emit_progress("filter", i + 1, len(extracted_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Filter error for {page.url}: {e}")
-
-            # Stage 4: Score
-            logger.info("Stage 4/6: Scoring %d pages", len(filtered_pages))
-            self._emit_progress("score", 0, len(filtered_pages))
-            scored_pages = []
-            for i, page in enumerate(filtered_pages):
-                try:
-                    score_result = self._score_page(page)
-                    page.relevance_score = score_result.total
-                    scored_pages.append(page)
-                    stats.pages_scored += 1
-                    self._emit_progress("score", i + 1, len(filtered_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Score error for {page.url}: {e}")
-
-            # Stage 5: Tag
-            logger.info("Stage 5/6: Tagging %d pages", len(scored_pages))
-            self._emit_progress("tag", 0, len(scored_pages))
-            tagged_pages = []
-            for i, page in enumerate(scored_pages):
-                try:
-                    tags, interests_matched = self._auto_tag_page(page)
-                    stats.tags_applied += len(tags)
-                    stats.interests_matched += interests_matched
-                    tagged_pages.append(page)
-                    stats.pages_tagged += 1
-                    self._emit_progress("tag", i + 1, len(scored_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Tag error for {page.url}: {e}")
-
-            # Stage 6: Index
-            logger.info("Stage 6/6: Indexing %d pages", len(tagged_pages))
-            self._emit_progress("index", 0, len(tagged_pages))
-            for i, page in enumerate(tagged_pages):
-                try:
-                    # Enforce minimum score threshold before indexing
-                    if page.relevance_score < self.pipeline_config.min_score_threshold:
-                        stats.pages_filtered_out += 1
-                        continue
-                    self._search_index.add_page(page)
-                    stats.pages_indexed += 1
-                    self._emit_progress("index", i + 1, len(tagged_pages))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Index error for {page.url}: {e}")
-
+            # Stages 2-6
+            pages = self._stage_extract(crawled_pages, stats, self._emit_progress)
+            pages = self._stage_filter(pages, stats, self._emit_progress)
+            pages = self._stage_score(pages, stats, self._emit_progress)
+            pages = self._stage_tag(pages, stats, self._emit_progress)
+            self._stage_index(pages, stats, self._emit_progress)
         finally:
             stats.elapsed_seconds = time.time() - start_time
 
