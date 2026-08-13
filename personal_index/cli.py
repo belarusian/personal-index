@@ -674,6 +674,21 @@ def _print_index_stats(data_dir: str) -> None:
     click.echo(f"  Total tags:          {tag_store.get_tag_count()}")
     click.echo(f"  Tagged pages:        {tag_store.get_tagged_page_count()}")
 
+
+def _create_pipeline_runner(data_dir: str, depth: int, max_pages: int,
+                            min_score: float, min_content_length: int):
+    """Create configured PipelineRunner instance."""
+    from personal_index.config.pipeline_config import PipelineConfig
+    from personal_index.pipeline_runner import PipelineRunner
+    config = PipelineConfig(
+        min_score_threshold=min_score,
+        min_content_length=min_content_length,
+        max_pages=max_pages,
+        max_depth=depth,
+    )
+    return PipelineRunner(data_dir=data_dir, pipeline_config=config)
+
+
 @main.command()
 @click.argument("urls", nargs=-1)
 @click.option("--import-file", "-i", "import_files", multiple=True,
@@ -696,82 +711,24 @@ def _print_index_stats(data_dir: str) -> None:
 def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
              min_content_length, data_dir, steps, no_crawl, no_filter,
              no_score, no_tag, no_index, recursive):
-    """Run the full content pipeline.
-
-    Processes content through all stages: crawl -> extract -> filter ->
-    score -> tag -> index. Can work with URLs (web crawling) or local
-    files (import mode).
-
-    Examples:
-        personal-index pipeline https://example.com
-        personal-index pipeline --import-file ./article.txt
-        personal-index pipeline https://example.com -d 2 -m 50
-    """
+    """Run the full content pipeline."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-
-    from personal_index.config.pipeline_config import PipelineConfig
-    from personal_index.pipeline_runner import PipelineRunner
-
-    config = PipelineConfig(
-        min_score_threshold=min_score,
-        min_content_length=min_content_length,
-        max_pages=max_pages,
-        max_depth=depth,
-    )
-
-    runner = PipelineRunner(
-        data_dir=dd,
-        pipeline_config=config,
-    )
+    runner = _create_pipeline_runner(dd, depth, max_pages, min_score, min_content_length)
 
     try:
         if import_files:
-            # Expand directories recursively if requested
-            expanded_files = []
-            for f in import_files:
-                if os.path.isdir(f) and recursive:
-                    for root, dirs, files in os.walk(f):
-                        for filename in files:
-                            filepath = os.path.join(root, filename)
-                            if filepath.endswith(('.txt', '.md', '.html', '.htm', '.json', '.xml', '.rst')):
-                                expanded_files.append(filepath)
-                else:
-                    expanded_files.append(f)
-            click.echo(f"Imported: {len(expanded_files)} file(s)")
-            stats = runner.run_from_files(expanded_files)
+            expanded = _expand_import_files(import_files, recursive)
+            click.echo(f"Imported: {len(expanded)} file(s)")
+            stats = runner.run_from_files(expanded)
         elif urls:
             click.echo(f"Running pipeline on {len(urls)} URL(s)...")
             stats = runner.run(list(urls))
         else:
             click.echo("No URLs or files specified.")
-            click.echo("Usage:")
-            click.echo("  personal-index pipeline https://example.com")
-            click.echo("  personal-index pipeline --import-file ./file.txt")
             sys.exit(1)
 
-        click.echo(f"\nPipeline complete in {stats.elapsed_seconds:.1f}s:")
-        click.echo(f"  Crawled:      {stats.pages_crawled}")
-        click.echo(f"  Extracted:    {stats.pages_extracted}")
-        click.echo(f"  Filtered in:  {stats.pages_filtered_in}")
-        click.echo(f"  Filtered out: {stats.pages_filtered_out}")
-        click.echo(f"  Scored:       {stats.pages_scored}")
-        click.echo(f"  Tagged:       {stats.pages_tagged}")
-        click.echo(f"  Tags applied: {stats.tags_applied}")
-        click.echo(f"  Indexed:      {stats.pages_indexed}")
-        click.echo(f"  Errors:       {len(stats.errors)}")
-        if stats.errors:
-            for err in stats.errors[:5]:
-                click.echo(f"    - {err}")
-
-        idx = get_search_index(dd)
-        tag_store = get_tag_store(dd)
-        interest_store = get_interest_store(dd)
-        click.echo("\nIndex stats:")
-        click.echo(f"  Total indexed pages: {idx.get_page_count()}")
-        click.echo(f"  Total interests:     {len(interest_store.list_all())}")
-        click.echo(f"  Total tags:          {tag_store.get_tag_count()}")
-        click.echo(f"  Tagged pages:        {tag_store.get_tagged_page_count()}")
-
+        _print_pipeline_stats(stats)
+        _print_index_stats(dd)
     finally:
         runner.close()
 
@@ -816,19 +773,28 @@ def _format_stats_text(page_count: int, interest_count: int, tag_count: int,
         click.echo("")
         click.echo(f"storage: {size_str}")
 
+
+def _format_storage_size(total_size: int) -> str:
+    """Format byte count to human-readable string."""
+    if total_size < 1024 * 1024:
+        return f"{total_size / 1024:.1f} KB"
+    return f"{total_size / (1024 * 1024):.1f} MB"
+
+
+def _print_interests(interests: list) -> None:
+    """Print interest list to stdout."""
+    click.echo("")
+    click.echo("Interests:")
+    for interest in interests:
+        click.echo("  - {}: {}".format(interest.name, ", ".join(interest.keywords[:5])))
+
+
 @main.command()
 @click.option("--format", "output_format", default="text", type=click.Choice(["text", "json"]), help="Output format")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def stats(ctx, output_format, data_dir):
-    """Show statistics about your personal-index.
-
-    Displays counts of indexed pages, interests, tags, and storage usage.
-
-    Examples:
-        personal-index stats
-        personal-index stats --format json
-    """
+    """Show statistics about your personal-index."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
     tag_store = get_tag_store(dd)
@@ -837,48 +803,30 @@ def stats(ctx, output_format, data_dir):
     page_count = idx.get_page_count()
     tag_count = tag_store.get_tag_count()
     interests = interest_store.list_all()
-    interest_count = len(interests)
-
-    total_size = 0
-    if os.path.exists(dd):
-        for dirpath, dirnames, filenames in os.walk(dd):
-            for fn in filenames:
-                fp = os.path.join(dirpath, fn)
-                try:
-                    total_size += os.path.getsize(fp)
-                except OSError:
-                    pass
+    storage_bytes = _compute_storage_bytes(dd)
 
     if output_format == "json":
         click.echo(json.dumps({
             "indexed_pages": page_count,
-            "interests": interest_count,
+            "interests": len(interests),
             "total_tags": tag_count,
             "tagged_pages": tag_store.get_tagged_page_count(),
-            "storage_bytes": total_size,
+            "storage_bytes": storage_bytes,
         }, indent=2))
         return
 
     click.echo("Personal Index Statistics")
     click.echo("=" * 40)
     click.echo(f"  indexed_pages:  {page_count}")
-    click.echo(f"  interests:      {interest_count}")
+    click.echo(f"  interests:      {len(interests)}")
     click.echo(f"  tags:           {tag_count}")
     click.echo(f"  tagged_pages:   {tag_store.get_tagged_page_count()}")
 
     if interests:
-        click.echo("")
-        click.echo("Interests:")
-        for interest in interests:
-            click.echo("  - {}: {}".format(interest.name, ", ".join(interest.keywords[:5])))
+        _print_interests(interests)
 
-    if total_size > 0:
-        if total_size < 1024 * 1024:
-            size_str = f"{total_size / 1024:.1f} KB"
-        else:
-            size_str = f"{total_size / (1024 * 1024):.1f} MB"
-        click.echo("")
-        click.echo(f"storage: {size_str}")
+    if storage_bytes > 0:
+        click.echo(f"\nstorage: {_format_storage_size(storage_bytes)}")
 
 
 # ── list (legacy - list indexed pages) ────────────────────────────────
@@ -1471,6 +1419,52 @@ def _index_file(fp: str, data_dir: str) -> None:
         idx.add_page(page)
         click.echo(f"  \u2713 Indexed: {fp}")
 
+
+def _index_file_once(fp: str, data_dir: str) -> None:
+    """Read and index a single file into the search index."""
+    idx = get_search_index(data_dir)
+    with open(fp, "r", errors="replace") as f:
+        content = f.read()
+    if len(content.strip()) < 10:
+        return
+    from personal_index.models import CrawledPage
+    page = CrawledPage(
+        url=f"file://{os.path.abspath(fp)}",
+        title=os.path.basename(fp),
+        content=content,
+    )
+    idx.add_page(page)
+    click.echo(f"  ✓ Indexed: {fp}")
+
+
+def _watch_once(paths: tuple[str, ...], data_dir: str) -> None:
+    """Process paths in once mode — collect and index all files."""
+    for path in paths:
+        if os.path.isfile(path):
+            click.echo(f"  Importing: {path}")
+            files = _collect_files(path, False)
+        elif os.path.isdir(path):
+            files = _collect_files(path, True)
+        else:
+            continue
+        for fp in files:
+            try:
+                _index_file_once(fp, data_dir)
+            except Exception as e:  # noqa: BLE001
+                click.echo(f"  ✗ Error: {e}", err=True)
+
+
+def _validate_watch_paths(paths: tuple[str, ...]) -> None:
+    """Validate that all watch paths exist."""
+    if not paths:
+        click.echo("Error: No paths specified to watch.", err=True)
+        sys.exit(1)
+    for path in paths:
+        if not os.path.exists(path):
+            click.echo(f"Error: '{path}' does not exist", err=True)
+            sys.exit(1)
+
+
 @main.command()
 @click.argument("paths", nargs=-1)
 @click.option("--interval", "-i", default=60, type=int, help="Check interval in seconds")
@@ -1478,77 +1472,20 @@ def _index_file(fp: str, data_dir: str) -> None:
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def watch(ctx, paths, interval, once, data_dir):
-    """Watch files or directories for changes and re-index.
-
-    Monitors specified paths and automatically re-indexes when changes
-    are detected.
-
-    Examples:
-        personal-index watch ./docs --interval 30
-        personal-index watch ./article.txt --once
-    """
+    """Watch files or directories for changes and re-index."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     os.makedirs(dd, exist_ok=True)
-
-    if not paths:
-        click.echo("Error: No paths specified to watch.", err=True)
-        sys.exit(1)
-
-    # Check all paths exist first
-    for path in paths:
-        if not os.path.exists(path):
-            click.echo(f"Error: '{path}' does not exist", err=True)
-            sys.exit(1)
+    _validate_watch_paths(paths)
 
     click.echo(f"Watching {len(paths)} path(s) every {interval}s...")
-
     for path in paths:
         click.echo(f"  Watching: {path}")
 
     if once:
-        # Run once and exit - import any files
-        for path in paths:
-            if os.path.isfile(path):
-                click.echo(f"  Importing: {path}")
-                try:
-                    files = _collect_files(path, False)
-                    for fp in files:
-                        with open(fp, "r", errors="replace") as f:
-                            content = f.read()
-                        if len(content.strip()) >= 10:
-                            from personal_index.models import CrawledPage
-                            page = CrawledPage(
-                                url=f"file://{os.path.abspath(fp)}",
-                                title=os.path.basename(fp),
-                                content=content,
-                            )
-                            idx = get_search_index(dd)
-                            idx.add_page(page)
-                            click.echo(f"  ✓ Indexed: {fp}")
-                except Exception as e:  # noqa: BLE001
-                    click.echo(f"  ✗ Error: {e}", err=True)
-            elif os.path.isdir(path):
-                files = _collect_files(path, True)
-                for fp in files:
-                    try:
-                        with open(fp, "r", errors="replace") as f:
-                            content = f.read()
-                        if len(content.strip()) >= 10:
-                            from personal_index.models import CrawledPage
-                            page = CrawledPage(
-                                url=f"file://{os.path.abspath(fp)}",
-                                title=os.path.basename(fp),
-                                content=content,
-                            )
-                            idx = get_search_index(dd)
-                            idx.add_page(page)
-                            click.echo(f"  ✓ Indexed: {fp}")
-                    except Exception as e:  # noqa: BLE001
-                        click.echo(f"  ✗ Error: {e}", err=True)
+        _watch_once(paths, dd)
         click.echo("Watch complete (once mode)")
         return
 
-    # Continuous watch mode (simplified - just acknowledge)
     click.echo("Watch mode started. Press Ctrl+C to stop.")
 
 

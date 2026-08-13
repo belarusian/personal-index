@@ -49,6 +49,27 @@ class TrendingEntry:
         self.last_seen = time.time()
 
 
+def _exact_or_prefix_match(q_lower: str, c_lower: str) -> float | None:
+    """Return exact/prefix match score, or None if not matched."""
+    if q_lower == c_lower:
+        return 1.0
+    if c_lower.startswith(q_lower):
+        prefix_ratio = len(q_lower) / max(len(c_lower), 1)
+        return max(0.9, 0.7 + prefix_ratio * 0.3)
+    return None
+
+
+def _sequence_with_containment(q_lower: str, c_lower: str) -> float:
+    """Compute SequenceMatcher ratio with character containment bonus."""
+    ratio = SequenceMatcher(None, q_lower, c_lower).ratio()
+    q_chars = set(q_lower)
+    c_chars = set(c_lower)
+    if q_chars and c_chars:
+        containment = len(q_chars & c_chars) / len(q_chars)
+        ratio = max(ratio, containment * 0.8)
+    return ratio
+
+
 def _fuzzy_match_score(query: str, candidate: str) -> float:
     """Compute fuzzy match score between query and candidate.
 
@@ -65,30 +86,14 @@ def _fuzzy_match_score(query: str, candidate: str) -> float:
     q_lower = query.lower()
     c_lower = candidate.lower()
 
-    # Exact match
-    if q_lower == c_lower:
-        return 1.0
+    exact = _exact_or_prefix_match(q_lower, c_lower)
+    if exact is not None:
+        return exact
 
-    # Prefix match (strong signal for autocomplete)
-    if c_lower.startswith(q_lower):
-        prefix_ratio = len(q_lower) / max(len(c_lower), 1)
-        return max(0.9, 0.7 + prefix_ratio * 0.3)
-
-    # Contains match
     if q_lower in c_lower:
         return 0.8
 
-    # SequenceMatcher ratio
-    ratio = SequenceMatcher(None, q_lower, c_lower).ratio()
-
-    # Character containment bonus
-    q_chars = set(q_lower)
-    c_chars = set(c_lower)
-    if q_chars and c_chars:
-        containment = len(q_chars & c_chars) / len(q_chars)
-        ratio = max(ratio, containment * 0.8)
-
-    return ratio
+    return _sequence_with_containment(q_lower, c_lower)
 
 
 class SearchSuggestions:

@@ -109,28 +109,39 @@ class WebhookSender:
             results.append(result)
         return results
 
-    def _send_to_endpoint(self, config: WebhookConfig, payload: WebhookPayload) -> dict:
-        last_error = None
-        # Validate URL scheme - only allow http and https
+    def _validate_url_scheme(self, url: str) -> str | None:
+        """Validate URL scheme. Returns error message if invalid, None if valid."""
         from urllib.parse import urlparse
-        parsed = urlparse(config.url)
+        parsed = urlparse(url)
         if parsed.scheme not in ("http", "https"):
+            return f"Unsupported URL scheme: {parsed.scheme}"
+        return None
+
+    def _build_request(self, config: WebhookConfig, payload: WebhookPayload) -> Request:
+        """Build HTTP request from config and payload."""
+        data = payload.to_json().encode("utf-8")
+        return Request(
+            config.url,
+            data=data,
+            headers={"Content-Type": "application/json", **config.headers},
+            method="POST",
+        )
+
+    def _send_to_endpoint(self, config: WebhookConfig, payload: WebhookPayload) -> dict:
+        scheme_error = self._validate_url_scheme(config.url)
+        if scheme_error:
             return {
                 "url": config.url,
                 "status": None,
                 "success": False,
-                "error": f"Unsupported URL scheme: {parsed.scheme}",
+                "error": scheme_error,
                 "attempts": 0,
             }
+
+        last_error = None
         for attempt in range(config.retry_count + 1):
             try:
-                data = payload.to_json().encode("utf-8")
-                req = Request(
-                    config.url,
-                    data=data,
-                    headers={"Content-Type": "application/json", **config.headers},
-                    method="POST",
-                )
+                req = self._build_request(config, payload)
                 with urllib.request.urlopen(req, timeout=config.timeout) as response:
                     return {
                         "url": config.url,
@@ -142,6 +153,7 @@ class WebhookSender:
                 last_error = str(e)
                 if attempt < config.retry_count:
                     time.sleep(config.retry_delay)
+
         return {
             "url": config.url,
             "status": None,
