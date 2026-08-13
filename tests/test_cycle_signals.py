@@ -495,3 +495,144 @@ class TestExtract:
         result = cycle_signals.extract(str(codemap_file), prev_codemap_path=str(prev_file))
         assert "S6_coverage" in result
         assert "delta_pct" in result["S6_coverage"]
+
+
+# ---------------------------------------------------------------------------
+# _create_tree_nodes
+# ---------------------------------------------------------------------------
+
+class TestCreateTreeNodes:
+    def test_empty_modules(self):
+        result = cycle_signals._create_tree_nodes([])
+        assert result == {}
+
+    def test_single_module_creates_path_nodes(self, sample_modules):
+        mods = [sample_modules[0]]  # personal_index.analytics
+        result = cycle_signals._create_tree_nodes(mods)
+        assert "personal_index" in result
+        assert "personal_index.analytics" in result
+        assert result["personal_index.analytics"]["name"] == "analytics"
+
+    def test_nested_module_creates_all_levels(self, sample_modules):
+        mods = [sample_modules[7]]  # personal_index.subpkg.helper
+        result = cycle_signals._create_tree_nodes(mods)
+        assert "personal_index" in result
+        assert "personal_index.subpkg" in result
+        assert "personal_index.subpkg.helper" in result
+
+    def test_leaf_has_modules_list(self, sample_modules):
+        mods = [sample_modules[0]]
+        result = cycle_signals._create_tree_nodes(mods)
+        assert result["personal_index.analytics"]["modules"] == [
+            "personal_index.analytics"
+        ]
+
+    def test_signals_propagated_up(self, sample_modules):
+        mods = [sample_modules[1]]  # big_module with errors → S5
+        result = cycle_signals._create_tree_nodes(mods)
+        assert "S5" in result["personal_index.big_module"]["signals"]
+        assert "S5" in result["personal_index"]["signals"]
+
+    def test_skip_root_only(self):
+        mods = [{"name": "standalone", "lines": 10, "functions": 1, "classes": 0,
+                 "tests": 0, "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0}]
+        result = cycle_signals._create_tree_nodes(mods)
+        assert result == {}
+
+
+# ---------------------------------------------------------------------------
+# _detect_module_signals
+# ---------------------------------------------------------------------------
+
+class TestDetectModuleSignals:
+    def test_no_signals_clean_module(self):
+        mod = {"tests": 5, "functions": 10, "lines": 100,
+               "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "clean")
+        assert result == []
+
+    def test_s2_oversized(self):
+        mod = {"tests": 5, "functions": 20, "lines": 300,
+               "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "big")
+        assert "S2" in result
+
+    def test_s5_errors(self):
+        mod = {"tests": 5, "functions": 5, "lines": 50,
+               "ruff_errors": 1, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "buggy")
+        assert "S5" in result
+
+    def test_s1_only_with_s2(self):
+        mod = {"tests": 0, "functions": 20, "lines": 300,
+               "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "big_no_test")
+        assert "S1" in result
+        assert "S2" in result
+
+    def test_s1_only_with_s5(self):
+        mod = {"tests": 0, "functions": 5, "lines": 50,
+               "ruff_errors": 1, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "buggy_no_test")
+        assert "S1" in result
+        assert "S5" in result
+
+    def test_s1_suppressed_for_cli_prefix(self):
+        mod = {"tests": 0, "functions": 20, "lines": 300,
+               "ruff_errors": 1, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "cli_app")
+        assert "S1" not in result
+        assert "S2" in result
+        assert "S5" in result
+
+    def test_s1_suppressed_for_init(self):
+        mod = {"tests": 0, "functions": 5, "lines": 50,
+               "ruff_errors": 1, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "__init__")
+        assert "S1" not in result
+
+    def test_s1_suppressed_for_test_prefix(self):
+        mod = {"tests": 0, "functions": 5, "lines": 50,
+               "ruff_errors": 1, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "test_foo")
+        assert "S1" not in result
+
+    def test_s1_suppressed_for_main(self):
+        mod = {"tests": 0, "functions": 5, "lines": 50,
+               "ruff_errors": 1, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "__main__")
+        assert "S1" not in result
+
+    def test_s1_not_flagged_alone(self):
+        """S1 alone (no S2, no S5) should not be flagged."""
+        mod = {"tests": 0, "functions": 5, "lines": 50,
+               "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0}
+        result = cycle_signals._detect_module_signals(mod, "small_no_test")
+        assert "S1" not in result
+
+
+# ---------------------------------------------------------------------------
+# _tree_to_nested
+# ---------------------------------------------------------------------------
+
+class TestTreeToNested:
+    def test_empty_tree(self):
+        result = cycle_signals._tree_to_nested({})
+        assert result["name"] == "root"
+        assert result["children"] == {}
+        assert result["stats"]["modules"] == 0
+
+    def test_single_module(self, sample_modules):
+        mods = [sample_modules[0]]
+        flat = cycle_signals._create_tree_nodes(mods)
+        result = cycle_signals._tree_to_nested(flat)
+        assert result["stats"]["modules"] == 1
+        assert "personal_index" in result["children"]
+
+    def test_nested_structure(self, sample_modules):
+        mods = [sample_modules[7]]  # personal_index.subpkg.helper
+        flat = cycle_signals._create_tree_nodes(mods)
+        result = cycle_signals._tree_to_nested(flat)
+        assert "personal_index" in result["children"]
+        pi = result["children"]["personal_index"]
+        assert "subpkg" in pi["children"]

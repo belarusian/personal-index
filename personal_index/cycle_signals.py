@@ -25,15 +25,14 @@ from pathlib import Path
 # Tree summary — hierarchical grouping for LLM-friendly consumption
 # ---------------------------------------------------------------------------
 
-def build_tree(modules: list[dict]) -> dict:
-    """Group modules into a hierarchical tree by package path.
+def _create_tree_nodes(modules: list[dict]) -> dict[str, dict]:
+    """Walk module dotted names and create/update flat tree nodes with stats.
 
-    Returns a tree node with aggregate stats. Each node has:
-      - name: package/module name
-      - children: nested package nodes (sorted by error count desc, then name)
-      - modules: leaf module names (only modules with signals, to keep it compact)
-      - stats: {lines, functions, classes, errors, warnings, modules}
-      - signals: list of active signal tags [S1, S2, S5, ...]
+    Args:
+        modules: List of module dicts from codemap.
+
+    Returns:
+        Flat dict mapping dotted path keys to tree node dicts.
     """
     tree: dict[str, dict] = {}
 
@@ -80,22 +79,8 @@ def build_tree(modules: list[dict]) -> dict:
                 node["stats"]["warnings"] += m.get("ruff_warnings", 0)
 
                 # Detect signals on leaf modules
-                # S1 is noisy at 0% coverage — only flag when co-occurring with S2 or S5
-                has_s1 = m.get("tests", 0) == 0 and m.get("functions", 0) > 0
-                short = part
-                if short in ("__init__", "__main__") or short.startswith(("cli_", "test_")):
-                    has_s1 = False
-                has_s2 = m.get("lines", 0) >= 200 and m.get("functions", 0) >= 15
-                total_err = m.get("ruff_errors", 0) + m.get("mypy_errors", 0) + m.get("ruff_warnings", 0)
-                has_s5 = total_err > 0
-                if has_s1 and has_s2:
-                    node["signals"].add("S1")
-                if has_s1 and has_s5:
-                    node["signals"].add("S1")
-                if has_s2:
-                    node["signals"].add("S2")
-                if has_s5:
-                    node["signals"].add("S5")
+                signals = _detect_module_signals(m, part)
+                node["signals"].update(signals)
             else:
                 # Accumulate stats up the tree
                 node["stats"]["lines"] += m.get("lines", 0)
@@ -113,26 +98,74 @@ def build_tree(modules: list[dict]) -> dict:
             if parent_key in tree:
                 tree[parent_key]["signals"].update(node["signals"])
 
-    # Convert to final tree structure
-    root = _build_tree_root(tree)
-    return root
+    return tree
 
 
-def _build_tree_root(tree: dict[str, dict]) -> dict:
-    """Build the root node from flat tree dict."""
+def _detect_module_signals(module: dict, short_name: str) -> list[str]:
+    """Detect S1/S2/S5 signals on a single module.
+
+    Args:
+        module: Module dict from codemap with stats fields.
+        short_name: The leaf module name (e.g., "analytics" from "pkg.analytics").
+
+    Returns:
+        List of active signal tags (e.g., ["S1", "S2", "S5"]).
+    """
+    signals: list[str] = []
+
+    # S1 is noisy at 0% coverage — only flag when co-occurring with S2 or S5
+    has_s1 = module.get("tests", 0) == 0 and module.get("functions", 0) > 0
+    if short_name in ("__init__", "__main__") or short_name.startswith(("cli_", "test_")):
+        has_s1 = False
+    has_s2 = module.get("lines", 0) >= 200 and module.get("functions", 0) >= 15
+    total_err = (
+        module.get("ruff_errors", 0)
+        + module.get("mypy_errors", 0)
+        + module.get("ruff_warnings", 0)
+    )
+    has_s5 = total_err > 0
+
+    if has_s1 and has_s2:
+        signals.append("S1")
+    if has_s1 and has_s5:
+        signals.append("S1")
+    if has_s2:
+        signals.append("S2")
+    if has_s5:
+        signals.append("S5")
+
+    return signals
+
+
+def _tree_to_nested(tree: dict[str, dict]) -> dict:
+    """Convert flat tree dict to hierarchical nested structure.
+
+    Args:
+        tree: Flat dict mapping dotted path keys to node dicts.
+
+    Returns:
+        Root node dict with nested children.
+    """
     # Find top-level keys (direct children of root)
-    top_level = set()
+    top_level: set[str] = set()
     for key in tree:
         parts = key.split(".")
         top_level.add(parts[0])
 
-    children = {}
+    children: dict[str, dict] = {}
     for tl in sorted(top_level):
         if tl in tree:
             children[tl] = _node_to_dict(tl, tree)
 
     # Compute root stats from all top-level children
-    root_stats = {"lines": 0, "functions": 0, "classes": 0, "errors": 0, "warnings": 0, "modules": 0}
+    root_stats = {
+        "lines": 0,
+        "functions": 0,
+        "classes": 0,
+        "errors": 0,
+        "warnings": 0,
+        "modules": 0,
+    }
     root_signals: set[str] = set()
     for child in children.values():
         for k in root_stats:
@@ -151,7 +184,7 @@ def _node_to_dict(key: str, tree: dict[str, dict]) -> dict:
     """Convert a tree node to its final dict representation."""
     node = tree[key]
     name = node["name"]
-    children = {}
+    children: dict[str, dict] = {}
 
     # Find direct children
     prefix = key + "."
@@ -164,14 +197,14 @@ def _node_to_dict(key: str, tree: dict[str, dict]) -> dict:
                     children[tl] = _node_to_dict(child_key, tree)
 
     # Only include modules that have signals (keep it compact)
-    signal_modules = []
+    signal_modules: list[str] = []
     if not children:  # leaf node
         signal_modules.extend(node["modules"])
 
     # Convert signals set to sorted list
     signals = sorted(node["signals"])
 
-    result = {
+    result: dict = {
         "name": name,
         "stats": node["stats"],
         "signals": signals,
@@ -196,6 +229,20 @@ def _sort_children(children: dict[str, dict]) -> dict[str, dict]:
         return (has_signals, errors, modules, name)
 
     return dict(sorted(children.items(), key=sort_key))
+
+
+def build_tree(modules: list[dict]) -> dict:
+    """Group modules into a hierarchical tree by package path.
+
+    Returns a tree node with aggregate stats. Each node has:
+      - name: package/module name
+      - children: nested package nodes (sorted by error count desc, then name)
+      - modules: leaf module names (only modules with signals, to keep it compact)
+      - stats: {lines, functions, classes, errors, warnings, modules}
+      - signals: list of active signal tags [S1, S2, S5, ...]
+    """
+    flat_tree = _create_tree_nodes(modules)
+    return _tree_to_nested(flat_tree)
 
 
 def format_tree(tree: dict, max_depth: int = 2, max_lines: int = 50) -> str:

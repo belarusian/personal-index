@@ -267,3 +267,152 @@ class TestPipelineProgressCallback:
         assert len(callbacks) > 0
         stages = [c[0] for c in callbacks]
         assert "read" in stages or "filter" in stages
+
+
+class TestPipelineStageMethods:
+    """Test extracted stage methods and _run_stage helper."""
+
+    def _create_test_file(self, tmp_path, name, content):
+        f = tmp_path / name
+        f.write_text(content)
+        return str(f)
+
+    def test_stage_read_returns_pages(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        fpath = self._create_test_file(docs, "test.txt", "Hello world content here")
+
+        orch = PipelineOrchestrator(data_dir=data_dir)
+        pages = orch._stage_read([fpath])
+        assert len(pages) == 1
+        assert pages[0].title == "test.txt"
+        orch.close()
+
+    def test_stage_read_skips_bad_files(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+        pages = orch._stage_read(["/nonexistent/file.txt"])
+        assert pages == []
+        orch.close()
+
+    def test_stage_filter_keeps_included(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        from personal_index.models import CrawledPage
+        page = CrawledPage(
+            url="http://example.com",
+            title="Test",
+            content="This is a reasonably long piece of content that should pass the filter",
+            word_count=14,
+        )
+        result = orch._stage_filter([page])
+        assert len(result) == 1
+        orch.close()
+
+    def test_stage_filter_removes_short(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        config = PipelineConfig(min_content_length=100)
+        orch = PipelineOrchestrator(data_dir=data_dir, config=config)
+
+        from personal_index.models import CrawledPage
+        page = CrawledPage(
+            url="http://example.com",
+            title="Test",
+            content="Short",
+            word_count=1,
+        )
+        result = orch._stage_filter([page])
+        assert len(result) == 0
+        orch.close()
+
+    def test_stage_score_returns_all_pages(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        from personal_index.models import CrawledPage
+        pages = [
+            CrawledPage(url=f"http://example.com/{i}", title=f"Page {i}",
+                        content=f"Content for page {i} with some words", word_count=8)
+            for i in range(3)
+        ]
+        result = orch._stage_score(pages)
+        assert len(result) == 3
+        for p in result:
+            assert hasattr(p, "relevance_score")
+        orch.close()
+
+    def test_stage_tag_returns_all_pages(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        from personal_index.models import CrawledPage
+        pages = [
+            CrawledPage(url="http://example.com/1", title="Python",
+                        content="Python programming language", word_count=4)
+        ]
+        result = orch._stage_tag(pages)
+        assert len(result) == 1
+        orch.close()
+
+    def test_stage_index_returns_all_pages(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        from personal_index.models import CrawledPage
+        pages = [
+            CrawledPage(url="http://example.com/1", title="Test",
+                        content="Some content here", word_count=4)
+        ]
+        result = orch._stage_index(pages)
+        assert len(result) == 1
+        orch.close()
+
+    def test_run_stage_includes_matching(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        from personal_index.models import CrawledPage
+        pages = [
+            CrawledPage(url=f"http://example.com/{i}", title=f"Page {i}",
+                        content=f"Content {i}", word_count=3)
+            for i in range(3)
+        ]
+        # Include only even-indexed pages
+        result = orch._run_stage(
+            pages,
+            lambda page: int(page.url.split("/")[-1]) % 2 == 0,
+            "test",
+        )
+        assert len(result) == 2  # pages 0 and 2
+        orch.close()
+
+    def test_run_stage_empty_input(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+        result = orch._run_stage([], lambda p: True, "test")
+        assert result == []
+        orch.close()
+
+    def test_run_stage_progress_callback(self, tmp_path):
+        data_dir = str(tmp_path / "data")
+        callbacks = []
+
+        def cb(stage, current, total):
+            callbacks.append((stage, current, total))
+
+        orch = PipelineOrchestrator(data_dir=data_dir, progress_callback=cb)
+
+        from personal_index.models import CrawledPage
+        pages = [
+            CrawledPage(url=f"http://example.com/{i}", title=f"Page {i}",
+                        content=f"Content {i}", word_count=3)
+            for i in range(3)
+        ]
+        orch._run_stage(pages, lambda p: True, "my_stage")
+
+        assert len(callbacks) > 0
+        stages = [c[0] for c in callbacks]
+        assert "my_stage" in stages
+        orch.close()
