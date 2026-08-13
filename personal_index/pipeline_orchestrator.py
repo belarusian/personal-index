@@ -119,6 +119,71 @@ class PipelineOrchestrator:
             except (RuntimeError, TypeError):
                 pass
 
+    def _run_stage(
+        self,
+        items: list[CrawledPage],
+        stage_fn,
+        stage_name: str,
+    ) -> list[CrawledPage]:
+        """Generic stage runner that handles loop, progress, and inclusion.
+
+        Args:
+            items: List of pages to process.
+            stage_fn: Callable(page) -> bool. Called on each page; return True
+                to include the page in the output list.
+            stage_name: Human-readable stage name for logging/progress.
+
+        Returns:
+            List of pages for which stage_fn returned True.
+        """
+        total = len(items)
+        self._emit_progress(stage_name, 0, total)
+
+        passed: list[CrawledPage] = []
+        for i, page in enumerate(items):
+            include = stage_fn(page)
+            if include:
+                passed.append(page)
+            self._emit_progress(stage_name, i + 1, total)
+
+        return passed
+
+    def _stage_read(self, filepaths: list[str]) -> list[CrawledPage]:
+        """Stage 1 of run_from_files: read local files into CrawledPage objects."""
+        pages: list[CrawledPage] = []
+        for filepath in filepaths:
+            page = self._read_file_as_page(filepath)
+            if page:
+                pages.append(page)
+        return pages
+
+    def _stage_filter(self, pages: list[CrawledPage]) -> list[CrawledPage]:
+        """Stage: filter pages through content filter."""
+        filtered: list[CrawledPage] = []
+        for page in pages:
+            if self.content_filter.should_include(page):
+                filtered.append(page)
+        return filtered
+
+    def _stage_score(self, pages: list[CrawledPage]) -> list[CrawledPage]:
+        """Stage: score pages based on content and interests."""
+        for page in pages:
+            score = self._score_page(page)
+            page.relevance_score = score
+        return pages
+
+    def _stage_tag(self, pages: list[CrawledPage]) -> list[CrawledPage]:
+        """Stage: auto-tag pages based on interests and keywords."""
+        for page in pages:
+            self._tag_page(page)
+        return pages
+
+    def _stage_index(self, pages: list[CrawledPage]) -> list[CrawledPage]:
+        """Stage: add pages to the search index."""
+        for page in pages:
+            self.search_index.add_page(page)
+        return pages
+
     def run(self, seed_urls: list[str]) -> PipelineResult:
         """Run the full pipeline on seed URLs.
 
@@ -145,43 +210,42 @@ class PipelineOrchestrator:
 
             # Stage 3: Filter
             logger.info("Stage 3/6: Filtering %d pages", len(crawled_pages))
-            self._emit_progress("filter", 0, len(crawled_pages))
-            filtered_pages = []
-            for i, page in enumerate(crawled_pages):
-                if self.content_filter.should_include(page):
-                    filtered_pages.append(page)
-                    result.stats.pages_passed_filter += 1
-                else:
-                    result.stats.pages_filtered_out += 1
-                self._emit_progress("filter", i + 1, len(crawled_pages))
+            filtered_pages = self._run_stage(
+                crawled_pages,
+                lambda page: self._apply_filter(page, result),
+                "filter",
+            )
+            result.stats.pages_passed_filter = len(filtered_pages)
+            result.stats.pages_filtered_out = len(crawled_pages) - len(filtered_pages)
             logger.info("Filtered to %d pages", len(filtered_pages))
 
             # Stage 4: Score
             logger.info("Stage 4/6: Scoring %d pages", len(filtered_pages))
-            self._emit_progress("score", 0, len(filtered_pages))
-            for i, page in enumerate(filtered_pages):
-                score = self._score_page(page)
-                page.relevance_score = score
-                result.stats.pages_scored += 1
-                self._emit_progress("score", i + 1, len(filtered_pages))
+            scored_pages = self._run_stage(
+                filtered_pages,
+                lambda page: self._apply_score(page),
+                "score",
+            )
+            result.stats.pages_scored = len(scored_pages)
 
             # Stage 5: Tag
-            logger.info("Stage 5/6: Tagging %d pages", len(filtered_pages))
-            self._emit_progress("tag", 0, len(filtered_pages))
-            for i, page in enumerate(filtered_pages):
-                tags = self._tag_page(page)
-                result.stats.pages_tagged += 1
-                result.stats.tags_applied += len(tags)
-                self._emit_progress("tag", i + 1, len(filtered_pages))
+            logger.info("Stage 5/6: Tagging %d pages", len(scored_pages))
+            tagged_pages = self._run_stage(
+                scored_pages,
+                lambda page: self._apply_tag(page, result),
+                "tag",
+            )
+            result.stats.pages_tagged = len(tagged_pages)
 
             # Stage 6: Index
-            logger.info("Stage 6/6: Indexing %d pages", len(filtered_pages))
-            self._emit_progress("index", 0, len(filtered_pages))
-            for i, page in enumerate(filtered_pages):
-                self.search_index.add_page(page)
-                result.stats.pages_indexed += 1
-                result.pages.append(page)
-                self._emit_progress("index", i + 1, len(filtered_pages))
+            logger.info("Stage 6/6: Indexing %d pages", len(tagged_pages))
+            indexed_pages = self._run_stage(
+                tagged_pages,
+                lambda page: self._apply_index(page, result),
+                "index",
+            )
+            result.stats.pages_indexed = len(indexed_pages)
+            result.pages.extend(indexed_pages)
 
         except (RuntimeError, OSError) as e:
             logger.exception("Pipeline error")
@@ -191,6 +255,29 @@ class PipelineOrchestrator:
             result.stats.elapsed_seconds = time.time() - start_time
 
         return result
+
+    def _apply_filter(self, page: CrawledPage, result: PipelineResult) -> bool:
+        """Filter callback for _run_stage. Returns True if page should be included."""
+        return self.content_filter.should_include(page)
+
+    def _apply_score(self, page: CrawledPage) -> bool:
+        """Score callback for _run_stage. Scores page and returns True."""
+        score = self._score_page(page)
+        page.relevance_score = score
+        return True
+
+    def _apply_tag(self, page: CrawledPage, result: PipelineResult) -> bool:
+        """Tag callback for _run_stage. Tags page, updates stats, returns True."""
+        tags = self._tag_page(page)
+        result.stats.pages_tagged += 1
+        result.stats.tags_applied += len(tags)
+        return True
+
+    def _apply_index(self, page: CrawledPage, result: PipelineResult) -> bool:
+        """Index callback for _run_stage. Indexes page, updates stats, returns True."""
+        self.search_index.add_page(page)
+        result.stats.pages_indexed += 1
+        return True
 
     def run_from_files(self, filepaths: list[str]) -> PipelineResult:
         """Run the pipeline on local files (skip crawl stage).
@@ -208,55 +295,50 @@ class PipelineOrchestrator:
             # Stage 1: Read files (replaces crawl)
             logger.info("Stage 1/5: Reading %d files", len(filepaths))
             self._emit_progress("read", 0, len(filepaths))
-            pages = []
-            for i, filepath in enumerate(filepaths):
-                page = self._read_file_as_page(filepath)
-                if page:
-                    pages.append(page)
-                    result.stats.pages_crawled += 1
-                self._emit_progress("read", i + 1, len(filepaths))
+            pages = self._stage_read(filepaths)
+            result.stats.pages_crawled = len(pages)
+            self._emit_progress("read", len(filepaths), len(filepaths))
             logger.info("Read %d files", len(pages))
 
             result.stats.pages_extracted = len(pages)
 
             # Stage 2: Filter
             logger.info("Stage 2/5: Filtering %d pages", len(pages))
-            self._emit_progress("filter", 0, len(pages))
-            filtered_pages = []
-            for i, page in enumerate(pages):
-                if self.content_filter.should_include(page):
-                    filtered_pages.append(page)
-                    result.stats.pages_passed_filter += 1
-                else:
-                    result.stats.pages_filtered_out += 1
-                self._emit_progress("filter", i + 1, len(pages))
+            filtered_pages = self._run_stage(
+                pages,
+                lambda page: self._apply_filter(page, result),
+                "filter",
+            )
+            result.stats.pages_passed_filter = len(filtered_pages)
+            result.stats.pages_filtered_out = len(pages) - len(filtered_pages)
 
             # Stage 3: Score
             logger.info("Stage 3/5: Scoring %d pages", len(filtered_pages))
-            self._emit_progress("score", 0, len(filtered_pages))
-            for i, page in enumerate(filtered_pages):
-                score = self._score_page(page)
-                page.relevance_score = score
-                result.stats.pages_scored += 1
-                self._emit_progress("score", i + 1, len(filtered_pages))
+            scored_pages = self._run_stage(
+                filtered_pages,
+                lambda page: self._apply_score(page),
+                "score",
+            )
+            result.stats.pages_scored = len(scored_pages)
 
             # Stage 4: Tag
-            logger.info("Stage 4/5: Tagging %d pages", len(filtered_pages))
-            self._emit_progress("tag", 0, len(filtered_pages))
-            for i, page in enumerate(filtered_pages):
-                tags = self._tag_page(page)
-                result.stats.pages_tagged += 1
-                result.stats.tags_applied += len(tags)
-                self._emit_progress("tag", i + 1, len(filtered_pages))
+            logger.info("Stage 4/5: Tagging %d pages", len(scored_pages))
+            tagged_pages = self._run_stage(
+                scored_pages,
+                lambda page: self._apply_tag(page, result),
+                "tag",
+            )
+            result.stats.pages_tagged = len(tagged_pages)
 
             # Stage 5: Index
-            logger.info("Stage 5/5: Indexing %d pages", len(filtered_pages))
-            self._emit_progress("index", 0, len(filtered_pages))
-            for i, page in enumerate(filtered_pages):
-                self.search_index.add_page(page)
-                result.stats.pages_indexed += 1
-                result.pages.append(page)
-                self._emit_progress("index", i + 1, len(filtered_pages))
+            logger.info("Stage 5/5: Indexing %d pages", len(tagged_pages))
+            indexed_pages = self._run_stage(
+                tagged_pages,
+                lambda page: self._apply_index(page, result),
+                "index",
+            )
+            result.stats.pages_indexed = len(indexed_pages)
+            result.pages.extend(indexed_pages)
 
         except (RuntimeError, OSError) as e:
             logger.exception("Pipeline error")
