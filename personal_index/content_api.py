@@ -30,7 +30,8 @@ class ContentAPI:
         params = parse_qs(query_string)
         handler = self._match_route(method, path_parts, params, body)
         if handler:
-            return handler()
+            result = handler()
+            return result  # type: ignore[no-any-return]
         return 404, {"error": "Not found", "path": path}
 
     def _match_route(
