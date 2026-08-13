@@ -27,49 +27,39 @@ class MigrationRunner:
         self.store = store or MigrationStore()
 
     def run_pending(self, dry_run: bool = False) -> list[MigrationRecord]:
-        """Run all pending migrations.
-
-        Args:
-            dry_run: If True, only validate without applying.
-
-        Returns:
-            List of MigrationRecord for applied migrations.
-        """
+        """Run all pending migrations."""
         pending = self.registry.get_pending(self.store.get_applied_versions())
-        results = []
-
+        results: list[MigrationRecord] = []
         for migration_class in pending:
             migration = migration_class()
-            errors = migration.validate()
-            if errors:
-                logger.warning(
-                    "Migration %s validation failed: %s",
-                    migration.name,
-                    errors,
-                )
-                raise MigrationError(
-                    f"Migration {migration.name} validation failed: {errors}"
-                )
-
+            self._validate_migration(migration)
             if dry_run:
                 logger.info("[DRY RUN] Would apply migration: %s", migration.name)
                 continue
-
-            start = time.monotonic()
-            operations = migration.upgrade()
-            duration_ms = (time.monotonic() - start) * 1000
-
-            record = self.store.record_applied(migration, duration_ms)
+            record = self._apply_migration(migration)
             results.append(record)
-            logger.info(
-                "Applied migration %s (v%d) in %.1fms: %s",
-                migration.name,
-                migration.version,
-                duration_ms,
-                operations,
+        return results
+
+    def _validate_migration(self, migration) -> None:
+        """Validate a migration, raising on failure."""
+        errors = migration.validate()
+        if errors:
+            logger.warning("Migration %s validation failed: %s", migration.name, errors)
+            raise MigrationError(
+                f"Migration {migration.name} validation failed: {errors}"
             )
 
-        return results
+    def _apply_migration(self, migration) -> MigrationRecord:
+        """Apply a migration and return the record."""
+        start = time.monotonic()
+        operations = migration.upgrade()
+        duration_ms = (time.monotonic() - start) * 1000
+        record = self.store.record_applied(migration, duration_ms)
+        logger.info(
+            "Applied migration %s (v%d) in %.1fms: %s",
+            migration.name, migration.version, duration_ms, operations,
+        )
+        return record
 
     def rollback(self, steps: int = 1, dry_run: bool = False) -> list[MigrationRecord]:
         """Rollback applied migrations.

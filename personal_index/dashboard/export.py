@@ -125,17 +125,17 @@ class DashboardExporter:
         fmt: ExportFormat = ExportFormat.CSV,
         filename: str | None = None,
     ) -> ExportResult:
-        """Export time series data.
+        """Export time series data."""
+        rows = self._points_to_rows(series)
+        content, fname = self._format_output(rows, fmt, filename or "timeseries")
+        return ExportResult(
+            format=fmt.value, content=content, filename=fname, row_count=len(rows),
+        )
 
-        Args:
-            series: List of time series points.
-            fmt: Export format.
-            filename: Optional filename override.
-
-        Returns:
-            ExportResult with content and metadata.
-        """
-        rows = []
+    @staticmethod
+    def _points_to_rows(series: list[Any]) -> list[dict[str, Any]]:
+        """Convert time series points to list of dicts."""
+        rows: list[dict[str, Any]] = []
         for point in series:
             if hasattr(point, "to_dict"):
                 rows.append(point.to_dict())
@@ -143,25 +143,7 @@ class DashboardExporter:
                 rows.append(point)
             else:
                 rows.append(asdict(point))
-
-        if fmt == ExportFormat.JSON:
-            content = json.dumps(rows, indent=2, default=str)
-            fname = filename or "timeseries.json"
-        elif fmt == ExportFormat.CSV:
-            content = self._dict_to_csv(rows)
-            fname = filename or "timeseries.csv"
-        elif fmt == ExportFormat.TSV:
-            content = self._dict_to_tsv(rows)
-            fname = filename or "timeseries.tsv"
-        else:
-            raise ValueError(f"Unsupported format: {fmt}")
-
-        return ExportResult(
-            format=fmt.value,
-            content=content,
-            filename=fname,
-            row_count=len(rows),
-        )
+        return rows
 
     @staticmethod
     def _dict_to_csv(rows: list[dict[str, Any]]) -> str:
