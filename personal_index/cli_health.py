@@ -17,42 +17,33 @@ from personal_index.content_health import (
 @click.option("--require-tags", is_flag=True, help="Require tags on all items")
 @click.option("--min-score", type=float, default=0.0, help="Minimum score threshold")
 @click.pass_context
-def health(
-    ctx,
-    data_dir,
-    min_content_length,
-    min_title_length,
-    require_tags,
-    min_score,
-):
-    """Check the health of indexed content.
-
-    Analyzes all indexed pages for quality issues including
-    missing titles, short content, and bad status codes.
-
-    Examples:
-        personal-index health
-        personal-index health --require-tags --min-score 5.0
-        personal-index health --min-content-length 100
-    """
+def health(ctx, data_dir, min_content_length, min_title_length, require_tags, min_score):
+    """Check the health of indexed content."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-
-    # Load indexed content
-    from personal_index.index import SearchIndex
-    idx_path = f"{dd}/search_index.json"
-    idx = SearchIndex(db_path=idx_path)
-
-    # Load tags
-    from personal_index.tags import TagStore
-    tag_path = f"{dd}/tags.json"
-    tag_store = TagStore(store_path=tag_path)
+    idx, tag_store = _load_stores(dd)
 
     pages = idx.list_pages()
     if not pages:
         click.echo("No indexed content found. Run 'personal-index pipeline' first.")
         return
 
-    # Build items for health check
+    items = _build_health_items(pages, tag_store)
+    config = _build_config(min_content_length, min_title_length, require_tags, min_score)
+    checker = ContentHealthChecker(config=config)
+    report = checker.check_all(items)
+
+    _print_report(report)
+
+
+def _load_stores(data_dir: str):
+    from personal_index.index import SearchIndex
+    from personal_index.tags import TagStore
+    idx = SearchIndex(db_path=f"{data_dir}/search_index.json")
+    tag_store = TagStore(store_path=f"{data_dir}/tags.json")
+    return idx, tag_store
+
+
+def _build_health_items(pages, tag_store):
     items = []
     for page in pages:
         page_tags = list(tag_store.get_tags_for_url(page.url))
@@ -64,38 +55,45 @@ def health(
             "score": page.score,
             "status_code": getattr(page, "status_code", 200),
         })
+    return items
 
-    # Configure and run health check
-    config = ContentHealthCheck(
+
+def _build_config(min_content_length, min_title_length, require_tags, min_score):
+    return ContentHealthCheck(
         min_content_length=min_content_length,
         min_title_length=min_title_length,
         require_tags=require_tags,
         require_score=min_score > 0,
         min_score=min_score,
     )
-    checker = ContentHealthChecker(config=config)
-    report = checker.check_all(items)
 
-    # Print report
+
+def _print_report(report):
     click.echo(report.summary())
     click.echo()
-
-    # Print issues
     if report.total_issues > 0:
-        click.echo(f"Issues Found ({report.total_issues}):")
-        click.echo("-" * 40)
-        for result in report.results:
-            if result.issues:
-                click.echo(f"\n  {result.url}")
-                for issue in result.issues:
-                    severity_icon = {
-                        "critical": "🔴",
-                        "high": "🟠",
-                        "medium": "🟡",
-                        "low": "🔵",
-                    }.get(issue.severity.value, "⚪")
-                    click.echo(f"    {severity_icon} [{issue.severity.value}] {issue.message}")
-                    if issue.suggestion:
-                        click.echo(f"       → {issue.suggestion}")
+        _print_issues(report)
     else:
         click.echo("✓ All content is healthy!")
+
+
+def _print_issues(report):
+    click.echo(f"Issues Found ({report.total_issues}):")
+    click.echo("-" * 40)
+    for result in report.results:
+        if result.issues:
+            click.echo(f"\n  {result.url}")
+            for issue in result.issues:
+                icon = _severity_icon(issue.severity.value)
+                click.echo(f"    {icon} [{issue.severity.value}] {issue.message}")
+                if issue.suggestion:
+                    click.echo(f"       → {issue.suggestion}")
+
+
+def _severity_icon(severity: str) -> str:
+    return {
+        "critical": "🔴",
+        "high": "🟠",
+        "medium": "🟡",
+        "low": "🔵",
+    }.get(severity, "⚪")

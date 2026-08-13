@@ -343,17 +343,7 @@ class ContentCategorizer:
         url: str = "",
         meta_description: str = "",
     ) -> CategorizationResult:
-        """Categorize content into topics.
-
-        Args:
-            text: Main content text to analyze.
-            title: Title or heading of the content (boosts matching).
-            url: URL of the content (provides path hints).
-            meta_description: Meta description text (boosts matching).
-
-        Returns:
-            CategorizationResult with ranked topics and confidence.
-        """
+        """Categorize content into topics."""
         if not text and not title and not meta_description:
             return CategorizationResult(
                 primary_topic="unknown",
@@ -362,21 +352,46 @@ class ContentCategorizer:
                 reasons=["no content provided"],
             )
 
-        # Tokenize all signals
-        text_tokens = set(tokenize(text, lowercase=True, remove_stopwords=True))
-        title_tokens = set(tokenize(title, lowercase=True, remove_stopwords=True))
-        meta_tokens = set(tokenize(meta_description, lowercase=True, remove_stopwords=True))
-
-        # Raw lowercased text for multi-word keyword matching
-        text_lower = text.lower()
-        title_lower = title.lower()
-        meta_lower = meta_description.lower()
-
-        # Extract URL hints
+        tokens = self._tokenize_signals(text, title, meta_description)
+        text_lower, title_lower, meta_lower = self._lowercase_signals(
+            text, title, meta_description
+        )
         url_hints = self._extract_url_hints(url)
 
-        # Score each topic
-        topic_scores: list[TopicScore] = []
+        topic_scores = self._score_all_topics(
+            tokens["text"], tokens["title"], tokens["meta"],
+            text_lower, title_lower, meta_lower, url_hints,
+        )
+        topic_scores = topic_scores[:self._max_topics]
+
+        primary, confidence = self._primary_and_confidence(topic_scores)
+        reasons = self._build_reasons(topic_scores, text)
+
+        return CategorizationResult(
+            primary_topic=primary,
+            topics=topic_scores,
+            confidence=round(confidence, 4),
+            reasons=reasons,
+            text_length=len(text.split()),
+            keyword_count=len(tokens["text"]),
+        )
+
+    def _tokenize_signals(
+        self, text: str, title: str, meta: str
+    ) -> dict[str, set]:
+        def tok(s: str) -> set:
+            return set(tokenize(s, lowercase=True, remove_stopwords=True))
+        return {"text": tok(text), "title": tok(title), "meta": tok(meta)}
+
+    @staticmethod
+    def _lowercase_signals(text: str, title: str, meta: str) -> tuple[str, str, str]:
+        return text.lower(), title.lower(), meta.lower()
+
+    def _score_all_topics(
+        self, text_tokens, title_tokens, meta_tokens,
+        text_lower: str, title_lower: str, meta_lower: str, url_hints
+    ) -> list[TopicScore]:
+        scores: list[TopicScore] = []
         for topic_name, topic in self._topics.items():
             score, matched, sources = self._score_topic(
                 topic=topic,
@@ -389,36 +404,22 @@ class ContentCategorizer:
                 url_hints=url_hints,
             )
             if score >= self.min_score:
-                topic_scores.append(TopicScore(
+                scores.append(TopicScore(
                     topic=topic_name,
                     score=round(score, 4),
                     matched_keywords=matched,
                     signal_sources=sources,
                 ))
+        scores.sort(key=lambda s: s.score, reverse=True)
+        return scores
 
-        # Sort by score descending
-        topic_scores.sort(key=lambda s: s.score, reverse=True)
-        topic_scores = topic_scores[: self._max_topics]
-
-        # Determine primary topic and confidence
+    @staticmethod
+    def _primary_and_confidence(
+        topic_scores: list[TopicScore],
+    ) -> tuple[str, float]:
         if topic_scores:
-            primary = topic_scores[0].topic
-            confidence = topic_scores[0].score
-        else:
-            primary = "uncategorized"
-            confidence = 0.0
-
-        # Build reasons
-        reasons = self._build_reasons(topic_scores, text)
-
-        return CategorizationResult(
-            primary_topic=primary,
-            topics=topic_scores,
-            confidence=round(confidence, 4),
-            reasons=reasons,
-            text_length=len(text.split()),
-            keyword_count=len(text_tokens),
-        )
+            return topic_scores[0].topic, topic_scores[0].score
+        return "uncategorized", 0.0
 
     def categorize_batch(
         self,

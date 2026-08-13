@@ -136,126 +136,35 @@ class ContentHealthChecker:
         score: float = 0.0,
         status_code: int = 200,
     ) -> HealthCheckResult:
-        """Check health of a single content item.
-
-        Args:
-            url: Content URL.
-            title: Content title.
-            content: Content text.
-            tags: Content tags.
-            score: Content score.
-            status_code: HTTP status code.
-
-        Returns:
-            HealthCheckResult with status and issues.
-        """
+        """Check health of a single content item."""
         issues: list[HealthIssue] = []
         checks_total = 0
         checks_passed = 0
 
-        # Check 1: URL validity
-        checks_total += 1
-        if url and len(url) > 5:
-            checks_passed += 1
-        else:
-            issues.append(HealthIssue(
-                url=url, title=title,
-                issue_type="invalid_url",
-                severity=IssueSeverity.HIGH,
-                message="URL is missing or too short",
-                suggestion="Ensure content has a valid URL",
-            ))
+        checks_total, checks_passed = self._check_url(
+            url, title, checks_total, checks_passed, issues
+        )
+        checks_total, checks_passed = self._check_title_presence(
+            title, url, checks_total, checks_passed, issues
+        )
+        checks_total, checks_passed = self._check_title_length(
+            title, url, checks_total, checks_passed, issues
+        )
+        checks_total, checks_passed = self._check_content_length(
+            content, url, title, checks_total, checks_passed, issues
+        )
+        checks_total, checks_passed = self._check_tags(
+            tags, url, title, checks_total, checks_passed, issues
+        )
+        checks_total, checks_passed = self._check_score(
+            score, url, title, checks_total, checks_passed, issues
+        )
+        checks_total, checks_passed = self._check_status_code(
+            status_code, url, title, checks_total, checks_passed, issues
+        )
 
-        # Check 2: Title presence
-        checks_total += 1
-        if title and len(title) >= self.config.min_title_length:
-            checks_passed += 1
-        else:
-            issues.append(HealthIssue(
-                url=url, title=title,
-                issue_type="missing_title",
-                severity=IssueSeverity.MEDIUM,
-                message=f"Title is missing or too short (min {self.config.min_title_length} chars)",
-                suggestion="Add a descriptive title",
-            ))
-
-        # Check 3: Title length
-        checks_total += 1
-        if len(title) <= self.config.max_title_length:
-            checks_passed += 1
-        else:
-            issues.append(HealthIssue(
-                url=url, title=title,
-                issue_type="title_too_long",
-                severity=IssueSeverity.LOW,
-                message=f"Title exceeds {self.config.max_title_length} characters",
-                suggestion="Shorten the title",
-            ))
-
-        # Check 4: Content length
-        checks_total += 1
-        if len(content) >= self.config.min_content_length:
-            checks_passed += 1
-        else:
-            issues.append(HealthIssue(
-                url=url, title=title,
-                issue_type="low_content",
-                severity=IssueSeverity.MEDIUM,
-                message=f"Content is too short ({len(content)} chars, min {self.config.min_content_length})",
-                suggestion="Ensure content has sufficient text",
-            ))
-
-        # Check 5: Tags (if required)
-        if self.config.require_tags:
-            checks_total += 1
-            if tags and len(tags) >= self.config.min_tags:
-                checks_passed += 1
-            else:
-                issues.append(HealthIssue(
-                    url=url, title=title,
-                    issue_type="missing_tags",
-                    severity=IssueSeverity.LOW,
-                    message=f"Content has no tags (min {self.config.min_tags} required)",
-                    suggestion="Add relevant tags for better organization",
-                ))
-
-        # Check 6: Score (if required)
-        if self.config.require_score:
-            checks_total += 1
-            if score >= self.config.min_score:
-                checks_passed += 1
-            else:
-                issues.append(HealthIssue(
-                    url=url, title=title,
-                    issue_type="low_score",
-                    severity=IssueSeverity.LOW,
-                    message=f"Score is below minimum ({score} < {self.config.min_score})",
-                    suggestion="Review content quality or adjust scoring",
-                ))
-
-        # Check 7: Status code
-        checks_total += 1
-        if 200 <= status_code < 400:
-            checks_passed += 1
-        else:
-            issues.append(HealthIssue(
-                url=url, title=title,
-                issue_type="bad_status",
-                severity=IssueSeverity.HIGH,
-                message=f"HTTP status code {status_code}",
-                suggestion="Check if the URL is still accessible",
-            ))
-
-        # Calculate score
         score_val = (checks_passed / checks_total * 100) if checks_total > 0 else 0.0
-
-        # Determine status
-        if any(i.severity == IssueSeverity.CRITICAL for i in issues) or any(i.severity == IssueSeverity.HIGH for i in issues):
-            status = HealthStatus.UNHEALTHY
-        elif any(i.severity == IssueSeverity.MEDIUM for i in issues) or issues:
-            status = HealthStatus.WARNING
-        else:
-            status = HealthStatus.HEALTHY
+        status = self._determine_status(issues)
 
         return HealthCheckResult(
             url=url,
@@ -266,6 +175,127 @@ class ContentHealthChecker:
             checks_passed=checks_passed,
             checks_total=checks_total,
         )
+
+    def _check_url(
+        self, url: str, title: str, ct: int, cp: int, issues: list[HealthIssue]
+    ) -> tuple[int, int]:
+        ct += 1
+        if url and len(url) > 5:
+            cp += 1
+        else:
+            issues.append(HealthIssue(
+                url=url, title=title, issue_type="invalid_url",
+                severity=IssueSeverity.HIGH,
+                message="URL is missing or too short",
+                suggestion="Ensure content has a valid URL",
+            ))
+        return ct, cp
+
+    def _check_title_presence(
+        self, title: str, url: str, ct: int, cp: int, issues: list[HealthIssue]
+    ) -> tuple[int, int]:
+        ct += 1
+        if title and len(title) >= self.config.min_title_length:
+            cp += 1
+        else:
+            issues.append(HealthIssue(
+                url=url, title=title, issue_type="missing_title",
+                severity=IssueSeverity.MEDIUM,
+                message=f"Title is missing or too short (min {self.config.min_title_length} chars)",
+                suggestion="Add a descriptive title",
+            ))
+        return ct, cp
+
+    def _check_title_length(
+        self, title: str, url: str, ct: int, cp: int, issues: list[HealthIssue]
+    ) -> tuple[int, int]:
+        ct += 1
+        if len(title) <= self.config.max_title_length:
+            cp += 1
+        else:
+            issues.append(HealthIssue(
+                url=url, title=title, issue_type="title_too_long",
+                severity=IssueSeverity.LOW,
+                message=f"Title exceeds {self.config.max_title_length} characters",
+                suggestion="Shorten the title",
+            ))
+        return ct, cp
+
+    def _check_content_length(
+        self, content: str, url: str, title: str, ct: int, cp: int, issues: list[HealthIssue]
+    ) -> tuple[int, int]:
+        ct += 1
+        if len(content) >= self.config.min_content_length:
+            cp += 1
+        else:
+            issues.append(HealthIssue(
+                url=url, title=title, issue_type="low_content",
+                severity=IssueSeverity.MEDIUM,
+                message=f"Content is too short ({len(content)} chars, min {self.config.min_content_length})",
+                suggestion="Ensure content has sufficient text",
+            ))
+        return ct, cp
+
+    def _check_tags(
+        self, tags: list[str] | None, url: str, title: str,
+        ct: int, cp: int, issues: list[HealthIssue]
+    ) -> tuple[int, int]:
+        if not self.config.require_tags:
+            return ct, cp
+        ct += 1
+        if tags and len(tags) >= self.config.min_tags:
+            cp += 1
+        else:
+            issues.append(HealthIssue(
+                url=url, title=title, issue_type="missing_tags",
+                severity=IssueSeverity.LOW,
+                message=f"Content has no tags (min {self.config.min_tags} required)",
+                suggestion="Add relevant tags for better organization",
+            ))
+        return ct, cp
+
+    def _check_score(
+        self, score: float, url: str, title: str,
+        ct: int, cp: int, issues: list[HealthIssue]
+    ) -> tuple[int, int]:
+        if not self.config.require_score:
+            return ct, cp
+        ct += 1
+        if score >= self.config.min_score:
+            cp += 1
+        else:
+            issues.append(HealthIssue(
+                url=url, title=title, issue_type="low_score",
+                severity=IssueSeverity.LOW,
+                message=f"Score is below minimum ({score} < {self.config.min_score})",
+                suggestion="Review content quality or adjust scoring",
+            ))
+        return ct, cp
+
+    def _check_status_code(
+        self, status_code: int, url: str, title: str,
+        ct: int, cp: int, issues: list[HealthIssue]
+    ) -> tuple[int, int]:
+        ct += 1
+        if 200 <= status_code < 400:
+            cp += 1
+        else:
+            issues.append(HealthIssue(
+                url=url, title=title, issue_type="bad_status",
+                severity=IssueSeverity.HIGH,
+                message=f"HTTP status code {status_code}",
+                suggestion="Check if the URL is still accessible",
+            ))
+        return ct, cp
+
+    @staticmethod
+    def _determine_status(issues: list[HealthIssue]) -> HealthStatus:
+        if any(i.severity == IssueSeverity.CRITICAL for i in issues) or \
+           any(i.severity == IssueSeverity.HIGH for i in issues):
+            return HealthStatus.UNHEALTHY
+        if any(i.severity == IssueSeverity.MEDIUM for i in issues) or issues:
+            return HealthStatus.WARNING
+        return HealthStatus.HEALTHY
 
     def check_all(
         self,

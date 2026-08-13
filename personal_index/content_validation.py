@@ -105,85 +105,96 @@ class ContentValidator:
         self,
         items: list[dict[str, Any]],
     ) -> ValidationResult:
-        """Validate a list of content items.
-
-        Args:
-            items: List of content item dictionaries.
-
-        Returns:
-            ValidationResult with errors and warnings.
-        """
+        """Validate a list of content items."""
         result = ValidationResult()
 
         for i, item in enumerate(items):
-            item_valid = True
-            prefix = f"item[{i}]"
-
-            # Check required fields
-            for field_name in self.required_fields:
-                if field_name not in item:
-                    result.add_error(
-                        f"{prefix}.{field_name}",
-                        f"Required field '{field_name}' is missing",
-                    )
-                    item_valid = False
-
-            # Validate URL
-            url = item.get("url", "")
-            if url:
-                if not self._is_valid_url(url):
-                    result.add_error(
-                        f"{prefix}.url",
-                        f"Invalid URL: {url}",
-                        value=url,
-                    )
-                    item_valid = False
-                elif len(url) > self.max_url_length:
-                    result.add_error(
-                        f"{prefix}.url",
-                        f"URL exceeds max length of {self.max_url_length}",
-                    )
-                    item_valid = False
-
-            # Validate title
-            title = item.get("title", "")
-            if title and len(title) > self.max_title_length:
-                result.add_warning(
-                    f"{prefix}.title",
-                    f"Title exceeds recommended length of {self.max_title_length}",
-                )
-
-            # Validate score range
-            score = item.get("score")
-            if score is not None:
-                if not isinstance(score, (int, float)):
-                    result.add_error(
-                        f"{prefix}.score",
-                        "Score must be a number",
-                    )
-                    item_valid = False
-                elif not (0.0 <= score <= 1.0):
-                    result.add_warning(
-                        f"{prefix}.score",
-                        f"Score {score} is outside typical range [0, 1]",
-                    )
-
-            # Validate date fields
-            for date_field in ("published_at", "updated_at"):
-                date_val = item.get(date_field)
-                if date_val and not self._is_valid_date(date_val):
-                    result.add_error(
-                        f"{prefix}.{date_field}",
-                        f"Invalid date format: {date_val}",
-                    )
-                    item_valid = False
-
+            item_valid = self._validate_item(item, i, result)
             if item_valid:
                 result.items_valid += 1
             else:
                 result.items_invalid += 1
 
         return result
+
+    def _validate_item(
+        self, item: dict[str, Any], index: int, result: ValidationResult
+    ) -> bool:
+        item_valid = True
+        prefix = f"item[{index}]"
+        item_valid = self._check_required_fields(item, prefix, result) and item_valid
+        item_valid = self._validate_url(item, prefix, result) and item_valid
+        self._validate_title(item, prefix, result)
+        item_valid = self._validate_score(item, prefix, result) and item_valid
+        item_valid = self._validate_dates(item, prefix, result) and item_valid
+        return item_valid
+
+    def _check_required_fields(
+        self, item: dict[str, Any], prefix: str, result: ValidationResult
+    ) -> bool:
+        valid = True
+        for field_name in self.required_fields:
+            if field_name not in item:
+                result.add_error(
+                    f"{prefix}.{field_name}",
+                    f"Required field '{field_name}' is missing",
+                )
+                valid = False
+        return valid
+
+    def _validate_url(
+        self, item: dict[str, Any], prefix: str, result: ValidationResult
+    ) -> bool:
+        url = item.get("url", "")
+        if not url:
+            return True
+        if not self._is_valid_url(url):
+            result.add_error(f"{prefix}.url", f"Invalid URL: {url}", value=url)
+            return False
+        if len(url) > self.max_url_length:
+            result.add_error(
+                f"{prefix}.url", f"URL exceeds max length of {self.max_url_length}"
+            )
+            return False
+        return True
+
+    def _validate_title(
+        self, item: dict[str, Any], prefix: str, result: ValidationResult
+    ) -> None:
+        title = item.get("title", "")
+        if title and len(title) > self.max_title_length:
+            result.add_warning(
+                f"{prefix}.title",
+                f"Title exceeds recommended length of {self.max_title_length}",
+            )
+
+    def _validate_score(
+        self, item: dict[str, Any], prefix: str, result: ValidationResult
+    ) -> bool:
+        score = item.get("score")
+        if score is None:
+            return True
+        if not isinstance(score, (int, float)):
+            result.add_error(f"{prefix}.score", "Score must be a number")
+            return False
+        if not (0.0 <= score <= 1.0):
+            result.add_warning(
+                f"{prefix}.score", f"Score {score} is outside typical range [0, 1]"
+            )
+        return True
+
+    def _validate_dates(
+        self, item: dict[str, Any], prefix: str, result: ValidationResult
+    ) -> bool:
+        valid = True
+        for date_field in ("published_at", "updated_at"):
+            date_val = item.get(date_field)
+            if date_val and not self._is_valid_date(date_val):
+                result.add_error(
+                    f"{prefix}.{date_field}", f"Invalid date format: {date_val}"
+                )
+                valid = False
+        return valid
 
     def validate_single(self, item: dict[str, Any]) -> ValidationResult:
         """Validate a single content item."""

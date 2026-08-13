@@ -162,79 +162,31 @@ class ContentMonitor:
         return self.error_rates
 
     def generate_health_report(self) -> HealthReport:
-        """Generate a comprehensive health report.
-
-        Returns:
-            HealthReport with current health status.
-        """
+        """Generate a comprehensive health report."""
         warnings: list[str] = []
         critical_issues: list[str] = []
         score = 1.0
 
-        # Check if we have any data at all
         has_source_data = bool(self.source_freshness)
         has_error_data = self.error_rates.total_crawls > 0
         has_disk_data = self.index_dir is not None and self.index_dir.exists()
 
         if not has_source_data and not has_error_data and not has_disk_data:
-            return HealthReport(
-                overall_status="no_data",
-                score=1.0,
-            )
+            return HealthReport(overall_status="no_data", score=1.0)
 
-        # Check disk usage
         disk_usage = self.get_disk_usage()
-        if has_disk_data and disk_usage.total_mb > self.max_disk_mb:
-            critical_issues.append(
-                f"Disk usage {disk_usage.total_mb:.2f} MB exceeds limit {self.max_disk_mb:.2f} MB"
-            )
-            score -= 0.3
-        elif has_disk_data and disk_usage.total_mb > self.max_disk_mb * 0.8:
-            warnings.append(
-                f"Disk usage {disk_usage.total_mb:.2f} MB approaching limit {self.max_disk_mb:.2f} MB"
-            )
-            score -= 0.1
+        score = self._check_disk(
+            disk_usage, has_disk_data, warnings, critical_issues, score
+        )
+        score = self._check_errors(
+            has_error_data, warnings, critical_issues, score
+        )
+        score = self._check_staleness(
+            warnings, critical_issues, score
+        )
 
-        # Check error rates — two-tier threshold
-        # Warning when above max_error_rate, critical when >= 5x max_error_rate
-        if has_error_data:
-            if self.error_rates.error_rate >= 5 * self.max_error_rate:
-                critical_issues.append(
-                    f"Error rate {self.error_rates.error_rate:.1%} exceeds threshold {self.max_error_rate:.1%}"
-                )
-                score -= 0.3
-            elif self.error_rates.error_rate > self.max_error_rate:
-                warnings.append(
-                    f"Error rate {self.error_rates.error_rate:.1%} approaching threshold {self.max_error_rate:.1%}"
-                )
-                score -= 0.1
-
-        # Check source freshness
-        stale_sources = self.get_stale_sources()
-        total_sources = len(self.source_freshness)
-        if total_sources > 0:
-            stale_ratio = len(stale_sources) / total_sources
-            if stale_ratio > 0.5 and len(stale_sources) > 1:
-                critical_issues.append(
-                    f"Majority of sources stale ({len(stale_sources)}/{total_sources})"
-                )
-                score -= 0.3
-            elif stale_sources:
-                warnings.append(
-                    f"{len(stale_sources)} of {total_sources} sources are stale"
-                )
-                score -= 0.1
-
-        # Clamp score
         score = max(0.0, min(1.0, score))
-
-        # Determine overall status
-        if critical_issues:
-            overall_status = "critical"
-        elif warnings:
-            overall_status = "degraded"
-        else:
-            overall_status = "healthy"
+        overall_status = self._determine_overall_status(critical_issues, warnings)
 
         return HealthReport(
             overall_status=overall_status,
@@ -245,6 +197,67 @@ class ContentMonitor:
             source_freshness=dict(self.source_freshness),
             error_rates=self.error_rates,
         )
+
+    def _check_disk(
+        self, disk_usage, has_disk: bool,
+        warnings: list[str], critical: list[str], score: float
+    ) -> float:
+        if has_disk and disk_usage.total_mb > self.max_disk_mb:
+            critical.append(
+                f"Disk usage {disk_usage.total_mb:.2f} MB exceeds limit {self.max_disk_mb:.2f} MB"
+            )
+            score -= 0.3
+        elif has_disk and disk_usage.total_mb > self.max_disk_mb * 0.8:
+            warnings.append(
+                f"Disk usage {disk_usage.total_mb:.2f} MB approaching limit {self.max_disk_mb:.2f} MB"
+            )
+            score -= 0.1
+        return score
+
+    def _check_errors(
+        self, has_data: bool,
+        warnings: list[str], critical: list[str], score: float
+    ) -> float:
+        if not has_data:
+            return score
+        if self.error_rates.error_rate >= 5 * self.max_error_rate:
+            critical.append(
+                f"Error rate {self.error_rates.error_rate:.1%} exceeds threshold {self.max_error_rate:.1%}"
+            )
+            score -= 0.3
+        elif self.error_rates.error_rate > self.max_error_rate:
+            warnings.append(
+                f"Error rate {self.error_rates.error_rate:.1%} approaching threshold {self.max_error_rate:.1%}"
+            )
+            score -= 0.1
+        return score
+
+    def _check_staleness(
+        self, warnings: list[str], critical: list[str], score: float
+    ) -> float:
+        stale_sources = self.get_stale_sources()
+        total_sources = len(self.source_freshness)
+        if total_sources > 0:
+            stale_ratio = len(stale_sources) / total_sources
+            if stale_ratio > 0.5 and len(stale_sources) > 1:
+                critical.append(
+                    f"Majority of sources stale ({len(stale_sources)}/{total_sources})"
+                )
+                score -= 0.3
+            elif stale_sources:
+                warnings.append(
+                    f"{len(stale_sources)} of {total_sources} sources are stale"
+                )
+                score -= 0.1
+        return score
+
+    @staticmethod
+    def _determine_overall_status(critical: list[str], warnings: list[str]) -> str:
+        if critical:
+            return "critical"
+        if warnings:
+            return "degraded"
+        return "healthy"
 
     def reset(self) -> None:
         """Reset all monitoring data."""
