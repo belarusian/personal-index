@@ -472,7 +472,7 @@ def _compute_signals(data: DashboardData) -> dict:
                 "functions": len(m.functions),
                 "severity": "high" if m.line_count > 100 else "medium",
             })
-    no_tests.sort(key=lambda x: x["lines"], reverse=True)
+    no_tests.sort(key=lambda x: x["lines"], reverse=True)  # type: ignore[return-value, arg-type]
 
     # S2: oversized modules (>200 lines, >15 functions)
     oversized = []
@@ -485,7 +485,7 @@ def _compute_signals(data: DashboardData) -> dict:
                 "functions": fc,
                 "severity": "critical" if m.line_count > 400 else "high",
             })
-    oversized.sort(key=lambda x: x["lines"], reverse=True)
+    oversized.sort(key=lambda x: x["lines"], reverse=True)  # type: ignore[return-value, arg-type]
 
     # S5: error hotspots
     errors = []
@@ -499,7 +499,7 @@ def _compute_signals(data: DashboardData) -> dict:
                 "ruff_warnings": len(m.ruff_warnings),
                 "total": total,
             })
-    errors.sort(key=lambda x: x["total"], reverse=True)
+    errors.sort(key=lambda x: x["total"], reverse=True)  # type: ignore[return-value, arg-type]
 
     # S6: coverage estimate
     covered = set()
@@ -1275,7 +1275,7 @@ def _build_dashboard_data(modules, test_modules, test_summary, dep_graph, commit
     )
 
 
-def _write_dashboard(data, output):
+def _write_dashboard(data, output: str) -> str:
     """Generate HTML + JSON from DashboardData."""
     print(f"[docs_generator] Generating dashboard → {output}")
     generate_dashboard(data, output)

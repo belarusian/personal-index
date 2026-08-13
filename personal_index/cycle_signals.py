@@ -21,7 +21,6 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Tree summary — hierarchical grouping for LLM-friendly consumption
 # ---------------------------------------------------------------------------
@@ -84,7 +83,7 @@ def build_tree(modules: list[dict]) -> dict:
                 # S1 is noisy at 0% coverage — only flag when co-occurring with S2 or S5
                 has_s1 = m.get("tests", 0) == 0 and m.get("functions", 0) > 0
                 short = part
-                if short in ("__init__", "__main__") or short.startswith("cli_") or short.startswith("test_"):
+                if short in ("__init__", "__main__") or short.startswith(("cli_", "test_")):
                     has_s1 = False
                 has_s2 = m.get("lines", 0) >= 200 and m.get("functions", 0) >= 15
                 total_err = m.get("ruff_errors", 0) + m.get("mypy_errors", 0) + m.get("ruff_warnings", 0)
@@ -167,8 +166,7 @@ def _node_to_dict(key: str, tree: dict[str, dict]) -> dict:
     # Only include modules that have signals (keep it compact)
     signal_modules = []
     if not children:  # leaf node
-        for mod_name in node["modules"]:
-            signal_modules.append(mod_name)
+        signal_modules.extend(node["modules"])
 
     # Convert signals set to sorted list
     signals = sorted(node["signals"])
@@ -212,7 +210,7 @@ def format_tree(tree: dict, max_depth: int = 2, max_lines: int = 50) -> str:
         max_depth: max tree depth to expand (1 = top-level only, 2 = expand flagged packages)
         max_lines: hard cap on output lines
     """
-    lines = []
+    lines: list[str] = []
     root = tree.get("children", {})
     if not root:
         return "no packages found"
@@ -258,7 +256,7 @@ def _render_summary_node(name: str, node: dict, lines: list[str], prefix: str, d
         child_clean = [(n, c) for n, c in child_items if not c.get("signals")]
 
         for cn, cn_node in child_flagged:
-            _render_summary_node(cn, cn_node, lines, f"  └ ", depth=depth + 1, max_depth=max_depth)
+            _render_summary_node(cn, cn_node, lines, "  └ ", depth=depth + 1, max_depth=max_depth)
 
         if child_clean:
             cm = sum(c["stats"]["modules"] for _, c in child_clean)
@@ -279,7 +277,7 @@ def load_codemap(path: str) -> dict:
     if not p.exists():
         print(f"[signal] ERROR: codemap not found at {p}", file=sys.stderr)
         sys.exit(1)
-    return json.loads(p.read_text(encoding="utf-8"))
+    return json.loads(p.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
