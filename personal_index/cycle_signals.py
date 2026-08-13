@@ -535,19 +535,29 @@ def extract(codemap_path: str, prev_codemap_path: str | None = None, test_dir: s
     modules = codemap.get("modules", [])
     dep_graph = codemap.get("dependency_graph", {})
     summary = codemap.get("summary", {})
-
-    # Auto-detect test dir if not given
-    if test_dir is None:
-        cm_base = Path(codemap_path).parent
-        for candidate in ["tests", "../tests", "../../tests"]:
-            p = (cm_base / candidate).resolve()
-            if p.is_dir():
-                test_dir = str(p)
-                break
-
+    test_dir = _detect_test_dir(codemap_path, test_dir)
     tree = build_tree(modules)
+    signals = _build_signals(codemap_path, codemap, summary, tree, modules, dep_graph, test_dir)
+    if prev_codemap_path:
+        _add_coverage_delta(signals, prev_codemap_path, test_dir)
+    return signals
 
-    signals = {
+
+def _detect_test_dir(codemap_path: str, test_dir: str | None) -> str | None:
+    """Auto-detect test directory if not given."""
+    if test_dir is not None:
+        return test_dir
+    cm_base = Path(codemap_path).parent
+    for candidate in ["tests", "../tests", "../../tests"]:
+        p = (cm_base / candidate).resolve()
+        if p.is_dir():
+            return str(p)
+    return None
+
+
+def _build_signals(codemap_path, codemap, summary, tree, modules, dep_graph, test_dir) -> dict:
+    """Build signals dict from codemap data."""
+    return {
         "generated_from": codemap_path,
         "codemap_generated_at": codemap.get("generated_at", "unknown"),
         "summary": summary,
@@ -560,18 +570,18 @@ def extract(codemap_path: str, prev_codemap_path: str | None = None, test_dir: s
         "S6_coverage": signal_coverage(modules, test_dir),
     }
 
-    if prev_codemap_path:
-        try:
-            prev = load_codemap(prev_codemap_path)
-            prev_cov = signal_coverage(prev.get("modules", []), test_dir)
-            signals["S6_coverage"]["previous"] = prev_cov
-            signals["S6_coverage"]["delta_pct"] = round(
-                signals["S6_coverage"]["coverage_pct"] - prev_cov["coverage_pct"], 1
-            )
-        except SystemExit:
-            pass
 
-    return signals
+def _add_coverage_delta(signals: dict, prev_path: str, test_dir: str | None) -> None:
+    """Add coverage delta from previous codemap."""
+    try:
+        prev = load_codemap(prev_path)
+        prev_cov = signal_coverage(prev.get("modules", []), test_dir)
+        signals["S6_coverage"]["previous"] = prev_cov
+        signals["S6_coverage"]["delta_pct"] = round(
+            signals["S6_coverage"]["coverage_pct"] - prev_cov["coverage_pct"], 1
+        )
+    except SystemExit:
+        pass
 
 
 def format_for_auditor(signals: dict) -> str:
