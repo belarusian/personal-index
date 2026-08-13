@@ -86,3 +86,59 @@ class TestTagDistribution:
         analytics = ContentAnalytics()
         dist = analytics.get_tag_distribution()
         assert dist == {}
+
+    def test_empty_title_lengths(self):
+        a = ContentAnalytics()
+        assert a.get_title_lengths() == []
+
+    def test_empty_avg_title_length(self):
+        a = ContentAnalytics()
+        assert a.get_avg_title_length() == 0.0
+
+    def test_empty_description_lengths(self):
+        a = ContentAnalytics()
+        assert a.get_description_lengths() == []
+
+    def test_empty_avg_description_length(self):
+        a = ContentAnalytics()
+        assert a.get_avg_description_length() == 0.0
+
+    def test_empty_link_ratio(self):
+        a = ContentAnalytics()
+        assert a.get_link_ratio() == 0.0
+
+    def test_empty_items_with_links(self):
+        a = ContentAnalytics()
+        assert a.get_items_with_links() == []
+
+    def test_empty_tag_counts(self):
+        a = ContentAnalytics()
+        assert a.get_tag_counts() == {}
+
+    def test_empty_unique_tags(self):
+        a = ContentAnalytics()
+        assert a.get_unique_tags_count() == 0
+
+    def test_items_no_tags(self):
+        a = ContentAnalytics()
+        a.add_items([{"id": "1", "title": "No tags"}])
+        assert a.get_tag_counts() == {}
+
+    def test_items_with_none_tags(self):
+        a = ContentAnalytics()
+        a.add_items([{"id": "1", "title": "None tags", "tags": None}])
+        assert a.get_tag_counts() == {}
+
+    def test_add_items_multiple_batches(self):
+        a = ContentAnalytics()
+        a.add_items([{"id": "1"}])
+        a.add_items([{"id": "2"}, {"id": "3"}])
+        assert a.total_items == 3
+
+    def test_link_ratio_all_linked(self):
+        a = ContentAnalytics()
+        a.add_items([
+            {"id": "1", "link": "http://a.com"},
+            {"id": "2", "link": "http://b.com"},
+        ])
+        assert a.get_link_ratio() == 1.0

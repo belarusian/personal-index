@@ -208,3 +208,185 @@ class TestProgressStore:
         store = ProgressStore(storage_path=str(tmp_path / "progress.json"))
         count = store.load_all()
         assert count == 0
+
+    def test_auto_generate_operation_id(self):
+        t = ProgressTracker()
+        assert t.operation_id.startswith("op_")
+        assert len(t.operation_id) > 10
+
+    def test_from_dict(self):
+        d = {
+            "operation_id": "op_123",
+            "operation_name": "import",
+            "state": "running",
+            "total_steps": 20,
+            "current_step": 10,
+            "steps": [],
+            "started_at": "2025-01-01T00:00:00+00:00",
+            "completed_at": None,
+            "message": "halfway",
+            "metadata": {"src": "csv"},
+        }
+        t = ProgressTracker.from_dict(d)
+        assert t.operation_id == "op_123"
+        assert t.operation_name == "import"
+        assert t.state == "running"
+        assert t.total_steps == 20
+        assert t.current_step == 10
+        assert t.message == "halfway"
+        assert t.metadata == {"src": "csv"}
+
+    def test_from_dict_ignores_extra_keys(self):
+        d = {
+            "operation_id": "op_456",
+            "operation_name": "test",
+            "state": "pending",
+            "total_steps": 5,
+            "current_step": 0,
+            "steps": [],
+            "started_at": None,
+            "completed_at": None,
+            "message": "",
+            "metadata": {},
+            "extra_field": "should_be_ignored",
+            "another_extra": 42,
+        }
+        t = ProgressTracker.from_dict(d)
+        assert t.operation_id == "op_456"
+        assert not hasattr(t, "extra_field")
+
+    def test_pause_when_not_running(self):
+        t = ProgressTracker(operation_name="test")
+        assert t.state == "pending"
+        t.pause()
+        assert t.state == "pending"
+
+    def test_resume_when_not_paused(self):
+        t = ProgressTracker(operation_name="test")
+        t.resume()
+        assert t.state == "pending"
+
+    def test_format_bar_zero_percent(self):
+        t = ProgressTracker(operation_name="test", total_steps=10)
+        bar = t.format_bar(width=10)
+        assert "0.0%" in bar
+
+    def test_format_bar_full(self):
+        t = ProgressTracker(operation_name="test", total_steps=10)
+        t.current_step = 10
+        bar = t.format_bar(width=10)
+        assert "100.0%" in bar
+
+    def test_elapsed_no_start(self):
+        t = ProgressTracker(operation_name="test")
+        assert t.elapsed_seconds == 0.0
+
+    def test_estimated_remaining_zero_step(self):
+        t = ProgressTracker(operation_name="test", total_steps=10)
+        t.start()
+        assert t.estimated_remaining == 0.0
+
+    def test_advance_with_details(self):
+        t = ProgressTracker(operation_name="test", total_steps=5)
+        t.start()
+        t.advance("step one", {"pages": 12})
+        assert t.steps[0]["details"]["pages"] == 12
+
+    def test_complete_sets_current_to_total(self):
+        t = ProgressTracker(operation_name="test", total_steps=10)
+        t.start()
+        t.advance()
+        t.advance()
+        t.complete()
+        assert t.current_step == 10
+        assert t.progress_percent == 100.0
+
+    def test_fail_sets_completed_at(self):
+        t = ProgressTracker(operation_name="test")
+        t.start()
+        t.fail("error")
+        assert t.completed_at is not None
+
+    def test_cancel_sets_completed_at(self):
+        t = ProgressTracker(operation_name="test")
+        t.start()
+        t.cancel()
+        assert t.completed_at is not None
+
+    def test_progress_step_to_dict(self):
+        from personal_index.progress import ProgressStep
+        step = ProgressStep(step_id="s1", description="crawl", completed=True, details={"url": "x"})
+        d = step.to_dict()
+        assert d["step_id"] == "s1"
+        assert d["description"] == "crawl"
+        assert d["completed"] is True
+        assert d["details"]["url"] == "x"
+
+    def test_store_save_no_storage_path(self):
+        store = ProgressStore()
+        store.create("test", total_steps=5)
+        store.save_all()
+
+    def test_store_load_no_storage_path(self):
+        store = ProgressStore()
+        assert store.load_all() == 0
+
+    def test_store_cleanup_nothing_to_remove(self):
+        store = ProgressStore()
+        removed = store.cleanup(max_keep=50)
+        assert removed == 0
+
+    def test_store_list_completed_limit(self):
+        store = ProgressStore()
+        for i in range(10):
+            t = store.create(f"op{i}", total_steps=1)
+            t.start()
+            t.complete()
+        completed = store.list_completed(limit=3)
+        assert len(completed) == 3
+
+    def test_store_list_active_includes_paused(self):
+        store = ProgressStore()
+        t1 = store.create("run", total_steps=10)
+        t1.start()
+        t2 = store.create("pause", total_steps=10)
+        t2.start()
+        t2.pause()
+        active = store.list_active()
+        assert len(active) == 2
+
+    def test_store_save_load_multiple(self, tmp_path):
+        store = ProgressStore(storage_path=str(tmp_path / "prog.json"))
+        t1 = store.create("a", total_steps=5)
+        t1.start()
+        t2 = store.create("b", total_steps=3)
+        t2.start()
+        store.save_all()
+        new_store = ProgressStore(storage_path=str(tmp_path / "prog.json"))
+        count = new_store.load_all()
+        assert count == 2
+        assert new_store.get(t1.operation_id) is not None
+        assert new_store.get(t2.operation_id) is not None
+
+    def test_tracker_metadata_default(self):
+        t = ProgressTracker(operation_name="test")
+        assert t.metadata == {}
+
+    def test_store_create_with_metadata(self):
+        store = ProgressStore()
+        t = store.create("test", metadata={"key": "val"})
+        assert t.metadata == {"key": "val"}
+
+    def test_to_dict_roundtrip(self):
+        t = ProgressTracker(operation_name="roundtrip", total_steps=20)
+        t.start()
+        t.advance("first")
+        t.advance("second")
+        t.set_message("going well")
+        d = t.to_dict()
+        t2 = ProgressTracker.from_dict(d)
+        assert t2.operation_name == "roundtrip"
+        assert t2.total_steps == 20
+        assert t2.current_step == 2
+        assert t2.message == "going well"
+        assert len(t2.steps) == 2
