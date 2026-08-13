@@ -37,6 +37,20 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
+def _normalize_path(path: str, lowercase: bool) -> str:
+    p = path.lower() if lowercase else path
+    p = re.sub(r"/+", "/", p)
+    if p != "/" and p.endswith("/"):
+        p = p.rstrip("/")
+    return p
+
+def _normalize_query(query: str, sort: bool) -> str:
+    if not sort or not query:
+        return query
+    params = parse_qs(query, keep_blank_values=True)
+    sorted_params = dict(sorted(params.items()))
+    return urlencode(sorted_params, doseq=True)
+
 def normalize_url(
     url: str,
     base_url: str = "",
@@ -45,56 +59,22 @@ def normalize_url(
     remove_default_port: bool = True,
     sort_query_params: bool = True,
 ) -> str | None:
-    """Normalize a URL by applying standard transformations.
-
-    Args:
-        url: The URL to normalize.
-        base_url: Optional base URL to resolve relative URLs against.
-        remove_fragment: Whether to remove the fragment.
-        lowercase_path: Whether to lowercase the path.
-        remove_default_port: Whether to remove default ports (80/443).
-        sort_query_params: Whether to sort query parameters.
-    """
+    """Normalize a URL by applying standard transformations."""
     if not url:
         return None
     try:
-        # Resolve relative URLs against base_url
         if base_url and not url.startswith(("http://", "https://")):
-            from urllib.parse import urljoin
             url = urljoin(base_url, url)
-        
         parsed = urlparse(url)
-
-        # Lowercase scheme and netloc
         scheme = parsed.scheme.lower()
         netloc = parsed.netloc.lower()
-
-        # Remove default ports
         if remove_default_port:
             netloc = _remove_default_port(netloc, scheme)
-
-        # Lowercase path if requested
-        path = parsed.path.lower() if lowercase_path else parsed.path
-        # Normalize path: collapse slashes
-        path = re.sub(r"/+", "/", path)
-        # Keep root path with trailing slash, remove for other paths
-        if path != "/" and path.endswith("/"):
-            path = path.rstrip("/")
-
-        # Sort query parameters
-        query = parsed.query
-        if sort_query_params and query:
-            params = parse_qs(query, keep_blank_values=True)
-            sorted_params = dict(sorted(params.items()))
-            query = urlencode(sorted_params, doseq=True)
-
-        # Remove fragment
+        path = _normalize_path(parsed.path, lowercase_path)
+        query = _normalize_query(parsed.query, sort_query_params)
         fragment = "" if remove_fragment else parsed.fragment
-
-        # Validate scheme
         if scheme not in ("http", "https"):
             return None
-
         return urlunparse((scheme, netloc, path, "", query, fragment))
     except (ValueError, AttributeError):
         return url

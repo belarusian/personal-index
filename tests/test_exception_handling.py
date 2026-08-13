@@ -59,7 +59,7 @@ class TestContentCategorizerExceptionHandling:
         from personal_index import content_categorizer
         source = _get_source_lines(content_categorizer)
         blocks = _find_except_blocks(source)
-        url_hints_blocks = [b for b in blocks if 550 < b["lineno"] < 565]
+        url_hints_blocks = [b for b in blocks if 535 < b["lineno"] < 550]
         assert len(url_hints_blocks) == 1
         assert url_hints_blocks[0]["exc_type"] == "ValueError"
 

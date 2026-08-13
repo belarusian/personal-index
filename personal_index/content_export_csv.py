@@ -42,6 +42,28 @@ class CSVExporter:
     def __init__(self) -> None:
         """Initialize the CSV exporter."""
 
+    def _apply_filter_sort(
+        self, items: list[dict],
+        filter_fn: Callable[[dict], bool] | None,
+        sort_key: Callable[[dict], Any] | None,
+    ) -> list[dict]:
+        out = [i for i in items if filter_fn(i)] if filter_fn else items
+        return sorted(out, key=sort_key) if sort_key else out
+
+    def _dispatch_format(
+        self, filtered: list[dict], columns: list[str], col_map: dict[str, str],
+        fmt: ExportFormat, delimiter: str, quoting: int, include_header: bool,
+    ) -> str:
+        if fmt == ExportFormat.CSV:
+            return self._export_csv(filtered, columns, delimiter, quoting, include_header, col_map)
+        if fmt == ExportFormat.TSV:
+            return self._export_csv(filtered, columns, "\t", quoting, include_header, col_map)
+        if fmt == ExportFormat.JSON:
+            return self._export_json(filtered, columns, col_map)
+        if fmt == ExportFormat.JSON_LINES:
+            return self._export_json_lines(filtered, columns, col_map)
+        return self._export_csv(filtered, columns, delimiter, quoting, include_header, col_map)
+
     def export(
         self,
         items: list[dict],
@@ -60,51 +82,15 @@ class CSVExporter:
         """Export items to the specified format."""
         if not items:
             return ""
-
-        # Apply filters and sorting
-        filtered = items
-        if filter_fn:
-            filtered = [item for item in items if filter_fn(item)]
-
-        if sort_key:
-            filtered = sorted(filtered, key=sort_key)
-
-        # Apply pagination
-        filtered = filtered[offset:]
+        filtered = self._apply_filter_sort(items, filter_fn, sort_key)[offset:]
         if limit is not None:
             filtered = filtered[:limit]
-
         if not filtered:
             return ""
-
-        # Determine columns
         if columns is None:
             columns = self._get_columns(filtered)
-
-        # Apply column name mapping
         col_map = column_names or {}
-
-        if export_format == ExportFormat.CSV:
-            return self._export_csv(
-                filtered, columns, delimiter=delimiter,
-                quoting=quoting, include_header=include_header,
-                column_names=col_map,
-            )
-        if export_format == ExportFormat.TSV:
-            return self._export_csv(
-                filtered, columns, delimiter="\t",
-                quoting=quoting, include_header=include_header,
-                column_names=col_map,
-            )
-        if export_format == ExportFormat.JSON:
-            return self._export_json(filtered, columns, col_map)
-        if export_format == ExportFormat.JSON_LINES:
-            return self._export_json_lines(filtered, columns, col_map)
-        return self._export_csv(
-            filtered, columns, delimiter=delimiter,
-            quoting=quoting, include_header=include_header,
-            column_names=col_map,
-        )
+        return self._dispatch_format(filtered, columns, col_map, export_format, delimiter, quoting, include_header)
 
     def _get_columns(self, items: list[dict]) -> list[str]:
         """Get all unique columns from items."""

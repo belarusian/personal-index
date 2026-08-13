@@ -1,9 +1,10 @@
 """Tests for search_facets module - filterable search dimensions."""
 
+from datetime import datetime, timezone
 
 from personal_index.search_facets.facet import Facet, FacetType, FacetValue
 from personal_index.search_facets.facet_builder import FacetBuilder
-from personal_index.search_facets.faceted_search import FacetedSearch
+from personal_index.search_facets.faceted_search import FacetedSearch, SearchResults
 
 # ── Facet model tests ──────────────────────────────────────
 
@@ -235,3 +236,227 @@ class TestFacetedSearch:
         search.add_document("id1", {"title": "Test"})
         search.clear()
         assert len(search.get_documents()) == 0
+
+
+# ── FacetedSearchFilters tests (ISSUE #287) ────────────────
+
+class TestFacetedSearchFilters:
+    """Tests for filter operators: $gte, $lte, $gt, $lt, $between, $in, $not."""
+
+    def _setup_search_with_scores(self) -> FacetedSearch:
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "Low", "score": 10, "category": "a"})
+        search.add_document("d2", {"title": "Mid", "score": 50, "category": "b"})
+        search.add_document("d3", {"title": "High", "score": 90, "category": "a"})
+        search.add_document("d4", {"title": "Max", "score": 100, "category": "c"})
+        return search
+
+    # -- $gte --
+    def test_filter_gte(self):
+        search = self._setup_search_with_scores()
+        results = search.search("", filters={"score": {"$gte": 50}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d2" in ids
+        assert "d3" in ids
+        assert "d4" in ids
+        assert "d1" not in ids
+
+    # -- $lte --
+    def test_filter_lte(self):
+        search = self._setup_search_with_scores()
+        results = search.search("", filters={"score": {"$lte": 50}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" in ids
+        assert "d3" not in ids
+        assert "d4" not in ids
+
+    # -- $gt --
+    def test_filter_gt(self):
+        search = self._setup_search_with_scores()
+        results = search.search("", filters={"score": {"$gt": 50}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" not in ids
+        assert "d2" not in ids
+        assert "d3" in ids
+        assert "d4" in ids
+
+    # -- $lt --
+    def test_filter_lt(self):
+        search = self._setup_search_with_scores()
+        results = search.search("", filters={"score": {"$lt": 50}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" not in ids
+        assert "d3" not in ids
+        assert "d4" not in ids
+
+    # -- $between --
+    def test_filter_between(self):
+        search = self._setup_search_with_scores()
+        results = search.search("", filters={"score": {"$between": [10, 50]}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" in ids
+        assert "d3" not in ids
+        assert "d4" not in ids
+
+    # -- $in --
+    def test_filter_in(self):
+        search = self._setup_search_with_scores()
+        results = search.search("", filters={"score": {"$in": [10, 90]}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d3" in ids
+        assert "d2" not in ids
+        assert "d4" not in ids
+
+    # -- $not --
+    def test_filter_not(self):
+        search = self._setup_search_with_scores()
+        results = search.search("", filters={"score": {"$not": 50}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" not in ids
+        assert "d3" in ids
+        assert "d4" in ids
+
+    # -- Date range filters with ISO strings --
+    def test_filter_date_gte_iso(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "Jan", "date": "2024-01-15"})
+        search.add_document("d2", {"title": "Mar", "date": "2024-03-01"})
+        search.add_document("d3", {"title": "Jun", "date": "2024-06-10"})
+        results = search.search("", filters={"date": {"$gte": "2024-03-01"}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" not in ids
+        assert "d2" in ids
+        assert "d3" in ids
+
+    def test_filter_date_lte_iso(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "Jan", "date": "2024-01-15"})
+        search.add_document("d2", {"title": "Mar", "date": "2024-03-01"})
+        search.add_document("d3", {"title": "Jun", "date": "2024-06-10"})
+        results = search.search("", filters={"date": {"$lte": "2024-03-01"}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" in ids
+        assert "d3" not in ids
+
+    def test_filter_date_between_iso(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "Jan", "date": "2024-01-15"})
+        search.add_document("d2", {"title": "Mar", "date": "2024-03-01"})
+        search.add_document("d3", {"title": "Jun", "date": "2024-06-10"})
+        results = search.search("", filters={"date": {"$between": ["2024-01-01", "2024-03-31"]}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" in ids
+        assert "d3" not in ids
+
+    # -- Nested dot-notation field access --
+    def test_filter_nested_dot_notation(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "A", "metadata": {"author": "alice", "score": 80}})
+        search.add_document("d2", {"title": "B", "metadata": {"author": "bob", "score": 60}})
+        results = search.search("", filters={"metadata.author": "alice"})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" not in ids
+
+    def test_filter_nested_dot_notation_range(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "A", "metadata": {"author": "alice", "score": 80}})
+        search.add_document("d2", {"title": "B", "metadata": {"author": "bob", "score": 60}})
+        results = search.search("", filters={"metadata.score": {"$gte": 70}})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" not in ids
+
+    # -- List intersection filters --
+    def test_filter_list_intersection(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "A", "tags": ["python", "web"]})
+        search.add_document("d2", {"title": "B", "tags": ["javascript", "web"]})
+        search.add_document("d3", {"title": "C", "tags": ["rust", "systems"]})
+        results = search.search("", filters={"tags": ["python"]})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" not in ids
+        assert "d3" not in ids
+
+    def test_filter_list_intersection_multiple(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "A", "tags": ["python", "web"]})
+        search.add_document("d2", {"title": "B", "tags": ["javascript", "web"]})
+        search.add_document("d3", {"title": "C", "tags": ["rust", "systems"]})
+        results = search.search("", filters={"tags": ["web"]})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" in ids
+        assert "d3" not in ids
+
+    # -- SearchResults dict-style access --
+    def test_searchresults_getitem(self):
+        sr = SearchResults(results=[{"id": "1"}], total=1, page=1, page_size=20)
+        assert sr["results"] == [{"id": "1"}]
+        assert sr["total"] == 1
+        assert sr["page"] == 1
+        assert sr["page_size"] == 20
+
+    def test_searchresults_contains(self):
+        sr = SearchResults(results=[], total=0)
+        assert "results" in sr
+        assert "total" in sr
+        assert "facets" in sr
+        assert "nonexistent" not in sr
+
+    def test_searchresults_keys(self):
+        sr = SearchResults(results=[], total=0)
+        keys = sr.keys()
+        assert "results" in keys
+        assert "facets" in keys
+        assert "total" in keys
+        assert "page" in keys
+        assert "page_size" in keys
+
+    # -- Combined range + exact match filters --
+    def test_combined_range_and_exact(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "A", "score": 80, "category": "tech"})
+        search.add_document("d2", {"title": "B", "score": 60, "category": "tech"})
+        search.add_document("d3", {"title": "C", "score": 90, "category": "cooking"})
+        results = search.search("", filters={"score": {"$gte": 70}, "category": "tech"})
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" not in ids
+        assert "d3" not in ids
+
+    def test_combined_multiple_ranges(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "A", "score": 80, "views": 100})
+        search.add_document("d2", {"title": "B", "score": 60, "views": 200})
+        search.add_document("d3", {"title": "C", "score": 90, "views": 50})
+        results = search.search("", filters={
+            "score": {"$gte": 70},
+            "views": {"$lte": 150},
+        })
+        ids = [r["id"] for r in results["results"]]
+        assert "d1" in ids
+        assert "d2" not in ids
+        assert "d3" in ids
+
+    def test_combined_in_and_exact(self):
+        search = FacetedSearch()
+        search.add_document("d1", {"title": "A", "score": 80, "category": "tech"})
+        search.add_document("d2", {"title": "B", "score": 60, "category": "tech"})
+        search.add_document("d3", {"title": "C", "score": 90, "category": "cooking"})
+        results = search.search("", filters={
+            "score": {"$in": [60, 90]},
+            "category": "tech",
+        })
+        ids = [r["id"] for r in results["results"]]
+        assert "d2" in ids
+        assert "d1" not in ids
+        assert "d3" not in ids

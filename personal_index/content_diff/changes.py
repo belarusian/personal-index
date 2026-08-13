@@ -47,6 +47,25 @@ class ContentDiff:
     changes: list[Change] = field(default_factory=list)
     summary: str = ""
 
+    @staticmethod
+    def _diff_field(name: str, old: dict[str, Any], new: dict[str, Any]) -> Change | None:
+        if name not in old and name in new:
+            return Change(field=name, change_type=ChangeType.ADDED, new_value=new[name])
+        if name in old and name not in new:
+            return Change(field=name, change_type=ChangeType.REMOVED, old_value=old[name])
+        if old.get(name) != new.get(name):
+            return Change(field=name, change_type=ChangeType.MODIFIED, old_value=old.get(name), new_value=new.get(name))
+        return None
+
+    @staticmethod
+    def _summary_text(changes: list[Change]) -> str:
+        parts: list[str] = []
+        for ct, label in [(ChangeType.ADDED, "added"), (ChangeType.REMOVED, "removed"), (ChangeType.MODIFIED, "modified")]:
+            n = sum(1 for c in changes if c.change_type == ct)
+            if n:
+                parts.append(f"{n} {label}")
+        return ", ".join(parts) if parts else "No changes"
+
     @classmethod
     def compute(
         cls,
@@ -54,60 +73,11 @@ class ContentDiff:
         new_item: dict[str, Any],
         id_field: str = "id",
     ) -> ContentDiff:
-        """Compute the diff between two content items.
-
-        Args:
-            old_item: Previous version of the item.
-            new_item: New version of the item.
-            id_field: Field name for item ID.
-
-        Returns:
-            ContentDiff with computed changes.
-        """
+        """Compute the diff between two content items."""
         item_id = str(new_item.get(id_field, old_item.get(id_field, "unknown")))
-        changes: list[Change] = []
-
         all_fields = set(old_item.keys()) | set(new_item.keys())
-
-        for field_name in sorted(all_fields):
-            old_val = old_item.get(field_name)
-            new_val = new_item.get(field_name)
-
-            if field_name not in old_item and field_name in new_item:
-                changes.append(Change(
-                    field=field_name,
-                    change_type=ChangeType.ADDED,
-                    new_value=new_val,
-                ))
-            elif field_name in old_item and field_name not in new_item:
-                changes.append(Change(
-                    field=field_name,
-                    change_type=ChangeType.REMOVED,
-                    old_value=old_val,
-                ))
-            elif old_val != new_val:
-                changes.append(Change(
-                    field=field_name,
-                    change_type=ChangeType.MODIFIED,
-                    old_value=old_val,
-                    new_value=new_val,
-                ))
-
-        # Generate summary
-        added = sum(1 for c in changes if c.change_type == ChangeType.ADDED)
-        removed = sum(1 for c in changes if c.change_type == ChangeType.REMOVED)
-        modified = sum(1 for c in changes if c.change_type == ChangeType.MODIFIED)
-
-        parts = []
-        if added:
-            parts.append(f"{added} added")
-        if removed:
-            parts.append(f"{removed} removed")
-        if modified:
-            parts.append(f"{modified} modified")
-
-        summary = ", ".join(parts) if parts else "No changes"
-
+        changes = [c for fn in sorted(all_fields) if (c := cls._diff_field(fn, old_item, new_item))]
+        summary = cls._summary_text(changes)
         return cls(item_id=item_id, changes=changes, summary=summary)
 
     @property
