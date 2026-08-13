@@ -166,3 +166,71 @@ class TestSessionManager:
     def test_load_missing_file(self):
         mgr = SessionManager()
         assert mgr.load_session("/nonexistent/file.json") is None
+
+    def test_pause_already_paused(self):
+        session = CrawlSession(session_id="s1")
+        session.pause()
+        session.pause()
+        assert session.status == SessionStatus.PAUSED
+
+    def test_resume_not_paused(self):
+        session = CrawlSession(session_id="s1")
+        session.resume()
+        assert session.status == SessionStatus.ACTIVE
+
+    def test_save_no_storage_path(self):
+        mgr = SessionManager()
+        mgr.create_session("s1")
+        assert mgr.save_session("s1") is None
+
+    def test_save_missing_session(self):
+        mgr = SessionManager()
+        assert mgr.save_session("missing") is None
+
+    def test_set_active_missing(self):
+        mgr = SessionManager()
+        assert mgr.set_active("missing") is False
+
+    def test_remove_active_clears_active(self):
+        mgr = SessionManager()
+        mgr.create_session("s1")
+        mgr.remove_session("s1")
+        assert mgr.get_active_session() is None
+
+    def test_remove_missing_session(self):
+        mgr = SessionManager()
+        assert mgr.remove_session("missing") is False
+
+    def test_session_count_zero(self):
+        mgr = SessionManager()
+        assert mgr.session_count == 0
+
+    def test_stats_to_dict_empty(self):
+        stats = SessionStats()
+        d = stats.to_dict()
+        assert d["domains_seen"] == 0
+        assert d["error_count"] == 0
+
+    def test_session_to_dict_completed(self):
+        session = CrawlSession(session_id="s1")
+        session.complete()
+        d = session.to_dict()
+        assert d["status"] == "completed"
+        assert d["completed_at"] is not None
+
+    def test_record_url_failed_no_error(self):
+        session = CrawlSession(session_id="s1")
+        session.record_url_failed("http://example.com")
+        assert session.stats.urls_failed == 1
+        assert len(session.stats.errors) == 0
+
+    def test_multiple_domains(self):
+        session = CrawlSession(session_id="s1")
+        session.record_url_crawled("http://example.com/a")
+        session.record_url_crawled("http://other.com/b")
+        assert len(session.stats.domains_seen) == 2
+
+    def test_list_empty(self):
+        mgr = SessionManager()
+        assert mgr.list_sessions() == []
+        assert mgr.list_active() == []

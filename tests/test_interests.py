@@ -96,3 +96,51 @@ class TestInterestStore:
         store = InterestStore(store_path=str(tmp_path / "interests.json"))
         assert len(store.list_all()) == 0
         assert store.get_all_keywords() == set()
+
+    def test_toggle_nonexistent(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        result = store.toggle("nonexistent")
+        assert result is None
+
+    def test_get_nonexistent(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        assert store.get("nonexistent") is None
+
+    def test_replace_interest(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest(name="tech", keywords=["old"]))
+        store.add(Interest(name="tech", keywords=["new"]))
+        assert store.get("tech").keywords == ["new"]
+        assert len(store.list_all()) == 1
+
+    def test_no_store_path(self):
+        store = InterestStore()
+        store.add(Interest(name="tech", keywords=["tech"]))
+        assert store.get("tech") is not None
+        assert len(store.list_all()) == 1
+
+    def test_invalid_json_file(self, tmp_path):
+        path = tmp_path / "interests.json"
+        path.write_text("not valid json")
+        store = InterestStore(store_path=str(path))
+        assert len(store.list_all()) == 0
+
+    def test_empty_keywords(self):
+        interest = Interest(name="empty")
+        assert interest.keywords == []
+
+    def test_enabled_default(self):
+        interest = Interest(name="default")
+        assert interest.enabled is True
+
+    def test_disabled_interest(self):
+        interest = Interest(name="disabled", enabled=False)
+        assert interest.enabled is False
+
+    def test_empty_topics(self):
+        interest = Interest(name="notopics")
+        assert interest.topics == []
+
+    def test_empty_url_patterns(self):
+        interest = Interest(name="nopatterns")
+        assert interest.url_patterns == []
