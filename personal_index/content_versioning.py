@@ -160,6 +160,29 @@ class ContentVersioning:
                 return True
         return False
 
+
+    def rollback_to(self, item_id: str, version_id: str) -> bool:
+        """Rollback an item to a specific version.
+
+        Creates a new version with the content of the specified version.
+
+        Args:
+            item_id: ID of the item.
+            version_id: Version ID to rollback to.
+
+        Returns:
+            True if rollback succeeded, False if version not found.
+        """
+        target = self.get_version(item_id, version_id)
+        if target is None:
+            return False
+        return self.create_version(
+            item_id,
+            content=target.content,
+            author=target.author,
+            message=f"rollback to {version_id}",
+        ) is not None
+
     def clear_versions(self, item_id: str) -> bool:
         """Clear all versions of an item.
 
