@@ -187,6 +187,31 @@ class ContentTypeDetector:
         self._mime_cache[cache_key] = info
         return info
 
+    def _check_magic_numbers(self, data: bytes) -> ContentTypeInfo | None:
+        """Check magic number patterns in raw bytes.
+
+        Args:
+            data: Raw bytes to analyze.
+
+        Returns:
+            ContentTypeInfo for a match, or None if no magic number matched.
+        """
+        if data[:4] == b"%PDF":
+            return self._make_info("application/pdf", ".pdf")
+        if data[:2] == b"\x1f\x8b":
+            return self._make_info("application/gzip", ".gz")
+        if data[:4] == b"PK\x03\x04":
+            return self._make_info("application/zip", ".zip")
+        if data[:8] == b"\x89PNG\r\n\x1a\n":
+            return self._make_info("image/png", ".png")
+        if data[:2] == b"\xff\xd8":
+            return self._make_info("image/jpeg", ".jpg")
+        if data[:6] in (b"GIF87a", b"GIF89a"):
+            return self._make_info("image/gif", ".gif")
+        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+            return self._make_info("image/webp", ".webp")
+        return None
+
     def detect_from_bytes(self, data: bytes) -> ContentTypeInfo:
         """Detect content type from raw bytes (magic number detection).
 
@@ -207,20 +232,9 @@ class ContentTypeDetector:
             )
 
         # Check magic numbers
-        if data[:4] == b"%PDF":
-            return self._make_info("application/pdf", ".pdf")
-        if data[:2] == b"\x1f\x8b":
-            return self._make_info("application/gzip", ".gz")
-        if data[:4] == b"PK\x03\x04":
-            return self._make_info("application/zip", ".zip")
-        if data[:8] == b"\x89PNG\r\n\x1a\n":
-            return self._make_info("image/png", ".png")
-        if data[:2] == b"\xff\xd8":
-            return self._make_info("image/jpeg", ".jpg")
-        if data[:6] in (b"GIF87a", b"GIF89a"):
-            return self._make_info("image/gif", ".gif")
-        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
-            return self._make_info("image/webp", ".webp")
+        result = self._check_magic_numbers(data)
+        if result is not None:
+            return result
 
         # Try to detect text by checking for null bytes
         try:

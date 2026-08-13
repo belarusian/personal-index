@@ -61,76 +61,67 @@ class ContentLinker:
         self._items.pop(item_id, None)
         self._link_cache.pop(item_id, None)
 
-    def _score_content(self, source_text: str, target: dict[str, Any]) -> tuple[float, bool]:
-        target_text = f"{target.get('title', '')} {target.get('content', '')}"
-        score = self._similarity.similarity(source_text, target_text)
-        return (score * 0.5, True) if score > 0 else (0.0, False)
+    def _score_content(self, src: str, t: dict[str, Any]) -> tuple[float, bool]:
+        s = self._similarity.similarity(src, f"{t.get('title', '')} {t.get('content', '')}")
+        return (s * 0.5, True) if s > 0 else (0.0, False)
 
-    def _score_temporal(self, source_time: str, target: dict[str, Any]) -> tuple[float, bool]:
-        if not source_time or not target.get("saved_at"):
+    def _score_temporal(self, st: str, t: dict[str, Any]) -> tuple[float, bool]:
+        if not st or not t.get("saved_at"):
             return 0.0, False
         try:
-            t1 = datetime.fromisoformat(source_time)
-            t2 = datetime.fromisoformat(target["saved_at"])
-            hours = abs((t1 - t2).total_seconds()) / 3600
-            if hours < 24:
-                return max(0, 0.2 * (1 - hours / 24)), True
+            h = abs((datetime.fromisoformat(st) - datetime.fromisoformat(t["saved_at"])).total_seconds()) / 3600
+            if h < 24:
+                return max(0, 0.2 * (1 - h / 24)), True
         except (ValueError, TypeError):
             pass
         return 0.0, False
 
+    def _score_target(
+        self, src_text: str, src_domain: str, src_time: str,
+        target: dict[str, Any],
+    ) -> tuple[float, list[str]]:
+        score, reasons = 0.0, []
+        cs, hc = self._score_content(src_text, target)
+        score += cs
+        if hc:
+            reasons.append("content")
+        if src_domain and target.get("domain") == src_domain:
+            score += 0.3
+            reasons.append("domain")
+        ts, ht = self._score_temporal(src_time, target)
+        score += ts
+        if ht:
+            reasons.append("temporal")
+        return score, reasons
+
     def find_related(
-        self,
-        item_id: str,
-        threshold: float = 0.1,
-        limit: int = 10,
+        self, item_id: str, threshold: float = 0.1, limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Find items related to the given item."""
         if item_id in self._link_cache:
             return self._link_cache[item_id]
-
         source = self._items.get(item_id)
         if not source:
             return []
 
-        results: list[dict[str, Any]] = []
         src_text = f"{source.get('title', '')} {source.get('content', '')}"
         src_domain = source.get("domain", "")
         src_time = source.get("saved_at", "")
+        results: list[dict[str, Any]] = []
 
         for tid, target in self._items.items():
             if tid == item_id:
                 continue
-
-            score = 0.0
-            reasons: list[str] = []
-
-            cs, has_content = self._score_content(src_text, target)
-            score += cs
-            if has_content:
-                reasons.append("content")
-
-            if src_domain and target.get("domain") == src_domain:
-                score += 0.3
-                reasons.append("domain")
-
-            ts, has_temporal = self._score_temporal(src_time, target)
-            score += ts
-            if has_temporal:
-                reasons.append("temporal")
-
+            score, reasons = self._score_target(src_text, src_domain, src_time, target)
             if score >= threshold:
                 results.append({
-                    "id": tid,
-                    "score": round(score, 3),
-                    "title": target.get("title", ""),
-                    "reasons": reasons,
+                    "id": tid, "score": round(score, 3),
+                    "title": target.get("title", ""), "reasons": reasons,
                 })
 
         results.sort(key=lambda r: r["score"], reverse=True)
-        results = results[:limit]
-        self._link_cache[item_id] = results
-        return results
+        self._link_cache[item_id] = results[:limit]
+        return results[:limit]
 
     def get_all_links(
         self,

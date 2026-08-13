@@ -53,6 +53,56 @@ STOPWORDS = {
 }
 
 
+def _extract_title(soup: BeautifulSoup) -> str:
+    tag = soup.find("title")
+    return tag.string.strip() if tag and tag.string else ""
+
+
+def _extract_meta_desc(soup: BeautifulSoup) -> str:
+    tag = soup.find("meta", attrs={"name": "description"})
+    return str(tag["content"]).strip() if tag and tag.get("content") else ""
+
+
+def _extract_meta_keywords(soup: BeautifulSoup) -> list[str]:
+    tag = soup.find("meta", attrs={"name": "keywords"})
+    if tag and tag.get("content"):
+        return [kw.strip() for kw in str(tag["content"]).split(",") if kw.strip()]
+    return []
+
+
+def _extract_headings(soup: BeautifulSoup) -> list[str]:
+    headings: list[str] = []
+    for level in range(1, 4):
+        for h in soup.find_all(f"h{level}"):
+            text = h.get_text(strip=True)
+            if text:
+                headings.append(f"h{level}: {text}")
+    return headings
+
+
+def _extract_text(soup: BeautifulSoup) -> str:
+    for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
+        tag.decompose()
+    return re.sub(r'\s+', ' ', soup.get_text(separator=" ")).strip()
+
+
+def _extract_links(soup: BeautifulSoup, base_url: str) -> list[str]:
+    from personal_index.url_utils import resolve_relative_url
+    links: list[str] = []
+    for a in soup.find_all("a", href=True):
+        href = str(a["href"])
+        if not href.startswith(("javascript:", "mailto:", "data:", "tel:")):
+            resolved = resolve_relative_url(base_url, href)
+            if resolved:
+                links.append(resolved)
+    return links
+
+
+def _detect_language(soup: BeautifulSoup) -> str:
+    html_tag = soup.find("html")
+    return str(html_tag["lang"]).split("-")[0] if html_tag and html_tag.get("lang") else "en"
+
+
 def extract_content(
     html: str,
     url: str,
@@ -60,69 +110,13 @@ def extract_content(
 ) -> ExtractedContent:
     """Extract structured content from HTML."""
     soup = BeautifulSoup(html, "html.parser")
-
-    # Extract title
-    title = ""
-    title_tag = soup.find("title")
-    if title_tag and title_tag.string:
-        title = title_tag.string.strip()
-
-    # Extract meta description
-    meta_desc = ""
-    meta_tag = soup.find("meta", attrs={"name": "description"})
-    if meta_tag and meta_tag.get("content"):
-        meta_desc = str(meta_tag["content"]).strip()
-
-    # Extract meta keywords
-    meta_keywords = []
-    meta_kw_tag = soup.find("meta", attrs={"name": "keywords"})
-    if meta_kw_tag and meta_kw_tag.get("content"):
-        meta_keywords = [
-            kw.strip() for kw in str(meta_kw_tag["content"]).split(",") if kw.strip()
-        ]
-
-    # Extract headings
-    headings = []
-    for level in range(1, 4):
-        for h in soup.find_all(f"h{level}"):
-            text = h.get_text(strip=True)
-            if text:
-                headings.append(f"h{level}: {text}")
-
-    # Remove scripts and styles
-    for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
-        tag.decompose()
-
-    # Extract text
-    text = soup.get_text(separator=" ")
-    text = re.sub(r'\s+', ' ', text).strip()
-
-    # Extract links
-    links = []
-    for a_tag in soup.find_all("a", href=True):
-        href = str(a_tag["href"])
-        if not href.startswith(("javascript:", "mailto:", "data:", "tel:")):
-            from personal_index.url_utils import resolve_relative_url
-            resolved = resolve_relative_url(url, href)
-            if resolved:
-                links.append(resolved)
-
-    # Detect language
-    language = "en"
-    html_tag = soup.find("html")
-    if html_tag and html_tag.get("lang"):
-        language = str(html_tag["lang"]).split("-")[0]
-
+    text = _extract_text(soup)
     return ExtractedContent(
-        url=url,
-        title=title,
-        text=text,
-        meta_description=meta_desc,
-        meta_keywords=meta_keywords,
-        headings=headings,
-        links=links,
-        content_length=len(text),
-        language=language,
+        url=url, title=_extract_title(soup), text=text,
+        meta_description=_extract_meta_desc(soup),
+        meta_keywords=_extract_meta_keywords(soup),
+        headings=_extract_headings(soup), links=_extract_links(soup, url),
+        content_length=len(text), language=_detect_language(soup),
         status_code=status_code,
     )
 

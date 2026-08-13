@@ -99,14 +99,18 @@ class AnalyticsTracker:
         self._crawl_events.append(event)
         return event
 
-    def get_analytics(self, top_n: int = 10) -> AnalyticsData:
-        """Compute aggregated analytics."""
+    def _compute_search_analytics(self, top_n: int) -> AnalyticsData:
+        """Compute search-related analytics metrics.
+
+        Args:
+            top_n: Number of top queries to return.
+
+        Returns:
+            AnalyticsData with search-related fields populated.
+        """
         data = AnalyticsData()
-
         data.total_searches = len(self._search_events)
-        data.total_crawls = len(self._crawl_events)
 
-        # Search analytics
         if self._search_events:
             durations = [e.duration_ms for e in self._search_events if e.duration_ms > 0]
             if durations:
@@ -129,7 +133,20 @@ class AnalyticsTracker:
             data.hourly_searches = dict(hourly)
             data.daily_searches = dict(daily)
 
-        # Crawl analytics
+        return data
+
+    def _compute_crawl_analytics(self, top_n: int) -> AnalyticsData:
+        """Compute crawl-related analytics metrics.
+
+        Args:
+            top_n: Number of top domains to return.
+
+        Returns:
+            AnalyticsData with crawl-related fields populated.
+        """
+        data = AnalyticsData()
+        data.total_crawls = len(self._crawl_events)
+
         if self._crawl_events:
             durations = [e.duration_ms for e in self._crawl_events if e.duration_ms > 0]
             if durations:
@@ -148,6 +165,24 @@ class AnalyticsTracker:
             data.error_count = sum(1 for ce in self._crawl_events if ce.status_code >= 400 or ce.error)
 
         return data
+
+    def get_analytics(self, top_n: int = 10) -> AnalyticsData:
+        """Compute aggregated analytics."""
+        search_data = self._compute_search_analytics(top_n)
+        crawl_data = self._compute_crawl_analytics(top_n)
+
+        return AnalyticsData(
+            total_searches=search_data.total_searches,
+            total_crawls=crawl_data.total_crawls,
+            avg_search_duration_ms=search_data.avg_search_duration_ms,
+            avg_crawl_duration_ms=crawl_data.avg_crawl_duration_ms,
+            top_queries=search_data.top_queries,
+            top_domains=crawl_data.top_domains,
+            hourly_searches=search_data.hourly_searches,
+            daily_searches=search_data.daily_searches,
+            error_count=crawl_data.error_count,
+            success_count=crawl_data.success_count,
+        )
 
     def get_search_events(self, limit: int | None = None) -> list[SearchEvent]:
         """Get search events, optionally limited."""

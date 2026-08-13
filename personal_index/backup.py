@@ -55,6 +55,32 @@ class BackupManager:
     def __init__(self, backup_dir: str | None = None):
         self._backup_dir = backup_dir or str(Path.home() / ".personal_index" / "backups")
 
+    @staticmethod
+    def _create_archive(files: list[Path], archive_path: Path, mode: str,
+                        source_path: Path) -> None:
+        """Create a tar or tar.gz archive from the given files.
+
+        Args:
+            files: List of file paths to include in the archive.
+            archive_path: Path where the archive will be created.
+            mode: Tarfile mode string (e.g. "w" or "w:gz").
+            source_path: Source directory for computing relative arcnames.
+        """
+        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
+            for filepath in files:
+                tar.add(str(filepath), arcname=str(filepath.relative_to(source_path)))
+
+    @staticmethod
+    def _save_manifest(manifest: BackupManifest, manifest_path: Path) -> None:
+        """Save a backup manifest as JSON.
+
+        Args:
+            manifest: The manifest to save.
+            manifest_path: Path where the JSON file will be written.
+        """
+        with open(str(manifest_path), "w") as f:
+            json.dump(manifest.to_dict(), f, indent=2)
+
     def create_backup(self, source_dir: str,
                       include_patterns: list[str] | None = None,
                       exclude_patterns: list[str] | None = None,
@@ -87,21 +113,17 @@ class BackupManager:
             mode = "w"
         archive_path = backup_path / archive_name
 
-        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
-            for filepath in files:
-                tar.add(str(filepath), arcname=str(filepath.relative_to(source_path)))
+        self._create_archive(files, archive_path, mode, source_path)
 
         # Save manifest
         manifest_path = backup_path / f"backup_{manifest.backup_id}.json"
-        with open(str(manifest_path), "w") as f:
-            json.dump(manifest.to_dict(), f, indent=2)
+        self._save_manifest(manifest, manifest_path)
 
         manifest.metadata["archive_path"] = str(archive_path.resolve())
         manifest.metadata["compressed"] = compress
 
         # Re-save manifest with updated metadata
-        with open(str(manifest_path), "w") as f:
-            json.dump(manifest.to_dict(), f, indent=2)
+        self._save_manifest(manifest, manifest_path)
 
         return manifest
 

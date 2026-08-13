@@ -164,3 +164,89 @@ class TestIsAllowed:
             rules=[RobotsRule(user_agent="*", allowed=False, pattern="/admin")],
         )
         assert is_allowed("https://example.com/admin", policy) is False
+
+
+class TestParseDirective:
+    """Tests for _parse_directive helper."""
+
+    def test_user_agent_directive(self):
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        agent, rules = _parse_directive(
+            "User-agent: Googlebot", None, policy, []
+        )
+        assert agent == "Googlebot"
+        assert rules == []
+
+    def test_disallow_directive(self):
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        agent, rules = _parse_directive(
+            "Disallow: /admin", "Googlebot", policy, []
+        )
+        assert agent == "Googlebot"
+        assert len(rules) == 1
+        assert rules[0].allowed is False
+        assert rules[0].pattern == "/admin"
+
+    def test_allow_directive(self):
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        agent, rules = _parse_directive(
+            "Allow: /public", "*", policy, []
+        )
+        assert agent == "*"
+        assert len(rules) == 1
+        assert rules[0].allowed is True
+        assert rules[0].pattern == "/public"
+
+    def test_crawl_delay_directive(self):
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        agent, rules = _parse_directive(
+            "Crawl-delay: 10", "*", policy, []
+        )
+        assert policy.crawl_delay == 10.0
+
+    def test_sitemap_directive(self):
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        agent, rules = _parse_directive(
+            "Sitemap: https://example.com/sitemap.xml", "*", policy, []
+        )
+        assert "https://example.com/sitemap.xml" in policy.sitemap_urls
+
+    def test_user_agent_switches_rules(self):
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        # First agent with a rule
+        agent, rules = _parse_directive(
+            "User-agent: Googlebot", None, policy, []
+        )
+        agent, rules = _parse_directive(
+            "Disallow: /no-google", agent, policy, rules
+        )
+        # Switch to new agent — previous rules should be flushed to policy
+        agent, rules = _parse_directive(
+            "User-agent: Bingbot", agent, policy, rules
+        )
+        assert agent == "Bingbot"
+        assert rules == []
+        assert len(policy.rules) == 1
+        assert policy.rules[0].user_agent == "Googlebot"
+
+    def test_disallow_without_agent_ignored(self):
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        agent, rules = _parse_directive(
+            "Disallow: /admin", None, policy, []
+        )
+        assert agent is None
+        assert rules == []

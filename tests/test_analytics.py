@@ -221,3 +221,88 @@ class TestAnalyticsTracker:
         events = self.tracker.get_crawl_events()
         assert events[0].error == "connection refused"
         assert events[0].status_code == 500
+
+
+class TestComputeSearchAnalytics:
+    """Tests for _compute_search_analytics helper."""
+
+    def setup_method(self):
+        self.tracker = AnalyticsTracker()
+
+    def test_empty_search_events(self):
+        data = self.tracker._compute_search_analytics(10)
+        assert data.total_searches == 0
+        assert data.avg_search_duration_ms == 0.0
+        assert data.top_queries == []
+        assert data.hourly_searches == {}
+        assert data.daily_searches == {}
+
+    def test_search_analytics_with_events(self):
+        self.tracker.record_search("python", result_count=5, duration_ms=100)
+        self.tracker.record_search("rust", result_count=3, duration_ms=200)
+        self.tracker.record_search("python", result_count=8, duration_ms=300)
+
+        data = self.tracker._compute_search_analytics(10)
+        assert data.total_searches == 3
+        assert data.avg_search_duration_ms == 200.0
+        assert data.top_queries[0] == ("python", 2)
+        assert len(data.hourly_searches) > 0
+        assert len(data.daily_searches) > 0
+
+    def test_search_analytics_top_n(self):
+        for i in range(20):
+            self.tracker.record_search(f"query_{i}")
+        data = self.tracker._compute_search_analytics(top_n=3)
+        assert len(data.top_queries) == 3
+
+    def test_search_analytics_crawl_fields_empty(self):
+        """Search analytics should not populate crawl fields."""
+        self.tracker.record_search("test")
+        data = self.tracker._compute_search_analytics(10)
+        assert data.total_crawls == 0
+        assert data.top_domains == []
+        assert data.success_count == 0
+        assert data.error_count == 0
+
+
+class TestComputeCrawlAnalytics:
+    """Tests for _compute_crawl_analytics helper."""
+
+    def setup_method(self):
+        self.tracker = AnalyticsTracker()
+
+    def test_empty_crawl_events(self):
+        data = self.tracker._compute_crawl_analytics(10)
+        assert data.total_crawls == 0
+        assert data.avg_crawl_duration_ms == 0.0
+        assert data.top_domains == []
+        assert data.success_count == 0
+        assert data.error_count == 0
+
+    def test_crawl_analytics_with_events(self):
+        self.tracker.record_crawl("http://example.com/page1", status_code=200, duration_ms=50)
+        self.tracker.record_crawl("http://example.com/page2", status_code=200, duration_ms=150)
+        self.tracker.record_crawl("http://other.com/page", status_code=404, duration_ms=100)
+
+        data = self.tracker._compute_crawl_analytics(10)
+        assert data.total_crawls == 3
+        assert data.avg_crawl_duration_ms == 100.0
+        assert data.top_domains[0][0] == "example.com"
+        assert data.top_domains[0][1] == 2
+        assert data.success_count == 2
+        assert data.error_count == 1
+
+    def test_crawl_analytics_top_n(self):
+        for i in range(20):
+            self.tracker.record_crawl(f"http://domain{i}.com/page")
+        data = self.tracker._compute_crawl_analytics(top_n=5)
+        assert len(data.top_domains) == 5
+
+    def test_crawl_analytics_search_fields_empty(self):
+        """Crawl analytics should not populate search fields."""
+        self.tracker.record_crawl("http://example.com")
+        data = self.tracker._compute_crawl_analytics(10)
+        assert data.total_searches == 0
+        assert data.top_queries == []
+        assert data.hourly_searches == {}
+        assert data.daily_searches == {}

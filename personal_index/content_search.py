@@ -257,6 +257,36 @@ class SearchIndex:
                     del self._term_freq[token]
         self._doc_lengths.pop(item_id, None)
 
+    def _find_candidates(self, tokens: list[str]) -> dict[str, float]:
+        cands: dict[str, float] = {}
+        for token in tokens:
+            if token in self._index:
+                for item_id in self._index[token]:
+                    if item_id not in cands:
+                        cands[item_id] = 0.0
+        return cands
+
+    def _score_candidates(self, cands: dict[str, float], tokens: list[str], ranking: str) -> dict[str, float]:
+        if ranking == "tfidf":
+            return self._score_tfidf(cands, tokens)
+        if ranking == "bm25":
+            return self._score_bm25(cands, tokens)
+        for token in tokens:
+            for item_id in self._index.get(token, set()):
+                cands[item_id] += self._term_freq.get(token, {}).get(item_id, 0)
+        return cands
+
+    def _build_entry(self, item: dict[str, Any], score: float, tokens: list[str], highlight: bool) -> dict[str, Any]:
+        entry: dict[str, Any] = {
+            "item": {k: v for k, v in item.items() if k != "content"},
+            "score": round(score, 4),
+        }
+        if highlight:
+            content = item.get("content", "") or item.get("description", "") or ""
+            snippets = self._snippet_extractor.extract(content, tokens)
+            entry["snippets"] = [s.to_dict() for s in snippets]
+        return entry
+
     def search(
         self,
         query: str,
@@ -266,66 +296,25 @@ class SearchIndex:
         ranking: str = "tf",
         highlight: bool = False,
     ) -> dict[str, Any]:
-        """Search the index and return ranked results.
-
-        Args:
-            query: Search query string.
-            filters: Optional filter dict.
-            limit: Max results to return.
-            offset: Pagination offset.
-            ranking: Ranking algorithm - "tf", "tfidf", or "bm25".
-            highlight: Whether to include highlighted snippets in results.
-        """
+        """Search the index and return ranked results."""
         tokens = self._tokenize(query)
         if not tokens:
             return {"results": [], "total": 0, "query": query}
 
-        # Find candidate items matching any query token
-        candidates: dict[str, float] = {}
-        for token in tokens:
-            if token in self._index:
-                for item_id in self._index[token]:
-                    if item_id not in candidates:
-                        candidates[item_id] = 0.0
-
-        # Score candidates using selected ranking algorithm
-        if ranking == "tfidf":
-            candidates = self._score_tfidf(candidates, tokens)
-        elif ranking == "bm25":
-            candidates = self._score_bm25(candidates, tokens)
-        else:
-            # Default TF-based scoring
-            for token in tokens:
-                for item_id in self._index.get(token, set()):
-                    tf = self._term_freq.get(token, {}).get(item_id, 0)
-                    candidates[item_id] += tf
-
-        # Apply filters
+        cands = self._find_candidates(tokens)
+        cands = self._score_candidates(cands, tokens, ranking)
         if filters:
-            candidates = self._apply_filters(candidates, filters)
+            cands = self._apply_filters(cands, filters)
 
-        # Rank by score descending
-        ranked = sorted(candidates.items(), key=lambda x: x[1], reverse=True)
-
-        # Paginate
-        total = len(ranked)
+        ranked = sorted(cands.items(), key=lambda x: x[1], reverse=True)
         page = ranked[offset:offset + limit]
-
         results = []
         for item_id, score in page:
             item = self._items.get(item_id)
             if item:
-                result_entry: dict[str, Any] = {
-                    "item": {k: v for k, v in item.items() if k != "content"},
-                    "score": round(score, 4),
-                }
-                if highlight:
-                    content = item.get("content", "") or item.get("description", "") or ""
-                    snippets = self._snippet_extractor.extract(content, tokens)
-                    result_entry["snippets"] = [s.to_dict() for s in snippets]
-                results.append(result_entry)
+                results.append(self._build_entry(item, score, tokens, highlight))
 
-        return {"results": results, "total": total, "query": query}
+        return {"results": results, "total": len(ranked), "query": query}
 
     def _score_tfidf(
         self,

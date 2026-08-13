@@ -214,3 +214,58 @@ class TestContentTypeDetector:
         info1 = self.detector.detect_from_extension(".txt")
         info2 = self.detector.detect_from_extension(".txt")
         assert info1 is info2
+
+
+class TestCheckMagicNumbers:
+    """Tests for _check_magic_numbers helper."""
+
+    def setup_method(self):
+        self.detector = ContentTypeDetector()
+
+    def test_pdf_magic(self):
+        result = self.detector._check_magic_numbers(b"%PDF-1.4 test")
+        assert result is not None
+        assert result.mime_type == "application/pdf"
+
+    def test_gzip_magic(self):
+        result = self.detector._check_magic_numbers(b"\x1f\x8b\x08\x00test")
+        assert result is not None
+        assert result.mime_type == "application/gzip"
+
+    def test_zip_magic(self):
+        result = self.detector._check_magic_numbers(b"PK\x03\x04test")
+        assert result is not None
+        assert result.mime_type == "application/zip"
+
+    def test_png_magic(self):
+        result = self.detector._check_magic_numbers(b"\x89PNG\r\n\x1a\n")
+        assert result is not None
+        assert result.mime_type == "image/png"
+
+    def test_jpeg_magic(self):
+        result = self.detector._check_magic_numbers(b"\xff\xd8\xff\xe0test")
+        assert result is not None
+        assert result.mime_type == "image/jpeg"
+
+    def test_gif87a_magic(self):
+        result = self.detector._check_magic_numbers(b"GIF87atest")
+        assert result is not None
+        assert result.mime_type == "image/gif"
+
+    def test_gif89a_magic(self):
+        result = self.detector._check_magic_numbers(b"GIF89atest")
+        assert result is not None
+        assert result.mime_type == "image/gif"
+
+    def test_webp_magic(self):
+        result = self.detector._check_magic_numbers(b"RIFF\x00\x00\x00\x00WEBP")
+        assert result is not None
+        assert result.mime_type == "image/webp"
+
+    def test_no_magic_match(self):
+        result = self.detector._check_magic_numbers(b"Hello world text")
+        assert result is None
+
+    def test_binary_no_magic(self):
+        result = self.detector._check_magic_numbers(b"\x00\x01\x02\x03")
+        assert result is None
