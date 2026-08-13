@@ -159,27 +159,17 @@ def _detect_module_signals(module: dict, short_name: str) -> list[str]:
     return signals
 
 
-def _tree_to_nested(tree: dict[str, dict]) -> dict:
-    """Convert flat tree dict to hierarchical nested structure.
-
-    Args:
-        tree: Flat dict mapping dotted path keys to node dicts.
-
-    Returns:
-        Root node dict with nested children.
-    """
-    # Find top-level keys (direct children of root)
+def _find_top_level(tree: dict[str, dict]) -> set[str]:
+    """Find top-level keys (direct children of root)."""
     top_level: set[str] = set()
     for key in tree:
         parts = key.split(".")
         top_level.add(parts[0])
+    return top_level
 
-    children: dict[str, dict] = {}
-    for tl in sorted(top_level):
-        if tl in tree:
-            children[tl] = _node_to_dict(tl, tree)
 
-    # Compute root stats from all top-level children
+def _aggregate_child_stats(children: dict[str, dict]) -> tuple[dict, list[str]]:
+    """Compute root stats from all children."""
     root_stats = {
         "lines": 0,
         "functions": 0,
@@ -193,11 +183,21 @@ def _tree_to_nested(tree: dict[str, dict]) -> dict:
         for k in root_stats:
             root_stats[k] += child["stats"].get(k, 0)
         root_signals.update(child.get("signals", []))
+    return root_stats, sorted(root_signals)
 
+
+def _tree_to_nested(tree: dict[str, dict]) -> dict:
+    """Convert flat tree dict to hierarchical nested structure."""
+    top_level = _find_top_level(tree)
+    children: dict[str, dict] = {}
+    for tl in sorted(top_level):
+        if tl in tree:
+            children[tl] = _node_to_dict(tl, tree)
+    root_stats, root_signals = _aggregate_child_stats(children)
     return {
         "name": "root",
         "stats": root_stats,
-        "signals": sorted(root_signals),
+        "signals": root_signals,
         "children": children,
     }
 
@@ -401,6 +401,40 @@ def signal_oversized(modules: list[dict], line_threshold: int = 200, func_thresh
 # S3: dead code — modules nobody imports
 # ---------------------------------------------------------------------------
 
+def _collect_imported(modules: list[dict], dep_graph: dict) -> set[str]:
+    """Build set of imported module names from dep graph and module imports."""
+    all_imported: set[str] = set()
+    for deps in dep_graph.values():
+        all_imported.update(deps)
+    for m in modules:
+        for imp in m.get("imports", []):
+            mod = imp.rpartition(".")[0]
+            all_imported.add(mod)
+    return all_imported
+
+
+def _find_unimported(modules: list[dict], all_imported: set[str]) -> list[dict]:
+    """Find unimported modules that have logic."""
+    skip_names = ("__init__", "__main__")
+    results = []
+    for m in modules:
+        name = m["name"]
+        short = name.rpartition(".")[2] if "." in name else name
+        if short in skip_names:
+            continue
+        has_logic = m["functions"] > 0 or m["classes"] > 0
+        is_imported = name in all_imported
+        if not is_imported and has_logic:
+            results.append({
+                "module": name,
+                "lines": m["lines"],
+                "functions": m["functions"],
+                "classes": m["classes"],
+                "confidence": "low",
+            })
+    return sorted(results, key=lambda x: x["lines"])
+
+
 def signal_dead_code(modules: list[dict], dep_graph: dict) -> list[dict]:
     """Modules with no static incoming imports.
 
@@ -408,41 +442,8 @@ def signal_dead_code(modules: list[dict], dep_graph: dict) -> list[dict]:
     re-exports, API routing) means many unimported modules are still live.
     Confidence is intentionally low; outer loop must verify before acting.
     """
-    # Build set of imported module names from dep graph
-    all_imported: set[str] = set()
-    for deps in dep_graph.values():
-        all_imported.update(deps)
-
-    # Also check each module's own imports for cross-references
-    for m in modules:
-        for imp in m.get("imports", []):
-            mod = imp.rpartition(".")[0]
-            all_imported.add(mod)
-
-    skip_names = ("__init__", "__main__")
-
-    results = []
-    for m in modules:
-        name = m["name"]
-        short = name.rpartition(".")[2] if "." in name else name
-
-        if short in skip_names:
-            continue
-
-        has_logic = m["functions"] > 0 or m["classes"] > 0
-        is_imported = name in all_imported
-
-        # Flag unimported modules that have logic — candidate for dead code review
-        if not is_imported and has_logic:
-            results.append({
-                "module": name,
-                "lines": m["lines"],
-                "functions": m["functions"],
-                "classes": m["classes"],
-                "confidence": "low",  # always low — requires manual verification
-            })
-
-    return sorted(results, key=lambda x: x["lines"])
+    all_imported = _collect_imported(modules, dep_graph)
+    return _find_unimported(modules, all_imported)
 
 
 # ---------------------------------------------------------------------------
@@ -584,49 +585,63 @@ def _add_coverage_delta(signals: dict, prev_path: str, test_dir: str | None) -> 
         pass
 
 
-def format_for_auditor(signals: dict) -> str:
-    """Format signals as a scoped auditor prompt."""
-    lines = ["Auditor scope for next cycle (from signal extractor):"]
-
+def _format_tree_section(signals: dict, lines: list[str]) -> None:
     tree = signals.get("tree_summary")
     if tree:
         lines.append("\n## Package Tree (hierarchical overview)")
         lines.append(format_tree(tree, max_depth=2))
 
-    errors = signals.get("S5_errors", [])
+
+def _format_errors_section(errors: list[dict], lines: list[str]) -> None:
     if errors:
         lines.append(f"\n## S5: Error hotspots ({len(errors)} modules)")
         for e in errors[:10]:
             lines.append(f"  - {e['module']}: R:{e['ruff_errors']} M:{e['mypy_errors']} W:{e['ruff_warnings']}")
 
-    no_tests = signals.get("S1_no_tests", [])
+
+def _format_no_tests_section(no_tests: list[dict], lines: list[str]) -> None:
     if no_tests:
         lines.append(f"\n## S1: Modules without tests ({len(no_tests)} modules, top 15)")
         for m in no_tests[:15]:
             lines.append(f"  - {m['module']}: {m['lines']}L, {m['functions']} funcs [{m['severity']}]")
 
-    oversized = signals.get("S2_oversized", [])
+
+def _format_oversized_section(oversized: list[dict], lines: list[str]) -> None:
     if oversized:
         lines.append(f"\n## S2: Oversized modules ({len(oversized)} modules)")
         for m in oversized:
             lines.append(f"  - {m['module']}: {m['lines']}L, {m['functions']} funcs [{m['severity']}]")
 
-    dead = signals.get("S3_dead_code", [])
+
+def _format_dead_code_section(dead: list[dict], lines: list[str]) -> None:
     if dead:
         lines.append(f"\n## S3: Unimported modules ({len(dead)} candidates, VERIFY BEFORE ACTING)")
         for m in dead[:20]:
             lines.append(f"  - {m['module']}: {m['lines']}L, {m['functions']}f [{m['confidence']}]")
 
-    dupes = signals.get("S4_duplicates", [])
+
+def _format_duplicates_section(dupes: list[dict], lines: list[str]) -> None:
     if dupes:
         lines.append(f"\n## S4: Potential duplicates ({len(dupes)} groups)")
         for d in dupes:
             lines.append(f"  - stem '{d['stem']}': {', '.join(d['modules'])}")
 
-    cov = signals.get("S6_coverage", {})
+
+def _format_coverage_section(cov: dict, lines: list[str]) -> None:
     lines.append(f"\n## S6: Coverage: {cov.get('coverage_pct', '?')}% "
                  f"({cov.get('modules_with_tests', 0)}/{cov.get('total_modules', 0)} modules)")
 
+
+def format_for_auditor(signals: dict) -> str:
+    """Format signals as a scoped auditor prompt."""
+    lines = ["Auditor scope for next cycle (from signal extractor):"]
+    _format_tree_section(signals, lines)
+    _format_errors_section(signals.get("S5_errors", []), lines)
+    _format_no_tests_section(signals.get("S1_no_tests", []), lines)
+    _format_oversized_section(signals.get("S2_oversized", []), lines)
+    _format_dead_code_section(signals.get("S3_dead_code", []), lines)
+    _format_duplicates_section(signals.get("S4_duplicates", []), lines)
+    _format_coverage_section(signals.get("S6_coverage", {}), lines)
     return "\n".join(lines)
 
 

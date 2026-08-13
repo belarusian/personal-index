@@ -212,6 +212,27 @@ class ContentTypeDetector:
             return self._make_info("image/webp", ".webp")
         return None
 
+    def _unknown_type(self) -> ContentTypeInfo:
+        """Return default unknown content type info."""
+        return ContentTypeInfo(
+            mime_type="application/octet-stream",
+            category="unknown",
+            extension="",
+            is_text=False,
+            is_media=False,
+            is_document=False,
+        )
+
+    def _try_detect_text(self, data: bytes) -> ContentTypeInfo | None:
+        """Try to detect text by checking for null bytes."""
+        try:
+            text = data.decode("utf-8")
+            if "\x00" not in text:
+                return self._make_info("text/plain", ".txt")
+        except (UnicodeDecodeError, ValueError):
+            pass
+        return None
+
     def detect_from_bytes(self, data: bytes) -> ContentTypeInfo:
         """Detect content type from raw bytes (magic number detection).
 
@@ -222,36 +243,17 @@ class ContentTypeDetector:
             ContentTypeInfo with detected type information.
         """
         if not data:
-            return ContentTypeInfo(
-                mime_type="application/octet-stream",
-                category="unknown",
-                extension="",
-                is_text=False,
-                is_media=False,
-                is_document=False,
-            )
+            return self._unknown_type()
 
-        # Check magic numbers
         result = self._check_magic_numbers(data)
         if result is not None:
             return result
 
-        # Try to detect text by checking for null bytes
-        try:
-            text = data.decode("utf-8")
-            if "\x00" not in text:
-                return self._make_info("text/plain", ".txt")
-        except (UnicodeDecodeError, ValueError):
-            pass
+        text_result = self._try_detect_text(data)
+        if text_result is not None:
+            return text_result
 
-        return ContentTypeInfo(
-            mime_type="application/octet-stream",
-            category="unknown",
-            extension="",
-            is_text=False,
-            is_media=False,
-            is_document=False,
-        )
+        return self._unknown_type()
 
     def classify(self, content_type: str) -> str:
         """Classify a MIME type into a category.

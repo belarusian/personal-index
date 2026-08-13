@@ -348,33 +348,34 @@ class PipelineRunner:
                 stats.errors.append(f"Read error for {fp}: {e}")
         return pages
 
-    def _read_file(self, filepath: str) -> CrawledPage | None:
-        """Read a file and create a CrawledPage from it.
+    def _extract_html_content(self, filepath: str) -> tuple[str, str]:
+        """Extract content and title from an HTML file."""
+        from personal_index.content_extractor import ContentExtractor
+        extractor = ContentExtractor()
+        with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+            html_content = f.read()
+        extracted = extractor.extract(html_content)
+        content = extracted.text or ""
+        title = extracted.title or os.path.basename(filepath)
+        return content, title
 
-        Handles plain text (.txt, .md, .rst) and HTML (.html, .htm) files.
-        For HTML files, uses ContentExtractor to extract meaningful text.
-        For plain text files, reads content directly.
-        """
+    def _read_plain_text(self, filepath: str) -> tuple[str, str]:
+        """Read plain text file and return (content, title)."""
+        with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        return content, os.path.basename(filepath)
+
+    def _read_file(self, filepath: str) -> CrawledPage | None:
+        """Read a file and create a CrawledPage from it."""
         if not os.path.isfile(filepath):
             return None
 
         ext = os.path.splitext(filepath)[1].lower()
-        title = os.path.basename(filepath)
 
         if ext in ('.html', '.htm'):
-            # HTML file: use ContentExtractor
-            from personal_index.content_extractor import ContentExtractor
-            extractor = ContentExtractor()
-            with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
-                html_content = f.read()
-            extracted = extractor.extract(html_content)
-            content = extracted.text or ""
-            if extracted.title:
-                title = extracted.title
+            content, title = self._extract_html_content(filepath)
         else:
-            # Plain text file: read directly
-            with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
-                content = f.read()
+            content, title = self._read_plain_text(filepath)
 
         if not content or not content.strip():
             return None
