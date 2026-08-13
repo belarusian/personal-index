@@ -184,67 +184,44 @@ class PipelineOrchestrator:
             self.search_index.add_page(page)
         return pages
 
+    def _run_filter_stage(self, pages: list[CrawledPage], result: PipelineResult) -> list[CrawledPage]:
+        logger.info("Filtering %d pages", len(pages))
+        out = self._run_stage(pages, lambda p: self._apply_filter(p, result), "filter")
+        result.stats.pages_passed_filter = len(out)
+        result.stats.pages_filtered_out = len(pages) - len(out)
+        return out
+
+    def _run_score_stage(self, pages: list[CrawledPage], result: PipelineResult) -> list[CrawledPage]:
+        logger.info("Scoring %d pages", len(pages))
+        out = self._run_stage(pages, lambda p: self._apply_score(p), "score")
+        result.stats.pages_scored = len(out)
+        return out
+
+    def _run_tag_stage(self, pages: list[CrawledPage], result: PipelineResult) -> list[CrawledPage]:
+        logger.info("Tagging %d pages", len(pages))
+        out = self._run_stage(pages, lambda p: self._apply_tag(p, result), "tag")
+        result.stats.pages_tagged = len(out)
+        return out
+
+    def _run_index_stage(self, pages: list[CrawledPage], result: PipelineResult) -> list[CrawledPage]:
+        logger.info("Indexing %d pages", len(pages))
+        out = self._run_stage(pages, lambda p: self._apply_index(p, result), "index")
+        result.stats.pages_indexed = len(out)
+        result.pages.extend(out)
+        return out
+
     def _execute_stages(
         self,
         pages: list[CrawledPage],
         result: PipelineResult,
         start_time: float,
     ) -> PipelineResult:
-        """Execute the shared filter→score→tag→index pipeline stages.
-
-        This is the core processing pipeline shared by both ``run()`` and
-        ``run_from_files()``.  It takes pages that have already been
-        acquired (via crawling or file reading) and runs them through the
-        remaining stages.
-
-        Args:
-            pages: Pages to process (already crawled/read).
-            result: PipelineResult to populate with stats.
-            start_time: Epoch seconds when the pipeline started.
-
-        Returns:
-            The same ``result`` object, mutated with stats and pages.
-        """
+        """Execute the shared filter→score→tag→index pipeline stages."""
         result.stats.pages_extracted = len(pages)
-
-        # Stage: Filter
-        logger.info("Filtering %d pages", len(pages))
-        filtered_pages = self._run_stage(
-            pages,
-            lambda page: self._apply_filter(page, result),
-            "filter",
-        )
-        result.stats.pages_passed_filter = len(filtered_pages)
-        result.stats.pages_filtered_out = len(pages) - len(filtered_pages)
-
-        # Stage: Score
-        logger.info("Scoring %d pages", len(filtered_pages))
-        scored_pages = self._run_stage(
-            filtered_pages,
-            lambda page: self._apply_score(page),
-            "score",
-        )
-        result.stats.pages_scored = len(scored_pages)
-
-        # Stage: Tag
-        logger.info("Tagging %d pages", len(scored_pages))
-        tagged_pages = self._run_stage(
-            scored_pages,
-            lambda page: self._apply_tag(page, result),
-            "tag",
-        )
-        result.stats.pages_tagged = len(tagged_pages)
-
-        # Stage: Index
-        logger.info("Indexing %d pages", len(tagged_pages))
-        indexed_pages = self._run_stage(
-            tagged_pages,
-            lambda page: self._apply_index(page, result),
-            "index",
-        )
-        result.stats.pages_indexed = len(indexed_pages)
-        result.pages.extend(indexed_pages)
-
+        pages = self._run_filter_stage(pages, result)
+        pages = self._run_score_stage(pages, result)
+        pages = self._run_tag_stage(pages, result)
+        self._run_index_stage(pages, result)
         result.stats.elapsed_seconds = time.time() - start_time
         return result
 

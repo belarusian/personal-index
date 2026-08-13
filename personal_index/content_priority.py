@@ -78,6 +78,15 @@ class PriorityCalculator:
     def __init__(self, config: PriorityConfig | None = None):
         self.config = config or PriorityConfig()
 
+    def _add_factor(self, factors: list[str], breakdown: dict[str, float], name: str, value: float, label: str, threshold: float = 0.7) -> None:
+        breakdown[name] = value
+        if value > threshold:
+            factors.append(label)
+
+    def _weighted_total(self, r: float, s: float, i: float, e: float) -> float:
+        return (r * self.config.recency_weight + s * self.config.score_weight +
+                i * self.config.interest_weight + e * self.config.engagement_weight)
+
     def calculate(
         self,
         url: str,
@@ -88,65 +97,31 @@ class PriorityCalculator:
         days_since_indexed: float = 0.0,
         tags: list[str] | None = None,
     ) -> PriorityResult:
-        """Calculate priority for a content item.
-
-        Args:
-            url: Content URL.
-            title: Content title.
-            content_score: Base content score (0-10).
-            interest_matches: List of matched interest names.
-            view_count: Number of times content has been viewed.
-            days_since_indexed: Days since content was indexed.
-            tags: Content tags.
-
-        Returns:
-            PriorityResult with calculated priority and breakdown.
-        """
-        factors = []
+        """Calculate priority for a content item."""
+        factors: list[str] = []
         breakdown: dict[str, float] = {}
 
-        # Factor 1: Recency score (newer = higher)
-        recency_score = self._recency_score(days_since_indexed)
-        breakdown["recency"] = recency_score
-        if recency_score > 0.7:
-            factors.append("recently indexed")
+        recency = self._recency_score(days_since_indexed)
+        self._add_factor(factors, breakdown, "recency", recency, "recently indexed")
 
-        # Factor 2: Content score (normalized to 0-1)
-        score_normalized = min(content_score / 10.0, 1.0)
-        breakdown["content_score"] = score_normalized
-        if score_normalized > 0.7:
-            factors.append("high content score")
+        score_n = min(content_score / 10.0, 1.0)
+        self._add_factor(factors, breakdown, "content_score", score_n, "high content score")
 
-        # Factor 3: Interest match
-        interest_score = self._interest_score(interest_matches or [])
-        breakdown["interest_match"] = interest_score
+        interest = self._interest_score(interest_matches or [])
+        breakdown["interest_match"] = interest
         if interest_matches:
             factors.append(f"matches interests: {', '.join(interest_matches[:3])}")
 
-        # Factor 4: Engagement
-        engagement_score = self._engagement_score(view_count)
-        breakdown["engagement"] = engagement_score
+        engagement = self._engagement_score(view_count)
+        breakdown["engagement"] = engagement
         if view_count > 10:
             factors.append(f"high engagement ({view_count} views)")
 
-        # Weighted combination
-        total = (
-            recency_score * self.config.recency_weight
-            + score_normalized * self.config.score_weight
-            + interest_score * self.config.interest_weight
-            + engagement_score * self.config.engagement_weight
-        )
-
-        # Determine priority level
-        priority = self._level_for_score(total)
+        total = self._weighted_total(recency, score_n, interest, engagement)
 
         return PriorityResult(
-            url=url,
-            title=title,
-            priority=priority,
-            score=total,
-            breakdown=breakdown,
-            factors=factors,
+            url=url, title=title, priority=self._level_for_score(total),
+            score=total, breakdown=breakdown, factors=factors,
         )
 
     def _recency_score(self, days_since_indexed: float) -> float:

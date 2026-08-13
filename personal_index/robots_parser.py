@@ -74,6 +74,56 @@ class RobotsPolicy:
         return path == pattern or path.startswith(pattern + "/")
 
 
+def _parse_directive(
+    line: str,
+    current_agent: str | None,
+    policy: RobotsPolicy,
+    current_rules: list[RobotsRule],
+) -> tuple[str | None, list[RobotsRule]]:
+    """Handle one line's directive parsing.
+
+    Args:
+        line: A stripped, non-empty, non-comment line from robots.txt.
+        current_agent: The current user-agent being parsed, or None.
+        policy: The RobotsPolicy being built.
+        current_rules: Accumulated rules for the current user-agent.
+
+    Returns:
+        Tuple of (updated_agent, updated_rules).
+    """
+    if line.lower().startswith("user-agent:"):
+        # Save previous agent's rules
+        if current_agent:
+            policy.rules.extend(current_rules)
+            current_rules = []
+        current_agent = line.split(":", 1)[1].strip()
+    elif line.lower().startswith("disallow:"):
+        pattern = line.split(":", 1)[1].strip()
+        if current_agent and pattern:
+            current_rules.append(RobotsRule(
+                user_agent=current_agent,
+                allowed=False,
+                pattern=pattern,
+            ))
+    elif line.lower().startswith("allow:"):
+        pattern = line.split(":", 1)[1].strip()
+        if current_agent and pattern:
+            current_rules.append(RobotsRule(
+                user_agent=current_agent,
+                allowed=True,
+                pattern=pattern,
+            ))
+    elif line.lower().startswith("crawl-delay:"):
+        with suppress(ValueError):
+            policy.crawl_delay = float(line.split(":", 1)[1].strip())
+    elif line.lower().startswith("sitemap:"):
+        sitemap_url = line.split(":", 1)[1].strip()
+        if sitemap_url:
+            policy.sitemap_urls.append(sitemap_url)
+
+    return current_agent, current_rules
+
+
 def parse_robots_txt(text: str, base_url: str) -> RobotsPolicy:
     """Parse robots.txt content into a RobotsPolicy."""
     parsed = urlparse(base_url)
@@ -89,35 +139,9 @@ def parse_robots_txt(text: str, base_url: str) -> RobotsPolicy:
         if not line or line.startswith("#"):
             continue
 
-        if line.lower().startswith("user-agent:"):
-            # Save previous agent's rules
-            if current_agent:
-                policy.rules.extend(current_rules)
-                current_rules = []
-            current_agent = line.split(":", 1)[1].strip()
-        elif line.lower().startswith("disallow:"):
-            pattern = line.split(":", 1)[1].strip()
-            if current_agent and pattern:
-                current_rules.append(RobotsRule(
-                    user_agent=current_agent,
-                    allowed=False,
-                    pattern=pattern,
-                ))
-        elif line.lower().startswith("allow:"):
-            pattern = line.split(":", 1)[1].strip()
-            if current_agent and pattern:
-                current_rules.append(RobotsRule(
-                    user_agent=current_agent,
-                    allowed=True,
-                    pattern=pattern,
-                ))
-        elif line.lower().startswith("crawl-delay:"):
-            with suppress(ValueError):
-                policy.crawl_delay = float(line.split(":", 1)[1].strip())
-        elif line.lower().startswith("sitemap:"):
-            sitemap_url = line.split(":", 1)[1].strip()
-            if sitemap_url:
-                policy.sitemap_urls.append(sitemap_url)
+        current_agent, current_rules = _parse_directive(
+            line, current_agent, policy, current_rules
+        )
 
     # Save last agent's rules
     if current_agent:

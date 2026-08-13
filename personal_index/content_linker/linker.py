@@ -61,69 +61,67 @@ class ContentLinker:
         self._items.pop(item_id, None)
         self._link_cache.pop(item_id, None)
 
+    def _score_content(self, src: str, t: dict[str, Any]) -> tuple[float, bool]:
+        s = self._similarity.similarity(src, f"{t.get('title', '')} {t.get('content', '')}")
+        return (s * 0.5, True) if s > 0 else (0.0, False)
+
+    def _score_temporal(self, st: str, t: dict[str, Any]) -> tuple[float, bool]:
+        if not st or not t.get("saved_at"):
+            return 0.0, False
+        try:
+            h = abs((datetime.fromisoformat(st) - datetime.fromisoformat(t["saved_at"])).total_seconds()) / 3600
+            if h < 24:
+                return max(0, 0.2 * (1 - h / 24)), True
+        except (ValueError, TypeError):
+            pass
+        return 0.0, False
+
+    def _score_target(
+        self, src_text: str, src_domain: str, src_time: str,
+        target: dict[str, Any],
+    ) -> tuple[float, list[str]]:
+        score, reasons = 0.0, []
+        cs, hc = self._score_content(src_text, target)
+        score += cs
+        if hc:
+            reasons.append("content")
+        if src_domain and target.get("domain") == src_domain:
+            score += 0.3
+            reasons.append("domain")
+        ts, ht = self._score_temporal(src_time, target)
+        score += ts
+        if ht:
+            reasons.append("temporal")
+        return score, reasons
+
     def find_related(
-        self,
-        item_id: str,
-        threshold: float = 0.1,
-        limit: int = 10,
+        self, item_id: str, threshold: float = 0.1, limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Find items related to the given item."""
         if item_id in self._link_cache:
             return self._link_cache[item_id]
-
         source = self._items.get(item_id)
         if not source:
             return []
 
+        src_text = f"{source.get('title', '')} {source.get('content', '')}"
+        src_domain = source.get("domain", "")
+        src_time = source.get("saved_at", "")
         results: list[dict[str, Any]] = []
-        source_text = f"{source.get('title', '')} {source.get('content', '')}"
-        source_domain = source.get("domain", "")
-        source_time = source.get("saved_at", "")
 
-        for target_id, target in self._items.items():
-            if target_id == item_id:
+        for tid, target in self._items.items():
+            if tid == item_id:
                 continue
-
-            combined_score = 0.0
-            reasons: list[str] = []
-
-            # Content similarity
-            target_text = f"{target.get('title', '')} {target.get('content', '')}"
-            content_score = self._similarity.similarity(source_text, target_text)
-            if content_score > 0:
-                combined_score += content_score * 0.5
-                reasons.append("content")
-
-            # Domain match
-            if source_domain and target.get("domain") == source_domain:
-                combined_score += 0.3
-                reasons.append("domain")
-
-            # Temporal proximity
-            if source_time and target.get("saved_at"):
-                try:
-                    t1 = datetime.fromisoformat(source_time)
-                    t2 = datetime.fromisoformat(target["saved_at"])
-                    hours_diff = abs((t1 - t2).total_seconds()) / 3600
-                    if hours_diff < 24:
-                        temporal_score = max(0, 0.2 * (1 - hours_diff / 24))
-                        combined_score += temporal_score
-                        reasons.append("temporal")
-                except (ValueError, TypeError):
-                    pass
-
-            if combined_score >= threshold:
+            score, reasons = self._score_target(src_text, src_domain, src_time, target)
+            if score >= threshold:
                 results.append({
-                    "id": target_id,
-                    "score": round(combined_score, 3),
-                    "title": target.get("title", ""),
-                    "reasons": reasons,
+                    "id": tid, "score": round(score, 3),
+                    "title": target.get("title", ""), "reasons": reasons,
                 })
 
         results.sort(key=lambda r: r["score"], reverse=True)
-        results = results[:limit]
-        self._link_cache[item_id] = results
-        return results
+        self._link_cache[item_id] = results[:limit]
+        return results[:limit]
 
     def get_all_links(
         self,
