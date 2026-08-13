@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from typing import Any
 
 import click
 import yaml
@@ -257,20 +258,44 @@ def tags_remove(ctx, tag_name, url, data_dir):
 
 
 # ── import ────────────────────────────────────────────────────────────
+
+def _score_and_tag_page(
+    page: Any, text: str, tag_store: Any, interest_store: Any
+) -> None:
+    """Score a page against interests and apply matching tags."""
+    matches = interest_store.matches_any(text, page.url)
+    for interest in matches:
+        tag_store.add_tag_to_page(page.url, interest.name)
+        if not page.matched_interests:
+            page.matched_interests = []
+        page.matched_interests.append(interest.name)
+    page.relevance_score = interest_store.total_score(text)
+
+
+def _import_single_file(filepath: str) -> Any | None:
+    """Read and parse a single file into a CrawledPage."""
+    try:
+        with open(filepath, "r", errors="replace") as f:
+            content = f.read()
+    except OSError:
+        return None
+    if len(content.strip()) < 10:
+        return None
+    from personal_index.models import CrawledPage
+    return CrawledPage(
+        url=f"file://{os.path.abspath(filepath)}",
+        title=os.path.basename(filepath),
+        content=content,
+    )
+
+
 @main.command("import")
 @click.argument("path")
 @click.option("--recursive", "-r", is_flag=True, help="Recursively import directory")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def import_cmd(ctx, path, recursive, data_dir):
-    """Import local files or directories into the index.
-
-    Reads text files and adds them to the search index.
-
-    Examples:
-        personal-index import ./article.txt
-        personal-index import ./docs --recursive
-    """
+    """Import local files or directories into the index."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     os.makedirs(dd, exist_ok=True)
 
@@ -283,35 +308,12 @@ def import_cmd(ctx, path, recursive, data_dir):
     interest_store = get_interest_store(dd)
 
     imported = 0
-    files = _collect_files(path, recursive)
-
-    for filepath in files:
-        try:
-            with open(filepath, "r", errors="replace") as f:
-                content = f.read()
-        except OSError:
+    for filepath in _collect_files(path, recursive):
+        page = _import_single_file(filepath)
+        if page is None:
             continue
-
-        if len(content.strip()) < 10:
-            continue
-
-        from personal_index.models import CrawledPage
-        page = CrawledPage(
-            url=f"file://{os.path.abspath(filepath)}",
-            title=os.path.basename(filepath),
-            content=content,
-        )
-
-        # Score and tag
         text = f"{page.title} {page.content}"
-        matches = interest_store.matches_any(text, page.url)
-        for interest in matches:
-            tag_store.add_tag_to_page(page.url, interest.name)
-            if not page.matched_interests:
-                page.matched_interests = []
-            page.matched_interests.append(interest.name)
-        page.relevance_score = interest_store.total_score(text)
-
+        _score_and_tag_page(page, text, tag_store, interest_store)
         index.add_page(page)
         imported += 1
 
@@ -524,13 +526,7 @@ def _export_csv(pages, tag_store):
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def status(ctx, data_dir):
-    """Show status of your personal-index.
-
-    Displays counts of indexed pages, interests, tags, and storage usage.
-
-    Examples:
-        personal-index status
-    """
+    """Show status of your personal-index."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
     tag_store = get_tag_store(dd)
@@ -539,37 +535,20 @@ def status(ctx, data_dir):
     page_count = idx.get_page_count()
     tag_count = tag_store.get_tag_count()
     interests = interest_store.list_all()
-    interest_count = len(interests)
-
-    total_size = 0
-    if os.path.exists(dd):
-        for dirpath, dirnames, filenames in os.walk(dd):
-            for fn in filenames:
-                fp = os.path.join(dirpath, fn)
-                try:
-                    total_size += os.path.getsize(fp)
-                except OSError:
-                    pass
+    storage_bytes = _compute_storage_bytes(dd)
 
     click.echo("Personal Index Status")
     click.echo("=" * 40)
     click.echo(f"  Pages indexed:  {page_count}")
-    click.echo(f"  Interests:      {interest_count}")
+    click.echo(f"  Interests:      {len(interests)}")
     click.echo(f"  Tags:           {tag_count}")
     click.echo(f"  Tagged pages:   {tag_store.get_tagged_page_count()}")
 
     if interests:
-        click.echo("")
-        click.echo("Interests:")
-        for interest in interests:
-            click.echo(f"  - {interest.name}: {', '.join(interest.keywords[:5])}")
+        _print_interests(interests)
 
-    if total_size > 0:
-        if total_size < 1024 * 1024:
-            size_str = f"{total_size / 1024:.1f} KB"
-        else:
-            size_str = f"{total_size / (1024 * 1024):.1f} MB"
-        click.echo(f"\nStorage: {size_str}")
+    if storage_bytes > 0:
+        click.echo(f"\nStorage: {_format_storage_size(storage_bytes)}")
 
 
 # ── crawl ─────────────────────────────────────────────────────────────
@@ -829,6 +808,38 @@ def stats(ctx, output_format, data_dir):
         click.echo(f"\nstorage: {_format_storage_size(storage_bytes)}")
 
 
+def _sort_pages(pages: list, sort: str) -> list:
+    """Sort pages by the specified criterion."""
+    if sort == "date":
+        return sorted(pages, key=lambda p: p.crawled_at or "", reverse=True)
+    if sort == "title":
+        return sorted(pages, key=lambda p: p.title.lower())
+    return sorted(pages, key=lambda p: p.score, reverse=True)
+
+
+def _format_pages_text(pages: list) -> None:
+    """Print pages in text format."""
+    click.echo("Indexed Pages")
+    click.echo("=" * 60)
+    for i, page in enumerate(pages, 1):
+        click.echo(f"{i}. {page.title}")
+        click.echo(f"   {page.url}")
+        click.echo(f"   Score: {page.relevance_score:.4f}")
+        click.echo("")
+
+
+def _format_pages_csv(pages: list) -> None:
+    """Print pages in CSV format."""
+    import csv as _csv
+    import io
+    output = io.StringIO()
+    writer = _csv.writer(output)
+    writer.writerow(["title", "url", "score", "crawled_at"])
+    for p in pages:
+        writer.writerow([p.title, p.url, f"{p.score:.4f}", p.crawled_at])
+    click.echo(output.getvalue().strip())
+
+
 # ── list (legacy - list indexed pages) ────────────────────────────────
 @main.command("list")
 @click.option("--format", "output_format", default="text", type=click.Choice(["text", "json", "csv"]), help="Output format")
@@ -838,26 +849,11 @@ def stats(ctx, output_format, data_dir):
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def list_pages(ctx, output_format, limit, sort, data_dir):
-    """List all indexed pages.
-
-    Shows all pages currently in the search index.
-
-    Examples:
-        personal-index list
-        personal-index list --limit 50
-        personal-index list --sort date
-    """
+    """List all indexed pages."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
 
-    pages = idx.list_pages()
-    if sort == "date":
-        pages = sorted(pages, key=lambda p: p.crawled_at or "", reverse=True)
-    elif sort == "title":
-        pages = sorted(pages, key=lambda p: p.title.lower())
-    else:
-        pages = sorted(pages, key=lambda p: p.score, reverse=True)
-    pages = pages[:limit]
+    pages = _sort_pages(idx.list_pages(), sort)[:limit]
 
     if not pages:
         if output_format == "json":
@@ -869,22 +865,9 @@ def list_pages(ctx, output_format, limit, sort, data_dir):
     if output_format == "json":
         click.echo(json.dumps({"pages": [p.to_dict() for p in pages]}, indent=2, default=str))
     elif output_format == "csv":
-        import csv as _csv
-        import io
-        output = io.StringIO()
-        writer = _csv.writer(output)
-        writer.writerow(["title", "url", "score", "crawled_at"])
-        for p in pages:
-            writer.writerow([p.title, p.url, f"{p.score:.4f}", p.crawled_at])
-        click.echo(output.getvalue().strip())
+        _format_pages_csv(pages)
     else:
-        click.echo("Indexed Pages")
-        click.echo("=" * 60)
-        for i, page in enumerate(pages, 1):
-            click.echo(f"{i}. {page.title}")
-            click.echo(f"   {page.url}")
-            click.echo(f"   Score: {page.relevance_score:.4f}")
-            click.echo("")
+        _format_pages_text(pages)
 
 
 # ── top (show highest-scored pages) ──────────────────────────────────
