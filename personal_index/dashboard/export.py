@@ -8,7 +8,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 
 class ExportFormat(Enum):
@@ -89,47 +89,35 @@ class DashboardExporter:
         filename: str | None = None,
         fields: list[str] | None = None,
     ) -> ExportResult:
-        """Export pages list to a format.
+        """Export pages list to a format."""
+        rows = [self._page_to_dict(p, fields) for p in pages]
+        content, fname = self._format_output(rows, fmt, filename or "pages_export")
+        return ExportResult(format=fmt.value, content=content, filename=fname, row_count=len(rows))
 
-        Args:
-            pages: List of page objects.
-            fmt: Export format.
-            filename: Optional filename override.
-            fields: Optional list of fields to include.
-
-        Returns:
-            ExportResult with content and metadata.
-        """
-        rows = []
-        for page in pages:
-            if hasattr(page, "to_dict"):
-                row = page.to_dict()
-            elif isinstance(page, dict):
-                row = page
-            else:
-                row = asdict(page)
-            if fields:
-                row = {k: row.get(k, "") for k in fields}
-            rows.append(row)
-
-        if fmt == ExportFormat.JSON:
-            content = json.dumps(rows, indent=2, default=str)
-            fname = filename or "pages_export.json"
-        elif fmt == ExportFormat.CSV:
-            content = self._dict_to_csv(rows)
-            fname = filename or "pages_export.csv"
-        elif fmt == ExportFormat.TSV:
-            content = self._dict_to_tsv(rows)
-            fname = filename or "pages_export.tsv"
+    @staticmethod
+    def _page_to_dict(page: Any, fields: list[str] | None) -> dict[str, Any]:
+        """Convert a page object to a dict, optionally filtering fields."""
+        if hasattr(page, "to_dict"):
+            row = cast(dict[str, Any], page.to_dict())
+        elif isinstance(page, dict):
+            row = page
         else:
-            raise ValueError(f"Unsupported format: {fmt}")
+            row = asdict(page)
+        if fields:
+            row = {k: row.get(k, "") for k in fields}
+        return row
 
-        return ExportResult(
-            format=fmt.value,
-            content=content,
-            filename=fname,
-            row_count=len(rows),
-        )
+    def _format_output(
+        self, rows: list[dict[str, Any]], fmt: ExportFormat, base_name: str
+    ) -> tuple[str, str]:
+        """Format rows and return (content, filename) for the given format."""
+        if fmt == ExportFormat.JSON:
+            return json.dumps(rows, indent=2, default=str), f"{base_name}.json"
+        if fmt == ExportFormat.CSV:
+            return self._dict_to_csv(rows), f"{base_name}.csv"
+        if fmt == ExportFormat.TSV:
+            return self._dict_to_tsv(rows), f"{base_name}.tsv"
+        raise ValueError(f"Unsupported format: {fmt}")
 
     def export_time_series(
         self,

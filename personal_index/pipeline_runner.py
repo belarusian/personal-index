@@ -73,7 +73,19 @@ class PipelineRunner:
         self.pipeline_config = pipeline_config or PipelineConfig()
         self._progress_callback = progress_callback
 
-        # Initialize stores
+        self._ensure_dirs(data_dir)
+        self._init_stores(data_dir)
+        self._init_processors()
+        self._init_crawler()
+
+    def _ensure_dirs(self, data_dir: str) -> None:
+        """Create data directory and subdirectories."""
+        os.makedirs(data_dir, exist_ok=True)
+        for subdir in ["cache", "archive", "backups"]:
+            os.makedirs(os.path.join(data_dir, subdir), exist_ok=True)
+
+    def _init_stores(self, data_dir: str) -> None:
+        """Initialize interest, tag, and search stores."""
         self._interest_store = InterestStore(
             store_path=os.path.join(data_dir, "interests.json")
         )
@@ -84,7 +96,8 @@ class PipelineRunner:
             db_path=os.path.join(data_dir, "search_index.json")
         )
 
-        # Initialize processing components
+    def _init_processors(self) -> None:
+        """Initialize filter and scorer components."""
         self._filter = ContentFilter(
             config=FilterConfig(
                 min_content_length=self.pipeline_config.min_content_length,
@@ -96,7 +109,8 @@ class PipelineRunner:
         )
         self._scorer = ContentScorer(weights=ScoreWeights())
 
-        # Initialize crawler
+    def _init_crawler(self) -> None:
+        """Initialize the crawler component."""
         self._crawler = Crawler(
             config=CrawlerConfig(
                 max_depth=self.pipeline_config.max_depth,
@@ -106,11 +120,6 @@ class PipelineRunner:
             ),
             interest_store=self._interest_store,
         )
-
-        # Ensure data directory exists
-        os.makedirs(data_dir, exist_ok=True)
-        for subdir in ["cache", "archive", "backups"]:
-            os.makedirs(os.path.join(data_dir, subdir), exist_ok=True)
 
     def _emit_progress(self, stage: str, count: int, total: int = 0) -> None:
         """Emit progress update, handling different callback signatures."""

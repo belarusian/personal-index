@@ -46,48 +46,47 @@ class LinkAnalyzer:
         stats = LinkStats()
         anchor_counter: Counter = Counter()
         domain_counter: Counter = Counter()
-        suspicious = []
+        suspicious: list[str] = []
 
         for link in links:
             link_url = link.get("url", "")
-            anchor = link.get("text", "").strip()
-
             if not link_url:
                 continue
-
-            stats.total_links += 1
-
-            # Classify internal vs external
-            parsed = urlparse(link_url)
-            link_domain = parsed.netloc.lower()
-
-            if self._is_internal(link_url):
-                stats.internal_links += 1
-            else:
-                stats.external_links += 1
-                if link_domain:
-                    domain_counter[link_domain] += 1
-
-            # Track anchor text
-            if anchor:
-                truncated = anchor[:self.max_anchor_length]
-                anchor_counter[truncated] += 1
-
-            # Detect suspicious links
-            if self._is_suspicious(link_url, anchor):
-                suspicious.append(link_url)
+            self._analyze_single_link(link_url, link.get("text", ""), stats, anchor_counter, domain_counter, suspicious)
 
         stats.unique_domains = len(domain_counter)
         stats.anchor_text_distribution = dict(anchor_counter.most_common(20))
         stats.domain_distribution = dict(domain_counter.most_common(20))
 
         return LinkAnalysisResult(
-            url=url,
-            stats=stats,
+            url=url, stats=stats,
             top_anchor_texts=anchor_counter.most_common(10),
             top_domains=domain_counter.most_common(10),
             suspicious_links=suspicious,
         )
+
+    def _analyze_single_link(
+        self, link_url: str, anchor: str, stats: LinkStats,
+        anchor_counter: Counter, domain_counter: Counter, suspicious: list[str],
+    ) -> None:
+        """Process a single link, updating stats and counters."""
+        stats.total_links += 1
+        parsed = urlparse(link_url)
+        link_domain = parsed.netloc.lower()
+
+        if self._is_internal(link_url):
+            stats.internal_links += 1
+        else:
+            stats.external_links += 1
+            if link_domain:
+                domain_counter[link_domain] += 1
+
+        a = anchor.strip()
+        if a:
+            anchor_counter[a[:self.max_anchor_length]] += 1
+
+        if self._is_suspicious(link_url, a):
+            suspicious.append(link_url)
 
     def _is_internal(self, url: str) -> bool:
         """Check if a URL is internal to the base domain."""
