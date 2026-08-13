@@ -133,30 +133,8 @@ def scan_modules(root: str) -> list[ModuleInfo]:
     return modules
 
 
-def _parse_module(filepath: str) -> ModuleInfo:
-    """Parse a single Python file and return ModuleInfo."""
-    module_name = _filepath_to_module(filepath)
-    info = ModuleInfo(filepath=filepath, module_name=module_name)
-
-    try:
-        source = Path(filepath).read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        info.status = "error"
-        return info
-
-    info.line_count = max(source.count("\n"), 1)
-    info.docstring = ""
-
-    try:
-        tree = ast.parse(source, filename=filepath)
-    except SyntaxError as exc:
-        info.ruff_errors.append(f"SyntaxError: {exc}")
-        info.status = "error"
-        return info
-
-    info.docstring = _extract_docstring(tree)
-
-    # Top-level imports
+def _parse_imports(tree: ast.Module, info: ModuleInfo) -> None:
+    """Extract top-level imports from AST."""
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -168,7 +146,9 @@ def _parse_module(filepath: str) -> ModuleInfo:
                 name = alias.asname if alias.asname else alias.name
                 info.imports.append(f"{module}.{name}" if module else name)
 
-    # Top-level functions
+
+def _parse_functions(tree: ast.Module, info: ModuleInfo) -> None:
+    """Extract top-level functions and classes from AST."""
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             func = FunctionInfo(
@@ -178,7 +158,6 @@ def _parse_module(filepath: str) -> ModuleInfo:
                 is_async=isinstance(node, ast.AsyncFunctionDef),
             )
             info.functions.append(func)
-
         elif isinstance(node, ast.ClassDef):
             cls = ClassInfo(
                 name=node.name,
@@ -199,7 +178,9 @@ def _parse_module(filepath: str) -> ModuleInfo:
                     cls.methods.append(method)
             info.classes.append(cls)
 
-    # Count test functions
+
+def _count_tests(info: ModuleInfo) -> None:
+    """Count test functions and methods."""
     for func in info.functions:
         if func.name.startswith("test_"):
             info.test_count += 1
@@ -208,6 +189,31 @@ def _parse_module(filepath: str) -> ModuleInfo:
             if method.name.startswith("test_"):
                 info.test_count += 1
 
+
+def _parse_module(filepath: str) -> ModuleInfo:
+    """Parse a single Python file and return ModuleInfo."""
+    module_name = _filepath_to_module(filepath)
+    info = ModuleInfo(filepath=filepath, module_name=module_name)
+
+    try:
+        source = Path(filepath).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        info.status = "error"
+        return info
+
+    info.line_count = max(source.count("\n"), 1)
+
+    try:
+        tree = ast.parse(source, filename=filepath)
+    except SyntaxError as exc:
+        info.ruff_errors.append(f"SyntaxError: {exc}")
+        info.status = "error"
+        return info
+
+    info.docstring = _extract_docstring(tree)
+    _parse_imports(tree, info)
+    _parse_functions(tree, info)
+    _count_tests(info)
     return info
 
 
@@ -452,12 +458,8 @@ def generate_metadata_json(data: DashboardData, output_path: str) -> str:
     return json_path
 
 
-def _compute_signals(data: DashboardData) -> dict:
-    """Compute cycle signals from dashboard data (mirrors cycle_signals.py logic)."""
-    modules = data.modules
-    test_names = set(data.test_module_names)
-
-    # S1: modules without tests (exclude CLI, __init__, __main__)
+def _signal_no_tests(modules: list) -> list[dict]:
+    """S1: modules without tests."""
     skip_prefixes = ("cli_", "test_")
     skip_names = ("__init__", "__main__")
     no_tests = []
@@ -473,8 +475,11 @@ def _compute_signals(data: DashboardData) -> dict:
                 "severity": "high" if m.line_count > 100 else "medium",
             })
     no_tests.sort(key=lambda x: x["lines"], reverse=True)  # type: ignore[return-value, arg-type]
+    return no_tests
 
-    # S2: oversized modules (>200 lines, >15 functions)
+
+def _signal_oversized(modules: list) -> list[dict]:
+    """S2: oversized modules (>200 lines, >15 functions)."""
     oversized = []
     for m in modules:
         fc = len(m.functions) + sum(len(c.methods) for c in m.classes)
@@ -486,8 +491,11 @@ def _compute_signals(data: DashboardData) -> dict:
                 "severity": "critical" if m.line_count > 400 else "high",
             })
     oversized.sort(key=lambda x: x["lines"], reverse=True)  # type: ignore[return-value, arg-type]
+    return oversized
 
-    # S5: error hotspots
+
+def _signal_errors(modules: list) -> list[dict]:
+    """S5: error hotspots."""
     errors = []
     for m in modules:
         total = len(m.ruff_errors) + len(m.mypy_errors) + len(m.ruff_warnings)
@@ -500,8 +508,11 @@ def _compute_signals(data: DashboardData) -> dict:
                 "total": total,
             })
     errors.sort(key=lambda x: x["total"], reverse=True)  # type: ignore[return-value, arg-type]
+    return errors
 
-    # S6: coverage estimate
+
+def _signal_coverage(modules: list, test_names: set[str]) -> dict:
+    """S6: coverage estimate."""
     covered = set()
     for tn in test_names:
         stem = tn.replace("test_", "", 1)
@@ -511,35 +522,35 @@ def _compute_signals(data: DashboardData) -> dict:
                 covered.add(m.module_name)
     total = len(modules)
     cov_pct = round(len(covered) / total * 100, 1) if total else 0
-
     return {
-        "S1_no_tests": no_tests,
-        "S2_oversized": oversized,
-        "S5_errors": errors,
-        "S6_coverage": {
-            "total_modules": total,
-            "covered": len(covered),
-            "uncovered": total - len(covered),
-            "pct": cov_pct,
-        },
+        "total_modules": total,
+        "covered": len(covered),
+        "uncovered": total - len(covered),
+        "pct": cov_pct,
     }
 
 
-def generate_dashboard(data: DashboardData, output_path: str) -> None:
-    """Generate the dark terminal-style HTML dashboard with embedded codemap metadata."""
-    total_errors = data.total_ruff_errors + data.total_mypy_errors
-    total_warnings = data.total_ruff_warnings
-    signals = _compute_signals(data)
-    total_source = data.total_lines - data.total_test_lines
+def _compute_signals(data: DashboardData) -> dict:
+    """Compute cycle signals from dashboard data."""
+    modules = data.modules
+    test_names = set(data.test_module_names)
+    return {
+        "S1_no_tests": _signal_no_tests(modules),
+        "S2_oversized": _signal_oversized(modules),
+        "S5_errors": _signal_errors(modules),
+        "S6_coverage": _signal_coverage(modules, test_names),
+    }
 
-    # ---- MODULE MAP rows ----
-    module_rows = ""
-    for mod in sorted(data.modules, key=lambda m: m.module_name):
+
+def _render_module_rows(modules: list) -> str:
+    """Render module map cards."""
+    rows = ""
+    for mod in sorted(modules, key=lambda m: m.module_name):
         color = _status_color(mod.status)
         indicator = _status_indicator(mod.status)
         class_count = len(mod.classes)
         func_count = len(mod.functions) + sum(len(c.methods) for c in mod.classes)
-        module_rows += f"""
+        rows += f"""
     <div class="mod-card" style="border-color: {color};">
         <div class="mod-header">
             <span class="mod-name">{_escape_html(mod.module_name)}</span>
@@ -552,26 +563,29 @@ def generate_dashboard(data: DashboardData, output_path: str) -> None:
             <span>TESTS: {mod.test_count}</span>
         </div>
     </div>"""
+    return rows
 
-    # ---- DEPENDENCY GRAPH (text tree) ----
-    dep_tree = ""
-    if data.dependency_graph:
-        for mod_name, deps in sorted(data.dependency_graph.items()):
-            dep_tree += f'<div class="dep-node"><span class="dep-module">{_escape_html(mod_name)}</span></div>\n'
-            for dep in deps:
-                dep_tree += f'<div class="dep-child">├── {_escape_html(dep)}</div>\n'
-    else:
-        dep_tree = '<div class="dep-node">No cross-module dependencies detected.</div>'
 
-    # ---- TEST COVERAGE bar chart (sorted by count desc) ----
-    test_bars = ""
-    sorted_by_tests = sorted(data.modules, key=lambda m: m.test_count, reverse=True)
-    max_tests = max((m.test_count for m in sorted_by_tests), default=1)
-    if max_tests == 0:
-        max_tests = 1
+def _render_dep_tree(dep_graph: dict | None) -> str:
+    """Render dependency graph tree."""
+    if not dep_graph:
+        return '<div class="dep-node">No cross-module dependencies detected.</div>'
+    tree = ""
+    for mod_name, deps in sorted(dep_graph.items()):
+        tree += f'<div class="dep-node"><span class="dep-module">{_escape_html(mod_name)}</span></div>\n'
+        for dep in deps:
+            tree += f'<div class="dep-child">├── {_escape_html(dep)}</div>\n'
+    return tree
+
+
+def _render_test_bars(modules: list) -> str:
+    """Render test coverage bar chart."""
+    sorted_by_tests = sorted(modules, key=lambda m: m.test_count, reverse=True)
+    max_tests = max((m.test_count for m in sorted_by_tests), default=1) or 1
+    bars = ""
     for mod in sorted_by_tests:
         bar_width = int((mod.test_count / max_tests) * 100)
-        test_bars += f"""
+        bars += f"""
     <div class="test-bar-row">
         <span class="test-bar-label">{_escape_html(mod.module_name)}</span>
         <div class="test-bar-track">
@@ -579,47 +593,102 @@ def generate_dashboard(data: DashboardData, output_path: str) -> None:
         </div>
         <span class="test-bar-count">{mod.test_count}</span>
     </div>"""
+    return bars
 
-    # ---- RECENT COMMITS ----
-    commit_rows = ""
-    for c in data.commits:
-        commit_rows += f"""
+
+def _render_commit_rows(commits: list) -> str:
+    """Render recent commits table."""
+    rows = ""
+    for c in commits:
+        rows += f"""
     <div class="commit-row">
         <span class="commit-sha">{_escape_html(c.sha_short)}</span>
         <span class="commit-msg">{_escape_html(c.message)}</span>
         <span class="commit-author">{_escape_html(c.author)}</span>
         <span class="commit-date">{_escape_html(c.date)}</span>
     </div>"""
+    return rows
 
-    # ---- HEAT MAP (sorted by errors+warnings desc) ----
-    heat_rows = ""
-    sorted_by_issues = sorted(data.modules, key=lambda m: len(m.ruff_errors) + len(m.mypy_errors) + len(m.ruff_warnings), reverse=True)
+
+def _heat_cell_style(total_issues: int) -> tuple[str, int]:
+    """Return (color, intensity) for heat map cell."""
+    if total_issues == 0:
+        return "#86f7ad", 0
+    if total_issues <= 2:
+        return "#f0a030", 30
+    if total_issues <= 5:
+        return "#e06030", 60
+    return "#ff2020", 100
+
+
+def _render_heat_rows(modules: list) -> str:
+    """Render issue heat map."""
+    sorted_by_issues = sorted(
+        modules,
+        key=lambda m: len(m.ruff_errors) + len(m.mypy_errors) + len(m.ruff_warnings),
+        reverse=True,
+    )
+    rows = ""
     for mod in sorted_by_issues:
         err_count = len(mod.ruff_errors) + len(mod.mypy_errors)
         warn_count = len(mod.ruff_warnings)
-        total_issues = err_count + warn_count
-        if total_issues == 0:
-            heat_color = "#86f7ad"
-            heat_intensity = 0
-        elif total_issues <= 2:
-            heat_color = "#f0a030"
-            heat_intensity = 30
-        elif total_issues <= 5:
-            heat_color = "#e06030"
-            heat_intensity = 60
-        else:
-            heat_color = "#ff2020"
-            heat_intensity = 100
-        heat_rows += f"""
+        heat_color, heat_intensity = _heat_cell_style(err_count + warn_count)
+        rows += f"""
     <div class="heat-row">
         <div class="heat-cell" style="background: {heat_color}; opacity: {0.2 + heat_intensity / 100};"></div>
         <span class="heat-name">{_escape_html(mod.module_name)}</span>
         <span class="heat-errs" style="color: {heat_color};">E:{err_count} W:{warn_count}</span>
     </div>"""
+    return rows
 
-    # ---- EMBEDDED METADATA for AI consumption ----
+
+def _render_signal_rows_no_tests(signals: dict) -> str:
+    """Render S1 signal rows (modules without tests)."""
+    rows = ""
+    for m in signals["S1_no_tests"][:10]:
+        sev_color = "#f0a030" if m["severity"] == "high" else "#5a9e7a"
+        rows += f"""
+    <div class="signal-row">
+        <span class="signal-name">{_escape_html(m['module'])}</span>
+        <span class="signal-meta">{m['lines']}L / {m['functions']}f</span>
+        <span class="signal-severity" style="color: {sev_color};">[{m['severity']}]</span>
+    </div>"""
+    return rows
+
+
+def _render_signal_rows_oversized(signals: dict) -> str:
+    """Render S2 signal rows (oversized modules)."""
+    rows = ""
+    for m in signals["S2_oversized"][:10]:
+        sev_color = "#ff4444" if m["severity"] == "critical" else "#f0a030"
+        rows += f"""
+    <div class="signal-row">
+        <span class="signal-name">{_escape_html(m['module'])}</span>
+        <span class="signal-meta">{m['lines']}L / {m['functions']}f</span>
+        <span class="signal-severity" style="color: {sev_color};">[{m['severity']}]</span>
+    </div>"""
+    return rows
+
+
+def _render_signal_rows_errors(signals: dict) -> str:
+    """Render S5 signal rows (error hotspots)."""
+    rows = ""
+    for e in signals["S5_errors"]:
+        rows += f"""
+    <div class="signal-row">
+        <span class="signal-name">{_escape_html(e['module'])}</span>
+        <span class="signal-meta">R:{e['ruff_errors']} M:{e['mypy_errors']} W:{e['ruff_warnings']}</span>
+        <span class="signal-severity" style="color: #ff4444;">[{e['total']}]</span>
+    </div>"""
+    return rows
+
+
+def _build_metadata_payload(data: DashboardData, signals: dict) -> str:
+    """Build embedded JSON metadata payload for AI consumption."""
     import json as _json
-    metadata_payload = _json.dumps({
+    total_errors = data.total_ruff_errors + data.total_mypy_errors
+    total_source = data.total_lines - data.total_test_lines
+    return _json.dumps({
         "summary": {
             "total_modules": data.total_modules,
             "total_lines": data.total_lines,
@@ -629,7 +698,7 @@ def generate_dashboard(data: DashboardData, output_path: str) -> None:
             "total_functions": data.total_functions,
             "total_tests": data.total_tests,
             "total_errors": total_errors,
-            "total_warnings": total_warnings,
+            "total_warnings": data.total_ruff_warnings,
         },
         "modules": [_module_to_dict(m) for m in data.modules],
         "dependency_graph": data.dependency_graph,
@@ -640,43 +709,26 @@ def generate_dashboard(data: DashboardData, output_path: str) -> None:
         ],
     })
 
-    # ---- SIGNAL SECTIONS ----
-    # S1: No tests (top 10)
-    no_tests_rows = ""
-    for m in signals["S1_no_tests"][:10]:
-        sev_color = "#f0a030" if m["severity"] == "high" else "#5a9e7a"
-        no_tests_rows += f"""
-    <div class="signal-row">
-        <span class="signal-name">{_escape_html(m['module'])}</span>
-        <span class="signal-meta">{m['lines']}L / {m['functions']}f</span>
-        <span class="signal-severity" style="color: {sev_color};">[{m['severity']}]</span>
-    </div>"""
 
-    # S2: Oversized (top 10)
-    oversized_rows = ""
-    for m in signals["S2_oversized"][:10]:
-        sev_color = "#ff4444" if m["severity"] == "critical" else "#f0a030"
-        oversized_rows += f"""
-    <div class="signal-row">
-        <span class="signal-name">{_escape_html(m['module'])}</span>
-        <span class="signal-meta">{m['lines']}L / {m['functions']}f</span>
-        <span class="signal-severity" style="color: {sev_color};">[{m['severity']}]</span>
-    </div>"""
-
-    # S5: Error hotspots
-    error_rows = ""
-    for e in signals["S5_errors"]:
-        error_rows += f"""
-    <div class="signal-row">
-        <span class="signal-name">{_escape_html(e['module'])}</span>
-        <span class="signal-meta">R:{e['ruff_errors']} M:{e['mypy_errors']} W:{e['ruff_warnings']}</span>
-        <span class="signal-severity" style="color: #ff4444;">[{e['total']}]</span>
-    </div>"""
-
-    # S6: Coverage
+def generate_dashboard(data: DashboardData, output_path: str) -> None:
+    """Generate the dark terminal-style HTML dashboard with embedded codemap metadata."""
+    signals = _compute_signals(data)
+    total_errors = data.total_ruff_errors + data.total_mypy_errors
+    total_warnings = data.total_ruff_warnings
+    total_source = data.total_lines - data.total_test_lines
     cov = signals["S6_coverage"]
     cov_bar_width = cov["pct"]
     cov_color = "#86f7ad" if cov["pct"] >= 50 else "#f0a030" if cov["pct"] >= 30 else "#ff4444"
+
+    module_rows = _render_module_rows(data.modules)
+    dep_tree = _render_dep_tree(data.dependency_graph)
+    test_bars = _render_test_bars(data.modules)
+    commit_rows = _render_commit_rows(data.commits)
+    heat_rows = _render_heat_rows(data.modules)
+    metadata_payload = _build_metadata_payload(data, signals)
+    no_tests_rows = _render_signal_rows_no_tests(signals)
+    oversized_rows = _render_signal_rows_oversized(signals)
+    error_rows = _render_signal_rows_errors(signals)
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1322,45 +1374,43 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
     return _write_dashboard(data, output)
 
 
-def generate_fast(root: str = "personal_index", output: str = "personal_index/docs_dashboard.html") -> str:
-    """Fast pipeline: scan → generate HTML (skip linting and testing).
+def _attribute_test_counts(modules: list, test_modules: list) -> None:
+    """Attribute test counts from test modules to source modules."""
+    for tm in test_modules:
+        test_stem = tm.module_name.rpartition(".")[2]
+        if not test_stem.startswith("test_"):
+            continue
+        source_stem = test_stem[5:]
+        for mod in modules:
+            if mod.module_name.rpartition(".")[2] == source_stem:
+                mod.test_count += tm.test_count
+                break
 
-    Uses AST-only scan. Error counts will be from whatever state the
-    module metadata was last in. Suitable for dashboard refresh between
-    full audit cycles.
-    """
+
+def _find_test_root(root: str) -> str | None:
+    """Find the tests/ directory relative to root."""
+    test_root = os.path.join(os.path.dirname(root) if root != "." else ".", "tests")
+    if not os.path.isdir(test_root):
+        test_root = "tests"
+    return test_root if os.path.isdir(test_root) else None
+
+
+def generate_fast(root: str = "personal_index", output: str = "personal_index/docs_dashboard.html") -> str:
+    """Fast pipeline: scan → generate HTML (skip linting and testing)."""
     print(f"[docs_generator] Fast scan of {root} (skipping ruff/mypy/pytest) ...")
     modules = scan_modules(root)
     print(f"[docs_generator] Found {len(modules)} modules")
 
-    # Scan tests/ directory for line counts and test attribution
-    test_root = os.path.join(os.path.dirname(root) if root != "." else ".", "tests")
-    if not os.path.isdir(test_root):
-        test_root = "tests"
-    test_modules = scan_modules(test_root) if os.path.isdir(test_root) else []
+    test_root = _find_test_root(root)
+    test_modules = scan_modules(test_root) if test_root else []
     print(f"[docs_generator] Found {len(test_modules)} test files")
 
-    # Attribute test counts to source modules based on test file names
-    # e.g., test_bookmarks.py -> personal_index.bookmarks
-    for tm in test_modules:
-        # Extract the tested module name from test file name
-        test_stem = tm.module_name.rpartition(".")[2]  # e.g., test_bookmarks
-        if test_stem.startswith("test_"):
-            source_stem = test_stem[5:]  # e.g., bookmarks
-            # Find matching source module
-            for mod in modules:
-                mod_short = mod.module_name.rpartition(".")[2]
-                if mod_short == source_stem:
-                    mod.test_count += tm.test_count
-                    break
-
-    # Print attribution summary
+    _attribute_test_counts(modules, test_modules)
     modules_with_tests = sum(1 for m in modules if m.test_count > 0)
     print(f"[docs_generator] Attributed tests to {modules_with_tests} source modules")
 
     dep_graph = detect_dependencies(modules)
     commits = fetch_recent_commits(20)
-
     data = _build_dashboard_data(modules, test_modules, "", dep_graph, commits)
     return _write_dashboard(data, output)
 
