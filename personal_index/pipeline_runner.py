@@ -310,39 +310,11 @@ class PipelineRunner:
         return stats
 
     def run_from_files(self, file_paths: list[str]) -> PipelineStats:
-        """Run the pipeline on local files (skip crawl stage).
-
-        Args:
-            file_paths: List of file paths to process.
-
-        Returns:
-            PipelineStats with results from each stage.
-        """
+        """Run the pipeline on local files (skip crawl stage)."""
         stats = PipelineStats()
         start_time = time.time()
-
         try:
-            # Stage 1: Read files (replaces crawl)
-            logger.info("Stage 1/6: Reading %d files", len(file_paths))
-            self._emit_progress("crawl", 0, len(file_paths))
-            crawled_pages = []
-            for i, filepath in enumerate(file_paths):
-                try:
-                    page = self._read_file(filepath)
-                    if page:
-                        crawled_pages.append(page)
-                        stats.pages_crawled += 1
-                    else:
-                        # File was empty or unreadable - record as error
-                        if not os.path.isfile(filepath):
-                            stats.errors.append(f"File not found: {filepath}")
-                        else:
-                            stats.errors.append(f"Empty or unreadable file: {filepath}")
-                    self._emit_progress("crawl", i + 1, len(file_paths))
-                except (RuntimeError, OSError) as e:
-                    stats.errors.append(f"Read error for {filepath}: {e}")
-
-            # Stages 2-6
+            crawled_pages = self._read_files(file_paths, stats)
             pages = self._stage_extract(crawled_pages, stats, self._emit_progress)
             pages = self._stage_filter(pages, stats, self._emit_progress)
             pages = self._stage_score(pages, stats, self._emit_progress)
@@ -350,9 +322,31 @@ class PipelineRunner:
             self._stage_index(pages, stats, self._emit_progress)
         finally:
             stats.elapsed_seconds = time.time() - start_time
-
         logger.info("Pipeline complete: %s", stats.summary())
         return stats
+
+    def _read_files(
+        self, file_paths: list[str], stats: PipelineStats
+    ) -> list[CrawledPage]:
+        """Read local files into CrawledPage objects."""
+        logger.info("Stage 1/6: Reading %d files", len(file_paths))
+        self._emit_progress("crawl", 0, len(file_paths))
+        pages: list[CrawledPage] = []
+        for i, fp in enumerate(file_paths):
+            try:
+                page = self._read_file(fp)
+                if page:
+                    pages.append(page)
+                    stats.pages_crawled += 1
+                else:
+                    stats.errors.append(
+                        f"File not found: {fp}" if not os.path.isfile(fp)
+                        else f"Empty or unreadable file: {fp}"
+                    )
+                self._emit_progress("crawl", i + 1, len(file_paths))
+            except (RuntimeError, OSError) as e:
+                stats.errors.append(f"Read error for {fp}: {e}")
+        return pages
 
     def _read_file(self, filepath: str) -> CrawledPage | None:
         """Read a file and create a CrawledPage from it.

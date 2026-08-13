@@ -218,49 +218,40 @@ class PipelineE2E:
         return result
 
     def _process_single_file(self, file_path: str, result: PipelineRunResult) -> None:
-        """Process a single file through all pipeline stages, updating result counters.
-
-        Args:
-            file_path: Path to the file to process.
-            result: PipelineRunResult to update with statistics.
-        """
+        """Process a single file through all pipeline stages."""
         try:
-            raw_content = self._stage_read(file_path)
-            if raw_content is None:
+            raw = self._stage_read(file_path)
+            if raw is None:
                 result.errors.append(f"File not found: {file_path}")
                 return
-
             result.pages_crawled += 1
-
-            page = self._stage_extract(raw_content, file_path)
+            page = self._stage_extract(raw, file_path)
             result.pages_extracted += 1
-
             if not self._stage_filter(page):
                 result.pages_filtered_out += 1
                 return
             result.pages_filtered_in += 1
-
             score = self._stage_score(page)
             result.pages_scored += 1
-
             if score < self.config.min_score_threshold:
                 return
-
-            tags = self._stage_tag(page)
-            if tags:
-                result.pages_tagged += 1
-                result.tags_applied += len(tags)
-            result.interests_matched += len(page.matched_interests)
-
-            try:
-                self._stage_index(page)
-                result.pages_indexed += 1
-                result.indexed_pages.append(page)
-            except (OSError, ValueError) as e:
-                result.errors.append(f"Index error for {page.url}: {e}")
-
+            self._apply_tags_and_index(page, result)
         except (RuntimeError, OSError) as e:
             result.errors.append(f"Error processing {file_path}: {e}")
+
+    def _apply_tags_and_index(self, page: CrawledPage, result: PipelineRunResult) -> None:
+        """Tag page and add to search index."""
+        tags = self._stage_tag(page)
+        if tags:
+            result.pages_tagged += 1
+            result.tags_applied += len(tags)
+        result.interests_matched += len(page.matched_interests)
+        try:
+            self._stage_index(page)
+            result.pages_indexed += 1
+            result.indexed_pages.append(page)
+        except (OSError, ValueError) as e:
+            result.errors.append(f"Index error for {page.url}: {e}")
 
     def search(self, query: str, limit: int = 20) -> list[dict[str, Any]]:
         """Search the indexed content.

@@ -9,7 +9,6 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
 
 
 @dataclass
@@ -89,43 +88,39 @@ class BackupManager:
         source_path = Path(source_dir)
         if not source_path.exists():
             raise FileNotFoundError(f"Source directory not found: {source_dir}")
-
         manifest = BackupManifest(source_dir=source_dir)
         backup_path = Path(self._backup_dir)
         backup_path.mkdir(parents=True, exist_ok=True)
-
-        # Collect files
-        files = self._collect_files(
-            source_path, include_patterns, exclude_patterns
-        )
-        manifest.files = [str(f.relative_to(source_path)) for f in files]
-        manifest.file_count = len(files)
-
-        # Calculate total size
-        manifest.total_size = sum(f.stat().st_size for f in files)
-
-        # Create archive
-        if compress:
-            archive_name = f"backup_{manifest.backup_id}.tar.gz"
-            mode: Literal["w:gz", "w"] = "w:gz"
-        else:
-            archive_name = f"backup_{manifest.backup_id}.tar"
-            mode = "w"
-        archive_path = backup_path / archive_name
-
-        self._create_archive(files, archive_path, mode, source_path)
-
-        # Save manifest
+        files = self._collect_files(source_path, include_patterns, exclude_patterns)
+        self._populate_manifest(manifest, files, source_path)
+        archive_path = self._build_archive(manifest, files, backup_path, source_path, compress)
         manifest_path = backup_path / f"backup_{manifest.backup_id}.json"
         self._save_manifest(manifest, manifest_path)
-
         manifest.metadata["archive_path"] = str(archive_path.resolve())
         manifest.metadata["compressed"] = compress
-
-        # Re-save manifest with updated metadata
         self._save_manifest(manifest, manifest_path)
-
         return manifest
+
+    def _populate_manifest(
+        self, manifest: BackupManifest, files: list[Path], source: Path
+    ) -> None:
+        """Set file list and total size on manifest."""
+        manifest.files = [str(f.relative_to(source)) for f in files]
+        manifest.file_count = len(files)
+        manifest.total_size = sum(f.stat().st_size for f in files)
+
+    def _build_archive(
+        self, manifest: BackupManifest, files: list[Path],
+        backup_path: Path, source: Path, compress: bool
+    ) -> Path:
+        """Create archive and return its path."""
+        if compress:
+            name, mode = f"backup_{manifest.backup_id}.tar.gz", "w:gz"
+        else:
+            name, mode = f"backup_{manifest.backup_id}.tar", "w"
+        archive_path = backup_path / name
+        self._create_archive(files, archive_path, mode, source)
+        return archive_path
 
     def list_backups(self) -> list[BackupManifest]:
         """List all available backups."""
@@ -148,47 +143,42 @@ class BackupManager:
         """Restore a backup to the target directory."""
         backup_path = Path(self._backup_dir)
         manifest_file = backup_path / f"backup_{backup_id}.json"
-
         if not manifest_file.exists():
             raise FileNotFoundError(f"Backup not found: {backup_id}")
-
         with open(str(manifest_file)) as f:
             manifest = BackupManifest.from_dict(json.load(f))
-
-        # Find archive
-        archive_path = Path(manifest.metadata.get("archive_path", ""))
-        if not archive_path.exists() or not archive_path.is_file():
-            # Try to find by name in backup directory
-            archive_name = f"backup_{backup_id}.tar.gz"
-            archive_path = backup_path / archive_name
-            if not archive_path.exists() or not archive_path.is_file():
-                archive_name = f"backup_{backup_id}.tar"
-                archive_path = backup_path / archive_name
-
-        if not archive_path.exists() or not archive_path.is_file():
-            raise FileNotFoundError(f"Archive not found for backup: {backup_id}")
-
-        # Determine mode
-        is_gzip = str(archive_path).endswith(".tar.gz")
-        mode: Literal["r:gz", "r"] = "r:gz" if is_gzip else "r"
-
-        # Extract
+        archive_path = self._find_archive(manifest, backup_path, backup_id)
+        mode = "r:gz" if str(archive_path).endswith(".tar.gz") else "r"
         target = Path(target_dir)
         target.mkdir(parents=True, exist_ok=True)
-
-        restored_files = 0
-        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
-            members = tar.getnames()
-            restored_files = len(members)
-            tar.extractall(path=str(target), filter="data")
-
-        result: dict[str, object] = {
+        restored = self._extract_archive(archive_path, mode, target)
+        return {
             "backup_id": backup_id,
             "target_dir": str(target),
-            "files_restored": int(restored_files),
+            "files_restored": restored,
             "restored_at": datetime.now(timezone.utc).isoformat(),
         }
-        return result
+
+    def _find_archive(
+        self, manifest: BackupManifest, backup_path: Path, backup_id: str
+    ) -> Path:
+        """Locate the archive file for a backup."""
+        archive_path = Path(manifest.metadata.get("archive_path", ""))
+        if not archive_path.exists() or not archive_path.is_file():
+            archive_path = backup_path / f"backup_{backup_id}.tar.gz"
+            if not archive_path.exists() or not archive_path.is_file():
+                archive_path = backup_path / f"backup_{backup_id}.tar"
+        if not archive_path.exists() or not archive_path.is_file():
+            raise FileNotFoundError(f"Archive not found for backup: {backup_id}")
+        return archive_path
+
+    @staticmethod
+    def _extract_archive(archive_path: Path, mode: str, target: Path) -> int:
+        """Extract archive and return number of files restored."""
+        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
+            count = len(tar.getnames())
+            tar.extractall(path=str(target), filter="data")
+        return count
 
     def delete_backup(self, backup_id: str) -> bool:
         """Delete a backup and its archive."""
