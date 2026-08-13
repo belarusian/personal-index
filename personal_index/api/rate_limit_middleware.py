@@ -73,29 +73,13 @@ class SlidingWindowRateLimiter:
         method: str,
         path: str,
     ) -> tuple[bool, dict[str, Any]]:
-        """Check if a request is allowed under rate limits.
-
-        Args:
-            identifier: Client identifier (IP, user ID, etc.)
-            method: HTTP method
-            path: Request path
-
-        Returns:
-            Tuple of (allowed, rate_limit_headers)
-        """
+        """Check if a request is allowed under rate limits."""
         now = time.monotonic()
-        headers = {}
+        headers: dict[str, Any] = {}
 
-        # Check global limit
-        self._global_timestamps = [
-            t for t in self._global_timestamps if now - t < self._global_window
-        ]
-        if len(self._global_timestamps) >= self._global_limit:
-            retry_after = self._global_window - (now - self._global_timestamps[0])
-            headers["Retry-After"] = str(max(1, int(retry_after)))
+        if self._check_global_limit(now, headers):
             return False, headers
 
-        # Check per-rule limits
         for rule in self.rules:
             if not rule.matches(method, path):
                 continue
@@ -108,22 +92,54 @@ class SlidingWindowRateLimiter:
             entry.cleanup(now, rule.window_seconds)
 
             if len(entry.timestamps) >= rule.max_requests:
-                oldest = entry.timestamps[0] if entry.timestamps else now
-                retry_after = rule.window_seconds - (now - oldest)
-                headers["Retry-After"] = str(max(1, int(retry_after)))
-                headers["X-RateLimit-Limit"] = str(rule.max_requests)
-                headers["X-RateLimit-Remaining"] = "0"
+                self._build_rejected_headers(entry, now, rule, headers)
                 return False, headers
 
             entry.record_request(now)
-            remaining = rule.max_requests - len(entry.timestamps)
-            headers["X-RateLimit-Limit"] = str(rule.max_requests)
-            headers["X-RateLimit-Remaining"] = str(remaining)
-            headers["X-RateLimit-Reset"] = str(int(now + rule.window_seconds))
+            self._build_allowed_headers(entry, now, rule, headers)
 
-        # Record in global tracker
         self._global_timestamps.append(now)
         return True, headers
+
+    def _check_global_limit(
+        self, now: float, headers: dict[str, Any]
+    ) -> bool:
+        """Return True if global limit exceeded."""
+        self._global_timestamps = [
+            t for t in self._global_timestamps if now - t < self._global_window
+        ]
+        if len(self._global_timestamps) >= self._global_limit:
+            retry_after = self._global_window - (now - self._global_timestamps[0])
+            headers["Retry-After"] = str(max(1, int(retry_after)))
+            return True
+        return False
+
+    def _build_rejected_headers(
+        self,
+        entry: RateLimitEntry,
+        now: float,
+        rule: RateLimitRule,
+        headers: dict[str, Any],
+    ) -> None:
+        """Build headers for a rate-limited response."""
+        oldest = entry.timestamps[0] if entry.timestamps else now
+        retry_after = rule.window_seconds - (now - oldest)
+        headers["Retry-After"] = str(max(1, int(retry_after)))
+        headers["X-RateLimit-Limit"] = str(rule.max_requests)
+        headers["X-RateLimit-Remaining"] = "0"
+
+    def _build_allowed_headers(
+        self,
+        entry: RateLimitEntry,
+        now: float,
+        rule: RateLimitRule,
+        headers: dict[str, Any],
+    ) -> None:
+        """Build headers for an allowed response."""
+        remaining = rule.max_requests - len(entry.timestamps)
+        headers["X-RateLimit-Limit"] = str(rule.max_requests)
+        headers["X-RateLimit-Remaining"] = str(remaining)
+        headers["X-RateLimit-Reset"] = str(int(now + rule.window_seconds))
 
     def get_status(self, identifier: str) -> dict[str, Any]:
         """Get rate limit status for an identifier."""
