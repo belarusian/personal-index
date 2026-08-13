@@ -443,6 +443,14 @@ class ContentCategorizer:
             for item in items
         ]
 
+    def _add_matches(self, matches: list[str], kw: list[str], src: list[str]) -> list[str]:
+        for k in matches:
+            if k not in kw:
+                kw.append(k)
+        if matches:
+            src.append("text")
+        return kw
+
     def _score_topic(
         self,
         topic: TopicCategory,
@@ -454,52 +462,34 @@ class ContentCategorizer:
         meta_lower: str,
         url_hints: set,
     ) -> tuple[float, list[str], list[str]]:
-        """Score a single topic against content signals.
-
-        Supports both single-word token matching and multi-word phrase matching.
-
-        Returns:
-            Tuple of (score, matched_keywords, signal_sources).
-        """
+        """Score a single topic against content signals."""
         score = 0.0
-        matched_keywords: list[str] = []
-        signal_sources: list[str] = []
+        matched: list[str] = []
+        sources: list[str] = []
 
-        # 1. Text keyword matching
-        text_matches = self._match_keywords(topic.keywords, text_tokens, text_lower)
-        if text_matches:
-            # Logarithmic scaling to prevent dominance
-            text_score = min(len(text_matches) * 0.15, 1.0)
-            score += text_score * topic.weight
-            matched_keywords.extend(text_matches)
-            signal_sources.append("text")
+        tm = self._match_keywords(topic.keywords, text_tokens, text_lower)
+        if tm:
+            score += min(len(tm) * 0.15, 1.0) * topic.weight
+            matched.extend(tm)
+            sources.append("text")
 
-        # 2. Title keyword matching (boosted)
-        title_matches = self._match_keywords(topic.keywords, title_tokens, title_lower)
-        if title_matches:
-            title_score = min(len(title_matches) * 0.3 * self.TITLE_BOOST, 1.0)
-            score += title_score * topic.weight
-            for kw in title_matches:
-                if kw not in matched_keywords:
-                    matched_keywords.append(kw)
-            signal_sources.append("title")
+        ttm = self._match_keywords(topic.keywords, title_tokens, title_lower)
+        if ttm:
+            score += min(len(ttm) * 0.3 * self.TITLE_BOOST, 1.0) * topic.weight
+            self._add_matches(ttm, matched, sources)
+            sources.append("title")
 
-        # 3. Meta description matching (boosted)
-        meta_matches = self._match_keywords(topic.keywords, meta_tokens, meta_lower)
-        if meta_matches:
-            meta_score = min(len(meta_matches) * 0.2 * self.META_DESC_BOOST, 1.0)
-            score += meta_score * topic.weight
-            for kw in meta_matches:
-                if kw not in matched_keywords:
-                    matched_keywords.append(kw)
-            signal_sources.append("meta_description")
+        mm = self._match_keywords(topic.keywords, meta_tokens, meta_lower)
+        if mm:
+            score += min(len(mm) * 0.2 * self.META_DESC_BOOST, 1.0) * topic.weight
+            self._add_matches(mm, matched, sources)
+            sources.append("meta_description")
 
-        # 4. URL hint matching
         if topic.name in url_hints:
             score += self.URL_HINT_BOOST * topic.weight
-            signal_sources.append("url_hint")
+            sources.append("url_hint")
 
-        return score, matched_keywords, signal_sources
+        return score, matched, sources
 
     def _match_keywords(
         self,

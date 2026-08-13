@@ -112,6 +112,27 @@ class Recommender:
         score = len(common) / len(union) if union else 0.0
         return score, sorted(common)
 
+    def _build_recommendation(
+        self, item: ContentItem, kw_score: float, kw_common: list[str],
+        tag_score: float, tag_common: list[str],
+        kw_w: float, tag_w: float, sc_w: float,
+    ) -> Recommendation | None:
+        norm = min(item.score / 10.0, 1.0) if item.score > 0 else 0.0
+        combined = kw_score * kw_w + tag_score * tag_w + norm * sc_w
+        if combined < self.min_score:
+            return None
+        reasons: list[str] = []
+        if kw_common:
+            reasons.append(f"keywords: {', '.join(kw_common[:5])}")
+        if tag_common:
+            reasons.append(f"tags: {', '.join(tag_common)}")
+        if not reasons:
+            reasons.append("score-based")
+        return Recommendation(
+            url=item.url, title=item.title, score=combined,
+            reason="; ".join(reasons), matching_keywords=kw_common, matching_tags=tag_common,
+        )
+
     def recommend(
         self,
         seed: ContentItem,
@@ -120,56 +141,18 @@ class Recommender:
         tag_weight: float = 0.3,
         score_weight: float = 0.1,
     ) -> list[Recommendation]:
-        """Generate recommendations based on a seed content item.
-
-        Args:
-            seed: The content item to find recommendations for.
-            top_n: Number of recommendations to return.
-            keyword_weight: Weight for keyword overlap scoring.
-            tag_weight: Weight for tag similarity scoring.
-            score_weight: Weight for existing content score.
-
-        Returns:
-            List of Recommendation objects sorted by score.
-        """
+        """Generate recommendations based on a seed content item."""
         if not self._items:
             return []
-
         candidates: list[Recommendation] = []
         for item in self._items:
             if item.url == seed.url:
                 continue
-
-            kw_score, kw_common = self._keyword_overlap_score(seed, item)
-            tag_score, tag_common = self._tag_similarity_score(seed, item)
-
-            # Normalize existing score to 0-1 range
-            norm_score = min(item.score / 10.0, 1.0) if item.score > 0 else 0.0
-
-            combined = (
-                kw_score * keyword_weight
-                + tag_score * tag_weight
-                + norm_score * score_weight
-            )
-
-            if combined >= self.min_score:
-                reasons = []
-                if kw_common:
-                    reasons.append(f"keywords: {', '.join(kw_common[:5])}")
-                if tag_common:
-                    reasons.append(f"tags: {', '.join(tag_common)}")
-                if not reasons:
-                    reasons.append("score-based")
-
-                candidates.append(Recommendation(
-                    url=item.url,
-                    title=item.title,
-                    score=combined,
-                    reason="; ".join(reasons),
-                    matching_keywords=kw_common,
-                    matching_tags=tag_common,
-                ))
-
+            kw_s, kw_c = self._keyword_overlap_score(seed, item)
+            tg_s, tg_c = self._tag_similarity_score(seed, item)
+            rec = self._build_recommendation(item, kw_s, kw_c, tg_s, tg_c, keyword_weight, tag_weight, score_weight)
+            if rec:
+                candidates.append(rec)
         candidates.sort(key=lambda r: r.score, reverse=True)
         return candidates[:top_n]
 

@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-08-13T02:58:44Z",
+  "generated_at": "2026-08-13T09:20:40Z",
   "summary": {
     "total_modules": 191,
-    "total_lines": 81946,
-    "total_source_lines": 34274,
-    "total_test_lines": 47672,
+    "total_lines": 83994,
+    "total_source_lines": 34812,
+    "total_test_lines": 49182,
     "total_classes": 402,
-    "total_functions": 1809,
-    "total_tests": 4394,
+    "total_functions": 1939,
+    "total_tests": 4509,
     "total_errors": 0,
     "total_warnings": 0
   },
   "tree_summary": {
     "name": "root",
     "stats": {
-      "lines": 34274,
-      "functions": 1809,
+      "lines": 34812,
+      "functions": 1939,
       "classes": 402,
       "errors": 0,
       "warnings": 0,
@@ -29,8 +29,8 @@
       "personal_index": {
         "name": "personal_index",
         "stats": {
-          "lines": 34274,
-          "functions": 1809,
+          "lines": 34812,
+          "functions": 1939,
           "classes": 402,
           "errors": 0,
           "warnings": 0,
@@ -41,6 +41,101 @@
           "S2"
         ],
         "children": {
+          "dashboard": {
+            "name": "dashboard",
+            "stats": {
+              "lines": 705,
+              "functions": 31,
+              "classes": 10,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 5
+            },
+            "signals": [
+              "S1",
+              "S2"
+            ],
+            "children": {
+              "aggregator": {
+                "name": "aggregator",
+                "stats": {
+                  "lines": 208,
+                  "functions": 16,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [
+                  "S1",
+                  "S2"
+                ],
+                "modules": [
+                  "personal_index.dashboard.aggregator"
+                ]
+              },
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 23,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.__init__"
+                ]
+              },
+              "export": {
+                "name": "export",
+                "stats": {
+                  "lines": 221,
+                  "functions": 7,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.export"
+                ]
+              },
+              "stats": {
+                "name": "stats",
+                "stats": {
+                  "lines": 37,
+                  "functions": 1,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.stats"
+                ]
+              },
+              "views": {
+                "name": "views",
+                "stats": {
+                  "lines": 216,
+                  "functions": 7,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.views"
+                ]
+              }
+            }
+          },
           "migrations": {
             "name": "migrations",
             "stats": {
@@ -138,7 +233,7 @@
             "name": "search_facets",
             "stats": {
               "lines": 488,
-              "functions": 27,
+              "functions": 34,
               "classes": 6,
               "errors": 0,
               "warnings": 0,
@@ -153,7 +248,7 @@
                 "name": "faceted_search",
                 "stats": {
                   "lines": 288,
-                  "functions": 16,
+                  "functions": 23,
                   "classes": 2,
                   "errors": 0,
                   "warnings": 0,
@@ -277,11 +372,28 @@
               }
             }
           },
+          "analytics": {
+            "name": "analytics",
+            "stats": {
+              "lines": 302,
+              "functions": 16,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [
+              "S2"
+            ],
+            "modules": [
+              "personal_index.analytics"
+            ]
+          },
           "app": {
             "name": "app",
             "stats": {
-              "lines": 274,
-              "functions": 15,
+              "lines": 318,
+              "functions": 19,
               "classes": 1,
               "errors": 0,
               "warnings": 0,
@@ -328,6 +440,23 @@
               "personal_index.cli"
             ]
           },
+          "cli_verify": {
+            "name": "cli_verify",
+            "stats": {
+              "lines": 415,
+              "functions": 17,
+              "classes": 0,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [
+              "S2"
+            ],
+            "modules": [
+              "personal_index.cli_verify"
+            ]
+          },
           "content_annotations": {
             "name": "content_annotations",
             "stats": {
@@ -365,8 +494,8 @@
           "content_categorizer": {
             "name": "content_categorizer",
             "stats": {
-              "lines": 590,
-              "functions": 16,
+              "lines": 591,
+              "functions": 20,
               "classes": 4,
               "errors": 0,
               "warnings": 0,
@@ -430,6 +559,23 @@
               "personal_index.content_feed"
             ]
           },
+          "content_health": {
+            "name": "content_health",
+            "stats": {
+              "lines": 345,
+              "functions": 15,
+              "classes": 7,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [
+              "S2"
+            ],
+            "modules": [
+              "personal_index.content_health"
+            ]
+          },
           "content_reader": {
             "name": "content_reader",
             "stats": {
@@ -467,8 +613,8 @@
           "content_search": {
             "name": "content_search",
             "stats": {
-              "lines": 539,
-              "functions": 30,
+              "lines": 528,
+              "functions": 33,
               "classes": 4,
               "errors": 0,
               "warnings": 0,
@@ -484,8 +630,8 @@
           "cycle_signals": {
             "name": "cycle_signals",
             "stats": {
-              "lines": 588,
-              "functions": 16,
+              "lines": 657,
+              "functions": 20,
               "classes": 0,
               "errors": 0,
               "warnings": 0,
@@ -581,6 +727,23 @@
             ],
             "modules": [
               "personal_index.pipeline"
+            ]
+          },
+          "pipeline_orchestrator": {
+            "name": "pipeline_orchestrator",
+            "stats": {
+              "lines": 397,
+              "functions": 25,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [
+              "S2"
+            ],
+            "modules": [
+              "personal_index.pipeline_orchestrator"
             ]
           },
           "pipeline_runner": {
@@ -945,8 +1108,8 @@
           "content_monitor": {
             "name": "content_monitor",
             "stats": {
-              "lines": 814,
-              "functions": 29,
+              "lines": 827,
+              "functions": 33,
               "classes": 11,
               "errors": 0,
               "warnings": 0,
@@ -1017,8 +1180,8 @@
               "monitor": {
                 "name": "monitor",
                 "stats": {
-                  "lines": 273,
-                  "functions": 9,
+                  "lines": 286,
+                  "functions": 13,
                   "classes": 1,
                   "errors": 0,
                   "warnings": 0,
@@ -1116,95 +1279,6 @@
                 "signals": [],
                 "modules": [
                   "personal_index.content_timeline.timeline_view"
-                ]
-              }
-            }
-          },
-          "dashboard": {
-            "name": "dashboard",
-            "stats": {
-              "lines": 704,
-              "functions": 25,
-              "classes": 10,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 5
-            },
-            "signals": [],
-            "children": {
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 23,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.dashboard.__init__"
-                ]
-              },
-              "aggregator": {
-                "name": "aggregator",
-                "stats": {
-                  "lines": 207,
-                  "functions": 10,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.dashboard.aggregator"
-                ]
-              },
-              "export": {
-                "name": "export",
-                "stats": {
-                  "lines": 221,
-                  "functions": 7,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.dashboard.export"
-                ]
-              },
-              "stats": {
-                "name": "stats",
-                "stats": {
-                  "lines": 37,
-                  "functions": 1,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.dashboard.stats"
-                ]
-              },
-              "views": {
-                "name": "views",
-                "stats": {
-                  "lines": 216,
-                  "functions": 7,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.dashboard.views"
                 ]
               }
             }
@@ -1582,8 +1656,8 @@
           "content_linker": {
             "name": "content_linker",
             "stats": {
-              "lines": 271,
-              "functions": 16,
+              "lines": 269,
+              "functions": 19,
               "classes": 4,
               "errors": 0,
               "warnings": 0,
@@ -1624,8 +1698,8 @@
               "linker": {
                 "name": "linker",
                 "stats": {
-                  "lines": 148,
-                  "functions": 9,
+                  "lines": 146,
+                  "functions": 12,
                   "classes": 1,
                   "errors": 0,
                   "warnings": 0,
@@ -2097,21 +2171,6 @@
               "personal_index.__main__"
             ]
           },
-          "analytics": {
-            "name": "analytics",
-            "stats": {
-              "lines": 267,
-              "functions": 14,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [],
-            "modules": [
-              "personal_index.analytics"
-            ]
-          },
           "annotation": {
             "name": "annotation",
             "stats": {
@@ -2130,8 +2189,8 @@
           "backup": {
             "name": "backup",
             "stats": {
-              "lines": 250,
-              "functions": 12,
+              "lines": 272,
+              "functions": 14,
               "classes": 2,
               "errors": 0,
               "warnings": 0,
@@ -2175,8 +2234,8 @@
           "cli_dedup": {
             "name": "cli_dedup",
             "stats": {
-              "lines": 92,
-              "functions": 1,
+              "lines": 135,
+              "functions": 7,
               "classes": 0,
               "errors": 0,
               "warnings": 0,
@@ -2190,8 +2249,8 @@
           "cli_export": {
             "name": "cli_export",
             "stats": {
-              "lines": 160,
-              "functions": 5,
+              "lines": 207,
+              "functions": 8,
               "classes": 0,
               "errors": 0,
               "warnings": 0,
@@ -2205,8 +2264,8 @@
           "cli_health": {
             "name": "cli_health",
             "stats": {
-              "lines": 101,
-              "functions": 1,
+              "lines": 99,
+              "functions": 7,
               "classes": 0,
               "errors": 0,
               "warnings": 0,
@@ -2220,8 +2279,8 @@
           "cli_recommend": {
             "name": "cli_recommend",
             "stats": {
-              "lines": 93,
-              "functions": 1,
+              "lines": 74,
+              "functions": 3,
               "classes": 0,
               "errors": 0,
               "warnings": 0,
@@ -2247,26 +2306,11 @@
               "personal_index.cli_top"
             ]
           },
-          "cli_verify": {
-            "name": "cli_verify",
-            "stats": {
-              "lines": 293,
-              "functions": 8,
-              "classes": 0,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [],
-            "modules": [
-              "personal_index.cli_verify"
-            ]
-          },
           "content": {
             "name": "content",
             "stats": {
-              "lines": 149,
-              "functions": 5,
+              "lines": 143,
+              "functions": 12,
               "classes": 1,
               "errors": 0,
               "warnings": 0,
@@ -2427,21 +2471,6 @@
               "personal_index.content_filter"
             ]
           },
-          "content_health": {
-            "name": "content_health",
-            "stats": {
-              "lines": 315,
-              "functions": 7,
-              "classes": 7,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [],
-            "modules": [
-              "personal_index.content_health"
-            ]
-          },
           "content_importer": {
             "name": "content_importer",
             "stats": {
@@ -2505,8 +2534,8 @@
           "content_priority": {
             "name": "content_priority",
             "stats": {
-              "lines": 239,
-              "functions": 10,
+              "lines": 214,
+              "functions": 12,
               "classes": 4,
               "errors": 0,
               "warnings": 0,
@@ -2550,8 +2579,8 @@
           "content_scoring": {
             "name": "content_scoring",
             "stats": {
-              "lines": 353,
-              "functions": 12,
+              "lines": 336,
+              "functions": 14,
               "classes": 4,
               "errors": 0,
               "warnings": 0,
@@ -2565,8 +2594,8 @@
           "content_summarizer": {
             "name": "content_summarizer",
             "stats": {
-              "lines": 192,
-              "functions": 7,
+              "lines": 179,
+              "functions": 10,
               "classes": 1,
               "errors": 0,
               "warnings": 0,
@@ -2580,8 +2609,8 @@
           "content_type": {
             "name": "content_type",
             "stats": {
-              "lines": 317,
-              "functions": 10,
+              "lines": 325,
+              "functions": 12,
               "classes": 2,
               "errors": 0,
               "warnings": 0,
@@ -2595,8 +2624,8 @@
           "content_validation": {
             "name": "content_validation",
             "stats": {
-              "lines": 208,
-              "functions": 8,
+              "lines": 219,
+              "functions": 14,
               "classes": 3,
               "errors": 0,
               "warnings": 0,
@@ -2865,8 +2894,8 @@
           "pipeline_e2e": {
             "name": "pipeline_e2e",
             "stats": {
-              "lines": 255,
-              "functions": 7,
+              "lines": 291,
+              "functions": 14,
               "classes": 2,
               "errors": 0,
               "warnings": 0,
@@ -2877,26 +2906,11 @@
               "personal_index.pipeline_e2e"
             ]
           },
-          "pipeline_orchestrator": {
-            "name": "pipeline_orchestrator",
-            "stats": {
-              "lines": 352,
-              "functions": 10,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [],
-            "modules": [
-              "personal_index.pipeline_orchestrator"
-            ]
-          },
           "publish_dashboard": {
             "name": "publish_dashboard",
             "stats": {
-              "lines": 213,
-              "functions": 5,
+              "lines": 254,
+              "functions": 9,
               "classes": 0,
               "errors": 0,
               "warnings": 0,
@@ -2955,8 +2969,8 @@
           "robots_parser": {
             "name": "robots_parser",
             "stats": {
-              "lines": 131,
-              "functions": 4,
+              "lines": 155,
+              "functions": 5,
               "classes": 2,
               "errors": 0,
               "warnings": 0,
@@ -2970,8 +2984,8 @@
           "rss": {
             "name": "rss",
             "stats": {
-              "lines": 260,
-              "functions": 9,
+              "lines": 279,
+              "functions": 13,
               "classes": 3,
               "errors": 0,
               "warnings": 0,
@@ -3030,8 +3044,8 @@
           "sitemap": {
             "name": "sitemap",
             "stats": {
-              "lines": 195,
-              "functions": 10,
+              "lines": 191,
+              "functions": 12,
               "classes": 3,
               "errors": 0,
               "warnings": 0,
@@ -3060,8 +3074,8 @@
           "stats": {
             "name": "stats",
             "stats": {
-              "lines": 130,
-              "functions": 2,
+              "lines": 153,
+              "functions": 3,
               "classes": 3,
               "errors": 0,
               "warnings": 0,
@@ -3135,8 +3149,8 @@
           "url_classifier": {
             "name": "url_classifier",
             "stats": {
-              "lines": 199,
-              "functions": 9,
+              "lines": 202,
+              "functions": 10,
               "classes": 3,
               "errors": 0,
               "warnings": 0,
@@ -3316,10 +3330,10 @@
       "name": "personal_index.analytics",
       "filepath": "personal_index/analytics.py",
       "status": "clean",
-      "lines": 267,
+      "lines": 302,
       "classes": 4,
-      "functions": 14,
-      "tests": 28,
+      "functions": 16,
+      "tests": 36,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -3360,7 +3374,7 @@
           "name": "AnalyticsTracker",
           "line": 58,
           "bases": [],
-          "methods": 12,
+          "methods": 14,
           "docstring": "Track and analyze personal index usage."
         }
       ],
@@ -3418,9 +3432,9 @@
       "name": "personal_index.app",
       "filepath": "personal_index/app.py",
       "status": "clean",
-      "lines": 274,
+      "lines": 318,
       "classes": 1,
-      "functions": 15,
+      "functions": 19,
       "tests": 35,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -3429,6 +3443,7 @@
         "__future__.annotations",
         "logging",
         "os",
+        "collections.abc.Callable",
         "personal_index.config.loader.load_config",
         "personal_index.content_search.ContentSearch",
         "personal_index.content_search.SearchIndex",
@@ -3440,9 +3455,9 @@
       "class_details": [
         {
           "name": "PersonalIndexApp",
-          "line": 17,
+          "line": 18,
           "bases": [],
-          "methods": 15,
+          "methods": 19,
           "docstring": "Main application class that wires all modules together."
         }
       ],
@@ -3452,9 +3467,9 @@
       "name": "personal_index.backup",
       "filepath": "personal_index/backup.py",
       "status": "clean",
-      "lines": 250,
+      "lines": 272,
       "classes": 2,
-      "functions": 12,
+      "functions": 14,
       "tests": 24,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -3484,7 +3499,7 @@
           "name": "BackupManager",
           "line": 52,
           "bases": [],
-          "methods": 9,
+          "methods": 11,
           "docstring": "Manage backups of personal index data."
         }
       ],
@@ -3995,27 +4010,76 @@
       "name": "personal_index.cli_dedup",
       "filepath": "personal_index/cli_dedup.py",
       "status": "clean",
-      "lines": 92,
+      "lines": 135,
       "classes": 0,
-      "functions": 1,
-      "tests": 4,
+      "functions": 7,
+      "tests": 11,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
       "imports": [
         "__future__.annotations",
         "click",
-        "personal_index.content_dedup.ContentDeduplicator"
+        "personal_index.content_dedup.ContentDeduplicator",
+        "personal_index.index.SearchIndex"
       ],
       "class_details": [],
       "function_details": [
         {
           "name": "dedup",
-          "line": 19,
+          "line": 20,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
           "docstring": "Find and remove duplicate content.\n\nAnalyzes indexed content for duplicates using hash matching,\nURL normalization, or similarity scoring.\n\nExamples:\n    personal-index dedup\n    personal-index dedup "
+        },
+        {
+          "name": "_load_indexed_content",
+          "line": 54,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Load indexed pages from the search index.\n\nReturns:\n    Tuple of (pages list, SearchIndex instance)."
+        },
+        {
+          "name": "_build_dedup_items",
+          "line": 66,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Build dedup input items from indexed pages.\n\nReturns:\n    List of dicts with url, title, and content keys."
+        },
+        {
+          "name": "_dispatch_dedup",
+          "line": 82,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run the appropriate dedup method and return the result.\n\nArgs:\n    items: List of page dicts to deduplicate.\n    method: One of 'hash', 'url', 'similarity', 'all'.\n    similarity_threshold: Threshold "
+        },
+        {
+          "name": "_display_result",
+          "line": 105,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Display the dedup summary to the user."
+        },
+        {
+          "name": "_display_duplicate_groups",
+          "line": 111,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Display detailed duplicate group information."
+        },
+        {
+          "name": "_remove_duplicates",
+          "line": 123,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Remove duplicate pages from the index and persist."
         }
       ]
     },
@@ -4023,9 +4087,9 @@
       "name": "personal_index.cli_export",
       "filepath": "personal_index/cli_export.py",
       "status": "clean",
-      "lines": 160,
+      "lines": 207,
       "classes": 0,
-      "functions": 5,
+      "functions": 8,
       "tests": 5,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -4051,8 +4115,32 @@
           "docstring": "Export indexed content in various formats.\n\nExports all indexed pages (or a filtered subset) in the specified\nformat. Supports markdown, JSON, CSV, and HTML output.\n\nExamples:\n    personal-index expor"
         },
         {
+          "name": "_load_pages",
+          "line": 57,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Load and filter pages from the index.\n\nArgs:\n    index: The SearchIndex instance.\n    tag_store: The TagStore instance.\n    query: Optional search query to filter results.\n    tag: Tuple of tag names "
+        },
+        {
+          "name": "_dispatch_format",
+          "line": 95,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Dispatch to the appropriate format exporter.\n\nArgs:\n    fmt: The export format string (markdown, json, csv, html).\n    pages: List of pages to export.\n    tag_store: The TagStore instance for tag look"
+        },
+        {
+          "name": "_tag_names",
+          "line": 116,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Extract tag names from a list of tags (handles Tag objects and strings)."
+        },
+        {
           "name": "_export_markdown",
-          "line": 87,
+          "line": 127,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4060,7 +4148,7 @@
         },
         {
           "name": "_export_json",
-          "line": 112,
+          "line": 153,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4068,7 +4156,7 @@
         },
         {
           "name": "_export_csv",
-          "line": 128,
+          "line": 171,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4076,7 +4164,7 @@
         },
         {
           "name": "_export_html",
-          "line": 140,
+          "line": 185,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4088,9 +4176,9 @@
       "name": "personal_index.cli_health",
       "filepath": "personal_index/cli_health.py",
       "status": "clean",
-      "lines": 101,
+      "lines": 99,
       "classes": 0,
-      "functions": 1,
+      "functions": 7,
       "tests": 4,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -4109,7 +4197,55 @@
           "is_async": false,
           "is_method": false,
           "parent_class": "",
-          "docstring": "Check the health of indexed content.\n\nAnalyzes all indexed pages for quality issues including\nmissing titles, short content, and bad status codes.\n\nExamples:\n    personal-index health\n    personal-ind"
+          "docstring": "Check the health of indexed content."
+        },
+        {
+          "name": "_load_stores",
+          "line": 38,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_build_health_items",
+          "line": 46,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_build_config",
+          "line": 61,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_print_report",
+          "line": 71,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_print_issues",
+          "line": 80,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_severity_icon",
+          "line": 93,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
         }
       ]
     },
@@ -4117,9 +4253,9 @@
       "name": "personal_index.cli_recommend",
       "filepath": "personal_index/cli_recommend.py",
       "status": "clean",
-      "lines": 93,
+      "lines": 74,
       "classes": 0,
-      "functions": 1,
+      "functions": 3,
       "tests": 4,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -4128,17 +4264,34 @@
         "__future__.annotations",
         "click",
         "personal_index.content_recommender.ContentItem",
+        "personal_index.content_recommender.Recommendation",
         "personal_index.content_recommender.Recommender"
       ],
       "class_details": [],
       "function_details": [
         {
-          "name": "recommend",
-          "line": 18,
+          "name": "_load_recommender",
+          "line": 10,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
-          "docstring": "Get content recommendations based on a query or seed content.\n\nAnalyzes indexed content and recommends related pages based on\nkeyword overlap, tag similarity, and content scores.\n\nExamples:\n    person"
+          "docstring": ""
+        },
+        {
+          "name": "_print_recommendations",
+          "line": 32,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "recommend",
+          "line": 50,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Get content recommendations based on a query or seed content."
         }
       ]
     },
@@ -4176,10 +4329,10 @@
       "name": "personal_index.cli_verify",
       "filepath": "personal_index/cli_verify.py",
       "status": "clean",
-      "lines": 293,
+      "lines": 415,
       "classes": 0,
-      "functions": 8,
-      "tests": 6,
+      "functions": 17,
+      "tests": 11,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -4249,16 +4402,88 @@
           "docstring": "Check that the content scorer works.\n\nReturns:\n    Tuple of (passed, message)."
         },
         {
-          "name": "_check_full_pipeline",
+          "name": "_create_test_content",
           "line": 138,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
-          "docstring": "Run a full pipeline self-test.\n\nReturns:\n    Tuple of (passed, message)."
+          "docstring": "Create temporary test content for pipeline verification.\n\nArgs:\n    data_dir: Base data directory.\n\nReturns:\n    Tuple of (test_data_dir, test_file_path)."
+        },
+        {
+          "name": "_setup_mini_pipeline",
+          "line": 161,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Create mini pipeline components for verification.\n\nArgs:\n    test_data_dir: Directory for temporary pipeline data.\n\nReturns:\n    Dict with keys: interest_store, tag_store, search_index, filter, scorer"
+        },
+        {
+          "name": "_create_test_page",
+          "line": 190,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Read the test article file and return a CrawledPage.\n\nArgs:\n    data_dir: Directory containing test_article.txt.\n\nReturns:\n    A CrawledPage populated from the test file."
+        },
+        {
+          "name": "_run_filter",
+          "line": 209,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run the content filter on a page.\n\nArgs:\n    filter: The ContentFilter instance.\n    page: The CrawledPage to filter.\n\nReturns:\n    Tuple of (passed, message)."
+        },
+        {
+          "name": "_run_score",
+          "line": 224,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run the content scorer on a page and set its relevance score.\n\nArgs:\n    scorer: The ContentScorer instance.\n    page: The CrawledPage to score.\n    content: The page content string.\n\nReturns:\n    The"
+        },
+        {
+          "name": "_run_tag_index",
+          "line": 245,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Tag a page, index it, and search for results.\n\nArgs:\n    tag_store: The TagStore instance.\n    search_index: The SearchIndex instance.\n    page: The CrawledPage to tag and index.\n\nReturns:\n    List of"
+        },
+        {
+          "name": "_check_full_pipeline",
+          "line": 262,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run a full pipeline self-test.\n\nCreates temporary content and processes it through all pipeline stages\nto verify the complete pipeline works end-to-end.\n\nArgs:\n    data_dir: Base data directory.\n\nRetu"
+        },
+        {
+          "name": "_build_summary",
+          "line": 309,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Build and display the verification summary report.\n\nArgs:\n    checks_passed: Number of checks that passed.\n    checks_total: Total number of checks run.\n    errors: List of error messages for failed c"
+        },
+        {
+          "name": "_run_checks",
+          "line": 340,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Run all verification checks.\n\nArgs:\n    data_dir: Data directory to verify.\n    quick: If True, skip the full pipeline test.\n\nReturns:\n    Tuple of (checks_passed, checks_total, errors)."
+        },
+        {
+          "name": "_cleanup_verify_files",
+          "line": 379,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Remove temporary verify files from the data directory.\n\nArgs:\n    data_dir: Data directory to clean up."
         },
         {
           "name": "verify",
-          "line": 217,
+          "line": 395,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4270,9 +4495,9 @@
       "name": "personal_index.content",
       "filepath": "personal_index/content.py",
       "status": "clean",
-      "lines": 149,
+      "lines": 143,
       "classes": 1,
-      "functions": 5,
+      "functions": 12,
       "tests": 25,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -4295,8 +4520,64 @@
       ],
       "function_details": [
         {
-          "name": "extract_content",
+          "name": "_extract_title",
           "line": 56,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_extract_meta_desc",
+          "line": 61,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_extract_meta_keywords",
+          "line": 66,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_extract_headings",
+          "line": 73,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_extract_text",
+          "line": 83,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_extract_links",
+          "line": 89,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_detect_language",
+          "line": 101,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "extract_content",
+          "line": 106,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4304,7 +4585,7 @@
         },
         {
           "name": "remove_stopwords",
-          "line": 130,
+          "line": 124,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4312,7 +4593,7 @@
         },
         {
           "name": "compute_tf",
-          "line": 141,
+          "line": 135,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -4501,9 +4782,9 @@
       "name": "personal_index.content_categorizer",
       "filepath": "personal_index/content_categorizer.py",
       "status": "clean",
-      "lines": 590,
+      "lines": 591,
       "classes": 4,
-      "functions": 16,
+      "functions": 20,
       "tests": 50,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -4542,7 +4823,7 @@
           "name": "ContentCategorizer",
           "line": 233,
           "bases": [],
-          "methods": 11,
+          "methods": 15,
           "docstring": "Classifies content into topic categories using multi-signal analysis.\n\nSignals used:\n- Keyword matching against topic dictionaries\n- Title/heading boosting (keywords in titles count more)\n- URL path h"
         }
       ],
@@ -5005,9 +5286,9 @@
       "name": "personal_index.content_health",
       "filepath": "personal_index/content_health.py",
       "status": "clean",
-      "lines": 315,
+      "lines": 345,
       "classes": 7,
-      "functions": 7,
+      "functions": 15,
       "tests": 15,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -5070,7 +5351,7 @@
           "name": "ContentHealthChecker",
           "line": 120,
           "bases": [],
-          "methods": 3,
+          "methods": 11,
           "docstring": "Checks health and quality of indexed content.\n\nValidates content items against configurable rules and\ngenerates health reports."
         }
       ],
@@ -5280,9 +5561,9 @@
       "name": "personal_index.content_priority",
       "filepath": "personal_index/content_priority.py",
       "status": "clean",
-      "lines": 239,
+      "lines": 214,
       "classes": 4,
-      "functions": 10,
+      "functions": 12,
       "tests": 11,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -5322,7 +5603,7 @@
           "name": "PriorityCalculator",
           "line": 71,
           "bases": [],
-          "methods": 8,
+          "methods": 10,
           "docstring": "Calculates content priority based on multiple factors.\n\nConsiders recency, content score, interest match, and\nengagement metrics to determine priority level."
         }
       ],
@@ -5509,9 +5790,9 @@
       "name": "personal_index.content_scoring",
       "filepath": "personal_index/content_scoring.py",
       "status": "clean",
-      "lines": 353,
+      "lines": 336,
       "classes": 4,
-      "functions": 12,
+      "functions": 14,
       "tests": 36,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -5555,7 +5836,7 @@
           "name": "ContentScorer",
           "line": 104,
           "bases": [],
-          "methods": 10,
+          "methods": 12,
           "docstring": "Scores content items based on configurable factors.\n\nUses a weighted combination of multiple scoring factors to produce\na composite score for each content item."
         }
       ],
@@ -5565,9 +5846,9 @@
       "name": "personal_index.content_search",
       "filepath": "personal_index/content_search.py",
       "status": "clean",
-      "lines": 539,
+      "lines": 528,
       "classes": 4,
-      "functions": 30,
+      "functions": 33,
       "tests": 44,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -5600,12 +5881,12 @@
           "name": "SearchIndex",
           "line": 212,
           "bases": [],
-          "methods": 17,
+          "methods": 20,
           "docstring": "In-memory inverted index for full-text search."
         },
         {
           "name": "ContentSearch",
-          "line": 510,
+          "line": 499,
           "bases": [],
           "methods": 5,
           "docstring": "High-level search interface."
@@ -5617,9 +5898,9 @@
       "name": "personal_index.content_summarizer",
       "filepath": "personal_index/content_summarizer.py",
       "status": "clean",
-      "lines": 192,
+      "lines": 179,
       "classes": 1,
-      "functions": 7,
+      "functions": 10,
       "tests": 23,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -5672,16 +5953,40 @@
           "docstring": "Score a sentence based on word frequencies."
         },
         {
-          "name": "summarize",
+          "name": "_score_and_select",
           "line": 89,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
-          "docstring": "Generate an extractive summary of the given text.\n\nUses sentence scoring based on keyword frequency to select\nthe most informative sentences.\n\nArgs:\n    text: The text to summarize.\n    max_sentences:"
+          "docstring": ""
+        },
+        {
+          "name": "_build_summary_result",
+          "line": 105,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "_no_op_result",
+          "line": 119,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": ""
+        },
+        {
+          "name": "summarize",
+          "line": 132,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Generate an extractive summary of the given text."
         },
         {
           "name": "summarize_page",
-          "line": 163,
+          "line": 150,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5693,10 +5998,10 @@
       "name": "personal_index.content_type",
       "filepath": "personal_index/content_type.py",
       "status": "clean",
-      "lines": 317,
+      "lines": 325,
       "classes": 2,
-      "functions": 10,
-      "tests": 44,
+      "functions": 12,
+      "tests": 54,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5718,7 +6023,7 @@
           "name": "ContentTypeDetector",
           "line": 75,
           "bases": [],
-          "methods": 9,
+          "methods": 11,
           "docstring": "Detects and classifies content types from URLs, filenames, or raw data."
         }
       ],
@@ -5728,9 +6033,9 @@
       "name": "personal_index.content_validation",
       "filepath": "personal_index/content_validation.py",
       "status": "clean",
-      "lines": 208,
+      "lines": 219,
       "classes": 3,
-      "functions": 8,
+      "functions": 14,
       "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -5761,7 +6066,7 @@
           "name": "ContentValidator",
           "line": 87,
           "bases": [],
-          "methods": 5,
+          "methods": 11,
           "docstring": "Validates content items against defined rules.\n\nChecks for required fields, valid URLs, proper date formats,\nand configurable custom rules."
         }
       ],
@@ -5892,10 +6197,10 @@
       "name": "personal_index.cycle_signals",
       "filepath": "personal_index/cycle_signals.py",
       "status": "clean",
-      "lines": 588,
+      "lines": 657,
       "classes": 0,
-      "functions": 16,
-      "tests": 38,
+      "functions": 20,
+      "tests": 57,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -5909,24 +6214,48 @@
       "class_details": [],
       "function_details": [
         {
-          "name": "build_tree",
+          "name": "_update_node_stats",
           "line": 28,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
-          "docstring": "Group modules into a hierarchical tree by package path.\n\nReturns a tree node with aggregate stats. Each node has:\n  - name: package/module name\n  - children: nested package nodes (sorted by error coun"
+          "docstring": "Update stats on a tree node for one module.\n\nArgs:\n    node: Tree node dict to update in-place.\n    module: Module dict from codemap with stats fields.\n    is_leaf: Whether this node represents the mo"
         },
         {
-          "name": "_build_tree_root",
-          "line": 121,
+          "name": "_walk_module_path",
+          "line": 59,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
-          "docstring": "Build the root node from flat tree dict."
+          "docstring": "Walk the dotted path of a module name, creating and updating tree nodes.\n\nArgs:\n    tree: Flat tree dict, updated in-place.\n    parts: Dotted name split into segments (e.g., [\"pkg\", \"sub\", \"mod\"]).\n  "
+        },
+        {
+          "name": "_create_tree_nodes",
+          "line": 94,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Walk module dotted names and create/update flat tree nodes with stats.\n\nArgs:\n    modules: List of module dicts from codemap.\n\nReturns:\n    Flat dict mapping dotted path keys to tree node dicts."
+        },
+        {
+          "name": "_detect_module_signals",
+          "line": 126,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Detect S1/S2/S5 signals on a single module.\n\nArgs:\n    module: Module dict from codemap with stats fields.\n    short_name: The leaf module name (e.g., \"analytics\" from \"pkg.analytics\").\n\nReturns:\n    "
+        },
+        {
+          "name": "_tree_to_nested",
+          "line": 162,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Convert flat tree dict to hierarchical nested structure.\n\nArgs:\n    tree: Flat dict mapping dotted path keys to node dicts.\n\nReturns:\n    Root node dict with nested children."
         },
         {
           "name": "_node_to_dict",
-          "line": 150,
+          "line": 205,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5934,15 +6263,23 @@
         },
         {
           "name": "_sort_children",
-          "line": 189,
+          "line": 244,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
           "docstring": "Sort children: nodes with errors/signals first, then by module count desc."
         },
         {
+          "name": "build_tree",
+          "line": 256,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Group modules into a hierarchical tree by package path.\n\nReturns a tree node with aggregate stats. Each node has:\n  - name: package/module name\n  - children: nested package nodes (sorted by error coun"
+        },
+        {
           "name": "format_tree",
-          "line": 201,
+          "line": 270,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5950,7 +6287,7 @@
         },
         {
           "name": "_render_summary_node",
-          "line": 239,
+          "line": 308,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5958,7 +6295,7 @@
         },
         {
           "name": "load_codemap",
-          "line": 275,
+          "line": 344,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5966,7 +6303,7 @@
         },
         {
           "name": "signal_no_tests",
-          "line": 287,
+          "line": 356,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5974,7 +6311,7 @@
         },
         {
           "name": "signal_oversized",
-          "line": 317,
+          "line": 386,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5982,7 +6319,7 @@
         },
         {
           "name": "signal_dead_code",
-          "line": 335,
+          "line": 404,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5990,7 +6327,7 @@
         },
         {
           "name": "signal_duplicates",
-          "line": 383,
+          "line": 452,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -5998,7 +6335,7 @@
         },
         {
           "name": "signal_errors",
-          "line": 410,
+          "line": 479,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6006,7 +6343,7 @@
         },
         {
           "name": "signal_coverage",
-          "line": 429,
+          "line": 498,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6014,7 +6351,7 @@
         },
         {
           "name": "extract",
-          "line": 464,
+          "line": 533,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6022,7 +6359,7 @@
         },
         {
           "name": "format_for_auditor",
-          "line": 508,
+          "line": 577,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6030,7 +6367,7 @@
         },
         {
           "name": "main",
-          "line": 554,
+          "line": 623,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -7320,9 +7657,9 @@
       "name": "personal_index.pipeline_e2e",
       "filepath": "personal_index/pipeline_e2e.py",
       "status": "clean",
-      "lines": 255,
+      "lines": 291,
       "classes": 2,
-      "functions": 7,
+      "functions": 14,
       "tests": 19,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -7359,7 +7696,7 @@
           "name": "PipelineE2E",
           "line": 74,
           "bases": [],
-          "methods": 5,
+          "methods": 12,
           "docstring": "End-to-end pipeline orchestrator.\n\nWires together all components:\ncrawl \u2192 extract \u2192 filter \u2192 score \u2192 tag \u2192 index \u2192 search\n\nUsage:\n    pipeline = PipelineE2E(data_dir=\".personal_index\")\n    result = pi"
         }
       ],
@@ -7369,10 +7706,10 @@
       "name": "personal_index.pipeline_orchestrator",
       "filepath": "personal_index/pipeline_orchestrator.py",
       "status": "clean",
-      "lines": 352,
+      "lines": 397,
       "classes": 2,
-      "functions": 10,
-      "tests": 15,
+      "functions": 25,
+      "tests": 29,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7410,7 +7747,7 @@
           "name": "PipelineOrchestrator",
           "line": 61,
           "bases": [],
-          "methods": 9,
+          "methods": 24,
           "docstring": "Orchestrates the full content pipeline end-to-end.\n\nManages all pipeline components and coordinates data flow\nbetween stages: crawl \u2192 extract \u2192 filter \u2192 score \u2192 tag \u2192 index."
         }
       ],
@@ -7530,9 +7867,9 @@
       "name": "personal_index.publish_dashboard",
       "filepath": "personal_index/publish_dashboard.py",
       "status": "clean",
-      "lines": 213,
+      "lines": 254,
       "classes": 0,
-      "functions": 5,
+      "functions": 9,
       "tests": 13,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -7573,16 +7910,48 @@
           "docstring": "Validate that HTML embedded metadata and JSON codemap are in sync."
         },
         {
-          "name": "publish",
+          "name": "_copy_dashboard_files",
           "line": 96,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Copy HTML and JSON dashboard files to the search repo.\n\nArgs:\n    html_path: Source HTML dashboard file.\n    json_path: Source JSON codemap file.\n    search_repo: Target search repository directory.\n "
+        },
+        {
+          "name": "_git_commit_push",
+          "line": 131,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Stage, commit, and push dashboard changes in the search repo.\n\nArgs:\n    json_path: Source JSON codemap file (used for commit message).\n    search_repo: Target search repository directory."
+        },
+        {
+          "name": "publish",
+          "line": 160,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
           "docstring": "Copy dashboard files to search repo and optionally push."
         },
         {
+          "name": "_build_parser",
+          "line": 177,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Build the argument parser for the publish dashboard CLI."
+        },
+        {
+          "name": "_resolve_dashboard_paths",
+          "line": 203,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Resolve the HTML and JSON dashboard file paths.\n\nArgs:\n    project_root: Root of the personal-index project.\n    do_regenerate: Whether to regenerate the dashboard from scratch.\n\nReturns:\n    Tuple of"
+        },
+        {
           "name": "main",
-          "line": 157,
+          "line": 233,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -7793,10 +8162,10 @@
       "name": "personal_index.robots_parser",
       "filepath": "personal_index/robots_parser.py",
       "status": "clean",
-      "lines": 131,
+      "lines": 155,
       "classes": 2,
-      "functions": 4,
-      "tests": 18,
+      "functions": 5,
+      "tests": 25,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -7826,8 +8195,16 @@
       ],
       "function_details": [
         {
-          "name": "parse_robots_txt",
+          "name": "_parse_directive",
           "line": 77,
+          "is_async": false,
+          "is_method": false,
+          "parent_class": "",
+          "docstring": "Handle one line's directive parsing.\n\nArgs:\n    line: A stripped, non-empty, non-comment line from robots.txt.\n    current_agent: The current user-agent being parsed, or None.\n    policy: The RobotsPo"
+        },
+        {
+          "name": "parse_robots_txt",
+          "line": 127,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -7835,7 +8212,7 @@
         },
         {
           "name": "is_allowed",
-          "line": 129,
+          "line": 153,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -7847,9 +8224,9 @@
       "name": "personal_index.rss",
       "filepath": "personal_index/rss.py",
       "status": "clean",
-      "lines": 260,
+      "lines": 279,
       "classes": 3,
-      "functions": 9,
+      "functions": 13,
       "tests": 22,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -7882,7 +8259,7 @@
           "name": "RSSParser",
           "line": 61,
           "bases": [],
-          "methods": 6,
+          "methods": 10,
           "docstring": "Parse RSS 2.0 and Atom feeds."
         }
       ],
@@ -8203,9 +8580,9 @@
       "name": "personal_index.sitemap",
       "filepath": "personal_index/sitemap.py",
       "status": "clean",
-      "lines": 195,
+      "lines": 191,
       "classes": 3,
-      "functions": 10,
+      "functions": 12,
       "tests": 18,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -8242,7 +8619,7 @@
           "name": "SitemapParser",
           "line": 54,
           "bases": [],
-          "methods": 6,
+          "methods": 8,
           "docstring": "Parse XML sitemaps and sitemap indexes."
         }
       ],
@@ -8290,9 +8667,9 @@
       "name": "personal_index.stats",
       "filepath": "personal_index/stats.py",
       "status": "clean",
-      "lines": 130,
+      "lines": 153,
       "classes": 3,
-      "functions": 2,
+      "functions": 3,
       "tests": 11,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -8325,7 +8702,7 @@
           "name": "StatsCollector",
           "line": 39,
           "bases": [],
-          "methods": 2,
+          "methods": 3,
           "docstring": "Collects and reports statistics."
         }
       ],
@@ -8616,10 +8993,10 @@
       "name": "personal_index.url_classifier",
       "filepath": "personal_index/url_classifier.py",
       "status": "clean",
-      "lines": 199,
+      "lines": 202,
       "classes": 3,
-      "functions": 9,
-      "tests": 15,
+      "functions": 10,
+      "tests": 17,
       "ruff_errors": 0,
       "ruff_warnings": 0,
       "mypy_errors": 0,
@@ -8655,7 +9032,7 @@
           "name": "URLClassifier",
           "line": 39,
           "bases": [],
-          "methods": 9,
+          "methods": 10,
           "docstring": "Classifies URLs into categories based on patterns."
         }
       ],
@@ -10668,7 +11045,7 @@
       "status": "clean",
       "lines": 288,
       "classes": 2,
-      "functions": 16,
+      "functions": 23,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -10695,7 +11072,7 @@
           "name": "FacetedSearch",
           "line": 48,
           "bases": [],
-          "methods": 12,
+          "methods": 19,
           "docstring": "Search engine with filterable facet dimensions."
         }
       ],
@@ -11233,9 +11610,9 @@
       "name": "personal_index.content_monitor.monitor",
       "filepath": "personal_index/content_monitor/monitor.py",
       "status": "clean",
-      "lines": 273,
+      "lines": 286,
       "classes": 1,
-      "functions": 9,
+      "functions": 13,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -11259,7 +11636,7 @@
           "name": "ContentMonitor",
           "line": 20,
           "bases": [],
-          "methods": 9,
+          "methods": 13,
           "docstring": "Monitors content sources for freshness, errors, and disk usage.\n\nAttributes:\n    index_dir: Directory to monitor for disk usage.\n    max_staleness_hours: Hours after which a source is considered stale"
         }
       ],
@@ -11292,9 +11669,9 @@
       "name": "personal_index.dashboard.aggregator",
       "filepath": "personal_index/dashboard/aggregator.py",
       "status": "clean",
-      "lines": 207,
+      "lines": 208,
       "classes": 3,
-      "functions": 10,
+      "functions": 16,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -11325,7 +11702,7 @@
           "name": "DashboardAggregator",
           "line": 56,
           "bases": [],
-          "methods": 8,
+          "methods": 14,
           "docstring": "Aggregates data from index instances for dashboard display."
         }
       ],
@@ -12239,9 +12616,9 @@
       "name": "personal_index.content_linker.linker",
       "filepath": "personal_index/content_linker/linker.py",
       "status": "clean",
-      "lines": 148,
+      "lines": 146,
       "classes": 1,
-      "functions": 9,
+      "functions": 12,
       "tests": 0,
       "ruff_errors": 0,
       "ruff_warnings": 0,
@@ -12260,7 +12637,7 @@
           "name": "ContentLinker",
           "line": 24,
           "bases": [],
-          "methods": 8,
+          "methods": 11,
           "docstring": "Finds and manages relationships between saved content items."
         }
       ],
@@ -12658,7 +13035,8 @@
       "personal_index.tags"
     ],
     "personal_index.cli_dedup": [
-      "personal_index.content_dedup"
+      "personal_index.content_dedup",
+      "personal_index.index"
     ],
     "personal_index.cli_export": [
       "personal_index.index",
@@ -13057,123 +13435,123 @@
   },
   "commits": [
     {
-      "sha": "996e6b7",
-      "message": "Merge pull request #247 from belarusian/cycle8/refactor-oversized-functions",
+      "sha": "2eb3b30",
+      "message": "Merge pull request #286 from belarusian/cycle11/refactor-remaining-4",
       "author": "kodep",
-      "date": "2026-08-12"
+      "date": "2026-08-13"
     },
     {
-      "sha": "ceb1dc1",
-      "message": "refactor: extract verification checks and pipeline stages into private helpers",
+      "sha": "f8caa38",
+      "message": "refactor: extract helpers from 5 remaining oversized functions (Cycle 11)",
       "author": "belarusian",
-      "date": "2026-08-12"
+      "date": "2026-08-13"
     },
     {
-      "sha": "bfd54c6",
-      "message": "type: fix mypy errors in cycle_signals.py (var-annotated, no-any-return)",
+      "sha": "074e9db",
+      "message": "refactor: extract helpers from 5 oversized functions (Cycle 15)",
       "author": "belarusian",
-      "date": "2026-08-12"
+      "date": "2026-08-13"
     },
     {
-      "sha": "10ff044",
-      "message": "Merge branch 'main' of github.com:belarusian/personal-index",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "adfd250",
-      "message": "Merge pull request #244 from belarusian/cycle7/test-coverage-publish-dashboard-cycle-signals-fix-mypy",
+      "sha": "637efb7",
+      "message": "refactor: extract helpers from 5 oversized functions (Cycle 14) (#285)",
       "author": "kodep",
-      "date": "2026-08-12"
+      "date": "2026-08-13"
     },
     {
-      "sha": "487da6f",
-      "message": "test: add coverage for publish_dashboard, cycle_signals; fix mypy in docs_generator, cycle_signals",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "c7b896b",
-      "message": "ticket: 226-228 \u2014 publish_dashboard/cycle_signals test gaps + docs_generator mypy errors",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "f0f77e5",
-      "message": "fix: use patch.object on pipeline instance to avoid cross-test mock contamination",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "f69580b",
-      "message": "Merge pull request #240 from belarusian/cycle6/test-coverage-categorizer-search-pipeline-models",
+      "sha": "49bea60",
+      "message": "refactor: extract helpers from 5 oversized functions (Cycle 13) (#277)",
       "author": "kodep",
-      "date": "2026-08-12"
+      "date": "2026-08-13"
     },
     {
-      "sha": "575f7c0",
-      "message": "test: add coverage for categorizer, search, pipeline, models (188 tests)",
+      "sha": "33f0f41",
+      "message": "refactor: extract helpers from 5 oversized functions (Cycle 12) (#276)",
+      "author": "kodep",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "f614c96",
+      "message": "Merge pull request #270 from belarusian/cycle11/mypy-fix-content-type",
+      "author": "kodep",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "247b916",
+      "message": "type: fix mypy return type in content_type._classify_category_from_ext",
       "author": "belarusian",
-      "date": "2026-08-12"
+      "date": "2026-08-13"
     },
     {
-      "sha": "235bf22",
+      "sha": "12eca7d",
+      "message": "Merge pull request #269 from belarusian/cycle11/refactor-oversized-funcs",
+      "author": "kodep",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "10133a4",
+      "message": "refactor: extract helpers from 5 oversized functions (Cycle 11)",
+      "author": "belarusian",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "a6f9214",
+      "message": "Merge pull request #263 from belarusian/cycle10/finish-remaining",
+      "author": "kodep",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "569b362",
       "message": "autonomous: save progress",
       "author": "belarusian",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "93f6861",
+      "message": "Merge pull request #262 from belarusian/cycle10/refactor-remaining-and-bare-except",
+      "author": "kodep",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "bed135c",
+      "message": "refactor: extract helpers in cli_dedup, pipeline_orchestrator; add tests (Cycle 10 partial)",
+      "author": "belarusian",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "41841e4",
+      "message": "Merge pull request #261 from belarusian/cycle10/refactor-cli-and-signals",
+      "author": "kodep",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "a0e0a62",
+      "message": "refactor: extract sub-functions in cycle_signals, cli_verify (Cycle 10 partial)",
+      "author": "belarusian",
+      "date": "2026-08-13"
+    },
+    {
+      "sha": "d6d9e41",
+      "message": "Merge pull request #253 from belarusian/cycle9/refactor-cycle-signals-orchestrator",
+      "author": "kodep",
       "date": "2026-08-12"
     },
     {
-      "sha": "de27fc1",
+      "sha": "8d5c932",
+      "message": "refactor: extract sub-functions in cycle_signals.build_tree and pipeline_orchestrator stages",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "00950c5",
+      "message": "Merge pull request #250 from belarusian/cycle9/refactor-pipeline-e2e-app",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "6c646ab",
       "message": "autonomous: save progress",
       "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "644fe4a",
-      "message": "docs: regenerate dashboard with improved tree (depth=2, S1 noise reduced)",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "6c82eb4",
-      "message": "feat: add --depth control and reduce S1 noise in tree output (#239)",
-      "author": "kodep",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "d5233eb",
-      "message": "docs: regenerate dashboard with tree summary",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "a4cc177",
-      "message": "Merge pull request #238 from belarusian/fix/fast-dashboard-publish",
-      "author": "kodep",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "1b46cf7",
-      "message": "feat: add hierarchical tree summary for LLM-friendly codemap consumption",
-      "author": "Sasha Malahov",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "75dd8d4",
-      "message": "fix: resolve merge conflict in docs_generator.py",
-      "author": "Sasha Malahov",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "e060c36",
-      "message": "Merge remote-tracking branch 'origin/main' into fix/fast-dashboard-publish",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "a51fa67",
-      "message": "dashboard: add --fast mode, signals section, split source/test lines",
-      "author": "Sasha Malahov",
       "date": "2026-08-12"
     }
   ]
