@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-12T23:48:58Z",
+  "generated_at": "2026-08-13T00:12:28Z",
   "summary": {
     "total_modules": 191,
-    "total_lines": 79687,
-    "total_source_lines": 34161,
+    "total_lines": 79703,
+    "total_source_lines": 34177,
     "total_test_lines": 45526,
     "total_classes": 402,
     "total_functions": 1796,
@@ -14,7 +14,7 @@
   "tree_summary": {
     "name": "root",
     "stats": {
-      "lines": 34161,
+      "lines": 34177,
       "functions": 1796,
       "classes": 402,
       "errors": 0,
@@ -29,7 +29,7 @@
       "personal_index": {
         "name": "personal_index",
         "stats": {
-          "lines": 34161,
+          "lines": 34177,
           "functions": 1796,
           "classes": 402,
           "errors": 0,
@@ -41,552 +41,6 @@
           "S2"
         ],
         "children": {
-          "api": {
-            "name": "api",
-            "stats": {
-              "lines": 900,
-              "functions": 49,
-              "classes": 22,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 7
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "handlers": {
-                "name": "handlers",
-                "stats": {
-                  "lines": 136,
-                  "functions": 8,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.api.handlers"
-                ]
-              },
-              "middleware": {
-                "name": "middleware",
-                "stats": {
-                  "lines": 156,
-                  "functions": 8,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.api.middleware"
-                ]
-              },
-              "models": {
-                "name": "models",
-                "stats": {
-                  "lines": 182,
-                  "functions": 13,
-                  "classes": 10,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.api.models"
-                ]
-              },
-              "pagination": {
-                "name": "pagination",
-                "stats": {
-                  "lines": 145,
-                  "functions": 6,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.api.pagination"
-                ]
-              },
-              "rate_limit_middleware": {
-                "name": "rate_limit_middleware",
-                "stats": {
-                  "lines": 220,
-                  "functions": 12,
-                  "classes": 4,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.api.rate_limit_middleware"
-                ]
-              },
-              "server": {
-                "name": "server",
-                "stats": {
-                  "lines": 60,
-                  "functions": 2,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.api.server"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 1,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.api.__init__"
-                ]
-              }
-            }
-          },
-          "auth": {
-            "name": "auth",
-            "stats": {
-              "lines": 858,
-              "functions": 47,
-              "classes": 11,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 6
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "api_keys": {
-                "name": "api_keys",
-                "stats": {
-                  "lines": 187,
-                  "functions": 10,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.auth.api_keys"
-                ]
-              },
-              "passwords": {
-                "name": "passwords",
-                "stats": {
-                  "lines": 106,
-                  "functions": 5,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.auth.passwords"
-                ]
-              },
-              "permissions": {
-                "name": "permissions",
-                "stats": {
-                  "lines": 143,
-                  "functions": 7,
-                  "classes": 4,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.auth.permissions"
-                ]
-              },
-              "sessions": {
-                "name": "sessions",
-                "stats": {
-                  "lines": 188,
-                  "functions": 11,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.auth.sessions"
-                ]
-              },
-              "tokens": {
-                "name": "tokens",
-                "stats": {
-                  "lines": 189,
-                  "functions": 14,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.auth.tokens"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 45,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.auth.__init__"
-                ]
-              }
-            }
-          },
-          "content_monitor": {
-            "name": "content_monitor",
-            "stats": {
-              "lines": 814,
-              "functions": 29,
-              "classes": 11,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 5
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "alert": {
-                "name": "alert",
-                "stats": {
-                  "lines": 137,
-                  "functions": 5,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_monitor.alert"
-                ]
-              },
-              "health": {
-                "name": "health",
-                "stats": {
-                  "lines": 121,
-                  "functions": 4,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_monitor.health"
-                ]
-              },
-              "info": {
-                "name": "info",
-                "stats": {
-                  "lines": 261,
-                  "functions": 11,
-                  "classes": 4,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_monitor.info"
-                ]
-              },
-              "monitor": {
-                "name": "monitor",
-                "stats": {
-                  "lines": 273,
-                  "functions": 9,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_monitor.monitor"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 22,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_monitor.__init__"
-                ]
-              }
-            }
-          },
-          "content_timeline": {
-            "name": "content_timeline",
-            "stats": {
-              "lines": 407,
-              "functions": 28,
-              "classes": 8,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 5
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "timeline": {
-                "name": "timeline",
-                "stats": {
-                  "lines": 135,
-                  "functions": 16,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_timeline.timeline"
-                ]
-              },
-              "timeline_entry": {
-                "name": "timeline_entry",
-                "stats": {
-                  "lines": 70,
-                  "functions": 3,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_timeline.timeline_entry"
-                ]
-              },
-              "timeline_event": {
-                "name": "timeline_event",
-                "stats": {
-                  "lines": 82,
-                  "functions": 3,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_timeline.timeline_event"
-                ]
-              },
-              "timeline_view": {
-                "name": "timeline_view",
-                "stats": {
-                  "lines": 102,
-                  "functions": 6,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_timeline.timeline_view"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 18,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_timeline.__init__"
-                ]
-              }
-            }
-          },
-          "dashboard": {
-            "name": "dashboard",
-            "stats": {
-              "lines": 704,
-              "functions": 25,
-              "classes": 10,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 5
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "aggregator": {
-                "name": "aggregator",
-                "stats": {
-                  "lines": 207,
-                  "functions": 10,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.dashboard.aggregator"
-                ]
-              },
-              "export": {
-                "name": "export",
-                "stats": {
-                  "lines": 221,
-                  "functions": 7,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.dashboard.export"
-                ]
-              },
-              "stats": {
-                "name": "stats",
-                "stats": {
-                  "lines": 37,
-                  "functions": 1,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.dashboard.stats"
-                ]
-              },
-              "views": {
-                "name": "views",
-                "stats": {
-                  "lines": 216,
-                  "functions": 7,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.dashboard.views"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 23,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.dashboard.__init__"
-                ]
-              }
-            }
-          },
           "migrations": {
             "name": "migrations",
             "stats": {
@@ -602,40 +56,6 @@
               "S2"
             ],
             "children": {
-              "001_initial_schema": {
-                "name": "001_initial_schema",
-                "stats": {
-                  "lines": 54,
-                  "functions": 2,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.migrations.001_initial_schema"
-                ]
-              },
-              "002_add_indexes": {
-                "name": "002_add_indexes",
-                "stats": {
-                  "lines": 44,
-                  "functions": 2,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.migrations.002_add_indexes"
-                ]
-              },
               "base": {
                 "name": "base",
                 "stats": {
@@ -654,21 +74,34 @@
                   "personal_index.migrations.base"
                 ]
               },
-              "runner": {
-                "name": "runner",
+              "001_initial_schema": {
+                "name": "001_initial_schema",
                 "stats": {
-                  "lines": 161,
-                  "functions": 5,
-                  "classes": 2,
+                  "lines": 54,
+                  "functions": 2,
+                  "classes": 0,
                   "errors": 0,
                   "warnings": 0,
                   "modules": 1
                 },
-                "signals": [
-                  "S1"
-                ],
+                "signals": [],
                 "modules": [
-                  "personal_index.migrations.runner"
+                  "personal_index.migrations.001_initial_schema"
+                ]
+              },
+              "002_add_indexes": {
+                "name": "002_add_indexes",
+                "stats": {
+                  "lines": 44,
+                  "functions": 2,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.migrations.002_add_indexes"
                 ]
               },
               "__init__": {
@@ -685,823 +118,20 @@
                 "modules": [
                   "personal_index.migrations.__init__"
                 ]
-              }
-            }
-          },
-          "config": {
-            "name": "config",
-            "stats": {
-              "lines": 635,
-              "functions": 41,
-              "classes": 13,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "loader": {
-                "name": "loader",
-                "stats": {
-                  "lines": 171,
-                  "functions": 9,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.config.loader"
-                ]
               },
-              "models": {
-                "name": "models",
+              "runner": {
+                "name": "runner",
                 "stats": {
-                  "lines": 250,
-                  "functions": 14,
-                  "classes": 8,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.config.models"
-                ]
-              },
-              "pipeline_config": {
-                "name": "pipeline_config",
-                "stats": {
-                  "lines": 104,
+                  "lines": 161,
                   "functions": 5,
                   "classes": 2,
                   "errors": 0,
                   "warnings": 0,
                   "modules": 1
                 },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.config.pipeline_config"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 110,
-                  "functions": 13,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
                 "signals": [],
                 "modules": [
-                  "personal_index.config.__init__"
-                ]
-              }
-            }
-          },
-          "content_archive": {
-            "name": "content_archive",
-            "stats": {
-              "lines": 267,
-              "functions": 24,
-              "classes": 6,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "archive_entry": {
-                "name": "archive_entry",
-                "stats": {
-                  "lines": 75,
-                  "functions": 7,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_archive.archive_entry"
-                ]
-              },
-              "archiver": {
-                "name": "archiver",
-                "stats": {
-                  "lines": 126,
-                  "functions": 11,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_archive.archiver"
-                ]
-              },
-              "compressor": {
-                "name": "compressor",
-                "stats": {
-                  "lines": 59,
-                  "functions": 6,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_archive.compressor"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 7,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_archive.__init__"
-                ]
-              }
-            }
-          },
-          "content_backup": {
-            "name": "content_backup",
-            "stats": {
-              "lines": 447,
-              "functions": 17,
-              "classes": 6,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "backup_manager": {
-                "name": "backup_manager",
-                "stats": {
-                  "lines": 136,
-                  "functions": 5,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_backup.backup_manager"
-                ]
-              },
-              "backup_store": {
-                "name": "backup_store",
-                "stats": {
-                  "lines": 178,
-                  "functions": 8,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_backup.backup_store"
-                ]
-              },
-              "restore": {
-                "name": "restore",
-                "stats": {
-                  "lines": 122,
-                  "functions": 4,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_backup.restore"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 11,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_backup.__init__"
-                ]
-              }
-            }
-          },
-          "content_cache": {
-            "name": "content_cache",
-            "stats": {
-              "lines": 240,
-              "functions": 12,
-              "classes": 5,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "cache_stats": {
-                "name": "cache_stats",
-                "stats": {
-                  "lines": 56,
-                  "functions": 3,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_cache.cache_stats"
-                ]
-              },
-              "cache_store": {
-                "name": "cache_store",
-                "stats": {
-                  "lines": 140,
-                  "functions": 9,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_cache.cache_store"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 12,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_cache.__init__"
-                ]
-              },
-              "cache_policy": {
-                "name": "cache_policy",
-                "stats": {
-                  "lines": 32,
-                  "functions": 0,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_cache.cache_policy"
-                ]
-              }
-            }
-          },
-          "content_export": {
-            "name": "content_export",
-            "stats": {
-              "lines": 578,
-              "functions": 19,
-              "classes": 5,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "csv_export": {
-                "name": "csv_export",
-                "stats": {
-                  "lines": 193,
-                  "functions": 7,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_export.csv_export"
-                ]
-              },
-              "json_export": {
-                "name": "json_export",
-                "stats": {
-                  "lines": 206,
-                  "functions": 8,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_export.json_export"
-                ]
-              },
-              "markdown_export": {
-                "name": "markdown_export",
-                "stats": {
-                  "lines": 164,
-                  "functions": 4,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_export.markdown_export"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 15,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_export.__init__"
-                ]
-              }
-            }
-          },
-          "content_linker": {
-            "name": "content_linker",
-            "stats": {
-              "lines": 271,
-              "functions": 16,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "link": {
-                "name": "link",
-                "stats": {
-                  "lines": 57,
-                  "functions": 3,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_linker.link"
-                ]
-              },
-              "linker": {
-                "name": "linker",
-                "stats": {
-                  "lines": 148,
-                  "functions": 9,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_linker.linker"
-                ]
-              },
-              "similarity": {
-                "name": "similarity",
-                "stats": {
-                  "lines": 59,
-                  "functions": 4,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_linker.similarity"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 7,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_linker.__init__"
-                ]
-              }
-            }
-          },
-          "content_router": {
-            "name": "content_router",
-            "stats": {
-              "lines": 271,
-              "functions": 16,
-              "classes": 6,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "handler": {
-                "name": "handler",
-                "stats": {
-                  "lines": 74,
-                  "functions": 7,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_router.handler"
-                ]
-              },
-              "route": {
-                "name": "route",
-                "stats": {
-                  "lines": 101,
-                  "functions": 4,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_router.route"
-                ]
-              },
-              "router": {
-                "name": "router",
-                "stats": {
-                  "lines": 84,
-                  "functions": 5,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_router.router"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 12,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_router.__init__"
-                ]
-              }
-            }
-          },
-          "content_tagger": {
-            "name": "content_tagger",
-            "stats": {
-              "lines": 256,
-              "functions": 16,
-              "classes": 5,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "detector": {
-                "name": "detector",
-                "stats": {
-                  "lines": 158,
-                  "functions": 5,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_tagger.detector"
-                ]
-              },
-              "tag": {
-                "name": "tag",
-                "stats": {
-                  "lines": 26,
-                  "functions": 3,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_tagger.tag"
-                ]
-              },
-              "tagger": {
-                "name": "tagger",
-                "stats": {
-                  "lines": 65,
-                  "functions": 8,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_tagger.tagger"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 7,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_tagger.__init__"
-                ]
-              }
-            }
-          },
-          "content_transform": {
-            "name": "content_transform",
-            "stats": {
-              "lines": 280,
-              "functions": 15,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "normalizer": {
-                "name": "normalizer",
-                "stats": {
-                  "lines": 83,
-                  "functions": 5,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_transform.normalizer"
-                ]
-              },
-              "pipeline": {
-                "name": "pipeline",
-                "stats": {
-                  "lines": 70,
-                  "functions": 5,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_transform.pipeline"
-                ]
-              },
-              "transformer": {
-                "name": "transformer",
-                "stats": {
-                  "lines": 116,
-                  "functions": 5,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_transform.transformer"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 11,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_transform.__init__"
-                ]
-              }
-            }
-          },
-          "content_validator": {
-            "name": "content_validator",
-            "stats": {
-              "lines": 364,
-              "functions": 11,
-              "classes": 6,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 4
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "quality": {
-                "name": "quality",
-                "stats": {
-                  "lines": 112,
-                  "functions": 3,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_validator.quality"
-                ]
-              },
-              "rules": {
-                "name": "rules",
-                "stats": {
-                  "lines": 127,
-                  "functions": 5,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_validator.rules"
-                ]
-              },
-              "schema": {
-                "name": "schema",
-                "stats": {
-                  "lines": 112,
-                  "functions": 3,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_validator.schema"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 13,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.content_validator.__init__"
+                  "personal_index.migrations.runner"
                 ]
               }
             }
@@ -1521,40 +151,6 @@
               "S2"
             ],
             "children": {
-              "facet": {
-                "name": "facet",
-                "stats": {
-                  "lines": 74,
-                  "functions": 7,
-                  "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.search_facets.facet"
-                ]
-              },
-              "facet_builder": {
-                "name": "facet_builder",
-                "stats": {
-                  "lines": 112,
-                  "functions": 4,
-                  "classes": 1,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.search_facets.facet_builder"
-                ]
-              },
               "faceted_search": {
                 "name": "faceted_search",
                 "stats": {
@@ -1587,70 +183,35 @@
                 "modules": [
                   "personal_index.search_facets.__init__"
                 ]
-              }
-            }
-          },
-          "content_diff": {
-            "name": "content_diff",
-            "stats": {
-              "lines": 288,
-              "functions": 9,
-              "classes": 5,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 3
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "changes": {
-                "name": "changes",
+              },
+              "facet": {
+                "name": "facet",
                 "stats": {
-                  "lines": 132,
-                  "functions": 4,
+                  "lines": 74,
+                  "functions": 7,
                   "classes": 3,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_diff.changes"
-                ]
-              },
-              "snapshot": {
-                "name": "snapshot",
-                "stats": {
-                  "lines": 145,
-                  "functions": 5,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.content_diff.snapshot"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 11,
-                  "functions": 0,
-                  "classes": 0,
                   "errors": 0,
                   "warnings": 0,
                   "modules": 1
                 },
                 "signals": [],
                 "modules": [
-                  "personal_index.content_diff.__init__"
+                  "personal_index.search_facets.facet"
+                ]
+              },
+              "facet_builder": {
+                "name": "facet_builder",
+                "stats": {
+                  "lines": 112,
+                  "functions": 4,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.search_facets.facet_builder"
                 ]
               }
             }
@@ -1666,7 +227,6 @@
               "modules": 3
             },
             "signals": [
-              "S1",
               "S2"
             ],
             "children": {
@@ -1697,9 +257,7 @@
                   "warnings": 0,
                   "modules": 1
                 },
-                "signals": [
-                  "S1"
-                ],
+                "signals": [],
                 "modules": [
                   "personal_index.crawler.main"
                 ]
@@ -1714,113 +272,12 @@
                   "warnings": 0,
                   "modules": 1
                 },
-                "signals": [
-                  "S1"
-                ],
+                "signals": [],
                 "modules": [
                   "personal_index.crawler.robots"
                 ]
               }
             }
-          },
-          "filter": {
-            "name": "filter",
-            "stats": {
-              "lines": 248,
-              "functions": 17,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 3
-            },
-            "signals": [
-              "S1"
-            ],
-            "children": {
-              "engine": {
-                "name": "engine",
-                "stats": {
-                  "lines": 119,
-                  "functions": 8,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.filter.engine"
-                ]
-              },
-              "matcher": {
-                "name": "matcher",
-                "stats": {
-                  "lines": 119,
-                  "functions": 9,
-                  "classes": 2,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [
-                  "S1"
-                ],
-                "modules": [
-                  "personal_index.filter.matcher"
-                ]
-              },
-              "__init__": {
-                "name": "__init__",
-                "stats": {
-                  "lines": 10,
-                  "functions": 0,
-                  "classes": 0,
-                  "errors": 0,
-                  "warnings": 0,
-                  "modules": 1
-                },
-                "signals": [],
-                "modules": [
-                  "personal_index.filter.__init__"
-                ]
-              }
-            }
-          },
-          "analytics": {
-            "name": "analytics",
-            "stats": {
-              "lines": 267,
-              "functions": 14,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.analytics"
-            ]
-          },
-          "annotation": {
-            "name": "annotation",
-            "stats": {
-              "lines": 205,
-              "functions": 13,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.annotation"
-            ]
           },
           "app": {
             "name": "app",
@@ -1838,57 +295,6 @@
             ],
             "modules": [
               "personal_index.app"
-            ]
-          },
-          "backup": {
-            "name": "backup",
-            "stats": {
-              "lines": 250,
-              "functions": 12,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.backup"
-            ]
-          },
-          "bookmark_export": {
-            "name": "bookmark_export",
-            "stats": {
-              "lines": 204,
-              "functions": 9,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.bookmark_export"
-            ]
-          },
-          "bookmarks": {
-            "name": "bookmarks",
-            "stats": {
-              "lines": 162,
-              "functions": 18,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.bookmarks"
             ]
           },
           "cache": {
@@ -1927,57 +333,6 @@
               "personal_index.cli"
             ]
           },
-          "content": {
-            "name": "content",
-            "stats": {
-              "lines": 149,
-              "functions": 5,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content"
-            ]
-          },
-          "content_aggregator": {
-            "name": "content_aggregator",
-            "stats": {
-              "lines": 69,
-              "functions": 10,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_aggregator"
-            ]
-          },
-          "content_analytics": {
-            "name": "content_analytics",
-            "stats": {
-              "lines": 84,
-              "functions": 14,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_analytics"
-            ]
-          },
           "content_annotations": {
             "name": "content_annotations",
             "stats": {
@@ -2014,23 +369,6 @@
               "personal_index.content_api"
             ]
           },
-          "content_batch": {
-            "name": "content_batch",
-            "stats": {
-              "lines": 239,
-              "functions": 7,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_batch"
-            ]
-          },
           "content_categorizer": {
             "name": "content_categorizer",
             "stats": {
@@ -2047,23 +385,6 @@
             ],
             "modules": [
               "personal_index.content_categorizer"
-            ]
-          },
-          "content_changelog": {
-            "name": "content_changelog",
-            "stats": {
-              "lines": 37,
-              "functions": 4,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_changelog"
             ]
           },
           "content_collections": {
@@ -2102,91 +423,6 @@
               "personal_index.content_dedup"
             ]
           },
-          "content_digest": {
-            "name": "content_digest",
-            "stats": {
-              "lines": 266,
-              "functions": 13,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_digest"
-            ]
-          },
-          "content_enricher": {
-            "name": "content_enricher",
-            "stats": {
-              "lines": 187,
-              "functions": 9,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_enricher"
-            ]
-          },
-          "content_export_csv": {
-            "name": "content_export_csv",
-            "stats": {
-              "lines": 221,
-              "functions": 9,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_export_csv"
-            ]
-          },
-          "content_exporter": {
-            "name": "content_exporter",
-            "stats": {
-              "lines": 177,
-              "functions": 16,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_exporter"
-            ]
-          },
-          "content_extractor": {
-            "name": "content_extractor",
-            "stats": {
-              "lines": 163,
-              "functions": 12,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_extractor"
-            ]
-          },
           "content_feed": {
             "name": "content_feed",
             "stats": {
@@ -2203,125 +439,6 @@
             ],
             "modules": [
               "personal_index.content_feed"
-            ]
-          },
-          "content_filter": {
-            "name": "content_filter",
-            "stats": {
-              "lines": 129,
-              "functions": 9,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_filter"
-            ]
-          },
-          "content_health": {
-            "name": "content_health",
-            "stats": {
-              "lines": 315,
-              "functions": 7,
-              "classes": 7,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_health"
-            ]
-          },
-          "content_importer": {
-            "name": "content_importer",
-            "stats": {
-              "lines": 156,
-              "functions": 11,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_importer"
-            ]
-          },
-          "content_merger": {
-            "name": "content_merger",
-            "stats": {
-              "lines": 201,
-              "functions": 10,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_merger"
-            ]
-          },
-          "content_notifications": {
-            "name": "content_notifications",
-            "stats": {
-              "lines": 239,
-              "functions": 13,
-              "classes": 5,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_notifications"
-            ]
-          },
-          "content_pin": {
-            "name": "content_pin",
-            "stats": {
-              "lines": 171,
-              "functions": 12,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_pin"
-            ]
-          },
-          "content_priority": {
-            "name": "content_priority",
-            "stats": {
-              "lines": 239,
-              "functions": 10,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_priority"
             ]
           },
           "content_reader": {
@@ -2342,40 +459,6 @@
               "personal_index.content_reader"
             ]
           },
-          "content_recommender": {
-            "name": "content_recommender",
-            "stats": {
-              "lines": 220,
-              "functions": 12,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_recommender"
-            ]
-          },
-          "content_rollback": {
-            "name": "content_rollback",
-            "stats": {
-              "lines": 48,
-              "functions": 5,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_rollback"
-            ]
-          },
           "content_scheduler": {
             "name": "content_scheduler",
             "stats": {
@@ -2392,23 +475,6 @@
             ],
             "modules": [
               "personal_index.content_scheduler"
-            ]
-          },
-          "content_scoring": {
-            "name": "content_scoring",
-            "stats": {
-              "lines": 353,
-              "functions": 12,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_scoring"
             ]
           },
           "content_search": {
@@ -2429,95 +495,10 @@
               "personal_index.content_search"
             ]
           },
-          "content_summarizer": {
-            "name": "content_summarizer",
-            "stats": {
-              "lines": 192,
-              "functions": 7,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_summarizer"
-            ]
-          },
-          "content_type": {
-            "name": "content_type",
-            "stats": {
-              "lines": 317,
-              "functions": 10,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_type"
-            ]
-          },
-          "content_validation": {
-            "name": "content_validation",
-            "stats": {
-              "lines": 208,
-              "functions": 8,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_validation"
-            ]
-          },
-          "content_versioning": {
-            "name": "content_versioning",
-            "stats": {
-              "lines": 215,
-              "functions": 12,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_versioning"
-            ]
-          },
-          "content_webhooks": {
-            "name": "content_webhooks",
-            "stats": {
-              "lines": 269,
-              "functions": 14,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.content_webhooks"
-            ]
-          },
           "cycle_signals": {
             "name": "cycle_signals",
             "stats": {
-              "lines": 574,
+              "lines": 590,
               "functions": 16,
               "classes": 0,
               "errors": 0,
@@ -2550,125 +531,6 @@
               "personal_index.docs_generator"
             ]
           },
-          "domains": {
-            "name": "domains",
-            "stats": {
-              "lines": 196,
-              "functions": 15,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.domains"
-            ]
-          },
-          "encoding": {
-            "name": "encoding",
-            "stats": {
-              "lines": 94,
-              "functions": 11,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.encoding"
-            ]
-          },
-          "export": {
-            "name": "export",
-            "stats": {
-              "lines": 229,
-              "functions": 14,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.export"
-            ]
-          },
-          "export_markdown": {
-            "name": "export_markdown",
-            "stats": {
-              "lines": 352,
-              "functions": 12,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.export_markdown"
-            ]
-          },
-          "formatter": {
-            "name": "formatter",
-            "stats": {
-              "lines": 179,
-              "functions": 11,
-              "classes": 0,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.formatter"
-            ]
-          },
-          "fuzzy_search": {
-            "name": "fuzzy_search",
-            "stats": {
-              "lines": 235,
-              "functions": 12,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.fuzzy_search"
-            ]
-          },
-          "importer": {
-            "name": "importer",
-            "stats": {
-              "lines": 249,
-              "functions": 11,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.importer"
-            ]
-          },
           "index": {
             "name": "index",
             "stats": {
@@ -2685,108 +547,6 @@
             ],
             "modules": [
               "personal_index.index"
-            ]
-          },
-          "interests": {
-            "name": "interests",
-            "stats": {
-              "lines": 139,
-              "functions": 16,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.interests"
-            ]
-          },
-          "keyword_extractor": {
-            "name": "keyword_extractor",
-            "stats": {
-              "lines": 127,
-              "functions": 8,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.keyword_extractor"
-            ]
-          },
-          "link_analyzer": {
-            "name": "link_analyzer",
-            "stats": {
-              "lines": 135,
-              "functions": 6,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.link_analyzer"
-            ]
-          },
-          "link_preview": {
-            "name": "link_preview",
-            "stats": {
-              "lines": 139,
-              "functions": 6,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.link_preview"
-            ]
-          },
-          "logging_config": {
-            "name": "logging_config",
-            "stats": {
-              "lines": 47,
-              "functions": 2,
-              "classes": 0,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.logging_config"
-            ]
-          },
-          "metrics": {
-            "name": "metrics",
-            "stats": {
-              "lines": 162,
-              "functions": 9,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.metrics"
             ]
           },
           "models": {
@@ -2825,40 +585,6 @@
               "personal_index.notifications"
             ]
           },
-          "pagination": {
-            "name": "pagination",
-            "stats": {
-              "lines": 151,
-              "functions": 16,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.pagination"
-            ]
-          },
-          "performance_monitor": {
-            "name": "performance_monitor",
-            "stats": {
-              "lines": 141,
-              "functions": 16,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.performance_monitor"
-            ]
-          },
           "pipeline": {
             "name": "pipeline",
             "stats": {
@@ -2875,57 +601,6 @@
             ],
             "modules": [
               "personal_index.pipeline"
-            ]
-          },
-          "pipeline_e2e": {
-            "name": "pipeline_e2e",
-            "stats": {
-              "lines": 255,
-              "functions": 7,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.pipeline_e2e"
-            ]
-          },
-          "pipeline_orchestrator": {
-            "name": "pipeline_orchestrator",
-            "stats": {
-              "lines": 352,
-              "functions": 10,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.pipeline_orchestrator"
-            ]
-          },
-          "pipeline_runner": {
-            "name": "pipeline_runner",
-            "stats": {
-              "lines": 477,
-              "functions": 10,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.pipeline_runner"
             ]
           },
           "progress": {
@@ -2946,23 +621,6 @@
               "personal_index.progress"
             ]
           },
-          "publish_dashboard": {
-            "name": "publish_dashboard",
-            "stats": {
-              "lines": 213,
-              "functions": 5,
-              "classes": 0,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.publish_dashboard"
-            ]
-          },
           "queue": {
             "name": "queue",
             "stats": {
@@ -2979,91 +637,6 @@
             ],
             "modules": [
               "personal_index.queue"
-            ]
-          },
-          "rate_limiter": {
-            "name": "rate_limiter",
-            "stats": {
-              "lines": 153,
-              "functions": 16,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.rate_limiter"
-            ]
-          },
-          "results": {
-            "name": "results",
-            "stats": {
-              "lines": 157,
-              "functions": 8,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.results"
-            ]
-          },
-          "robots_cache": {
-            "name": "robots_cache",
-            "stats": {
-              "lines": 131,
-              "functions": 11,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.robots_cache"
-            ]
-          },
-          "robots_parser": {
-            "name": "robots_parser",
-            "stats": {
-              "lines": 131,
-              "functions": 4,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.robots_parser"
-            ]
-          },
-          "rss": {
-            "name": "rss",
-            "stats": {
-              "lines": 260,
-              "functions": 9,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.rss"
             ]
           },
           "scheduler": {
@@ -3084,40 +657,6 @@
               "personal_index.scheduler"
             ]
           },
-          "scraper": {
-            "name": "scraper",
-            "stats": {
-              "lines": 184,
-              "functions": 11,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.scraper"
-            ]
-          },
-          "search_index": {
-            "name": "search_index",
-            "stats": {
-              "lines": 146,
-              "functions": 11,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.search_index"
-            ]
-          },
           "search_suggestions": {
             "name": "search_suggestions",
             "stats": {
@@ -3134,23 +673,6 @@
             ],
             "modules": [
               "personal_index.search_suggestions"
-            ]
-          },
-          "serializer": {
-            "name": "serializer",
-            "stats": {
-              "lines": 126,
-              "functions": 10,
-              "classes": 4,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.serializer"
             ]
           },
           "session": {
@@ -3171,91 +693,6 @@
               "personal_index.session"
             ]
           },
-          "sitemap": {
-            "name": "sitemap",
-            "stats": {
-              "lines": 195,
-              "functions": 10,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.sitemap"
-            ]
-          },
-          "sitemap_builder": {
-            "name": "sitemap_builder",
-            "stats": {
-              "lines": 104,
-              "functions": 10,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.sitemap_builder"
-            ]
-          },
-          "stats": {
-            "name": "stats",
-            "stats": {
-              "lines": 130,
-              "functions": 2,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.stats"
-            ]
-          },
-          "storage": {
-            "name": "storage",
-            "stats": {
-              "lines": 170,
-              "functions": 18,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.storage"
-            ]
-          },
-          "tags": {
-            "name": "tags",
-            "stats": {
-              "lines": 180,
-              "functions": 21,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.tags"
-            ]
-          },
           "text_utils": {
             "name": "text_utils",
             "stats": {
@@ -3272,108 +709,6 @@
             ],
             "modules": [
               "personal_index.text_utils"
-            ]
-          },
-          "tfidf": {
-            "name": "tfidf",
-            "stats": {
-              "lines": 109,
-              "functions": 10,
-              "classes": 1,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.tfidf"
-            ]
-          },
-          "throttle": {
-            "name": "throttle",
-            "stats": {
-              "lines": 146,
-              "functions": 10,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.throttle"
-            ]
-          },
-          "url_classifier": {
-            "name": "url_classifier",
-            "stats": {
-              "lines": 199,
-              "functions": 9,
-              "classes": 3,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.url_classifier"
-            ]
-          },
-          "url_dedup": {
-            "name": "url_dedup",
-            "stats": {
-              "lines": 209,
-              "functions": 13,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.url_dedup"
-            ]
-          },
-          "url_filter": {
-            "name": "url_filter",
-            "stats": {
-              "lines": 142,
-              "functions": 14,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.url_filter"
-            ]
-          },
-          "url_history": {
-            "name": "url_history",
-            "stats": {
-              "lines": 167,
-              "functions": 13,
-              "classes": 2,
-              "errors": 0,
-              "warnings": 0,
-              "modules": 1
-            },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.url_history"
             ]
           },
           "url_utils": {
@@ -3394,56 +729,1353 @@
               "personal_index.url_utils"
             ]
           },
-          "validator": {
-            "name": "validator",
+          "api": {
+            "name": "api",
             "stats": {
-              "lines": 173,
-              "functions": 11,
-              "classes": 3,
+              "lines": 900,
+              "functions": 49,
+              "classes": 22,
               "errors": 0,
               "warnings": 0,
-              "modules": 1
+              "modules": 7
             },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.validator"
-            ]
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 1,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.api.__init__"
+                ]
+              },
+              "handlers": {
+                "name": "handlers",
+                "stats": {
+                  "lines": 136,
+                  "functions": 8,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.api.handlers"
+                ]
+              },
+              "middleware": {
+                "name": "middleware",
+                "stats": {
+                  "lines": 156,
+                  "functions": 8,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.api.middleware"
+                ]
+              },
+              "models": {
+                "name": "models",
+                "stats": {
+                  "lines": 182,
+                  "functions": 13,
+                  "classes": 10,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.api.models"
+                ]
+              },
+              "pagination": {
+                "name": "pagination",
+                "stats": {
+                  "lines": 145,
+                  "functions": 6,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.api.pagination"
+                ]
+              },
+              "rate_limit_middleware": {
+                "name": "rate_limit_middleware",
+                "stats": {
+                  "lines": 220,
+                  "functions": 12,
+                  "classes": 4,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.api.rate_limit_middleware"
+                ]
+              },
+              "server": {
+                "name": "server",
+                "stats": {
+                  "lines": 60,
+                  "functions": 2,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.api.server"
+                ]
+              }
+            }
           },
-          "versioning": {
-            "name": "versioning",
+          "auth": {
+            "name": "auth",
             "stats": {
-              "lines": 126,
-              "functions": 13,
-              "classes": 2,
+              "lines": 858,
+              "functions": 47,
+              "classes": 11,
               "errors": 0,
               "warnings": 0,
-              "modules": 1
+              "modules": 6
             },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.versioning"
-            ]
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 45,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.auth.__init__"
+                ]
+              },
+              "api_keys": {
+                "name": "api_keys",
+                "stats": {
+                  "lines": 187,
+                  "functions": 10,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.auth.api_keys"
+                ]
+              },
+              "passwords": {
+                "name": "passwords",
+                "stats": {
+                  "lines": 106,
+                  "functions": 5,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.auth.passwords"
+                ]
+              },
+              "permissions": {
+                "name": "permissions",
+                "stats": {
+                  "lines": 143,
+                  "functions": 7,
+                  "classes": 4,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.auth.permissions"
+                ]
+              },
+              "sessions": {
+                "name": "sessions",
+                "stats": {
+                  "lines": 188,
+                  "functions": 11,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.auth.sessions"
+                ]
+              },
+              "tokens": {
+                "name": "tokens",
+                "stats": {
+                  "lines": 189,
+                  "functions": 14,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.auth.tokens"
+                ]
+              }
+            }
           },
-          "webhook": {
-            "name": "webhook",
+          "content_monitor": {
+            "name": "content_monitor",
             "stats": {
-              "lines": 156,
-              "functions": 9,
+              "lines": 814,
+              "functions": 29,
+              "classes": 11,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 5
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 22,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_monitor.__init__"
+                ]
+              },
+              "alert": {
+                "name": "alert",
+                "stats": {
+                  "lines": 137,
+                  "functions": 5,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_monitor.alert"
+                ]
+              },
+              "health": {
+                "name": "health",
+                "stats": {
+                  "lines": 121,
+                  "functions": 4,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_monitor.health"
+                ]
+              },
+              "info": {
+                "name": "info",
+                "stats": {
+                  "lines": 261,
+                  "functions": 11,
+                  "classes": 4,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_monitor.info"
+                ]
+              },
+              "monitor": {
+                "name": "monitor",
+                "stats": {
+                  "lines": 273,
+                  "functions": 9,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_monitor.monitor"
+                ]
+              }
+            }
+          },
+          "content_timeline": {
+            "name": "content_timeline",
+            "stats": {
+              "lines": 407,
+              "functions": 28,
+              "classes": 8,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 5
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 18,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_timeline.__init__"
+                ]
+              },
+              "timeline": {
+                "name": "timeline",
+                "stats": {
+                  "lines": 135,
+                  "functions": 16,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_timeline.timeline"
+                ]
+              },
+              "timeline_entry": {
+                "name": "timeline_entry",
+                "stats": {
+                  "lines": 70,
+                  "functions": 3,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_timeline.timeline_entry"
+                ]
+              },
+              "timeline_event": {
+                "name": "timeline_event",
+                "stats": {
+                  "lines": 82,
+                  "functions": 3,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_timeline.timeline_event"
+                ]
+              },
+              "timeline_view": {
+                "name": "timeline_view",
+                "stats": {
+                  "lines": 102,
+                  "functions": 6,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_timeline.timeline_view"
+                ]
+              }
+            }
+          },
+          "dashboard": {
+            "name": "dashboard",
+            "stats": {
+              "lines": 704,
+              "functions": 25,
+              "classes": 10,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 5
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 23,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.__init__"
+                ]
+              },
+              "aggregator": {
+                "name": "aggregator",
+                "stats": {
+                  "lines": 207,
+                  "functions": 10,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.aggregator"
+                ]
+              },
+              "export": {
+                "name": "export",
+                "stats": {
+                  "lines": 221,
+                  "functions": 7,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.export"
+                ]
+              },
+              "stats": {
+                "name": "stats",
+                "stats": {
+                  "lines": 37,
+                  "functions": 1,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.stats"
+                ]
+              },
+              "views": {
+                "name": "views",
+                "stats": {
+                  "lines": 216,
+                  "functions": 7,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.dashboard.views"
+                ]
+              }
+            }
+          },
+          "config": {
+            "name": "config",
+            "stats": {
+              "lines": 635,
+              "functions": 41,
+              "classes": 13,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 110,
+                  "functions": 13,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.config.__init__"
+                ]
+              },
+              "loader": {
+                "name": "loader",
+                "stats": {
+                  "lines": 171,
+                  "functions": 9,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.config.loader"
+                ]
+              },
+              "models": {
+                "name": "models",
+                "stats": {
+                  "lines": 250,
+                  "functions": 14,
+                  "classes": 8,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.config.models"
+                ]
+              },
+              "pipeline_config": {
+                "name": "pipeline_config",
+                "stats": {
+                  "lines": 104,
+                  "functions": 5,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.config.pipeline_config"
+                ]
+              }
+            }
+          },
+          "content_archive": {
+            "name": "content_archive",
+            "stats": {
+              "lines": 267,
+              "functions": 24,
+              "classes": 6,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 7,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_archive.__init__"
+                ]
+              },
+              "archive_entry": {
+                "name": "archive_entry",
+                "stats": {
+                  "lines": 75,
+                  "functions": 7,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_archive.archive_entry"
+                ]
+              },
+              "archiver": {
+                "name": "archiver",
+                "stats": {
+                  "lines": 126,
+                  "functions": 11,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_archive.archiver"
+                ]
+              },
+              "compressor": {
+                "name": "compressor",
+                "stats": {
+                  "lines": 59,
+                  "functions": 6,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_archive.compressor"
+                ]
+              }
+            }
+          },
+          "content_backup": {
+            "name": "content_backup",
+            "stats": {
+              "lines": 447,
+              "functions": 17,
+              "classes": 6,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 11,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_backup.__init__"
+                ]
+              },
+              "backup_manager": {
+                "name": "backup_manager",
+                "stats": {
+                  "lines": 136,
+                  "functions": 5,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_backup.backup_manager"
+                ]
+              },
+              "backup_store": {
+                "name": "backup_store",
+                "stats": {
+                  "lines": 178,
+                  "functions": 8,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_backup.backup_store"
+                ]
+              },
+              "restore": {
+                "name": "restore",
+                "stats": {
+                  "lines": 122,
+                  "functions": 4,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_backup.restore"
+                ]
+              }
+            }
+          },
+          "content_cache": {
+            "name": "content_cache",
+            "stats": {
+              "lines": 240,
+              "functions": 12,
+              "classes": 5,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 12,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_cache.__init__"
+                ]
+              },
+              "cache_policy": {
+                "name": "cache_policy",
+                "stats": {
+                  "lines": 32,
+                  "functions": 0,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_cache.cache_policy"
+                ]
+              },
+              "cache_stats": {
+                "name": "cache_stats",
+                "stats": {
+                  "lines": 56,
+                  "functions": 3,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_cache.cache_stats"
+                ]
+              },
+              "cache_store": {
+                "name": "cache_store",
+                "stats": {
+                  "lines": 140,
+                  "functions": 9,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_cache.cache_store"
+                ]
+              }
+            }
+          },
+          "content_export": {
+            "name": "content_export",
+            "stats": {
+              "lines": 578,
+              "functions": 19,
+              "classes": 5,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 15,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_export.__init__"
+                ]
+              },
+              "csv_export": {
+                "name": "csv_export",
+                "stats": {
+                  "lines": 193,
+                  "functions": 7,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_export.csv_export"
+                ]
+              },
+              "json_export": {
+                "name": "json_export",
+                "stats": {
+                  "lines": 206,
+                  "functions": 8,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_export.json_export"
+                ]
+              },
+              "markdown_export": {
+                "name": "markdown_export",
+                "stats": {
+                  "lines": 164,
+                  "functions": 4,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_export.markdown_export"
+                ]
+              }
+            }
+          },
+          "content_linker": {
+            "name": "content_linker",
+            "stats": {
+              "lines": 271,
+              "functions": 16,
               "classes": 4,
               "errors": 0,
               "warnings": 0,
-              "modules": 1
+              "modules": 4
             },
-            "signals": [
-              "S1"
-            ],
-            "modules": [
-              "personal_index.webhook"
-            ]
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 7,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_linker.__init__"
+                ]
+              },
+              "link": {
+                "name": "link",
+                "stats": {
+                  "lines": 57,
+                  "functions": 3,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_linker.link"
+                ]
+              },
+              "linker": {
+                "name": "linker",
+                "stats": {
+                  "lines": 148,
+                  "functions": 9,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_linker.linker"
+                ]
+              },
+              "similarity": {
+                "name": "similarity",
+                "stats": {
+                  "lines": 59,
+                  "functions": 4,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_linker.similarity"
+                ]
+              }
+            }
+          },
+          "content_router": {
+            "name": "content_router",
+            "stats": {
+              "lines": 271,
+              "functions": 16,
+              "classes": 6,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 12,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_router.__init__"
+                ]
+              },
+              "handler": {
+                "name": "handler",
+                "stats": {
+                  "lines": 74,
+                  "functions": 7,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_router.handler"
+                ]
+              },
+              "route": {
+                "name": "route",
+                "stats": {
+                  "lines": 101,
+                  "functions": 4,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_router.route"
+                ]
+              },
+              "router": {
+                "name": "router",
+                "stats": {
+                  "lines": 84,
+                  "functions": 5,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_router.router"
+                ]
+              }
+            }
+          },
+          "content_tagger": {
+            "name": "content_tagger",
+            "stats": {
+              "lines": 256,
+              "functions": 16,
+              "classes": 5,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 7,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_tagger.__init__"
+                ]
+              },
+              "detector": {
+                "name": "detector",
+                "stats": {
+                  "lines": 158,
+                  "functions": 5,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_tagger.detector"
+                ]
+              },
+              "tag": {
+                "name": "tag",
+                "stats": {
+                  "lines": 26,
+                  "functions": 3,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_tagger.tag"
+                ]
+              },
+              "tagger": {
+                "name": "tagger",
+                "stats": {
+                  "lines": 65,
+                  "functions": 8,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_tagger.tagger"
+                ]
+              }
+            }
+          },
+          "content_transform": {
+            "name": "content_transform",
+            "stats": {
+              "lines": 280,
+              "functions": 15,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 11,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_transform.__init__"
+                ]
+              },
+              "normalizer": {
+                "name": "normalizer",
+                "stats": {
+                  "lines": 83,
+                  "functions": 5,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_transform.normalizer"
+                ]
+              },
+              "pipeline": {
+                "name": "pipeline",
+                "stats": {
+                  "lines": 70,
+                  "functions": 5,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_transform.pipeline"
+                ]
+              },
+              "transformer": {
+                "name": "transformer",
+                "stats": {
+                  "lines": 116,
+                  "functions": 5,
+                  "classes": 1,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_transform.transformer"
+                ]
+              }
+            }
+          },
+          "content_validator": {
+            "name": "content_validator",
+            "stats": {
+              "lines": 364,
+              "functions": 11,
+              "classes": 6,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 4
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 13,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_validator.__init__"
+                ]
+              },
+              "quality": {
+                "name": "quality",
+                "stats": {
+                  "lines": 112,
+                  "functions": 3,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_validator.quality"
+                ]
+              },
+              "rules": {
+                "name": "rules",
+                "stats": {
+                  "lines": 127,
+                  "functions": 5,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_validator.rules"
+                ]
+              },
+              "schema": {
+                "name": "schema",
+                "stats": {
+                  "lines": 112,
+                  "functions": 3,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_validator.schema"
+                ]
+              }
+            }
+          },
+          "content_diff": {
+            "name": "content_diff",
+            "stats": {
+              "lines": 288,
+              "functions": 9,
+              "classes": 5,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 3
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 11,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_diff.__init__"
+                ]
+              },
+              "changes": {
+                "name": "changes",
+                "stats": {
+                  "lines": 132,
+                  "functions": 4,
+                  "classes": 3,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_diff.changes"
+                ]
+              },
+              "snapshot": {
+                "name": "snapshot",
+                "stats": {
+                  "lines": 145,
+                  "functions": 5,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.content_diff.snapshot"
+                ]
+              }
+            }
+          },
+          "filter": {
+            "name": "filter",
+            "stats": {
+              "lines": 248,
+              "functions": 17,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 3
+            },
+            "signals": [],
+            "children": {
+              "__init__": {
+                "name": "__init__",
+                "stats": {
+                  "lines": 10,
+                  "functions": 0,
+                  "classes": 0,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.filter.__init__"
+                ]
+              },
+              "engine": {
+                "name": "engine",
+                "stats": {
+                  "lines": 119,
+                  "functions": 8,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.filter.engine"
+                ]
+              },
+              "matcher": {
+                "name": "matcher",
+                "stats": {
+                  "lines": 119,
+                  "functions": 9,
+                  "classes": 2,
+                  "errors": 0,
+                  "warnings": 0,
+                  "modules": 1
+                },
+                "signals": [],
+                "modules": [
+                  "personal_index.filter.matcher"
+                ]
+              }
+            }
           },
           "__init__": {
             "name": "__init__",
@@ -3473,6 +2105,81 @@
             "signals": [],
             "modules": [
               "personal_index.__main__"
+            ]
+          },
+          "analytics": {
+            "name": "analytics",
+            "stats": {
+              "lines": 267,
+              "functions": 14,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.analytics"
+            ]
+          },
+          "annotation": {
+            "name": "annotation",
+            "stats": {
+              "lines": 205,
+              "functions": 13,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.annotation"
+            ]
+          },
+          "backup": {
+            "name": "backup",
+            "stats": {
+              "lines": 250,
+              "functions": 12,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.backup"
+            ]
+          },
+          "bookmark_export": {
+            "name": "bookmark_export",
+            "stats": {
+              "lines": 204,
+              "functions": 9,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.bookmark_export"
+            ]
+          },
+          "bookmarks": {
+            "name": "bookmarks",
+            "stats": {
+              "lines": 162,
+              "functions": 18,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.bookmarks"
             ]
           },
           "cli_dedup": {
@@ -3565,6 +2272,951 @@
               "personal_index.cli_verify"
             ]
           },
+          "content": {
+            "name": "content",
+            "stats": {
+              "lines": 149,
+              "functions": 5,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content"
+            ]
+          },
+          "content_aggregator": {
+            "name": "content_aggregator",
+            "stats": {
+              "lines": 69,
+              "functions": 10,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_aggregator"
+            ]
+          },
+          "content_analytics": {
+            "name": "content_analytics",
+            "stats": {
+              "lines": 84,
+              "functions": 14,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_analytics"
+            ]
+          },
+          "content_batch": {
+            "name": "content_batch",
+            "stats": {
+              "lines": 239,
+              "functions": 7,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_batch"
+            ]
+          },
+          "content_changelog": {
+            "name": "content_changelog",
+            "stats": {
+              "lines": 37,
+              "functions": 4,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_changelog"
+            ]
+          },
+          "content_digest": {
+            "name": "content_digest",
+            "stats": {
+              "lines": 266,
+              "functions": 13,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_digest"
+            ]
+          },
+          "content_enricher": {
+            "name": "content_enricher",
+            "stats": {
+              "lines": 187,
+              "functions": 9,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_enricher"
+            ]
+          },
+          "content_export_csv": {
+            "name": "content_export_csv",
+            "stats": {
+              "lines": 221,
+              "functions": 9,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_export_csv"
+            ]
+          },
+          "content_exporter": {
+            "name": "content_exporter",
+            "stats": {
+              "lines": 177,
+              "functions": 16,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_exporter"
+            ]
+          },
+          "content_extractor": {
+            "name": "content_extractor",
+            "stats": {
+              "lines": 163,
+              "functions": 12,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_extractor"
+            ]
+          },
+          "content_filter": {
+            "name": "content_filter",
+            "stats": {
+              "lines": 129,
+              "functions": 9,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_filter"
+            ]
+          },
+          "content_health": {
+            "name": "content_health",
+            "stats": {
+              "lines": 315,
+              "functions": 7,
+              "classes": 7,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_health"
+            ]
+          },
+          "content_importer": {
+            "name": "content_importer",
+            "stats": {
+              "lines": 156,
+              "functions": 11,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_importer"
+            ]
+          },
+          "content_merger": {
+            "name": "content_merger",
+            "stats": {
+              "lines": 201,
+              "functions": 10,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_merger"
+            ]
+          },
+          "content_notifications": {
+            "name": "content_notifications",
+            "stats": {
+              "lines": 239,
+              "functions": 13,
+              "classes": 5,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_notifications"
+            ]
+          },
+          "content_pin": {
+            "name": "content_pin",
+            "stats": {
+              "lines": 171,
+              "functions": 12,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_pin"
+            ]
+          },
+          "content_priority": {
+            "name": "content_priority",
+            "stats": {
+              "lines": 239,
+              "functions": 10,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_priority"
+            ]
+          },
+          "content_recommender": {
+            "name": "content_recommender",
+            "stats": {
+              "lines": 220,
+              "functions": 12,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_recommender"
+            ]
+          },
+          "content_rollback": {
+            "name": "content_rollback",
+            "stats": {
+              "lines": 48,
+              "functions": 5,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_rollback"
+            ]
+          },
+          "content_scoring": {
+            "name": "content_scoring",
+            "stats": {
+              "lines": 353,
+              "functions": 12,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_scoring"
+            ]
+          },
+          "content_summarizer": {
+            "name": "content_summarizer",
+            "stats": {
+              "lines": 192,
+              "functions": 7,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_summarizer"
+            ]
+          },
+          "content_type": {
+            "name": "content_type",
+            "stats": {
+              "lines": 317,
+              "functions": 10,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_type"
+            ]
+          },
+          "content_validation": {
+            "name": "content_validation",
+            "stats": {
+              "lines": 208,
+              "functions": 8,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_validation"
+            ]
+          },
+          "content_versioning": {
+            "name": "content_versioning",
+            "stats": {
+              "lines": 215,
+              "functions": 12,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_versioning"
+            ]
+          },
+          "content_webhooks": {
+            "name": "content_webhooks",
+            "stats": {
+              "lines": 269,
+              "functions": 14,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.content_webhooks"
+            ]
+          },
+          "domains": {
+            "name": "domains",
+            "stats": {
+              "lines": 196,
+              "functions": 15,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.domains"
+            ]
+          },
+          "encoding": {
+            "name": "encoding",
+            "stats": {
+              "lines": 94,
+              "functions": 11,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.encoding"
+            ]
+          },
+          "export": {
+            "name": "export",
+            "stats": {
+              "lines": 229,
+              "functions": 14,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.export"
+            ]
+          },
+          "export_markdown": {
+            "name": "export_markdown",
+            "stats": {
+              "lines": 352,
+              "functions": 12,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.export_markdown"
+            ]
+          },
+          "formatter": {
+            "name": "formatter",
+            "stats": {
+              "lines": 179,
+              "functions": 11,
+              "classes": 0,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.formatter"
+            ]
+          },
+          "fuzzy_search": {
+            "name": "fuzzy_search",
+            "stats": {
+              "lines": 235,
+              "functions": 12,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.fuzzy_search"
+            ]
+          },
+          "importer": {
+            "name": "importer",
+            "stats": {
+              "lines": 249,
+              "functions": 11,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.importer"
+            ]
+          },
+          "interests": {
+            "name": "interests",
+            "stats": {
+              "lines": 139,
+              "functions": 16,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.interests"
+            ]
+          },
+          "keyword_extractor": {
+            "name": "keyword_extractor",
+            "stats": {
+              "lines": 127,
+              "functions": 8,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.keyword_extractor"
+            ]
+          },
+          "link_analyzer": {
+            "name": "link_analyzer",
+            "stats": {
+              "lines": 135,
+              "functions": 6,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.link_analyzer"
+            ]
+          },
+          "link_preview": {
+            "name": "link_preview",
+            "stats": {
+              "lines": 139,
+              "functions": 6,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.link_preview"
+            ]
+          },
+          "logging_config": {
+            "name": "logging_config",
+            "stats": {
+              "lines": 47,
+              "functions": 2,
+              "classes": 0,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.logging_config"
+            ]
+          },
+          "metrics": {
+            "name": "metrics",
+            "stats": {
+              "lines": 162,
+              "functions": 9,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.metrics"
+            ]
+          },
+          "pagination": {
+            "name": "pagination",
+            "stats": {
+              "lines": 151,
+              "functions": 16,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.pagination"
+            ]
+          },
+          "performance_monitor": {
+            "name": "performance_monitor",
+            "stats": {
+              "lines": 141,
+              "functions": 16,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.performance_monitor"
+            ]
+          },
+          "pipeline_e2e": {
+            "name": "pipeline_e2e",
+            "stats": {
+              "lines": 255,
+              "functions": 7,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.pipeline_e2e"
+            ]
+          },
+          "pipeline_orchestrator": {
+            "name": "pipeline_orchestrator",
+            "stats": {
+              "lines": 352,
+              "functions": 10,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.pipeline_orchestrator"
+            ]
+          },
+          "pipeline_runner": {
+            "name": "pipeline_runner",
+            "stats": {
+              "lines": 477,
+              "functions": 10,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.pipeline_runner"
+            ]
+          },
+          "publish_dashboard": {
+            "name": "publish_dashboard",
+            "stats": {
+              "lines": 213,
+              "functions": 5,
+              "classes": 0,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.publish_dashboard"
+            ]
+          },
+          "rate_limiter": {
+            "name": "rate_limiter",
+            "stats": {
+              "lines": 153,
+              "functions": 16,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.rate_limiter"
+            ]
+          },
+          "results": {
+            "name": "results",
+            "stats": {
+              "lines": 157,
+              "functions": 8,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.results"
+            ]
+          },
+          "robots_cache": {
+            "name": "robots_cache",
+            "stats": {
+              "lines": 131,
+              "functions": 11,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.robots_cache"
+            ]
+          },
+          "robots_parser": {
+            "name": "robots_parser",
+            "stats": {
+              "lines": 131,
+              "functions": 4,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.robots_parser"
+            ]
+          },
+          "rss": {
+            "name": "rss",
+            "stats": {
+              "lines": 260,
+              "functions": 9,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.rss"
+            ]
+          },
+          "scraper": {
+            "name": "scraper",
+            "stats": {
+              "lines": 184,
+              "functions": 11,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.scraper"
+            ]
+          },
+          "search_index": {
+            "name": "search_index",
+            "stats": {
+              "lines": 146,
+              "functions": 11,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.search_index"
+            ]
+          },
+          "serializer": {
+            "name": "serializer",
+            "stats": {
+              "lines": 126,
+              "functions": 10,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.serializer"
+            ]
+          },
+          "sitemap": {
+            "name": "sitemap",
+            "stats": {
+              "lines": 195,
+              "functions": 10,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.sitemap"
+            ]
+          },
+          "sitemap_builder": {
+            "name": "sitemap_builder",
+            "stats": {
+              "lines": 104,
+              "functions": 10,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.sitemap_builder"
+            ]
+          },
+          "stats": {
+            "name": "stats",
+            "stats": {
+              "lines": 130,
+              "functions": 2,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.stats"
+            ]
+          },
+          "storage": {
+            "name": "storage",
+            "stats": {
+              "lines": 170,
+              "functions": 18,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.storage"
+            ]
+          },
+          "tags": {
+            "name": "tags",
+            "stats": {
+              "lines": 180,
+              "functions": 21,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.tags"
+            ]
+          },
+          "tfidf": {
+            "name": "tfidf",
+            "stats": {
+              "lines": 109,
+              "functions": 10,
+              "classes": 1,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.tfidf"
+            ]
+          },
+          "throttle": {
+            "name": "throttle",
+            "stats": {
+              "lines": 146,
+              "functions": 10,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.throttle"
+            ]
+          },
+          "url_classifier": {
+            "name": "url_classifier",
+            "stats": {
+              "lines": 199,
+              "functions": 9,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.url_classifier"
+            ]
+          },
+          "url_dedup": {
+            "name": "url_dedup",
+            "stats": {
+              "lines": 209,
+              "functions": 13,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.url_dedup"
+            ]
+          },
+          "url_filter": {
+            "name": "url_filter",
+            "stats": {
+              "lines": 142,
+              "functions": 14,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.url_filter"
+            ]
+          },
+          "url_history": {
+            "name": "url_history",
+            "stats": {
+              "lines": 167,
+              "functions": 13,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.url_history"
+            ]
+          },
           "utils": {
             "name": "utils",
             "stats": {
@@ -3593,6 +3245,51 @@
                 ]
               }
             }
+          },
+          "validator": {
+            "name": "validator",
+            "stats": {
+              "lines": 173,
+              "functions": 11,
+              "classes": 3,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.validator"
+            ]
+          },
+          "versioning": {
+            "name": "versioning",
+            "stats": {
+              "lines": 126,
+              "functions": 13,
+              "classes": 2,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.versioning"
+            ]
+          },
+          "webhook": {
+            "name": "webhook",
+            "stats": {
+              "lines": 156,
+              "functions": 9,
+              "classes": 4,
+              "errors": 0,
+              "warnings": 0,
+              "modules": 1
+            },
+            "signals": [],
+            "modules": [
+              "personal_index.webhook"
+            ]
           }
         }
       }
@@ -6164,7 +5861,7 @@
       "name": "personal_index.cycle_signals",
       "filepath": "personal_index/cycle_signals.py",
       "status": "clean",
-      "lines": 574,
+      "lines": 590,
       "classes": 0,
       "functions": 16,
       "tests": 0,
@@ -6190,7 +5887,7 @@
         },
         {
           "name": "_build_tree_root",
-          "line": 115,
+          "line": 122,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6198,7 +5895,7 @@
         },
         {
           "name": "_node_to_dict",
-          "line": 144,
+          "line": 151,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6206,7 +5903,7 @@
         },
         {
           "name": "_sort_children",
-          "line": 184,
+          "line": 191,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6214,7 +5911,7 @@
         },
         {
           "name": "format_tree",
-          "line": 196,
+          "line": 203,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6222,7 +5919,7 @@
         },
         {
           "name": "_render_summary_node",
-          "line": 233,
+          "line": 241,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6230,7 +5927,7 @@
         },
         {
           "name": "load_codemap",
-          "line": 262,
+          "line": 277,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6238,7 +5935,7 @@
         },
         {
           "name": "signal_no_tests",
-          "line": 274,
+          "line": 289,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6246,7 +5943,7 @@
         },
         {
           "name": "signal_oversized",
-          "line": 304,
+          "line": 319,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6254,7 +5951,7 @@
         },
         {
           "name": "signal_dead_code",
-          "line": 322,
+          "line": 337,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6262,7 +5959,7 @@
         },
         {
           "name": "signal_duplicates",
-          "line": 370,
+          "line": 385,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6270,7 +5967,7 @@
         },
         {
           "name": "signal_errors",
-          "line": 397,
+          "line": 412,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6278,7 +5975,7 @@
         },
         {
           "name": "signal_coverage",
-          "line": 416,
+          "line": 431,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6286,7 +5983,7 @@
         },
         {
           "name": "extract",
-          "line": 451,
+          "line": 466,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6294,7 +5991,7 @@
         },
         {
           "name": "format_for_auditor",
-          "line": 495,
+          "line": 510,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -6302,7 +5999,7 @@
         },
         {
           "name": "main",
-          "line": 541,
+          "line": 556,
           "is_async": false,
           "is_method": false,
           "parent_class": "",
@@ -13329,6 +13026,18 @@
   },
   "commits": [
     {
+      "sha": "6c82eb4",
+      "message": "feat: add --depth control and reduce S1 noise in tree output (#239)",
+      "author": "kodep",
+      "date": "2026-08-12"
+    },
+    {
+      "sha": "d5233eb",
+      "message": "docs: regenerate dashboard with tree summary",
+      "author": "belarusian",
+      "date": "2026-08-12"
+    },
+    {
       "sha": "a4cc177",
       "message": "Merge pull request #238 from belarusian/fix/fast-dashboard-publish",
       "author": "kodep",
@@ -13433,18 +13142,6 @@
     {
       "sha": "da70132",
       "message": "Merge pull request #227 from belarusian/lint/clean-tests",
-      "author": "kodep",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "3fd625c",
-      "message": "lint: auto-fix 773 ruff errors in tests/",
-      "author": "belarusian",
-      "date": "2026-08-12"
-    },
-    {
-      "sha": "f2f8feb",
-      "message": "Merge pull request #226 from belarusian/test/add-missing-coverage",
       "author": "kodep",
       "date": "2026-08-12"
     }
