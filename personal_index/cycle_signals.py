@@ -25,6 +25,72 @@ from pathlib import Path
 # Tree summary — hierarchical grouping for LLM-friendly consumption
 # ---------------------------------------------------------------------------
 
+def _update_node_stats(node: dict, module: dict, is_leaf: bool, part: str) -> None:
+    """Update stats on a tree node for one module.
+
+    Args:
+        node: Tree node dict to update in-place.
+        module: Module dict from codemap with stats fields.
+        is_leaf: Whether this node represents the module itself (leaf).
+        part: The leaf module name segment (used for signal detection).
+    """
+    if is_leaf:
+        node["modules"].append(node["full_path"])
+        node["stats"]["modules"] += 1
+        node["stats"]["lines"] += module.get("lines", 0)
+        node["stats"]["functions"] += module.get("functions", 0)
+        node["stats"]["classes"] += module.get("classes", 0)
+        node["stats"]["errors"] += module.get("ruff_errors", 0) + module.get("mypy_errors", 0)
+        node["stats"]["warnings"] += module.get("ruff_warnings", 0)
+
+        # Detect signals on leaf modules
+        signals = _detect_module_signals(module, part)
+        node["signals"].update(signals)
+    else:
+        # Accumulate stats up the tree
+        node["stats"]["lines"] += module.get("lines", 0)
+        node["stats"]["functions"] += module.get("functions", 0)
+        node["stats"]["classes"] += module.get("classes", 0)
+        node["stats"]["errors"] += module.get("ruff_errors", 0) + module.get("mypy_errors", 0)
+        node["stats"]["warnings"] += module.get("ruff_warnings", 0)
+        node["stats"]["modules"] += 1
+
+
+def _walk_module_path(tree: dict[str, dict], parts: list[str], module: dict) -> None:
+    """Walk the dotted path of a module name, creating and updating tree nodes.
+
+    Args:
+        tree: Flat tree dict, updated in-place.
+        parts: Dotted name split into segments (e.g., ["pkg", "sub", "mod"]).
+        module: Module dict from codemap with stats fields.
+    """
+    current_path: list[str] = []
+    for i, part in enumerate(parts):
+        current_path.append(part)
+        key = ".".join(current_path)
+
+        if key not in tree:
+            tree[key] = {
+                "name": part,
+                "full_path": key,
+                "children": {},
+                "modules": [],
+                "stats": {
+                    "lines": 0,
+                    "functions": 0,
+                    "classes": 0,
+                    "errors": 0,
+                    "warnings": 0,
+                    "modules": 0,
+                },
+                "signals": set(),
+            }
+
+        node = tree[key]
+        is_leaf = i == len(parts) - 1
+        _update_node_stats(node, module, is_leaf, part)
+
+
 def _create_tree_nodes(modules: list[dict]) -> dict[str, dict]:
     """Walk module dotted names and create/update flat tree nodes with stats.
 
@@ -43,52 +109,7 @@ def _create_tree_nodes(modules: list[dict]) -> dict[str, dict]:
         if len(parts) <= 1:
             continue
 
-        # Walk the path and create/update nodes
-        current_path = []
-        for i, part in enumerate(parts):
-            current_path.append(part)
-            key = ".".join(current_path)
-
-            if key not in tree:
-                tree[key] = {
-                    "name": part,
-                    "full_path": key,
-                    "children": {},
-                    "modules": [],
-                    "stats": {
-                        "lines": 0,
-                        "functions": 0,
-                        "classes": 0,
-                        "errors": 0,
-                        "warnings": 0,
-                        "modules": 0,
-                    },
-                    "signals": set(),
-                }
-
-            node = tree[key]
-            is_leaf = i == len(parts) - 1
-
-            if is_leaf:
-                node["modules"].append(name)
-                node["stats"]["modules"] += 1
-                node["stats"]["lines"] += m.get("lines", 0)
-                node["stats"]["functions"] += m.get("functions", 0)
-                node["stats"]["classes"] += m.get("classes", 0)
-                node["stats"]["errors"] += m.get("ruff_errors", 0) + m.get("mypy_errors", 0)
-                node["stats"]["warnings"] += m.get("ruff_warnings", 0)
-
-                # Detect signals on leaf modules
-                signals = _detect_module_signals(m, part)
-                node["signals"].update(signals)
-            else:
-                # Accumulate stats up the tree
-                node["stats"]["lines"] += m.get("lines", 0)
-                node["stats"]["functions"] += m.get("functions", 0)
-                node["stats"]["classes"] += m.get("classes", 0)
-                node["stats"]["errors"] += m.get("ruff_errors", 0) + m.get("mypy_errors", 0)
-                node["stats"]["warnings"] += m.get("ruff_warnings", 0)
-                node["stats"]["modules"] += 1
+        _walk_module_path(tree, parts, m)
 
     # Propagate signals up the tree
     for key, node in tree.items():
@@ -99,6 +120,7 @@ def _create_tree_nodes(modules: list[dict]) -> dict[str, dict]:
                 tree[parent_key]["signals"].update(node["signals"])
 
     return tree
+
 
 
 def _detect_module_signals(module: dict, short_name: str) -> list[str]:

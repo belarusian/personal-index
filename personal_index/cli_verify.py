@@ -210,6 +210,27 @@ def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
         shutil.rmtree(test_data_dir, ignore_errors=True)
 
 
+
+def _build_summary(checks_passed: int, checks_total: int, errors: list[str]) -> None:
+    """Build and display the verification summary report.
+
+    Args:
+        checks_passed: Number of checks that passed.
+        checks_total: Total number of checks run.
+        errors: List of error messages for failed checks.
+    """
+    click.echo(f"\n{'=' * 50}")
+    click.echo(f"Results: {checks_passed}/{checks_total} checks passed")
+
+    if errors:
+        click.echo(f"\nFailed checks ({len(errors)}):")
+        for error in errors:
+            click.echo(f"  {error}")
+        sys.exit(1)
+    else:
+        click.echo("\n✓ All checks passed! Your pipeline is working correctly.")
+
+
 @click.command("verify")
 @click.option("--data-dir", default=None, help="Data directory")
 @click.option("--quick", "-q", is_flag=True, help="Quick verification (skip full pipeline test)")
@@ -281,13 +302,4 @@ def verify(ctx, data_dir, quick):
             os.remove(path)
 
     # Summary
-    click.echo(f"\n{'=' * 50}")
-    click.echo(f"Results: {checks_passed}/{checks_total} checks passed")
-
-    if errors:
-        click.echo(f"\nFailed checks ({len(errors)}):")
-        for error in errors:
-            click.echo(f"  {error}")
-        sys.exit(1)
-    else:
-        click.echo("\n✓ All checks passed! Your pipeline is working correctly.")
+    _build_summary(checks_passed, checks_total, errors)
