@@ -76,50 +76,50 @@ def main(ctx, data_dir, verbose):
 
 
 # ── init ──────────────────────────────────────────────────────────────
+
+def _create_data_dirs(data_dir: str) -> None:
+    """Create data directory structure."""
+    os.makedirs(data_dir, exist_ok=True)
+    for subdir in ["cache", "archive", "backups"]:
+        os.makedirs(os.path.join(data_dir, subdir), exist_ok=True)
+
+
+def _create_default_config(config_path: str, data_dir: str) -> None:
+    """Create default config file if it doesn't exist."""
+    if os.path.exists(config_path):
+        return
+    default_config = {
+        "data_dir": data_dir,
+        "crawler": {
+            "max_depth": 3,
+            "max_pages_per_domain": 100,
+            "timeout": 30,
+            "politeness_delay": 1.0,
+        },
+        "filter": {
+            "min_content_length": 100,
+            "min_title_length": 3,
+            "blocked_domains": [],
+        },
+        "pipeline": {
+            "min_score_threshold": 0.0,
+            "min_content_length": 100,
+        },
+    }
+    with open(config_path, "w") as f:
+        yaml.dump(default_config, f, default_flow_style=False)
+
+
 @main.command()
 @click.option("--data-dir", default=None, help="Data directory")
 @click.option("--config", default=None, help="Config file path")
 @click.pass_context
 def init(ctx, data_dir, config):
-    """Initialize a new personal-index data directory.
-
-    Creates the data directory structure and default configuration.
-
-    Examples:
-        personal-index init
-        personal-index init --data-dir ./my_index
-    """
+    """Initialize a new personal-index data directory."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    os.makedirs(dd, exist_ok=True)
-    for subdir in ["cache", "archive", "backups"]:
-        os.makedirs(os.path.join(dd, subdir), exist_ok=True)
-
-    # Use config path from option or default
-    config_path = config if config else "config.yaml"
-    
-    # Create default config if not exists
-    if not os.path.exists(config_path):
-        default_config = {
-            "data_dir": dd,
-            "crawler": {
-                "max_depth": 3,
-                "max_pages_per_domain": 100,
-                "timeout": 30,
-                "politeness_delay": 1.0,
-            },
-            "filter": {
-                "min_content_length": 100,
-                "min_title_length": 3,
-                "blocked_domains": [],
-            },
-            "pipeline": {
-                "min_score_threshold": 0.0,
-                "min_content_length": 100,
-            },
-        }
-        with open(config_path, "w") as f:
-            yaml.dump(default_config, f, default_flow_style=False)
-
+    _create_data_dirs(dd)
+    config_path = config or "config.yaml"
+    _create_default_config(config_path, dd)
     click.echo(f"Initialized personal-index in '{dd}'")
     click.echo(f"Config written to '{config_path}'")
 
@@ -552,6 +552,27 @@ def status(ctx, data_dir):
 
 
 # ── crawl ─────────────────────────────────────────────────────────────
+
+def _create_crawler(data_dir: str, depth: int, max_pages: int):
+    """Create configured Crawler instance."""
+    from personal_index.crawler.main import Crawler, CrawlerConfig
+    from personal_index.interests import InterestStore
+    interest_store = InterestStore(store_path=os.path.join(data_dir, "interests.json"))
+    return Crawler(
+        config=CrawlerConfig(max_depth=depth, max_pages=max_pages, delay=0.0, timeout=10),
+        interest_store=interest_store,
+    )
+
+
+def _print_crawl_results(pages: list, url: str) -> None:
+    """Print crawl results to stdout."""
+    click.echo(f"Crawled {len(pages)} page(s) from {url}")
+    for page in pages[:10]:
+        click.echo(f"  - {page.title} ({page.url})")
+    if len(pages) > 10:
+        click.echo(f"  ... and {len(pages) - 10} more")
+
+
 @main.command()
 @click.argument("url", required=False)
 @click.option("--depth", "-d", default=3, type=int, help="Max crawl depth")
@@ -559,43 +580,18 @@ def status(ctx, data_dir):
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def crawl(ctx, url, depth, max_pages, data_dir):
-    """Crawl a URL and extract content.
-
-    Crawls a website starting from the given URL.
-
-    Examples:
-        personal-index crawl https://example.com
-        personal-index crawl https://example.com -d 2 -m 50
-    """
+    """Crawl a URL and extract content."""
     if not url:
         click.echo("Error: URL is required")
-        click.echo("Usage: personal-index crawl <url>")
         sys.exit(1)
 
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     os.makedirs(dd, exist_ok=True)
 
-    from personal_index.crawler.main import Crawler, CrawlerConfig
-    from personal_index.interests import InterestStore
-
-    interest_store = InterestStore(store_path=os.path.join(dd, "interests.json"))
-    crawler = Crawler(
-        config=CrawlerConfig(
-            max_depth=depth,
-            max_pages=max_pages,
-            delay=0.0,
-            timeout=10,
-        ),
-        interest_store=interest_store,
-    )
-
+    crawler = _create_crawler(dd, depth, max_pages)
     try:
         pages = crawler.crawl([url])
-        click.echo(f"Crawled {len(pages)} page(s) from {url}")
-        for page in pages[:10]:
-            click.echo(f"  - {page.title} ({page.url})")
-        if len(pages) > 10:
-            click.echo(f"  ... and {len(pages) - 10} more")
+        _print_crawl_results(pages, url)
     finally:
         crawler.close()
 
@@ -1157,42 +1153,40 @@ def schedule_remove(ctx, name, data_dir):
         sys.exit(1)
 
 
-@schedule.command("run")
-@click.argument("name")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def schedule_run(ctx, name, data_dir):
-    """Manually run a scheduled job now.
-
-    Examples:
-        personal-index schedule run daily
-    """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    store_path = os.path.join(dd, "schedules.json")
-
+def _find_schedule_entry(store_path: str, name: str) -> Any:
+    """Find a scheduled job by name. Exits with error if not found."""
     if not os.path.exists(store_path):
         click.echo(f"Scheduled job '{name}' not found")
         sys.exit(1)
-
     from personal_index.scheduler import ScheduleStore
     store = ScheduleStore(path=store_path)
-
     entries = store.list_all()
     entry = next((e for e in entries if e.name == name), None)
     if not entry:
         click.echo(f"Scheduled job '{name}' not found")
         sys.exit(1)
+    return entry
+
+
+@schedule.command("run")
+@click.argument("name")
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def schedule_run(ctx, name, data_dir):
+    """Manually run a scheduled job now."""
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    store_path = os.path.join(dd, "schedules.json")
+    entry = _find_schedule_entry(store_path, name)
 
     click.echo(f"Running scheduled job '{name}'...")
     click.echo(f"  URLs: {', '.join(entry.config.seed_urls)}")
 
-    from personal_index.config.pipeline_config import PipelineConfig
-    from personal_index.pipeline_runner import PipelineRunner
-    config = PipelineConfig(
-        max_depth=getattr(entry.config, 'crawl_depth', 2),
-        max_pages=getattr(entry.config, 'max_pages_per_run', 50),
+    runner = _create_pipeline_runner(
+        dd,
+        getattr(entry.config, 'crawl_depth', 2),
+        getattr(entry.config, 'max_pages_per_run', 50),
+        0.0, 100,
     )
-    runner = PipelineRunner(data_dir=dd, pipeline_config=config)
     try:
         stats = runner.run(entry.config.seed_urls)
         click.echo(f"Job complete: {stats.pages_crawled} pages crawled")
