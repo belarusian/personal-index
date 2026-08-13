@@ -34,46 +34,57 @@ class URLDeduplicator:
         """Normalize a URL for comparison."""
         parsed = urlparse(url)
         normalized = parsed._replace(fragment="").geturl()
+        normalized = self._strip_trailing_slash(normalized, parsed.path)
+        normalized = self._sort_query_params(normalized, parsed.query)
+        normalized = self._lowercase_scheme_netloc(normalized)
+        normalized = self._remove_www(normalized)
+        normalized = self._remove_tracking_params(normalized)
+        return normalized
 
-        # Remove trailing slashes (except for root)
-        path = parsed.path
+    @staticmethod
+    def _strip_trailing_slash(normalized: str, path: str) -> str:
+        """Remove trailing slash from path (except root)."""
         if path.endswith("/") and len(path) > 1:
-            normalized = normalized.replace(path, path.rstrip("/"))
+            return normalized.replace(path, path.rstrip("/"))
+        return normalized
 
-        # Normalize query parameters (sort them)
-        if parsed.query:
-            params = parse_qs(parsed.query, keep_blank_values=True)
-            sorted_params = "&".join(
-                f"{k}={v[0]}" for k, v in sorted(params.items())
-            )
-            normalized = normalized.replace(parsed.query, sorted_params)
+    @staticmethod
+    def _sort_query_params(normalized: str, query: str) -> str:
+        """Sort query parameters alphabetically."""
+        if not query:
+            return normalized
+        params = parse_qs(query, keep_blank_values=True)
+        sorted_params = "&".join(f"{k}={v[0]}" for k, v in sorted(params.items()))
+        return normalized.replace(query, sorted_params)
 
-        # Lowercase scheme and netloc
+    @staticmethod
+    def _lowercase_scheme_netloc(normalized: str) -> str:
+        """Lowercase the scheme and netloc."""
         parsed = urlparse(normalized)
-        normalized = parsed._replace(
+        return parsed._replace(
             scheme=parsed.scheme.lower(),
             netloc=parsed.netloc.lower(),
         ).geturl()
 
-        # Remove www. prefix
+    @staticmethod
+    def _remove_www(normalized: str) -> str:
+        """Remove www. prefix from netloc."""
         parsed = urlparse(normalized)
-        normalized = parsed._replace(netloc=parsed.netloc.removeprefix("www.")).geturl()
+        return parsed._replace(netloc=parsed.netloc.removeprefix("www.")).geturl()
 
-        # Remove common tracking parameters
-        tracking_params = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"}
+    @staticmethod
+    def _remove_tracking_params(normalized: str) -> str:
+        """Remove common tracking parameters."""
+        tracking = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"}
         parsed = urlparse(normalized)
-        if parsed.query:
-            params = parse_qs(parsed.query, keep_blank_values=True)
-            filtered = {k: v for k, v in params.items() if k not in tracking_params}
-            if filtered:
-                sorted_params = "&".join(
-                    f"{k}={v[0]}" for k, v in sorted(filtered.items())
-                )
-                normalized = normalized.replace(parsed.query, sorted_params)
-            else:
-                normalized = normalized.split("?")[0]
-
-        return normalized
+        if not parsed.query:
+            return normalized
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        filtered = {k: v for k, v in params.items() if k not in tracking}
+        if filtered:
+            sorted_params = "&".join(f"{k}={v[0]}" for k, v in sorted(filtered.items()))
+            return normalized.replace(parsed.query, sorted_params)
+        return normalized.split("?")[0]
 
     def _get_path(self, url: str) -> str:
         """Extract just the path from a URL."""
