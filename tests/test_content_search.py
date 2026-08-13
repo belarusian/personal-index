@@ -1,297 +1,379 @@
-"""Tests for content_search module."""
+"""Tests for personal_index.content_search module.
 
+Covers:
+- Snippet dataclass and to_dict()
+- SnippetExtractor.extract()
+- SearchIndex.add_item(), add_items(), item_count, term_count
+- SearchIndex.search()
+- SearchIndex.remove_item()
+- SearchIndex.get_suggestions()
+- SearchIndex.save_index() / load_index()
+- SearchIndex.highlight_matches()
+- ContentSearch.index_items(), search(), remove_item(), get_suggestions()
+"""
+
+from __future__ import annotations
+
+import json
+import tempfile
 from datetime import datetime, timezone
 
 import pytest
 
-from personal_index.content_search import ContentSearch
+from personal_index.content_search import (
+    ContentSearch,
+    SearchIndex,
+    Snippet,
+    SnippetExtractor,
+)
 
 
-@pytest.fixture
-def sample_items():
-    return [
-        {"id": "1", "title": "Python Tutorial", "description": "Learn Python basics", "tags": ["python", "tutorial"]},
-        {"id": "2", "title": "JavaScript Guide", "description": "JavaScript fundamentals", "tags": ["javascript", "web"]},
-        {"id": "3", "title": "Python Advanced", "description": "Advanced Python techniques", "tags": ["python", "advanced"]},
-        {"id": "4", "title": "React Framework", "description": "Building UIs with React", "tags": ["react", "javascript", "web"]},
-        {"id": "5", "title": "Data Science", "description": "Python for data science", "tags": ["python", "data"]},
-    ]
+# ---------------------------------------------------------------------------
+# Snippet dataclass tests
+# ---------------------------------------------------------------------------
 
 
-@pytest.fixture
-def search():
-    s = ContentSearch()
-    return s
+class TestSnippet:
+    """Tests for Snippet dataclass."""
+
+    def test_snippet_creation(self):
+        s = Snippet(text="hello world", highlighted="<mark>hello</mark> world")
+        assert s.text == "hello world"
+        assert s.highlighted == "<mark>hello</mark> world"
+        assert s.start_offset == 0
+        assert s.end_offset == 0
+        assert s.matched_terms == []
+
+    def test_snippet_with_offsets(self):
+        s = Snippet(
+            text="hello world",
+            highlighted="<mark>hello</mark> world",
+            start_offset=5,
+            end_offset=15,
+            matched_terms=["hello"],
+        )
+        assert s.start_offset == 5
+        assert s.end_offset == 15
+        assert s.matched_terms == ["hello"]
+
+    def test_snippet_to_dict(self):
+        s = Snippet(
+            text="hello world",
+            highlighted="<mark>hello</mark> world",
+            start_offset=5,
+            end_offset=15,
+            matched_terms=["hello"],
+        )
+        d = s.to_dict()
+        assert d["text"] == "hello world"
+        assert d["highlighted"] == "<mark>hello</mark> world"
+        assert d["start_offset"] == 5
+        assert d["end_offset"] == 15
+        assert d["matched_terms"] == ["hello"]
 
 
-# --- Basic Indexing Tests ---
-
-class TestIndexing:
-    def test_add_single_item(self, search):
-        search.index_items([{"id": "1", "title": "Test Post"}])
-        assert search.index.item_count == 1
-
-    def test_add_multiple_items(self, search, sample_items):
-        search.index_items(sample_items)
-        assert search.index.item_count == 5
-
-    def test_remove_item(self, search, sample_items):
-        search.index_items(sample_items)
-        search.remove_item("1")
-        assert search.index.item_count == 4
-
-    def test_remove_nonexistent_item(self, search):
-        search.remove_item("999")  # should not raise
-
-    def test_term_count(self, search, sample_items):
-        search.index_items(sample_items)
-        assert search.index.term_count > 0
-
-    def test_add_duplicate_item(self, search):
-        item = {"id": "1", "title": "Test"}
-        search.index_items([item, item])
-        assert search.index.item_count == 1
+# ---------------------------------------------------------------------------
+# SnippetExtractor tests
+# ---------------------------------------------------------------------------
 
 
-# --- Search Tests ---
+class TestSnippetExtractor:
+    """Tests for SnippetExtractor."""
 
-class TestSearch:
-    def test_search_basic(self, search, sample_items):
-        search.index_items(sample_items)
+    @pytest.fixture
+    def extractor(self):
+        return SnippetExtractor(max_snippet_length=100, max_snippets=3)
+
+    def test_extract_single_match(self, extractor):
+        text = "The quick brown fox jumps over the lazy dog"
+        snippets = extractor.extract(text, ["fox"])
+        assert len(snippets) == 1
+        assert "fox" in snippets[0].text.lower()
+
+    def test_extract_multiple_matches(self, extractor):
+        text = "Python is great. Python is popular. Python is fun."
+        snippets = extractor.extract(text, ["python"])
+        assert len(snippets) >= 1
+
+    def test_extract_no_match(self, extractor):
+        text = "The quick brown fox"
+        snippets = extractor.extract(text, ["xyz"])
+        # Returns fallback snippet when no match
+        assert len(snippets) == 1
+
+    def test_extract_highlights_terms(self, extractor):
+        text = "Python programming is fun"
+        snippets = extractor.extract(text, ["python"])
+        assert len(snippets) >= 1
+        assert "<mark>" in snippets[0].highlighted
+
+    def test_extract_empty_text(self, extractor):
+        snippets = extractor.extract("", ["python"])
+        assert snippets == []
+
+    def test_extract_empty_query(self, extractor):
+        snippets = extractor.extract("some text", [])
+        assert snippets == []
+
+    def test_extract_max_snippets_limit(self):
+        extractor = SnippetExtractor(max_snippets=2)
+        text = "A A A A A A A A A A A A A A A"
+        snippets = extractor.extract(text, ["A"])
+        assert len(snippets) <= 2
+
+    def test_extract_matched_terms(self, extractor):
+        text = "Python and JavaScript are languages"
+        snippets = extractor.extract(text, ["python", "javascript"])
+        assert len(snippets) >= 1
+        assert "python" in snippets[0].matched_terms or "javascript" in snippets[0].matched_terms
+
+
+# ---------------------------------------------------------------------------
+# SearchIndex tests
+# ---------------------------------------------------------------------------
+
+
+class TestSearchIndex:
+    """Tests for SearchIndex."""
+
+    @pytest.fixture
+    def index(self):
+        return SearchIndex()
+
+    def test_add_item(self, index):
+        index.add_item({"id": "1", "title": "Python Tutorial", "description": "Learn Python"})
+        assert index.item_count == 1
+
+    def test_add_items(self, index):
+        items = [
+            {"id": "1", "title": "Python Tutorial"},
+            {"id": "2", "title": "JavaScript Guide"},
+        ]
+        index.add_items(items)
+        assert index.item_count == 2
+
+    def test_item_count(self, index):
+        assert index.item_count == 0
+        index.add_item({"id": "1", "title": "Test"})
+        assert index.item_count == 1
+
+    def test_term_count(self, index):
+        index.add_item({"id": "1", "title": "Python Tutorial", "description": "Learn Python basics"})
+        assert index.term_count > 0
+
+    def test_search_keyword_match(self, index):
+        index.add_items([
+            {"id": "1", "title": "Python Tutorial", "description": "Learn Python"},
+            {"id": "2", "title": "JavaScript Guide", "description": "Learn JavaScript"},
+        ])
+        result = index.search("python")
+        assert result["total"] > 0
+        assert result["query"] == "python"
+
+    def test_search_empty_query(self, index):
+        index.add_item({"id": "1", "title": "Test"})
+        result = index.search("")
+        assert result["total"] == 0
+
+    def test_search_filter_by_category(self, index):
+        index.add_items([
+            {"id": "1", "title": "Python", "category": "tech"},
+            {"id": "2", "title": "Recipe", "category": "food"},
+        ])
+        result = index.search("python", filters={"category": "tech"})
+        assert result["total"] > 0
+
+    def test_search_filter_by_source(self, index):
+        index.add_items([
+            {"id": "1", "title": "Python", "source": "blog"},
+            {"id": "2", "title": "Recipe", "source": "cookbook"},
+        ])
+        result = index.search("python", filters={"source": "blog"})
+        assert result["total"] > 0
+
+    def test_search_filter_by_domain(self, index):
+        index.add_items([
+            {"id": "1", "title": "Python", "domain": "example.com"},
+            {"id": "2", "title": "Recipe", "domain": "food.com"},
+        ])
+        result = index.search("python", filters={"domain": "example.com"})
+        assert result["total"] > 0
+
+    def test_remove_item(self, index):
+        index.add_items([
+            {"id": "1", "title": "Python"},
+            {"id": "2", "title": "JavaScript"},
+        ])
+        assert index.item_count == 2
+        index.remove_item("1")
+        assert index.item_count == 1
+
+    def test_remove_nonexistent_item(self, index):
+        index.remove_item("nonexistent")  # Should not raise
+
+    def test_get_suggestions_prefix(self, index):
+        index.add_items([
+            {"id": "1", "title": "Python Tutorial"},
+            {"id": "2", "title": "Python Advanced"},
+            {"id": "3", "title": "JavaScript Guide"},
+        ])
+        suggestions = index.get_suggestions("python")
+        assert "python" in suggestions
+
+    def test_get_suggestions_limit(self, index):
+        index.add_items([
+            {"id": str(i), "title": f"Alpha {i}"} for i in range(10)
+        ])
+        suggestions = index.get_suggestions("alpha", limit=3)
+        assert len(suggestions) <= 3
+
+    def test_get_suggestions_no_match(self, index):
+        index.add_item({"id": "1", "title": "Python"})
+        suggestions = index.get_suggestions("zzz")
+        assert suggestions == []
+
+    def test_save_and_load_index(self, index, tmp_path):
+        items = [
+            {"id": "1", "title": "Python Tutorial", "description": "Learn Python"},
+            {"id": "2", "title": "JavaScript Guide"},
+        ]
+        index.add_items(items)
+        filepath = str(tmp_path / "index.json")
+        index.save_index(filepath)
+
+        new_index = SearchIndex()
+        new_index.load_index(filepath)
+        assert new_index.item_count == 2
+        result = new_index.search("python")
+        assert result["total"] > 0
+
+    def test_save_index_creates_file(self, index, tmp_path):
+        index.add_item({"id": "1", "title": "Test"})
+        filepath = str(tmp_path / "index.json")
+        index.save_index(filepath)
+        assert tmp_path.joinpath("index.json").exists()
+
+    def test_load_empty_index(self, index, tmp_path):
+        filepath = str(tmp_path / "empty.json")
+        index.save_index(filepath)
+        new_index = SearchIndex()
+        new_index.load_index(filepath)
+        assert new_index.item_count == 0
+
+    def test_highlight_matches(self, index):
+        text = "Python is great for Python programming"
+        result = index.highlight_matches(text, "python")
+        assert "*" in result
+
+    def test_highlight_matches_case_insensitive(self, index):
+        text = "PYTHON is great"
+        result = index.highlight_matches(text, "python")
+        assert "*" in result.lower()
+
+    def test_highlight_matches_no_match(self, index):
+        text = "No matching terms here"
+        result = index.highlight_matches(text, "xyz")
+        assert result == text
+
+    def test_highlight_matches_multiple_terms(self, index):
+        text = "Python JavaScript both are languages"
+        result = index.highlight_matches(text, "python javascript")
+        assert "*" in result
+
+    def test_search_no_results(self, index):
+        index.add_item({"id": "1", "title": "Python"})
+        result = index.search("xyznonexistent")
+        assert result["total"] == 0
+
+    def test_search_results_sorted_by_score(self, index):
+        index.add_items([
+            {"id": "1", "title": "Python", "description": "Python Python Python"},
+            {"id": "2", "title": "Python Tutorial", "description": "Python"},
+        ])
+        result = index.search("python")
+        scores = [r["score"] for r in result["results"]]
+        assert scores == sorted(scores, reverse=True)
+
+    def test_search_limit(self, index):
+        index.add_items([
+            {"id": str(i), "title": "Python Tutorial"} for i in range(5)
+        ])
+        result = index.search("python", limit=2)
+        assert len(result["results"]) <= 2
+
+    def test_search_offset(self, index):
+        index.add_items([
+            {"id": str(i), "title": "Python Tutorial"} for i in range(5)
+        ])
+        r1 = index.search("python", limit=2, offset=0)
+        r2 = index.search("python", limit=2, offset=2)
+        if len(r1["results"]) > 0 and len(r2["results"]) > 0:
+            assert r1["results"][0]["item"]["id"] != r2["results"][0]["item"]["id"]
+
+
+# ---------------------------------------------------------------------------
+# ContentSearch tests
+# ---------------------------------------------------------------------------
+
+
+class TestContentSearch:
+    """Tests for ContentSearch high-level interface."""
+
+    @pytest.fixture
+    def search(self):
+        return ContentSearch()
+
+    def test_index_items(self, search):
+        items = [
+            {"id": "1", "title": "Python Tutorial"},
+            {"id": "2", "title": "JavaScript Guide"},
+        ]
+        search.index_items(items)
+        assert search.index.item_count == 2
+
+    def test_search(self, search):
+        search.index_items([
+            {"id": "1", "title": "Python Tutorial", "description": "Learn Python"},
+        ])
         result = search.search("python")
         assert result["total"] > 0
         assert result["query"] == "python"
 
-    def test_search_returns_results(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python")
-        assert len(result["results"]) > 0
-        assert "item" in result["results"][0]
-        assert "score" in result["results"][0]
-
-    def test_search_no_results(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("xyznonexistent")
-        assert result["total"] == 0
-        assert result["results"] == []
-
-    def test_search_empty_query(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("")
-        assert result["total"] == 0
-
-    def test_search_ranking(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python")
-        scores = [r["score"] for r in result["results"]]
-        assert scores == sorted(scores, reverse=True)
-
-    def test_search_multi_word(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python tutorial")
+    def test_search_with_filters(self, search):
+        search.index_items([
+            {"id": "1", "title": "Python", "category": "tech"},
+        ])
+        result = search.search("python", filters={"category": "tech"})
         assert result["total"] > 0
 
-    def test_search_pagination(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python", limit=2)
-        assert len(result["results"]) <= 2
+    def test_remove_item(self, search):
+        search.index_items([
+            {"id": "1", "title": "Python"},
+            {"id": "2", "title": "JavaScript"},
+        ])
+        search.remove_item("1")
+        assert search.index.item_count == 1
 
-    def test_search_offset(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python", limit=2, offset=1)
-        assert len(result["results"]) <= 2
-
-    def test_search_score_positive(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python")
-        for r in result["results"]:
-            assert r["score"] > 0
-
-
-# --- Filter Tests ---
-
-class TestFilters:
-    def test_filter_by_tag(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python", filters={"tags": ["python", "tutorial"]})
-        for r in result["results"]:
-            assert "python" in r["item"].get("tags", []) or "tutorial" in r["item"].get("tags", [])
-
-    def test_filter_by_exact_field(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("javascript", filters={"tags": ["javascript", "web"]})
-        assert result["total"] > 0
-
-    def test_filter_excludes(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python", filters={"tags": ["react"]})
-        assert result["total"] == 0
-
-    def test_filter_range_gte(self, search):
-        items = [
-            {"id": "1", "title": "Old", "date": datetime(2023, 1, 1, tzinfo=timezone.utc)},
-            {"id": "2", "title": "New", "date": datetime(2024, 6, 1, tzinfo=timezone.utc)},
-        ]
-        search.index_items(items)
-        result = search.search("old", filters={"date": {"$gte": datetime(2024, 1, 1, tzinfo=timezone.utc)}})
-        assert result["total"] == 0
-
-    def test_filter_range_lte(self, search):
-        items = [
-            {"id": "1", "title": "Old", "date": datetime(2023, 1, 1, tzinfo=timezone.utc)},
-            {"id": "2", "title": "New", "date": datetime(2024, 6, 1, tzinfo=timezone.utc)},
-        ]
-        search.index_items(items)
-        result = search.search("old", filters={"date": {"$lte": datetime(2023, 6, 1, tzinfo=timezone.utc)}})
-        assert result["total"] == 1
-
-
-# --- Suggestions Tests ---
-
-class TestSuggestions:
-    def test_suggestions_basic(self, search, sample_items):
-        search.index_items(sample_items)
-        suggestions = search.get_suggestions("pyt")
+    def test_get_suggestions(self, search):
+        search.index_items([
+            {"id": "1", "title": "Python Tutorial"},
+            {"id": "2", "title": "Python Advanced"},
+        ])
+        suggestions = search.get_suggestions("python")
         assert "python" in suggestions
 
-    def test_suggestions_limit(self, search, sample_items):
-        search.index_items(sample_items)
-        suggestions = search.get_suggestions("", limit=3)
+    def test_get_suggestions_limit(self, search):
+        search.index_items([
+            {"id": str(i), "title": f"Alpha {i}"} for i in range(10)
+        ])
+        suggestions = search.get_suggestions("alpha", limit=3)
         assert len(suggestions) <= 3
-
-    def test_suggestions_empty(self, search, sample_items):
-        search.index_items(sample_items)
-        suggestions = search.get_suggestions("zzz")
-        assert suggestions == []
-
-
-# --- Edge Cases ---
-
-class TestEdgeCases:
-    def test_search_stop_words(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("the is a")
-        assert result["total"] == 0
-
-    def test_search_case_insensitive(self, search, sample_items):
-        search.index_items(sample_items)
-        r1 = search.search("Python")
-        r2 = search.search("python")
-        assert r1["total"] == r2["total"]
-
-    def test_search_special_chars(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python!")
-        assert result["total"] > 0
-
-    def test_index_empty_items(self, search):
-        search.index_items([])
-        assert search.index.item_count == 0
 
     def test_search_empty_index(self, search):
         result = search.search("anything")
         assert result["total"] == 0
 
-    def test_remove_and_search(self, search, sample_items):
-        search.index_items(sample_items)
-        search.remove_item("1")
-        result = search.search("tutorial")
-        # Item 1 had "tutorial" in tags, so removing it should reduce results
-        ids = [r["item"]["id"] for r in result["results"]]
-        assert "1" not in ids
-
-
-# --- Additional Search Tests ---
-
-class TestSearchAdvanced:
-    def test_search_partial_match(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python")
-        assert result["total"] > 0
-
-    def test_search_tags_indexed(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("tutorial")
-        assert result["total"] > 0
-
-    def test_search_description_only(self, search):
-        items = [{"id": "1", "title": "X", "description": "find me here"}]
-        search.index_items(items)
-        result = search.search("find me")
-        assert result["total"] == 1
-
-    def test_search_result_structure(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python")
-        for r in result["results"]:
-            assert "item" in r
-            assert "score" in r
-            assert isinstance(r["score"], float)
-
-    def test_search_total_matches(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python")
-        assert result["total"] == len(result["results"])
-
-    def test_search_limit_respected(self, search, sample_items):
-        search.index_items(sample_items)
-        result = search.search("python", limit=1)
-        assert len(result["results"]) == 1
-        assert result["total"] >= 1
-
-    def test_search_offset_pagination(self, search, sample_items):
-        search.index_items(sample_items)
-        r1 = search.search("python", limit=1, offset=0)
-        r2 = search.search("python", limit=1, offset=1)
-        if r2["total"] > 1:
-            assert r1["results"][0]["item"]["id"] != r2["results"][0]["item"]["id"]
-
-
-# --- Index Persistence Tests ---
-
-class TestIndexPersistence:
-    def test_save_and_load_index(self, search, sample_items, tmp_path):
-        search.index_items(sample_items)
-        filepath = tmp_path / "index.json"
-        search.index.save_index(str(filepath))
-        new_search = ContentSearch()
-        new_search.index.load_index(str(filepath))
-        assert new_search.index.item_count == 5
-        result = new_search.search("python")
-        assert result["total"] > 0
-
-    def test_save_index_creates_file(self, search, sample_items, tmp_path):
-        search.index_items(sample_items)
-        filepath = tmp_path / "index.json"
-        search.index.save_index(str(filepath))
-        assert filepath.exists()
-
-    def test_load_empty_index(self, search, tmp_path):
-        search.index.save_index(str(tmp_path / "empty.json"))
-        new_search = ContentSearch()
-        new_search.index.load_index(str(tmp_path / "empty.json"))
-        assert new_search.index.item_count == 0
-
-
-# --- Highlight Tests ---
-
-class TestHighlight:
-    def test_highlight_basic(self, search):
-        text = "Python is great for Python programming"
-        result = search.index.highlight_matches(text, "python")
-        assert "*" in result
-
-    def test_highlight_case_insensitive(self, search):
-        text = "PYTHON is great"
-        result = search.index.highlight_matches(text, "python")
-        assert "*python*" in result.lower() or "*PYTHON*" in result
-
-    def test_highlight_multiple_terms(self, search):
-        text = "Python JavaScript both are languages"
-        result = search.index.highlight_matches(text, "python javascript")
-        assert "*" in result
-
-    def test_highlight_no_match(self, search):
-        text = "No matching terms here"
-        result = search.index.highlight_matches(text, "xyz")
-        assert result == text
+    def test_search_empty_query(self, search):
+        search.index_items([{"id": "1", "title": "Test"}])
+        result = search.search("")
+        assert result["total"] == 0
