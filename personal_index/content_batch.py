@@ -135,15 +135,7 @@ class BatchProcessor:
         items: list[dict[str, Any]],
         max_retries: int = 3,
     ) -> BatchResult:
-        """Process items with retry logic for failed batches.
-
-        Args:
-            items: List of content items.
-            max_retries: Maximum retry attempts per batch.
-
-        Returns:
-            BatchResult with processing statistics.
-        """
+        """Process items with retry logic for failed batches."""
         self._batch_counter += 1
         batch_id = f"batch-{self._batch_counter}"
         result = BatchResult(
@@ -157,33 +149,45 @@ class BatchProcessor:
 
         for i in range(0, total, self.batch_size):
             batch = items[i : i + self.batch_size]
-
-            for attempt in range(max_retries):
-                try:
-                    output = self.processor(batch)
-                    result.output.extend(output)
-                    result.processed += len(batch)
-                    break
-                except ValueError as e:
-                    if attempt == max_retries - 1:
-                        result.failed += len(batch)
-                        result.errors.append({
-                            "batch_start": i,
-                            "attempts": attempt + 1,
-                            "error": str(e),
-                        })
+            self._try_process_batch(batch, max_retries, i, result)
 
             processed_count += len(batch)
             if self.on_progress:
                 self.on_progress(processed_count, total)
 
+        self._finalize_result(result)
+        return result
+
+    def _try_process_batch(
+        self,
+        batch: list[dict[str, Any]],
+        max_retries: int,
+        batch_start: int,
+        result: BatchResult,
+    ) -> None:
+        """Try to process a single batch with retries."""
+        for attempt in range(max_retries):
+            try:
+                output = self.processor(batch)
+                result.output.extend(output)
+                result.processed += len(batch)
+                break
+            except ValueError as e:
+                if attempt == max_retries - 1:
+                    result.failed += len(batch)
+                    result.errors.append({
+                        "batch_start": batch_start,
+                        "attempts": attempt + 1,
+                        "error": str(e),
+                    })
+
+    def _finalize_result(self, result: BatchResult) -> None:
+        """Set completion timestamp and duration on result."""
         result.completed_at = datetime.now(timezone.utc)
         if result.started_at:
             result.duration_seconds = (
                 result.completed_at - result.started_at
             ).total_seconds()
-
-        return result
 
     def _default_processor(
         self,

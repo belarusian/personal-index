@@ -231,46 +231,24 @@ class ContentDeduplicator:
         items: list[dict[str, Any]],
         compare_field: str = "content",
     ) -> DedupResult:
-        """Deduplicate items by content similarity.
-
-        Args:
-            items: List of content item dicts.
-            compare_field: Field to compare for similarity.
-
-        Returns:
-            DedupResult with duplicate groups.
-        """
+        """Deduplicate items by content similarity."""
         n = len(items)
-        visited = set()
-        groups = []
+        visited: set[int] = set()
+        groups: list[DuplicateGroup] = []
         removed = 0
 
         for i in range(n):
             if i in visited:
                 continue
-            group_urls = [items[i].get("url", "")]
-            visited.add(i)
-
-            for j in range(i + 1, n):
-                if j in visited:
-                    continue
-
-                text_a = items[i].get(compare_field, "")
-                text_b = items[j].get(compare_field, "")
-                similarity = text_similarity(text_a, text_b)
-
-                if similarity >= self.similarity_threshold:
-                    group_urls.append(items[j].get("url", ""))
-                    visited.add(j)
-
-            if len(group_urls) > 1:
+            group = self._find_similarity_group(items, i, compare_field, visited)
+            if len(group) > 1:
                 groups.append(DuplicateGroup(
-                    representative=group_urls[0],
-                    duplicates=group_urls[1:],
+                    representative=group[0],
+                    duplicates=group[1:],
                     similarity_score=self.similarity_threshold,
                     dedup_method="similarity",
                 ))
-                removed += len(group_urls) - 1
+                removed += len(group) - 1
 
         return DedupResult(
             total_items=len(items),
@@ -279,6 +257,28 @@ class ContentDeduplicator:
             removed_count=removed,
             method="similarity",
         )
+
+    def _find_similarity_group(
+        self,
+        items: list[dict[str, Any]],
+        seed: int,
+        compare_field: str,
+        visited: set[int],
+    ) -> list[str]:
+        """Find all items similar to the seed item."""
+        visited.add(seed)
+        group_urls = [items[seed].get("url", "")]
+        text_a = items[seed].get(compare_field, "")
+
+        for j in range(seed + 1, len(items)):
+            if j in visited:
+                continue
+            text_b = items[j].get(compare_field, "")
+            if text_similarity(text_a, text_b) >= self.similarity_threshold:
+                group_urls.append(items[j].get("url", ""))
+                visited.add(j)
+
+        return group_urls
 
     def _check_single_item(
         self,

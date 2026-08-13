@@ -163,54 +163,53 @@ def build_dashboard(
     search_index=None,
     config=None,
 ) -> DashboardData:
-    """Build dashboard data from index instances.
+    """Build dashboard data from index instances."""
+    sections: list[DashboardSection] = []
+    sections.append(_build_overview(index_instance))
 
-    Args:
-        index_instance: Optional index instance.
-        search_index: Optional search index instance.
-        config: Optional configuration.
-
-    Returns:
-        Complete dashboard data.
-    """
-    sections = []
-
-    # Overview section
-    overview_stats = [DashboardStat(label="Status", value="Active", icon="pulse")]
     if index_instance:
         pages = index_instance.get_all_pages() if hasattr(index_instance, "get_all_pages") else []
-        overview_stats.append(DashboardStat(label="Total Pages", value=len(pages)))
-        domains = {p.domain for p in pages if p.domain}
-        overview_stats.append(DashboardStat(label="Unique Domains", value=len(domains)))
-        interests = getattr(index_instance, "interests", [])
-        overview_stats.append(DashboardStat(label="Active Interests", value=len(interests)))
-    sections.append(DashboardSection(title="Overview", stats=overview_stats))
-
-    # Recent pages section
-    if index_instance:
-        pages = index_instance.get_all_pages() if hasattr(index_instance, "get_all_pages") else []
-        recent = sorted(pages, key=lambda p: p.crawled_at or "", reverse=True)[:10]
-        table_data = [
-            {
-                "URL": p.url,
-                "Title": p.title[:50] if p.title else "",
-                "Domain": p.domain,
-                "Status": p.status_code,
-                "Crawled": p.crawled_at[:19] if p.crawled_at else "",
-            }
-            for p in recent
-        ]
-        sections.append(DashboardSection(title="Recent Pages", table_data=table_data))
-
-    # Domain distribution section
-    if index_instance:
-        pages = index_instance.get_all_pages() if hasattr(index_instance, "get_all_pages") else []
-        domain_counts: dict[str, int] = {}
-        for p in pages:
-            if p.domain:
-                domain_counts[p.domain] = domain_counts.get(p.domain, 0) + 1
-        top_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-        domain_table = [{"Domain": d, "Pages": c} for d, c in top_domains]
-        sections.append(DashboardSection(title="Top Domains", table_data=domain_table))
+        sections.append(_build_recent_pages(pages))
+        sections.append(_build_top_domains(pages))
 
     return DashboardData(sections=sections)
+
+
+def _build_overview(index_instance: Any) -> DashboardSection:
+    """Build the overview section with summary stats."""
+    stats = [DashboardStat(label="Status", value="Active", icon="pulse")]
+    if index_instance:
+        pages = index_instance.get_all_pages() if hasattr(index_instance, "get_all_pages") else []
+        stats.append(DashboardStat(label="Total Pages", value=len(pages)))
+        domains = {p.domain for p in pages if p.domain}
+        stats.append(DashboardStat(label="Unique Domains", value=len(domains)))
+        interests = getattr(index_instance, "interests", [])
+        stats.append(DashboardStat(label="Active Interests", value=len(interests)))
+    return DashboardSection(title="Overview", stats=stats)
+
+
+def _build_recent_pages(pages: list[Any]) -> DashboardSection:
+    """Build the recent pages section with a table."""
+    recent = sorted(pages, key=lambda p: p.crawled_at or "", reverse=True)[:10]
+    table_data = [
+        {
+            "URL": p.url,
+            "Title": p.title[:50] if p.title else "",
+            "Domain": p.domain,
+            "Status": p.status_code,
+            "Crawled": p.crawled_at[:19] if p.crawled_at else "",
+        }
+        for p in recent
+    ]
+    return DashboardSection(title="Recent Pages", table_data=table_data)
+
+
+def _build_top_domains(pages: list[Any]) -> DashboardSection:
+    """Build the top domains section with a table."""
+    domain_counts: dict[str, int] = {}
+    for p in pages:
+        if p.domain:
+            domain_counts[p.domain] = domain_counts.get(p.domain, 0) + 1
+    top_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    domain_table = [{"Domain": d, "Pages": c} for d, c in top_domains]
+    return DashboardSection(title="Top Domains", table_data=domain_table)

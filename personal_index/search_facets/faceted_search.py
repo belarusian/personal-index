@@ -105,37 +105,16 @@ class FacetedSearch:
         """Search with optional filters and facets."""
         docs = list(self._documents.values())
 
-        # Apply text search
         if query.strip():
-            query_tokens = set(re.findall(r"[a-z0-9]+", query.lower()))
-            scored: list[tuple[dict[str, Any], float]] = []
+            docs = self._apply_text_search(docs, query)
 
-            for doc in docs:
-                text = self._extract_text(doc)
-                tokens = set(re.findall(r"[a-z0-9]+", text))
-                if query_tokens & tokens:
-                    score = len(query_tokens & tokens) / len(query_tokens) if query_tokens else 0
-                    scored.append((doc, score))
-
-            scored.sort(key=lambda x: x[1], reverse=True)
-            docs = [d for d, _ in scored]
-
-        # Apply filters
         if filters:
-            filtered: list[dict[str, Any]] = []
-            for doc in docs:
-                if self._matches_all_filters(doc, filters):
-                    filtered.append(doc)
-            docs = filtered
+            docs = [d for d in docs if self._matches_all_filters(d, filters)]
 
         total = len(docs)
-
-        # Pagination
         start = (page - 1) * page_size
-        end = start + page_size
-        paginated = docs[start:end]
+        paginated = docs[start : start + page_size]
 
-        # Build facets from filtered results
         facets: dict[str, Facet] = {}
         if facet_fields:
             facets = self._facet_builder.build(docs, facet_fields)
@@ -147,6 +126,23 @@ class FacetedSearch:
             page=page,
             page_size=page_size,
         )
+
+    def _apply_text_search(
+        self, docs: list[dict[str, Any]], query: str
+    ) -> list[dict[str, Any]]:
+        """Score and sort documents by text query match."""
+        query_tokens = set(re.findall(r"[a-z0-9]+", query.lower()))
+        scored: list[tuple[dict[str, Any], float]] = []
+
+        for doc in docs:
+            text = self._extract_text(doc)
+            tokens = set(re.findall(r"[a-z0-9]+", text))
+            if query_tokens & tokens:
+                score = len(query_tokens & tokens) / len(query_tokens) if query_tokens else 0
+                scored.append((doc, score))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [d for d, _ in scored]
 
     def _get_nested_value(self, doc: dict[str, Any], field_name: str) -> Any:
         """Get a value from a document, supporting nested dot notation."""
