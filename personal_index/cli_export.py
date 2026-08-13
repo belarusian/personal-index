@@ -38,6 +38,35 @@ def export_cmd(ctx, fmt, output, data_dir, tag, query, limit):
     index = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
     tag_store = TagStore(store_path=os.path.join(dd, "tags.json"))
 
+    pages = _load_pages(index, tag_store, query, tag, limit)
+
+    if not pages:
+        click.echo("No pages to export.")
+        return
+
+    output_text = _dispatch_format(fmt, pages, tag_store)
+
+    if output:
+        with open(output, "w", encoding="utf-8") as f:
+            f.write(output_text)
+        click.echo(f"Exported {len(pages)} pages to {output}")
+    else:
+        click.echo(output_text)
+
+
+def _load_pages(index, tag_store, query, tag, limit):
+    """Load and filter pages from the index.
+
+    Args:
+        index: The SearchIndex instance.
+        tag_store: The TagStore instance.
+        query: Optional search query to filter results.
+        tag: Tuple of tag names to filter by.
+        limit: Maximum number of pages to return (0 = all).
+
+    Returns:
+        List of filtered and limited pages.
+    """
     pages = index.list_pages()
 
     # Filter by query
@@ -60,28 +89,39 @@ def export_cmd(ctx, fmt, output, data_dir, tag, query, limit):
     if limit > 0:
         pages = pages[:limit]
 
-    if not pages:
-        click.echo("No pages to export.")
-        return
+    return pages
 
-    # Generate output
-    if fmt == "markdown":
-        output_text = _export_markdown(pages, tag_store)
-    elif fmt == "json":
-        output_text = _export_json(pages, tag_store)
-    elif fmt == "csv":
-        output_text = _export_csv(pages, tag_store)
-    elif fmt == "html":
-        output_text = _export_html(pages, tag_store)
-    else:
-        output_text = _export_markdown(pages, tag_store)
 
-    if output:
-        with open(output, "w", encoding="utf-8") as f:
-            f.write(output_text)
-        click.echo(f"Exported {len(pages)} pages to {output}")
-    else:
-        click.echo(output_text)
+def _dispatch_format(fmt, pages, tag_store):
+    """Dispatch to the appropriate format exporter.
+
+    Args:
+        fmt: The export format string (markdown, json, csv, html).
+        pages: List of pages to export.
+        tag_store: The TagStore instance for tag lookups.
+
+    Returns:
+        The formatted output string.
+    """
+    dispatch = {
+        "markdown": _export_markdown,
+        "json": _export_json,
+        "csv": _export_csv,
+        "html": _export_html,
+    }
+    exporter = dispatch.get(fmt, _export_markdown)
+    return exporter(pages, tag_store)
+
+
+def _tag_names(tags):
+    """Extract tag names from a list of tags (handles Tag objects and strings)."""
+    names = []
+    for t in tags:
+        if hasattr(t, "name"):
+            names.append(t.name)
+        else:
+            names.append(str(t))
+    return names
 
 
 def _export_markdown(pages, tag_store):
@@ -97,7 +137,8 @@ def _export_markdown(pages, tag_store):
         lines.append(f"- **Score**: {score:.3f}")
         tags = tag_store.get_tags_for_page(page.url)
         if tags:
-            lines.append(f"- **Tags**: {', '.join(sorted(tags))}")
+            tag_names = _tag_names(tags)
+            lines.append(f"- **Tags**: {', '.join(sorted(tag_names))}")
         content = getattr(page, 'content', '') or ''
         if content:
             snippet = content[:300]
@@ -113,12 +154,14 @@ def _export_json(pages, tag_store):
     """Export pages as JSON."""
     data = []
     for page in pages:
+        tags = tag_store.get_tags_for_page(page.url)
+        tag_names = _tag_names(tags)
         entry = {
             "url": page.url,
             "title": page.title or "",
             "score": getattr(page, 'score', 0) or getattr(page, 'relevance_score', 0),
             "content_length": getattr(page, 'content_length', len(page.content or '')),
-            "tags": list(tag_store.get_tags_for_page(page.url)),
+            "tags": list(tag_names),
             "crawled_at": getattr(page, 'crawled_at', ''),
         }
         data.append(entry)
@@ -130,10 +173,12 @@ def _export_csv(pages, tag_store):
     lines = ["url,title,score,tags,content_length"]
     for page in pages:
         title = (page.title or "").replace('"', '""')
-        tags = ";".join(sorted(tag_store.get_tags_for_page(page.url)))
+        tags = tag_store.get_tags_for_page(page.url)
+        tag_names = _tag_names(tags)
+        tags_str = ";".join(sorted(tag_names))
         score = getattr(page, 'score', 0) or getattr(page, 'relevance_score', 0)
         content_len = getattr(page, 'content_length', len(page.content or ''))
-        lines.append(f'"{page.url}","{title}",{score:.3f},"{tags}",{content_len}')
+        lines.append(f'"{page.url}","{title}",{score:.3f},"{tags_str}",{content_len}')
     return "\n".join(lines)
 
 
@@ -153,8 +198,10 @@ def _export_html(pages, tag_store):
     for page in pages:
         title = (page.title or "Untitled").replace("<", "&lt;").replace(">", "&gt;")
         score = getattr(page, 'score', 0) or getattr(page, 'relevance_score', 0)
-        tags = ", ".join(sorted(tag_store.get_tags_for_page(page.url)))
+        tags = tag_store.get_tags_for_page(page.url)
+        tag_names = _tag_names(tags)
+        tags_str = ", ".join(sorted(tag_names))
         lines.append(f'<tr><td>{title}</td><td><a href="{page.url}">{page.url}</a></td>'
-                     f'<td>{score:.3f}</td><td>{tags}</td></tr>')
+                     f'<td>{score:.3f}</td><td>{tags_str}</td></tr>')
     lines.append("</table></body></html>")
     return "\n".join(lines)
