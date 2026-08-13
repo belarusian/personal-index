@@ -61,6 +61,24 @@ class ContentLinker:
         self._items.pop(item_id, None)
         self._link_cache.pop(item_id, None)
 
+    def _score_content(self, source_text: str, target: dict[str, Any]) -> tuple[float, bool]:
+        target_text = f"{target.get('title', '')} {target.get('content', '')}"
+        score = self._similarity.similarity(source_text, target_text)
+        return (score * 0.5, True) if score > 0 else (0.0, False)
+
+    def _score_temporal(self, source_time: str, target: dict[str, Any]) -> tuple[float, bool]:
+        if not source_time or not target.get("saved_at"):
+            return 0.0, False
+        try:
+            t1 = datetime.fromisoformat(source_time)
+            t2 = datetime.fromisoformat(target["saved_at"])
+            hours = abs((t1 - t2).total_seconds()) / 3600
+            if hours < 24:
+                return max(0, 0.2 * (1 - hours / 24)), True
+        except (ValueError, TypeError):
+            pass
+        return 0.0, False
+
     def find_related(
         self,
         item_id: str,
@@ -76,46 +94,35 @@ class ContentLinker:
             return []
 
         results: list[dict[str, Any]] = []
-        source_text = f"{source.get('title', '')} {source.get('content', '')}"
-        source_domain = source.get("domain", "")
-        source_time = source.get("saved_at", "")
+        src_text = f"{source.get('title', '')} {source.get('content', '')}"
+        src_domain = source.get("domain", "")
+        src_time = source.get("saved_at", "")
 
-        for target_id, target in self._items.items():
-            if target_id == item_id:
+        for tid, target in self._items.items():
+            if tid == item_id:
                 continue
 
-            combined_score = 0.0
+            score = 0.0
             reasons: list[str] = []
 
-            # Content similarity
-            target_text = f"{target.get('title', '')} {target.get('content', '')}"
-            content_score = self._similarity.similarity(source_text, target_text)
-            if content_score > 0:
-                combined_score += content_score * 0.5
+            cs, has_content = self._score_content(src_text, target)
+            score += cs
+            if has_content:
                 reasons.append("content")
 
-            # Domain match
-            if source_domain and target.get("domain") == source_domain:
-                combined_score += 0.3
+            if src_domain and target.get("domain") == src_domain:
+                score += 0.3
                 reasons.append("domain")
 
-            # Temporal proximity
-            if source_time and target.get("saved_at"):
-                try:
-                    t1 = datetime.fromisoformat(source_time)
-                    t2 = datetime.fromisoformat(target["saved_at"])
-                    hours_diff = abs((t1 - t2).total_seconds()) / 3600
-                    if hours_diff < 24:
-                        temporal_score = max(0, 0.2 * (1 - hours_diff / 24))
-                        combined_score += temporal_score
-                        reasons.append("temporal")
-                except (ValueError, TypeError):
-                    pass
+            ts, has_temporal = self._score_temporal(src_time, target)
+            score += ts
+            if has_temporal:
+                reasons.append("temporal")
 
-            if combined_score >= threshold:
+            if score >= threshold:
                 results.append({
-                    "id": target_id,
-                    "score": round(combined_score, 3),
+                    "id": tid,
+                    "score": round(score, 3),
                     "title": target.get("title", ""),
                     "reasons": reasons,
                 })
