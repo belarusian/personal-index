@@ -81,14 +81,21 @@ def build_tree(modules: list[dict]) -> dict:
                 node["stats"]["warnings"] += m.get("ruff_warnings", 0)
 
                 # Detect signals on leaf modules
-                if m.get("tests", 0) == 0 and m.get("functions", 0) > 0:
-                    short = part
-                    if short not in ("__init__", "__main__") and not short.startswith("cli_") and not short.startswith("test_"):
-                        node["signals"].add("S1")
-                if m.get("lines", 0) >= 200 and m.get("functions", 0) >= 15:
-                    node["signals"].add("S2")
+                # S1 is noisy at 0% coverage — only flag when co-occurring with S2 or S5
+                has_s1 = m.get("tests", 0) == 0 and m.get("functions", 0) > 0
+                short = part
+                if short in ("__init__", "__main__") or short.startswith("cli_") or short.startswith("test_"):
+                    has_s1 = False
+                has_s2 = m.get("lines", 0) >= 200 and m.get("functions", 0) >= 15
                 total_err = m.get("ruff_errors", 0) + m.get("mypy_errors", 0) + m.get("ruff_warnings", 0)
-                if total_err > 0:
+                has_s5 = total_err > 0
+                if has_s1 and has_s2:
+                    node["signals"].add("S1")
+                if has_s1 and has_s5:
+                    node["signals"].add("S1")
+                if has_s2:
+                    node["signals"].add("S2")
+                if has_s5:
                     node["signals"].add("S5")
             else:
                 # Accumulate stats up the tree
@@ -183,7 +190,7 @@ def _node_to_dict(key: str, tree: dict[str, dict]) -> dict:
 
 def _sort_children(children: dict[str, dict]) -> dict[str, dict]:
     """Sort children: nodes with errors/signals first, then by module count desc."""
-    def sort_key(item: tuple[str, dict]) -> tuple[int, int, str]:
+    def sort_key(item: tuple[str, dict]) -> tuple[int, int, int, str]:
         name, node = item
         has_signals = 0 if node.get("signals") else 1
         errors = -(node.get("stats", {}).get("errors", 0))
@@ -193,7 +200,7 @@ def _sort_children(children: dict[str, dict]) -> dict[str, dict]:
     return dict(sorted(children.items(), key=sort_key))
 
 
-def format_tree(tree: dict, max_lines: int = 30) -> str:
+def format_tree(tree: dict, max_depth: int = 2, max_lines: int = 50) -> str:
     """Pruned tree summary for LLM consumption.
 
     Strategy: show top-level packages, collapse clean subtrees into
@@ -202,6 +209,7 @@ def format_tree(tree: dict, max_lines: int = 30) -> str:
 
     Args:
         tree: tree from build_tree()
+        max_depth: max tree depth to expand (1 = top-level only, 2 = expand flagged packages)
         max_lines: hard cap on output lines
     """
     lines = []
@@ -214,7 +222,7 @@ def format_tree(tree: dict, max_lines: int = 30) -> str:
     clean = [(n, c) for n, c in children if not c.get("signals")]
 
     for name, node in flagged:
-        _render_summary_node(name, node, lines, "")
+        _render_summary_node(name, node, lines, "", depth=1, max_depth=max_depth)
 
     if clean and len(lines) < max_lines - 3:
         total_mods = sum(c["stats"]["modules"] for _, c in clean)
@@ -223,14 +231,14 @@ def format_tree(tree: dict, max_lines: int = 30) -> str:
         clean_names = [n for n, _ in clean]
         if len(clean_names) <= 8:
             for name, node in clean:
-                _render_summary_node(name, node, lines, "")
+                _render_summary_node(name, node, lines, "", depth=1, max_depth=max_depth)
         else:
             lines.append(f"  [{len(clean)} clean packages: {', '.join(clean_names[:5])}... — {total_mods}m {total_lines_count:,}L {total_funcs}f]")
 
     return "\n".join(lines)
 
 
-def _render_summary_node(name: str, node: dict, lines: list[str], prefix: str) -> None:
+def _render_summary_node(name: str, node: dict, lines: list[str], prefix: str, depth: int = 1, max_depth: int = 2) -> None:
     """Render one node line with signal annotations."""
     stats = node.get("stats", {})
     signals = node.get("signals", [])
@@ -242,21 +250,28 @@ def _render_summary_node(name: str, node: dict, lines: list[str], prefix: str) -
 
     lines.append(f"{prefix}{name}: {stat_str}{signal_str}")
 
-    # Only expand children if this node has signals AND has children
+    # Only expand children if within depth limit AND this node has signals AND has children
     children = node.get("children", {})
-    if children and signals:
+    if children and signals and depth < max_depth:
         child_items = list(children.items())
         child_flagged = [(n, c) for n, c in child_items if c.get("signals")]
         child_clean = [(n, c) for n, c in child_items if not c.get("signals")]
 
         for cn, cn_node in child_flagged:
-            _render_summary_node(cn, cn_node, lines, f"  └ ")
+            _render_summary_node(cn, cn_node, lines, f"  └ ", depth=depth + 1, max_depth=max_depth)
 
         if child_clean:
             cm = sum(c["stats"]["modules"] for _, c in child_clean)
             cl = sum(c["stats"]["lines"] for _, c in child_clean)
             cf = sum(c["stats"]["functions"] for _, c in child_clean)
             lines.append(f"  └ [{len(child_clean)} clean: {cm}m {cl:,}L {cf}f]")
+    elif children and depth >= max_depth:
+        # At max depth — collapse remaining children
+        total_children = len(children)
+        cm = sum(c["stats"]["modules"] for c in children.values())
+        cl = sum(c["stats"]["lines"] for c in children.values())
+        cf = sum(c["stats"]["functions"] for c in children.values())
+        lines.append(f"  └ [{total_children} children collapsed: {cm}m {cl:,}L {cf}f]")
 
 
 def load_codemap(path: str) -> dict:
@@ -547,7 +562,8 @@ def main() -> None:
     parser.add_argument("--test-dir", help="Path to tests/ directory for coverage estimation")
     parser.add_argument("--format", choices=["json", "auditor", "tree"], default="json",
                         help="Output format")
-    parser.add_argument("--lines", type=int, default=30, help="Max output lines for tree (default: 30)")
+    parser.add_argument("--depth", type=int, default=2, help="Max tree depth to expand (default: 2)")
+    parser.add_argument("--lines", type=int, default=50, help="Max output lines for tree (default: 50)")
     args = parser.parse_args()
 
     signals = extract(args.codemap, args.prev, args.test_dir)
@@ -565,7 +581,7 @@ def main() -> None:
         print(json.dumps(_serialize(signals), indent=2))
     elif args.format == "tree":
         tree = signals.get("tree_summary", {})
-        print(format_tree(tree, max_lines=args.lines))
+        print(format_tree(tree, max_depth=args.depth, max_lines=args.lines))
     else:
         print(format_for_auditor(signals))
 
