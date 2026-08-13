@@ -147,47 +147,31 @@ class MarkdownExporter:
         """Export items as markdown."""
         groups = self._group_items(items)
         lines: list[str] = []
-
         for group_name, group_items in groups.items():
             if len(groups) > 1:
-                lines.append(f"## {group_name}")
-                lines.append("")
-
+                lines.extend([f"## {group_name}", ""])
             for item in group_items:
-                title = item.get("title", "Untitled")
-                url = item.get("url", "")
-                content = item.get("content", "")
-                tags = item.get("tags", [])
-                date = item.get("published_date", "")
-
-                # Title as heading
-                lines.append(f"# {title}")
-
-                # Link
-                if url:
-                    lines.append(f"[{title}]({url})")
-
-                # Metadata
-                if self.config.include_metadata and date:
-                    lines.append(f"**Published:** {date}")
-
-                # Tags
-                if self.config.include_tags and tags:
-                    tag_str = ", ".join(tags)
-                    lines.append(f"**Tags:** {tag_str}")
-
-                # Content/Summary
-                if content:
-                    lines.append("")
-                    if self.config.include_summary:
-                        summary = self._truncate(content, 200)
-                        lines.append(summary)
-                    else:
-                        lines.append(content)
-
-                lines.append("")
-
+                self._render_md_item(item, lines)
         return "\n".join(lines).strip()
+
+    def _render_md_item(self, item: dict[str, Any], lines: list[str]) -> None:
+        """Render a single item to markdown lines."""
+        title = item.get("title", "Untitled")
+        url = item.get("url", "")
+        content = item.get("content", "")
+        tags = item.get("tags", [])
+        date = item.get("published_date", "")
+        lines.append(f"# {title}")
+        if url:
+            lines.append(f"[{title}]({url})")
+        if self.config.include_metadata and date:
+            lines.append(f"**Published:** {date}")
+        if self.config.include_tags and tags:
+            lines.append(f"**Tags:** {', '.join(tags)}")
+        if content:
+            lines.append("")
+            lines.append(self._truncate(content, 200) if self.config.include_summary else content)
+        lines.append("")
 
     def _export_html(self, items: list[dict[str, Any]]) -> str:
         """Export items as HTML."""

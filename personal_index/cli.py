@@ -1015,41 +1015,49 @@ def clear(ctx, index, tags, interests, data_dir):
 
 
 # ── doctor ────────────────────────────────────────────────────────────
-@main.command()
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def doctor(ctx, data_dir):
-    """Diagnose issues with your personal-index setup.
 
-    Checks configuration, data directory, and component health.
+def _doctor_check_data_dir(dd: str) -> tuple[list[str], list[str]]:
+    """Check data directory existence and subdirectories.
 
-    Examples:
-        personal-index doctor
+    Returns:
+        Tuple of (issues, warnings).
     """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    issues = []
-    warnings = []
-
+    issues: list[str] = []
+    warnings: list[str] = []
     if not os.path.exists(dd):
         issues.append(f"Data directory '{dd}' does not exist. Run 'personal-index init'.")
     else:
         for subdir in ["cache", "archive", "backups"]:
             if not os.path.exists(os.path.join(dd, subdir)):
                 warnings.append(f"Missing subdirectory: {subdir}")
+    return issues, warnings
 
+
+def _doctor_check_config() -> list[str]:
+    """Check for config.yaml existence."""
     if not os.path.exists("config.yaml"):
-        warnings.append("No config.yaml found. Run 'personal-index init' for defaults.")
+        return ["No config.yaml found. Run 'personal-index init' for defaults."]
+    return []
 
+
+def _doctor_check_index(dd: str) -> list[str]:
+    """Check search index is populated."""
     idx = get_search_index(dd)
     if idx.get_page_count() == 0:
-        warnings.append("Index is empty. Run 'personal-index pipeline' to add content.")
+        return ["Index is empty. Run 'personal-index pipeline' to add content."]
+    return []
 
+
+def _doctor_check_interests(dd: str) -> list[str]:
+    """Check interests are configured."""
     interest_store = get_interest_store(dd)
     if not interest_store.list_all():
-        warnings.append("No interests configured. Add interests for better scoring.")
+        return ["No interests configured. Add interests for better scoring."]
+    return []
 
-    tag_store = get_tag_store(dd)
 
+def _doctor_print_results(issues: list[str], warnings: list[str], dd: str) -> None:
+    """Print doctor diagnostic results."""
     click.echo("Personal Index Health Check")
     click.echo("=" * 40)
 
@@ -1065,9 +1073,39 @@ def doctor(ctx, data_dir):
         for warning in warnings:
             click.echo(f"  - {warning}")
 
+    idx = get_search_index(dd)
+    tag_store = get_tag_store(dd)
+    interest_store = get_interest_store(dd)
     click.echo(f"\nIndex: {idx.get_page_count()} pages")
     click.echo(f"Tags: {tag_store.get_tag_count()}")
     click.echo(f"Interests: {len(interest_store.list_all())}")
+
+
+@main.command()
+@click.option("--data-dir", default=None, help="Data directory")
+@click.pass_context
+def doctor(ctx, data_dir):
+    """Diagnose issues with your personal-index setup.
+
+    Checks configuration, data directory, and component health.
+
+    Examples:
+        personal-index doctor
+    """
+    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
+    issues: list[str] = []
+    warnings: list[str] = []
+
+    dir_issues, dir_warnings = _doctor_check_data_dir(dd)
+    issues.extend(dir_issues)
+    warnings.extend(dir_warnings)
+
+    if not issues:
+        warnings.extend(_doctor_check_config())
+        warnings.extend(_doctor_check_index(dd))
+        warnings.extend(_doctor_check_interests(dd))
+
+    _doctor_print_results(issues, warnings, dd)
 
     if issues:
         sys.exit(1)
@@ -1330,6 +1368,45 @@ def config_set_schedule(ctx, interval, enabled, data_dir):
 
 
 # ── verify ────────────────────────────────────────────────────────────
+
+def _verify_check_store(name: str, getter, attr: str, dd: str) -> tuple[bool, str]:
+    """Verify a data store is accessible and readable.
+
+    Args:
+        name: Display name for the store.
+        getter: Function to get the store instance.
+        attr: Attribute/method to call on the store.
+        dd: Data directory path.
+
+    Returns:
+        Tuple of (passed, message).
+    """
+    try:
+        store = getter(dd)
+        value = getattr(store, attr)()
+        return True, f"{name}: {value} {'pages' if 'Search' in name else ''}"
+    except Exception as e:  # noqa: BLE001
+        return False, f"{name}: {e}"
+
+
+def _verify_check_subdirs(dd: str) -> tuple[int, int]:
+    """Check that expected subdirectories exist.
+
+    Returns:
+        Tuple of (passed, failed) counts.
+    """
+    passed = 0
+    failed = 0
+    for subdir in ["cache", "archive", "backups"]:
+        if os.path.isdir(os.path.join(dd, subdir)):
+            click.echo(f"  ✓ Directory: {subdir}/")
+            passed += 1
+        else:
+            click.echo(f"  ✗ Directory: {subdir}/ missing")
+            failed += 1
+    return passed, failed
+
+
 @main.command()
 @click.option("--quick", is_flag=True, help="Quick verification only")
 @click.option("--data-dir", default=None, help="Data directory")
@@ -1349,46 +1426,25 @@ def verify(ctx, quick, data_dir):
     checks_passed = 0
     checks_failed = 0
 
-    # Check search index
-    idx = get_search_index(dd)
-    try:
-        count = idx.get_page_count()
-        click.echo(f"  ✓ Search index: {count} pages")
-        checks_passed += 1
-    except Exception as e:  # noqa: BLE001
-        click.echo(f"  ✗ Search index: {e}")
-        checks_failed += 1
+    store_checks = [
+        ("Search index", get_search_index, "get_page_count"),
+        ("Tag store", get_tag_store, "get_tag_count"),
+        ("Interest store", get_interest_store, "list_all"),
+    ]
 
-    # Check tag store
-    tag_store = get_tag_store(dd)
-    try:
-        tag_count = tag_store.get_tag_count()
-        click.echo(f"  ✓ Tag store: {tag_count} tags")
-        checks_passed += 1
-    except Exception as e:  # noqa: BLE001
-        click.echo(f"  ✗ Tag store: {e}")
-        checks_failed += 1
-
-    # Check interest store
-    interest_store = get_interest_store(dd)
-    try:
-        interest_count = len(interest_store.list_all())
-        click.echo(f"  ✓ Interest store: {interest_count} interests")
-        checks_passed += 1
-    except Exception as e:  # noqa: BLE001
-        click.echo(f"  ✗ Interest store: {e}")
-        checks_failed += 1
+    for name, getter, attr in store_checks:
+        passed, msg = _verify_check_store(name, getter, attr, dd)
+        if passed:
+            click.echo(f"  ✓ {msg}")
+            checks_passed += 1
+        else:
+            click.echo(f"  ✗ {msg}")
+            checks_failed += 1
 
     if not quick:
-        # Additional checks
-        # Check data directory structure
-        for subdir in ["cache", "archive", "backups"]:
-            if os.path.isdir(os.path.join(dd, subdir)):
-                click.echo(f"  ✓ Directory: {subdir}/")
-                checks_passed += 1
-            else:
-                click.echo(f"  ✗ Directory: {subdir}/ missing")
-                checks_failed += 1
+        p, f = _verify_check_subdirs(dd)
+        checks_passed += p
+        checks_failed += f
 
     click.echo(f"All checks passed: {checks_passed}/{checks_passed + checks_failed}")
 

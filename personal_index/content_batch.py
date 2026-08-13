@@ -197,43 +197,34 @@ class BatchProcessor:
         items: list[dict[str, Any]],
         item_processor: Callable[[dict[str, Any]], dict[str, Any]],
     ) -> BatchResult:
-        """Process items individually with per-item error handling.
-
-        Args:
-            items: List of content items.
-            item_processor: Function to process each item.
-
-        Returns:
-            BatchResult with processing statistics.
-        """
+        """Process items individually with per-item error handling."""
         self._batch_counter += 1
-        batch_id = f"batch-{self._batch_counter}"
         result = BatchResult(
-            batch_id=batch_id,
+            batch_id=f"batch-{self._batch_counter}",
             total_items=len(items),
             started_at=datetime.now(timezone.utc),
         )
-
         for i, item in enumerate(items):
-            try:
-                output = item_processor(item)
-                result.output.append(output)
-                result.processed += 1
-            except ValueError as e:
-                result.failed += 1
-                result.errors.append({
-                    "item_index": i,
-                    "item_id": item.get("id", "unknown"),
-                    "error": str(e),
-                })
-
+            self._process_single_item(item, i, item_processor, result)
             if self.on_progress:
                 self.on_progress(i + 1, len(items))
-
-        result.completed_at = datetime.now(timezone.utc)
-        if result.started_at:
-            result.duration_seconds = (
-                result.completed_at - result.started_at
-            ).total_seconds()
-
+        self._finalize_result(result)
         return result
+
+    def _process_single_item(
+        self, item: dict[str, Any], idx: int,
+        processor: Callable[[dict[str, Any]], dict[str, Any]],
+        result: BatchResult,
+    ) -> None:
+        """Process a single item with error handling."""
+        try:
+            output = processor(item)
+            result.output.append(output)
+            result.processed += 1
+        except ValueError as e:
+            result.failed += 1
+            result.errors.append({
+                "item_index": idx,
+                "item_id": item.get("id", "unknown"),
+                "error": str(e),
+            })

@@ -74,13 +74,19 @@ class PipelineOrchestrator:
         self.data_dir = data_dir
         self.config = config or PipelineConfig()
         self.progress_callback = progress_callback
+        self._ensure_dirs(data_dir)
+        self._init_stores(data_dir)
+        self._init_processors()
+        self._init_crawler()
 
-        # Ensure data directory exists
+    def _ensure_dirs(self, data_dir: str) -> None:
+        """Create data directory and subdirectories."""
         os.makedirs(data_dir, exist_ok=True)
         for subdir in ["cache", "archive", "backups"]:
             os.makedirs(os.path.join(data_dir, subdir), exist_ok=True)
 
-        # Initialize all pipeline components
+    def _init_stores(self, data_dir: str) -> None:
+        """Initialize interest, tag, and search stores."""
         self.interest_store = InterestStore(
             store_path=os.path.join(data_dir, "interests.json")
         )
@@ -88,26 +94,28 @@ class PipelineOrchestrator:
         self.search_index = SearchIndex(
             db_path=os.path.join(data_dir, "search_index.json")
         )
+
+    def _init_processors(self) -> None:
+        """Initialize extractor, scorer, and filter."""
         self.content_extractor = ContentExtractor()
         self.content_scorer = ContentScorer(weights=ScoreWeights())
-
-        filter_config = FilterConfig(
-            min_content_length=self.config.min_content_length,
-            require_interest_match=False,  # Allow pages without interest match
-        )
         self.content_filter = ContentFilter(
-            config=filter_config,
+            config=FilterConfig(
+                min_content_length=self.config.min_content_length,
+                require_interest_match=False,
+            ),
             interest_store=self.interest_store,
         )
 
-        crawler_config = CrawlerConfig(
-            max_depth=self.config.max_depth,
-            max_pages=self.config.max_pages,
-            timeout=30,
-            delay=1.0,
-        )
+    def _init_crawler(self) -> None:
+        """Initialize the crawler component."""
         self.crawler = Crawler(
-            config=crawler_config,
+            config=CrawlerConfig(
+                max_depth=self.config.max_depth,
+                max_pages=self.config.max_pages,
+                timeout=30,
+                delay=1.0,
+            ),
             interest_store=self.interest_store,
         )
 

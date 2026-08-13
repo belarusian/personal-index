@@ -87,35 +87,13 @@ class ContentReader:
         sort_by: str = "score",
         reverse: bool = True,
     ) -> PageView:
-        """Get a paginated view of content items.
-
-        Args:
-            page: Page number (1-indexed).
-            page_size: Number of items per page.
-            sort_by: Field to sort by ('score', 'title', 'url').
-            reverse: Sort in descending order.
-
-        Returns:
-            PageView with paginated results.
-        """
-        items = list(self._items)
-
-        # Sort
-        if sort_by == "score":
-            items.sort(key=lambda x: x.score, reverse=reverse)
-        elif sort_by == "title":
-            items.sort(key=lambda x: x.title.lower(), reverse=reverse)
-        elif sort_by == "url":
-            items.sort(key=lambda x: x.url.lower(), reverse=reverse)
-
+        """Get a paginated view of content items."""
+        items = self._sort_items(list(self._items), sort_by, reverse)
         total_items = len(items)
         total_pages = max(1, (total_items + page_size - 1) // page_size)
         page = max(1, min(page, total_pages))
-
         start = (page - 1) * page_size
-        end = start + page_size
-        page_items = items[start:end]
-
+        page_items = items[start:start + page_size]
         return PageView(
             items=page_items,
             page=page,
@@ -125,6 +103,17 @@ class ContentReader:
             has_next=page < total_pages,
             has_prev=page > 1,
         )
+
+    @staticmethod
+    def _sort_items(items: list[ReadResult], sort_by: str, reverse: bool) -> list[ReadResult]:
+        """Sort items by the given field."""
+        if sort_by == "score":
+            items.sort(key=lambda x: x.score, reverse=reverse)
+        elif sort_by == "title":
+            items.sort(key=lambda x: x.title.lower(), reverse=reverse)
+        elif sort_by == "url":
+            items.sort(key=lambda x: x.url.lower(), reverse=reverse)
+        return items
 
     def filter_by_tags(
         self,

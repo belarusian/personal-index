@@ -215,47 +215,58 @@ class HealthReport:
 
     def to_summary_string(self) -> str:
         """Generate a human-readable summary string."""
-        lines: list[str] = []
-        lines.append("=" * 60)
-        lines.append("Health Report")
-        lines.append("=" * 60)
-        lines.append(f"Status: {self.overall_status}")
-        lines.append(f"Score: {self.score:.2f}")
+        lines = [
+            "=" * 60, "Health Report", "=" * 60,
+            f"Status: {self.overall_status}", f"Score: {self.score:.2f}", "",
+        ]
+        self._render_disk(lines)
+        self._render_freshness(lines)
+        self._render_errors(lines)
+        self._render_warnings(lines)
+        return "\n".join(lines)
+
+    def _render_disk(self, lines: list[str]) -> None:
+        """Render disk usage section."""
+        if self.disk_usage is None:
+            return
+        lines.extend([
+            "--- Disk Usage ---",
+            f"Total: {self.disk_usage.total_mb:.2f} MB",
+            f"Files: {self.disk_usage.file_count}",
+            f"Directories: {self.disk_usage.dir_count}", "",
+        ])
+
+    def _render_freshness(self, lines: list[str]) -> None:
+        """Render source freshness section."""
+        if not self.source_freshness:
+            return
+        lines.append("--- Source Freshness ---")
+        for source, f in self.source_freshness.items():
+            status = "STALE" if f.is_stale() else "OK"
+            s = f"{f.staleness_hours:.1f}h" if f.staleness_hours is not None else "never"
+            lines.append(f"  {source}: {status} (last crawled: {s} ago)")
         lines.append("")
 
-        if self.disk_usage is not None:
-            lines.append("--- Disk Usage ---")
-            lines.append(f"Total: {self.disk_usage.total_mb:.2f} MB")
-            lines.append(f"Files: {self.disk_usage.file_count}")
-            lines.append(f"Directories: {self.disk_usage.dir_count}")
-            lines.append("")
+    def _render_errors(self, lines: list[str]) -> None:
+        """Render error rates section."""
+        if self.error_rates is None:
+            return
+        lines.extend([
+            "--- Error Rates ---",
+            f"Total crawls: {self.error_rates.total_crawls}",
+            f"Success rate: {self.error_rates.success_rate:.1%}",
+            f"Error rate: {self.error_rates.error_rate:.1%}", "",
+        ])
 
-        if self.source_freshness:
-            lines.append("--- Source Freshness ---")
-            for source, freshness in self.source_freshness.items():
-                status = "STALE" if freshness.is_stale() else "OK"
-                staleness = freshness.staleness_hours
-                staleness_str = f"{staleness:.1f}h" if staleness is not None else "never"
-                lines.append(f"  {source}: {status} (last crawled: {staleness_str} ago)")
-            lines.append("")
-
-        if self.error_rates is not None:
-            lines.append("--- Error Rates ---")
-            lines.append(f"Total crawls: {self.error_rates.total_crawls}")
-            lines.append(f"Success rate: {self.error_rates.success_rate:.1%}")
-            lines.append(f"Error rate: {self.error_rates.error_rate:.1%}")
-            lines.append("")
-
+    def _render_warnings(self, lines: list[str]) -> None:
+        """Render warnings and critical issues."""
         if self.warnings:
             lines.append("--- Warnings ---")
-            for warning in self.warnings:
-                lines.append(f"  - {warning}")
+            for w in self.warnings:
+                lines.append(f"  - {w}")
             lines.append("")
-
         if self.critical_issues:
             lines.append("--- Critical Issues ---")
-            for issue in self.critical_issues:
-                lines.append(f"  - {issue}")
+            for i in self.critical_issues:
+                lines.append(f"  - {i}")
             lines.append("")
-
-        return "\n".join(lines)
