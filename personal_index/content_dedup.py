@@ -146,37 +146,9 @@ class ContentDeduplicator:
         items: list[dict[str, Any]],
         hash_field: str = "content",
     ) -> DedupResult:
-        """Deduplicate items by content hash.
-
-        Args:
-            items: List of content item dicts.
-            hash_field: Field to hash for comparison.
-
-        Returns:
-            DedupResult with duplicate groups.
-        """
-        hash_groups: dict[str, list[dict[str, Any]]] = {}
-
-        for item in items:
-            text = item.get(hash_field, "")
-            h = content_hash(text)
-            if h:
-                hash_groups.setdefault(h, []).append(item)
-
-        groups = []
-        removed = 0
-        for h, group in hash_groups.items():
-            if len(group) > 1:
-                representative = group[0].get("url", "")
-                duplicates = [g.get("url", "") for g in group[1:]]
-                groups.append(DuplicateGroup(
-                    representative=representative,
-                    duplicates=duplicates,
-                    similarity_score=1.0,
-                    dedup_method="exact_hash",
-                ))
-                removed += len(duplicates)
-
+        """Deduplicate items by content hash."""
+        hash_groups = self._group_by_hash(items, hash_field)
+        groups, removed = self._build_dup_groups(hash_groups)
         return DedupResult(
             total_items=len(items),
             unique_items=len(items) - removed,
@@ -184,6 +156,35 @@ class ContentDeduplicator:
             removed_count=removed,
             method="hash",
         )
+
+    def _group_by_hash(
+        self, items: list[dict[str, Any]], field: str
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Group items by content hash."""
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for item in items:
+            h = content_hash(item.get(field, ""))
+            if h:
+                groups.setdefault(h, []).append(item)
+        return groups
+
+    @staticmethod
+    def _build_dup_groups(
+        hash_groups: dict[str, list[dict[str, Any]]]
+    ) -> tuple[list[DuplicateGroup], int]:
+        """Build duplicate groups from hash groups."""
+        groups: list[DuplicateGroup] = []
+        removed = 0
+        for group in hash_groups.values():
+            if len(group) > 1:
+                groups.append(DuplicateGroup(
+                    representative=group[0].get("url", ""),
+                    duplicates=[g.get("url", "") for g in group[1:]],
+                    similarity_score=1.0,
+                    dedup_method="exact_hash",
+                ))
+                removed += len(group) - 1
+        return groups, removed
 
     def dedup_by_url(
         self,
