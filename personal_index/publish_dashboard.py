@@ -93,13 +93,15 @@ def validate_sync(html_path: Path, json_path: Path) -> dict:
     return {"sync": True, "summary": json_summary}
 
 
-def publish(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool = False) -> None:
-    """Copy dashboard files to search repo and optionally push."""
-    if not search_repo.is_dir():
-        print(f"[publish] ERROR: search repo not found at {search_repo}", file=sys.stderr)
-        sys.exit(1)
+def _copy_dashboard_files(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool) -> None:
+    """Copy HTML and JSON dashboard files to the search repo.
 
-    # Copy files
+    Args:
+        html_path: Source HTML dashboard file.
+        json_path: Source JSON codemap file.
+        search_repo: Target search repository directory.
+        dry_run: If True, only print what would be done.
+    """
     dest_html = search_repo / "index.html"
     dest_json = search_repo / "codemap.json"
 
@@ -125,11 +127,14 @@ def publish(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool =
         except (OSError, RuntimeError) as e:
             print(f"[publish] WARNING: signal extraction failed: {e}", file=sys.stderr)
 
-    # Git commit + push
-    if dry_run:
-        print("[publish] DRY RUN — skipping git operations")
-        return
 
+def _git_commit_push(json_path: Path, search_repo: Path) -> None:
+    """Stage, commit, and push dashboard changes in the search repo.
+
+    Args:
+        json_path: Source JSON codemap file (used for commit message).
+        search_repo: Target search repository directory.
+    """
     run(["git", "add", "index.html", "codemap.json", "signals.json"], cwd=search_repo)
 
     # Check if there are changes
@@ -150,6 +155,21 @@ def publish(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool =
 
     run(["git", "commit", "-m", msg], cwd=search_repo)
     run(["git", "push", "origin", "HEAD"], cwd=search_repo)
+
+
+def publish(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool = False) -> None:
+    """Copy dashboard files to search repo and optionally push."""
+    if not search_repo.is_dir():
+        print(f"[publish] ERROR: search repo not found at {search_repo}", file=sys.stderr)
+        sys.exit(1)
+
+    _copy_dashboard_files(html_path, json_path, search_repo, dry_run)
+
+    if dry_run:
+        print("[publish] DRY RUN — skipping git operations")
+        return
+
+    _git_commit_push(json_path, search_repo)
 
     print("[publish] Done. Dashboard live at: https://belarusian.github.io/search/")
 

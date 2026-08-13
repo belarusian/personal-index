@@ -134,6 +134,31 @@ class ContentTypeDetector:
             is_document=False,
         )
 
+    def _classify_category_from_ext(self, ext: str) -> tuple[str, str]:
+        """Classify a file extension into a category and MIME type.
+
+        Args:
+            ext: File extension (with leading dot).
+
+        Returns:
+            Tuple of (category, mime_type).
+        """
+        if ext in TEXT_EXTENSIONS:
+            return "text", "text/plain"
+        if ext in DOCUMENT_EXTENSIONS:
+            mime_type, _ = mimetypes.guess_type(f"file{ext}")
+            return "document", mime_type or "application/octet-stream"
+        if ext in MEDIA_EXTENSIONS:
+            mime_type, _ = mimetypes.guess_type(f"file{ext}")
+            if ext in {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".ico"}:
+                return "image", mime_type or "application/octet-stream"
+            return "media", mime_type or "application/octet-stream"
+        if ext in ARCHIVE_EXTENSIONS:
+            if ext == ".zip":
+                return "archive", "application/zip"
+            return "archive", "application/x-archive"
+        return None, None
+
     def detect_from_extension(self, ext: str) -> ContentTypeInfo:
         """Detect content type from a file extension.
 
@@ -148,43 +173,16 @@ class ContentTypeDetector:
         if cache_key in self._mime_cache:
             return self._mime_cache[cache_key]
 
-        if ext in TEXT_EXTENSIONS:
+        category, mime_type = self._classify_category_from_ext(ext)
+
+        if category is not None:
             info = ContentTypeInfo(
-                mime_type="text/plain",
-                category="text",
+                mime_type=mime_type,
+                category=category,
                 extension=ext,
-                is_text=True,
-                is_media=False,
-                is_document=False,
-            )
-        elif ext in DOCUMENT_EXTENSIONS:
-            mime_type, _ = mimetypes.guess_type(f"file{ext}")
-            info = ContentTypeInfo(
-                mime_type=mime_type or "application/octet-stream",
-                category="document",
-                extension=ext,
-                is_text=False,
-                is_media=False,
-                is_document=True,
-            )
-        elif ext in MEDIA_EXTENSIONS:
-            mime_type, _ = mimetypes.guess_type(f"file{ext}")
-            info = ContentTypeInfo(
-                mime_type=mime_type or "application/octet-stream",
-                category="image" if ext in {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".ico"} else "media",
-                extension=ext,
-                is_text=False,
-                is_media=True,
-                is_document=False,
-            )
-        elif ext in ARCHIVE_EXTENSIONS:
-            info = ContentTypeInfo(
-                mime_type="application/zip" if ext == ".zip" else "application/x-archive",
-                category="archive",
-                extension=ext,
-                is_text=False,
-                is_media=False,
-                is_document=False,
+                is_text=category == "text",
+                is_media=category in ("image", "video", "audio", "media"),
+                is_document=category == "document",
             )
         else:
             mime_type, _ = mimetypes.guess_type(f"file{ext}")

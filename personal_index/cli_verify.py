@@ -128,45 +128,87 @@ def _check_content_scorer() -> tuple[bool, str]:
             word_count=10,
             domain_authority=0.5,
         )
-        if score.total >= 0:
+        if score.total > 0:
             return True, ""
-        return False, "Scorer returned invalid score"
+        return False, "Scorer returned zero score"
     except (RuntimeError, OSError, ValueError) as e:
         return False, str(e)
 
 
+def _create_test_content(data_dir: str) -> tuple[str, str]:
+    """Create temporary directory and test file for pipeline verification.
+
+    Args:
+        data_dir: Base data directory.
+
+    Returns:
+        Tuple of (test_data_dir, test_file_path).
+    """
+    test_data_dir = os.path.join(data_dir, ".verify_pipeline")
+    os.makedirs(test_data_dir, exist_ok=True)
+
+    test_file_path = os.path.join(test_data_dir, "test_article.txt")
+    with open(test_file_path, "w") as f:
+        f.write(
+            "Python is a versatile programming language used for web development, "
+            "data science, and machine learning. Python has a clean and readable syntax "
+            "that makes it popular among beginners and experts alike."
+        )
+
+    return test_data_dir, test_file_path
+
+
+def _setup_mini_pipeline(test_data_dir: str) -> dict:
+    """Create mini pipeline components for verification.
+
+    Args:
+        test_data_dir: Directory for temporary pipeline data.
+
+    Returns:
+        Dict with keys: interest_store, tag_store, search_index, filter, scorer.
+    """
+    interest_store = InterestStore(store_path=os.path.join(test_data_dir, "interests.json"))
+    interest_store.add(Interest(name="python", keywords=["python", "programming"]))
+
+    tag_store = TagStore(store_path=os.path.join(test_data_dir, "tags.json"))
+    search_index = SearchIndex(db_path=os.path.join(test_data_dir, "search_index.json"))
+    content_filter = ContentFilter(
+        config=FilterConfig(min_content_length=10),
+        interest_store=interest_store,
+    )
+    scorer = ContentScorer(weights=ScoreWeights())
+
+    return {
+        "interest_store": interest_store,
+        "tag_store": tag_store,
+        "search_index": search_index,
+        "filter": content_filter,
+        "scorer": scorer,
+    }
+
+
 def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
     """Run a full pipeline self-test.
+
+    Creates temporary content and processes it through all pipeline stages
+    to verify the complete pipeline works end-to-end.
+
+    Args:
+        data_dir: Base data directory.
 
     Returns:
         Tuple of (passed, message).
     """
     import shutil
 
-    test_data_dir = os.path.join(data_dir, ".verify_pipeline")
+    test_data_dir, test_file_path = _create_test_content(data_dir)
+
     try:
-        os.makedirs(test_data_dir, exist_ok=True)
-
-        # Create test file
-        test_file_path = os.path.join(test_data_dir, "test_article.txt")
-        with open(test_file_path, "w") as f:
-            f.write(
-                "Python is a versatile programming language used for web development, "
-                "data science, and machine learning. Python has a clean and readable syntax "
-                "that makes it popular among beginners and experts alike."
-            )
-
-        # Run mini pipeline
-        mini_interest_store = InterestStore(store_path=os.path.join(test_data_dir, "interests.json"))
-        mini_interest_store.add(Interest(name="python", keywords=["python", "programming"]))
-
-        mini_tag_store = TagStore(store_path=os.path.join(test_data_dir, "tags.json"))
-        mini_search_index = SearchIndex(db_path=os.path.join(test_data_dir, "search_index.json"))
-        mini_filter = ContentFilter(
-            config=FilterConfig(min_content_length=10),
-            interest_store=mini_interest_store,
-        )
-        mini_scorer = ContentScorer(weights=ScoreWeights())
+        components = _setup_mini_pipeline(test_data_dir)
+        mini_tag_store = components["tag_store"]
+        mini_search_index = components["search_index"]
+        mini_filter = components["filter"]
+        mini_scorer = components["scorer"]
 
         # Process
         with open(test_file_path, "r") as f:
@@ -210,7 +252,6 @@ def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
         shutil.rmtree(test_data_dir, ignore_errors=True)
 
 
-
 def _build_summary(checks_passed: int, checks_total: int, errors: list[str]) -> None:
     """Build and display the verification summary report.
 
@@ -229,6 +270,68 @@ def _build_summary(checks_passed: int, checks_total: int, errors: list[str]) -> 
         sys.exit(1)
     else:
         click.echo("\n✓ All checks passed! Your pipeline is working correctly.")
+
+
+# Data-driven check definitions for the verify command
+_VERIFY_CHECKS = [
+    ("Data directory is writable", lambda dd: _check_data_dir(dd)),
+    ("Interest store works", lambda dd: _check_interest_store(dd)),
+    ("Tag store works", lambda dd: _check_tag_store(dd)),
+    ("Search index works", lambda dd: _check_search_index(dd)),
+    ("Content filter works", lambda dd: _check_content_filter()),
+    ("Content scorer works", lambda dd: _check_content_scorer()),
+]
+
+
+def _run_checks(data_dir: str, quick: bool) -> tuple[int, int, list[str]]:
+    """Run all verification checks.
+
+    Args:
+        data_dir: Data directory to verify.
+        quick: If True, skip the full pipeline test.
+
+    Returns:
+        Tuple of (checks_passed, checks_total, errors).
+    """
+    errors: list[str] = []
+    checks_passed = 0
+    checks_total = 0
+
+    for name, check_fn in _VERIFY_CHECKS:
+        checks_total += 1
+        passed, msg = check_fn(data_dir)
+        if passed:
+            checks_passed += 1
+            click.echo(f"  ✓ {name}")
+        else:
+            errors.append(f"✗ {name}: {msg}")
+            click.echo(f"  ✗ {name}: {msg}")
+
+    # Full pipeline test (skip with --quick)
+    if not quick:
+        click.echo("\nRunning full pipeline self-test...")
+        checks_total += 1
+        passed, msg = _check_full_pipeline(data_dir)
+        if passed:
+            checks_passed += 1
+            click.echo("  ✓ Full pipeline: all stages")
+        else:
+            errors.append(f"✗ Full pipeline: all stages: {msg}")
+            click.echo(f"  ✗ Full pipeline: all stages: {msg}")
+
+    return checks_passed, checks_total, errors
+
+
+def _cleanup_verify_files(data_dir: str) -> None:
+    """Remove temporary verify files from the data directory.
+
+    Args:
+        data_dir: Data directory to clean up.
+    """
+    for f in ["verify_interests.json", "verify_tags.json", "verify_index.json"]:
+        path = os.path.join(data_dir, f)
+        if os.path.exists(path):
+            os.remove(path)
 
 
 @click.command("verify")
@@ -251,55 +354,8 @@ def verify(ctx, data_dir, quick):
     click.echo("Verifying personal-index pipeline...")
     click.echo("=" * 50)
 
-    errors = []
-    checks_passed = 0
-    checks_total = 0
+    checks_passed, checks_total, errors = _run_checks(dd, quick)
 
-    def check(name: str, condition: bool, detail: str = "") -> None:
-        nonlocal checks_passed, checks_total
-        checks_total += 1
-        if condition:
-            checks_passed += 1
-            click.echo(f"  ✓ {name}")
-        else:
-            errors.append(f"✗ {name}: {detail}")
-            click.echo(f"  ✗ {name}: {detail}")
+    _cleanup_verify_files(dd)
 
-    # Check 1: Data directory writable
-    passed, msg = _check_data_dir(dd)
-    check("Data directory is writable", passed, msg)
-
-    # Check 2: Interest store works
-    passed, msg = _check_interest_store(dd)
-    check("Interest store works", passed, msg)
-
-    # Check 3: Tag store works
-    passed, msg = _check_tag_store(dd)
-    check("Tag store works", passed, msg)
-
-    # Check 4: Search index works
-    passed, msg = _check_search_index(dd)
-    check("Search index works", passed, msg)
-
-    # Check 5: Content filter works
-    passed, msg = _check_content_filter()
-    check("Content filter works", passed, msg)
-
-    # Check 6: Content scorer works
-    passed, msg = _check_content_scorer()
-    check("Content scorer works", passed, msg)
-
-    # Full pipeline test (skip with --quick)
-    if not quick:
-        click.echo("\nRunning full pipeline self-test...")
-        passed, msg = _check_full_pipeline(dd)
-        check("Full pipeline: all stages", passed, msg)
-
-    # Cleanup verify files
-    for f in ["verify_interests.json", "verify_tags.json", "verify_index.json"]:
-        path = os.path.join(dd, f)
-        if os.path.exists(path):
-            os.remove(path)
-
-    # Summary
     _build_summary(checks_passed, checks_total, errors)
