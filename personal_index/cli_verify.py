@@ -260,50 +260,29 @@ def _run_tag_index(tag_store: TagStore, search_index: SearchIndex, page: Crawled
 
 
 def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
-    """Run a full pipeline self-test.
-
-    Creates temporary content and processes it through all pipeline stages
-    to verify the complete pipeline works end-to-end.
-
-    Args:
-        data_dir: Base data directory.
-
-    Returns:
-        Tuple of (passed, message).
-    """
+    """Run a full pipeline self-test."""
     import shutil
-
     test_data_dir, _ = _create_test_content(data_dir)
-
     try:
         components = _setup_mini_pipeline(test_data_dir)
-        mini_tag_store = components["tag_store"]
-        mini_search_index = components["search_index"]
-        mini_filter = components["filter"]
-        mini_scorer = components["scorer"]
-
-        # Process
         page = _create_test_page(test_data_dir)
-
-        # Filter
-        passed, msg = _run_filter(mini_filter, page)
-        if not passed:
-            return False, msg
-
-        # Score
-        _run_score(mini_scorer, page, page.content)
-
-        # Tag and Index
-        results = _run_tag_index(mini_tag_store, mini_search_index, page)
-
+        if not _verify_filter(components["filter"], page):
+            return False, "Filter rejected valid content"
+        _run_score(components["scorer"], page, page.content)
+        results = _run_tag_index(
+            components["tag_store"], components["search_index"], page
+        )
         if len(results) > 0:
             return True, ""
-        return False, "Pipeline did not produce searchable results"
-
+        return False, "Search returned no results"
     except (RuntimeError, OSError, ValueError) as e:
         return False, str(e)
     finally:
         shutil.rmtree(test_data_dir, ignore_errors=True)
+
+def _verify_filter(filter: ContentFilter, page: CrawledPage) -> bool:
+    """Run filter and return whether content passed."""
+    return filter.should_include(page)
 
 
 def _build_summary(checks_passed: int, checks_total: int, errors: list[str]) -> None:

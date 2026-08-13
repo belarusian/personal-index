@@ -17,47 +17,35 @@ from personal_index.index import SearchIndex
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def top_pages(ctx, limit, fmt, data_dir):
-    """Show the highest-scored indexed pages.
-
-    Displays pages ranked by their relevance score.
-
-    Examples:
-        personal-index top
-        personal-index top --limit 20
-        personal-index top --format json
-    """
+    """Show the highest-scored indexed pages."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-
-    db_path = os.path.join(dd, "search_index.json")
-    index = SearchIndex(db_path=db_path)
-
+    index = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
     pages = index.list_pages()[:limit]
-
     if not pages:
         click.echo("No indexed pages found. Run 'personal-index pipeline' first.")
         return
-
     if fmt == "json":
-        data = {
-            "top_pages": [
-                {
-                    "rank": i + 1,
-                    "url": p.url,
-                    "title": p.title,
-                    "score": p.score,
-                    "crawled_at": p.crawled_at,
-                    "tags": [],
-                }
-                for i, p in enumerate(pages)
-            ],
-            "total": len(pages),
-        }
-        click.echo(json.dumps(data, indent=2))
+        click.echo(json.dumps(_to_json(pages), indent=2))
     else:
-        click.echo(f"\nTop {len(pages)} pages by score:")
-        click.echo("=" * 60)
-        for i, p in enumerate(pages, 1):
-            click.echo(f"\n{i}. {p.title}")
-            click.echo(f"   Score: {p.score:.4f}")
-            click.echo(f"   URL:   {p.url}")
-            click.echo(f"   Date:  {p.crawled_at or 'N/A'}")
+        _print_text(pages)
+
+def _to_json(pages: list) -> dict:
+    """Convert pages to JSON-serializable dict."""
+    return {
+        "top_pages": [
+            {"rank": i + 1, "url": p.url, "title": p.title,
+             "score": p.score, "crawled_at": p.crawled_at, "tags": []}
+            for i, p in enumerate(pages)
+        ],
+        "total": len(pages),
+    }
+
+def _print_text(pages: list) -> None:
+    """Print pages in text format."""
+    click.echo(f"\nTop {len(pages)} pages by score:")
+    click.echo("=" * 60)
+    for i, p in enumerate(pages, 1):
+        click.echo(f"\n{i}. {p.title}")
+        click.echo(f"   Score: {p.score:.4f}")
+        click.echo(f"   URL:   {p.url}")
+        click.echo(f"   Date:  {p.crawled_at or 'N/A'}")
