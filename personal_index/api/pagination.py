@@ -66,44 +66,34 @@ def paginate(
     page: int = 1,
     page_size: int = 20,
 ) -> PaginatedResult[T]:
-    """Paginate a sequence of items.
+    """Paginate a sequence of items."""
+    _validate_page(page, page_size)
+    total_items = len(items)
+    total_pages = max(1, (total_items + page_size - 1) // page_size)
+    page = _clamp_page(page, total_pages, total_items)
+    start = (page - 1) * page_size
+    page_items = list(items[start:start + page_size])
+    page_info = PageInfo(
+        page=page, page_size=page_size,
+        total_items=total_items, total_pages=total_pages,
+        has_next=page < total_pages, has_prev=page > 1,
+    )
+    return PaginatedResult(items=page_items, page_info=page_info)
 
-    Args:
-        items: The full sequence of items.
-        page: 1-based page number.
-        page_size: Number of items per page.
 
-    Returns:
-        PaginatedResult with items and page info.
-
-    Raises:
-        ValueError: If page or page_size is invalid.
-    """
+def _validate_page(page: int, page_size: int) -> None:
+    """Validate page parameters."""
     if page < 1:
         raise ValueError("Page must be >= 1")
     if page_size < 1:
         raise ValueError("Page size must be >= 1")
 
-    total_items = len(items)
-    total_pages = max(1, (total_items + page_size - 1) // page_size)
 
-    # Clamp page to valid range
-    page = max(1, min(page, total_pages)) if total_items > 0 else 1
-
-    start = (page - 1) * page_size
-    end = start + page_size
-    page_items = list(items[start:end])
-
-    page_info = PageInfo(
-        page=page,
-        page_size=page_size,
-        total_items=total_items,
-        total_pages=total_pages,
-        has_next=page < total_pages,
-        has_prev=page > 1,
-    )
-
-    return PaginatedResult(items=page_items, page_info=page_info)
+def _clamp_page(page: int, total_pages: int, total_items: int) -> int:
+    """Clamp page to valid range."""
+    if total_items == 0:
+        return 1
+    return max(1, min(page, total_pages))
 
 
 def paginate_with_offset(
