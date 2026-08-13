@@ -210,7 +210,7 @@ def format_tree(tree: dict, max_depth: int = 2, max_lines: int = 50) -> str:
         max_depth: max tree depth to expand (1 = top-level only, 2 = expand flagged packages)
         max_lines: hard cap on output lines
     """
-    lines = []
+    lines: list[str] = []
     root = tree.get("children", {})
     if not root:
         return "no packages found"
@@ -277,7 +277,7 @@ def load_codemap(path: str) -> dict:
     if not p.exists():
         print(f"[signal] ERROR: codemap not found at {p}", file=sys.stderr)
         sys.exit(1)
-    return json.loads(p.read_text(encoding="utf-8"))
+    return json.loads(p.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
