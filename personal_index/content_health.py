@@ -6,9 +6,10 @@ issues like broken links, low-quality content, and stale entries.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
 
 class HealthStatus(Enum):
@@ -138,43 +139,27 @@ class ContentHealthChecker:
     ) -> HealthCheckResult:
         """Check health of a single content item."""
         issues: list[HealthIssue] = []
-        checks_total = 0
-        checks_passed = 0
+        ct = 0
+        cp = 0
 
-        checks_total, checks_passed = self._check_url(
-            url, title, checks_total, checks_passed, issues
-        )
-        checks_total, checks_passed = self._check_title_presence(
-            title, url, checks_total, checks_passed, issues
-        )
-        checks_total, checks_passed = self._check_title_length(
-            title, url, checks_total, checks_passed, issues
-        )
-        checks_total, checks_passed = self._check_content_length(
-            content, url, title, checks_total, checks_passed, issues
-        )
-        checks_total, checks_passed = self._check_tags(
-            tags, url, title, checks_total, checks_passed, issues
-        )
-        checks_total, checks_passed = self._check_score(
-            score, url, title, checks_total, checks_passed, issues
-        )
-        checks_total, checks_passed = self._check_status_code(
-            status_code, url, title, checks_total, checks_passed, issues
-        )
+        for fn in self._check_item_funcs:
+            ct, cp = fn(self, url, title, content, tags, score, status_code, ct, cp, issues)
 
-        score_val = (checks_passed / checks_total * 100) if checks_total > 0 else 0.0
-        status = self._determine_status(issues)
-
+        score_val = (cp / ct * 100) if ct > 0 else 0.0
         return HealthCheckResult(
-            url=url,
-            title=title,
-            status=status,
-            issues=issues,
-            score=score_val,
-            checks_passed=checks_passed,
-            checks_total=checks_total,
+            url=url, title=title, status=self._determine_status(issues),
+            issues=issues, score=score_val, checks_passed=cp, checks_total=ct,
         )
+
+    _check_item_funcs: ClassVar[list[Callable[..., tuple[int, int]]]] = [
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_url(u, t, ct, cp, iss),
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_title_presence(t, u, ct, cp, iss),
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_title_length(t, u, ct, cp, iss),
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_content_length(c, u, t, ct, cp, iss),
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_tags(tg, u, t, ct, cp, iss),
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_score(sc, u, t, ct, cp, iss),
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_status_code(st, u, t, ct, cp, iss),
+    ]
 
     def _check_url(
         self, url: str, title: str, ct: int, cp: int, issues: list[HealthIssue]
