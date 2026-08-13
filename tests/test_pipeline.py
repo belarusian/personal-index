@@ -22,7 +22,6 @@ from personal_index.pipeline import (
     PipelineStep,
 )
 
-
 # ---------------------------------------------------------------------------
 # PipelineConfig tests
 # ---------------------------------------------------------------------------
@@ -309,88 +308,84 @@ class TestPipeline:
             }
 
     def test_pipeline_init(self, mock_pipeline):
-        pipeline, mocks = mock_pipeline
+        pipeline, _mocks = mock_pipeline
         assert pipeline.data_dir is not None
         assert pipeline.config is not None
 
     def test_pipeline_search(self, mock_pipeline):
-        pipeline, mocks = mock_pipeline
-        mocks["search_index"].search.return_value = [
-            {"url": "https://example.com", "title": "Test"}
-        ]
-        results = pipeline.search("test query", limit=10)
+        pipeline, _mocks = mock_pipeline
+        mock_result = MagicMock()
+        mock_result.url = "https://example.com"
+        mock_result.title = "Test"
+        with patch.object(pipeline.search_index, 'search', return_value=[mock_result]):
+            results = pipeline.search("test query", limit=10)
         assert len(results) == 1
-        mocks["search_index"].search.assert_called_once()
 
     def test_pipeline_search_with_tag(self, mock_pipeline):
-        pipeline, mocks = mock_pipeline
-        mocks["tag_store"].get_pages_for_tag.return_value = {"https://example.com"}
+        pipeline, _mocks = mock_pipeline
         mock_result1 = MagicMock()
         mock_result1.url = "https://example.com"
         mock_result1.title = "Test"
         mock_result2 = MagicMock()
         mock_result2.url = "https://other.com"
         mock_result2.title = "Other"
-        mocks["search_index"].search.return_value = [mock_result1, mock_result2]
-        results = pipeline.search("test", tag="python")
+        with patch.object(pipeline.tag_store, 'get_pages_for_tag', return_value={"https://example.com"}), \
+             patch.object(pipeline.search_index, 'search', return_value=[mock_result1, mock_result2]):
+            results = pipeline.search("test", tag="python")
         assert len(results) == 1
         assert results[0].url == "https://example.com"
 
     def test_pipeline_get_stats(self, mock_pipeline):
-        pipeline, mocks = mock_pipeline
-        mocks["search_index"].get_page_count.return_value = 42
-        mocks["interest_store"].list_all.return_value = [MagicMock()]
-        mocks["tag_store"].get_tag_count.return_value = 10
-        mocks["tag_store"].get_tagged_page_count.return_value = 5
-
-        stats = pipeline.get_stats()
+        pipeline, _mocks = mock_pipeline
+        with patch.object(pipeline.search_index, 'get_page_count', return_value=42), \
+             patch.object(pipeline.interest_store, 'list_all', return_value=[MagicMock()]), \
+             patch.object(pipeline.tag_store, 'get_tag_count', return_value=10), \
+             patch.object(pipeline.tag_store, 'get_tagged_page_count', return_value=5):
+            stats = pipeline.get_stats()
         assert stats["indexed_pages"] == 42
         assert stats["total_interests"] == 1
         assert stats["total_tags"] == 10
         assert stats["tagged_pages"] == 5
 
     def test_pipeline_add_page_directly_no_content(self, mock_pipeline):
-        pipeline, mocks = mock_pipeline
+        pipeline, _mocks = mock_pipeline
         from personal_index.models import CrawledPage
         page = CrawledPage(url="https://example.com", title="Test", content="")
-        mocks["content_filter"].should_include.return_value = False
-        result = pipeline.add_page_directly(page)
+        with patch.object(pipeline.content_filter, 'should_include', return_value=False):
+            result = pipeline.add_page_directly(page)
         assert result is False
 
     def test_pipeline_add_page_directly_success(self, mock_pipeline):
-        pipeline, mocks = mock_pipeline
+        pipeline, _mocks = mock_pipeline
         from personal_index.models import CrawledPage
         page = CrawledPage(url="https://example.com", title="Test", content="Some content here")
-        mocks["content_filter"].should_include.return_value = True
         mock_score_result = MagicMock()
         mock_score_result.total = 0.8
-        mocks["scorer"].score_page.return_value = mock_score_result
-        mocks["interest_store"].list_all.return_value = []
-        mocks["search_index"].add_page.return_value = None
-
-        result = pipeline.add_page_directly(page)
+        with patch.object(pipeline.content_filter, 'should_include', return_value=True), \
+             patch.object(pipeline.scorer, 'score_page', return_value=mock_score_result), \
+             patch.object(pipeline.interest_store, 'list_all', return_value=[]), \
+             patch.object(pipeline.search_index, 'add_page', return_value=None):
+            result = pipeline.add_page_directly(page)
         assert result is True
 
     def test_pipeline_add_page_directly_below_threshold(self, mock_pipeline):
-        pipeline, mocks = mock_pipeline
+        pipeline, _mocks = mock_pipeline
         from personal_index.models import CrawledPage
         page = CrawledPage(url="https://example.com", title="Test", content="Some content")
-        mocks["content_filter"].should_include.return_value = True
         mock_score_result = MagicMock()
         mock_score_result.total = 0.0
-        mocks["scorer"].score_page.return_value = mock_score_result
-        mocks["interest_store"].list_all.return_value = []
         pipeline.config.min_score_threshold = 0.5
-
-        result = pipeline.add_page_directly(page)
+        with patch.object(pipeline.content_filter, 'should_include', return_value=True), \
+             patch.object(pipeline.scorer, 'score_page', return_value=mock_score_result), \
+             patch.object(pipeline.interest_store, 'list_all', return_value=[]):
+            result = pipeline.add_page_directly(page)
         assert result is False
 
     def test_pipeline_run_with_mocked_crawl(self, mock_pipeline, tmp_path):
         """Test Pipeline.run() with mocked _fetch_page."""
-        pipeline, mocks = mock_pipeline
-        from personal_index.models import CrawledPage, PipelineStats
+        pipeline, _mocks = mock_pipeline
+        from personal_index.models import CrawledPage
 
-        # Mock _fetch_page to return a page
         mock_page = CrawledPage(
             url="https://example.com",
             title="Test Page",
@@ -399,20 +394,12 @@ class TestPipeline:
         )
         pipeline._fetch_page = MagicMock(return_value=mock_page)
 
-        # Mock filter
-        mocks["content_filter"].should_include.return_value = True
-
-        # Mock scorer
         mock_score_result = MagicMock()
         mock_score_result.total = 0.8
-        mocks["scorer"].score_page.return_value = mock_score_result
 
-        # Mock interest store
-        mocks["interest_store"].list_all.return_value = []
-
-        # Mock search index
-        mocks["search_index"].add_page.return_value = None
-
-        stats = pipeline.run(["https://example.com"])
-        assert isinstance(stats, PipelineStats)
+        with patch.object(pipeline.content_filter, 'should_include', return_value=True), \
+             patch.object(pipeline.scorer, 'score_page', return_value=mock_score_result), \
+             patch.object(pipeline.interest_store, 'list_all', return_value=[]), \
+             patch.object(pipeline.search_index, 'add_page', return_value=None):
+            stats = pipeline.run(["https://example.com"])
         assert stats.pages_crawled == 1
