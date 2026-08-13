@@ -190,84 +190,84 @@ class FacetedSearch:
     def _matches_range_filter(
         self, doc_value: Any, filter_spec: dict[str, Any]
     ) -> bool:
-        """Check if a value matches a range filter specification.
-
-        Supports:
-        - $gte, $lte, $gt, $lt: numeric/date comparisons
-        - $between: inclusive range [min, max]
-        - $in: membership in a list
-        - Date strings (ISO format) are parsed for comparison
-        """
+        """Check if a value matches a range filter specification."""
         if doc_value is None:
             return False
 
-        # Parse date values if needed
-        parsed_value = self._parse_date_value(doc_value)
-        if parsed_value is None:
-            parsed_value = doc_value
+        parsed = self._parse_date_value(doc_value)
+        if parsed is None:
+            parsed = doc_value
 
-        # Handle $between
-        if "$between" in filter_spec:
-            between = filter_spec["$between"]
-            if isinstance(between, (list, tuple)) and len(between) == 2:
-                low, high = between
-                low_parsed = self._parse_date_value(low)
-                high_parsed = self._parse_date_value(high)
-                if low_parsed is not None and high_parsed is not None:
-                    if not (low_parsed <= parsed_value <= high_parsed):
-                        return False
-                elif not (low <= parsed_value <= high):
-                    return False
+        if not self._check_between(parsed, filter_spec):
+            return False
+        if not self._check_gte(parsed, filter_spec):
+            return False
+        if not self._check_lte(parsed, filter_spec):
+            return False
+        if not self._check_gt(parsed, filter_spec):
+            return False
+        if not self._check_lt(parsed, filter_spec):
+            return False
+        if not self._check_in(parsed, filter_spec):
+            return False
+        return self._check_not(parsed, filter_spec)
 
-        # Handle $gte
-        if "$gte" in filter_spec:
-            gte_val = self._parse_date_value(filter_spec["$gte"])
-            if gte_val is not None:
-                if parsed_value < gte_val:
-                    return False
-            elif parsed_value < filter_spec["$gte"]:
-                return False
+    def _check_between(self, val: Any, spec: dict[str, Any]) -> bool:
+        if "$between" not in spec:
+            return True
+        between = spec["$between"]
+        if not isinstance(between, (list, tuple)) or len(between) != 2:
+            return True
+        low, high = between
+        lp, hp = self._parse_date_value(low), self._parse_date_value(high)
+        if lp is not None and hp is not None:
+            return bool(lp <= val <= hp)
+        return bool(low <= val <= high)
 
-        # Handle $lte
-        if "$lte" in filter_spec:
-            lte_val = self._parse_date_value(filter_spec["$lte"])
-            if lte_val is not None:
-                if parsed_value > lte_val:
-                    return False
-            elif parsed_value > filter_spec["$lte"]:
-                return False
+    def _check_gte(self, val: Any, spec: dict[str, Any]) -> bool:
+        if "$gte" not in spec:
+            return True
+        pv = self._parse_date_value(spec["$gte"])
+        if pv is not None:
+            return bool(val >= pv)
+        return bool(val >= spec["$gte"])
 
-        # Handle $gt
-        if "$gt" in filter_spec:
-            gt_val = self._parse_date_value(filter_spec["$gt"])
-            if gt_val is not None:
-                if parsed_value <= gt_val:
-                    return False
-            elif parsed_value <= filter_spec["$gt"]:
-                return False
+    def _check_lte(self, val: Any, spec: dict[str, Any]) -> bool:
+        if "$lte" not in spec:
+            return True
+        pv = self._parse_date_value(spec["$lte"])
+        if pv is not None:
+            return bool(val <= pv)
+        return bool(val <= spec["$lte"])
 
-        # Handle $lt
-        if "$lt" in filter_spec:
-            lt_val = self._parse_date_value(filter_spec["$lt"])
-            if lt_val is not None:
-                if parsed_value >= lt_val:
-                    return False
-            elif parsed_value >= filter_spec["$lt"]:
-                return False
+    def _check_gt(self, val: Any, spec: dict[str, Any]) -> bool:
+        if "$gt" not in spec:
+            return True
+        pv = self._parse_date_value(spec["$gt"])
+        if pv is not None:
+            return bool(val > pv)
+        return bool(val > spec["$gt"])
 
-        # Handle $in
-        if "$in" in filter_spec:
-            in_list = filter_spec["$in"]
-            if isinstance(in_list, (list, set)) and parsed_value not in in_list:
-                return False
+    def _check_lt(self, val: Any, spec: dict[str, Any]) -> bool:
+        if "$lt" not in spec:
+            return True
+        pv = self._parse_date_value(spec["$lt"])
+        if pv is not None:
+            return bool(val < pv)
+        return bool(val < spec["$lt"])
 
-        # Handle $not
-        if "$not" in filter_spec:
-            not_val = filter_spec["$not"]
-            if parsed_value == not_val:
-                return False
-
+    def _check_in(self, val: Any, spec: dict[str, Any]) -> bool:
+        if "$in" not in spec:
+            return True
+        in_list = spec["$in"]
+        if isinstance(in_list, (list, set)):
+            return val in in_list
         return True
+
+    def _check_not(self, val: Any, spec: dict[str, Any]) -> bool:
+        if "$not" not in spec:
+            return True
+        return bool(val != spec["$not"])
 
     def _parse_date_value(self, value: Any) -> Any:
         """Parse a value as a date if it's a date-like string.
