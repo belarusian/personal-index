@@ -152,49 +152,34 @@ class DigestGenerator:
         group_by: str = "tags",
         max_entries_per_section: int = 10,
     ) -> ContentDigest:
-        """Generate a content digest.
-
-        Args:
-            title: Digest title.
-            period_start: Start of the digest period.
-            period_end: End of the digest period.
-            group_by: How to group entries ('tags', 'source', 'none').
-            max_entries_per_section: Max entries per section.
-
-        Returns:
-            ContentDigest with grouped entries.
-        """
+        """Generate a content digest."""
         now = datetime.now(timezone.utc).isoformat()
-
-        if period_start is None:
-            period_start = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
-        if period_end is None:
-            period_end = now
-
         entries = sorted(self._entries, key=lambda e: e.score, reverse=True)
-
-        if group_by == "none":
-            sections = [DigestSection(
-                topic="All Content",
-                entries=entries[:max_entries_per_section],
-            )]
-        elif group_by == "source":
-            sections = self._group_by_source(entries, max_entries_per_section)
-        else:  # tags
-            sections = self._group_by_tags(entries, max_entries_per_section)
-
-        # Generate summary
+        sections = self._resolve_sections(entries, group_by, max_entries_per_section)
         summary = self._generate_summary(sections)
 
         return ContentDigest(
             title=title,
             generated_at=now,
-            period_start=period_start,
-            period_end=period_end,
+            period_start=period_start or (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(),
+            period_end=period_end or now,
             sections=sections,
             total_entries=len(entries),
             summary=summary,
         )
+
+    def _resolve_sections(
+        self,
+        entries: list[DigestEntry],
+        group_by: str,
+        max_per_section: int,
+    ) -> list[DigestSection]:
+        """Resolve grouping strategy and return digest sections."""
+        if group_by == "none":
+            return [DigestSection(topic="All Content", entries=entries[:max_per_section])]
+        if group_by == "source":
+            return self._group_by_source(entries, max_per_section)
+        return self._group_by_tags(entries, max_per_section)
 
     def _group_by_tags(
         self,
