@@ -416,3 +416,93 @@ class TestPipelineStageMethods:
         stages = [c[0] for c in callbacks]
         assert "my_stage" in stages
         orch.close()
+
+
+class TestExecuteStages:
+    """Test the extracted _execute_stages shared core."""
+
+    def test_execute_stages_processes_pages(self, tmp_path):
+        from personal_index.models import CrawledPage
+        from personal_index.pipeline_orchestrator import PipelineResult
+
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        pages = [
+            CrawledPage(
+                url="http://example.com/1",
+                title="Test Page",
+                content="This is some content that should pass the filter with enough words",
+                word_count=14,
+            )
+        ]
+        result = PipelineResult()
+        import time
+        start_time = time.time()
+
+        orch._execute_stages(pages, result, start_time)
+
+        assert result.stats.pages_extracted == 1
+        assert result.stats.pages_passed_filter >= 0
+        assert result.stats.pages_scored >= 0
+        assert result.stats.pages_tagged >= 0
+        assert result.stats.pages_indexed >= 0
+        assert result.stats.elapsed_seconds >= 0
+        orch.close()
+
+    def test_execute_stages_filters_short_content(self, tmp_path):
+        from personal_index.models import CrawledPage
+        from personal_index.pipeline_orchestrator import PipelineResult
+
+        data_dir = str(tmp_path / "data")
+        config = PipelineConfig(min_content_length=100)
+        orch = PipelineOrchestrator(data_dir=data_dir, config=config)
+
+        pages = [
+            CrawledPage(
+                url="http://example.com/1",
+                title="Short",
+                content="Too short",
+                word_count=2,
+            )
+        ]
+        result = PipelineResult()
+        import time
+        start_time = time.time()
+
+        orch._execute_stages(pages, result, start_time)
+
+        assert result.stats.pages_extracted == 1
+        assert result.stats.pages_filtered_out >= 1
+        orch.close()
+
+    def test_execute_stages_empty_pages(self, tmp_path):
+        from personal_index.pipeline_orchestrator import PipelineResult
+
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        result = PipelineResult()
+        import time
+        start_time = time.time()
+
+        orch._execute_stages([], result, start_time)
+
+        assert result.stats.pages_extracted == 0
+        assert result.stats.pages_indexed == 0
+        assert result.pages == []
+        orch.close()
+
+    def test_execute_stages_returns_result(self, tmp_path):
+        from personal_index.pipeline_orchestrator import PipelineResult
+
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+
+        result = PipelineResult()
+        import time
+        start_time = time.time()
+
+        returned = orch._execute_stages([], result, start_time)
+        assert returned is result
+        orch.close()
