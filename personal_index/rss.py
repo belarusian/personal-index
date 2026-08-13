@@ -192,50 +192,27 @@ class RSSParser:
         """Parse a single Atom entry."""
         entry = FeedEntry()
 
-        title_elem = entry_elem.find("atom:title", ns)
-        if title_elem is None:
-            title_elem = entry_elem.find("title")
-        entry.title = title_elem.text if title_elem is not None and title_elem.text else ""
+        entry.title = self._atom_text(entry_elem, "title", ns)
 
-        link_elem = entry_elem.find("atom:link[@rel='alternate']", ns)
-        if link_elem is None:
-            links = entry_elem.findall("atom:link", ns)
-            for link in links:
-                if link.get("rel") == "alternate" or link.get("rel") is None:
-                    link_elem = link
-                    break
+        link_elem = self._find_atom_link(entry_elem, ns)
         entry.link = link_elem.get("href", "") if link_elem is not None else ""
 
-        summary_elem = entry_elem.find("atom:summary", ns)
-        if summary_elem is None:
-            summary_elem = entry_elem.find("summary")
-        entry.summary = summary_elem.text if summary_elem is not None and summary_elem.text else ""
-
-        content_elem = entry_elem.find("atom:content", ns)
-        if content_elem is None:
-            content_elem = entry_elem.find("content")
-        entry.content = content_elem.text if content_elem is not None and content_elem.text else ""
+        entry.summary = self._atom_text(entry_elem, "summary", ns)
+        entry.content = self._atom_text(entry_elem, "content", ns)
 
         author_elem = entry_elem.find("atom:author", ns)
+        if author_elem is None:
+            author_elem = entry_elem.find("author")
         if author_elem is not None:
             name_elem = author_elem.find("atom:name", ns)
             if name_elem is None:
                 name_elem = author_elem.find("name")
             entry.author = name_elem.text if name_elem is not None and name_elem.text else ""
 
-        published_elem = entry_elem.find("atom:published", ns)
-        if published_elem is None:
-            published_elem = entry_elem.find("published")
-        entry.published = published_elem.text if published_elem is not None and published_elem.text else None
+        entry.published = self._atom_text_or_none(entry_elem, "published", ns)
+        entry.updated = self._atom_text_or_none(entry_elem, "updated", ns)
 
-        updated_elem = entry_elem.find("atom:updated", ns)
-        if updated_elem is None:
-            updated_elem = entry_elem.find("updated")
-        entry.updated = updated_elem.text if updated_elem is not None and updated_elem.text else None
-
-        id_elem = entry_elem.find("atom:id", ns)
-        if id_elem is None:
-            id_elem = entry_elem.find("id")
+        id_elem = self._atom_find_fallback(entry_elem, "id", ns)
         entry.guid = id_elem.text if id_elem is not None and id_elem.text else entry.link
 
         for cat in entry_elem.findall("atom:category", ns):
@@ -244,6 +221,48 @@ class RSSParser:
                 entry.categories.append(term)
 
         return entry
+
+    @staticmethod
+    def _atom_find_fallback(
+        parent: ET_Element, tag: str, ns: dict
+    ) -> ET_Element | None:
+        """Find an element with namespace fallback."""
+        elem = parent.find(f"atom:{tag}", ns)
+        if elem is None:
+            elem = parent.find(tag)
+        return elem
+
+    @staticmethod
+    def _atom_text(
+        parent: ET_Element, tag: str, ns: dict
+    ) -> str:
+        """Find an element with namespace fallback and return its text, or ''."""
+        elem = parent.find(f"atom:{tag}", ns)
+        if elem is None:
+            elem = parent.find(tag)
+        return elem.text if elem is not None and elem.text else ""
+
+    @staticmethod
+    def _atom_text_or_none(
+        parent: ET_Element, tag: str, ns: dict
+    ) -> str | None:
+        """Find an element with namespace fallback and return its text, or None."""
+        elem = parent.find(f"atom:{tag}", ns)
+        if elem is None:
+            elem = parent.find(tag)
+        return elem.text if elem is not None and elem.text else None
+
+    @staticmethod
+    def _find_atom_link(
+        parent: ET_Element, ns: dict
+    ) -> ET_Element | None:
+        """Find the alternate link element in an Atom entry or feed."""
+        link = parent.find("atom:link[@rel='alternate']", ns)
+        if link is None:
+            for link in parent.findall("atom:link", ns):
+                if link.get("rel") == "alternate" or link.get("rel") is None:
+                    return link
+        return link
 
     @staticmethod
     def is_feed(xml_content: str) -> bool:

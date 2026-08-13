@@ -51,12 +51,47 @@ class StatsCollector:
         pages = self.search_index.urls()
         stats.total_pages = len(pages)
 
+        (
+            total_words,
+            total_content_length,
+            domain_counts,
+            interest_counts,
+            pages_with_interests,
+            timestamps,
+        ) = self._accumulate_page_stats(pages)
+
+        stats.total_words = total_words
+        stats.unique_domains = len(domain_counts)
+        stats.avg_content_length = (
+            total_content_length / max(stats.total_pages, 1)
+        )
+        stats.pages_with_interests = pages_with_interests
+        stats.top_domains = sorted(
+            domain_counts.items(),
+            key=lambda x: x[1], reverse=True
+        )[:10]
+        stats.top_interests = sorted(
+            interest_counts.items(),
+            key=lambda x: x[1], reverse=True
+        )[:10]
+
+        if timestamps:
+            stats.oldest_page = min(timestamps)
+            stats.newest_page = max(timestamps)
+
+        return stats
+
+    def _accumulate_page_stats(
+        self, pages: list[str]
+    ) -> tuple[int, int, dict[str, int], dict[str, int], int, list[datetime]]:
+        """Iterate over pages and accumulate statistics."""
+        assert self.search_index is not None
         domain_counts: dict[str, int] = {}
         interest_counts: dict[str, int] = {}
         total_words = 0
         total_content_length = 0
         pages_with_interests = 0
-        timestamps = []
+        timestamps: list[datetime] = []
 
         for url in pages:
             page = self.search_index.get(url)
@@ -79,26 +114,14 @@ class StatsCollector:
             if page.crawled_at:
                 timestamps.append(page.crawled_at)
 
-        stats.total_words = total_words
-        stats.unique_domains = len(domain_counts)
-        stats.avg_content_length = (
-            total_content_length / max(stats.total_pages, 1)
+        return (
+            total_words,
+            total_content_length,
+            domain_counts,
+            interest_counts,
+            pages_with_interests,
+            timestamps,
         )
-        stats.pages_with_interests = pages_with_interests
-        stats.top_domains = sorted(
-            domain_counts.items(),
-            key=lambda x: x[1], reverse=True
-        )[:10]
-        stats.top_interests = sorted(
-            interest_counts.items(),
-            key=lambda x: x[1], reverse=True
-        )[:10]
-
-        if timestamps:
-            stats.oldest_page = min(timestamps)
-            stats.newest_page = max(timestamps)
-
-        return stats
 
     def format_index_stats(self) -> str:
         """Format index statistics as a string."""

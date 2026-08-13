@@ -70,51 +70,47 @@ class SitemapParser:
 
         sitemap = Sitemap(source_url=source_url)
 
-        # Check if this is a sitemap index (root tag is sitemapindex)
         root_tag = root.tag
-        # Strip namespace if present
         if "}" in root_tag:
             root_tag = root_tag.split("}", 1)[1]
 
         if root_tag == "sitemapindex":
-            # Try with namespace first
-            for sitemap_elem in root.findall("ns:sitemap", self.NAMESPACES):
-                loc_elem = sitemap_elem.find("ns:loc", self.NAMESPACES)
-                if loc_elem is not None and loc_elem.text:
-                    loc = loc_elem.text.strip()
-                    if source_url and not loc.startswith(("http://", "https://")):
-                        loc = urljoin(source_url, loc)
-                    sitemap.sitemaps.append(loc)
-            # Also try without namespace
-            if not sitemap.sitemaps:
-                for sitemap_elem in root.findall("sitemap"):
-                    loc_elem = sitemap_elem.find("loc")
-                    if loc_elem is not None and loc_elem.text:
-                        loc = loc_elem.text.strip()
-                        if source_url and not loc.startswith(("http://", "https://")):
-                            loc = urljoin(source_url, loc)
-                        sitemap.sitemaps.append(loc)
+            self._parse_sitemap_index_items(root, sitemap, source_url)
             return sitemap
 
-        # Also check for nested sitemapindex element
         sitemap_index = root.find("ns:sitemapindex", self.NAMESPACES)
         if sitemap_index is not None:
-            for sitemap_elem in sitemap_index.findall("ns:sitemap", self.NAMESPACES):
-                loc_elem = sitemap_elem.find("ns:loc", self.NAMESPACES)
-                if loc_elem is not None and loc_elem.text:
-                    loc = loc_elem.text.strip()
-                    if source_url and not loc.startswith(("http://", "https://")):
-                        loc = urljoin(source_url, loc)
-                    sitemap.sitemaps.append(loc)
+            self._parse_sitemap_index_items(sitemap_index, sitemap, source_url)
             return sitemap
 
-        # Parse regular sitemap entries
         for url_elem in root.findall("ns:url", self.NAMESPACES):
             entry = self._parse_url_element(url_elem, source_url)
             if entry:
                 sitemap.entries.append(entry)
 
         return sitemap
+
+    def _resolve_sitemap_url(self, loc: str, source_url: str) -> str:
+        """Resolve a potentially relative sitemap URL against the source URL."""
+        if source_url and not loc.startswith(("http://", "https://")):
+            return urljoin(source_url, loc)
+        return loc
+
+    def _parse_sitemap_index_items(
+        self, root: ET_Element, sitemap: Sitemap, source_url: str
+    ) -> None:
+        """Parse <sitemap> elements from a sitemap index root, appending to sitemap.sitemaps."""
+        for sitemap_elem in root.findall("ns:sitemap", self.NAMESPACES):
+            loc_elem = sitemap_elem.find("ns:loc", self.NAMESPACES)
+            if loc_elem is not None and loc_elem.text:
+                loc = self._resolve_sitemap_url(loc_elem.text.strip(), source_url)
+                sitemap.sitemaps.append(loc)
+        if not sitemap.sitemaps:
+            for sitemap_elem in root.findall("sitemap"):
+                loc_elem = sitemap_elem.find("loc")
+                if loc_elem is not None and loc_elem.text:
+                    loc = self._resolve_sitemap_url(loc_elem.text.strip(), source_url)
+                    sitemap.sitemaps.append(loc)
 
     def _parse_url_element(
         self, url_elem: ET_Element, base_url: str = ""

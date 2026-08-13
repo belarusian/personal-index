@@ -174,7 +174,8 @@ def publish(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool =
     print("[publish] Done. Dashboard live at: https://belarusian.github.io/search/")
 
 
-def main() -> None:
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser for the publish dashboard CLI."""
     parser = argparse.ArgumentParser(description="Publish dashboard to belarusian/search")
     parser.add_argument(
         "--search-repo",
@@ -196,26 +197,46 @@ def main() -> None:
         action="store_true",
         help="Show what would happen without making changes",
     )
-    args = parser.parse_args()
+    return parser
 
+
+def _resolve_dashboard_paths(
+    project_root: Path, do_regenerate: bool
+) -> tuple[Path, Path]:
+    """Resolve the HTML and JSON dashboard file paths.
+
+    Args:
+        project_root: Root of the personal-index project.
+        do_regenerate: Whether to regenerate the dashboard from scratch.
+
+    Returns:
+        Tuple of (html_path, json_path).
+
+    Raises:
+        SystemExit: If files don't exist and do_regenerate is False.
+    """
+    if do_regenerate:
+        return regenerate(project_root)
+
+    html = project_root / "personal_index" / "docs_dashboard.html"
+    json_path = project_root / "personal_index" / "docs_dashboard_metadata.json"
+    if not html.exists():
+        print(f"[publish] ERROR: no existing dashboard at {html}", file=sys.stderr)
+        print("[publish] Use --regenerate to create one (slow) or generate manually first.", file=sys.stderr)
+        sys.exit(1)
+    if not json_path.exists():
+        print(f"[publish] ERROR: no existing codemap at {json_path}", file=sys.stderr)
+        sys.exit(1)
+    return html, json_path
+
+
+def main() -> None:
+    args = _build_parser().parse_args()
     project_root = Path(args.project_root)
     search_repo = Path(args.search_repo)
 
-    # Get HTML + JSON paths
-    if args.regenerate:
-        html, json_path = regenerate(project_root)
-    else:
-        html = project_root / "personal_index" / "docs_dashboard.html"
-        json_path = project_root / "personal_index" / "docs_dashboard_metadata.json"
-        if not html.exists():
-            print(f"[publish] ERROR: no existing dashboard at {html}", file=sys.stderr)
-            print("[publish] Use --regenerate to create one (slow) or generate manually first.", file=sys.stderr)
-            sys.exit(1)
-        if not json_path.exists():
-            print(f"[publish] ERROR: no existing codemap at {json_path}", file=sys.stderr)
-            sys.exit(1)
+    html, json_path = _resolve_dashboard_paths(project_root, args.regenerate)
 
-    # Validate sync before publishing
     sync = validate_sync(html, json_path)
     if not sync.get("sync"):
         print("[publish] WARNING: HTML and JSON are out of sync!", file=sys.stderr)
