@@ -1,17 +1,11 @@
 """Tests for export_markdown module - MarkdownExporter class."""
 
-import os
-import tempfile
 
 import pytest
 
 from personal_index.export_markdown import (
     ExportConfig,
-    ExportFormat,
     MarkdownExporter,
-    export_markdown,
-    export_to_md,
-    save_markdown,
 )
 
 

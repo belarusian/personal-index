@@ -2,15 +2,12 @@
 
 import json
 import os
-import tempfile
 
 import pytest
 
 from personal_index.content_versioning import (
     ContentVersion,
     ContentVersioning,
-    create_version,
-    get_versions,
 )
 
 

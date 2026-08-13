@@ -11,10 +11,6 @@ Covers:
 
 from __future__ import annotations
 
-import json
-import tempfile
-from unittest.mock import patch
-
 import pytest
 
 from personal_index.content_categorizer import (
@@ -24,7 +20,6 @@ from personal_index.content_categorizer import (
     TopicCategory,
     TopicScore,
 )
-
 
 # ---------------------------------------------------------------------------
 # TopicCategory dataclass tests

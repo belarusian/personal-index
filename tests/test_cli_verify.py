@@ -76,7 +76,7 @@ class TestPipelineHelpers:
 
     def test_create_test_page(self, tmp_path):
         """_create_test_page reads file and returns CrawledPage."""
-        from personal_index.cli_verify import _create_test_page, _create_test_content
+        from personal_index.cli_verify import _create_test_content, _create_test_page
 
         test_data_dir, _ = _create_test_content(str(tmp_path))
         page = _create_test_page(test_data_dir)
