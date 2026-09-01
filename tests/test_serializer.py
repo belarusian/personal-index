@@ -17,7 +17,7 @@ from personal_index.serializer import (
 class _TestItem:
     name: str
     value: int
-    timestamp: datetime = None
+    timestamp: datetime | None = None
 
 
 class TestSerializationConfig:

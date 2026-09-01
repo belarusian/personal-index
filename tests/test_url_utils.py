@@ -64,6 +64,7 @@ class TestNormalizeUrl:
 
     def test_fragment_removal(self) -> None:
         result = normalize_url("https://example.com/page#section")
+        assert result is not None
         assert "#section" not in result
 
     def test_lowercase_path(self) -> None:
@@ -72,14 +73,17 @@ class TestNormalizeUrl:
 
     def test_default_port_removal_http(self) -> None:
         result = normalize_url("http://example.com:80/path")
+        assert result is not None
         assert ":80" not in result
 
     def test_default_port_removal_https(self) -> None:
         result = normalize_url("https://example.com:443/path")
+        assert result is not None
         assert ":443" not in result
 
     def test_non_default_port_kept(self) -> None:
         result = normalize_url("https://example.com:8080/path")
+        assert result is not None
         assert ":8080" in result
 
     def test_query_param_sorting(self) -> None:
@@ -110,6 +114,7 @@ class TestNormalizeUrl:
         result = normalize_url(
             "http://example.com/page#section", remove_fragment=False
         )
+        assert result is not None
         assert "#section" in result
 
     def test_empty_url_returns_none(self) -> None:

@@ -65,7 +65,7 @@ def test_url_classifier_no_misplaced_docstring_at_end():
     with open('personal_index/url_classifier.py', 'r') as f:
         content = f.read()
     # The last non-empty line should not be a docstring
-    lines = [l for l in content.split('\n') if l.strip()]
+    lines = [line for line in content.split('\n') if line.strip()]
     assert not lines[-1].startswith('"""'), "No docstring should be at the end of the file"
 
 
@@ -74,5 +74,5 @@ def test_validator_no_misplaced_docstring_at_end():
     with open('personal_index/validator.py', 'r') as f:
         content = f.read()
     # The last non-empty line should not be a docstring
-    lines = [l for l in content.split('\n') if l.strip()]
+    lines = [line for line in content.split('\n') if line.strip()]
     assert not lines[-1].startswith('"""'), "No docstring should be at the end of the file"

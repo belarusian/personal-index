@@ -42,3 +42,5 @@ After extraction, `stats` body drops to ~25 lines of data gathering + dispatch.
 - `os` module — already imported at top of cli.py
 - `json` module — already imported at top of cli.py
 - No cross-module dependencies needed for the extracted helpers
+
+## Status: RESOLVED (verified against code, cycle 1)

@@ -7,3 +7,5 @@
 `personal_index/cli.py`, lines 1312–1386. The once-mode section has two nearly identical blocks:
 
 **Single-file import (L1338–1356):**
+
+## Status: RESOLVED (verified against code, cycle 1)

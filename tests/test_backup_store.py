@@ -1,9 +1,9 @@
 """Tests for backup store."""
 
-import json
 import tempfile
+import time
 
-from personal_index.content_backup.backup_store import BackupEntry, BackupStore
+from personal_index.content_backup.backup_store import BackupStore
 
 
 class TestBackupStore:
@@ -63,7 +63,6 @@ class TestBackupStore:
         assert len(s.list_backups()) == 2
 
     def test_export_import_roundtrip(self):
-        import tempfile
         s = BackupStore()
         s.add_backup([{"id": "1", "title": "A"}], backup_id="b1")
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
@@ -80,6 +79,3 @@ class TestBackupStore:
             assert False, "Should have raised"
         except ValueError:
             pass
-
-
-import time

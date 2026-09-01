@@ -3,7 +3,6 @@
 from personal_index.content_monitor.health import (
     HealthChecker,
     HealthCheck,
-    HealthStatus,
 )
 
 

@@ -3,7 +3,6 @@
 
 import subprocess
 import os
-import textwrap
 
 def run(cmd, check=True):
     """Run a shell command."""

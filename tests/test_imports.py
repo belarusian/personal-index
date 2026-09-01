@@ -19,10 +19,7 @@ def get_all_modules():
 
 
 # Known pre-existing syntax errors - skip these
-SKIP_MODULES = {
-
-
-}
+SKIP_MODULES: set[str] = set()
 
 
 @pytest.mark.parametrize("mod_name", get_all_modules())

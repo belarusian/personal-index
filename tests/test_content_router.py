@@ -56,6 +56,7 @@ class TestRouteMatcher:
         matcher.add_route(Route(name="low", pattern="*", handler=lambda c: c, priority=1))
         matcher.add_route(Route(name="high", pattern="*", handler=lambda c: c, priority=10))
         route = matcher.match({"type": "test"})
+        assert route is not None
         assert route.name == "high"
 
     def test_match_all(self) -> None:

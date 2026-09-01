@@ -1,7 +1,7 @@
 """Tests for content router."""
 
 from personal_index.content_router.handler import PassThroughHandler, TypeHandler
-from personal_index.content_router.route import Route, RouteMatcher
+from personal_index.content_router.route import Route
 from personal_index.content_router.router import ContentRouter
 
 

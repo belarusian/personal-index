@@ -37,12 +37,12 @@ class TestInterestStore:
         assert all_interests[0].name == "Python"
 
     def test_add_multiple_interests(self, store: InterestStore):
-        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
-        store.add(Interest("ML", InterestType.TOPIC, "machine learning", 8))
+        store.add(Interest("Py", InterestType.KEYWORD, "python", priority=5))
+        store.add(Interest("ML", InterestType.TOPIC, "machine learning", priority=8))
         assert len(store.list_all()) == 2
 
     def test_remove_interest(self, store: InterestStore):
-        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+        store.add(Interest("Py", InterestType.KEYWORD, "python", priority=5))
         assert store.remove("Py") is True
         assert len(store.list_all()) == 0
 
@@ -50,7 +50,7 @@ class TestInterestStore:
         assert store.remove("nonexistent") is False
 
     def test_get_interest(self, store: InterestStore):
-        interest = Interest("Py", InterestType.KEYWORD, "python", 5)
+        interest = Interest("Py", InterestType.KEYWORD, "python", priority=5)
         store.add(interest)
         found = store.get("Py")
         assert found is not None
@@ -60,13 +60,13 @@ class TestInterestStore:
         assert store.get("nonexistent") is None
 
     def test_list_enabled_only(self, store: InterestStore):
-        store.add(Interest("A", InterestType.KEYWORD, "a", 5, enabled=True))
-        store.add(Interest("B", InterestType.KEYWORD, "b", 5, enabled=False))
+        store.add(Interest("A", InterestType.KEYWORD, "a", priority=5, enabled=True))
+        store.add(Interest("B", InterestType.KEYWORD, "b", priority=5, enabled=False))
         assert len(store.get_enabled()) == 1
         assert len(store.list_all()) == 2
 
     def test_toggle_interest(self, store: InterestStore):
-        store.add(Interest("A", InterestType.KEYWORD, "a", 5, enabled=True))
+        store.add(Interest("A", InterestType.KEYWORD, "a", priority=5, enabled=True))
         toggled = store.toggle("A")
         assert toggled is not None
         assert toggled.enabled is False
@@ -75,36 +75,42 @@ class TestInterestStore:
         assert store.toggle("nonexistent") is None
 
     def test_update_priority(self, store: InterestStore):
-        store.add(Interest("A", InterestType.KEYWORD, "a", 5))
+        store.add(Interest("A", InterestType.KEYWORD, "a", priority=5))
         updated = store.update_priority("A", 9)
         assert updated is not None
         assert updated.priority == 9
 
     def test_update_priority_clamped(self, store: InterestStore):
-        store.add(Interest("A", InterestType.KEYWORD, "a", 5))
+        store.add(Interest("A", InterestType.KEYWORD, "a", priority=5))
         store.update_priority("A", 15)
-        assert store.get("A").priority == 10
+        a = store.get("A")
+        assert a is not None
+        assert a.priority == 10
         store.update_priority("A", -3)
-        assert store.get("A").priority == 1
+        a = store.get("A")
+        assert a is not None
+        assert a.priority == 1
 
     def test_matches_any(self, store: InterestStore):
-        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
-        store.add(Interest("JS", InterestType.KEYWORD, "javascript", 5))
+        store.add(Interest("Py", InterestType.KEYWORD, "python", priority=5))
+        store.add(Interest("JS", InterestType.KEYWORD, "javascript", priority=5))
         matches = store.matches_any("I love python")
         assert len(matches) == 1
         assert matches[0].name == "Py"
 
     def test_total_score(self, store: InterestStore):
-        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+        store.add(Interest("Py", InterestType.KEYWORD, "python", priority=5))
         score = store.total_score("python python")
         assert score == 10.0
 
     def test_persistence(self, store_path: str):
         store1 = InterestStore(store_path=store_path)
-        store1.add(Interest("Py", InterestType.KEYWORD, "python", 7))
+        store1.add(Interest("Py", InterestType.KEYWORD, "python", priority=7))
         store2 = InterestStore(store_path=store_path)
         assert len(store2.list_all()) == 1
-        assert store2.get("Py").priority == 7
+        py = store2.get("Py")
+        assert py is not None
+        assert py.priority == 7
 
     def test_load_corrupted_file(self, tmp_path: Path):
         path = str(tmp_path / "bad.json")
@@ -115,5 +121,5 @@ class TestInterestStore:
     def test_creates_parent_dirs(self, tmp_path: Path):
         path = str(tmp_path / "nested" / "dir" / "interests.json")
         store = InterestStore(store_path=path)
-        store.add(Interest("A", InterestType.KEYWORD, "a", 5))
+        store.add(Interest("A", InterestType.KEYWORD, "a", priority=5))
         assert Path(path).exists()

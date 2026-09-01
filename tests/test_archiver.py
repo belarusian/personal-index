@@ -100,7 +100,8 @@ class TestContentArchiver:
         assert stats["archived_items"] == 1
 
     def test_export_archived(self):
-        import tempfile, json
+        import json
+        import tempfile
         a = ContentArchiver()
         old_time = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
         a.add_item("id1", "hello", saved_at=old_time)

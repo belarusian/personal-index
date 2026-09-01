@@ -53,7 +53,7 @@ class TestHTMLScraper:
         scraper = HTMLScraper()
         result = scraper.scrape(html, "http://example.com")
         assert len(result.links) == 2
-        urls = [l["url"] for l in result.links]
+        urls = [link["url"] for link in result.links]
         assert "http://example.com/page1" in urls
         assert "http://other.com" in urls
 

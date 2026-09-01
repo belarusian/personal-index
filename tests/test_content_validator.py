@@ -111,7 +111,7 @@ class TestQualityChecker:
 
     def test_poor_quality(self) -> None:
         checker = QualityChecker()
-        item = {}
+        item: dict = {}
         score = checker.check(item)
         assert score.overall == 0.0
         assert len(score.issues) > 0

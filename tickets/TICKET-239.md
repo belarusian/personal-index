@@ -8,3 +8,5 @@
 ## Evidence
 
 Current test file (`tests/test_export_markdown.py`) is 7 lines:
+
+## Status: RESOLVED (verified against code, cycle 1)

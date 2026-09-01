@@ -44,3 +44,5 @@ After extraction, `pipeline` body drops to ~30 lines of orchestration.
 ## Dependencies
 - `PipelineStats` type from `personal_index.pipeline_runner` (already imported via `runner`)
 - `get_search_index`, `get_tag_store`, `get_interest_store` — already used in cli.py
+
+## Status: RESOLVED (verified against code, cycle 1)

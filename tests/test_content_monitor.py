@@ -312,7 +312,7 @@ class TestContentMonitor:
 
     def test_init_custom_params(self) -> None:
         monitor = ContentMonitor(
-            index_dir="/tmp/test_index",
+            index_dir=Path("/tmp/test_index"),
             max_staleness_hours=48.0,
             max_error_rate=0.2,
             max_disk_mb=2048.0,
@@ -329,14 +329,14 @@ class TestContentMonitor:
     # -- get_disk_usage --
 
     def test_get_disk_usage_nonexistent_dir(self) -> None:
-        monitor = ContentMonitor(index_dir="/nonexistent/path/xyz")
+        monitor = ContentMonitor(index_dir=Path("/nonexistent/path/xyz"))
         info = monitor.get_disk_usage()
         assert info.total_bytes == 0
         assert info.file_count == 0
 
     def test_get_disk_usage_empty_dir(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            monitor = ContentMonitor(index_dir=tmpdir)
+            monitor = ContentMonitor(index_dir=Path(tmpdir))
             info = monitor.get_disk_usage()
             assert info.total_bytes == 0
             assert info.file_count == 0
@@ -351,7 +351,7 @@ class TestContentMonitor:
             subdir.mkdir()
             Path(subdir, "file3.txt").write_text("data" * 50)
 
-            monitor = ContentMonitor(index_dir=tmpdir)
+            monitor = ContentMonitor(index_dir=Path(tmpdir))
             info = monitor.get_disk_usage()
 
             assert info.total_bytes > 0
@@ -364,7 +364,7 @@ class TestContentMonitor:
             for i in range(10):
                 Path(tmpdir, f"file{i}.txt").write_text("x" * (i * 100))
 
-            monitor = ContentMonitor(index_dir=tmpdir)
+            monitor = ContentMonitor(index_dir=Path(tmpdir))
             info = monitor.get_disk_usage(top_n=3)
             assert len(info.largest_files) == 3
             # Largest should be file9
@@ -539,7 +539,7 @@ class TestContentMonitor:
             large_file.write_bytes(b"x" * (2048 * 1024 * 1024))  # 2GB virtual
 
             # We can't actually write 2GB, so we mock getsize
-            monitor = ContentMonitor(index_dir=tmpdir, max_disk_mb=0.001)
+            monitor = ContentMonitor(index_dir=Path(tmpdir), max_disk_mb=0.001)
             # Even a tiny file will exceed 0.001 MB threshold
             Path(tmpdir, "tiny.txt").write_text("hello")
 
@@ -550,7 +550,7 @@ class TestContentMonitor:
     def test_health_report_disk_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             Path(tmpdir, "file.txt").write_text("hello")
-            monitor = ContentMonitor(index_dir=tmpdir, max_disk_mb=100.0)
+            monitor = ContentMonitor(index_dir=Path(tmpdir), max_disk_mb=100.0)
             # File is tiny, so no warning
             report = monitor.generate_health_report()
             assert "disk" not in " ".join(report.warnings).lower() or report.overall_status in ("healthy", "no_data")
@@ -642,7 +642,7 @@ class TestContentMonitorIntegration:
     def test_full_monitoring_workflow(self) -> None:
         """Test a complete monitoring workflow."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            monitor = ContentMonitor(index_dir=tmpdir)
+            monitor = ContentMonitor(index_dir=Path(tmpdir))
 
             # Simulate crawls
             now = datetime.now(timezone.utc)
@@ -698,7 +698,7 @@ class TestContentMonitorIntegration:
             Path(tmpdir, "level1", "level2", "l2.txt").write_text("level2" * 20)
             Path(tmpdir, "level1", "level2", "level3", "l3.txt").write_text("level3" * 30)
 
-            monitor = ContentMonitor(index_dir=tmpdir)
+            monitor = ContentMonitor(index_dir=Path(tmpdir))
             info = monitor.get_disk_usage()
 
             assert info.file_count == 4

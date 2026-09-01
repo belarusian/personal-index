@@ -1,6 +1,5 @@
 """Comprehensive tests for experiment_test utility functions."""
 
-import pytest
 from experiment_test import slugify, truncate, word_count
 
 

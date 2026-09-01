@@ -23,6 +23,9 @@ import yaml
 
 from personal_index.index import SearchIndex
 from personal_index.tags import TagStore
+from personal_index.cli_dedup import dedup
+from personal_index.cli_health import health
+from personal_index.cli_recommend import recommend
 
 
 def get_search_index(data_dir: str) -> SearchIndex:
@@ -1467,10 +1470,6 @@ def watch(ctx, paths, interval, once, data_dir):
 
 
 # Register additional CLI commands from separate modules
-from personal_index.cli_dedup import dedup
-from personal_index.cli_health import health
-from personal_index.cli_recommend import recommend
-
 main.add_command(dedup)
 main.add_command(health)
 main.add_command(recommend)

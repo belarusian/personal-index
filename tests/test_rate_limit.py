@@ -1,6 +1,5 @@
 """Tests for rate limiting middleware."""
 
-import time
 
 from personal_index.api.rate_limit_middleware import (
     RateLimitEntry,

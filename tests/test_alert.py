@@ -59,9 +59,9 @@ class TestAlertManager:
 
     def test_clear_acknowledged(self):
         mgr = AlertManager()
-        a1 = mgr.add_alert(AlertLevel.INFO, "a", "src")
+        mgr.add_alert(AlertLevel.INFO, "a", "src")
         a2 = mgr.add_alert(AlertLevel.ERROR, "b", "src")
-        mgr.acknowledge(a1.alert_id)
+        mgr.acknowledge(a2.alert_id)
         cleared = mgr.clear_acknowledged()
         assert cleared == 1
         assert len(mgr.alerts) == 1
