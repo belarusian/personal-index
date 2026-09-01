@@ -30,4 +30,4 @@ in url_utils; type annotations in serializer/imports/validator; None guard in ro
 
 ## Issue: #322 (gh)
 
-## Status: IN PROGRESS (cycle 1)
+## Status: RESOLVED (merged to main, cycle 1)

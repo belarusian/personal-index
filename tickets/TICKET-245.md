@@ -21,4 +21,4 @@ reality; do NOT re-ticket them. This is reconciliation, not new build work.
 
 ## Issue: #323 (gh)
 
-## Status: IN PROGRESS (cycle 1)
+## Status: RESOLVED (merged to main, cycle 1)

@@ -21,4 +21,4 @@ redundant in-function `import tempfile` (top-level import already present).
 
 ## Issue: #321 (gh)
 
-## Status: IN PROGRESS (cycle 1)
+## Status: RESOLVED (merged to main, cycle 1)
