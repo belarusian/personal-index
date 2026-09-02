@@ -155,6 +155,8 @@ class BookmarkManager:
             return 0
         with open(path_obj) as f:
             data = json.load(f)
+        if not isinstance(data, list):
+            return 0
         self._bookmarks.clear()
         for item in data:
             bookmark = Bookmark.from_dict(item)

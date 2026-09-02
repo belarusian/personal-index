@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 
 import pytest
@@ -215,3 +216,30 @@ class TestBookmarkManager:
     def test_load_no_path(self):
         with pytest.raises(ValueError):
             self.manager.load()
+
+    def test_load_null_json(self, tmp_path):
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            f.write("null")
+        manager = BookmarkManager()
+        loaded = manager.load(path)
+        assert loaded == 0
+        assert manager.count() == 0
+
+    def test_load_dict_json(self, tmp_path):
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            json.dump({"key": "val"}, f)
+        manager = BookmarkManager()
+        loaded = manager.load(path)
+        assert loaded == 0
+        assert manager.count() == 0
+
+    def test_load_number_json(self, tmp_path):
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            f.write("42")
+        manager = BookmarkManager()
+        loaded = manager.load(path)
+        assert loaded == 0
+        assert manager.count() == 0
