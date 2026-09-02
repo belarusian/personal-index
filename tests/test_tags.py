@@ -82,6 +82,17 @@ class TestTagStore:
         self.store.add_tag_to_page("http://example.com", "important")
         assert self.store.remove_tag_from_page("http://example.com", "important") is True
 
+    def test_remove_tag_from_page_not_present(self):
+        """Removing a tag the page never had is a no-op and returns False."""
+        self.store.create_tag("important")
+        self.store.add_tag_to_page("http://example.com", "important")
+        # "other" was never added to this page
+        assert self.store.remove_tag_from_page("http://example.com", "other") is False
+        # original tag is untouched
+        assert self.store.remove_tag_from_page("http://example.com", "important") is True
+        # removing it again is a no-op
+        assert self.store.remove_tag_from_page("http://example.com", "important") is False
+
     def test_get_tags_for_page(self):
         self.store.create_tag("tag1")
         self.store.create_tag("tag2")
