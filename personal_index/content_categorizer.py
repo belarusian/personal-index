@@ -443,12 +443,18 @@ class ContentCategorizer:
             for item in items
         ]
 
-    def _add_matches(self, matches: list[str], kw: list[str], src: list[str]) -> list[str]:
+    def _add_matches(
+        self,
+        matches: list[str],
+        kw: list[str],
+        src: list[str],
+        source: str = "text",
+    ) -> list[str]:
         for k in matches:
             if k not in kw:
                 kw.append(k)
         if matches:
-            src.append("text")
+            src.append(source)
         return kw
 
     def _score_topic(
@@ -476,14 +482,12 @@ class ContentCategorizer:
         ttm = self._match_keywords(topic.keywords, title_tokens, title_lower)
         if ttm:
             score += min(len(ttm) * 0.3 * self.TITLE_BOOST, 1.0) * topic.weight
-            self._add_matches(ttm, matched, sources)
-            sources.append("title")
+            self._add_matches(ttm, matched, sources, "title")
 
         mm = self._match_keywords(topic.keywords, meta_tokens, meta_lower)
         if mm:
             score += min(len(mm) * 0.2 * self.META_DESC_BOOST, 1.0) * topic.weight
-            self._add_matches(mm, matched, sources)
-            sources.append("meta_description")
+            self._add_matches(mm, matched, sources, "meta_description")
 
         if topic.name in url_hints:
             score += self.URL_HINT_BOOST * topic.weight
