@@ -1,6 +1,6 @@
 # TICKET-251: content_scheduler cron day-of-week field rejects `7` (Sunday alias)
 
-Status: OPEN
+Status: RESOLVED (merged to main, gh #331 closed)
 Module: personal_index/content_scheduler.py
 Symptom: A cron expression whose day-of-week field uses `7` (the standard-cron
 alias for Sunday, equivalent to `0`) is silently dropped, so the task never
