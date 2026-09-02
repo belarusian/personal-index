@@ -198,3 +198,28 @@ class TestContentPinner:
 
     def test_module_unpin_content(self):
         assert unpin_content("module-test") is True
+
+
+class TestContentPinnerNonDictJSON:
+    """Regression tests for TICKET-266: non-dict JSON in storage file."""
+
+    def test_null_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "pinned.json")
+        with open(path, "w") as f:
+            f.write("null")
+        pinner = ContentPinner(storage_path=path)
+        assert pinner._pinned == {}
+
+    def test_list_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "pinned.json")
+        with open(path, "w") as f:
+            f.write("[1, 2, 3]")
+        pinner = ContentPinner(storage_path=path)
+        assert pinner._pinned == {}
+
+    def test_number_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "pinned.json")
+        with open(path, "w") as f:
+            f.write("42")
+        pinner = ContentPinner(storage_path=path)
+        assert pinner._pinned == {}
