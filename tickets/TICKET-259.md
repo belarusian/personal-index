@@ -1,6 +1,6 @@
 # TICKET-259: Interest.matches/score crash on non-string topics elements
 
-**Status**: OPEN
+**Status**: RESOLVED
 **File**: `personal_index/models.py`
 **Symptom**: If `Interest.topics` contains a non-string element (e.g., an int or None),
 both `Interest.matches()` (line 102) and `Interest.score()` (line 132) raise
