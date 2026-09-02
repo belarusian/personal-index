@@ -99,7 +99,7 @@ class Interest:
             if isinstance(kw, str) and kw.lower() in text_lower:
                 return True
         for topic in self.topics:
-            if topic.lower() in text_lower:
+            if isinstance(topic, str) and topic.lower() in text_lower:
                 return True
         for pattern in self.url_patterns:
             try:
@@ -129,7 +129,8 @@ class Interest:
             if isinstance(kw, str):
                 total += text_lower.count(kw.lower())
         for topic in self.topics:
-            total += text_lower.count(topic.lower())
+            if isinstance(topic, str):
+                total += text_lower.count(topic.lower())
         return min(total * self.priority, self.priority * 10)
 
 
