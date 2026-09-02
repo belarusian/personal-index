@@ -128,6 +128,20 @@ class TestCronParsing:
         task = scheduler.add_task("T", "crawl", "0,30 * * * *")
         assert task.next_run is not None
 
+    def test_cron_zero_step_degrades(self, scheduler):
+        # A zero step ('*/0') is malformed; the constructor must not raise
+        # and the task must degrade to "never runs".
+        task = scheduler.add_task("T", "crawl", "*/0 * * * *")
+        assert task.next_run is None
+        task2 = scheduler.add_task("T2", "crawl", "5/0 * * * *")
+        assert task2.next_run is None
+
+    def test_cron_non_numeric_field_degrades(self, scheduler):
+        # A non-numeric token in a field is malformed; the constructor must
+        # not raise and the task must degrade to "never runs".
+        task = scheduler.add_task("T", "crawl", "abc * * * *")
+        assert task.next_run is None
+
 
 # --- Task Management ---
 
