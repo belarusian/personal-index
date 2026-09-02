@@ -50,6 +50,8 @@ class ScheduledTask:
         self._dom: list[int] = []
         self._month: list[int] = []
         self._dow: list[int] = []
+        self._dom_restricted: bool = False
+        self._dow_restricted: bool = False
         self._parse_cron()
 
     def _parse_cron(self) -> None:
@@ -62,6 +64,7 @@ class ScheduledTask:
         self._minute = self._parse_field(minute, 0, 59)
         self._hour = self._parse_field(hour, 0, 23)
         self._dom = self._parse_field(dom, 1, 31)
+        self._dom_restricted = dom.strip() != "*"
         self._month = self._parse_field(month, 1, 12)
         # Cron: 0=Sunday, 1=Monday, ..., 6=Saturday
         # Python weekday(): 0=Monday, ..., 6=Sunday
@@ -73,6 +76,7 @@ class ScheduledTask:
                 self._dow.append(6)  # Sunday
             else:
                 self._dow.append(d - 1)  # Shift: cron 1(Mon) -> python 0(Mon)
+        self._dow_restricted = dow.strip() != "*"
         self._compute_next_run()
 
     def _parse_field(self, field: str, min_val: int, max_val: int) -> list[int]:
@@ -105,11 +109,18 @@ class ScheduledTask:
         candidate = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
         # Try up to 1 year ahead
         for _ in range(525600):
+            dom_ok = candidate.day in self._dom
+            dow_ok = candidate.weekday() in self._dow
+            # Standard cron: when both dom and dow are restricted,
+            # a day matches if it satisfies dom OR dow.
+            if self._dom_restricted and self._dow_restricted:
+                day_ok = dom_ok or dow_ok
+            else:
+                day_ok = dom_ok and dow_ok
             if (candidate.minute in self._minute and
                 candidate.hour in self._hour and
-                candidate.day in self._dom and
                 candidate.month in self._month and
-                candidate.weekday() in self._dow):
+                day_ok):
                 self.next_run = candidate
                 return
             candidate += timedelta(minutes=1)
