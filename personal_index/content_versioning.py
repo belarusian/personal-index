@@ -51,6 +51,9 @@ class ContentVersioning:
         try:
             with open(self.storage_path, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                self._versions = {}
+                return
             self._versions = {}
             for item_id, version_list in data.items():
                 self._versions[item_id] = [

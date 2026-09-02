@@ -213,3 +213,25 @@ class TestContentVersioning:
         versioning.create_version("item-1", "v1")
         v = versioning.get_version("item-1", "item-1_v999")
         assert v is None
+
+    # -- _load() with non-dict JSON (TICKET-262) --
+    def test_load_null_json(self, tmp_storage):
+        """Storage file containing JSON null should not crash."""
+        with open(tmp_storage, "w") as f:
+            json.dump(None, f)
+        v = ContentVersioning(storage_path=tmp_storage)
+        assert v.get_versions("item-1") == []
+
+    def test_load_list_json(self, tmp_storage):
+        """Storage file containing a JSON list should not crash."""
+        with open(tmp_storage, "w") as f:
+            json.dump([1, 2, 3], f)
+        v = ContentVersioning(storage_path=tmp_storage)
+        assert v.get_versions("item-1") == []
+
+    def test_load_number_json(self, tmp_storage):
+        """Storage file containing a JSON number should not crash."""
+        with open(tmp_storage, "w") as f:
+            json.dump(42, f)
+        v = ContentVersioning(storage_path=tmp_storage)
+        assert v.get_versions("item-1") == []
