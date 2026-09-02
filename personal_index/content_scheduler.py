@@ -83,9 +83,15 @@ class ScheduledTask:
         for part in field.split(","):
             if "/" in part:
                 base, step_str = part.split("/", 1)
-                start = int(base) if base != "*" else min_val
                 step = int(step_str)
-                values.update(range(start, max_val + 1, step))
+                if base == "*":
+                    start, end = min_val, max_val
+                elif "-" in base:
+                    start_str, end_str = base.split("-", 1)
+                    start, end = int(start_str), int(end_str)
+                else:
+                    start, end = int(base), max_val
+                values.update(range(start, end + 1, step))
             elif "-" in part:
                 start_str, end_str = part.split("-", 1)
                 values.update(range(int(start_str), int(end_str) + 1))
