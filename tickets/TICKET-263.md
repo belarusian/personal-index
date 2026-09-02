@@ -1,6 +1,6 @@
 # TICKET-263: InterestStore._load crashes on non-dict JSON (null/list/number)
 
-**Status:** OPEN
+**Status:** RESOLVED
 **Module:** personal_index/interests.py
 **Issue:** #355
 
