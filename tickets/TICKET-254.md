@@ -1,6 +1,6 @@
 # TICKET-254: `remove` command leaves orphan tag associations in TagStore
 
-Status: ACCEPTED
+Status: RESOLVED (commit cb678b8, gh #337 closed)
 Module: personal_index/cli.py
 Issue: #337
 
