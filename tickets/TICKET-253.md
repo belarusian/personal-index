@@ -1,6 +1,6 @@
 # TICKET-253: CLI `schedule run` does not persist run state back to the store
 
-Status: OPEN
+Status: RESOLVED (merged to main, gh #335 closed)
 Module: personal_index/cli.py
 Symptom: `schedule run <name>` (cli.py `schedule_run`, line 1178) executes the
 crawl pipeline and prints the page count, but never writes the run back to the
