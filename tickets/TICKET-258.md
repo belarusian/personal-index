@@ -1,6 +1,6 @@
 # TICKET-258: Interest.matches aborts on a single malformed url_pattern (false negative)
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/models.py (Interest.matches) - exercised by personal_index/interests.py matches_any
 Issue: #345
 
