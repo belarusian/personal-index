@@ -8,4 +8,4 @@ When the storage file contains valid JSON that is not a dict (null, list, number
 `json.load` succeeds but the subsequent `data.get("pages", {})` raises
 `AttributeError` which is NOT caught by the existing `except (json.JSONDecodeError, KeyError, TypeError)` clause.
 
-## EvidenceIssue: #357
+## Evidence
