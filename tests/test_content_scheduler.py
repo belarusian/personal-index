@@ -77,6 +77,11 @@ class TestCronParsing:
         task = scheduler.add_task("T", "crawl", "0 9-17 * * 1-5")
         assert task.next_run is not None
 
+    def test_cron_range_with_step(self, scheduler):
+        task = scheduler.add_task("T", "crawl", "0 9-17/2 * * 1-5")
+        assert task.next_run is not None
+        assert task._hour == [9, 11, 13, 15, 17]
+
     def test_cron_multiple(self, scheduler):
         task = scheduler.add_task("T", "crawl", "0,30 * * * *")
         assert task.next_run is not None
