@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+import calendar
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from personal_index.content_timeline.timeline_entry import TimelineEntry
@@ -94,16 +95,15 @@ class Timeline:
     def get_events_for_week(self, d: date) -> list[TimelineEvent]:
         """Get events for the week containing the given date."""
         # Monday of the week
-        monday = d - __import__("datetime").timedelta(days=d.weekday())
+        monday = d - timedelta(days=d.weekday())
         start = datetime(monday.year, monday.month, monday.day, tzinfo=timezone.utc)
         # Sunday end of week
-        sunday = monday + __import__("datetime").timedelta(days=6)
+        sunday = monday + timedelta(days=6)
         end = datetime(sunday.year, sunday.month, sunday.day, 23, 59, 59, 999999, tzinfo=timezone.utc)
         return [e for e in self.events if start <= e.timestamp <= end]
 
     def get_events_for_month(self, year: int, month: int) -> list[TimelineEvent]:
         """Get events for a specific month."""
-        import calendar
         last_day = calendar.monthrange(year, month)[1]
         start = datetime(year, month, 1, tzinfo=timezone.utc)
         end = datetime(year, month, last_day, 23, 59, 59, 999999, tzinfo=timezone.utc)
