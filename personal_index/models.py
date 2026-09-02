@@ -112,7 +112,7 @@ class Interest:
                 if re.search(pattern, url, re.IGNORECASE):
                     return True
             except re.error:
-                return False
+                continue
         return False
 
     def score(self, text: str) -> float:

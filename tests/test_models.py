@@ -192,6 +192,21 @@ class TestInterest:
         )
         assert interest.matches("content", "https://github.com/python/cpython")
 
+    def test_interest_matches_malformed_pattern_does_not_poison(self):
+        """A malformed regex pattern must not abort the whole match.
+
+        Regression for TICKET-258: previously 'except re.error: return False'
+        made a single bad pattern poison every later valid pattern.
+        """
+        interest = Interest(
+            name="mixed",
+            url_patterns=["[bad-regex", "example.com"],
+        )
+        assert interest.matches("content", "https://example.com/page")
+
+        # Control: a genuinely non-matching url still returns False.
+        assert not interest.matches("content", "https://other.org/page")
+
     def test_interest_matches_disabled(self):
         interest = Interest(
             name="python",
