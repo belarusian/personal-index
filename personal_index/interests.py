@@ -99,6 +99,8 @@ class InterestStore:
         patterns = []
         for interest in self._interests.values():
             for pattern_str in interest.url_patterns:
+                if not isinstance(pattern_str, str):
+                    continue
                 with suppress(re.error):
                     patterns.append(re.compile(pattern_str))
         return patterns

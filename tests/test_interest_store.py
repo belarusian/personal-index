@@ -123,3 +123,13 @@ class TestInterestStore:
         store = InterestStore(store_path=path)
         store.add(Interest("A", InterestType.KEYWORD, "a", priority=5))
         assert Path(path).exists()
+
+
+def test_get_all_url_patterns_non_string_does_not_crash(tmp_path: Path):
+    """TICKET-261: non-string url_patterns elements must not crash get_all_url_patterns()."""
+    store = InterestStore(store_path=str(tmp_path / "interests.json"))
+    store.add(Interest("A", InterestType.KEYWORD, "a", url_patterns=[1, "valid", None]))
+    patterns = store.get_all_url_patterns()
+    # Only the valid string pattern is compiled; non-string elements are skipped
+    assert len(patterns) == 1
+    assert patterns[0].pattern == "valid"

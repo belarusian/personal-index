@@ -102,6 +102,8 @@ class Interest:
             if isinstance(topic, str) and topic.lower() in text_lower:
                 return True
         for pattern in self.url_patterns:
+            if not isinstance(pattern, str):
+                continue
             try:
                 import fnmatch
                 import re
