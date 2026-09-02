@@ -82,6 +82,30 @@ class TestCronParsing:
         assert task.next_run is not None
         assert task._hour == [9, 11, 13, 15, 17]
 
+    def test_cron_dom_dow_or(self, scheduler):
+        # Standard cron: when both dom and dow are restricted, a day
+        # matches if it satisfies dom OR dow. '0 0 1 * 1' = at 00:00 on
+        # the 1st of the month OR on Monday. The next run must be the
+        # next Monday (weekday 0), not the next day that is both the
+        # 1st and a Monday.
+        task = scheduler.add_task("T", "crawl", "0 0 1 * 1")
+        assert task.next_run is not None
+        assert task.next_run.weekday() == 0  # Monday
+        assert task.next_run.hour == 0
+        assert task.next_run.minute == 0
+
+    def test_cron_dow_only_still_schedules(self, scheduler):
+        # Only dow restricted (dom is '*'): next run is the next Monday.
+        task = scheduler.add_task("T", "crawl", "0 0 * * 1")
+        assert task.next_run is not None
+        assert task.next_run.weekday() == 0
+
+    def test_cron_dom_only_still_schedules(self, scheduler):
+        # Only dom restricted (dow is '*'): next run is the next 1st.
+        task = scheduler.add_task("T", "crawl", "0 0 1 * *")
+        assert task.next_run is not None
+        assert task.next_run.day == 1
+
     def test_cron_multiple(self, scheduler):
         task = scheduler.add_task("T", "crawl", "0,30 * * * *")
         assert task.next_run is not None
