@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any
 
 from personal_index.content_timeline.timeline import Timeline
-from personal_index.content_timeline.timeline_entry import TimelineEventType
+from personal_index.content_timeline.timeline_event import TimelineEventType
 
 
 class ViewMode(Enum):

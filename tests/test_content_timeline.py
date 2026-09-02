@@ -6,9 +6,7 @@ serialization round-trips, and TimelineView rendering in all modes.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
-
-import pytest
+from datetime import date, datetime, timezone
 
 from personal_index.content_timeline import (
     EntryEventType,
@@ -126,11 +124,15 @@ class TestTimelineQueries:
 
     def test_get_latest_event_overall(self) -> None:
         tl = self._populated()
-        assert tl.get_latest_event().event_id == "e4"
+        latest = tl.get_latest_event()
+        assert latest is not None
+        assert latest.event_id == "e4"
 
     def test_get_latest_event_by_content(self) -> None:
         tl = self._populated()
-        assert tl.get_latest_event("c1").event_id == "e2"
+        latest = tl.get_latest_event("c1")
+        assert latest is not None
+        assert latest.event_id == "e2"
 
     def test_get_latest_event_empty(self) -> None:
         assert Timeline().get_latest_event() is None
