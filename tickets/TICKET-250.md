@@ -1,6 +1,6 @@
 # TICKET-250: content_scheduler cron day-of-month / day-of-week combined with AND instead of OR
 
-Status: OPEN
+Status: RESOLVED (merged to main, cycle 4, gh #329 closed)
 Module: personal_index/content_scheduler.py
 Issue: #329
 
