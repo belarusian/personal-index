@@ -51,6 +51,9 @@ class ContentPinner:
         try:
             with open(self.storage_path, "r") as f:
                 data = json.load(f)
+                if not isinstance(data, dict):
+                    self._pinned = {}
+                    return
             self._pinned = {}
             for item_id, item_data in data.items():
                 self._pinned[item_id] = PinnedItem(
