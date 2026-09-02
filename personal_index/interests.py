@@ -31,6 +31,9 @@ class InterestStore:
         try:
             with open(self.store_path, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                self._interests = {}
+                return
             self._interests = {
                 name: Interest.from_dict(d)
                 for name, d in data.items()
