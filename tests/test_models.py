@@ -645,3 +645,19 @@ class TestPipelineStats:
         assert "crawled=0" in summary
         assert "errors=0" in summary
         assert "time=0.0s" in summary
+
+
+def test_interest_matches_non_string_topic_does_not_crash():
+    """TICKET-259: non-string topics elements must not crash matches()."""
+    interest = Interest(name="test", topics=["python", 42, None])
+    # Should not raise AttributeError
+    result = interest.matches("I love python programming")
+    assert result is True
+
+
+def test_interest_score_non_string_topic_does_not_crash():
+    """TICKET-259: non-string topics elements must not crash score()."""
+    interest = Interest(name="test", topics=["python", 42, None])
+    # Should not raise AttributeError
+    result = interest.score("I love python programming")
+    assert result > 0
