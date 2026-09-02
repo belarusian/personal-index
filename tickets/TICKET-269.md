@@ -1,6 +1,6 @@
 # TICKET-269: config/__init__.py non-dict JSON guard
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/config/__init__.py
 - Class: json.load non-dict guard sweep (7th instance)
 
@@ -32,4 +32,8 @@ not a store object with state fields).
 3 regression tests (null / list / number) per loader, mirroring the
 established pattern.
 
-## Issue: #367
+## Issue: #367 (closed)
+
+## Resolution
+- Branch build24/config-json-guard, PR #368, squash-merged d93f6ea to main, CI green (3 jobs), gh #367 closed.
+- 6 regression tests added (null/list/number per loader).
