@@ -1,6 +1,6 @@
 # TICKET-265: ScheduleStore._load crashes on non-dict JSON storage
 
-**Status**: OPEN
+**Status**: RESOLVED
 **Module**: `personal_index/scheduler.py`
 **Symptom**: `ScheduleStore._load` (line ~58) calls `data.items()` on the result of `json.load(f)` without verifying it is a dict. If the storage file contains valid JSON that is not a dict (null, list, number), an `AttributeError` is raised. The except clause catches `(json.JSONDecodeError, KeyError, TypeError)` but NOT `AttributeError`.
 
