@@ -184,3 +184,34 @@ class TestRemovePageNoUnusedVariable:
         assert 'hello' not in search_index._word_index
         assert 'world' not in search_index._word_index
         assert search_index.get_page_count() == 0
+
+
+class TestSearchIndexNonDictJSON:
+    """Regression tests for TICKET-264: non-dict top-level JSON in storage."""
+
+    def test_null_storage_resets_to_empty(self, tmp_path):
+        import json
+        db_path = str(tmp_path / "index.json")
+        with open(db_path, "w") as f:
+            json.dump(None, f)
+        idx = SearchIndex(db_path=db_path)
+        assert idx._pages == {}
+        assert idx._word_index == {}
+
+    def test_list_storage_resets_to_empty(self, tmp_path):
+        import json
+        db_path = str(tmp_path / "index.json")
+        with open(db_path, "w") as f:
+            json.dump([1, 2, 3], f)
+        idx = SearchIndex(db_path=db_path)
+        assert idx._pages == {}
+        assert idx._word_index == {}
+
+    def test_number_storage_resets_to_empty(self, tmp_path):
+        import json
+        db_path = str(tmp_path / "index.json")
+        with open(db_path, "w") as f:
+            json.dump(42, f)
+        idx = SearchIndex(db_path=db_path)
+        assert idx._pages == {}
+        assert idx._word_index == {}

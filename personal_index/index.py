@@ -49,6 +49,10 @@ class SearchIndex:
         try:
             with open(self.db_path, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                self._pages = {}
+                self._word_index = {}
+                return
             self._pages = {url: IndexedPage.from_dict(d) for url, d in data.get("pages", {}).items()}
             self._word_index = data.get("word_index", {})
         except (json.JSONDecodeError, KeyError, TypeError):
