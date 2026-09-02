@@ -68,6 +68,16 @@ class TestContentVersioning:
         assert v.author == "bob"
         assert v.message == "fix typo"
 
+    def test_create_version_no_id_collision_after_delete(self, versioning):
+        versioning.create_version("item-1", "a")  # item-1_v1
+        versioning.create_version("item-1", "b")  # item-1_v2
+        assert versioning.delete_version("item-1", "item-1_v1") is True
+        v3 = versioning.create_version("item-1", "c")
+        ids = [v.version_id for v in versioning.get_versions("item-1")]
+        assert ids == ["item-1_v2", "item-1_v3"]
+        assert len(ids) == len(set(ids))
+        assert v3.version_id == "item-1_v3"
+
     def test_create_version_multiple_items(self, versioning):
         versioning.create_version("item-1", "content A")
         versioning.create_version("item-2", "content B")

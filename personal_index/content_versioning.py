@@ -99,7 +99,15 @@ class ContentVersioning:
         Returns:
             The created ContentVersion object.
         """
-        version_id = f"{item_id}_v{len(self._versions.get(item_id, [])) + 1}"
+        existing = self._versions.get(item_id, [])
+        prefix = f"{item_id}_v"
+        max_suffix = 0
+        for v in existing:
+            if v.version_id.startswith(prefix):
+                tail = v.version_id[len(prefix):]
+                if tail.isdigit():
+                    max_suffix = max(max_suffix, int(tail))
+        version_id = f"{item_id}_v{max_suffix + 1}"
         version = ContentVersion(
             version_id=version_id,
             content=content,
