@@ -190,3 +190,31 @@ class TestTagStoreLoadNonePath:
         store = TagStore(store_path=None)
         store._save()
         # Should not raise any error
+
+
+class TestTagStoreNonDictJSON:
+    """Regression tests for TICKET-267: non-dict JSON in storage file."""
+
+    def test_null_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "tags.json")
+        with open(path, "w") as f:
+            f.write("null")
+        store = TagStore(store_path=path)
+        assert store._tags == {}
+        assert store._page_tags == {}
+
+    def test_list_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "tags.json")
+        with open(path, "w") as f:
+            f.write("[1, 2, 3]")
+        store = TagStore(store_path=path)
+        assert store._tags == {}
+        assert store._page_tags == {}
+
+    def test_number_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "tags.json")
+        with open(path, "w") as f:
+            f.write("42")
+        store = TagStore(store_path=path)
+        assert store._tags == {}
+        assert store._page_tags == {}
