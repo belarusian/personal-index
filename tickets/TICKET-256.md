@@ -34,4 +34,4 @@ Add a test asserting a title-only match yields signal_sources == ["title"]
 Issue: #341
 
 ## Status
-OPEN
+RESOLVED (commit 29815ee, gh #341 closed, PR #342 merged)
