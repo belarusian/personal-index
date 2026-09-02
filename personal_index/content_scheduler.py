@@ -60,26 +60,33 @@ class ScheduledTask:
         if len(parts) != 5:
             self.next_run = None
             return
-        minute, hour, dom, month, dow = parts
-        self._minute = self._parse_field(minute, 0, 59)
-        self._hour = self._parse_field(hour, 0, 23)
-        self._dom = self._parse_field(dom, 1, 31)
-        self._dom_restricted = dom.strip() != "*"
-        self._month = self._parse_field(month, 1, 12)
-        # Cron: 0=Sunday, 1=Monday, ..., 6=Saturday. Standard cron also
-        # accepts 7 as an alias for Sunday (0), so parse the field over the
-        # full 0-7 range and fold 7 into 0 before converting.
-        # Python weekday(): 0=Monday, ..., 6=Sunday
-        # Convert cron DOW to Python weekday
-        cron_dow = self._parse_field(dow, 0, 7)
-        cron_dow = [0 if d == 7 else d for d in cron_dow]
-        self._dow = []
-        for d in cron_dow:
-            if d == 0:
-                self._dow.append(6)  # Sunday
-            else:
-                self._dow.append(d - 1)  # Shift: cron 1(Mon) -> python 0(Mon)
-        self._dow_restricted = dow.strip() != "*"
+        try:
+            minute, hour, dom, month, dow = parts
+            self._minute = self._parse_field(minute, 0, 59)
+            self._hour = self._parse_field(hour, 0, 23)
+            self._dom = self._parse_field(dom, 1, 31)
+            self._dom_restricted = dom.strip() != "*"
+            self._month = self._parse_field(month, 1, 12)
+            # Cron: 0=Sunday, 1=Monday, ..., 6=Saturday. Standard cron also
+            # accepts 7 as an alias for Sunday (0), so parse the field over the
+            # full 0-7 range and fold 7 into 0 before converting.
+            # Python weekday(): 0=Monday, ..., 6=Sunday
+            # Convert cron DOW to Python weekday
+            cron_dow = self._parse_field(dow, 0, 7)
+            cron_dow = [0 if d == 7 else d for d in cron_dow]
+            self._dow = []
+            for d in cron_dow:
+                if d == 0:
+                    self._dow.append(6)  # Sunday
+                else:
+                    self._dow.append(d - 1)  # Shift: cron 1(Mon) -> python 0(Mon)
+            self._dow_restricted = dow.strip() != "*"
+        except ValueError:
+            # Malformed field content (e.g. a zero step '*/0' or a
+            # non-numeric token) is treated as "never runs", consistent
+            # with the wrong-field-count case above.
+            self.next_run = None
+            return
         self._compute_next_run()
 
     def _parse_field(self, field: str, min_val: int, max_val: int) -> list[int]:
