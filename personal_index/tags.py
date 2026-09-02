@@ -126,12 +126,16 @@ class TagStore:
         return True
 
     def remove_tag_from_page(self, url: str, tag_name: str) -> bool:
-        """Remove a tag from a page."""
-        if url not in self._page_tags:
-            return False
-        self._page_tags[url].discard(tag_name)
-        self._save()
-        return True
+        """Remove a tag from a page.
+
+        Returns True only if the tag was actually present on the page and
+        removed; False if the page had no such tag (a no-op).
+        """
+        present = tag_name in self._page_tags.get(url, set())
+        if present:
+            self._page_tags[url].discard(tag_name)
+            self._save()
+        return present
 
     def get_tags_for_page(self, url: str) -> list[Tag]:
         """Get all tags for a page."""

@@ -128,6 +128,15 @@ class TestTagCommands:
         assert result.exit_code == 0
         assert "Removed tag" in result.output
 
+    def test_remove_tag_not_present(self, runner, tmp_path):
+        data_dir = str(tmp_path / "data")
+        runner.invoke(main, ['--data-dir', data_dir, 'tags', 'add', 'important', 'https://example.com/page1'])
+        # "missing" was never added to this page -> should report not found
+        result = runner.invoke(main, ['--data-dir', data_dir, 'tags', 'remove', 'missing', 'https://example.com/page1'])
+        assert result.exit_code == 0
+        assert "not found" in result.output
+        assert "Removed tag" not in result.output
+
 
 class TestScheduleCommands:
     def test_schedule_list(self, runner, tmp_path):
