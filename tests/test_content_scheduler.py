@@ -106,6 +106,24 @@ class TestCronParsing:
         assert task.next_run is not None
         assert task.next_run.day == 1
 
+    def test_cron_dow_7_is_sunday(self, scheduler):
+        # Standard cron accepts 7 as an alias for Sunday (0). '0 0 * * 7'
+        # must schedule on a Sunday (weekday 6), identical to '0 0 * * 0'.
+        task = scheduler.add_task("T", "crawl", "0 0 * * 7")
+        assert task.next_run is not None
+        assert task.next_run.weekday() == 6  # Sunday
+        assert task._dow == [6]
+        # Must match the dow=0 result exactly.
+        task0 = scheduler.add_task("T0", "crawl", "0 0 * * 0")
+        assert task.next_run == task0.next_run
+
+    def test_cron_dow_7_in_range(self, scheduler):
+        # A range ending in 7 (e.g. '6-7') covers Saturday and Sunday.
+        task = scheduler.add_task("T", "crawl", "0 0 * * 6-7")
+        assert task._dow == [5, 6]  # Saturday, Sunday
+        assert task.next_run is not None
+        assert task.next_run.weekday() in (5, 6)
+
     def test_cron_multiple(self, scheduler):
         task = scheduler.add_task("T", "crawl", "0,30 * * * *")
         assert task.next_run is not None

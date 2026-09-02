@@ -66,10 +66,13 @@ class ScheduledTask:
         self._dom = self._parse_field(dom, 1, 31)
         self._dom_restricted = dom.strip() != "*"
         self._month = self._parse_field(month, 1, 12)
-        # Cron: 0=Sunday, 1=Monday, ..., 6=Saturday
+        # Cron: 0=Sunday, 1=Monday, ..., 6=Saturday. Standard cron also
+        # accepts 7 as an alias for Sunday (0), so parse the field over the
+        # full 0-7 range and fold 7 into 0 before converting.
         # Python weekday(): 0=Monday, ..., 6=Sunday
         # Convert cron DOW to Python weekday
-        cron_dow = self._parse_field(dow, 0, 6)
+        cron_dow = self._parse_field(dow, 0, 7)
+        cron_dow = [0 if d == 7 else d for d in cron_dow]
         self._dow = []
         for d in cron_dow:
             if d == 0:
