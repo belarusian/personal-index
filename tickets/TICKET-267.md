@@ -1,6 +1,6 @@
 # TICKET-267: Unguarded non-dict JSON load in TagStore._load
 
-## Status: OPEN
+## Status: RESOLVED
 
 ## File
 personal_index/tags.py
