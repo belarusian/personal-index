@@ -1,6 +1,6 @@
 # TICKET-252: content_scheduler ScheduledTask constructor raises on malformed cron field content
 
-Status: OPEN
+Status: RESOLVED (merged to main, gh #333 closed)
 Module: personal_index/content_scheduler.py
 Symptom: A 5-field cron expression whose field *content* is malformed (e.g. a
 zero step `*/0`, a non-numeric token `abc`) makes the `ScheduledTask`
