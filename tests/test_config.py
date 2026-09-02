@@ -141,3 +141,53 @@ class TestConfigManager:
         config = AppConfig()
         interest = manager.get_interest(config, "nonexistent")
         assert interest is None
+
+
+class TestAppConfigLoadNonDictGuard:
+    """Regression: non-dict JSON in config file must not crash AppConfig.load."""
+
+    def test_load_null_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("null")
+        config = AppConfig.load(config_path)
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_list_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("[1, 2, 3]")
+        config = AppConfig.load(config_path)
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_number_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("42")
+        config = AppConfig.load(config_path)
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+
+class TestConfigManagerLoadNonDictGuard:
+    """Regression: non-dict JSON in config file must not crash ConfigManager.load."""
+
+    def test_load_null_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("null")
+        config = ConfigManager(config_path=config_path).load()
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_list_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("[1, 2, 3]")
+        config = ConfigManager(config_path=config_path).load()
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_number_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("42")
+        config = ConfigManager(config_path=config_path).load()
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
