@@ -661,3 +661,17 @@ def test_interest_score_non_string_topic_does_not_crash():
     # Should not raise AttributeError
     result = interest.score("I love python programming")
     assert result > 0
+
+
+def test_interest_matches_non_string_url_pattern_does_not_crash():
+    """TICKET-261: non-string url_patterns elements must not crash matches()."""
+    interest = Interest(name="test", url_patterns=[1, "*.example.com/*", None])
+    # Should not raise TypeError; the valid glob pattern still matches
+    assert interest.matches("hello", url="http://foo.example.com/") is True
+
+
+def test_interest_matches_non_string_url_pattern_no_match():
+    """TICKET-261: non-string url_patterns elements must not crash matches() (no match)."""
+    interest = Interest(name="test", url_patterns=[1, None])
+    # Should not raise TypeError; no valid pattern -> no match
+    assert interest.matches("hello", url="http://foo.example.com/") is False
