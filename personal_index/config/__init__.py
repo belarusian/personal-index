@@ -70,6 +70,8 @@ class AppConfig:
         if config_path.exists():
             with open(config_path) as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                return cls()
             return cls.from_dict(data)
         return cls()
 
@@ -85,6 +87,8 @@ class ConfigManager:
         if self.config_path.exists():
             with open(self.config_path) as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                return AppConfig()
             return AppConfig.from_dict(data)
         return AppConfig()
 
