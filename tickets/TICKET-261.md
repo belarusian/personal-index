@@ -1,6 +1,6 @@
 # TICKET-261: non-string element in `Interest.url_patterns` crashes `Interest.matches` and `InterestStore.get_all_url_patterns`
 
-Status: OPEN
+Status: RESOLVED (merged to main, gh #351 closed)
 
 ## File
 - `personal_index/models.py` — `Interest.matches` (url_patterns loop, line 104)
