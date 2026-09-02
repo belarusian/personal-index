@@ -151,3 +151,39 @@ class TestContentMerger:
         result = merger.merge(sources)
         assert len(result.sources) == 3
         assert "https://a.com" in result.sources
+
+
+class TestNonStringTagGuard:
+    """TICKET-260: non-string tag elements must not crash any merge strategy."""
+
+    def _bad_source(self) -> MergeSource:
+        return MergeSource(
+            url="https://example.com",
+            title="Test",
+            content="Content here",
+            tags=[1, "valid", None],  # type: ignore[list-item]
+        )
+
+    def test_concatenate_non_string_tag_does_not_crash(self):
+        merger = ContentMerger(strategy="concatenate")
+        result = merger.merge([self._bad_source()])
+        assert result is not None
+        assert result.tags == ["valid"]
+
+    def test_longest_non_string_tag_does_not_crash(self):
+        merger = ContentMerger(strategy="longest")
+        result = merger.merge([self._bad_source()])
+        assert result is not None
+        assert result.tags == ["valid"]
+
+    def test_highest_priority_non_string_tag_does_not_crash(self):
+        merger = ContentMerger(strategy="highest_priority")
+        result = merger.merge([self._bad_source()])
+        assert result is not None
+        assert result.tags == ["valid"]
+
+    def test_unique_paragraphs_non_string_tag_does_not_crash(self):
+        merger = ContentMerger(strategy="unique_paragraphs")
+        result = merger.merge([self._bad_source()])
+        assert result is not None
+        assert result.tags == ["valid"]

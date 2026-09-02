@@ -103,7 +103,7 @@ class ContentMerger:
         for source in sources:
             if source.content:
                 contents.append(source.content.strip())
-            all_tags.update(t.lower() for t in source.tags)
+            all_tags.update(t.lower() for t in source.tags if isinstance(t, str))
             all_sources.append(source.url)
 
         merged_content = "\n\n---\n\n".join(contents) if contents else ""
@@ -124,7 +124,7 @@ class ContentMerger:
         longest = max(sources, key=lambda s: len(s.content))
         all_tags: set[str] = set()
         for source in sources:
-            all_tags.update(t.lower() for t in source.tags)
+            all_tags.update(t.lower() for t in source.tags if isinstance(t, str))
 
         return MergedContent(
             url=longest.url,
@@ -142,7 +142,7 @@ class ContentMerger:
         primary = sources[0]  # Already sorted by priority
         all_tags: set[str] = set()
         for source in sources:
-            all_tags.update(t.lower() for t in source.tags)
+            all_tags.update(t.lower() for t in source.tags if isinstance(t, str))
 
         return MergedContent(
             url=primary.url,
@@ -169,7 +169,7 @@ class ContentMerger:
                 if normalized and normalized not in seen_paragraphs:
                     seen_paragraphs.add(normalized)
                     merged_paragraphs.append(para.strip())
-            all_tags.update(t.lower() for t in source.tags)
+            all_tags.update(t.lower() for t in source.tags if isinstance(t, str))
 
         merged_content = "\n\n".join(merged_paragraphs)
 
