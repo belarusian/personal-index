@@ -306,6 +306,38 @@ class TestSearchIndex:
             assert r1["results"][0]["item"]["id"] != r2["results"][0]["item"]["id"]
 
 
+class TestSearchIndexLoadNonDictGuard:
+    """Regression: non-dict JSON in index file must not crash SearchIndex.load_index."""
+
+    def test_load_null_json(self, tmp_path):
+        filepath = str(tmp_path / "idx.json")
+        with open(filepath, "w") as f:
+            f.write("null")
+        idx = SearchIndex()
+        idx.load_index(filepath)
+        assert idx.item_count == 0
+        assert idx.term_count == 0
+
+    def test_load_list_json(self, tmp_path):
+        filepath = str(tmp_path / "idx.json")
+        with open(filepath, "w") as f:
+            f.write("[1, 2, 3]")
+        idx = SearchIndex()
+        idx.load_index(filepath)
+        assert idx.item_count == 0
+        assert idx.term_count == 0
+
+    def test_load_number_json(self, tmp_path):
+        filepath = str(tmp_path / "idx.json")
+        with open(filepath, "w") as f:
+            f.write("42")
+        idx = SearchIndex()
+        idx.load_index(filepath)
+        assert idx.item_count == 0
+        assert idx.term_count == 0
+
+
+
 # ---------------------------------------------------------------------------
 # ContentSearch tests
 # ---------------------------------------------------------------------------
