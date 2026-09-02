@@ -27,4 +27,4 @@ declared type.
 
 ## Issue: #326 (gh)
 
-## Status: OPEN
+## Status: RESOLVED (merged to main, cycle 2)

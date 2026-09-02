@@ -28,4 +28,4 @@ modes with and without event_type filter.
 
 ## Issue: #325 (gh)
 
-## Status: OPEN
+## Status: RESOLVED (merged to main, cycle 2)

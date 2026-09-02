@@ -22,4 +22,4 @@ at module top; replace the two `__import__("datetime").timedelta` calls with
 
 ## Issue: #324 (gh)
 
-## Status: OPEN
+## Status: RESOLVED (merged to main, cycle 2)
