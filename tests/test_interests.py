@@ -144,3 +144,21 @@ class TestInterestStore:
     def test_empty_url_patterns(self):
         interest = Interest(name="nopatterns")
         assert interest.url_patterns == []
+
+    def test_load_null_json(self, tmp_path):
+        path = tmp_path / "interests.json"
+        path.write_text("null")
+        store = InterestStore(store_path=str(path))
+        assert len(store.list_all()) == 0
+
+    def test_load_list_json(self, tmp_path):
+        path = tmp_path / "interests.json"
+        path.write_text("[1, 2, 3]")
+        store = InterestStore(store_path=str(path))
+        assert len(store.list_all()) == 0
+
+    def test_load_number_json(self, tmp_path):
+        path = tmp_path / "interests.json"
+        path.write_text("42")
+        store = InterestStore(store_path=str(path))
+        assert len(store.list_all()) == 0
