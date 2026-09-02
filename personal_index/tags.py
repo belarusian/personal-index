@@ -52,6 +52,10 @@ class TagStore:
         try:
             with open(self.store_path, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                self._tags = {}
+                self._page_tags = {}
+                return
             for name, tag_data in data.get("tags", {}).items():
                 self._tags[name] = Tag(
                     name=name,
