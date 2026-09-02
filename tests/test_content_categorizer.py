@@ -416,6 +416,59 @@ class TestContentCategorizerInternal:
         assert isinstance(matched, list)
         assert isinstance(sources, list)
 
+    def test_score_topic_title_only_source_label(self):
+        """A keyword matched only in the title must be labeled 'title', not 'text'."""
+        cat = ContentCategorizer()
+        topic = TopicCategory(name="tech", keywords=["python"])
+        _score, matched, sources = cat._score_topic(
+            topic=topic,
+            text_tokens=set(),
+            title_tokens={"python"},
+            meta_tokens=set(),
+            text_lower="",
+            title_lower="python",
+            meta_lower="",
+            url_hints=set(),
+        )
+        assert matched == ["python"]
+        assert sources == ["title"]
+        assert "text" not in sources
+
+    def test_score_topic_meta_only_source_label(self):
+        """A keyword matched only in the meta description must be labeled 'meta_description'."""
+        cat = ContentCategorizer()
+        topic = TopicCategory(name="tech", keywords=["python"])
+        _score, matched, sources = cat._score_topic(
+            topic=topic,
+            text_tokens=set(),
+            title_tokens=set(),
+            meta_tokens={"python"},
+            text_lower="",
+            title_lower="",
+            meta_lower="python",
+            url_hints=set(),
+        )
+        assert matched == ["python"]
+        assert sources == ["meta_description"]
+        assert "text" not in sources
+
+    def test_score_topic_text_and_title_sources(self):
+        """Text and title matches produce distinct, correctly-labeled sources."""
+        cat = ContentCategorizer()
+        topic = TopicCategory(name="tech", keywords=["python", "code"])
+        _score, matched, sources = cat._score_topic(
+            topic=topic,
+            text_tokens={"python"},
+            title_tokens={"code"},
+            meta_tokens=set(),
+            text_lower="python",
+            title_lower="code",
+            meta_lower="",
+            url_hints=set(),
+        )
+        assert sorted(matched) == ["code", "python"]
+        assert sources == ["text", "title"]
+
     def test_match_keywords_single_word(self):
         cat = ContentCategorizer()
         matches = cat._match_keywords(
