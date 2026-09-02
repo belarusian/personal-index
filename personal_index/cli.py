@@ -907,6 +907,10 @@ def remove(ctx, url, data_dir):
     for p in pages:
         if p.url == url:
             idx.remove_page(p.url)
+            # Drop the page's tag associations too, so the TagStore does not
+            # keep orphan entries for a page that no longer exists in the index
+            # (mirrors what `clear --tags` does at the whole-store level).
+            get_tag_store(dd).remove_page(p.url)
             found = True
             break
     if not found:

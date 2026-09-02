@@ -557,3 +557,50 @@ class TestCLIOtherCommands:
         """Test recommend --help works."""
         result = runner.invoke(main, ["recommend", "--help"])
         assert result.exit_code == 0
+
+
+# ── CLI Remove Command (tag cleanup parity) ───────────────────────────
+class TestCLIRemoveCommand:
+    """Test `remove` drops the page's tags alongside the index entry."""
+
+    def test_remove_cleans_orphan_tags(self, runner, tmp_path):
+        """Removing a page must also drop its TagStore associations."""
+        from personal_index.index import SearchIndex
+        from personal_index.models import IndexedPage
+        from personal_index.tags import TagStore
+
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Seed the search index with a page and tag it.
+        idx = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        idx.add_page(IndexedPage(url="https://example.com/page1", title="T"))
+        tag_store = TagStore(store_path=os.path.join(data_dir, "tags.json"))
+        tag_store.add_tag_to_page("https://example.com/page1", "important")
+
+        # Remove the page via the CLI (it uses its own store instances).
+        result = runner.invoke(main, [
+            "--data-dir", data_dir,
+            "remove", "https://example.com/page1",
+        ])
+        assert result.exit_code == 0
+
+        # Reload fresh instances from disk to observe the persisted state.
+        idx2 = SearchIndex(db_path=os.path.join(data_dir, "search_index.json"))
+        tag_store2 = TagStore(store_path=os.path.join(data_dir, "tags.json"))
+        # The page is gone from the index...
+        assert idx2.get_page("https://example.com/page1") is None
+        # ...and its tag association is cleaned up (no orphan).
+        assert tag_store2.get_pages_for_tag("important") == []
+        assert tag_store2.get_tags_for_page("https://example.com/page1") == []
+
+    def test_remove_not_found(self, runner, tmp_path):
+        """Removing an unknown URL exits non-zero."""
+        data_dir = str(tmp_path / "data")
+        os.makedirs(data_dir, exist_ok=True)
+        result = runner.invoke(main, [
+            "--data-dir", data_dir,
+            "remove", "https://example.com/missing",
+        ])
+        assert result.exit_code == 1
+        assert "not found" in result.output
