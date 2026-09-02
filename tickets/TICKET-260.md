@@ -26,4 +26,4 @@ with if isinstance(t, str) in all four merge methods.
 Issue: #349
 
 ## Status
-OPEN
+RESOLVED (merged to main, gh #349 closed)
