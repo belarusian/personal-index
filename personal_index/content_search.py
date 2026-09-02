@@ -469,6 +469,8 @@ class SearchIndex:
         import json as _json
         with open(filepath) as f:
             data = _json.load(f)
+        if not isinstance(data, dict):
+            return
         self._items = data["items"]
         self._index = {k: set(v) for k, v in data["index"].items()}
         self._term_freq = data["term_freq"]
