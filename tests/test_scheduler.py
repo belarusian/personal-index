@@ -219,3 +219,27 @@ class TestScheduler:
     def test_run_schedule_nonexistent(self, scheduler):
         count = scheduler.run_schedule("nonexistent")
         assert count == 0
+
+class TestScheduleStoreNonDictJSON:
+    """Regression tests for TICKET-265: non-dict JSON in storage file."""
+
+    def test_null_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        with open(path, "w") as f:
+            f.write("null")
+        store = ScheduleStore(path=path)
+        assert store._entries == {}
+
+    def test_list_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        with open(path, "w") as f:
+            f.write("[1, 2, 3]")
+        store = ScheduleStore(path=path)
+        assert store._entries == {}
+
+    def test_number_storage_resets_to_empty(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        with open(path, "w") as f:
+            f.write("42")
+        store = ScheduleStore(path=path)
+        assert store._entries == {}
