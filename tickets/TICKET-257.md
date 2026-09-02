@@ -28,4 +28,4 @@ deletions. Add a regression test asserting unique ids after delete+create.
 ## Issue: #343
 
 ## Status
-OPEN
+RESOLVED (merged to main as 2ef790b, gh #343 closed)
