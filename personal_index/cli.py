@@ -1193,6 +1193,18 @@ def schedule_run(ctx, name, data_dir):
     try:
         stats = runner.run(entry.config.seed_urls)
         click.echo(f"Job complete: {stats.pages_crawled} pages crawled")
+        # Persist the run back to the store so run_count, last_run and
+        # next_run reflect the manual run (mirrors Scheduler.run_schedule).
+        from datetime import datetime, timedelta, timezone
+        from personal_index.scheduler import ScheduleStore
+        store = ScheduleStore(path=store_path)
+        entry.run_count += 1
+        entry.total_pages_indexed += stats.pages_crawled
+        entry.last_run = datetime.now(timezone.utc)
+        entry.next_run = entry.last_run + timedelta(
+            hours=entry.config.interval_hours
+        )
+        store.update(entry)
     except Exception as e:  # noqa: BLE001
         click.echo(f"Job failed: {e}", err=True)
         sys.exit(1)
