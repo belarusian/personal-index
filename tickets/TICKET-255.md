@@ -1,6 +1,6 @@
 # TICKET-255: TagStore.remove_tag_from_page returns True when the tag was not on the page
 
-Status: OPEN
+Status: RESOLVED (merged to main, gh #339 closed, commit e23aae4)
 Module: personal_index/tags.py
 Symptom: `remove_tag_from_page(url, tag_name)` returns `True` whenever `url` is
 present in `_page_tags`, even if `tag_name` was never associated with that page.
