@@ -57,6 +57,9 @@ class ScheduleStore:
             with open(self.path, "r") as f:
                 data = json.load(f)
             self._entries = {}
+            if not isinstance(data, dict):
+                self._entries = {}
+                return
             for name, entry_data in data.items():
                 config = ScheduleConfig(**entry_data["config"])
                 last_run = None
