@@ -1,6 +1,6 @@
 # TICKET-306
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/storage.py
 - Defect class: (a) unguarded exception / crash on corrupt input
 - Issue: #445
