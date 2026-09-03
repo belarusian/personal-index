@@ -141,6 +141,13 @@ class ContentLinker:
         ]
 
     def clear_cache(self) -> None:
-        """Clear all cached data."""
+        """Reset the linker to an empty state.
+
+        Removes ALL stored content items (the primary ``_items`` store
+        added via :meth:`add_item`) in addition to the derived
+        ``_link_cache`` of precomputed related-item results. After this
+        call, :meth:`get_item` and :meth:`get_all_items` return nothing;
+        this is a full reset, not just a link-cache invalidation.
+        """
         self._items.clear()
         self._link_cache.clear()
