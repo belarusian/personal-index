@@ -157,6 +157,8 @@ class URLHistory:
             return 0
         with open(str(path)) as f:
             data = json.load(f)
+        if not isinstance(data, list):
+            return 0
         self._history = [URLVisit.from_dict(d) for d in data]
         self._trim()
         return len(self._history)

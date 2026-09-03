@@ -140,3 +140,55 @@ class TestURLHistory:
         history.record("http://example.com", status_code=200, error="timeout")
         stats = history.get_stats()
         assert stats["error_count"] == 1
+
+
+class TestURLHistoryNonListGuard:
+    """Regression tests for non-list JSON in load()."""
+
+    def test_load_null_returns_zero(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text("null")
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
+
+    def test_load_number_returns_zero(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text("42")
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
+
+    def test_load_dict_returns_zero(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text('{"url": "http://example.com"}')
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
+
+    def test_load_valid_list_still_works(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text(
+            '[{"url": "http://example.com", "timestamp": "2024-01-01T00:00:00Z",'
+            ' "status_code": 200, "content_length": 0, "title": "",'
+            ' "user_agent": "", "response_time_ms": 0.0, "error": ""}]'
+        )
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 1
+        assert history.get_visits()[0].url == "http://example.com"
+
+    def test_load_valid_after_invalid_not_suppressed(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text("null")
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
+        filepath.write_text(
+            '[{"url": "http://good.com", "timestamp": "2024-01-01T00:00:00Z",'
+            ' "status_code": 200, "content_length": 0, "title": "",'
+            ' "user_agent": "", "response_time_ms": 0.0, "error": ""}]'
+        )
+        count = history.load(str(filepath))
+        assert count == 1
+        assert history.get_visits()[0].url == "http://good.com"
