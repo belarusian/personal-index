@@ -68,8 +68,11 @@ class AppConfig:
     def load(cls, config_path: Path) -> AppConfig:
         """Load config from disk."""
         if config_path.exists():
-            with open(config_path) as f:
-                data = json.load(f)
+            try:
+                with open(config_path) as f:
+                    data = json.load(f)
+            except json.JSONDecodeError:
+                return cls()
             if not isinstance(data, dict):
                 return cls()
             return cls.from_dict(data)
@@ -85,8 +88,11 @@ class ConfigManager:
     def load(self) -> AppConfig:
         """Load config, creating default if file doesn't exist."""
         if self.config_path.exists():
-            with open(self.config_path) as f:
-                data = json.load(f)
+            try:
+                with open(self.config_path) as f:
+                    data = json.load(f)
+            except json.JSONDecodeError:
+                return AppConfig()
             if not isinstance(data, dict):
                 return AppConfig()
             return AppConfig.from_dict(data)
