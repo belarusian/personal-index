@@ -1,6 +1,6 @@
 # TICKET-293: url_history.py URLHistory.load unguarded json.load
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #417
 - Module: personal_index/url_history.py
 - Function: URLHistory.load (line 153)
