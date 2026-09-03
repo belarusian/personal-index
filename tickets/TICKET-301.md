@@ -1,6 +1,6 @@
 # TICKET-301: cycle_signals.load_codemap leaks raw JSONDecodeError / returns non-dict
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/cycle_signals.py
 - Class: unguarded `json.loads` + missing non-dict guard (violates the module's own CLI error style)
 - Issue: #434
