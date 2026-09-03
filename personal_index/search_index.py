@@ -38,6 +38,8 @@ class SearchIndex:
         try:
             with open(self.index_path, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                return
             self._pages = {}
             for url, page_data in data.get("pages", {}).items():
                 page = CrawledPage.from_dict(page_data)

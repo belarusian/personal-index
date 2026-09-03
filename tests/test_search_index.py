@@ -142,3 +142,28 @@ class TestSearchIndex:
         ))
         results = index.search("content")
         assert results[0][0] == "https://a.com"
+
+
+class TestSearchIndexLoadGuard:
+    """Regression tests: non-dict JSON index file must not crash _load."""
+
+    def test_load_null_file(self, tmp_path):
+        path = str(tmp_path / "index.json")
+        with open(path, "w") as f:
+            f.write("null")
+        idx = SearchIndex(index_path=path)
+        assert idx.count() == 0
+
+    def test_load_list_file(self, tmp_path):
+        path = str(tmp_path / "index.json")
+        with open(path, "w") as f:
+            f.write("[1, 2, 3]")
+        idx = SearchIndex(index_path=path)
+        assert idx.count() == 0
+
+    def test_load_number_file(self, tmp_path):
+        path = str(tmp_path / "index.json")
+        with open(path, "w") as f:
+            f.write("42")
+        idx = SearchIndex(index_path=path)
+        assert idx.count() == 0
