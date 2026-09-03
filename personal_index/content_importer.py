@@ -31,7 +31,10 @@ class ContentImporter:
         return result
 
     def _import_json(self, data: str) -> list[dict[str, Any]]:
-        parsed = json.loads(data)
+        try:
+            parsed = json.loads(data)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Malformed JSON: {exc}") from exc
         if isinstance(parsed, dict):
             parsed = [parsed]
         return self._normalize_items(parsed)

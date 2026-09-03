@@ -180,8 +180,16 @@ class TestEdgeCases:
         assert ContentImporter.SUPPORTED_FORMATS == ("json", "html", "markdown", "rss", "csv")
 
     def test_import_json_invalid(self, importer):
-        with pytest.raises(json.JSONDecodeError):
+        # Malformed JSON raises a clean ValueError (module contract), not a raw
+        # json.JSONDecodeError traceback.
+        with pytest.raises(ValueError, match="Malformed JSON"):
             importer.import_content("not json", "json")
+
+    def test_import_json_malformed_no_jsondecodeerror_escapes(self, importer):
+        # Regression: a raw json.JSONDecodeError must not escape the public API.
+        with pytest.raises(ValueError) as excinfo:
+            importer.import_content("{not json", "json")
+        assert not isinstance(excinfo.value, json.JSONDecodeError)
 
     def test_import_csv_with_empty_values(self, importer):
         data = "title,description\nPost 1,\n,Desc 2"
