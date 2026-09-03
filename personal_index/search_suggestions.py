@@ -302,7 +302,7 @@ class SearchSuggestions:
         """Generate suggestions from trending queries with decay."""
         for entry in self._trending.values():
             query = entry.query
-            if query.startswith(prefix):
+            if query.lower().startswith(prefix):
                 decayed = self._apply_decay(entry)
                 score = min(decayed / max(sum(
                     self._apply_decay(e) for e in self._trending.values()
