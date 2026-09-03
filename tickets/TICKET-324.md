@@ -1,7 +1,7 @@
 # TICKET-324
 
-- Status: OPEN
-- Issue: #486 (open)
+- Status: RESOLVED (merged to main bbd78fe, gh #487 merged, gh #486 closed)
+- Issue: #486 (closed)
 - Module: personal_index/content_pin.py
 - Class: (b) doc/behavior drift — docstring over-promises a return path
 
