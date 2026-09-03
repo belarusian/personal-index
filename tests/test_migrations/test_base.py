@@ -173,3 +173,28 @@ class TestMigrationStore:
             f.write("not json")
         store = MigrationStore(store_path=path)
         assert store.get_applied_versions() == []
+
+
+class TestMigrationStoreLoadGuard:
+    """Regression: non-dict JSON in migration store file must not crash MigrationStore._load."""
+
+    def test_null_file(self, tmp_path):
+        store_file = tmp_path / "migrations.json"
+        store_file.write_text("null")
+        store = MigrationStore(store_path=str(store_file))
+        assert store.get_applied_versions() == []
+        assert store.get_current_version() == 0
+
+    def test_list_file(self, tmp_path):
+        store_file = tmp_path / "migrations.json"
+        store_file.write_text("[1, 2, 3]")
+        store = MigrationStore(store_path=str(store_file))
+        assert store.get_applied_versions() == []
+        assert store.get_current_version() == 0
+
+    def test_number_file(self, tmp_path):
+        store_file = tmp_path / "migrations.json"
+        store_file.write_text("42")
+        store = MigrationStore(store_path=str(store_file))
+        assert store.get_applied_versions() == []
+        assert store.get_current_version() == 0

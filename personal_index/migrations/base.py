@@ -211,6 +211,8 @@ class MigrationStore:
         try:
             with open(path, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                return
             for record_data in data.get("migrations", []):
                 record = MigrationRecord(**record_data)
                 self._records[record.version] = record
