@@ -106,7 +106,8 @@ class ContentPinner:
             item_id: ID of the item to unpin.
 
         Returns:
-            True if successfully unpinned (or was not pinned).
+            True. The item is unpinned if present (or is a no-op if it was not
+            pinned); there is no failure path, so this always returns True.
         """
         if item_id in self._pinned:
             del self._pinned[item_id]
@@ -171,6 +172,7 @@ def unpin_content(item_id: str) -> bool:
         item_id: ID of the item to unpin.
 
     Returns:
-        True if successfully unpinned (or was not pinned).
+        True. The item is unpinned if present (or is a no-op if it was not
+        pinned); there is no failure path, so this always returns True.
     """
     return _get_default_pinner().unpin(item_id)
