@@ -398,3 +398,13 @@ class TestBackupManifestNonDictGuard:
         bm = BackupManager(backup_dir=str(backup_dir))
         with pytest.raises(ValueError, match="Invalid manifest"):
             bm.restore_backup("badkey", str(tmp_path / "restore"))
+
+    def test_restore_backup_raises_for_unparseable_manifest(self, tmp_path):
+        """An unparseable manifest (truncated `{`) raises ValueError, not JSONDecodeError (TICKET-290)."""
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        with open(backup_dir / "backup_badjson.json", "w") as f:
+            f.write("{")
+        bm = BackupManager(backup_dir=str(backup_dir))
+        with pytest.raises(ValueError, match="Invalid manifest"):
+            bm.restore_backup("badjson", str(tmp_path / "restore"))

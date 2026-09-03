@@ -148,7 +148,13 @@ class BackupManager:
         if not manifest_file.exists():
             raise FileNotFoundError(f"Backup not found: {backup_id}")
         with open(str(manifest_file)) as f:
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"Invalid manifest in {manifest_file}: "
+                    f"not valid JSON for backup {backup_id!r}: {exc}"
+                ) from exc
         if not isinstance(data, dict):
             raise ValueError(
                 f"Invalid manifest in {manifest_file}: "
