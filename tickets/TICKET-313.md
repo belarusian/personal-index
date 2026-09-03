@@ -1,6 +1,6 @@
 # TICKET-313: content_backup/backup_store.py import_from_file unguarded datetime.fromisoformat ValueError on corrupt timestamp
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/content_backup/backup_store.py
 - Symptom: `BackupStore.import_from_file` already guards the decode step — it raises a clean
   `ValueError` on non-JSON input and on a non-dict payload, and wraps the `BackupEntry(...)`
