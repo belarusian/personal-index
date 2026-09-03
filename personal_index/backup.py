@@ -136,7 +136,7 @@ class BackupManager:
                 if not isinstance(data, dict):
                     continue
                 manifests.append(BackupManifest.from_dict(data))
-            except (json.JSONDecodeError, KeyError):
+            except (json.JSONDecodeError, KeyError, TypeError):
                 continue
 
         return manifests

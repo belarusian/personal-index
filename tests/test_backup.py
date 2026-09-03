@@ -327,6 +327,24 @@ class TestBackupManifestNonDictGuard:
         assert "good1" in ids
         assert "badnull" not in ids
 
+    def test_list_backups_skips_unexpected_key_manifest(self, tmp_path):
+        """A dict manifest with an unexpected key is skipped, not fatal (TICKET-286)."""
+        import json as _json
+
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        bad = {"backup_id": "badkey", "unexpected_key": 1}
+        with open(backup_dir / "backup_badkey.json", "w") as f:
+            _json.dump(bad, f)
+        valid = BackupManifest(backup_id="good1", source_dir="/tmp/x")
+        with open(backup_dir / "backup_good1.json", "w") as f:
+            _json.dump(valid.to_dict(), f)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        results = bm.list_backups()
+        ids = [m.backup_id for m in results]
+        assert "good1" in ids
+        assert "badkey" not in ids
+
     def test_get_backup_info_returns_none_for_null_manifest(self, tmp_path):
         backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
         bm = BackupManager(backup_dir=str(backup_dir))
