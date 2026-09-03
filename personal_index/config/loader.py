@@ -59,6 +59,10 @@ def load_config(path: str) -> AppConfig:
     if data is None:
         data = {}
 
+    if not isinstance(data, dict):
+        logger.error("Config file %s is not a mapping, using defaults", path)
+        return AppConfig()
+
     return AppConfig(
         data_dir=data.get("data_dir", ".personal_index"),
         crawler=_parse_crawler(data),
