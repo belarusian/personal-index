@@ -177,6 +177,48 @@ class TestBackupManager:
         with pytest.raises(ValueError, match="Corrupt or unreadable archive"):
             manager.restore_backup(manifest.backup_id, str(tmp_path / "out"))
 
+    def test_create_backup_nonwritable_backup_dir_raises_runtime_error(self, tmp_path):
+        """A write failure (permission denied) must raise a clean RuntimeError,
+        not a raw OSError leak (TICKET-300)."""
+        source = self._create_test_dir(tmp_path)
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir()
+        manager = BackupManager(backup_dir=str(backup_dir))
+
+        # Make the backup dir non-writable so the archive write fails.
+        os.chmod(backup_dir, 0o555)
+        try:
+            # Precondition: a raw write into this dir actually raises OSError,
+            # so the test exercises the new guard branch rather than a
+            # pre-existing path.
+            with pytest.raises(OSError):
+                tarfile.open(str(backup_dir / "probe.tar"), "w")
+
+            # The guarded create_backup must translate that into a clean
+            # RuntimeError.
+            with pytest.raises(RuntimeError, match="Failed to create archive"):
+                manager.create_backup(source)
+        finally:
+            os.chmod(backup_dir, 0o755)
+
+    def test_create_archive_directory_path_raises_runtime_error(self, tmp_path):
+        """An archive path that is a directory must raise a clean RuntimeError,
+        not a raw IsADirectoryError leak (TICKET-300)."""
+        source = self._create_test_dir(tmp_path)
+        source_path = Path(source)
+        files = [source_path / "file1.txt"]
+        bad_archive = tmp_path / "not_a_file"
+        bad_archive.mkdir()
+
+        # Precondition: a raw write to a directory actually raises OSError
+        # (IsADirectoryError), so the test exercises the new guard branch
+        # rather than a pre-existing path.
+        with pytest.raises(OSError):
+            tarfile.open(str(bad_archive), "w")
+
+        with pytest.raises(RuntimeError, match="Failed to create archive"):
+            BackupManager._create_archive(files, bad_archive, "w", source_path)
+
     def test_delete_backup(self, tmp_path):
         source = self._create_test_dir(tmp_path)
         backup_dir = str(tmp_path / "backups")
