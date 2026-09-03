@@ -145,12 +145,14 @@ class PriorityCalculator:
     def _engagement_score(self, view_count: int) -> float:
         """Calculate engagement score (0-1).
 
-        Uses logarithmic scaling: score = log(1 + views) / log(101)
+        Uses logarithmic scaling: score = log(1 + views) / log(101),
+        capped at 1.0 so the score saturates at 100+ views and stays
+        within the documented 0-1 range (matching _interest_score).
         """
         import math
         if view_count <= 0:
             return 0.0
-        return math.log(1 + view_count) / math.log(101)
+        return min(1.0, math.log(1 + view_count) / math.log(101))
 
     def _level_for_score(self, score: float) -> PriorityLevel:
         """Determine priority level from score."""

@@ -89,6 +89,44 @@ class TestPriorityCalculator:
         )
         assert high_views.breakdown["engagement"] > low_views.breakdown["engagement"]
 
+    def test_engagement_score_stays_in_0_1_range(self):
+        """Regression: _engagement_score must stay within the documented 0-1 range.
+
+        TICKET-305: the body previously returned log(1+views)/log(101) uncapped,
+        exceeding 1.0 for view_count > 100. It must saturate at 1.0.
+        """
+        calc = PriorityCalculator()
+        for view_count in [0, 1, 10, 100, 101, 1000, 10000]:
+            score = calc._engagement_score(view_count)
+            assert 0.0 <= score <= 1.0, (
+                f"engagement score {score} out of [0,1] for view_count={view_count}"
+            )
+        # Saturates at 1.0 for 100+ views (the log(101) normalization point).
+        assert calc._engagement_score(100) == 1.0
+        assert calc._engagement_score(101) == 1.0
+        assert calc._engagement_score(10000) == 1.0
+        # Non-decreasing in view_count.
+        scores = [calc._engagement_score(v) for v in [0, 1, 10, 100, 101, 1000, 10000]]
+        assert scores == sorted(scores)
+
+    def test_total_score_stays_in_0_1_range(self):
+        """Regression: a very popular item's total score must stay within [0,1].
+
+        TICKET-305: uncapped engagement pushed the weighted total above 1.0
+        (weights sum to 1.0, so every factor in [0,1] keeps the total in [0,1]).
+        """
+        calc = PriorityCalculator()
+        result = calc.calculate(
+            url="https://a.com",
+            title="Hot",
+            content_score=10.0,
+            interest_matches=["a", "b", "c", "d"],
+            view_count=10000,
+            days_since_indexed=0.0,
+        )
+        assert 0.0 <= result.score <= 1.0
+        assert 0.0 <= result.breakdown["engagement"] <= 1.0
+
     def test_batch_calculate(self):
         calc = PriorityCalculator()
         results = calc.batch_calculate([
