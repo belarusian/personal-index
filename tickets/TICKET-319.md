@@ -1,6 +1,6 @@
 # TICKET-319: content_timeline.TimelineEntry.from_dict raises ValueError on a corrupt stored timestamp
 
-- Status: OPEN
+- Status: RESOLVED (merged to main 728e055, gh #475 merged, gh #474 closed)
 - Issue: #474
 - Module: personal_index/content_timeline/timeline_entry.py
 - Defect class: (a) unguarded parse — `datetime.fromisoformat(ts)` is called on a value
