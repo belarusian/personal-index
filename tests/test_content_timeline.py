@@ -224,6 +224,25 @@ class TestSerialization:
         assert restored.event_type is EntryEventType.TAGGED
         assert restored.metadata == {"a": 1}
 
+    def test_timeline_entry_from_dict_bad_timestamp_degrades_to_datetime(self) -> None:
+        entry = TimelineEntry.from_dict(
+            {"item_id": "i1", "timestamp": "not-a-date"}
+        )
+        assert isinstance(entry.timestamp, datetime)
+        assert entry.item_id == "i1"
+
+    def test_timeline_entry_from_dict_non_string_timestamp_passthrough(self) -> None:
+        ts = _ts(3, 6)
+        entry = TimelineEntry.from_dict({"item_id": "i1", "timestamp": ts})
+        assert entry.timestamp == ts
+
+    def test_timeline_entry_from_dict_valid_timestamp_round_trips(self) -> None:
+        entry = TimelineEntry.from_dict(
+            {"item_id": "i1", "timestamp": _ts(4, 9).isoformat()}
+        )
+        assert entry.timestamp == _ts(4, 9)
+        assert entry.item_id == "i1"
+
     def test_timeline_to_dict_from_dict(self) -> None:
         tl = Timeline()
         tl.add_event(_event("e1", "c1", _ts(2)))

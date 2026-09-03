@@ -49,7 +49,10 @@ class TimelineEntry:
 
         ts = data.get("timestamp", datetime.now(timezone.utc).isoformat())
         if isinstance(ts, str):
-            ts = datetime.fromisoformat(ts)
+            try:
+                ts = datetime.fromisoformat(ts)
+            except ValueError:
+                ts = datetime.now(timezone.utc)
 
         return cls(
             item_id=data["item_id"],
