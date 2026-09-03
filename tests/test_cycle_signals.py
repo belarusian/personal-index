@@ -462,6 +462,18 @@ class TestLoadCodemap:
         with pytest.raises(SystemExit):
             cycle_signals.load_codemap(str(tmp_path / "nonexistent.json"))
 
+    def test_load_malformed_json_exits(self, tmp_path):
+        codemap_file = tmp_path / "bad.json"
+        codemap_file.write_text("{not valid json")
+        with pytest.raises(SystemExit):
+            cycle_signals.load_codemap(str(codemap_file))
+
+    def test_load_non_dict_json_exits(self, tmp_path):
+        codemap_file = tmp_path / "arr.json"
+        codemap_file.write_text("[1, 2, 3]")
+        with pytest.raises(SystemExit):
+            cycle_signals.load_codemap(str(codemap_file))
+
 
 # ---------------------------------------------------------------------------
 # extract
