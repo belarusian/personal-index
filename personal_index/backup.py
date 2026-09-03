@@ -194,10 +194,24 @@ class BackupManager:
 
     @staticmethod
     def _extract_archive(archive_path: Path, mode: str, target: Path) -> int:
-        """Extract archive and return number of files restored."""
-        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
-            count = len(tar.getnames())
-            tar.extractall(path=str(target), filter="data")
+        """Extract archive and return number of files restored.
+
+        Raises:
+            ValueError: If the archive is corrupt or unreadable. A corrupt
+                archive raises ``tarfile.TarError`` (e.g. ``ReadError`` /
+                ``CompressionError``) and a truncated ``.tar.gz`` raises
+                ``EOFError`` from the gzip layer; both are translated into a
+                clean ``ValueError`` consistent with the module's invalid-data
+                error style.
+        """
+        try:
+            with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
+                count = len(tar.getnames())
+                tar.extractall(path=str(target), filter="data")
+        except (tarfile.TarError, EOFError) as exc:
+            raise ValueError(
+                f"Corrupt or unreadable archive {archive_path}: {exc}"
+            ) from exc
         return count
 
     def delete_backup(self, backup_id: str) -> bool:
