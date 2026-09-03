@@ -1,6 +1,6 @@
 # TICKET-307: content_importer._import_json escapes raw JSONDecodeError on malformed JSON
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/content_importer.py
 - Issue: #448
 
