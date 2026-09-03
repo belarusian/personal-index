@@ -65,6 +65,20 @@ class TestListContent:
         )
         assert body["per_page"] == 100
 
+    def test_list_page_non_numeric(self, api_with_data):
+        status, body = api_with_data.handle_request(
+            "GET", "/api/v1/content", query_string="page=abc"
+        )
+        assert status == 400
+        assert "error" in body
+
+    def test_list_per_page_non_numeric(self, api_with_data):
+        status, body = api_with_data.handle_request(
+            "GET", "/api/v1/content", query_string="per_page=xyz"
+        )
+        assert status == 400
+        assert "error" in body
+
 
 # --- Create Content ---
 
