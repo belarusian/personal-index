@@ -183,6 +183,21 @@ class TestContentLinker:
         linker.clear_cache()
         assert len(linker.get_all_items()) == 0
 
+    def test_clear_cache_removes_all_stored_items(self):
+        """clear_cache() is a full reset: it empties the primary item store,
+        not just the derived link cache (TICKET-316)."""
+        linker = ContentLinker()
+        linker.add_item("id1", "first item content")
+        linker.add_item("id2", "second item content")
+        # Populate the derived link cache so both stores are non-empty.
+        linker.find_related("id1", threshold=0.0)
+        assert len(linker.get_all_items()) == 2
+        linker.clear_cache()
+        # The primary item store is wiped, not merely the link cache.
+        assert linker.get_all_items() == []
+        assert linker.get_item("id1") is None
+        assert linker.get_item("id2") is None
+
     def test_get_item(self):
         linker = ContentLinker()
         linker.add_item("id1", "test content", url="https://test.com")
