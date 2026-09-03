@@ -274,6 +274,9 @@ class AnalyticsTracker:
         with open(path_obj) as f:
             data = json.load(f)
 
+        if not isinstance(data, dict):
+            return 0
+
         self._search_events.clear()
         self._crawl_events.clear()
 
