@@ -44,6 +44,32 @@ class TestSerializer:
         with pytest.raises(DeserializationError):
             s.from_json("not json")
 
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ('{"key": "value"}', {"key": "value"}),
+            ("[1, 2, 3]", [1, 2, 3]),
+            ('"just a string"', "just a string"),
+            ("42", 42),
+            ("3.5", 3.5),
+            ("true", True),
+            ("null", None),
+        ],
+    )
+    def test_from_json_returns_any_top_level_type(self, raw, expected):
+        """from_json returns whatever json.loads yields, not only dicts (TICKET-303)."""
+        s = Serializer()
+        result = s.from_json(raw)
+        assert result == expected
+        assert type(result) is type(expected)
+
+    def test_from_json_non_dict_does_not_raise(self):
+        """A top-level list is valid JSON and must not raise or coerce to dict."""
+        s = Serializer()
+        result = s.from_json("[1, 2]")
+        assert isinstance(result, list)
+        assert not isinstance(result, dict)
+
     def test_to_json_dataclass(self):
         s = Serializer()
         item = _TestItem(name="test", value=42, timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc))
