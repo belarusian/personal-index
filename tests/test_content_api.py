@@ -207,6 +207,16 @@ class TestApiErrorHandling:
         status, _resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body="bad")
         assert status == 400
 
+    def test_update_not_dict(self, api_with_data):
+        status, _resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body='["list"]')
+        assert status == 400
+
+    def test_update_list_body_with_key_name_no_typeerror(self, api_with_data):
+        # A list body containing a key name used to index the list with a
+        # string and escape as a raw TypeError; it must now be a clean 400.
+        status, _resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body='["title", "x"]')
+        assert status == 400
+
     def test_list_page_2_empty(self, api_with_data):
         _status, body = api_with_data.handle_request(
             "GET", "/api/v1/content", query_string="page=2&per_page=1"
