@@ -1,7 +1,8 @@
 # TICKET-323: bookmark_export.BookmarkExporter.export_to_file return annotation over-promises a None path
 
-- Status: OPEN
-- Issue: #483
+- Status: RESOLVED
+- Merged: main 0a7225b (PR #484)
+- Issue: #483 (closed)
 - Module: personal_index/bookmark_export.py
 - Class: (b) doc/behavior drift — return annotation over-promises a None path the code never honors
 
