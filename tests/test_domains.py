@@ -1,5 +1,7 @@
 """Tests for the domain management module."""
 
+import json
+
 from personal_index.domains import DomainManager, DomainRule
 
 
@@ -125,3 +127,50 @@ class TestDomainManagerLoadNonePath:
         mgr = DomainManager(rules_file=None)
         mgr._save()
         # Should not raise any error
+
+
+class TestDomainManagerNonDictGuard:
+    """Tests for TICKET-276: _load() guards against non-dict JSON."""
+
+    def _write(self, tmp_path, payload):
+        path = str(tmp_path / "domains.json")
+        with open(path, "w") as f:
+            f.write(payload)
+        return path
+
+    def test_load_null_does_not_crash(self, tmp_path):
+        path = self._write(tmp_path, "null")
+        mgr = DomainManager(rules_file=path)
+        assert mgr._rules == {}
+        assert mgr.is_allowed("example.com") is True
+
+    def test_load_number_does_not_crash(self, tmp_path):
+        path = self._write(tmp_path, "42")
+        mgr = DomainManager(rules_file=path)
+        assert mgr._rules == {}
+
+    def test_load_list_does_not_crash(self, tmp_path):
+        path = self._write(tmp_path, json.dumps([1, 2, 3]))
+        mgr = DomainManager(rules_file=path)
+        assert mgr._rules == {}
+
+    def test_valid_dict_still_works(self, tmp_path):
+        path = str(tmp_path / "domains.json")
+        dm = DomainManager(rules_file=path)
+        dm.add_block("spam.com", reason="spam")
+        dm2 = DomainManager(rules_file=path)
+        assert dm2.is_blocked("spam.com") is True
+        assert len(dm2.list_rules()) == 1
+
+    def test_valid_after_invalid_not_suppressed(self, tmp_path):
+        path = str(tmp_path / "domains.json")
+        # write invalid (non-dict) first
+        with open(path, "w") as f:
+            f.write("null")
+        bad = DomainManager(rules_file=path)
+        assert bad._rules == {}
+        # now write a valid dict and reload
+        good = DomainManager(rules_file=path)
+        good.add_block("spam.com", reason="spam")
+        reloaded = DomainManager(rules_file=path)
+        assert reloaded.is_blocked("spam.com") is True

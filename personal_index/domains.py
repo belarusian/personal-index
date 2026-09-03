@@ -63,6 +63,9 @@ class DomainManager:
         try:
             with open(self.rules_file, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                self._rules = {}
+                return
             self._rules = {
                 d: DomainRule.from_dict(r) for d, r in data.items()
             }
