@@ -468,7 +468,10 @@ class SearchIndex:
         """Load the search index from a JSON file."""
         import json as _json
         with open(filepath) as f:
-            data = _json.load(f)
+            try:
+                data = _json.load(f)
+            except _json.JSONDecodeError:
+                return
         if not isinstance(data, dict):
             return
         self._items = data["items"]
