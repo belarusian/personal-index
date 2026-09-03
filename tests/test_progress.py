@@ -230,6 +230,20 @@ class TestProgressStore:
         count = store.load_all()
         assert count == 0
 
+    def test_load_all_corrupt_json(self, tmp_path):
+        path = tmp_path / "progress.json"
+        path.write_text("{")
+        store = ProgressStore(storage_path=str(path))
+        count = store.load_all()
+        assert count == 0
+
+    def test_load_all_truncated_json(self, tmp_path):
+        path = tmp_path / "progress.json"
+        path.write_text('{"op_1": {"operation_id": "op_1", "state": "run')
+        store = ProgressStore(storage_path=str(path))
+        count = store.load_all()
+        assert count == 0
+
     def test_auto_generate_operation_id(self):
         t = ProgressTracker()
         assert t.operation_id.startswith("op_")
