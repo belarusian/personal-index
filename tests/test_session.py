@@ -296,3 +296,39 @@ class TestSessionManagerNonDictGuard:
         session = mgr.load_session(good)
         assert session is not None
         assert session.session_id == "s2"
+
+
+class TestSessionManagerCorruptJsonGuard:
+    """load_session must degrade to None on corrupt/truncated JSON, not raise."""
+
+    def _write_raw(self, tmp_path, text, name="s.json"):
+        p = tmp_path / name
+        p.write_text(text)
+        return str(p)
+
+    def test_corrupt_brace_returns_none(self, tmp_path):
+        # A lone '{' is genuinely invalid JSON (json.loads raises JSONDecodeError),
+        # so this exercises the new except branch, not the isinstance guard.
+        import json
+
+        try:
+            json.loads("{")
+            raise AssertionError("precondition: '{' should not parse")
+        except json.JSONDecodeError:
+            pass
+        mgr = SessionManager()
+        assert mgr.load_session(self._write_raw(tmp_path, "{")) is None
+
+    def test_truncated_json_returns_none(self, tmp_path):
+        # A genuinely-truncated object string (unterminated) raises JSONDecodeError,
+        # not a valid-but-non-dict value, so it hits the new except branch.
+        import json
+
+        truncated = '{"session_id": "s1", "name": "http://exa'
+        try:
+            json.loads(truncated)
+            raise AssertionError("precondition: truncated string should not parse")
+        except json.JSONDecodeError:
+            pass
+        mgr = SessionManager()
+        assert mgr.load_session(self._write_raw(tmp_path, truncated)) is None
