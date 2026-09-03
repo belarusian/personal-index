@@ -187,8 +187,18 @@ def is_internal_link(url: str, base_url: str) -> bool:
 
 
 def urls_are_equivalent(url1: str, url2: str) -> bool:
-    """Check if two URLs are equivalent after normalization."""
-    return normalize_url(url1) == normalize_url(url2)
+    """Check if two URLs are equivalent after normalization.
+
+    Two URLs are equivalent only when both normalize to the same http/https
+    URL. A URL that cannot be normalized (non-http/https scheme, or empty)
+    normalizes to ``None`` and is never equivalent to anything, so two
+    distinct non-normalizable URLs are not reported as equivalent.
+    """
+    n1 = normalize_url(url1)
+    n2 = normalize_url(url2)
+    if n1 is None or n2 is None:
+        return False
+    return n1 == n2
 
 
 def remove_query_params(url: str, params: list | None = None) -> str:
