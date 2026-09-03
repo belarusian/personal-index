@@ -1,6 +1,6 @@
 # TICKET-317: url_utils.extract_domain corrupts IPv6 literals without an explicit port
 
-- Status: RESOLVED (merged to main <pending>, gh #468 closed)
+- Status: RESOLVED (merged to main 21b8132, gh #471 merged, gh #468 closed)
 - Issue: #468
 - Module: personal_index/url_utils.py
 - Defect class: (a) logic bug — port-stripping `rsplit(":", 1)` also strips the last colon
