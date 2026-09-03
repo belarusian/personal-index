@@ -243,3 +243,21 @@ class TestBookmarkManager:
         loaded = manager.load(path)
         assert loaded == 0
         assert manager.count() == 0
+
+    def test_load_corrupt_json(self, tmp_path):
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            f.write("{")
+        manager = BookmarkManager()
+        loaded = manager.load(path)
+        assert loaded == 0
+        assert manager.count() == 0
+
+    def test_load_truncated_json(self, tmp_path):
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            f.write('[{"url": "http://exa')
+        manager = BookmarkManager()
+        loaded = manager.load(path)
+        assert loaded == 0
+        assert manager.count() == 0
