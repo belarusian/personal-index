@@ -1,6 +1,6 @@
 # TICKET-305: content_priority.py PriorityCalculator._engagement_score exceeds documented 0-1 range
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/content_priority.py
 - Class: (b) doc/behavior drift — documented return range not honored by the body
 - Site: personal_index/content_priority.py:145-153 - `def _engagement_score(self, view_count: int) -> float:`
@@ -45,3 +45,9 @@ view counts (0, 1, 10, 100, 101, 1000, 10000) and that it is non-decreasing, and
 a high-view item's total score stays within [0,1].
 
 ## Issue: #443
+
+## Resolution
+- Merged: 67eb026 (PR #444, squash-merged to main 2026-09-03)
+- CI: GREEN (run 33771898271, 3 jobs pass: 3.10 / 3.11 / 3.12)
+- gh issue #443 CLOSED
+- Local gate: pytest 5345 passed / 22 skipped; ruff clean; mypy 495 files, no issues
