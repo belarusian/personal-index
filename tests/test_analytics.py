@@ -361,3 +361,26 @@ class TestAnalyticsTrackerNonDictGuard:
         tracker2 = AnalyticsTracker()
         assert tracker2.load(path) == 1
         assert tracker2.get_analytics().total_searches == 1
+
+
+class TestAnalyticsTrackerCorruptJsonGuard:
+    """Regression: corrupt/truncated JSON in analytics file must not crash AnalyticsTracker.load."""
+
+    def setup_method(self):
+        self.tracker = AnalyticsTracker()
+
+    def test_load_corrupt_brace_json(self, tmp_path):
+        path = str(tmp_path / "analytics.json")
+        with open(path, "w") as f:
+            f.write("{")
+        assert self.tracker.load(path) == 0
+        assert self.tracker.get_analytics().total_searches == 0
+        assert self.tracker.get_analytics().total_crawls == 0
+
+    def test_load_truncated_json(self, tmp_path):
+        path = str(tmp_path / "analytics.json")
+        with open(path, "w") as f:
+            f.write('{"search_events": [{"query": "http://exa')
+        assert self.tracker.load(path) == 0
+        assert self.tracker.get_analytics().total_searches == 0
+        assert self.tracker.get_analytics().total_crawls == 0
