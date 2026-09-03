@@ -1,6 +1,6 @@
 # TICKET-318: progress.ProgressTracker.elapsed_seconds raises ValueError on a corrupt stored started_at
 
-- Status: OPEN
+- Status: RESOLVED (merged to main 51b58a2, gh #473 merged, gh #472 closed)
 - Issue: #472
 - Module: personal_index/progress.py
 - Defect class: (a) unguarded parse — `datetime.fromisoformat(self.started_at)` is called
