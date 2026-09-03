@@ -1,6 +1,6 @@
 # TICKET-285: search_suggestions _get_trending_counts keys Counter by (query, score) tuples
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #394
 - Module: personal_index/search_suggestions.py
 - Class: logic (Counter keyed by composite (query, int(score)) tuples instead of query)
