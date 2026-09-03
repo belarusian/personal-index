@@ -293,6 +293,8 @@ class SessionManager:
             return None
         with open(path) as f:
             data = json.load(f)
+        if not isinstance(data, dict):
+            return None
         session = CrawlSession(
             session_id=data["session_id"],
             name=data.get("name", ""),

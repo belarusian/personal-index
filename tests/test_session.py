@@ -234,3 +234,65 @@ class TestSessionManager:
         mgr = SessionManager()
         assert mgr.list_sessions() == []
         assert mgr.list_active() == []
+
+
+class TestSessionManagerNonDictGuard:
+    def _write(self, tmp_path, value, name="s.json"):
+        import json
+
+        p = tmp_path / name
+        p.write_text(json.dumps(value))
+        return str(p)
+
+    def test_null(self, tmp_path):
+        mgr = SessionManager()
+        assert mgr.load_session(self._write(tmp_path, None)) is None
+
+    def test_number(self, tmp_path):
+        mgr = SessionManager()
+        assert mgr.load_session(self._write(tmp_path, 42)) is None
+
+    def test_list(self, tmp_path):
+        mgr = SessionManager()
+        assert mgr.load_session(self._write(tmp_path, [1, 2, 3])) is None
+
+    def test_valid_dict_still_works(self, tmp_path):
+        mgr = SessionManager()
+        path = self._write(
+            tmp_path,
+            {
+                "session_id": "s1",
+                "name": "Test",
+                "status": "active",
+                "started_at": time.time(),
+                "completed_at": None,
+                "stats": {},
+                "config": {},
+                "metadata": {},
+            },
+        )
+        session = mgr.load_session(path)
+        assert session is not None
+        assert session.session_id == "s1"
+
+    def test_valid_after_invalid_not_suppressed(self, tmp_path):
+        mgr = SessionManager()
+        bad = self._write(tmp_path, None)
+        assert mgr.load_session(bad) is None
+        good = self._write(
+            tmp_path,
+            {
+                "session_id": "s2",
+                "name": "Good",
+                "status": "active",
+                "started_at": time.time(),
+                "completed_at": None,
+                "stats": {},
+                "config": {},
+                "metadata": {},
+            },
+            name="good.json",
+        )
+        session = mgr.load_session(good)
+        assert session is not None
+        assert session.session_id == "s2"
