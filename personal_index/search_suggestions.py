@@ -159,8 +159,7 @@ class SearchSuggestions:
     def _get_trending_counts(self) -> Counter:
         """Get trending counts as a Counter for backward compatibility."""
         return Counter(
-            (entry.query, int(self._apply_decay(entry)))
-            for entry in self._trending.values()
+            {entry.query: entry.count for entry in self._trending.values()}
         )
 
     def suggest(

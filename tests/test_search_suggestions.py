@@ -380,3 +380,26 @@ class TestSearchSuggestions:
         assert inst._search_history == ["a", "b"]
         assert inst._tags == ["x"]
         assert inst._keywords == ["y"]
+
+    def test_get_trending_counts_aggregates_repeated_query(self) -> None:
+        """Repeated searches for the same query aggregate under one string key."""
+        s = SearchSuggestions()
+        s.record_search("Python")
+        s.record_search("Python")
+        s.record_search("Rust")
+        counts = s._get_trending_counts()
+        # Same query recorded twice -> count 2 under a single string key,
+        # not two distinct (query, score) tuple keys.
+        assert counts["Python"] == 2
+        assert counts["Rust"] == 1
+        assert len(counts) == 2
+
+    def test_get_trending_counts_keys_are_plain_strings(self) -> None:
+        """Counter keys are query strings, never (query, score) tuples."""
+        s = SearchSuggestions()
+        s.record_search("Python")
+        s.record_search("Rust")
+        counts = s._get_trending_counts()
+        for key in counts:
+            assert isinstance(key, str)
+        assert set(counts) == {"Python", "Rust"}
