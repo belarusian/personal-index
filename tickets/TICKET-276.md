@@ -1,6 +1,6 @@
 # TICKET-276: domains.py _load() missing non-dict JSON guard
 
-- Status: OPEN
+- Status: RESOLVED
 - File: personal_index/domains.py
 - Symptom: `DomainManager._load()` calls `data.items()` after `json.load(f)`. If the file contains valid JSON that is not a dict (null, number, list, or string), `data.items()` raises AttributeError. The `except` clause only catches `(json.JSONDecodeError, KeyError)`, so a valid-JSON-but-wrong-type file crashes the constructor.
 - Evidence: line 65 `data = json.load(f)` → line 66-68 `self._rules = {d: DomainRule.from_dict(r) for d, r in data.items()}` — no isinstance check; except at line 71 catches only JSONDecodeError/KeyError.
