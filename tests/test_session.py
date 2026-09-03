@@ -369,3 +369,44 @@ class TestSessionManagerInvalidStatusGuard:
         loaded = mgr.load_session(self._write_raw(tmp_path, payload))
         assert loaded is not None
         assert loaded.status == SessionStatus.PAUSED
+
+
+class TestSessionManagerMissingSessionIdGuard:
+    """load_session must degrade to None on a valid-JSON dict that is missing the
+    required "session_id" key, not raise KeyError from the CrawlSession(...) construction."""
+
+    def _write_raw(self, tmp_path, text, name="s.json"):
+        p = tmp_path / name
+        p.write_text(text)
+        return str(p)
+
+    def test_missing_session_id_returns_none(self, tmp_path):
+        # Valid JSON dict, valid status, but no "session_id" key. The bare
+        # data["session_id"] subscript used to raise KeyError; the guard must
+        # swallow it and return None.
+        import json
+
+        payload = json.dumps({"status": "active", "name": "x"})
+        mgr = SessionManager()
+        assert mgr.load_session(self._write_raw(tmp_path, payload)) is None
+
+    def test_empty_session_id_returns_none(self, tmp_path):
+        # An empty-string session_id is also unusable; degrade to None.
+        import json
+
+        payload = json.dumps({"session_id": "", "status": "active"})
+        mgr = SessionManager()
+        assert mgr.load_session(self._write_raw(tmp_path, payload)) is None
+
+    def test_valid_session_id_still_loads(self, tmp_path):
+        # Regression: a well-formed file with a session_id must still load.
+        import json
+
+        payload = json.dumps(
+            {"session_id": "s1", "name": "x", "status": "paused", "stats": {}}
+        )
+        mgr = SessionManager()
+        loaded = mgr.load_session(self._write_raw(tmp_path, payload))
+        assert loaded is not None
+        assert loaded.session_id == "s1"
+        assert loaded.status == SessionStatus.PAUSED

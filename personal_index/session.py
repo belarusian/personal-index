@@ -302,8 +302,11 @@ class SessionManager:
             status = SessionStatus(data.get("status", "active"))
         except ValueError:
             return None
+        session_id = data.get("session_id")
+        if not session_id:
+            return None
         session = CrawlSession(
-            session_id=data["session_id"],
+            session_id=session_id,
             name=data.get("name", ""),
             status=status,
             started_at=data.get("started_at", time.time()),
