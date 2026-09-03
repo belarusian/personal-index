@@ -1,6 +1,6 @@
 # TICKET-312: scheduler.py ScheduleStore._load unguarded datetime.fromisoformat ValueError on corrupt timestamp
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/scheduler.py
 - Symptom: `ScheduleStore._load` already degrades to an empty store on corrupt JSON, a
   non-dict payload, and a missing `config`/key (TICKET-265) via
