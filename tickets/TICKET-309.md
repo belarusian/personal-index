@@ -1,6 +1,6 @@
 # TICKET-309: content_api._list_content unguarded int() on query params escapes as traceback
 
-- Status: OPEN
+- Status: RESOLVED (cycle 65, PR #454, merged 1e6ffa7, gh #453 closed)
 - Module: personal_index/content_api.py
 - Symptom: GET /api/v1/content?page=abc (or per_page=xyz) raises a raw
   ValueError: invalid literal for int() with base 10: 'abc' out of
