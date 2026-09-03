@@ -173,6 +173,42 @@ class TestSerialization:
         assert ev.event_type is TimelineEventType.CREATED
         assert ev.source == "system"
 
+    def test_from_dict_bad_timestamp_degrades_to_datetime(self) -> None:
+        ev = TimelineEvent.from_dict(
+            {"event_id": "e1", "content_id": "c1", "timestamp": "not-a-date"}
+        )
+        assert isinstance(ev.timestamp, datetime)
+        assert ev.event_id == "e1"
+        assert ev.content_id == "c1"
+
+    def test_from_dict_missing_event_id_degrades_to_empty(self) -> None:
+        ev = TimelineEvent.from_dict(
+            {"content_id": "c1", "timestamp": _ts(1).isoformat()}
+        )
+        assert ev.event_id == ""
+        assert ev.content_id == "c1"
+
+    def test_from_dict_missing_content_id_degrades_to_empty(self) -> None:
+        ev = TimelineEvent.from_dict(
+            {"event_id": "e1", "timestamp": _ts(1).isoformat()}
+        )
+        assert ev.content_id == ""
+        assert ev.event_id == "e1"
+
+    def test_from_dict_valid_record_still_round_trips(self) -> None:
+        ev = TimelineEvent(
+            event_id="e1",
+            event_type=TimelineEventType.TAGGED,
+            timestamp=_ts(5, 8),
+            content_id="c1",
+            metadata={"k": "v"},
+            source="user",
+        )
+        restored = TimelineEvent.from_dict(ev.to_dict())
+        assert restored == ev
+        assert restored.event_type is TimelineEventType.TAGGED
+        assert restored.metadata == {"k": "v"}
+
     def test_timeline_entry_round_trip(self) -> None:
         entry = TimelineEntry(
             item_id="i1",

@@ -61,13 +61,16 @@ class TimelineEvent:
 
         ts = data.get("timestamp", datetime.now(timezone.utc).isoformat())
         if isinstance(ts, str):
-            ts = datetime.fromisoformat(ts)
+            try:
+                ts = datetime.fromisoformat(ts)
+            except ValueError:
+                ts = datetime.now(timezone.utc)
 
         return cls(
-            event_id=data["event_id"],
+            event_id=data.get("event_id", ""),
             event_type=et,
             timestamp=ts,
-            content_id=data["content_id"],
+            content_id=data.get("content_id", ""),
             metadata=data.get("metadata", {}),
             source=data.get("source", "system"),
             item_id=data.get("item_id", ""),
