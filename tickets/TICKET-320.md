@@ -1,6 +1,6 @@
 # TICKET-320: content_rollback.rollback docstring promises a side-effect the code does not perform
 
-- Status: OPEN
+- Status: RESOLVED (merged to main 38d9604, gh #478 merged, gh #476 closed)
 - Issue: #476
 - Module: personal_index/content_rollback.py
 - Defect class: (b) doc/behavior drift — the docstring promises a mutation ("Roll back a
