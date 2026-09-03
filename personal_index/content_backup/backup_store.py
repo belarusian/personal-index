@@ -189,5 +189,9 @@ class BackupStore:
             raise ValueError(
                 f"Invalid backup file {filepath}: missing required key {exc}"
             ) from exc
+        except ValueError as exc:
+            raise ValueError(
+                f"Invalid backup file {filepath}: invalid timestamp {exc}"
+            ) from exc
         self.backups[entry.backup_id] = entry
         return entry
