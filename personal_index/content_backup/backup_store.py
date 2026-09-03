@@ -163,9 +163,14 @@ class BackupStore:
 
         Returns:
             The created BackupEntry.
+
+        Raises:
+            ValueError: If the file does not contain a JSON object.
         """
         filepath = Path(filepath)
         data = json.loads(filepath.read_text())
+        if not isinstance(data, dict):
+            raise ValueError("Backup file must contain a JSON object")
 
         entry = BackupEntry(
             backup_id=data["backup_id"],

@@ -79,3 +79,58 @@ class TestBackupStore:
             assert False, "Should have raised"
         except ValueError:
             pass
+
+
+class TestBackupStoreNonDictGuard:
+    def _write(self, tmp_path, value, name="b.json"):
+        p = tmp_path / name
+        p.write_text(value)
+        return str(p)
+
+    def test_import_null_raises(self, tmp_path):
+        s = BackupStore()
+        try:
+            s.import_from_file(self._write(tmp_path, "null"))
+            assert False, "Should have raised"
+        except ValueError:
+            pass
+
+    def test_import_number_raises(self, tmp_path):
+        s = BackupStore()
+        try:
+            s.import_from_file(self._write(tmp_path, "42"))
+            assert False, "Should have raised"
+        except ValueError:
+            pass
+
+    def test_import_list_raises(self, tmp_path):
+        s = BackupStore()
+        try:
+            s.import_from_file(self._write(tmp_path, '[{"backup_id": "x"}]'))
+            assert False, "Should have raised"
+        except ValueError:
+            pass
+
+    def test_import_valid_dict_still_works(self, tmp_path):
+        s = BackupStore()
+        s.add_backup([{"id": "1", "title": "A"}], backup_id="b1")
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+            s.export_to_file("b1", f.name)
+        s2 = BackupStore()
+        entry = s2.import_from_file(f.name)
+        assert entry.backup_id == "b1"
+        assert entry.data[0]["title"] == "A"
+
+    def test_valid_after_invalid_not_suppressed(self, tmp_path):
+        s = BackupStore()
+        try:
+            s.import_from_file(self._write(tmp_path, "null", "bad.json"))
+            assert False, "Should have raised"
+        except ValueError:
+            pass
+        s.add_backup([{"id": "1", "title": "A"}], backup_id="b1")
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+            s.export_to_file("b1", f.name)
+        entry = s.import_from_file(f.name)
+        assert entry.backup_id == "b1"
+        assert entry.data[0]["title"] == "A"
