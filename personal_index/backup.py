@@ -221,7 +221,10 @@ class BackupManager:
             return None
 
         with open(str(manifest_file)) as f:
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                return None
         if not isinstance(data, dict):
             return None
         try:

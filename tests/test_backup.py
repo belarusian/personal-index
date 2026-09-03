@@ -366,6 +366,15 @@ class TestBackupManifestNonDictGuard:
         bm = BackupManager(backup_dir=str(backup_dir))
         assert bm.get_backup_info("badkey") is None
 
+    def test_get_backup_info_returns_none_for_unparseable_manifest(self, tmp_path):
+        """An unparseable manifest (truncated `{`) returns None, not JSONDecodeError (TICKET-289)."""
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        with open(backup_dir / "backup_badjson.json", "w") as f:
+            f.write("{")
+        bm = BackupManager(backup_dir=str(backup_dir))
+        assert bm.get_backup_info("badjson") is None
+
     def test_restore_backup_raises_for_null_manifest(self, tmp_path):
         backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
         bm = BackupManager(backup_dir=str(backup_dir))
