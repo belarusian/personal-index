@@ -1,6 +1,6 @@
 # TICKET-296: content_search.py SearchIndex.load_index unguarded json.load
 
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #421 closed)
 - Issue: #421
 - Module: personal_index/content_search.py
 - Function: SearchIndex.load_index (line 466)
