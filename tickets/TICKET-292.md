@@ -1,6 +1,6 @@
 # TICKET-292: config/__init__.py AppConfig.load and ConfigManager.load unguarded json.load
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #415
 - Module: personal_index/config/__init__.py
 - Function: AppConfig.load (line 68) and ConfigManager.load (line 85)
