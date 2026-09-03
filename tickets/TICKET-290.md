@@ -1,6 +1,6 @@
 # TICKET-290: backup.py restore_backup dies with an unlocated JSONDecodeError on an unparseable manifest
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #409
 - Module: personal_index/backup.py
 - Class: error-location (declared located-ValueError contract bypassed)
