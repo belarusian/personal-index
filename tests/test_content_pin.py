@@ -107,6 +107,18 @@ class TestContentPinner:
         assert "item-2" in pinner._pinned
         assert "item-1" not in pinner._pinned
 
+    def test_unpin_always_returns_true_no_failure_path(self, pinner):
+        # Regression (TICKET-324): the docstring contract is that unpin()
+        # unconditionally returns True — there is no False failure path.
+        # Unpinning a pinned id and unpinning a never-pinned id must both
+        # return True (not False).
+        pinner.pin("item-1")
+        assert pinner.unpin("item-1") is True
+        # Unpinning the same id again (now absent) is a no-op, still True.
+        assert pinner.unpin("item-1") is True
+        # Unpinning a never-pinned id is also a no-op, still True.
+        assert pinner.unpin("never-pinned") is True
+
     # -- is_pinned() --
     def test_is_pinned_true(self, pinner):
         pinner.pin("item-1")
