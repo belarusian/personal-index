@@ -372,9 +372,9 @@ class SearchSuggestions:
                 "last_seen": entry.last_seen,
             }
         return {
-            "search_history": self._search_history,
-            "tags": self._tags,
-            "keywords": self._keywords,
+            "search_history": list(self._search_history),
+            "tags": list(self._tags),
+            "keywords": list(self._keywords),
             "trending": trending_data,
         }
 
@@ -382,9 +382,9 @@ class SearchSuggestions:
     def from_dict(cls, data: dict[str, Any]) -> SearchSuggestions:
         """Deserialize suggestion data."""
         instance = cls()
-        instance._search_history = data.get("search_history", [])
-        instance._tags = data.get("tags", [])
-        instance._keywords = data.get("keywords", [])
+        instance._search_history = list(data.get("search_history", []))
+        instance._tags = list(data.get("tags", []))
+        instance._keywords = list(data.get("keywords", []))
         trending_data = data.get("trending", {})
         for key, value in trending_data.items():
             if isinstance(value, dict):

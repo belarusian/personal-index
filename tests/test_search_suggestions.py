@@ -352,3 +352,31 @@ class TestSearchSuggestions:
         restored = SearchSuggestions.from_dict(data)
         assert "python" in restored._trending
         assert restored._trending["python"].count == 5
+
+    def test_to_dict_returns_copies_not_live_lists(self, suggestions: SearchSuggestions) -> None:
+        """Mutating the dict returned by to_dict must not change the instance."""
+        suggestions._search_history.append("query1")
+        suggestions._tags.append("tag1")
+        suggestions._keywords.append("kw1")
+        d = suggestions.to_dict()
+        d["search_history"].append("hacked")
+        d["tags"].append("hacked")
+        d["keywords"].append("hacked")
+        assert "hacked" not in suggestions._search_history
+        assert "hacked" not in suggestions._tags
+        assert "hacked" not in suggestions._keywords
+
+    def test_from_dict_does_not_alias_input_lists(self) -> None:
+        """Mutating the input dict after from_dict must not change the instance."""
+        data = {
+            "search_history": ["a", "b"],
+            "tags": ["x"],
+            "keywords": ["y"],
+        }
+        inst = SearchSuggestions.from_dict(data)
+        data["search_history"].append("c")
+        data["tags"].append("z")
+        data["keywords"].append("w")
+        assert inst._search_history == ["a", "b"]
+        assert inst._tags == ["x"]
+        assert inst._keywords == ["y"]
