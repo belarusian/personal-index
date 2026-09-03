@@ -1,7 +1,7 @@
 # TICKET-327: content_recommender module docstring promises "interest matching" that no code implements
 
 - File: personal_index/content_recommender.py
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc/behavior drift
 
 ## Symptom
