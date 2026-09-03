@@ -1,6 +1,6 @@
 # TICKET-279: backup_store.py import_from_file() crashes on non-dict JSON
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/content_backup/backup_store.py
 - File: personal_index/content_backup/backup_store.py
 
