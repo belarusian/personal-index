@@ -26,13 +26,26 @@ class Storage:
         if not self.pages_file.exists():
             self.pages_file.write_text("[]")
 
+    def _default_for(self, filepath: Path) -> list | dict:
+        """Return the documented default for a file with no usable content.
+
+        interests.json / pages.json are list-backed; everything else is dict-backed.
+        """
+        if filepath.name in ("interests.json", "pages.json"):
+            return []
+        return {}
+
     def _read_json(self, filepath: Path) -> list | dict:
         content = filepath.read_text()
         if not content.strip():
-            if filepath.name in ("interests.json", "pages.json"):
-                return []
-            return {}
-        return json.loads(content)  # type: ignore[no-any-return]
+            return self._default_for(filepath)
+        try:
+            return json.loads(content)  # type: ignore[no-any-return]
+        except json.JSONDecodeError:
+            # Corrupt file (truncated write, hand-edit, disk corruption): degrade
+            # to the same default an empty file gets, rather than raising out of
+            # every public accessor.
+            return self._default_for(filepath)
 
     def _write_json(self, filepath: Path, data):
         filepath.write_text(json.dumps(data, indent=2, default=str))

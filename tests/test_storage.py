@@ -187,3 +187,34 @@ class TestStorageTypeNarrowing:
         result = storage.add_page(page)
         assert result.url == "http://example.com"
         assert len(storage.get_pages()) == 1
+
+
+class TestStorageCorruptJson:
+    """Regression (TICKET-306): a corrupt JSON file must degrade to the
+    documented default ([]/{}/[]) instead of raising json.JSONDecodeError
+    out of every public accessor."""
+
+    def test_corrupt_interests_degrades_to_empty_list(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.interests_file.write_text("{ this is not valid json ]")
+        assert storage.get_interests() == []
+        assert storage.list_interests() == []
+
+    def test_corrupt_pages_degrades_to_empty_list(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.pages_file.write_text("oops not json")
+        assert storage.get_pages() == []
+
+    def test_corrupt_config_degrades_to_default(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.config_file.write_text("[[ broken")
+        config = storage.get_config()
+        assert isinstance(config, CrawlConfig)
+
+    def test_corrupt_file_recovers_after_rewrite(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.interests_file.write_text("{ broken ]")
+        assert storage.get_interests() == []
+        # A subsequent valid write must be readable again.
+        storage.add_interest(Interest(name="python", keywords=["python"]))
+        assert len(storage.get_interests()) == 1
