@@ -1,6 +1,6 @@
 # TICKET-278: session.py load_session() crashes on non-dict JSON
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/session.py
 - File: personal_index/session.py
 
