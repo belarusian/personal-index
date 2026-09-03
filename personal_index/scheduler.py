@@ -83,7 +83,7 @@ class ScheduleStore:
                     next_run=next_run,
                 )
                 self._entries[name] = entry
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             self._entries = {}
 
     def _save(self) -> None:
