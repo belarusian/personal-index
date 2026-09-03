@@ -133,6 +133,8 @@ class BackupManager:
             try:
                 with open(str(manifest_file)) as f:
                     data = json.load(f)
+                if not isinstance(data, dict):
+                    continue
                 manifests.append(BackupManifest.from_dict(data))
             except (json.JSONDecodeError, KeyError):
                 continue
@@ -146,7 +148,13 @@ class BackupManager:
         if not manifest_file.exists():
             raise FileNotFoundError(f"Backup not found: {backup_id}")
         with open(str(manifest_file)) as f:
-            manifest = BackupManifest.from_dict(json.load(f))
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"Invalid manifest in {manifest_file}: "
+                f"expected dict, got {type(data).__name__}"
+            )
+        manifest = BackupManifest.from_dict(data)
         archive_path = self._find_archive(manifest, backup_path, backup_id)
         mode = "r:gz" if str(archive_path).endswith(".tar.gz") else "r"
         target = Path(target_dir)
@@ -207,7 +215,10 @@ class BackupManager:
             return None
 
         with open(str(manifest_file)) as f:
-            return BackupManifest.from_dict(json.load(f))
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return None
+        return BackupManifest.from_dict(data)
 
     def get_total_backup_size(self) -> int:
         """Get total size of all backups."""
