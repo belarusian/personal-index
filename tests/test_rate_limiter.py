@@ -97,6 +97,24 @@ class TestRateLimiter:
             self.limiter.can_request("example.com")
         assert self.limiter.can_request("example.com") is False
 
+    def test_can_request_consumes_token(self):
+        """A successful can_request spends one token (documented side effect)."""
+        limiter = RateLimiter(RateLimitConfig(max_requests=3, window_seconds=1000.0))
+        before = limiter.get_status("example.com").remaining
+        assert limiter.can_request("example.com") is True
+        after = limiter.get_status("example.com").remaining
+        assert after == before - 1
+
+    def test_can_request_denied_does_not_consume(self):
+        """A denied can_request does not spend a token."""
+        limiter = RateLimiter(RateLimitConfig(max_requests=3, window_seconds=1000.0))
+        for _ in range(3):
+            limiter.can_request("example.com")
+        before = limiter.get_status("example.com").remaining
+        assert limiter.can_request("example.com") is False
+        after = limiter.get_status("example.com").remaining
+        assert after == before
+
     def test_separate_domains(self):
         self.limiter.can_request("a.com")
         self.limiter.can_request("a.com")

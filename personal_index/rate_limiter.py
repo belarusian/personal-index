@@ -103,7 +103,14 @@ class RateLimiter:
         return self._buckets[domain]
 
     def can_request(self, domain: str) -> bool:
-        """Check if a request to the domain is allowed."""
+        """Check if a request to the domain is allowed.
+
+        Consumes one token from the domain's budget when the request is
+        allowed (returns True); returns False without consuming a token
+        when the budget is exhausted. This is not a side-effect-free
+        probe: each successful call spends a token, so callers that only
+        want to inspect the budget should use get_status()/get_wait_time().
+        """
         bucket = self._get_bucket(domain)
         return bucket.acquire()
 
