@@ -1,7 +1,7 @@
 # TICKET-326: content_digest module docstring promises "interests" grouping that no code implements
 
 - File: personal_index/content_digest.py
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc/behavior drift
 
 ## Symptom
