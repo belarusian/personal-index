@@ -1,6 +1,6 @@
 # TICKET-310: session.py load_session unguarded SessionStatus() on invalid status string
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/session.py
 - Symptom: `SessionManager.load_session` guards `json.JSONDecodeError` (TICKET-298) and a
   non-dict payload, but then constructs `SessionStatus(data.get("status", "active"))` from
