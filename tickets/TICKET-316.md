@@ -1,6 +1,6 @@
 # TICKET-316: content_linker.ContentLinker.clear_cache docstring understates its destructive scope
 
-- Status: OPEN
+- Status: RESOLVED (merged to main edc27f1, gh #470 merged, gh #469 closed)
 - Module: personal_index/content_linker/linker.py
 - Defect class: (b) doc/behavior drift — docstring says "Clear all cached data" but the body also wipes the entire source item store
 - Issue: #469
