@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import tarfile
+from pathlib import Path
 
 import pytest
 
@@ -129,6 +131,51 @@ class TestBackupManager:
         manager = BackupManager(backup_dir=backup_dir)
         with pytest.raises(FileNotFoundError):
             manager.restore_backup("nonexistent_id", str(tmp_path / "target"))
+
+    def test_restore_corrupt_archive_raises_value_error(self, tmp_path):
+        """A corrupt/truncated archive must raise a clean ValueError, not a
+        raw tarfile.TarError leak (TICKET-299)."""
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+        manifest = manager.create_backup(source)
+
+        archive_path = Path(manifest.metadata["archive_path"])
+        # Overwrite the real archive with garbage bytes (corrupt .tar.gz).
+        archive_path.write_bytes(b"THIS IS NOT A VALID TAR ARCHIVE")
+
+        # Precondition: tarfile.open on the garbage actually raises a
+        # tarfile.TarError, so the test exercises the new guard branch
+        # rather than a pre-existing path.
+        with pytest.raises(tarfile.TarError):
+            tarfile.open(str(archive_path), "r:gz")
+
+        # The guarded restore must translate that into a clean ValueError.
+        with pytest.raises(ValueError, match="Corrupt or unreadable archive"):
+            manager.restore_backup(manifest.backup_id, str(tmp_path / "out"))
+
+    def test_restore_truncated_archive_raises_value_error(self, tmp_path):
+        """A truncated archive (valid gzip header, cut short) must also raise
+        a clean ValueError (TICKET-299)."""
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+        manifest = manager.create_backup(source)
+
+        archive_path = Path(manifest.metadata["archive_path"])
+        full = archive_path.read_bytes()
+        # Truncate to a fraction of the real archive (still a gzip header).
+        archive_path.write_bytes(full[: len(full) // 3])
+
+        # Precondition: the truncated archive genuinely fails to open (the
+        # gzip layer raises EOFError before tarfile ever sees a valid stream),
+        # so the test exercises the new guard branch rather than a pre-existing
+        # path.
+        with pytest.raises((tarfile.TarError, EOFError)):
+            tarfile.open(str(archive_path), "r:gz")
+
+        with pytest.raises(ValueError, match="Corrupt or unreadable archive"):
+            manager.restore_backup(manifest.backup_id, str(tmp_path / "out"))
 
     def test_delete_backup(self, tmp_path):
         source = self._create_test_dir(tmp_path)
