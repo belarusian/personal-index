@@ -1,6 +1,6 @@
 # TICKET-284: search_suggestions to_dict/from_dict alias live lists
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #393
 - Module: personal_index/search_suggestions.py
 - Class: logic (shared mutable reference between serialized dict and live instance / input)
