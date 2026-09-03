@@ -1,6 +1,6 @@
 # TICKET-300: backup.py BackupManager._create_archive unguarded tarfile.open (write failure)
 
-- Status: OPEN
+- Status: RESOLVED (merged to main f0a4189, gh #432 closed)
 - Issue: #432
 - Module: personal_index/backup.py
 - Function: BackupManager._create_archive (line 58)
