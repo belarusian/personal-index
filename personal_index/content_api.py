@@ -128,6 +128,8 @@ class ContentAPI:
             data = json.loads(body)
         except json.JSONDecodeError:
             return 400, {"error": "Invalid JSON in request body"}
+        if not isinstance(data, dict):
+            return 400, {"error": "Request body must be a JSON object"}
         item = self._store[item_id]
         for key in ("title", "description", "link", "tags"):
             if key in data:

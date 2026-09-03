@@ -207,6 +207,16 @@ class TestApiErrorHandling:
         status, _resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body="bad")
         assert status == 400
 
+    def test_update_not_dict(self, api_with_data):
+        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body='["list"]')
+        assert status == 400
+        assert resp["error"] == "Request body must be a JSON object"
+
+    def test_update_not_dict_int(self, api_with_data):
+        status, resp = api_with_data.handle_request("PUT", "/api/v1/content/1", body="123")
+        assert status == 400
+        assert resp["error"] == "Request body must be a JSON object"
+
     def test_list_page_2_empty(self, api_with_data):
         _status, body = api_with_data.handle_request(
             "GET", "/api/v1/content", query_string="page=2&per_page=1"
