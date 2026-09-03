@@ -243,3 +243,61 @@ class TestScheduleStoreNonDictJSON:
             f.write("42")
         store = ScheduleStore(path=path)
         assert store._entries == {}
+
+
+class TestScheduleStoreCorruptTimestamp:
+    """Regression tests for TICKET-312: corrupt last_run/next_run timestamp.
+
+    The TICKET-265 guard degrades to an empty store on corrupt JSON / non-dict /
+    missing keys, but datetime.fromisoformat raises ValueError on a corrupt
+    timestamp string, which the guard must also catch.
+    """
+
+    def _write(self, path, last_run, next_run):
+        import json
+
+        with open(path, "w") as f:
+            json.dump(
+                {
+                    "job1": {
+                        "config": {
+                            "interval_hours": 24,
+                            "enabled": True,
+                            "seed_urls": [],
+                            "max_pages_per_run": 50,
+                            "crawl_depth": 2,
+                            "delay": 1.0,
+                        },
+                        "last_run": last_run,
+                        "next_run": next_run,
+                        "run_count": 0,
+                        "total_pages_indexed": 0,
+                    }
+                },
+                f,
+            )
+
+    def test_corrupt_last_run_degrades_to_empty(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        self._write(path, last_run="not-a-timestamp", next_run=None)
+        store = ScheduleStore(path=path)
+        assert store._entries == {}
+
+    def test_corrupt_next_run_degrades_to_empty(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        self._write(path, last_run=None, next_run="bad")
+        store = ScheduleStore(path=path)
+        assert store._entries == {}
+
+    def test_valid_timestamps_still_load(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        self._write(
+            path,
+            last_run="2024-01-01T12:00:00+00:00",
+            next_run="2024-01-02T12:00:00+00:00",
+        )
+        store = ScheduleStore(path=path)
+        assert len(store._entries) == 1
+        entry = store._entries["job1"]
+        assert entry.last_run == datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
+        assert entry.next_run == datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
