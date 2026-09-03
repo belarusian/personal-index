@@ -1,6 +1,6 @@
 # TICKET-298: session.py SessionManager.load_session unguarded json.load
 
-- Status: OPEN
+- Status: RESOLVED (merged to main ff61536, gh #425 closed)
 - Issue: #425
 - Module: personal_index/session.py
 - Function: SessionManager.load_session (line 295)
