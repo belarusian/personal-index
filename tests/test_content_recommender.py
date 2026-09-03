@@ -182,3 +182,17 @@ class TestRecommender:
         recs_kw = self.recommender.recommend(seed, keyword_weight=0.9, tag_weight=0.05, score_weight=0.05)
         assert len(recs_kw) >= 1
         assert "python" in recs_kw[0].url
+
+
+class TestModuleDocstringContract:
+    def test_docstring_does_not_promise_interest_matching(self):
+        """Regression: module docstring must not over-promise capabilities.
+
+        The module implements no interest matching (only keyword overlap,
+        tag similarity, and existing scores), so its docstring must not
+        claim to match on 'interest' (TICKET-327).
+        """
+        import personal_index.content_recommender as cr
+
+        doc = (cr.__doc__ or "").lower()
+        assert "interest" not in doc
