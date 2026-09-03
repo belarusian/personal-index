@@ -1,6 +1,6 @@
 # TICKET-274: backup.py json.load non-dict guard sweep
 
-**Status:** OPEN
+**Status:** RESOLVED
 **Module:** personal_index/backup.py
 **Issue:** #377
 
