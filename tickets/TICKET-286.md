@@ -1,6 +1,6 @@
 # TICKET-286: backup.py list_backups aborts whole listing on a dict manifest with unexpected keys
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #395
 - Module: personal_index/backup.py
 - Class: TypeError-coverage (from_dict raises TypeError on unexpected keys; not in except tuple)
