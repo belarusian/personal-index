@@ -1,6 +1,6 @@
 # TICKET-282: content_timeline/timeline_event.py from_dict unguarded fromisoformat + keyed access
 
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #398 closed)
 - Issue: #398
 - Module: personal_index/content_timeline/timeline_event.py
 - Class: unguarded type-assumption (datetime.fromisoformat on unvalidated external string -> ValueError; data[key] on unvalidated external dict -> KeyError)
