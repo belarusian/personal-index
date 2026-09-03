@@ -168,16 +168,26 @@ class BackupStore:
             ValueError: If the file does not contain a JSON object.
         """
         filepath = Path(filepath)
-        data = json.loads(filepath.read_text())
+        try:
+            data = json.loads(filepath.read_text())
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Invalid backup file {filepath}: not valid JSON: {exc}"
+            ) from exc
         if not isinstance(data, dict):
             raise ValueError("Backup file must contain a JSON object")
 
-        entry = BackupEntry(
-            backup_id=data["backup_id"],
-            timestamp=datetime.fromisoformat(data["timestamp"]),
-            item_count=data["item_count"],
-            data=data["items"],
-            metadata=data.get("metadata", {}),
-        )
+        try:
+            entry = BackupEntry(
+                backup_id=data["backup_id"],
+                timestamp=datetime.fromisoformat(data["timestamp"]),
+                item_count=data["item_count"],
+                data=data["items"],
+                metadata=data.get("metadata", {}),
+            )
+        except KeyError as exc:
+            raise ValueError(
+                f"Invalid backup file {filepath}: missing required key {exc}"
+            ) from exc
         self.backups[entry.backup_id] = entry
         return entry
