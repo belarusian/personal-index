@@ -1,6 +1,6 @@
 # TICKET-325
 
-- Status: OPEN
+- Status: RESOLVED (merged to main a2f847e, gh #489 merged, gh #488 closed)
 - Module: personal_index/content_health.py
 - Class: (b) doc/behavior drift (docstring over-promises)
 
