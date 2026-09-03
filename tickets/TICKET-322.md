@@ -1,6 +1,8 @@
 # TICKET-322
 
-- Status: OPEN
+- Status: RESOLVED
+- Merged: main 4535ea8 (PR #481)
+- Issue: #480 (closed)
 - Module: personal_index/content_pin.py
 - Class: (b) doc/behavior drift — docstring over-promises a return path
 
@@ -28,4 +30,3 @@ Correct the `pin` docstring to state the actual contract: always returns True
 regression test pinning the corrected contract (pin always returns True, even
 for a re-pin of an already-pinned id). No behavior change.
 
-## Issue: #480
