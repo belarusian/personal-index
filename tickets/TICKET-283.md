@@ -1,6 +1,6 @@
 # TICKET-283: search_suggestions trending suggestions drop every mixed-case query
 
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #392 closed)
 - Issue: #392
 - Module: personal_index/search_suggestions.py
 - Class: logic (case-sensitive prefix match against a lowercased prefix)
