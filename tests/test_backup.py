@@ -268,3 +268,94 @@ class TestBackupTarFilter:
             assert os.path.exists(restored_file)
             with open(restored_file) as f:
                 assert f.read() == "hello world"
+
+
+class TestBackupManifestNonDictGuard:
+    """Regression tests for TICKET-274: json.load non-dict guard in backup.py.
+
+    A corrupted manifest file containing a non-dict JSON value (null, list,
+    number) must not crash BackupManifest.from_dict. Each site has its own
+    documented failure contract:
+      - list_backups(): skip the bad entry (continue)
+      - get_backup_info(): return None (not-found path)
+      - restore_backup(): raise ValueError (explicit restore fails loudly)
+    """
+
+    def _write_bad_manifest(self, tmp_path, backup_id, bad_value):
+        """Write a flat backup_<id>.json manifest containing a non-dict value."""
+        import json as _json
+
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        manifest_path = backup_dir / f"backup_{backup_id}.json"
+        with open(manifest_path, "w") as f:
+            _json.dump(bad_value, f)
+        return backup_dir
+
+    def test_list_backups_skips_null_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        results = bm.list_backups()
+        assert all(m.backup_id != "badnull" for m in results)
+
+    def test_list_backups_skips_list_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badlist", [1, 2, 3])
+        bm = BackupManager(backup_dir=str(backup_dir))
+        results = bm.list_backups()
+        assert all(m.backup_id != "badlist" for m in results)
+
+    def test_list_backups_skips_number_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badnum", 42)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        results = bm.list_backups()
+        assert all(m.backup_id != "badnum" for m in results)
+
+    def test_list_backups_still_returns_valid_entries(self, tmp_path):
+        """A bad manifest must not suppress valid sibling manifests."""
+        import json as _json
+
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        with open(backup_dir / "backup_badnull.json", "w") as f:
+            _json.dump(None, f)
+        valid = BackupManifest(backup_id="good1", source_dir="/tmp/x")
+        with open(backup_dir / "backup_good1.json", "w") as f:
+            _json.dump(valid.to_dict(), f)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        results = bm.list_backups()
+        ids = [m.backup_id for m in results]
+        assert "good1" in ids
+        assert "badnull" not in ids
+
+    def test_get_backup_info_returns_none_for_null_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        assert bm.get_backup_info("badnull") is None
+
+    def test_get_backup_info_returns_none_for_list_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badlist", [1, 2, 3])
+        bm = BackupManager(backup_dir=str(backup_dir))
+        assert bm.get_backup_info("badlist") is None
+
+    def test_get_backup_info_returns_none_for_number_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badnum", 42)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        assert bm.get_backup_info("badnum") is None
+
+    def test_restore_backup_raises_for_null_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        with pytest.raises(ValueError, match="Invalid manifest"):
+            bm.restore_backup("badnull", str(tmp_path / "restore"))
+
+    def test_restore_backup_raises_for_list_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badlist", [1, 2, 3])
+        bm = BackupManager(backup_dir=str(backup_dir))
+        with pytest.raises(ValueError, match="Invalid manifest"):
+            bm.restore_backup("badlist", str(tmp_path / "restore"))
+
+    def test_restore_backup_raises_for_number_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badnum", 42)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        with pytest.raises(ValueError, match="Invalid manifest"):
+            bm.restore_backup("badnum", str(tmp_path / "restore"))
