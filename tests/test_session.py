@@ -332,3 +332,40 @@ class TestSessionManagerCorruptJsonGuard:
             pass
         mgr = SessionManager()
         assert mgr.load_session(self._write_raw(tmp_path, truncated)) is None
+
+
+class TestSessionManagerInvalidStatusGuard:
+    """load_session must degrade to None on a valid-JSON file whose status is not a
+    valid SessionStatus value, not raise ValueError from the enum construction."""
+
+    def _write_raw(self, tmp_path, text, name="s.json"):
+        p = tmp_path / name
+        p.write_text(text)
+        return str(p)
+
+    def test_invalid_status_returns_none(self, tmp_path):
+        # Valid JSON, but "status" is not one of the five enum values, so
+        # SessionStatus(...) raises ValueError. The guard must swallow it.
+        import json
+
+        payload = json.dumps({"session_id": "s1", "name": "x", "status": "bogus"})
+        # Precondition: the enum really does reject this value.
+        try:
+            SessionStatus("bogus")
+            raise AssertionError("precondition: 'bogus' should not be a valid status")
+        except ValueError:
+            pass
+        mgr = SessionManager()
+        assert mgr.load_session(self._write_raw(tmp_path, payload)) is None
+
+    def test_valid_status_still_loads(self, tmp_path):
+        # Regression: a well-formed file with a valid status must still load.
+        import json
+
+        payload = json.dumps(
+            {"session_id": "s1", "name": "x", "status": "paused", "stats": {}}
+        )
+        mgr = SessionManager()
+        loaded = mgr.load_session(self._write_raw(tmp_path, payload))
+        assert loaded is not None
+        assert loaded.status == SessionStatus.PAUSED
