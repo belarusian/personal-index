@@ -1,7 +1,9 @@
 """Content health monitoring for personal-index.
 
-Checks the health and quality of indexed content, identifying
-issues like broken links, low-quality content, and stale entries.
+Checks the health and quality of indexed content against configurable
+rules, flagging issues such as invalid URLs, missing or oversized
+titles, low-content items, missing tags, low scores, and bad HTTP
+status codes.
 """
 
 from __future__ import annotations
