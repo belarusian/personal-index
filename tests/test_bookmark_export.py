@@ -474,6 +474,26 @@ class TestExportToFile:
             data = json.load(f)
         assert data == []
 
+    def test_export_to_file_never_returns_none(self, exporter, tmp_path):
+        # TICKET-323 regression: export_to_file always returns a
+        # BookmarkExportResult (errors reported via result.errors), never None.
+        # Success path.
+        ok_path = str(tmp_path / "ok.json")
+        ok = exporter.export_to_file(ok_path, "json")
+        assert ok is not None
+        assert isinstance(ok, BookmarkExportResult)
+        assert ok.errors == []
+        # Unsupported-format path (explicit fmt).
+        bad = exporter.export_to_file(str(tmp_path / "x.pdf"), "pdf")
+        assert bad is not None
+        assert isinstance(bad, BookmarkExportResult)
+        assert len(bad.errors) > 0
+        # Unsupported-extension path (auto-detect).
+        bad2 = exporter.export_to_file(str(tmp_path / "x.xyz"))
+        assert bad2 is not None
+        assert isinstance(bad2, BookmarkExportResult)
+        assert len(bad2.errors) > 0
+
 
 # ---------------------------------------------------------------------------
 # Edge case tests
