@@ -306,3 +306,58 @@ class TestComputeCrawlAnalytics:
         assert data.top_queries == []
         assert data.hourly_searches == {}
         assert data.daily_searches == {}
+
+
+class TestAnalyticsTrackerNonDictGuard:
+    """load() must degrade to 0 on valid-JSON-but-wrong-type (non-dict) files."""
+
+    def setup_method(self):
+        self.tracker = AnalyticsTracker()
+
+    def _write(self, tmp_path, content: str) -> str:
+        path = str(tmp_path / "analytics.json")
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def test_load_null(self, tmp_path):
+        path = self._write(tmp_path, "null")
+        assert self.tracker.load(path) == 0
+        assert self.tracker.get_analytics().total_searches == 0
+        assert self.tracker.get_analytics().total_crawls == 0
+
+    def test_load_number(self, tmp_path):
+        path = self._write(tmp_path, "42")
+        assert self.tracker.load(path) == 0
+
+    def test_load_list(self, tmp_path):
+        path = self._write(tmp_path, '[{"query": "x"}]')
+        assert self.tracker.load(path) == 0
+
+    def test_load_string(self, tmp_path):
+        path = self._write(tmp_path, '"hello"')
+        assert self.tracker.load(path) == 0
+
+    def test_valid_dict_still_works(self, tmp_path):
+        path = str(tmp_path / "analytics.json")
+        self.tracker.record_search("python", result_count=5)
+        self.tracker.record_crawl("http://example.com", status_code=200)
+        self.tracker.save(path)
+
+        tracker2 = AnalyticsTracker()
+        assert tracker2.load(path) == 2
+        assert tracker2.get_analytics().total_searches == 1
+        assert tracker2.get_analytics().total_crawls == 1
+
+    def test_valid_after_invalid_not_suppressed(self, tmp_path):
+        path = str(tmp_path / "analytics.json")
+        with open(path, "w") as f:
+            f.write("null")
+        assert self.tracker.load(path) == 0
+
+        # overwrite with a valid dict; the guard must not suppress a later valid load
+        self.tracker.record_search("rust", result_count=3)
+        self.tracker.save(path)
+        tracker2 = AnalyticsTracker()
+        assert tracker2.load(path) == 1
+        assert tracker2.get_analytics().total_searches == 1
