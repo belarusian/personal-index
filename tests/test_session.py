@@ -296,3 +296,34 @@ class TestSessionManagerNonDictGuard:
         session = mgr.load_session(good)
         assert session is not None
         assert session.session_id == "s2"
+
+
+class TestSessionManagerCorruptJSON:
+    """TICKET-298: a corrupt session file must degrade to None, not raise."""
+
+    def _raw(self, tmp_path, text, name="s.json"):
+        p = tmp_path / name
+        p.write_text(text)
+        return str(p)
+
+    def test_truncated_json_returns_none(self, tmp_path):
+        mgr = SessionManager()
+        assert mgr.load_session(self._raw(tmp_path, "{")) is None
+
+    def test_garbage_json_returns_none(self, tmp_path):
+        mgr = SessionManager()
+        assert mgr.load_session(self._raw(tmp_path, '{"session_id": "s1",')) is None
+
+    def test_valid_after_corrupt_not_suppressed(self, tmp_path):
+        mgr = SessionManager()
+        assert mgr.load_session(self._raw(tmp_path, "{", name="bad.json")) is None
+        good = self._raw(
+            tmp_path,
+            '{"session_id": "s3", "name": "Good", "status": "active",'
+            ' "started_at": 1.0, "completed_at": null, "stats": {},'
+            ' "config": {}, "metadata": {}}',
+            name="good.json",
+        )
+        session = mgr.load_session(good)
+        assert session is not None
+        assert session.session_id == "s3"

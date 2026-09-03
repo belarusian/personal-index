@@ -291,8 +291,11 @@ class SessionManager:
         path = Path(filepath)
         if not path.exists():
             return None
-        with open(path) as f:
-            data = json.load(f)
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except json.JSONDecodeError:
+            return None
         if not isinstance(data, dict):
             return None
         session = CrawlSession(
