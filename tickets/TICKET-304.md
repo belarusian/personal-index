@@ -1,9 +1,10 @@
 # TICKET-304: read_time_minutes annotated -> float but returns int
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/text_utils.py
 - Defect class: (b) doc/behavior drift
 - Issue: #441
+- Merged: 1c4e5d4 (PR #442, CI green)
 
 ## Symptom
 `read_time_minutes` is annotated `-> float`, but the body returns an int:
