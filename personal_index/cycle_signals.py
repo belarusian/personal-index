@@ -346,7 +346,15 @@ def load_codemap(path: str) -> dict:
     if not p.exists():
         print(f"[signal] ERROR: codemap not found at {p}", file=sys.stderr)
         sys.exit(1)
-    return json.loads(p.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"[signal] ERROR: codemap is not valid JSON at {p}: {exc}", file=sys.stderr)
+        sys.exit(1)
+    if not isinstance(data, dict):
+        print(f"[signal] ERROR: codemap must be a JSON object at {p}", file=sys.stderr)
+        sys.exit(1)
+    return data
 
 
 # ---------------------------------------------------------------------------
