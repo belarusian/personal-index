@@ -154,7 +154,13 @@ class BackupManager:
                 f"Invalid manifest in {manifest_file}: "
                 f"expected dict, got {type(data).__name__}"
             )
-        manifest = BackupManifest.from_dict(data)
+        try:
+            manifest = BackupManifest.from_dict(data)
+        except (KeyError, TypeError):
+            raise ValueError(
+                f"Invalid manifest in {manifest_file}: "
+                f"unexpected or missing keys in dict manifest"
+            ) from None
         archive_path = self._find_archive(manifest, backup_path, backup_id)
         mode = "r:gz" if str(archive_path).endswith(".tar.gz") else "r"
         target = Path(target_dir)

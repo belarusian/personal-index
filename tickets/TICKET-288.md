@@ -1,6 +1,6 @@
 # TICKET-288: backup.py restore_backup dies with opaque TypeError on a dict manifest with unexpected keys
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #397
 - Module: personal_index/backup.py
 - Class: TypeError-coverage (from_dict raises TypeError on unexpected keys; not caught)
