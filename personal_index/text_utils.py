@@ -269,7 +269,7 @@ def count_characters(text: str, include_spaces: bool = True) -> int:
     return len(text.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", ""))
 
 
-def read_time_minutes(text: str, wpm: int = 200) -> float:
+def read_time_minutes(text: str, wpm: int = 200) -> int:
     """Estimate reading time in minutes.
 
     Args:
@@ -277,7 +277,7 @@ def read_time_minutes(text: str, wpm: int = 200) -> float:
         wpm: Words per minute reading speed.
 
     Returns:
-        Estimated reading time in minutes.
+        Integer number of minutes (minimum 1).
     """
     words = count_words(text)
     return max(1, round(words / wpm))

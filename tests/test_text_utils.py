@@ -280,3 +280,9 @@ class TestReadTimeMinutes:
 
     def test_empty(self):
         assert read_time_minutes("") == 1
+
+    def test_returns_int_type(self):
+        # Regression: annotation is -> int; pin the runtime type.
+        assert isinstance(read_time_minutes("word " * 400), int)
+        assert type(read_time_minutes("hello")) is int
+        assert type(read_time_minutes("")) is int
