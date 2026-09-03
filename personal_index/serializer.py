@@ -51,11 +51,16 @@ class Serializer:
         except (TypeError, ValueError) as e:
             raise SerializationError(f"Failed to serialize to JSON: {e}") from e
 
-    def from_json(self, json_str: str) -> dict:
-        """Deserialize JSON string to dict."""
+    def from_json(self, json_str: str) -> Any:
+        """Deserialize a JSON string to its top-level value.
+
+        ``json.loads`` yields whatever the document actually contains, so the
+        result may be a dict, list, str, int, float, bool or None - not
+        necessarily a mapping. Callers that require a dict must check with
+        ``isinstance(result, dict)`` before using it as one.
+        """
         try:
-            result = json.loads(json_str)
-            return result  # type: ignore[no-any-return]
+            return json.loads(json_str)
         except json.JSONDecodeError as e:
             raise DeserializationError(f"Failed to deserialize JSON: {e}") from e
 
