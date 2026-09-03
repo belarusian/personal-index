@@ -187,3 +187,38 @@ class TestStorageTypeNarrowing:
         result = storage.add_page(page)
         assert result.url == "http://example.com"
         assert len(storage.get_pages()) == 1
+
+
+class TestStorageCorruptJson:
+    """TICKET-306: malformed JSON must degrade to the documented default, not raise."""
+
+    def test_get_interests_with_corrupt_file(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.interests_file.write_text("{not json")
+        assert storage.get_interests() == []
+
+    def test_get_pages_with_corrupt_file(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.pages_file.write_text("{not json")
+        assert storage.get_pages() == []
+
+    def test_get_config_with_corrupt_file(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.config_file.write_text("{not json")
+        config = storage.get_config()
+        assert isinstance(config, CrawlConfig)
+
+    def test_get_page_count_with_corrupt_file(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.pages_file.write_text("[1, 2")
+        assert storage.get_page_count() == 0
+
+    def test_whitespace_only_interests(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.interests_file.write_text("   \n  \t ")
+        assert storage.get_interests() == []
+
+    def test_whitespace_only_config(self, tmp_path):
+        storage = Storage(data_dir=str(tmp_path))
+        storage.config_file.write_text("   \n  ")
+        assert isinstance(storage.get_config(), CrawlConfig)

@@ -27,12 +27,16 @@ class Storage:
             self.pages_file.write_text("[]")
 
     def _read_json(self, filepath: Path) -> list | dict:
+        default: list | dict = (
+            [] if filepath.name in ("interests.json", "pages.json") else {}
+        )
         content = filepath.read_text()
         if not content.strip():
-            if filepath.name in ("interests.json", "pages.json"):
-                return []
-            return {}
-        return json.loads(content)  # type: ignore[no-any-return]
+            return default
+        try:
+            return json.loads(content)  # type: ignore[no-any-return]
+        except json.JSONDecodeError:
+            return default
 
     def _write_json(self, filepath: Path, data):
         filepath.write_text(json.dumps(data, indent=2, default=str))
