@@ -1,7 +1,7 @@
 """Content recommendation engine for personal-index.
 
 Recommends related content based on keyword overlap, tag similarity,
-and interest matching scores.
+and existing scores.
 """
 
 from __future__ import annotations
