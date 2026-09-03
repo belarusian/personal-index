@@ -132,6 +132,40 @@ class TestProgressTracker:
         time.sleep(0.1)
         assert t.elapsed_seconds >= 0.1
 
+    def test_elapsed_seconds_corrupt_started_at(self):
+        # A non-ISO started_at (e.g. from corrupt persisted storage) must not raise.
+        t = ProgressTracker.from_dict({
+            "operation_name": "x",
+            "state": "running",
+            "total_steps": 10,
+            "current_step": 2,
+            "started_at": "not-a-timestamp",
+        })
+        assert t.elapsed_seconds == 0.0
+
+    def test_elapsed_seconds_non_string_started_at(self):
+        # A non-string started_at (e.g. a number from JSON) must not raise.
+        t = ProgressTracker.from_dict({
+            "operation_name": "x",
+            "state": "running",
+            "total_steps": 10,
+            "current_step": 2,
+            "started_at": 12345,
+        })
+        assert t.elapsed_seconds == 0.0
+
+    def test_to_dict_with_corrupt_started_at(self):
+        # to_dict calls elapsed_seconds; a corrupt started_at must not crash it.
+        t = ProgressTracker.from_dict({
+            "operation_name": "x",
+            "state": "running",
+            "total_steps": 10,
+            "current_step": 2,
+            "started_at": "garbage",
+        })
+        d = t.to_dict()
+        assert d["elapsed_seconds"] == 0.0
+
     def test_estimated_remaining(self):
         t = ProgressTracker(operation_name="test", total_steps=10)
         t.start()
@@ -243,6 +277,23 @@ class TestProgressStore:
         store = ProgressStore(storage_path=str(path))
         count = store.load_all()
         assert count == 0
+
+    def test_load_all_corrupt_started_at(self, tmp_path):
+        # A persisted file with a non-ISO started_at loads fine and reading
+        # elapsed_seconds on the loaded tracker must not raise.
+        path = tmp_path / "progress.json"
+        path.write_text(
+            '{"op1": {"operation_name": "x", "state": "running",'
+            ' "total_steps": 10, "current_step": 2, "started_at": "garbage"}}'
+        )
+        store = ProgressStore(storage_path=str(path))
+        count = store.load_all()
+        assert count == 1
+        loaded = store.get("op1")
+        assert loaded is not None
+        assert loaded.elapsed_seconds == 0.0
+        # to_dict (which calls elapsed_seconds) must not crash either.
+        assert loaded.to_dict()["elapsed_seconds"] == 0.0
 
     def test_auto_generate_operation_id(self):
         t = ProgressTracker()

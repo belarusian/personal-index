@@ -82,7 +82,10 @@ class ProgressTracker:
         """Get elapsed time in seconds."""
         if not self.started_at:
             return 0.0
-        start = datetime.fromisoformat(self.started_at)
+        try:
+            start = datetime.fromisoformat(self.started_at)
+        except (ValueError, TypeError):
+            return 0.0
         now = datetime.now(timezone.utc)
         return (now - start).total_seconds()
 
