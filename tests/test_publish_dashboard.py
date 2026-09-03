@@ -191,6 +191,115 @@ class TestValidateSync:
         assert result["reason"] == "no embedded metadata"
 
 
+class TestGitCommitPushNonDictGuard:
+    """Regression tests: _git_commit_push() must not crash on non-dict codemap JSON."""
+
+    def _run_commit(self, tmp_path, codemap_raw):
+        json_path = tmp_path / "codemap.json"
+        json_path.write_text(codemap_raw)
+        search_repo = tmp_path / "search"
+        search_repo.mkdir()
+
+        def fake_run(cmd, cwd=None, check=True):
+            r = MagicMock(spec=subprocess.CompletedProcess)
+            r.returncode = 0
+            r.stdout = ""
+            r.stderr = ""
+            # git diff --cached --quiet -> non-zero means "there are changes"
+            if "diff" in cmd:
+                r.returncode = 1
+            return r
+
+        with patch.object(publish_dashboard, "run", side_effect=fake_run):
+            publish_dashboard._git_commit_push(json_path, search_repo)
+
+    def test_codemap_null_no_crash(self, tmp_path):
+        self._run_commit(tmp_path, "null")  # must not raise
+
+    def test_codemap_list_no_crash(self, tmp_path):
+        self._run_commit(tmp_path, "[1, 2]")  # must not raise
+
+    def test_codemap_valid_no_crash(self, tmp_path):
+        self._run_commit(tmp_path, json.dumps({"summary": {"total_modules": 2}}))
+
+
+class TestValidateSyncNonDictGuard:
+    """Regression tests: validate_sync() must not crash on non-dict JSON."""
+
+    def _write_files(self, tmp_path, codemap_raw, embedded_raw):
+        json_path = tmp_path / "codemap.json"
+        json_path.write_text(codemap_raw)
+        html_path = tmp_path / "dashboard.html"
+        html_path.write_text(
+            '<script type="application/json" id="codemap-metadata">'
+            + embedded_raw
+            + "</script>"
+        )
+        return html_path, json_path
+
+    def test_codemap_null(self, tmp_path):
+        html_path, json_path = self._write_files(
+            tmp_path, "null", json.dumps({"summary": {"total_modules": 1}})
+        )
+        result = publish_dashboard.validate_sync(html_path, json_path)
+        assert result["sync"] is False
+        assert result["reason"] == "codemap JSON is not an object"
+
+    def test_codemap_number(self, tmp_path):
+        html_path, json_path = self._write_files(
+            tmp_path, "5", json.dumps({"summary": {"total_modules": 1}})
+        )
+        result = publish_dashboard.validate_sync(html_path, json_path)
+        assert result["sync"] is False
+        assert result["reason"] == "codemap JSON is not an object"
+
+    def test_codemap_list(self, tmp_path):
+        html_path, json_path = self._write_files(
+            tmp_path, "[1, 2]", json.dumps({"summary": {"total_modules": 1}})
+        )
+        result = publish_dashboard.validate_sync(html_path, json_path)
+        assert result["sync"] is False
+        assert result["reason"] == "codemap JSON is not an object"
+
+    def test_embedded_non_dict(self, tmp_path):
+        html_path, json_path = self._write_files(
+            tmp_path, json.dumps({"summary": {"total_modules": 1}}), "null"
+        )
+        result = publish_dashboard.validate_sync(html_path, json_path)
+        assert result["sync"] is False
+        assert result["reason"] == "embedded metadata is not an object"
+
+    def test_valid_still_works(self, tmp_path):
+        summary = {"total_modules": 5, "total_errors": 0, "total_warnings": 0}
+        html_path, json_path = self._write_files(
+            tmp_path,
+            json.dumps({"summary": summary}),
+            json.dumps({"summary": summary}),
+        )
+        result = publish_dashboard.validate_sync(html_path, json_path)
+        assert result["sync"] is True
+        assert result["summary"]["total_modules"] == 5
+
+    def test_valid_after_invalid_not_suppressed(self, tmp_path):
+        # First an invalid codemap (must not crash), then a valid one (must pass).
+        html_path, json_path = self._write_files(
+            tmp_path, "null", json.dumps({"summary": {"total_modules": 1}})
+        )
+        first = publish_dashboard.validate_sync(html_path, json_path)
+        assert first["sync"] is False
+
+        summary = {"total_modules": 3, "total_errors": 0, "total_warnings": 0}
+        html_path, json_path = self._write_files(
+            tmp_path,
+            json.dumps({"summary": summary}),
+            json.dumps({"summary": summary}),
+        )
+        second = publish_dashboard.validate_sync(html_path, json_path)
+        assert second["sync"] is True
+        assert second["summary"]["total_modules"] == 3
+
+
+
 class TestPublish:
     """Tests for publish_dashboard.publish()."""
 

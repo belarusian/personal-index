@@ -61,6 +61,9 @@ def validate_sync(html_path: Path, json_path: Path) -> dict:
 
     # Read JSON codemap
     codemap = json.loads(json_path.read_text(encoding="utf-8"))
+    if not isinstance(codemap, dict):
+        print("[publish] ERROR: codemap JSON is not an object", file=sys.stderr)
+        return {"sync": False, "reason": "codemap JSON is not an object"}
     json_summary = codemap.get("summary", {})
 
     # Extract embedded metadata from HTML
@@ -74,6 +77,9 @@ def validate_sync(html_path: Path, json_path: Path) -> dict:
     import html as htmlmod
     embedded_raw = html_text[start + len('<script type="application/json" id="codemap-metadata">'):end]
     embedded = json.loads(htmlmod.unescape(embedded_raw))
+    if not isinstance(embedded, dict):
+        print("[publish] ERROR: embedded metadata is not an object", file=sys.stderr)
+        return {"sync": False, "reason": "embedded metadata is not an object"}
     embedded_summary = embedded.get("summary", {})
 
     # Compare summaries
@@ -146,7 +152,8 @@ def _git_commit_push(json_path: Path, search_repo: Path) -> None:
     result = run(["git", "status", "--porcelain"], cwd=search_repo, check=False)
     changed_files = result.stdout.strip()
 
-    summary = json.loads(json_path.read_text(encoding="utf-8")).get("summary", {})
+    _codemap = json.loads(json_path.read_text(encoding="utf-8"))
+    summary = _codemap.get("summary", {}) if isinstance(_codemap, dict) else {}
     msg = (f"dashboard: refresh — {summary.get('total_modules', '?')} modules, "
            f"{summary.get('total_lines', '?')} lines, "
            f"{summary.get('total_errors', '?')} errors, "
