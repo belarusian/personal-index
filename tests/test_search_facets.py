@@ -459,3 +459,38 @@ class TestFacetedSearchFilters:
         assert "d2" in ids
         assert "d1" not in ids
         assert "d3" not in ids
+
+
+class TestParseDateValue:
+    """Regression tests for FacetedSearch._parse_date_value contract.
+
+    Pins the actual behavior: datetime for ISO strings, the original value
+    for numbers/datetimes, and None for any other value (including
+    non-parseable strings). TICKET-302.
+    """
+
+    def test_iso_string_returns_datetime(self):
+        from datetime import datetime
+        fs = FacetedSearch()
+        result = fs._parse_date_value("2020-01-01")
+        assert isinstance(result, datetime)
+        assert result == datetime(2020, 1, 1)
+
+    def test_number_returns_original(self):
+        fs = FacetedSearch()
+        assert fs._parse_date_value(42) == 42
+        assert fs._parse_date_value(3.14) == 3.14
+
+    def test_datetime_returns_original(self):
+        from datetime import datetime
+        fs = FacetedSearch()
+        dt = datetime(2021, 6, 15)
+        assert fs._parse_date_value(dt) is dt
+
+    def test_unparseable_string_returns_none(self):
+        fs = FacetedSearch()
+        assert fs._parse_date_value("not-a-date") is None
+
+    def test_none_returns_none(self):
+        fs = FacetedSearch()
+        assert fs._parse_date_value(None) is None

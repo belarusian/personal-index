@@ -268,8 +268,10 @@ class FacetedSearch:
     def _parse_date_value(self, value: Any) -> Any:
         """Parse a value as a date if it's a date-like string.
 
-        Returns a datetime object for ISO format strings, or the original
-        value if it's already a number or not parseable as a date.
+        Returns a datetime object for ISO format strings, the original value
+        for numbers (and datetimes), and None for any other value, including
+        strings that are not parseable as an ISO date. Callers treat the None
+        return as the "not a date" sentinel.
         """
         if isinstance(value, datetime):
             return value
