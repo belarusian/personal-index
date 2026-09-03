@@ -1,6 +1,7 @@
 # TICKET-295: bookmarks.py BookmarkManager.load unguarded json.load
 
 - Status: OPEN
+- Issue: #420
 - Module: personal_index/bookmarks.py
 - Function: BookmarkManager.load (line 148)
 

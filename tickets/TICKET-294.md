@@ -1,6 +1,7 @@
 # TICKET-294: progress.py ProgressStore.load_all unguarded json.load
 
 - Status: OPEN
+- Issue: #419
 - Module: personal_index/progress.py
 - Function: ProgressStore.load_all (line 263)
 
