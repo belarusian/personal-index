@@ -1,6 +1,6 @@
 # TICKET-280: publish_dashboard.py unguarded json.loads keyed access
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/publish_dashboard.py
 - Class: non-dict JSON guard (json.loads -> keyed .get access, no guard)
 
