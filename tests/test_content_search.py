@@ -336,6 +336,27 @@ class TestSearchIndexLoadNonDictGuard:
         assert idx.item_count == 0
         assert idx.term_count == 0
 
+class TestSearchIndexLoadCorruptJsonGuard:
+    """Regression: corrupt/truncated JSON in index file must not crash SearchIndex.load_index."""
+
+    def test_load_corrupt_brace_json(self, tmp_path):
+        filepath = str(tmp_path / "idx.json")
+        with open(filepath, "w") as f:
+            f.write("{")
+        idx = SearchIndex()
+        idx.load_index(filepath)
+        assert idx.item_count == 0
+        assert idx.term_count == 0
+
+    def test_load_truncated_json(self, tmp_path):
+        filepath = str(tmp_path / "idx.json")
+        with open(filepath, "w") as f:
+            f.write('{"items": {"1": {"title": "http://exa')
+        idx = SearchIndex()
+        idx.load_index(filepath)
+        assert idx.item_count == 0
+        assert idx.term_count == 0
+
 
 
 # ---------------------------------------------------------------------------
