@@ -1,6 +1,6 @@
 # TICKET-303: serializer.from_json annotation/docstring promise dict but returns any JSON type
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/serializer.py
 - Defect class: (b) doc/behavior drift
 - Issue: #439
@@ -36,3 +36,7 @@ No behaviour change (the code is correct - it is the contract that is wrong):
 ## Out of scope
 No runtime type guard, no signature change, no new exception - callers such
 as tests/test_exception_chains.py:34 depend on the current error contract.
+
+## Resolution
+Merged to main as squash commit 1e43620 (PR #440, CI run 33758779336 green on 3.10/3.11/3.12).
+gh issue #439 closed. Cycle 59.
