@@ -1,6 +1,6 @@
 # TICKET-289: backup.py get_backup_info still raises JSONDecodeError on an unparseable manifest
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #408
 - Module: personal_index/backup.py
 - Class: TypeError/JSONDecodeError-coverage (declared `BackupManifest | None` contract violated)
