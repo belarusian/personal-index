@@ -54,6 +54,16 @@ class TestContentPinner:
     def test_pin_returns_true(self, pinner):
         assert pinner.pin("item-1") is True
 
+    def test_pin_always_returns_true_no_failure_path(self, pinner):
+        # Regression (TICKET-322): the docstring contract is that pin()
+        # unconditionally pins and always returns True — there is no
+        # False failure path. Re-pinning an already-pinned id must still
+        # return True (not False).
+        assert pinner.pin("item-1") is True
+        assert pinner.pin("item-1", reason="again") is True
+        assert pinner.pin("item-1", metadata={"k": "v"}) is True
+        assert pinner.is_pinned("item-1") is True
+
     def test_pin_with_reason(self, pinner):
         pinner.pin("item-1", reason="important")
         item = pinner._pinned["item-1"]
