@@ -165,7 +165,7 @@ class BookmarkExporter:
 
     def export_to_file(
         self, filepath: str, fmt: str | None = None
-    ) -> BookmarkExportResult | None:
+    ) -> BookmarkExportResult:
         """Export bookmarks to a file.
 
         Args:

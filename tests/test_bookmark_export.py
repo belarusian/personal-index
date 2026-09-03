@@ -479,6 +479,20 @@ class TestExportToFile:
 # Edge case tests
 # ---------------------------------------------------------------------------
 
+
+    def test_export_to_file_returns_result_not_none(self, exporter, tmp_path):
+        """Regression: export_to_file must return BookmarkExportResult, never None (TICKET-323)."""
+        from personal_index.bookmark_export import BookmarkExportResult
+
+        filepath = str(tmp_path / "bookmarks.json")
+        result = exporter.export_to_file(filepath, "json")
+        assert isinstance(result, BookmarkExportResult)
+        assert result is not None
+        assert result.format == "json"
+        assert result.bookmark_count == 3
+        assert result.output_path == filepath
+        assert os.path.exists(filepath)
+
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
