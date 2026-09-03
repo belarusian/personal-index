@@ -166,6 +166,33 @@ class TestSearchSuggestions:
         trending_results = [r for r in results if r.source == "trending"]
         assert len(trending_results) > 0
 
+
+    def test_suggest_from_trending_mixed_case(self, suggestions: SearchSuggestions) -> None:
+        """A mixed-case trending query is returned for a lowercase prefix (TICKET-283)."""
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.record_search("Python")
+        s.record_search("Python")
+        results = s.suggest("py", sources=["trending"])
+        trending_results = [r for r in results if r.source == "trending"]
+        assert len(trending_results) > 0
+        assert any(r.text == "Python" for r in trending_results)
+
+    def test_suggest_from_trending_mixed_case_full_prefix(self) -> None:
+        """A mixed-case trending query matches its own lowercased full prefix (TICKET-283)."""
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.record_search("Python")
+        results = s.suggest("python", sources=["trending"])
+        trending_results = [r for r in results if r.source == "trending"]
+        assert any(r.text == "Python" for r in trending_results)
+
+    def test_suggest_from_trending_lowercase_still_works(self) -> None:
+        """Lowercase trending queries still match (no regression from TICKET-283)."""
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.record_search("python")
+        results = s.suggest("py", sources=["trending"])
+        trending_results = [r for r in results if r.source == "trending"]
+        assert any(r.text == "python" for r in trending_results)
+
     def test_suggest_fuzzy_true(self, suggestions: SearchSuggestions) -> None:
         """Fuzzy=True should return at least as many results as fuzzy=False."""
         exact = suggestions.suggest("pyt", fuzzy=False)
