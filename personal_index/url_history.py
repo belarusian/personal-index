@@ -155,8 +155,11 @@ class URLHistory:
         path = Path(filepath)
         if not path.exists():
             return 0
-        with open(str(path)) as f:
-            data = json.load(f)
+        try:
+            with open(str(path)) as f:
+                data = json.load(f)
+        except json.JSONDecodeError:
+            return 0
         if not isinstance(data, list):
             return 0
         self._history = [URLVisit.from_dict(d) for d in data]
