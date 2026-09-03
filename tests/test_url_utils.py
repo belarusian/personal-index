@@ -306,6 +306,20 @@ class TestUrlsAreEquivalent:
             "http://a.com:80/path", "http://a.com/path"
         ) is True
 
+    def test_distinct_non_http_urls_not_equivalent(self) -> None:
+        # TICKET-314: two distinct non-http/https URLs both normalize to None
+        # and must NOT be reported as equivalent.
+        assert urls_are_equivalent(
+            "mailto:a@x.com", "mailto:b@y.com"
+        ) is False
+        assert urls_are_equivalent(
+            "ftp://a.com/f", "ftp://b.com/g"
+        ) is False
+
+    def test_empty_urls_not_equivalent(self) -> None:
+        # TICKET-314: empty input normalizes to None -> never equivalent.
+        assert urls_are_equivalent("", "") is False
+
 
 # ── remove_query_params ────────────────────────────────────────────
 
