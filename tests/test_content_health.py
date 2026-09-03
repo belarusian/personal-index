@@ -190,3 +190,17 @@ class TestContentHealthChecker:
         )
         # Multiple failures should reduce score
         assert result.score < 100.0
+
+
+class TestModuleDocstringContract:
+    def test_docstring_does_not_promise_stale_detection(self):
+        """Regression: module docstring must not over-promise capabilities.
+
+        The module performs no staleness/age/timestamp checks, so its
+        docstring must not claim to detect 'stale entries' (TICKET-325).
+        """
+        import personal_index.content_health as ch
+
+        doc = (ch.__doc__ or "").lower()
+        assert "stale" not in doc
+        assert "stale entries" not in doc
