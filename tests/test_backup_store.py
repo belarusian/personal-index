@@ -137,6 +137,22 @@ class TestBackupStoreNonDictGuard:
         except ValueError as e:
             assert "missing required key" in str(e)
 
+    def test_import_corrupt_timestamp_raises_valueerror(self, tmp_path):
+        """Valid JSON dict with a non-ISO timestamp raises ValueError, not a raw
+        ValueError traceback from datetime.fromisoformat."""
+        s = BackupStore()
+        p = self._write(
+            tmp_path,
+            '{"backup_id": "x", "timestamp": "not-a-timestamp", '
+            '"item_count": 0, "items": []}',
+            "badts.json",
+        )
+        try:
+            s.import_from_file(p)
+            assert False, "Should have raised"
+        except ValueError as e:
+            assert "invalid timestamp" in str(e)
+
     def test_import_valid_dict_still_works(self, tmp_path):
         s = BackupStore()
         s.add_backup([{"id": "1", "title": "A"}], backup_id="b1")
