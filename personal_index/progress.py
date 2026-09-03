@@ -269,6 +269,8 @@ class ProgressStore:
             return 0
         with open(str(path)) as f:
             data = json.load(f)
+        if not isinstance(data, dict):
+            return 0
         for oid, d in data.items():
             tracker = ProgressTracker.from_dict(d)
             self._trackers[oid] = tracker

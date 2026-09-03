@@ -209,6 +209,27 @@ class TestProgressStore:
         count = store.load_all()
         assert count == 0
 
+    def test_load_all_null_json(self, tmp_path):
+        path = tmp_path / "progress.json"
+        path.write_text("null")
+        store = ProgressStore(storage_path=str(path))
+        count = store.load_all()
+        assert count == 0
+
+    def test_load_all_list_json(self, tmp_path):
+        path = tmp_path / "progress.json"
+        path.write_text("[1, 2, 3]")
+        store = ProgressStore(storage_path=str(path))
+        count = store.load_all()
+        assert count == 0
+
+    def test_load_all_number_json(self, tmp_path):
+        path = tmp_path / "progress.json"
+        path.write_text("42")
+        store = ProgressStore(storage_path=str(path))
+        count = store.load_all()
+        assert count == 0
+
     def test_auto_generate_operation_id(self):
         t = ProgressTracker()
         assert t.operation_id.startswith("op_")
