@@ -1,6 +1,6 @@
 # TICKET-287: backup.py get_backup_info raises on a dict manifest with unexpected keys instead of returning None
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #396
 - Module: personal_index/backup.py
 - Class: TypeError-coverage (from_dict raises TypeError on unexpected keys; not caught)
