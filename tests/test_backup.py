@@ -269,6 +269,100 @@ class TestBackupTarFilter:
             with open(restored_file) as f:
                 assert f.read() == "hello world"
 
+class TestBackupManifestCorruption:
+    """TICKET-285/286/287: each json.load site has its own failure semantics.
+
+    The writer (_save_manifest) always emits a JSON object, so a non-dict
+    top-level value means the manifest file is corrupt. list_backups skips the
+    entry, get_backup_info reports None, restore_backup fails loudly.
+    """
+
+    def _manager_with_backup(self, tmp_path):
+        source = tmp_path / "src"
+        source.mkdir()
+        (source / "file1.txt").write_text("content 1")
+        backup_dir = tmp_path / "backups"
+        manager = BackupManager(backup_dir=str(backup_dir))
+        manifest = manager.create_backup(str(source))
+        return manager, backup_dir, manifest
+
+    def _corrupt(self, backup_dir, content):
+        (backup_dir / "backup_corrupt.json").write_text(content)
+
+    # --- TICKET-285: list_backups skips a malformed entry, keeps the rest ---
+
+    @pytest.mark.parametrize("content", ["[]", '"str"', "5", "null", "{"])
+    def test_list_backups_skips_non_dict_manifest(self, tmp_path, content):
+        manager, backup_dir, manifest = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, content)
+
+        backups = manager.list_backups()
+
+        assert [m.backup_id for m in backups] == [manifest.backup_id]
+
+    def test_list_backups_survives_unknown_key_manifest(self, tmp_path):
+        manager, backup_dir, manifest = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, '{"nope": 1}')
+
+        assert len(manager.list_backups()) == 1
+
+    # --- TICKET-286: get_backup_info honours its `| None` contract ---
+
+    @pytest.mark.parametrize("content", ["[]", '"str"', "5", "null", "{", '{"nope": 1}'])
+    def test_get_backup_info_returns_none_on_corrupt_manifest(self, tmp_path, content):
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, content)
+
+        assert manager.get_backup_info("corrupt") is None
+
+    def test_get_backup_info_still_reads_valid_manifest(self, tmp_path):
+        manager, _, manifest = self._manager_with_backup(tmp_path)
+
+        info = manager.get_backup_info(manifest.backup_id)
+
+        assert info is not None
+        assert info.backup_id == manifest.backup_id
+        assert info.file_count == 1
+
+    # --- TICKET-287: restore_backup stays loud, but with a located ValueError ---
+
+    @pytest.mark.parametrize("content", ["[]", '"str"', "5", "null"])
+    def test_restore_backup_raises_value_error_on_non_dict_manifest(self, tmp_path, content):
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, content)
+
+        with pytest.raises(ValueError, match="Invalid manifest"):
+            manager.restore_backup("corrupt", str(tmp_path / "target"))
+
+    def test_restore_backup_message_names_the_offending_type(self, tmp_path):
+        """Upstream TICKET-274 contract: the loud message names the type seen."""
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, "[]")
+
+        with pytest.raises(ValueError, match="expected dict, got list"):
+            manager.restore_backup("corrupt", str(tmp_path / "target"))
+
+    def test_restore_backup_raises_value_error_on_bad_fields(self, tmp_path):
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, '{"nope": 1}')
+
+        with pytest.raises(ValueError, match="Invalid manifest"):
+            manager.restore_backup("corrupt", str(tmp_path / "target"))
+
+    def test_restore_backup_still_raises_file_not_found_for_missing_id(self, tmp_path):
+        manager, _, _ = self._manager_with_backup(tmp_path)
+
+        with pytest.raises(FileNotFoundError):
+            manager.restore_backup("does_not_exist", str(tmp_path / "target"))
+
+    def test_restore_backup_valid_manifest_unaffected(self, tmp_path):
+        manager, _, manifest = self._manager_with_backup(tmp_path)
+
+        result = manager.restore_backup(manifest.backup_id, str(tmp_path / "target"))
+
+        assert result["files_restored"] == 1
+        assert (tmp_path / "target" / "file1.txt").read_text() == "content 1"
+
 
 class TestBackupManifestNonDictGuard:
     """Regression tests for TICKET-274: json.load non-dict guard in backup.py.
@@ -359,3 +453,4 @@ class TestBackupManifestNonDictGuard:
         bm = BackupManager(backup_dir=str(backup_dir))
         with pytest.raises(ValueError, match="Invalid manifest"):
             bm.restore_backup("badnum", str(tmp_path / "restore"))
+

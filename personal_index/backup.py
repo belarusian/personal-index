@@ -133,10 +133,15 @@ class BackupManager:
             try:
                 with open(str(manifest_file)) as f:
                     data = json.load(f)
+                # The writer (_save_manifest) always emits a JSON object, so a
+                # non-dict top-level value means the file was truncated or
+                # hand-edited: skip it like any other malformed entry instead
+                # of letting from_dict's `cls(**data)` raise TypeError and
+                # abort the whole listing.
                 if not isinstance(data, dict):
                     continue
                 manifests.append(BackupManifest.from_dict(data))
-            except (json.JSONDecodeError, KeyError):
+            except (json.JSONDecodeError, KeyError, TypeError):
                 continue
 
         return manifests
@@ -149,12 +154,22 @@ class BackupManager:
             raise FileNotFoundError(f"Backup not found: {backup_id}")
         with open(str(manifest_file)) as f:
             data = json.load(f)
+        # A restore must never proceed from a manifest we cannot trust, so this
+        # site stays loud (unlike list_backups/get_backup_info). Fail with a
+        # ValueError naming the file rather than an opaque TypeError from
+        # `cls(**data)` inside the dataclass constructor.
         if not isinstance(data, dict):
             raise ValueError(
                 f"Invalid manifest in {manifest_file}: "
                 f"expected dict, got {type(data).__name__}"
             )
-        manifest = BackupManifest.from_dict(data)
+        try:
+            manifest = BackupManifest.from_dict(data)
+        except TypeError as exc:
+            raise ValueError(
+                f"Invalid manifest in {manifest_file}: bad fields for "
+                f"backup {backup_id!r}: {exc}"
+            ) from exc
         archive_path = self._find_archive(manifest, backup_path, backup_id)
         mode = "r:gz" if str(archive_path).endswith(".tar.gz") else "r"
         target = Path(target_dir)
@@ -214,11 +229,20 @@ class BackupManager:
         if not manifest_file.exists():
             return None
 
-        with open(str(manifest_file)) as f:
-            data = json.load(f)
+        # Declared to return None when there is no usable info for this id; an
+        # unreadable or wrong-typed manifest is that same outcome, so report it
+        # as None instead of letting JSONDecodeError/TypeError escape.
+        try:
+            with open(str(manifest_file)) as f:
+                data = json.load(f)
+        except json.JSONDecodeError:
+            return None
         if not isinstance(data, dict):
             return None
-        return BackupManifest.from_dict(data)
+        try:
+            return BackupManifest.from_dict(data)
+        except (TypeError, ValueError):
+            return None
 
     def get_total_backup_size(self) -> int:
         """Get total size of all backups."""

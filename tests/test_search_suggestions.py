@@ -325,3 +325,81 @@ class TestSearchSuggestions:
         restored = SearchSuggestions.from_dict(data)
         assert "python" in restored._trending
         assert restored._trending["python"].count == 5
+
+
+# ── TICKET-288: trending prefix match is case-insensitive ──────────
+
+
+class TestTrendingCaseInsensitive:
+    """Mixed-case recorded queries must still match a lowercase prefix."""
+
+    def test_mixed_case_query_returned_for_lowercase_prefix(self) -> None:
+        s = SearchSuggestions()
+        s.record_search("Python Tips")
+        results = s.suggest("py", sources=["trending"], fuzzy=False)
+        texts = [r.text for r in results]
+        assert "Python Tips" in texts
+
+    def test_returned_text_preserves_original_casing(self) -> None:
+        s = SearchSuggestions()
+        s.record_search("Python Tips")
+        results = s.suggest("py", sources=["trending"], fuzzy=False)
+        assert any(r.text == "Python Tips" for r in results)
+
+
+# ── TICKET-283: to_dict/from_dict do not alias live lists ──────────
+
+
+class TestSerializationIsolation:
+    """Restored instances must not share mutable state with the source."""
+
+    def test_to_dict_returns_copies(self) -> None:
+        a = SearchSuggestions()
+        a.add_search_history(["alpha"])
+        d = a.to_dict()
+        d["search_history"].append("INJECTED")
+        d["tags"].append("INJECTED")
+        d["keywords"].append("INJECTED")
+        assert a._search_history == ["alpha"]
+        assert "INJECTED" not in a._tags
+        assert "INJECTED" not in a._keywords
+
+    def test_two_restores_are_independent(self) -> None:
+        a = SearchSuggestions()
+        a.add_search_history(["alpha"])
+        d = a.to_dict()
+        b = SearchSuggestions.from_dict(d)
+        c = SearchSuggestions.from_dict(d)
+        b.record_search("ONLY_IN_B")
+        assert "ONLY_IN_B" not in c._search_history
+        assert "ONLY_IN_B" not in d["search_history"]
+
+
+# ── TICKET-284: _get_trending_counts keyed by query, float decay ───
+
+
+class TestTrendingCountsContract:
+    """Counter is keyed by query string and accumulates float decay."""
+
+    def test_lookup_by_query_string_works(self) -> None:
+        s = SearchSuggestions(decay_half_life=0)
+        s.record_search("python")
+        counts = s._get_trending_counts()
+        assert counts["python"] >= 1
+
+    def test_repeated_recordings_accumulate(self) -> None:
+        s = SearchSuggestions(decay_half_life=0)
+        s.record_search("python")
+        s.record_search("python")
+        counts = s._get_trending_counts()
+        assert counts["python"] >= 2
+
+    def test_decayed_entry_keeps_fractional_weight(self) -> None:
+        s = SearchSuggestions(decay_half_life=1.0)
+        s.record_search("python")
+        # Age the entry so its decayed score is a small positive fraction.
+        s._trending["python"].last_seen = time.time() - 10.0
+        counts = s._get_trending_counts()
+        # int() truncation would collapse this to 0; it must stay positive.
+        assert counts["python"] > 0
+        assert counts["python"] < 1
