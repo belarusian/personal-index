@@ -1,6 +1,6 @@
 # TICKET-299: backup.py BackupManager._extract_archive unguarded tarfile.open (corrupt tar)
 
-- Status: OPEN
+- Status: RESOLVED (merged to main cfd844e, gh #430 closed)
 - Issue: #430
 - Module: personal_index/backup.py
 - Function: BackupManager._extract_archive (line 196)
