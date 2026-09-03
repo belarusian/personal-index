@@ -1,7 +1,8 @@
 # TICKET-321: content_reader.ContentReader.paginate raises ZeroDivisionError on page_size=0
 
-- Status: OPEN
-- Issue: #477
+- Status: RESOLVED
+- Issue: #477 (closed)
+- Merged: main f038b93 (PR #479)
 - Module: personal_index/content_reader.py
 - Defect class: (b) sibling-class asymmetry — a pagination guard present on the two
   near-identical sibling pagination implementations is missing on this one.
