@@ -218,7 +218,10 @@ class BackupManager:
             data = json.load(f)
         if not isinstance(data, dict):
             return None
-        return BackupManifest.from_dict(data)
+        try:
+            return BackupManifest.from_dict(data)
+        except (KeyError, TypeError):
+            return None
 
     def get_total_backup_size(self) -> int:
         """Get total size of all backups."""

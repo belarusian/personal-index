@@ -360,6 +360,12 @@ class TestBackupManifestNonDictGuard:
         bm = BackupManager(backup_dir=str(backup_dir))
         assert bm.get_backup_info("badnum") is None
 
+    def test_get_backup_info_returns_none_for_unexpected_key_manifest(self, tmp_path):
+        """A dict manifest with an unexpected key returns None, not a TypeError (TICKET-287)."""
+        backup_dir = self._write_bad_manifest(tmp_path, "badkey", {"backup_id": "badkey", "unexpected_key": 1})
+        bm = BackupManager(backup_dir=str(backup_dir))
+        assert bm.get_backup_info("badkey") is None
+
     def test_restore_backup_raises_for_null_manifest(self, tmp_path):
         backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
         bm = BackupManager(backup_dir=str(backup_dir))
