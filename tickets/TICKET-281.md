@@ -1,6 +1,6 @@
 # TICKET-281: config/loader.py load_config() unguarded non-dict YAML keyed access
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #390
 - Module: personal_index/config/loader.py
 - Class: unguarded type-assumption (yaml.safe_load -> data.get() keyed access, no guard)
