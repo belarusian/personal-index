@@ -191,3 +191,39 @@ class TestConfigManagerLoadNonDictGuard:
         config = ConfigManager(config_path=config_path).load()
         assert isinstance(config, AppConfig)
         assert config.interests == []
+
+
+class TestAppConfigLoadCorruptGuard:
+    """Regression: corrupt (unparseable) JSON must not crash AppConfig.load."""
+
+    def test_load_truncated_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("{")
+        config = AppConfig.load(config_path)
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_partial_object_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text('{"interests": [')
+        config = AppConfig.load(config_path)
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+
+class TestConfigManagerLoadCorruptGuard:
+    """Regression: corrupt (unparseable) JSON must not crash ConfigManager.load."""
+
+    def test_load_truncated_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text("{")
+        config = ConfigManager(config_path=config_path).load()
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_partial_object_json(self, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text('{"interests": [')
+        config = ConfigManager(config_path=config_path).load()
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
