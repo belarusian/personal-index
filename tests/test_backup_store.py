@@ -111,6 +111,32 @@ class TestBackupStoreNonDictGuard:
         except ValueError:
             pass
 
+
+    def test_import_corrupt_json_raises_valueerror(self, tmp_path):
+        """Corrupt (truncated) JSON file raises ValueError, not JSONDecodeError."""
+        import json as _json
+        s = BackupStore()
+        p = self._write(tmp_path, "{", "corrupt.json")
+        try:
+            s.import_from_file(p)
+            assert False, "Should have raised"
+        except _json.JSONDecodeError:
+            assert False, "Should raise ValueError, not JSONDecodeError"
+        except ValueError as e:
+            assert "not valid JSON" in str(e)
+
+    def test_import_missing_key_raises_valueerror(self, tmp_path):
+        """Valid JSON dict missing required key raises ValueError, not KeyError."""
+        s = BackupStore()
+        p = self._write(tmp_path, '{"backup_id": "x"}', "missing.json")
+        try:
+            s.import_from_file(p)
+            assert False, "Should have raised"
+        except KeyError:
+            assert False, "Should raise ValueError, not KeyError"
+        except ValueError as e:
+            assert "missing required key" in str(e)
+
     def test_import_valid_dict_still_works(self, tmp_path):
         s = BackupStore()
         s.add_backup([{"id": "1", "title": "A"}], backup_id="b1")
