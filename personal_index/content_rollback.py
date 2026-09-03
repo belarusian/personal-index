@@ -34,7 +34,12 @@ class ContentRollback:
         return list(self._rollback_points.get(url, []))
 
     def rollback(self, url: str, index: int = 0) -> RollbackPoint | None:
-        """Roll back a URL to a previous version."""
+        """Return the rollback point at ``index`` for ``url`` (0 = oldest).
+
+        This is a pure accessor: it does not mutate the stored points or apply
+        the rollback to any current content. Returns the selected
+        ``RollbackPoint``, or ``None`` if ``url`` has no rollback points.
+        """
         points = self._rollback_points.get(url, [])
         if not points:
             return None
