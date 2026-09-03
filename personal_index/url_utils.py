@@ -112,8 +112,15 @@ def extract_domain(url: str) -> str | None:
         if not parsed.netloc:
             return None
         netloc = parsed.netloc.lower()
-        # Strip port number
-        if ":" in netloc:
+        # Strip port number. A bracketed IPv6 literal (e.g. "[::1]" or
+        # "[2001:db8::1]:8080") contains internal colons, so only drop a
+        # trailing ":port" after the closing bracket instead of splitting on
+        # the last colon (which would corrupt the literal when no port is set).
+        if netloc.startswith("["):
+            bracket_end = netloc.find("]")
+            if bracket_end != -1:
+                netloc = netloc[: bracket_end + 1]
+        elif ":" in netloc:
             netloc = netloc.rsplit(":", 1)[0]
         return netloc
     except (ValueError, AttributeError):

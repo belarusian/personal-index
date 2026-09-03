@@ -161,6 +161,25 @@ class TestExtractDomain:
     def test_domain_with_port_stripped(self) -> None:
         assert extract_domain("http://example.com:8080/path") == "example.com"
 
+    # TICKET-316: bracketed IPv6 literals contain internal colons; the port
+    # strip must not chop the last colon off the literal when no port is set.
+    def test_ipv6_literal_without_port(self) -> None:
+        assert extract_domain("http://[::1]/path") == "[::1]"
+
+    def test_ipv6_full_literal_without_port(self) -> None:
+        assert extract_domain("http://[2001:db8::1]/") == "[2001:db8::1]"
+
+    def test_ipv6_literal_with_port(self) -> None:
+        assert extract_domain("http://[::1]:8080/path") == "[::1]"
+
+    def test_ipv6_full_literal_with_port(self) -> None:
+        assert extract_domain("http://[2001:db8::ff00:42:8329]:80/") == (
+            "[2001:db8::ff00:42:8329]"
+        )
+
+    def test_ipv6_literal_is_case_normalized(self) -> None:
+        assert extract_domain("http://[2001:DB8::1]/") == "[2001:db8::1]"
+
     def test_get_domain_alias(self) -> None:
         assert get_domain("https://example.com/path") == "example.com"
 
