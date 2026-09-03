@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 
 import pytest
@@ -389,3 +390,93 @@ class TestBackupManifestNonDictGuard:
         bm = BackupManager(backup_dir=str(backup_dir))
         with pytest.raises(ValueError, match="Invalid manifest"):
             bm.restore_backup("badkey", str(tmp_path / "restore"))
+
+
+class TestBackupManifestUnparseableGuards:
+    """Regression tests for TICKET-289 / TICKET-290 (gh #408, #409).
+
+    The non-dict guard (TICKET-274) and the field guard (TICKET-287/288) both
+    run AFTER `json.load`, so a manifest file that is not valid JSON at all
+    (e.g. a truncated write containing `{`) still escaped both sites:
+      - get_backup_info(): must return None (declared `BackupManifest | None`)
+      - restore_backup():  must raise a located ValueError naming the file,
+                           never a bare JSONDecodeError
+
+    The full corrupt-fixture matrix is asserted at both sites so a future
+    regression at either layer is caught regardless of which layer broke.
+    """
+
+    # (fixture id, raw file content) - written verbatim so "{" stays unparseable.
+    CORRUPT = [
+        ("empty_list", "[]"),
+        ("string", '"str"'),
+        ("number", "5"),
+        ("null", "null"),
+        ("truncated_object", "{"),
+        ("nope_key", '{"nope": 1}'),
+        ("unexpected_key", '{"backup_id": "corrupt", "unexpected_key": 1}'),
+    ]
+
+    def _write_manifest(self, tmp_path, backup_id, raw):
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        (backup_dir / f"backup_{backup_id}.json").write_text(raw)
+        return backup_dir
+
+    @pytest.mark.parametrize("name,raw", CORRUPT)
+    def test_list_backups_skips_every_corrupt_manifest(self, tmp_path, name, raw):
+        backup_dir = self._write_manifest(tmp_path, name, raw)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        assert bm.list_backups() == []
+
+    @pytest.mark.parametrize("name,raw", CORRUPT)
+    def test_get_backup_info_returns_none_for_every_corrupt_manifest(
+        self, tmp_path, name, raw
+    ):
+        """TICKET-289: honour `BackupManifest | None` for every malformed file."""
+        backup_dir = self._write_manifest(tmp_path, name, raw)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        assert bm.get_backup_info(name) is None
+
+    @pytest.mark.parametrize("name,raw", CORRUPT)
+    def test_restore_backup_raises_located_value_error(self, tmp_path, name, raw):
+        """TICKET-290: a located ValueError naming the file, never JSONDecodeError."""
+        backup_dir = self._write_manifest(tmp_path, name, raw)
+        bm = BackupManager(backup_dir=str(backup_dir))
+        with pytest.raises(ValueError, match="Invalid manifest") as exc:
+            bm.restore_backup(name, str(tmp_path / "restore"))
+        assert f"backup_{name}.json" in str(exc.value)
+
+    def test_valid_manifest_still_round_trips(self, tmp_path):
+        """Positive control: the guards must not swallow healthy manifests."""
+        source = tmp_path / "src"
+        source.mkdir()
+        (source / "file1.txt").write_text("content 1")
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+
+        manifest = manager.create_backup(str(source))
+
+        assert [m.backup_id for m in manager.list_backups()] == [manifest.backup_id]
+        info = manager.get_backup_info(manifest.backup_id)
+        assert info is not None
+        assert info.backup_id == manifest.backup_id
+        assert info.source_dir == str(source)
+
+        result = manager.restore_backup(manifest.backup_id, str(tmp_path / "restored"))
+        assert result["files_restored"] == 1
+
+    def test_valid_sibling_survives_a_corrupt_neighbour(self, tmp_path):
+        """One corrupt manifest must not hide the valid ones (list + info)."""
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir()
+        valid = BackupManifest(backup_id="good1", source_dir="/tmp/x")
+        (backup_dir / "backup_good1.json").write_text(json.dumps(valid.to_dict()))
+        (backup_dir / "backup_badkey.json").write_text('{"nope": 1}')
+        bm = BackupManager(backup_dir=str(backup_dir))
+
+        ids = [m.backup_id for m in bm.list_backups()]
+        assert ids == ["good1"]
+        info = bm.get_backup_info("good1")
+        assert info is not None
+        assert info.source_dir == "/tmp/x"
