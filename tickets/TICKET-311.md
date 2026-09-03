@@ -1,6 +1,6 @@
 # TICKET-311: session.py load_session unguarded data["session_id"] KeyError on missing key
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/session.py
 - Symptom: `SessionManager.load_session` already degrades to `None` on corrupt JSON
   (TICKET-298), a non-dict payload, and an invalid `status` string (TICKET-310). But the very
