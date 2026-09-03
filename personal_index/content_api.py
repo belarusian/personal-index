@@ -77,8 +77,11 @@ class ContentAPI:
     def _list_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
         items = list(self._store.values())
         # Pagination
-        page = int(params.get("page", ["1"])[0])
-        per_page = int(params.get("per_page", ["20"])[0])
+        try:
+            page = int(params.get("page", ["1"])[0])
+            per_page = int(params.get("per_page", ["20"])[0])
+        except ValueError:
+            return 400, {"error": "Query parameters 'page' and 'per_page' must be integers"}
         per_page = min(per_page, 100)
         start = (page - 1) * per_page
         end = start + per_page
