@@ -462,6 +462,28 @@ class TestLoadCodemap:
         with pytest.raises(SystemExit):
             cycle_signals.load_codemap(str(tmp_path / "nonexistent.json"))
 
+    def test_load_malformed_json_exits(self, tmp_path, capsys):
+        """TICKET-301: corrupt codemap exits cleanly, no raw JSONDecodeError."""
+        bad = tmp_path / "codemap.json"
+        bad.write_text("{not valid json")
+        with pytest.raises(SystemExit) as excinfo:
+            cycle_signals.load_codemap(str(bad))
+        assert excinfo.value.code == 1
+        err = capsys.readouterr().err
+        assert "[signal] ERROR" in err
+        assert "not valid JSON" in err
+
+    def test_load_non_dict_json_exits(self, tmp_path, capsys):
+        """TICKET-301: a top-level array is rejected instead of returned."""
+        arr = tmp_path / "codemap.json"
+        arr.write_text(json.dumps([{"modules": []}]))
+        with pytest.raises(SystemExit) as excinfo:
+            cycle_signals.load_codemap(str(arr))
+        assert excinfo.value.code == 1
+        err = capsys.readouterr().err
+        assert "[signal] ERROR" in err
+        assert "not a JSON object" in err
+
 
 # ---------------------------------------------------------------------------
 # extract

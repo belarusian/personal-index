@@ -342,11 +342,34 @@ def _render_summary_node(name: str, node: dict, lines: list[str], prefix: str, d
 
 
 def load_codemap(path: str) -> dict:
+    """Load a codemap JSON file.
+
+    A missing file, a file that is not valid JSON, and a file whose top-level
+    value is not an object are all reported through this module's CLI error
+    style (``[signal] ERROR: ...`` on stderr) and exit with status 1, so the
+    caller never sees a raw ``JSONDecodeError`` and never receives a non-dict
+    value that would blow up later on ``codemap.get(...)``.
+    """
     p = Path(path)
     if not p.exists():
         print(f"[signal] ERROR: codemap not found at {p}", file=sys.stderr)
         sys.exit(1)
-    return json.loads(p.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(
+            f"[signal] ERROR: codemap at {p} is not valid JSON: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if not isinstance(data, dict):
+        print(
+            f"[signal] ERROR: codemap at {p} is not a JSON object "
+            f"(got {type(data).__name__})",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return data
 
 
 # ---------------------------------------------------------------------------
