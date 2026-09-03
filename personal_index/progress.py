@@ -268,7 +268,10 @@ class ProgressStore:
         if not path.exists():
             return 0
         with open(str(path)) as f:
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                return 0
         if not isinstance(data, dict):
             return 0
         for oid, d in data.items():
