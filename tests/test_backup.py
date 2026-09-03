@@ -383,3 +383,9 @@ class TestBackupManifestNonDictGuard:
         bm = BackupManager(backup_dir=str(backup_dir))
         with pytest.raises(ValueError, match="Invalid manifest"):
             bm.restore_backup("badnum", str(tmp_path / "restore"))
+
+    def test_restore_backup_raises_for_unexpected_key_manifest(self, tmp_path):
+        backup_dir = self._write_bad_manifest(tmp_path, "badkey", {"backup_id": "badkey", "unexpected_key": 1})
+        bm = BackupManager(backup_dir=str(backup_dir))
+        with pytest.raises(ValueError, match="Invalid manifest"):
+            bm.restore_backup("badkey", str(tmp_path / "restore"))
