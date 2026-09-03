@@ -144,3 +144,17 @@ class TestDigestGenerator:
         entries = digest.sections[0].entries
         scores = [e.score for e in entries]
         assert scores == sorted(scores, reverse=True)
+
+
+class TestModuleDocstringContract:
+    def test_docstring_does_not_promise_interests_grouping(self):
+        """Regression: module docstring must not over-promise capabilities.
+
+        The module implements no interest-based grouping (only tags and
+        source), so its docstring must not claim to group by 'interests'
+        (TICKET-326).
+        """
+        import personal_index.content_digest as cd
+
+        doc = (cd.__doc__ or "").lower()
+        assert "interest" not in doc

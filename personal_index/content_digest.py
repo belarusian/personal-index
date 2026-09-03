@@ -1,7 +1,7 @@
 """Content digest module for personal-index.
 
 Generates daily/weekly digests of new and updated content,
-grouped by topics and interests.
+grouped by topics/tags and source.
 """
 
 from __future__ import annotations
