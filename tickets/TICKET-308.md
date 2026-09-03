@@ -1,6 +1,6 @@
 # TICKET-308: content_api._update_content accepts a non-object JSON body (contract asymmetry with _create_content)
 
-- Status: OPEN
+- Status: RESOLVED (cycle 64, PR #452, merged 4fa7d46, gh #450 closed)
 - Module: personal_index/content_api.py
 - Defect class: (b) doc/behavior drift — contract asymmetry between sibling handlers
 - Issue: #450
