@@ -44,6 +44,25 @@ class TestContentRollback(unittest.TestCase):
         result = self.rollback.rollback("http://nonexistent.com")
         self.assertIsNone(result)
 
+    def test_rollback_returns_indexed_point_without_mutation(self):
+        # TICKET-320: rollback is a pure accessor — it returns the point at
+        # the given index (0 = oldest) and does not mutate the stored list.
+        p1 = RollbackPoint(url="http://example.com", content="v1")
+        p2 = RollbackPoint(url="http://example.com", content="v2")
+        self.rollback.create_rollback_point(p1)
+        self.rollback.create_rollback_point(p2)
+
+        result = self.rollback.rollback("http://example.com", index=0)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.content, "v1")  # 0 = oldest
+
+        result_last = self.rollback.rollback("http://example.com", index=1)
+        self.assertEqual(result_last.content, "v2")
+
+        # No mutation: both points remain stored, in original order.
+        stored = self.rollback.get_rollback_points("http://example.com")
+        self.assertEqual([pt.content for pt in stored], ["v1", "v2"])
+
     def test_clear_specific_url(self):
         point1 = RollbackPoint(url="http://example.com", content="v1")
         point2 = RollbackPoint(url="http://other.com", content="v2")
