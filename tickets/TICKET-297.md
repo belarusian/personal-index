@@ -1,6 +1,6 @@
 # TICKET-297: analytics.py AnalyticsTracker.load unguarded json.load
 
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #424 closed)
 - Issue: #424
 - Module: personal_index/analytics.py
 - Function: AnalyticsTracker.load (line 275)
