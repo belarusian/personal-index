@@ -192,3 +192,21 @@ class TestURLHistoryNonListGuard:
         count = history.load(str(filepath))
         assert count == 1
         assert history.get_visits()[0].url == "http://good.com"
+
+
+class TestURLHistoryCorruptJSONGuard:
+    """Regression: corrupt/truncated JSON in load() must not raise (TICKET-293)."""
+
+    def test_load_corrupt_json_returns_zero(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text("{")
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
+
+    def test_load_truncated_json_returns_zero(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text('[{"url": "http://example.com"')
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
