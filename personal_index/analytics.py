@@ -272,7 +272,10 @@ class AnalyticsTracker:
             return 0
 
         with open(path_obj) as f:
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                return 0
 
         if not isinstance(data, dict):
             return 0
