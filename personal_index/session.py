@@ -298,10 +298,14 @@ class SessionManager:
                 return None
         if not isinstance(data, dict):
             return None
+        try:
+            status = SessionStatus(data.get("status", "active"))
+        except ValueError:
+            return None
         session = CrawlSession(
             session_id=data["session_id"],
             name=data.get("name", ""),
-            status=SessionStatus(data.get("status", "active")),
+            status=status,
             started_at=data.get("started_at", time.time()),
             completed_at=data.get("completed_at"),
             config=data.get("config", {}),
