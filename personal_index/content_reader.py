@@ -88,6 +88,8 @@ class ContentReader:
         reverse: bool = True,
     ) -> PageView:
         """Get a paginated view of content items."""
+        if page_size < 1:
+            raise ValueError("Page size must be >= 1")
         items = self._sort_items(list(self._items), sort_by, reverse)
         total_items = len(items)
         total_pages = max(1, (total_items + page_size - 1) // page_size)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from personal_index.content_reader import (
     ContentReader,
     PageView,
@@ -94,6 +96,14 @@ class TestContentReader:
     def test_paginate_out_of_range(self):
         view = self.reader.paginate(page=100, page_size=10)
         assert view.page == 1  # clamped to last page
+
+    def test_paginate_zero_page_size_raises(self):
+        with pytest.raises(ValueError, match="Page size must be >= 1"):
+            self.reader.paginate(page=1, page_size=0)
+
+    def test_paginate_negative_page_size_raises(self):
+        with pytest.raises(ValueError, match="Page size must be >= 1"):
+            self.reader.paginate(page=1, page_size=-5)
 
     def test_filter_by_tags_any(self):
         results = self.reader.filter_by_tags(["tech"], match_all=False)
