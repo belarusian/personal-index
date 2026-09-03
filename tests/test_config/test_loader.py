@@ -140,3 +140,45 @@ class TestCreateDefaultConfig:
         create_default_config(str(config_file))
         config = load_config(str(config_file))
         assert isinstance(config, AppConfig)
+
+
+class TestLoadConfigNonDictYamlGuard:
+    """load_config() must degrade to defaults (not crash) on non-dict YAML."""
+
+    def test_load_int_yaml_returns_defaults(self, tmp_path):
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("42\n")
+        config = load_config(str(config_file))
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_string_yaml_returns_defaults(self, tmp_path):
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("just a plain string\n")
+        config = load_config(str(config_file))
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_load_list_yaml_returns_defaults(self, tmp_path):
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("- a\n- b\n- c\n")
+        config = load_config(str(config_file))
+        assert isinstance(config, AppConfig)
+        assert config.interests == []
+
+    def test_valid_dict_yaml_still_works(self, tmp_path):
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("data_dir: /tmp/custom\nlog_level: DEBUG\n")
+        config = load_config(str(config_file))
+        assert config.data_dir == "/tmp/custom"
+        assert config.log_level == "DEBUG"
+
+    def test_valid_after_invalid_not_suppressed(self, tmp_path):
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("42\n")
+        bad = load_config(str(config_file))
+        assert bad.interests == []
+        config_file.write_text("data_dir: /tmp/after\nlog_level: WARNING\n")
+        good = load_config(str(config_file))
+        assert good.data_dir == "/tmp/after"
+        assert good.log_level == "WARNING"
