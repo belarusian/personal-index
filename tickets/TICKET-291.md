@@ -1,6 +1,6 @@
 # TICKET-291: backup_store.py import_from_file unguarded json.loads and KeyError
 
-- Status: OPEN
+- Status: RESOLVED
 - Module: personal_index/content_backup/backup_store.py
 - Function: BackupStore.import_from_file (line 155)
 
