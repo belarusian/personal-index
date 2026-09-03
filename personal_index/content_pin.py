@@ -88,7 +88,8 @@ class ContentPinner:
             metadata: Optional metadata dictionary.
 
         Returns:
-            True if successfully pinned.
+            True. The item is pinned (or re-pinned/overwritten) unconditionally;
+            there is no failure path, so this always returns True.
         """
         self._pinned[item_id] = PinnedItem(
             item_id=item_id,
