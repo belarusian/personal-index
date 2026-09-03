@@ -269,93 +269,96 @@ class TestBackupTarFilter:
             with open(restored_file) as f:
                 assert f.read() == "hello world"
 
+class TestBackupManifestCorruption:
+    """TICKET-285/263/264: each json.load site has its own failure semantics.
 
-class TestBackupManifestNonDictGuard:
-    """Regression tests for TICKET-274: json.load non-dict guard in backup.py.
-
-    A corrupted manifest file containing a non-dict JSON value (null, list,
-    number) must not crash BackupManifest.from_dict. Each site has its own
-    documented failure contract:
-      - list_backups(): skip the bad entry (continue)
-      - get_backup_info(): return None (not-found path)
-      - restore_backup(): raise ValueError (explicit restore fails loudly)
+    The writer (_save_manifest) always emits a JSON object, so a non-dict
+    top-level value means the manifest file is corrupt. list_backups skips the
+    entry, get_backup_info reports None, restore_backup fails loudly.
     """
 
-    def _write_bad_manifest(self, tmp_path, backup_id, bad_value):
-        """Write a flat backup_<id>.json manifest containing a non-dict value."""
-        import json as _json
-
+    def _manager_with_backup(self, tmp_path):
+        source = tmp_path / "src"
+        source.mkdir()
+        (source / "file1.txt").write_text("content 1")
         backup_dir = tmp_path / "backups"
-        backup_dir.mkdir(parents=True, exist_ok=True)
-        manifest_path = backup_dir / f"backup_{backup_id}.json"
-        with open(manifest_path, "w") as f:
-            _json.dump(bad_value, f)
-        return backup_dir
+        manager = BackupManager(backup_dir=str(backup_dir))
+        manifest = manager.create_backup(str(source))
+        return manager, backup_dir, manifest
 
-    def test_list_backups_skips_null_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
-        bm = BackupManager(backup_dir=str(backup_dir))
-        results = bm.list_backups()
-        assert all(m.backup_id != "badnull" for m in results)
+    def _corrupt(self, backup_dir, content):
+        (backup_dir / "backup_corrupt.json").write_text(content)
 
-    def test_list_backups_skips_list_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badlist", [1, 2, 3])
-        bm = BackupManager(backup_dir=str(backup_dir))
-        results = bm.list_backups()
-        assert all(m.backup_id != "badlist" for m in results)
+    # --- TICKET-285: list_backups skips a malformed entry, keeps the rest ---
 
-    def test_list_backups_skips_number_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badnum", 42)
-        bm = BackupManager(backup_dir=str(backup_dir))
-        results = bm.list_backups()
-        assert all(m.backup_id != "badnum" for m in results)
+    @pytest.mark.parametrize("content", ["[]", '"str"', "5", "null", "{"])
+    def test_list_backups_skips_non_dict_manifest(self, tmp_path, content):
+        manager, backup_dir, manifest = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, content)
 
-    def test_list_backups_still_returns_valid_entries(self, tmp_path):
-        """A bad manifest must not suppress valid sibling manifests."""
-        import json as _json
+        backups = manager.list_backups()
 
-        backup_dir = tmp_path / "backups"
-        backup_dir.mkdir(parents=True, exist_ok=True)
-        with open(backup_dir / "backup_badnull.json", "w") as f:
-            _json.dump(None, f)
-        valid = BackupManifest(backup_id="good1", source_dir="/tmp/x")
-        with open(backup_dir / "backup_good1.json", "w") as f:
-            _json.dump(valid.to_dict(), f)
-        bm = BackupManager(backup_dir=str(backup_dir))
-        results = bm.list_backups()
-        ids = [m.backup_id for m in results]
-        assert "good1" in ids
-        assert "badnull" not in ids
+        assert [m.backup_id for m in backups] == [manifest.backup_id]
 
-    def test_get_backup_info_returns_none_for_null_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
-        bm = BackupManager(backup_dir=str(backup_dir))
-        assert bm.get_backup_info("badnull") is None
+    def test_list_backups_survives_unknown_key_manifest(self, tmp_path):
+        manager, backup_dir, manifest = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, '{"nope": 1}')
 
-    def test_get_backup_info_returns_none_for_list_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badlist", [1, 2, 3])
-        bm = BackupManager(backup_dir=str(backup_dir))
-        assert bm.get_backup_info("badlist") is None
+        assert len(manager.list_backups()) == 1
 
-    def test_get_backup_info_returns_none_for_number_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badnum", 42)
-        bm = BackupManager(backup_dir=str(backup_dir))
-        assert bm.get_backup_info("badnum") is None
+    # --- TICKET-286: get_backup_info honours its `| None` contract ---
 
-    def test_restore_backup_raises_for_null_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badnull", None)
-        bm = BackupManager(backup_dir=str(backup_dir))
+    @pytest.mark.parametrize("content", ["[]", '"str"', "5", "null", "{", '{"nope": 1}'])
+    def test_get_backup_info_returns_none_on_corrupt_manifest(self, tmp_path, content):
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, content)
+
+        assert manager.get_backup_info("corrupt") is None
+
+    def test_get_backup_info_still_reads_valid_manifest(self, tmp_path):
+        manager, _, manifest = self._manager_with_backup(tmp_path)
+
+        info = manager.get_backup_info(manifest.backup_id)
+
+        assert info is not None
+        assert info.backup_id == manifest.backup_id
+        assert info.file_count == 1
+
+    # --- TICKET-287: restore_backup stays loud, but with a located ValueError ---
+
+    @pytest.mark.parametrize("content", ["[]", '"str"', "5", "null"])
+    def test_restore_backup_raises_value_error_on_non_dict_manifest(self, tmp_path, content):
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, content)
+
         with pytest.raises(ValueError, match="Invalid manifest"):
-            bm.restore_backup("badnull", str(tmp_path / "restore"))
+            manager.restore_backup("corrupt", str(tmp_path / "target"))
 
-    def test_restore_backup_raises_for_list_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badlist", [1, 2, 3])
-        bm = BackupManager(backup_dir=str(backup_dir))
-        with pytest.raises(ValueError, match="Invalid manifest"):
-            bm.restore_backup("badlist", str(tmp_path / "restore"))
+    def test_restore_backup_message_names_the_offending_type(self, tmp_path):
+        """Upstream TICKET-274 contract: the loud message names the type seen."""
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, "[]")
 
-    def test_restore_backup_raises_for_number_manifest(self, tmp_path):
-        backup_dir = self._write_bad_manifest(tmp_path, "badnum", 42)
-        bm = BackupManager(backup_dir=str(backup_dir))
+        with pytest.raises(ValueError, match="expected dict, got list"):
+            manager.restore_backup("corrupt", str(tmp_path / "target"))
+
+    def test_restore_backup_raises_value_error_on_bad_fields(self, tmp_path):
+        manager, backup_dir, _ = self._manager_with_backup(tmp_path)
+        self._corrupt(backup_dir, '{"nope": 1}')
+
         with pytest.raises(ValueError, match="Invalid manifest"):
-            bm.restore_backup("badnum", str(tmp_path / "restore"))
+            manager.restore_backup("corrupt", str(tmp_path / "target"))
+
+    def test_restore_backup_still_raises_file_not_found_for_missing_id(self, tmp_path):
+        manager, _, _ = self._manager_with_backup(tmp_path)
+
+        with pytest.raises(FileNotFoundError):
+            manager.restore_backup("does_not_exist", str(tmp_path / "target"))
+
+    def test_restore_backup_valid_manifest_unaffected(self, tmp_path):
+        manager, _, manifest = self._manager_with_backup(tmp_path)
+
+        result = manager.restore_backup(manifest.backup_id, str(tmp_path / "target"))
+
+        assert result["files_restored"] == 1
+        assert (tmp_path / "target" / "file1.txt").read_text() == "content 1"

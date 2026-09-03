@@ -157,11 +157,18 @@ class SearchSuggestions:
         return float(entry.count * decay_factor)
 
     def _get_trending_counts(self) -> Counter:
-        """Get trending counts as a Counter for backward compatibility."""
-        return Counter(
-            (entry.query, int(self._apply_decay(entry)))
-            for entry in self._trending.values()
-        )
+        """Get trending counts as a Counter for backward compatibility.
+
+        Keyed by query string; each entry contributes its (float) decayed
+        score so repeated recordings accumulate and decayed entries keep a
+        fractional weight instead of being truncated to an int.
+        """
+        counts: Counter = Counter()
+        for entry in self._trending.values():
+            # Counter values are modelled as int by typeshed; the decayed
+            # score is a float weight, so the accumulation is a float.
+            counts[entry.query] += self._apply_decay(entry)  # type: ignore[assignment]
+        return counts
 
     def suggest(
         self,
@@ -302,7 +309,7 @@ class SearchSuggestions:
         """Generate suggestions from trending queries with decay."""
         for entry in self._trending.values():
             query = entry.query
-            if query.startswith(prefix):
+            if query.lower().startswith(prefix):
                 decayed = self._apply_decay(entry)
                 score = min(decayed / max(sum(
                     self._apply_decay(e) for e in self._trending.values()
@@ -372,9 +379,9 @@ class SearchSuggestions:
                 "last_seen": entry.last_seen,
             }
         return {
-            "search_history": self._search_history,
-            "tags": self._tags,
-            "keywords": self._keywords,
+            "search_history": list(self._search_history),
+            "tags": list(self._tags),
+            "keywords": list(self._keywords),
             "trending": trending_data,
         }
 
@@ -382,9 +389,9 @@ class SearchSuggestions:
     def from_dict(cls, data: dict[str, Any]) -> SearchSuggestions:
         """Deserialize suggestion data."""
         instance = cls()
-        instance._search_history = data.get("search_history", [])
-        instance._tags = data.get("tags", [])
-        instance._keywords = data.get("keywords", [])
+        instance._search_history = list(data.get("search_history", []))
+        instance._tags = list(data.get("tags", []))
+        instance._keywords = list(data.get("keywords", []))
         trending_data = data.get("trending", {})
         for key, value in trending_data.items():
             if isinstance(value, dict):
