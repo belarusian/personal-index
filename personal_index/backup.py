@@ -64,10 +64,23 @@ class BackupManager:
             archive_path: Path where the archive will be created.
             mode: Tarfile mode string (e.g. "w" or "w:gz").
             source_path: Source directory for computing relative arcnames.
+
+        Raises:
+            RuntimeError: If the archive cannot be written. A write failure
+                (disk full, permission denied, non-writable path, or the
+                archive path being a directory) raises an ``OSError``
+                subclass and the tar layer can raise ``tarfile.TarError``;
+                both are translated into a clean ``RuntimeError`` consistent
+                with the module's clean-error style.
         """
-        with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
-            for filepath in files:
-                tar.add(str(filepath), arcname=str(filepath.relative_to(source_path)))
+        try:
+            with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
+                for filepath in files:
+                    tar.add(str(filepath), arcname=str(filepath.relative_to(source_path)))
+        except (OSError, tarfile.TarError) as exc:
+            raise RuntimeError(
+                f"Failed to create archive {archive_path}: {exc}"
+            ) from exc
 
     @staticmethod
     def _save_manifest(manifest: BackupManifest, manifest_path: Path) -> None:
