@@ -1,6 +1,6 @@
 # TICKET-315: rate_limiter.RateLimiter.can_request docstring hides a token-consuming side effect
 
-- Status: OPEN
+- Status: RESOLVED (merged to main fd70139, gh #467 closed, gh #466 closed)
 - Module: personal_index/rate_limiter.py
 - Defect class: (b) doc/behavior drift — docstring promises a pure "check" but the body consumes a token
 - Issue: #466
