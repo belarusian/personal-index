@@ -1,6 +1,6 @@
 # TICKET-337: progress.ProgressStore.load_all docstring over-promises "count loaded"
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/progress.py
 Class: (b) docstring over-promises behavior the code does not do
 
