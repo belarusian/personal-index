@@ -9,5 +9,5 @@ vs lines 52-59: only `scheme.lower()` and `host_path[0].lower()` are applied.
 **Fix:** Reword docstring to "Removes trailing slashes and fragments, and
 lowercases the scheme and host." (doc-only, no behavior change).
 Add one behavior test pinning that an uppercase path segment is preserved.
-**Status:** OPEN
+**Status:** RESOLVED (merged to main e0da596, gh #521 merged, gh #520 closed)
 **Issue:** #520
