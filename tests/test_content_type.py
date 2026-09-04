@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 from personal_index.content_type import (
     ContentTypeDetector,
     ContentTypeInfo,
@@ -41,6 +43,13 @@ class TestContentTypeInfo:
             is_document=False,
         )
         assert info.is_downloadable is False
+
+
+    def test_media_category_is_documented(self):
+        """The category field comment must document the "media" value the detector emits."""
+        src = inspect.getsource(ContentTypeInfo)
+        cat_line = next(line for line in src.splitlines() if line.strip().startswith("category:"))
+        assert 'media' in cat_line
 
 
 class TestContentTypeDetector:
