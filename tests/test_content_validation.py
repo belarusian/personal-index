@@ -141,3 +141,16 @@ class TestContentValidator:
         item = {"id": "1", "url": "https://example.com"}
         result = self.validator.validate_single(item)
         assert result.is_valid is True
+
+
+class TestContentValidatorDocstring:
+    def test_docstring_does_not_promise_custom_rules(self) -> None:
+        """Regression: class docstring must not over-promise capabilities.
+
+        ContentValidator runs a fixed set of built-in checks (required
+        fields, URL, title, score, dates) and exposes no custom-rule API
+        (no add_rule/register/callback/predicate), so its docstring must
+        not claim to support 'custom rules' (TICKET-330).
+        """
+        doc = (ContentValidator.__doc__ or "").lower()
+        assert "custom rules" not in doc
