@@ -1,6 +1,6 @@
 # TICKET-369 — get_keywords leaks heading-level markers (h1/h2/h3) into the keyword set
 
-- Status: OPEN
+- Status: RESOLVED (merged to main b4a1c2d, gh #576 closed)
 - Class: (a) behavioral
 - Module: personal_index/content.py
 - Issue: #576
