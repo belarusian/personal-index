@@ -1,6 +1,6 @@
 # TICKET-328 — content_summarizer module docstring drift (TF-IDF over-promise)
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc/behavior drift
 - File: personal_index/content_summarizer.py
 - Issue: #494
