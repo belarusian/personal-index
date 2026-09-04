@@ -181,7 +181,13 @@ class SearchIndex:
         return search_results
 
     def _create_snippet(self, content: str, query: str, length: int = 150) -> str:
-        """Create a snippet highlighting the query terms."""
+        """Create a snippet windowed around the first query term.
+
+        Locates the first query token in the content and returns a window
+        around it (up to 50 chars before, ``length`` chars after), prefixed
+        and/or suffixed with "..." when the window is clipped. The matched
+        terms are NOT marked up; the snippet is plain text.
+        """
         if not content:
             return ""
         # Try to find each query token and create best snippet

@@ -131,6 +131,25 @@ class TestSearchIndex:
         assert search_index._tokenize("") == []
         assert search_index._tokenize(None) == []
 
+    def test_create_snippet_does_not_mark_up_terms(self, search_index):
+        # Pins the corrected docstring claim: _create_snippet windows around
+        # the first query term and returns PLAIN text — it does not mark up
+        # / highlight the matched terms.
+        content = "The quick brown fox jumps over the lazy dog near the river bank"
+        snippet = search_index._create_snippet(content, "fox", length=40)
+        # The matched term appears verbatim in the snippet...
+        assert "fox" in snippet
+        # ...but no highlight markup of any common kind is applied.
+        assert "<mark>" not in snippet
+        assert "</mark>" not in snippet
+        assert "*" not in snippet
+        assert "**" not in snippet
+        assert "<b>" not in snippet
+        assert "<strong>" not in snippet
+        # The snippet is a substring-window of the original (plain text).
+        stripped = snippet.strip(".")
+        assert stripped in content
+
     def test_context_manager(self, tmp_path):
         db_path = str(tmp_path / "ctx.db")
         with SearchIndex(db_path=db_path) as idx:
