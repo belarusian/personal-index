@@ -309,6 +309,10 @@ def resolve_relative_url(base_url: str, relative_url: str) -> str | None:
     rel_path = parsed_rel.path
     if rel_path.startswith("/"):
         path = rel_path
+    elif rel_path == "":
+        # Fragment-only (#section) or query-only (?x=1) reference: no path
+        # component, so the reference points at the base page itself.
+        path = parsed_base.path
     else:
         base_path = parsed_base.path
         if base_path.endswith("/"):
