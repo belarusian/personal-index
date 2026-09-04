@@ -329,3 +329,22 @@ class TestContentDeduplicator:
         )
         assert result.is_duplicate is True
         assert result.removed_count == 1
+
+
+# ── docstring contract (TICKET-333) ────────────────────────────────
+
+class TestContentDedupDocstring:
+    def test_dedup_all_docstring_does_not_promise_all_strategies(self) -> None:
+        """Regression: dedup_all docstring must not over-promise 'all strategies'.
+
+        ContentDeduplicator defines three strategies (dedup_by_hash,
+        dedup_by_url, dedup_by_similarity), but dedup_all invokes only the
+        URL and content-hash strategies (it never calls dedup_by_similarity).
+        The docstring must therefore not claim it runs 'all deduplication
+        strategies' (TICKET-333).
+        """
+        doc = (ContentDeduplicator.dedup_all.__doc__ or "").lower()
+        assert "all deduplication strategies" not in doc
+        # The corrected contract names the two strategies actually run.
+        assert "url" in doc
+        assert "hash" in doc

@@ -322,7 +322,7 @@ class ContentDeduplicator:
         self,
         items: list[dict[str, Any]],
     ) -> DedupResult:
-        """Run all deduplication strategies and combine results.
+        """Run the URL and content-hash deduplication strategies and combine results.
 
         Args:
             items: List of content item dicts.
