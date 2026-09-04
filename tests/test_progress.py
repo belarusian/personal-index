@@ -454,6 +454,26 @@ class TestProgressStore:
         assert new_store.get(t1.operation_id) is not None
         assert new_store.get(t2.operation_id) is not None
 
+    def test_store_load_all_returns_total_store_size(self, tmp_path):
+        """load_all returns total store size, not just the loaded count."""
+        path = str(tmp_path / "prog.json")
+        store = ProgressStore(storage_path=path)
+        store.create("inmem", total_steps=1)  # 1 in-memory tracker
+        store.save_all()
+        # fresh store: load the 1 saved tracker
+        fresh = ProgressStore(storage_path=path)
+        assert fresh.load_all() == 1
+        # store that already holds an in-memory tracker: total size after load
+        mixed = ProgressStore(storage_path=path)
+        mixed.create("extra", total_steps=1)  # 1 in-memory tracker
+        assert mixed.load_all() == 2  # 1 loaded + 1 pre-existing
+
+    def test_store_load_all_docstring_not_overpromise(self):
+        import inspect
+        src = inspect.getsource(ProgressStore.load_all)
+        assert "Returns count loaded" not in src
+        assert "total number of trackers in the store" in src
+
     def test_tracker_metadata_default(self):
         t = ProgressTracker(operation_name="test")
         assert t.metadata == {}
