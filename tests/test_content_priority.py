@@ -127,6 +127,25 @@ class TestPriorityCalculator:
         assert 0.0 <= result.score <= 1.0
         assert 0.0 <= result.breakdown["engagement"] <= 1.0
 
+    def test_negative_content_score_clamped_to_zero(self):
+        """Regression: a negative content_score must not push the total below 0.0.
+
+        TICKET-379: score_n was min(content_score/10.0, 1.0), capping only the
+        upper bound, so a negative content_score produced a negative factor and
+        a weighted total below 0.0, violating the documented [0,1] invariant
+        that the other three factors enforce. score_n must be clamped to [0,1].
+        """
+        calc = PriorityCalculator()
+        result = calc.calculate(
+            url="https://a.com",
+            title="Negative",
+            content_score=-10.0,
+        )
+        # The content_score factor must be floored at 0.0 (not -1.0).
+        assert result.breakdown["content_score"] == 0.0
+        # The weighted total must stay within the documented [0,1] range.
+        assert 0.0 <= result.score <= 1.0
+
     def test_batch_calculate(self):
         calc = PriorityCalculator()
         results = calc.batch_calculate([

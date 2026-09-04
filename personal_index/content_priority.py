@@ -104,7 +104,7 @@ class PriorityCalculator:
         recency = self._recency_score(days_since_indexed)
         self._add_factor(factors, breakdown, "recency", recency, "recently indexed")
 
-        score_n = min(content_score / 10.0, 1.0)
+        score_n = min(max(content_score / 10.0, 0.0), 1.0)
         self._add_factor(factors, breakdown, "content_score", score_n, "high content score")
 
         interest = self._interest_score(interest_matches or [])
