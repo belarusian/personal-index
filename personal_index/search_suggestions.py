@@ -97,7 +97,7 @@ def _fuzzy_match_score(query: str, candidate: str) -> float:
 
 
 class SearchSuggestions:
-    """Generates search suggestions from indexed content metadata."""
+    """Generates search suggestions from added search history, tags, keywords, and trending queries."""
 
     def __init__(
         self,
