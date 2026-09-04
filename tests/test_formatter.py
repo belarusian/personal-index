@@ -180,6 +180,12 @@ class TestTruncate:
         assert len(result) == 20
         assert result.endswith("...")
 
+    def test_truncation_small_max_length(self):
+        # max_length < 3 must still respect the bound (no negative slice).
+        assert truncate("hello world", max_length=2) == "he"
+        assert len(truncate("hello world", max_length=1)) <= 1
+        assert len(truncate("hello world", max_length=0)) <= 0
+
 
 class TestHighlight:
     def test_basic_highlight(self):
