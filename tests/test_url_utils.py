@@ -487,6 +487,14 @@ class TestResolveRelativeUrl:
         )
         assert result is None
 
+    def test_root_relative_with_query(self) -> None:
+        result = resolve_relative_url("http://example.com/base", "/page?x=1")
+        assert result == "http://example.com/page?x=1"
+
+    def test_relative_with_query(self) -> None:
+        result = resolve_relative_url("http://example.com/base/", "page?x=1")
+        assert result == "http://example.com/base/page?x=1"
+
 
 # ── is_robotstxt ───────────────────────────────────────────────────
 
