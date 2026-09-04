@@ -113,7 +113,15 @@ class ContentFilter:
         return any(pattern.search(text) for pattern in self._compiled_required)
 
     def _matches_interests(self, page: CrawledPage) -> bool:
-        """Check if page matches any interests."""
+        """Check whether any interest matches the page, recording matches on it.
+
+        Returns True immediately when there is no interest_store (no check
+        is performed). Otherwise builds text = f"{page.title} {page.content}"
+        and asks interest_store.matches_any(text, page.url); on a match it
+        sets page.matched_interests to the matched interest names and
+        page.relevance_score to interest_store.total_score(text), then
+        returns True. Returns False when no interest matches.
+        """
         if not self.interest_store:
             return True
         text = f"{page.title} {page.content}"

@@ -148,6 +148,36 @@ class TestContentFilter:
         # Score will be 5.0 (1 occurrence * priority 5)
         assert f.should_include(page) is False
 
+    def test_matches_interests_records_matched_fields(self, filter_with_store):
+        """Pin the corrected _matches_interests claim against the returned object.
+
+        On a match the method sets page.matched_interests to the matched
+        interest names and page.relevance_score to the store's total_score
+        of the combined title+content text, and returns True.
+        """
+        page = CrawledPage(
+            url="https://example.com",
+            title="Python",
+            content="python " + "x" * 90,
+        )
+        assert filter_with_store._matches_interests(page) is True
+        # Only the "Py" (value "python") interest matches this text.
+        assert page.matched_interests == ["Py"]
+        # relevance_score is the store's total_score of the combined text:
+        # "python" appears twice (title + content) * priority 5 = 10.0.
+        assert page.relevance_score == 10.0
+
+    def test_matches_interests_no_match_leaves_fields_untouched(self, filter_with_store):
+        """On no match the method returns False and leaves the page fields as-is."""
+        page = CrawledPage(
+            url="https://example.com",
+            title="Cooking",
+            content="How to cook pasta. " + "x" * 90,
+        )
+        assert filter_with_store._matches_interests(page) is False
+        assert page.matched_interests == []
+        assert page.relevance_score == 0.0
+
     def test_filter_pages(self, filter_no_store):
         pages = [
             CrawledPage(url="https://a.com", title="Good", content="x" * 200),
