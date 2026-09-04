@@ -88,7 +88,7 @@ class ContentValidator:
     """Validates content items against defined rules.
 
     Checks for required fields, valid URLs, proper date formats,
-    and configurable custom rules.
+    and configurable field requirements and length limits.
     """
 
     def __init__(
