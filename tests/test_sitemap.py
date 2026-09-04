@@ -149,3 +149,17 @@ class TestSitemapParser:
         </sitemapindex>"""
         sitemap = self.parser.parse(xml)
         assert sitemap.sitemap_count == 1
+
+
+class TestSitemapGetUrlsFiltering:
+    """Pin the corrected get_urls claim: only valid http/https entries are returned."""
+
+    def test_get_urls_excludes_invalid_entries(self):
+        from personal_index.sitemap import Sitemap
+
+        valid = SitemapEntry(loc="https://example.com/page")
+        invalid = SitemapEntry(loc="example.com/bare")
+        sitemap = Sitemap(entries=[valid, invalid])
+        urls = sitemap.get_urls()
+        assert urls == ["https://example.com/page"]
+        assert len(urls) == 1
