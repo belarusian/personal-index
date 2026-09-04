@@ -17,5 +17,5 @@
   so each source position is matched at most once.
 - **Test:** Add `test_substring_terms` to tests/test_text_utils.py
   (TestHighlightText) that asserts the corrected output.
-- **Status:** OPEN
+- **Status:** RESOLVED
 Issue: #582
