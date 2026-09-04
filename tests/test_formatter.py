@@ -193,3 +193,9 @@ class TestHighlight:
     def test_empty_terms(self):
         result = highlight("Hello world", [])
         assert result == "Hello world"
+
+    def test_substring_terms(self):
+        # A term that is a substring of another must not be re-matched
+        # inside the longer term's inserted markers.
+        assert highlight("cat catalog", ["cat", "catalog"]) == "**cat** **catalog**"
+        assert highlight("pythonic code", ["python", "pythonic"]) == "**pythonic** code"
