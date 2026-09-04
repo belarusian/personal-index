@@ -88,3 +88,15 @@ class TestSourceNames:
 
     def test_get_source_names_empty(self, aggregator):
         assert aggregator.get_source_names() == []
+
+
+class TestMergeDedupKeepFirst:
+    def test_merge_default_dedup_keeps_first_occurrence_by_id(self, aggregator):
+        """Pin the corrected claim: default merge_all dedups by id (fallback
+        title), keeping the FIRST occurrence, asserted on the returned list."""
+        aggregator.add_source("a", [{"id": "1", "title": "First"}])
+        aggregator.add_source("b", [{"id": "1", "title": "Second"}])
+        merged = aggregator.merge_all()  # deduplicate defaults to True
+        assert len(merged) == 1
+        # The survivor is the FIRST occurrence (from source "a"), not the later one.
+        assert merged[0]["title"] == "First"
