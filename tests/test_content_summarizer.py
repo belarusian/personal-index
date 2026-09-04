@@ -180,3 +180,41 @@ class TestModuleDocstringContract:
         doc = (cs.__doc__ or "").lower()
         assert "tf-idf" not in doc
         assert "idf" not in doc
+
+
+class TestSummarizePageTitleDocstringContract:
+    def test_docstring_does_not_promise_keyword_boost(self):
+        """Regression: summarize_page docstring must not over-promise.
+
+        The body only prepends the title to the content and summarizes the
+        combined text (combined = f"{title}. {content}"); there is no
+        title-specific keyword boost / re-weighting mechanism. The docstring
+        must therefore not claim a 'keyword boost' (TICKET-339).
+        """
+        import inspect
+
+        src = inspect.getsource(summarize_page)
+        assert "keyword boost" not in src
+        assert "prepended to the content" in src
+
+    def test_title_is_prepended_to_content(self):
+        """Behavior unchanged: the title is prepended to the content.
+
+        summarize_page builds combined = f"{title}. {content}" and summarizes
+        it, so the returned original_text must start with the title (the title
+        becomes the first sentence of the combined text).
+        """
+        title = "Python Programming"
+        content = (
+            "Python is a popular language. "
+            "It is used in data science. "
+            "Many developers love Python. "
+            "Python is used in web development. "
+            "It has a large ecosystem of libraries. "
+            "Python is beginner friendly. "
+        )
+        result = summarize_page(title, content, max_sentences=2)
+        # The title is prepended, so original_text starts with the title.
+        assert result.original_text.startswith(title)
+        # The title becomes the first sentence of the combined text.
+        assert result.sentences[0].startswith(title)
