@@ -8,3 +8,6 @@
   `p.startswith(f"{param}=")` (a prefix test) instead of an exact key match.
 - **Evidence (line 220-222):**
 - **Issue:** #574
+
+## RESOLVED
+- Merged to main e2b8cb2 (PR #575), gh #574 closed.
