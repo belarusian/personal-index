@@ -403,3 +403,32 @@ class TestSearchSuggestions:
         for key in counts:
             assert isinstance(key, str)
         assert set(counts) == {"Python", "Rust"}
+
+
+class TestSearchSuggestionsDocstringClaim:
+    """Pin the corrected class docstring claim: suggestions are generated from
+    the four added sources (search history, tags, keywords, trending queries),
+    not from any 'indexed content metadata' the class never touches."""
+
+    def test_each_added_source_is_reachable(self) -> None:
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.add_search_history(["python tutorial", "python web"])
+        s.add_tags(["python", "pyt", "rust"])
+        s.add_keywords(["python", "async"])
+        s.record_search("pythons advanced")
+        s.record_search("pythons advanced")
+        s.record_search("pythons advanced")
+
+        # Each of the four added sources independently yields a suggestion.
+        assert all(r.source == "history" for r in s.suggest("pyt", sources=["history"]))
+        assert len(s.suggest("pyt", sources=["history"])) > 0
+        assert all(r.source == "tags" for r in s.suggest("pyt", sources=["tags"]))
+        assert len(s.suggest("pyt", sources=["tags"])) > 0
+        assert all(r.source == "keywords" for r in s.suggest("pyt", sources=["keywords"]))
+        assert len(s.suggest("pyt", sources=["keywords"])) > 0
+        assert all(r.source == "trending" for r in s.suggest("pyt", sources=["trending"]))
+        assert len(s.suggest("pyt", sources=["trending"])) > 0
+
+    def test_empty_when_nothing_added(self) -> None:
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        assert s.suggest("pyt") == []
