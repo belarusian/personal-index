@@ -82,6 +82,15 @@ class TestContentReader:
         assert view.has_next is True
         assert view.has_prev is False
 
+    def test_paginate_default_sorts_score_descending(self):
+        # Pins the corrected docstring claim: default sort_by="score",
+        # reverse=True (descending), against the returned PageView.items.
+        view = self.reader.paginate(page=1, page_size=10)
+        scores = [i.score for i in view.items]
+        assert scores == [9.0, 8.0, 6.0, 3.0]
+        titles = [i.title for i in view.items]
+        assert titles == ["Gamma", "Alpha", "Beta", "Delta"]
+
     def test_paginate_second_page(self):
         view = self.reader.paginate(page=2, page_size=2)
         assert len(view.items) == 2
