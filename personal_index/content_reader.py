@@ -87,7 +87,13 @@ class ContentReader:
         sort_by: str = "score",
         reverse: bool = True,
     ) -> PageView:
-        """Get a paginated view of content items."""
+        """Get a paginated view of content items.
+
+        Items are sorted by the ``sort_by`` field (``"score"``, ``"title"``,
+        or ``"url"``; any other value leaves insertion order) with ``reverse``
+        (default ``True`` = descending). ``page`` is clamped to the range
+        ``[1, total_pages]``. Raises ``ValueError`` if ``page_size < 1``.
+        """
         if page_size < 1:
             raise ValueError("Page size must be >= 1")
         items = self._sort_items(list(self._items), sort_by, reverse)
