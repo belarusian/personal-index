@@ -1,6 +1,6 @@
 # TICKET-380: _find_match_indices returns [] when query is longer than text -> match cannot be highlighted
 
-- Status: OPEN
+- Status: RESOLVED (merged to main 4db9a46, gh #598 closed)
 - Issue: #598
 - File: personal_index/fuzzy_search.py
 - Function: FuzzySearcher._find_match_indices (line 178)
