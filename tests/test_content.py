@@ -127,9 +127,9 @@ class TestExtractContent:
 
 class TestTokenize:
     def test_basic_tokenize(self):
-        # text_utils.tokenize requires 2+ char tokens, so "a" is excluded
+        # single-letter words are preserved (no min-length filter)
         tokens = tokenize("Hello World, this is a test!")
-        assert tokens == ["hello", "world", "this", "is", "test"]
+        assert tokens == ["hello", "world", "this", "is", "a", "test"]
 
     def test_empty_string(self):
         tokens = tokenize("")

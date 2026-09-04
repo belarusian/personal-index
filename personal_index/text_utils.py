@@ -320,7 +320,7 @@ def tokenize(text: str, lowercase: bool = True, remove_stopwords: bool = False) 
     """
     if not text:
         return []
-    tokens = re.findall(r"\b[a-zA-Z][a-zA-Z0-9_-]+\b|\b\d+\b", text)
+    tokens = re.findall(r"\b[a-zA-Z][a-zA-Z0-9_-]*\b|\b\d+\b", text)
     if lowercase:
         tokens = [t.lower() for t in tokens]
     if remove_stopwords:
