@@ -230,6 +230,18 @@ class TestContentScorer:
         result = scorer.score()
         assert result.authority == 0.5
 
+    def test_score_authority_verified_bonus_exact(self, scorer: ContentScorer) -> None:
+        # Pin the corrected docstring claim: verified adds +0.1 capped at 1.0,
+        # unverified returns domain_authority unchanged.
+        verified = scorer.score(
+            domain_authority=0.9, is_verified_source=True,
+        ).authority
+        unverified = scorer.score(
+            domain_authority=0.9, is_verified_source=False,
+        ).authority
+        assert verified == 1.0  # 0.9 + 0.1 capped at 1.0
+        assert unverified == 0.9  # unchanged
+
     # ── _score_freshness() ───────────────────────────────────────
 
     def test_score_freshness_recent_crawl(self, scorer: ContentScorer) -> None:

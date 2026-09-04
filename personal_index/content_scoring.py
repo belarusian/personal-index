@@ -238,7 +238,12 @@ class ContentScorer:
         domain_authority: float,
         is_verified_source: bool,
     ) -> float:
-        """Score based on source authority."""
+        """Score based on source authority.
+
+        Returns ``domain_authority`` unchanged, plus a +0.1 bonus only
+        when ``is_verified_source`` is true, capped at 1.0 and rounded
+        to 4 places.
+        """
         score = domain_authority
         if is_verified_source:
             score = min(1.0, score + 0.1)
