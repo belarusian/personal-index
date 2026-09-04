@@ -113,6 +113,16 @@ class TestFormatScheduleJob:
         assert "24 hours" in output
         assert "5" in output
 
+    def test_dict_job_seed_urls_none(self):
+        # A dict job with seed_urls present-but-None (common JSON shape)
+        # must render without raising; the .get default only fires on an
+        # absent key, not a present-but-None value.
+        job = {"name": "daily", "seed_urls": None, "interval_hours": 24}
+        output = format_schedule_job(job)
+        assert "daily" in output
+        assert "Seed URLs:" in output
+        assert "24 hours" in output
+
 
 class TestFormatTable:
     def test_basic_table(self):

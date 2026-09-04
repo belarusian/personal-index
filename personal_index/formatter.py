@@ -83,7 +83,7 @@ def format_schedule_job(job: dict[str, Any] | ScheduledJob) -> str:
         interval_hours = job.get('interval_hours', 0)
         run_count = job.get('run_count', 0)
         last_run = job.get('last_run')
-        seed_urls = job.get('seed_urls', [])
+        seed_urls = job.get('seed_urls') or []
     else:
         # Try attribute access as fallback
         name = getattr(job, 'name', 'unknown')
