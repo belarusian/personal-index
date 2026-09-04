@@ -253,6 +253,18 @@ class TestCollectionManager:
         result = self.manager.move_item("item1", cid, "nonexistent")
         assert result is False
 
+    def test_move_item_absent_from_source_still_adds_to_dest(self):
+        # Pins the corrected docstring claim: move_item does NOT require the
+        # item to be present in the source; it adds to dest and returns True
+        # whenever both collections exist.
+        cid_src = self.manager.create("Source")
+        cid_dst = self.manager.create("Dest")
+        # 'item1' is never added to the source collection.
+        result = self.manager.move_item("item1", cid_src, cid_dst)
+        assert result is True
+        assert "item1" not in self.manager.get(cid_src).item_ids
+        assert "item1" in self.manager.get(cid_dst).item_ids
+
     def test_merge_collections(self):
         cid1 = self.manager.create("A")
         cid2 = self.manager.create("B")
