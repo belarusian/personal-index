@@ -73,6 +73,19 @@ class TestExtractedContent:
         assert "h1" not in keywords
         assert "h2" not in keywords
 
+    def test_get_keywords_filters_stopwords_from_headings(self):
+        content = ExtractedContent(
+            url="http://example.com",
+            meta_keywords=["python"],
+            headings=["h1: Introduction to Python"],
+        )
+        keywords = content.get_keywords()
+        # Real heading words are present...
+        assert "introduction" in keywords
+        assert "python" in keywords
+        # ...but the stopword "to" is NOT returned as a keyword.
+        assert "to" not in keywords
+
 
 class TestExtractContent:
     def test_extract_title(self):

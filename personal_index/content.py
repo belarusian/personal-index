@@ -35,7 +35,9 @@ class ExtractedContent:
             # contributes keywords (the marker itself is not a keyword).
             text = re.sub(r'^h\d+:\s*', '', heading)
             words = re.findall(r'[a-z0-9]+', text.lower())
-            keywords.extend(words)
+            # Filter out stopwords so only meaningful terms are keywords
+            # (meta keywords are author-supplied and kept as-is).
+            keywords.extend(remove_stopwords(words))
         return list(set(keywords))
 
 
