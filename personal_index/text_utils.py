@@ -234,13 +234,16 @@ def highlight_text(text: str, terms: list[str], tag: str = "mark") -> str:
     """
     if not text or not terms:
         return text
-    result = text
-    for term in terms:
-        if not term:
-            continue
-        pattern = re.compile(re.escape(term), re.IGNORECASE)
-        result = pattern.sub(f"<{tag}>{term}</{tag}>", result)
-    return result
+    # Single-pass regex alternation, longest-first, so each source position
+    # is matched at most once and shorter terms are not re-matched inside
+    # markers inserted for longer terms.
+    filtered = [t for t in terms if t]
+    if not filtered:
+        return text
+    filtered.sort(key=len, reverse=True)
+    term_map = {t.lower(): t for t in filtered}
+    pattern = re.compile('|'.join(re.escape(t) for t in filtered), re.IGNORECASE)
+    return pattern.sub(lambda m: f"<{tag}>{term_map.get(m.group(0).lower(), m.group(0))}</{tag}>", text)
 
 
 def count_words(text: str) -> int:
