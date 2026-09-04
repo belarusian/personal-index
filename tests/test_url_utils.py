@@ -363,6 +363,22 @@ class TestRemoveQueryParams:
         assert "foo" not in result
         assert "bar" not in result
 
+    def test_remove_does_not_drop_sibling_prefix_param(self) -> None:
+        # Removing "foo" must not drop the sibling "foobar" param.
+        result = remove_query_params(
+            "https://example.com?foo=1&foobar=2", params=["foo"]
+        )
+        assert "foo=1" not in result
+        assert "foobar=2" in result
+
+    def test_remove_does_not_match_key_inside_value(self) -> None:
+        # A value that merely contains the key must not be removed.
+        result = remove_query_params(
+            "https://example.com?msg=foo=1&bar=2", params=["foo"]
+        )
+        assert "msg=foo=1" in result
+        assert "bar=2" in result
+
 
 # ── strip_tracking_params ──────────────────────────────────────────
 
