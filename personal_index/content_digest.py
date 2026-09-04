@@ -127,9 +127,9 @@ class ContentDigest:
 
 
 class DigestGenerator:
-    """Generates content digests from indexed content.
+    """Generates content digests from entries added via add_entry/add_entries.
 
-    Groups content by topics/tags and generates formatted
+    Groups entries by tags or source and generates formatted
     digest reports.
     """
 

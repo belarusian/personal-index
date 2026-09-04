@@ -176,3 +176,22 @@ class TestGenerateDocstringClaim:
         assert [e.score for e in python_section.entries] == [
             float(i) for i in range(14, 4, -1)
         ]
+
+
+class TestGeneratorDocstringClaim:
+    def test_digest_contains_exactly_added_entries(self):
+        """Pin the corrected class docstring claim: the digest is built
+        from the entries added via add_entry/add_entries (no external or
+        indexed source), and source-grouping produces one section per source."""
+        gen = DigestGenerator()
+        gen.add_entry(make_entry(url="https://a.com", title="A", tags=["t1"], score=1.0, source="blog"))
+        gen.add_entries([
+            make_entry(url="https://b.com", title="B", tags=["t2"], score=2.0, source="blog"),
+            make_entry(url="https://c.com", title="C", tags=["t3"], score=3.0, source="docs"),
+        ])
+        digest = gen.generate(group_by="source")
+        # The digest holds exactly the 3 entries that were added - nothing more.
+        all_entries = [e for s in digest.sections for e in s.entries]
+        assert {e.url for e in all_entries} == {"https://a.com", "https://b.com", "https://c.com"}
+        # Source grouping yields one section per distinct source.
+        assert {s.topic for s in digest.sections} == {"blog", "docs"}
