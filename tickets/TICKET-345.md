@@ -17,5 +17,5 @@
   True iff both collections exist, False if either is missing), and add ONE
   behavior test pinning that move_item on an item absent from the source still
   adds it to the destination and returns True.
-- Status: OPEN
+- Status: RESOLVED (merged to main 34fb1f3, gh #529 merged, gh #528 closed)
 - Issue: #528
