@@ -1,6 +1,6 @@
 # TICKET-333 — content_dedup.dedup_all docstring over-promises "all deduplication strategies"
 
-- Status: OPEN
+- Status: RESOLVED (merged to main 9d87e43, gh #505 merged, gh #504 closed)
 - Class: (b) doc/behavior drift
 - Module: personal_index/content_dedup.py
 - Issue: #504
