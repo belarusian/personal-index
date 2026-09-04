@@ -495,6 +495,21 @@ class TestResolveRelativeUrl:
         result = resolve_relative_url("http://example.com/base/", "page?x=1")
         assert result == "http://example.com/base/page?x=1"
 
+    def test_fragment_only_keeps_base_page(self) -> None:
+        # A fragment-only reference points at the base page itself; the
+        # page path must not be dropped to the parent directory.
+        result = resolve_relative_url(
+            "http://example.com/dir/page", "#section"
+        )
+        assert result == "http://example.com/dir/page#section"
+
+    def test_query_only_keeps_base_page(self) -> None:
+        # A query-only reference likewise points at the base page itself.
+        result = resolve_relative_url(
+            "http://example.com/dir/page", "?x=1"
+        )
+        assert result == "http://example.com/dir/page?x=1"
+
 
 # ── is_robotstxt ───────────────────────────────────────────────────
 
