@@ -1,6 +1,6 @@
 # TICKET-346: content_scoring._score_authority docstring over-promises (class b)
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/content_scoring.py
 Method: ContentScorer._score_authority (line 236)
 
