@@ -10,5 +10,5 @@
 - Minimal additive fix: reword docstring to state the exact dedup key (case-insensitive,
   whitespace-stripped paragraph text), and add ONE behavior test pinning that two
   paragraphs differing only in case/whitespace merge to a single paragraph.
-- Status: OPEN
+- Status: RESOLVED (merged to main c241e33, gh #527 merged, gh #526 closed)
 - Issue: #526
