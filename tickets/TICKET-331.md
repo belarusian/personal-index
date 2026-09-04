@@ -1,6 +1,6 @@
 # TICKET-331 — content_notifications.NotificationManager class docstring over-promises "delivers notifications through configured channels"
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc/behavior drift
 - Module: personal_index/content_notifications.py
 - Issue: #500
