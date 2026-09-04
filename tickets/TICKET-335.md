@@ -1,6 +1,6 @@
 # TICKET-335: content_webhooks.mark_failed docstring over-promises retry scheduling
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/content_webhooks.py
 Class: (b) docstring over-promises behavior the code does not do
 
