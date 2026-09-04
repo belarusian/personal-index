@@ -204,3 +204,32 @@ class TestModuleDocstringContract:
         doc = (ch.__doc__ or "").lower()
         assert "stale" not in doc
         assert "stale entries" not in doc
+
+
+class TestContentHealthCheckerDocstringClaim:
+    """TICKET-366: pin the corrected class docstring claim.
+
+    The class docstring now states the checker works on "content items passed
+    to check_item/check_all" - not on any "indexed content" source. Witness the
+    claim against the returned object: a fresh checker holds no content, and
+    check_all surfaces exactly the items passed in (no hidden index backing it).
+    """
+
+    def test_fresh_checker_holds_no_content(self):
+        """A fresh checker has no content of its own; check_all([]) is empty."""
+        checker = ContentHealthChecker()
+        report = checker.check_all([])
+        assert report.total_items == 0
+        assert report.results == []
+
+    def test_check_all_surfaces_exactly_passed_items(self):
+        """check_all returns exactly the items passed in, in order."""
+        checker = ContentHealthChecker()
+        items = [
+            {"url": "https://a.example/1", "title": "Alpha", "content": "x" * 60},
+            {"url": "https://b.example/2", "title": "Beta", "content": "y" * 60},
+            {"url": "https://c.example/3", "title": "Gamma", "content": "z" * 60},
+        ]
+        report = checker.check_all(items)
+        assert report.total_items == len(items)
+        assert [r.url for r in report.results] == [it["url"] for it in items]

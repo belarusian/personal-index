@@ -121,7 +121,7 @@ class ContentHealthCheck:
 
 
 class ContentHealthChecker:
-    """Checks health and quality of indexed content.
+    """Checks health and quality of content items passed to check_item/check_all.
 
     Validates content items against configurable rules and
     generates health reports.
