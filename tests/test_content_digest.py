@@ -158,3 +158,21 @@ class TestModuleDocstringContract:
 
         doc = (cd.__doc__ or "").lower()
         assert "interest" not in doc
+
+
+class TestGenerateDocstringClaim:
+    def test_generate_caps_each_section_at_default_limit(self):
+        """Pin the corrected docstring claim: each section is capped at
+        max_entries_per_section (default 10) entries in the returned digest."""
+        gen = DigestGenerator()
+        # 15 entries all sharing one tag -> one section that must be capped at 10
+        for i in range(15):
+            gen.add_entry(make_entry(title=f"E{i}", tags=["python"], score=float(i)))
+        digest = gen.generate()
+        # The single "python" section must hold exactly the default cap of 10
+        python_section = next(s for s in digest.sections if s.topic == "python")
+        assert python_section.count == 10
+        # And the kept entries are the 10 highest-scored (score desc sort)
+        assert [e.score for e in python_section.entries] == [
+            float(i) for i in range(14, 4, -1)
+        ]

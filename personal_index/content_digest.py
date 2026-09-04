@@ -152,7 +152,13 @@ class DigestGenerator:
         group_by: str = "tags",
         max_entries_per_section: int = 10,
     ) -> ContentDigest:
-        """Generate a content digest."""
+        """Generate a content digest from the accumulated entries.
+
+        Entries are sorted by score (descending), grouped by the
+        `group_by` strategy ("tags" by default, "source", or "none"),
+        and each section is capped at `max_entries_per_section`
+        (default 10) entries.
+        """
         now = datetime.now(timezone.utc).isoformat()
         entries = sorted(self._entries, key=lambda e: e.score, reverse=True)
         sections = self._resolve_sections(entries, group_by, max_entries_per_section)
