@@ -37,7 +37,8 @@ class DuplicateGroup:
 def normalize_url(url: str) -> str:
     """Normalize a URL for comparison.
 
-    Removes trailing slashes, fragments, and normalizes case.
+    Removes trailing slashes and fragments, and lowercases the
+    scheme and host.
     """
     if not url:
         return url
