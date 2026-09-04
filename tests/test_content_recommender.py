@@ -146,6 +146,37 @@ class TestRecommender:
         recs = self.recommender.recommend_for_keywords([], top_n=3)
         assert recs == []
 
+    def test_recommend_for_keywords_case_insensitive_and_fraction_score(self):
+        """Regression: recommend_for_keywords lowercases query keywords and
+        scores by the matched keyword fraction (TICKET-347).
+
+        Pins the corrected docstring claim against the returned object:
+        (a) a mixed-case query keyword matches a lowercase item keyword
+        (case-insensitive), and (b) the returned score equals the matched
+        fraction (len(common) / len(query)).
+        """
+        rec = Recommender(min_score=0.0)
+        rec.add_items([
+            ContentItem(
+                url="https://example.com/py",
+                title="Python Basics",
+                content="",
+                keywords=["python", "web"],
+            ),
+        ])
+        # Mixed-case query: "Python" should match lowercase "python".
+        recs = rec.recommend_for_keywords(["Python", "web"], top_n=5)
+        assert len(recs) == 1
+        r = recs[0]
+        # (a) case-insensitive match: both query keywords matched
+        assert set(r.matching_keywords) == {"python", "web"}
+        # (b) score equals the matched fraction: 2/2 == 1.0
+        assert r.score == 1.0
+        # Partial match: only "Python" matches -> fraction 1/2 == 0.5
+        recs2 = rec.recommend_for_keywords(["Python", "rust"], top_n=5)
+        assert len(recs2) == 1
+        assert recs2[0].score == 0.5
+
     def test_clear(self):
         self.recommender.clear()
         assert self.recommender.item_count == 0

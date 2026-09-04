@@ -161,14 +161,21 @@ class Recommender:
         keywords: list[str],
         top_n: int = 5,
     ) -> list[Recommendation]:
-        """Recommend content items matching given keywords.
+        """Recommend content items by keyword match fraction.
+
+        Query keywords are lowercased before matching, so matching is
+        case-insensitive. Each item's score is the fraction of the query
+        keywords it matches (len(common) / len(query)); items whose score is
+        below ``min_score`` are dropped, and the survivors are sorted by score
+        (descending) and truncated to ``top_n``.
 
         Args:
-            keywords: Keywords to match against.
-            top_n: Number of recommendations to return.
+            keywords: Keywords to match against (lowercased internally).
+            top_n: Maximum number of recommendations to return.
 
         Returns:
-            List of Recommendation objects.
+            List of Recommendation objects, each score equal to the matched
+            keyword fraction.
         """
         keyword_set = {kw.lower() for kw in keywords if kw}
         if not keyword_set:
