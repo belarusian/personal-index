@@ -22,5 +22,5 @@ may break a word. (doc-only, no behavior change.)
 Add one behavior test pinning the corrected claim: a long unbroken tail token
 is cut mid-word (result ends in the token's characters + suffix, not on a
 space), documenting that "without breaking words" is not guaranteed.
-**Status:** OPEN
+**Status:** RESOLVED (merged to main 10c585e, gh #525 merged, gh #524 closed)
 **Issue:** #524
