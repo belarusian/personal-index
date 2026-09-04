@@ -24,7 +24,10 @@ class ContentAggregator:
         return self._sources.get(name, [])
 
     def merge_all(self, deduplicate: bool = True) -> list[dict[str, Any]]:
-        """Merge all sources into a single list."""
+        """Merge all sources into a single list in source insertion order.
+        When deduplicate is True (the default), removes duplicate items
+        keyed on the item's "id" (falling back to "title"), keeping the
+        first occurrence."""
         merged = []
         for items in self._sources.values():
             merged.extend(items)
