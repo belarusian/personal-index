@@ -95,7 +95,7 @@ def _extract_links(soup: BeautifulSoup, base_url: str) -> list[str]:
     links: list[str] = []
     for a in soup.find_all("a", href=True):
         href = str(a["href"])
-        if not href.startswith(("javascript:", "mailto:", "data:", "tel:")):
+        if href and not href.startswith(("javascript:", "mailto:", "data:", "tel:")):
             resolved = resolve_relative_url(base_url, href)
             if resolved:
                 links.append(resolved)

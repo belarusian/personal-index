@@ -125,6 +125,16 @@ class TestExtractContent:
         assert "http://example.com/link1" in content.links
         assert "http://example.com/link2" in content.links
 
+    def test_extract_links_skips_empty_href(self):
+        html = """
+        <html lang="en"><body>
+        <a href="">empty</a>
+        <a href="/real">real</a>
+        </body></html>"""
+        content = extract_content(html, "http://example.com/page")
+        assert "http://example.com/page" not in content.links
+        assert "http://example.com/real" in content.links
+
     def test_content_length(self):
         content = extract_content(SAMPLE_HTML, "http://example.com")
         assert content.content_length > 0
