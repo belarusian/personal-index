@@ -9,5 +9,5 @@
 **Minimal additive fix**:
 1. Reword the docstring to state the exact dedup key (id, falling back to title), the keep-first behavior, and the deduplicate default (True).
 2. Add ONE behavior test pinning the corrected claim against the returned list: two items sharing an id (different titles) collapse to the FIRST occurrence under the default call.
-**Status**: OPEN
+**Status**: RESOLVED
 **Issue**: #546
