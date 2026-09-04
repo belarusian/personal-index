@@ -56,6 +56,20 @@ class TestStorageInterests:
         found = temp_storage.get_interest("python")
         assert found.keywords == ["python", "dev"]
 
+    def test_add_interest_upsert_returns_updated_object(self, temp_storage):
+        """Pin the corrected docstring claim: re-adding the same name
+        updates in place (no new entry) and the returned object reflects it."""
+        first = Interest(name="python", keywords=["python"])
+        temp_storage.add_interest(first)
+        second = Interest(name="python", keywords=["python", "dev"])
+        returned = temp_storage.add_interest(second)
+        # returned object is the updated interest, not a fresh duplicate
+        assert returned.name == "python"
+        assert returned.keywords == ["python", "dev"]
+        # store state: still exactly one interest, updated in place
+        assert len(temp_storage.get_interests()) == 1
+        assert temp_storage.get_interest("python").keywords == ["python", "dev"]
+
     def test_list_interests(self, temp_storage):
         temp_storage.add_interest(Interest(name="python", keywords=["python"]))
         temp_storage.add_interest(Interest(name="rust", keywords=["rust"]))
