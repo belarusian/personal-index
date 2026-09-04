@@ -1,7 +1,7 @@
 """Content summarization for personal-index.
 
 Provides extractive summarization of indexed content using
-sentence scoring based on keyword frequency and TF-IDF-like metrics.
+sentence scoring based on keyword frequency.
 """
 
 from __future__ import annotations

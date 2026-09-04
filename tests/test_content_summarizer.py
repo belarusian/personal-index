@@ -165,3 +165,18 @@ class TestSummarizePage:
     def test_page_with_empty_content(self):
         result = summarize_page("Title", "", max_sentences=3)
         assert result.summary == ""
+
+
+class TestModuleDocstringContract:
+    def test_docstring_does_not_promise_tfidf(self):
+        """Regression: module docstring must not over-promise capabilities.
+
+        The module implements no TF-IDF / inverse-document-frequency scoring
+        (only keyword frequency), so its docstring must not claim to use
+        'TF-IDF' or 'idf' metrics (TICKET-328).
+        """
+        import personal_index.content_summarizer as cs
+
+        doc = (cs.__doc__ or "").lower()
+        assert "tf-idf" not in doc
+        assert "idf" not in doc
