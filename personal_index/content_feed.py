@@ -101,7 +101,7 @@ class FeedGenerator:
             self.feed_id = self.link
 
     def add_item(self, item: FeedItem) -> None:
-        """Add an item to the feed."""
+        """Add an item, then sort by published date (newest first) and cap at max_items."""
         self.items.append(item)
         # Sort by published date, newest first
         self.items.sort(key=lambda i: i.published or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
