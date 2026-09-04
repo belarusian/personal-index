@@ -145,3 +145,17 @@ class TestBatchProcessor:
         assert result.started_at is not None
         assert result.completed_at is not None
         assert result.duration_seconds >= 0
+
+
+class TestModuleDocstringContract:
+    def test_docstring_does_not_promise_parallel_execution(self) -> None:
+        """Regression: module docstring must not over-promise capabilities.
+
+        The module processes batches sequentially (a plain for-loop, no
+        threading / concurrent.futures / multiprocessing), so its docstring
+        must not claim to support 'parallel' execution (TICKET-329).
+        """
+        import personal_index.content_batch as cb
+
+        doc = (cb.__doc__ or "").lower()
+        assert "parallel" not in doc
