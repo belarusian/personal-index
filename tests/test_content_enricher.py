@@ -168,3 +168,47 @@ class TestEnrichedContentDatetime:
             EnrichedContent(title="Test", text="Hello world")
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) == 0, f"Expected no deprecation warnings, got: {[str(x.message) for x in deprecation_warnings]}"
+
+
+class TestEnrichDocstringContract:
+    """Regression: enrich docstring must not over-promise (TICKET-340)."""
+
+    def test_docstring_does_not_claim_language_is_computed(self):
+        """The enrich docstring must not claim 'computed metadata' wholesale.
+
+        The body computes word_count, reading_time, keywords,
+        has_code/has_links/has_images, sentiment_score and complexity_score,
+        but the EnrichedContent.language field is NEVER computed — it stays at
+        its dataclass default 'en'. The docstring must therefore not claim
+        'computed metadata' (which would imply language is computed); it should
+        enumerate what IS computed (TICKET-340).
+        """
+        import inspect
+
+        from personal_index.content_enricher import ContentEnricher
+
+        src = inspect.getsource(ContentEnricher.enrich)
+        assert "computed metadata" not in src
+        assert "computed metrics, keywords, sentiment, and complexity" in src
+
+    def test_class_docstring_does_not_claim_computed_metadata(self):
+        """The class docstring must not claim 'computed metadata' either."""
+        import inspect
+
+        from personal_index.content_enricher import ContentEnricher
+
+        src = inspect.getsource(ContentEnricher)
+        assert "computed metadata" not in src
+        assert "computed metrics, keywords, sentiment, and complexity" in src
+
+    def test_language_is_not_computed_by_enrich(self):
+        """Behavior unchanged: enrich leaves language at its default 'en'.
+
+        enrich never assigns enriched.language, so after enriching non-English
+        text the language field must still be the default 'en' (proving the
+        doc fix is doc-only and language is not computed).
+        """
+        enricher = ContentEnricher()
+        text = "Bonjour le monde. Ceci est un test en français."
+        enriched = enricher.enrich("Titre", text)
+        assert enriched.language == "en"

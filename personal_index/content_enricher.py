@@ -49,7 +49,7 @@ class EnrichedContent:
         }
 
 class ContentEnricher:
-    """Enrich content with computed metadata and analysis."""
+    """Enrich content with computed metrics, keywords, sentiment, and complexity analysis."""
 
     # Simple positive/negative word lists for basic sentiment
     POSITIVE_WORDS: ClassVar[set[str]] = {
@@ -77,7 +77,7 @@ class ContentEnricher:
         self.top_n_keywords = top_n_keywords
 
     def enrich(self, title: str, text: str, html: str | None = None) -> EnrichedContent:
-        """Enrich content with computed metadata.
+        """Enrich content with computed metrics, keywords, sentiment, and complexity analysis.
 
         Args:
             title: Content title.
@@ -85,7 +85,7 @@ class ContentEnricher:
             html: Optional HTML source for additional analysis.
 
         Returns:
-            EnrichedContent with computed metadata.
+            EnrichedContent with the computed fields.
         """
         enriched = EnrichedContent(
             title=title,
