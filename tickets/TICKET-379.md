@@ -1,6 +1,6 @@
 # TICKET-379: content_score not clamped to lower bound -> total score below 0.0
 
-- Status: OPEN
+- Status: RESOLVED (merged to main c15dc91, gh #596 closed)
 - Issue: #596
 - File: personal_index/content_priority.py
 - Function: PriorityCalculator.calculate (line 107)
