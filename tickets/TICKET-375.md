@@ -1,4 +1,4 @@
-# TICKET-375
+# TICKET-375 (RESOLVED)
 
 - File: personal_index/url_utils.py
 - Function: resolve_relative_url (line 289)
