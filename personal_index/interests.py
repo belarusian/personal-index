@@ -56,7 +56,7 @@ class InterestStore:
             json.dump(data, f, indent=2)
 
     def add(self, interest: Interest) -> None:
-        """Add an interest."""
+        """Add or update an interest (replaces an existing interest with the same name)."""
         self._interests[interest.name] = interest
         self._save()
 
