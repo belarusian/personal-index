@@ -15,6 +15,7 @@ from personal_index.text_utils import (
     remove_html_tags,
     similarity_ratio,
     slugify,
+    tokenize,
     truncate_text,
     word_frequency,
 )
@@ -298,3 +299,22 @@ class TestReadTimeMinutes:
         assert isinstance(read_time_minutes("word " * 400), int)
         assert type(read_time_minutes("hello")) is int
         assert type(read_time_minutes("")) is int
+
+
+class TestTokenize:
+    def test_single_letter_word_preserved(self):
+        """Single-letter words must be preserved when remove_stopwords=False."""
+        result = tokenize("I like cats", remove_stopwords=False)
+        assert "i" in result
+        assert result == ["i", "like", "cats"]
+
+    def test_single_letter_word_filtered_with_stopwords(self):
+        """Single-letter stopwords are filtered when remove_stopwords=True."""
+        result = tokenize("I like cats", remove_stopwords=True)
+        assert "i" not in result
+        assert result == ["like", "cats"]
+
+    def test_mixed_single_and_multi_letter(self):
+        """Mix of single and multi-letter words all preserved."""
+        result = tokenize("A B hello 42", remove_stopwords=False)
+        assert result == ["a", "b", "hello", "42"]
