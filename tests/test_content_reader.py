@@ -181,3 +181,22 @@ class TestContentReader:
 
     def test_count(self):
         assert self.reader.count == 4
+
+
+class TestContentReaderDocstringClaim:
+    """Pin the corrected class docstring: items come from add/add_many, not an index."""
+
+    def test_fresh_reader_is_empty(self):
+        reader = ContentReader()
+        assert reader.count == 0
+        assert reader.list_all() == []
+
+    def test_surfaces_exactly_added_items(self):
+        reader = ContentReader()
+        reader.add_many([
+            make_item("https://a.com", "Alpha"),
+            make_item("https://b.com", "Beta"),
+        ])
+        reader.add(make_item("https://c.com", "Gamma"))
+        urls = [item.url for item in reader.list_all()]
+        assert urls == ["https://a.com", "https://b.com", "https://c.com"]
