@@ -15,5 +15,5 @@ topic`.
 recommended)." (doc-only, no behavior change).
 Add one behavior test pinning that the returned TopicCategory's name is
 lowercased (e.g. add_topic("My Topic", [...]).name == "my topic").
-**Status:** OPEN
+**Status:** RESOLVED (merged to main a289878, gh #523 merged, gh #522 closed)
 **Issue:** #522
