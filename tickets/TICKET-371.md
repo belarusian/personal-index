@@ -23,5 +23,5 @@
 - Test: add tests/test_formatter.py::TestHighlight::test_substring_terms that
   asserts highlight('cat catalog', ['cat','catalog']) == 'cat **catalog**'
   (fails pre-fix, passes post-fix).
-- Status: OPEN
+- Status: RESOLVED (merged to main 19b009c, gh #580 closed)
 - Issue: #580
