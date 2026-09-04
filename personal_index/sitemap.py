@@ -47,7 +47,7 @@ class Sitemap:
         return len(self.sitemaps)
 
     def get_urls(self) -> list[str]:
-        """Get all URLs from entries."""
+        """Get URLs from entries that have a valid http/https location."""
         return [e.loc for e in self.entries if e.is_valid()]
 
 
