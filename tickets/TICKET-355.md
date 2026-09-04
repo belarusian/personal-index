@@ -12,5 +12,5 @@
   a valid http/https location." Add one behavior test that pins the corrected
   claim: a Sitemap with one valid (https://) entry and one invalid (bare domain)
   entry returns only the valid URL from get_urls().
-- **Status:** OPEN
+- **Status:** RESOLVED
 Issue: #548
