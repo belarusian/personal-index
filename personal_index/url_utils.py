@@ -215,9 +215,10 @@ def remove_query_params(url: str, params: list | None = None) -> str:
     try:
         parsed = urlparse(url)
         query_parts = parsed.query.split("&")
+        wanted = set(params)
         filtered = [
-            p for p in query_parts
-            if not any(p.startswith(f"{param}=") for param in params)
+            part for part in query_parts
+            if part.split("=", 1)[0] not in wanted
         ]
         new_query = "&".join(filtered)
         return urlunparse((
