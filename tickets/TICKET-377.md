@@ -1,6 +1,6 @@
 # TICKET-377 — truncate() negative-slice bug for max_length < 3
 
-- Status: OPEN
+- Status: RESOLVED (merged to main 35d6a8d, gh #592 closed)
 - Class: (a) behavioral
 - File: personal_index/formatter.py
 - Function: truncate(text, max_length=100)
