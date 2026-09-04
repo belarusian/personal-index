@@ -227,3 +227,18 @@ class TestContentExtractor:
         )
         score = extractor.extract_readability_score(content)
         assert score > 0.5
+
+    def test_readability_score_exact_components(self, extractor):
+        """Pin the corrected docstring claim: score = min(words/500,0.4) + min(headings*0.1,0.3) + 0.3."""
+        text = " ".join(["word"] * 200)
+        content = ExtractedContent(
+            text=text,
+            headings=["Title"],
+            meta_description="A description",
+        )
+        score = extractor.extract_readability_score(content)
+        # 200 words: min(200/500, 0.4) = 0.4
+        # 1 heading: min(1*0.1, 0.3) = 0.1
+        # meta_description: 0.3
+        # total: 0.8
+        assert score == 0.8
