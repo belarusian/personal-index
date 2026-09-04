@@ -210,7 +210,10 @@ class CollectionManager:
     def move_item(
         self, item_id: str, from_collection_id: str, to_collection_id: str
     ) -> bool:
-        """Move an item from one collection to another."""
+        """Add the item to the destination collection and remove it from the
+        source collection if present. Returns True iff both collections exist
+        (the item does not need to be in the source); False if either collection
+        is missing."""
         from_c = self._collections.get(from_collection_id)
         to_c = self._collections.get(to_collection_id)
         if from_c and to_c:
