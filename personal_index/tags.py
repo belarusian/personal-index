@@ -95,7 +95,7 @@ class TagStore:
             json.dump(data, f, indent=2)
 
     def create_tag(self, name: str, color: str = "#3498db", description: str = "") -> Tag:
-        """Create a new tag."""
+        """Create a tag, or replace an existing tag with the same name."""
         tag = Tag(name=name, color=color, description=description)
         self._tags[name] = tag
         self._save()

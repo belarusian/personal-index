@@ -44,6 +44,18 @@ class TestTagStore:
         assert tag.name == "important"
         assert tag.color == "#ff0000"
 
+    def test_create_tag_replaces_existing(self):
+        """create_tag is an upsert: re-creating a name replaces the tag."""
+        self.store.create_tag("important", color="#ff0000", description="old")
+        tag = self.store.create_tag("important", color="#00ff00", description="new")
+        assert self.store.get_tag_count() == 1
+        assert tag.color == "#00ff00"
+        assert tag.description == "new"
+        stored = self.store.get_tag("important")
+        assert stored is not None
+        assert stored.color == "#00ff00"
+        assert stored.description == "new"
+
     def test_get_tag(self):
         self.store.create_tag("test")
         tag = self.store.get_tag("test")
