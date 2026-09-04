@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from typing import Any
 
 from personal_index.index import IndexedPage, SearchResult
@@ -169,11 +171,16 @@ def truncate(text: str, max_length: int = 100) -> str:
 
 
 def highlight(text: str, terms: list[str]) -> str:
-    """Highlight search terms in text with ** markers."""
+    """Highlight search terms in text with ** markers.
+
+    Each source position is matched at most once: terms are combined into a
+    single alternation ordered longest-first, so a term that is a substring of
+    another (e.g. 'cat' and 'catalog') is not re-matched inside the longer
+    term's inserted markers.
+    """
+    terms = [t for t in terms if t]
     if not terms:
         return text
-    result = text
-    for term in terms:
-        if term:
-            result = result.replace(term, f"**{term}**")
-    return result
+    ordered = sorted(terms, key=len, reverse=True)
+    pattern = re.compile("|".join(re.escape(t) for t in ordered))
+    return pattern.sub(lambda m: f"**{m.group(0)}**", text)
