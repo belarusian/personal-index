@@ -77,7 +77,7 @@ class TfidfScorer:
         return score
 
     def rank_documents(self, query: str, limit: int = 10) -> list[tuple[int, float]]:
-        """Rank all documents by relevance to query."""
+        """Rank documents with positive TF-IDF score by relevance to query."""
         scores: list[tuple[int, float]] = []
         for doc_id in self._doc_terms:
             score = self.score_query(query, doc_id)

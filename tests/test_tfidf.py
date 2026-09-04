@@ -144,3 +144,12 @@ class TestTfidfScorer:
         self.scorer.add_document("Hello World")
         score = self.scorer.score_query("HELLO", 0)
         assert score > 0
+
+    def test_rank_documents_excludes_zero_score(self):
+        """rank_documents only returns documents with positive TF-IDF score."""
+        self.scorer.add_document("python programming language")
+        self.scorer.add_document("completely unrelated text here")
+        results = self.scorer.rank_documents("python")
+        # Only the matching doc should appear; zero-score doc is excluded
+        assert len(results) == 1
+        assert results[0][0] == 0
