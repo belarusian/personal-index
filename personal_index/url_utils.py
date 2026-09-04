@@ -303,15 +303,18 @@ def resolve_relative_url(base_url: str, relative_url: str) -> str | None:
                            parsed_rel.path, parsed_rel.params,
                            parsed_rel.query, parsed_rel.fragment))
 
-    # Relative path
-    if relative_url.startswith("/"):
-        path = relative_url
+    # Relative path. Use parsed_rel.path (not the raw relative_url) so the
+    # query string and fragment are not embedded in the path; urlunparse
+    # appends parsed_rel.query / parsed_rel.fragment separately.
+    rel_path = parsed_rel.path
+    if rel_path.startswith("/"):
+        path = rel_path
     else:
         base_path = parsed_base.path
         if base_path.endswith("/"):
-            path = base_path + relative_url
+            path = base_path + rel_path
         else:
-            path = base_path.rsplit("/", 1)[0] + "/" + relative_url
+            path = base_path.rsplit("/", 1)[0] + "/" + rel_path
 
     # Normalize path (resolve .. and .)
     import posixpath
