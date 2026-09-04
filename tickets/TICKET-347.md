@@ -1,5 +1,7 @@
 # TICKET-347: content_recommender.recommend_for_keywords docstring over-promises
 
+Status: RESOLVED (merged to main ea28513, gh #533 merged, gh #532 closed)
+
 - File: personal_index/content_recommender.py
 - Method: Recommender.recommend_for_keywords (line 164)
 - Symptom: docstring says "Recommend content items matching given keywords."
