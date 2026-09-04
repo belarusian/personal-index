@@ -52,7 +52,7 @@ class PageView:
 
 
 class ContentReader:
-    """Reader for navigating and browsing indexed content.
+    """Reader for navigating and browsing content items added via add/add_many.
 
     Provides pagination, filtering by tags/score, and formatting
     options for displaying content.
