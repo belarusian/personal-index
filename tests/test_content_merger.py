@@ -111,6 +111,17 @@ class TestContentMerger:
         # Para 2 should appear only once
         assert result.content.count("Para 2") == 1
 
+    def test_unique_paragraphs_dedup_is_case_and_whitespace_insensitive(self):
+        merger = ContentMerger(strategy="unique_paragraphs")
+        sources = [
+            make_source(url="https://a.com", content="Hello World"),
+            make_source(url="https://b.com", content="  hello world  "),
+        ]
+        result = merger.merge(sources)
+        # Differing only in case/surrounding whitespace -> collapse to one
+        assert result.content.count("Hello World") == 1
+        assert result.content.count("hello world") == 0
+
     def test_tags_merged(self):
         merger = ContentMerger()
         sources = [

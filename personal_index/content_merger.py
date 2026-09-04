@@ -156,7 +156,9 @@ class ContentMerger:
         )
 
     def _merge_unique_paragraphs(self, sources: list[MergeSource]) -> MergedContent:
-        """Merge unique paragraphs from all sources."""
+        """Merge paragraphs from all sources, deduped on a case-insensitive,
+        whitespace-stripped paragraph text (para.strip().lower()). Paragraphs
+        differing only in case or surrounding whitespace collapse to one."""
         primary = sources[0]
         seen_paragraphs: set[str] = set()
         merged_paragraphs: list[str] = []
