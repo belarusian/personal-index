@@ -1,6 +1,6 @@
 # TICKET-365: content_reader.ContentReader class docstring "indexed content" over-promise
 
-Status: OPEN
+Status: RESOLVED
 Issue: #568
 Module: personal_index/content_reader.py
 Class: (b) doc-drift (docstring over-promise)
