@@ -12,5 +12,5 @@
   date newest-first; cap at max_items). Add ONE behavior test pinning the
   sort order (newest published first) against the returned items list.
 - Class: (b) doc-drift.
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #538 closed)
 - Issue: #538
