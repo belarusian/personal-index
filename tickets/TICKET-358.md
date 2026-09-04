@@ -1,6 +1,6 @@
 # TICKET-358: index.SearchIndex._create_snippet docstring over-promises "highlighting the query terms"
 
-Status: OPEN
+Status: RESOLVED
 Issue: #554
 Module: personal_index/index.py
 Symptom: _create_snippet docstring says "Create a snippet highlighting the
