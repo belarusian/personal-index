@@ -1,7 +1,9 @@
 """
 Content API Module
 REST API endpoints for content operations.
-Uses a lightweight approach compatible with any WSGI/ASGI framework.
+Exposes a lightweight request/response interface
+(`handle_request(method, path, body, query_string) -> (status, payload)`)
+that callers can adapt to their own HTTP framework.
 """
 
 from __future__ import annotations
