@@ -164,9 +164,17 @@ def format_timestamp(timestamp: str | None) -> str:
 
 
 def truncate(text: str, max_length: int = 100) -> str:
-    """Truncate text to max_length, adding ellipsis."""
+    """Truncate text to max_length, adding ellipsis.
+
+    The result is always at most max_length characters long. When
+    max_length < 3 there is no room for the three-dot ellipsis, so the
+    text is cut to exactly max_length characters (a negative slice index
+    would otherwise count from the end and grow the string).
+    """
     if len(text) <= max_length:
         return text
+    if max_length < 3:
+        return text[:max_length]
     return text[: max_length - 3] + "..."
 
 
