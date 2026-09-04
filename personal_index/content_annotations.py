@@ -160,7 +160,8 @@ class AnnotationManager:
         return list(self._annotations.values())
 
     def get_recent(self, limit: int = 10) -> list[Annotation]:
-        """Get the most recent annotations."""
+        """Return up to `limit` annotations (default 10), sorted by
+        `created_at` in descending order (newest first)."""
         all_ann = list(self._annotations.values())
         all_ann.sort(key=lambda a: a.created_at, reverse=True)
         return all_ann[:limit]
