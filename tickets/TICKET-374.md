@@ -1,6 +1,6 @@
 # TICKET-374
 
-Status: OPEN
+Status: RESOLVED (merged to main 4882571, gh #586 closed)
 Issue: #586
 Class: (a) behavioral
 
