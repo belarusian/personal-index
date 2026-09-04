@@ -59,7 +59,7 @@ class ResultsFormatter:
     def create_snippet(
         self, text: str, query: str, max_length: int = 200
     ) -> str:
-        """Create a snippet highlighting the query."""
+        """Create a snippet centered on the query."""
         if not text:
             return ""
         query_lower = query.lower()

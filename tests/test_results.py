@@ -90,6 +90,23 @@ class TestResultsFormatter:
         assert len(snippet) <= 250  # max_length + ellipsis
 
 
+    def test_create_snippet_no_highlight_markup(self, formatter):
+        # behavior unchanged: the snippet is a plain window around the
+        # query with NO emphasis/markup added to the query itself
+        text = (
+            "The quick brown fox jumps over the lazy dog near the river"
+        )
+        snippet = formatter.create_snippet(text, "fox")
+        assert "fox" in snippet
+        assert not any(m in snippet for m in ("**", "<b>", "<mark>", "__", "//"))
+
+    def test_create_snippet_docstring_not_overpromise(self):
+        import inspect
+        src = inspect.getsource(ResultsFormatter.create_snippet)
+        assert "highlighting" not in src
+        assert "centered on the query" in src
+
+
 class TestResultsExporter:
     """Tests for ResultsExporter."""
 
