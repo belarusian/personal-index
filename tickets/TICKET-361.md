@@ -15,5 +15,5 @@
   the same name).") and add ONE behavior test pinning the corrected claim
   against the returned/observed store state (re-adding the same name keeps
   count at 1 and reflects the update).
-- Status: OPEN
+- Status: RESOLVED (merged to main 824cfed, gh #560 closed)
 - Issue: #560
