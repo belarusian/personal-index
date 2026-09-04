@@ -1,6 +1,6 @@
 # TICKET-357: stats.pages_with_interests mislabeled — counts interest matches, not pages
 
-Status: OPEN
+Status: RESOLVED
 Issue: #552
 Module: personal_index/stats.py
 Symptom: IndexStats.pages_with_interests is named/labeled as a page count
