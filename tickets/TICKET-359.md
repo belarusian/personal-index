@@ -1,6 +1,6 @@
 # TICKET-359: publish_dashboard._copy_dashboard_files docstring omits signals.json
 
-Status: OPEN
+Status: RESOLVED (merged to main c29f418, gh #556 closed)
 Module: personal_index/publish_dashboard.py
 Class: (b) doc-drift (docstring under-promises the body's behavior)
 
