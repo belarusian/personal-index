@@ -260,6 +260,11 @@ class TestHighlightText:
     def test_empty_text(self):
         assert highlight_text("", ["hello"]) == ""
 
+    def test_substring_terms(self):
+        """Shorter terms must not be re-matched inside longer-term markers."""
+        result = highlight_text("catalog cat", ["catalog", "cat"])
+        assert result == "<mark>catalog</mark> <mark>cat</mark>"
+
 
 class TestCountWords:
     def test_basic(self):
