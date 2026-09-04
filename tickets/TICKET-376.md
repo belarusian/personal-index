@@ -1,6 +1,6 @@
 # TICKET-376: _extract_links includes spurious self-link for empty href
 
-Status: OPEN
+Status: RESOLVED
 Issue: #590
 Module: personal_index/content.py
 Function: _extract_links (line 93)
