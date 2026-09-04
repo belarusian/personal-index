@@ -44,7 +44,7 @@ class Storage:
     # --- Interests ---
 
     def add_interest(self, interest: Interest) -> Interest:
-        """Add a new interest."""
+        """Add or update an interest (replaces an existing interest with the same name)."""
         interests = self._read_json(self.interests_file)
         if not isinstance(interests, list):
             interests = []
