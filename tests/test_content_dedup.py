@@ -49,6 +49,13 @@ class TestNormalizeUrl:
         )
 
 
+    def test_path_case_preserved(self) -> None:
+        """Uppercase path segments are NOT lowercased (only scheme+host are)."""
+        assert (
+            normalize_url("https://example.com/MyPage/Section")
+            == "https://example.com/MyPage/Section"
+        )
+
 # ── content_hash ───────────────────────────────────────────────────
 
 class TestContentHash:
