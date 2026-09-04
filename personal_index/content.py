@@ -31,8 +31,10 @@ class ExtractedContent:
         """Extract keywords from meta keywords and headings."""
         keywords = list(self.meta_keywords)
         for heading in self.headings:
-            # Extract words from headings
-            words = re.findall(r'[a-z0-9]+', heading.lower())
+            # Strip the "hN:" level prefix so only the heading text
+            # contributes keywords (the marker itself is not a keyword).
+            text = re.sub(r'^h\d+:\s*', '', heading)
+            words = re.findall(r'[a-z0-9]+', text.lower())
             keywords.extend(words)
         return list(set(keywords))
 

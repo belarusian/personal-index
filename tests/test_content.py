@@ -59,6 +59,20 @@ class TestExtractedContent:
         assert "python" in keywords
         assert "coding" in keywords
 
+    def test_get_keywords_excludes_heading_level_markers(self):
+        content = ExtractedContent(
+            url="http://example.com",
+            meta_keywords=["python"],
+            headings=["h1: Python Tutorial", "h2: Advanced Guide"],
+        )
+        keywords = content.get_keywords()
+        # Real heading words are present...
+        assert "tutorial" in keywords
+        assert "advanced" in keywords
+        # ...but the structural level markers are NOT keywords.
+        assert "h1" not in keywords
+        assert "h2" not in keywords
+
 
 class TestExtractContent:
     def test_extract_title(self):
