@@ -1,6 +1,6 @@
 # TICKET-338: results.ResultsFormatter.create_snippet docstring over-promises "highlighting the query"
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/results.py
 Class: (b) docstring over-promises behavior the code does not do
 
