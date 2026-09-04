@@ -1,6 +1,6 @@
 # TICKET-370: tokenize() silently drops single-letter words when remove_stopwords=False
 
-**Status:** OPEN
+**Status:** RESOLVED
 **Issue:** #578
 **Module:** personal_index/text_utils.py
 **Defect class:** (a) behavioral
