@@ -90,6 +90,18 @@ class TestTruncateText:
     def test_none_input(self):
         assert truncate_text(None, max_length=10) == ""  # type: ignore
 
+    def test_long_unbroken_tail_cut_mid_word(self):
+        # Pins the corrected docstring claim: a word boundary is preferred
+        # only when a space exists after 60% of max_length. When the tail
+        # is one long unbroken token, the cut lands mid-word (not on a
+        # space), so "without breaking words" is NOT guaranteed.
+        result = truncate_text("hello world " + "x" * 200, max_length=200)
+        assert result.endswith("...")
+        # The cut is mid-word: the pre-suffix text does not end on a space.
+        assert not result[:-3].endswith(" ")
+        # It ends inside the unbroken x-run.
+        assert result[:-3].endswith("x")
+
 
 class TestExtractSentences:
     def test_basic_sentences(self):

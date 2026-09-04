@@ -48,7 +48,12 @@ def remove_html_tags(html: str) -> str:
 
 
 def truncate_text(text: str, max_length: int = 200, suffix: str = "...") -> str:
-    """Truncate text to a maximum length without breaking words.
+    """Truncate text to a maximum length, preferring a word boundary.
+
+    The cut is made at a word boundary only when a space exists in the
+    latter part of the truncated window (after 60% of ``max_length``);
+    otherwise the text is cut at exactly ``max_length`` characters and
+    may break a word. The ``suffix`` is appended when truncation occurs.
 
     Args:
         text: Text to truncate.
