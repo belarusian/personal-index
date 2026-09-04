@@ -236,6 +236,22 @@ class TestAnnotationManager:
         recent = self.manager.get_recent(5)
         assert len(recent) == 5
 
+    def test_get_recent_sorted_by_created_at_desc(self):
+        # Pin the corrected docstring claim: get_recent returns annotations
+        # sorted by created_at in descending order (newest first).
+        self.manager.add(Annotation(content_id="a", text="old",
+                                    created_at="2024-01-01T00:00:00+00:00"))
+        self.manager.add(Annotation(content_id="b", text="new",
+                                    created_at="2024-03-01T00:00:00+00:00"))
+        self.manager.add(Annotation(content_id="c", text="mid",
+                                    created_at="2024-02-01T00:00:00+00:00"))
+        recent = self.manager.get_recent(10)
+        assert [a.content_id for a in recent] == ["b", "c", "a"]
+        assert [a.created_at for a in recent] == sorted(
+            [a.created_at for a in recent], reverse=True
+        )
+
+
     def test_get_all_annotations(self):
         self.manager.add(Annotation(content_id="c1", text="A"))
         self.manager.add(Annotation(content_id="c2", text="B"))
