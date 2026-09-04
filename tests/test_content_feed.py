@@ -132,6 +132,23 @@ class TestFeedGenerator:
         self.generator.add_items(items)
         assert len(self.generator.items) == 3
 
+    def test_add_item_sorts_newest_published_first(self):
+        base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        # Insert oldest first, then newest; add_item must reorder newest-first.
+        self.generator.add_item(
+            FeedItem(title="old", link="http://example.com/old",
+                     published=base)
+        )
+        self.generator.add_item(
+            FeedItem(title="new", link="http://example.com/new",
+                     published=base + timedelta(days=10))
+        )
+        self.generator.add_item(
+            FeedItem(title="mid", link="http://example.com/mid",
+                     published=base + timedelta(days=5))
+        )
+        assert [i.title for i in self.generator.items] == ["new", "mid", "old"]
+
     def test_generate_rss(self):
         self.generator.add_item(
             FeedItem(title="Article 1", link="http://example.com/1")
