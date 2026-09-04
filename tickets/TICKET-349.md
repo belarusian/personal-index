@@ -15,4 +15,4 @@
   threshold. Add one behavior test that calls `extract_readability_score` with
   a known ExtractedContent and asserts the exact returned float, pinning the
   corrected claim.
-- **Status:** OPEN
+- **Status:** RESOLVED (merged to main c5bd700, gh #536 closed)
