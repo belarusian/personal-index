@@ -19,3 +19,6 @@
   root-relative and base-relative relative URLs (fails pre-fix, passes post-fix).
 
 Issue: #584
+
+## RESOLVED
+Merged to main 61a37e2 (PR #585, squash); gh #584 closed; local gate green (5454 passed, ruff clean, mypy success); CI green (run 33918337336).
