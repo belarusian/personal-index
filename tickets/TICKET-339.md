@@ -1,6 +1,6 @@
 # TICKET-339: content_summarizer.summarize_page docstring over-promises "keyword boost" for the title
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/content_summarizer.py
 Class: (b) docstring over-promises behavior the code does not do
 
