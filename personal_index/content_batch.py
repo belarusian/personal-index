@@ -1,8 +1,7 @@
 """Batch processing for content operations in personal-index.
 
 Provides utilities for processing content items in batches,
-with support for parallel execution, error handling, and
-progress tracking.
+with support for error handling and progress tracking.
 """
 
 from __future__ import annotations
