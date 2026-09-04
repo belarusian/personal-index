@@ -111,10 +111,10 @@ class Notification:
 
 
 class NotificationManager:
-    """Manages notification rules and delivery.
+    """Manages notification rules and delivery state.
 
-    Stores rules, evaluates events against rules, and
-    delivers notifications through configured channels.
+    Stores rules, evaluates events against rules to generate
+    notifications, and tracks their delivery state.
     """
 
     def __init__(self) -> None:

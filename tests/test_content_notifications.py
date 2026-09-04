@@ -225,3 +225,18 @@ class TestNotificationManager:
         cleared = self.manager.clear_old(datetime.now(tz=timezone.utc) - timedelta(minutes=30))
         assert cleared == 1
         assert len(self.manager.notifications) == 1
+
+
+class TestNotificationManagerDocstring:
+    def test_docstring_does_not_promise_channel_delivery(self) -> None:
+        """Regression: class docstring must not over-promise capabilities.
+
+        NotificationManager stores rules, evaluates events against rules to
+        generate notifications, and tracks delivery state via the delivered
+        flag (set externally by mark_delivered/mark_all_delivered). It has
+        no send/dispatch/emit/deliver method and the channels field is
+        stored but never used to perform delivery, so its docstring must not
+        claim it 'delivers notifications' through channels (TICKET-331).
+        """
+        doc = (NotificationManager.__doc__ or "").lower()
+        assert "delivers notifications" not in doc
