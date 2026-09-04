@@ -200,7 +200,7 @@ class WebhookManager:
         return False
 
     def mark_failed(self, payload_id: str, error: str) -> bool:
-        """Mark a payload as failed and schedule retry if possible."""
+        """Mark a payload as failed; drop it to delivered once retries are exhausted."""
         for payload in self.pending:
             if payload.payload_id == payload_id:
                 payload.attempts += 1
