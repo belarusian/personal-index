@@ -1,6 +1,6 @@
 # TICKET-329 — content_batch module docstring over-promises "parallel execution"
 
-Status: OPEN
+Status: RESOLVED
 Class: (b) doc/behavior drift
 Module: personal_index/content_batch.py
 
