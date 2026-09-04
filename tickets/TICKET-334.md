@@ -1,6 +1,6 @@
 # TICKET-334 — content_type.ContentTypeInfo.category comment omits the "media" value the detector actually produces
 
-- Status: OPEN
+- Status: RESOLVED (merged to main ebac658, gh #507 merged, gh #506 closed)
 - Class: (b) doc/behavior drift
 - Module: personal_index/content_type.py
 - Issue: #506
