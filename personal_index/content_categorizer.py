@@ -296,7 +296,7 @@ class ContentCategorizer:
         """Add or update a topic category.
 
         Args:
-            name: Topic name (lowercase, no spaces recommended).
+            name: Topic name; normalized to lowercase by this method (no spaces recommended).
             keywords: List of keywords associated with this topic.
             description: Human-readable description.
             weight: Weight multiplier for this topic's scores.

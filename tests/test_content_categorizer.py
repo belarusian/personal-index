@@ -210,6 +210,11 @@ class TestContentCategorizerTopics:
         cat.add_topic("CUSTOM", ["kw1"])
         assert cat.get_topic("custom") is not None
 
+    def test_add_topic_returns_lowercased_name(self):
+        cat = ContentCategorizer()
+        topic = cat.add_topic("My Topic", ["kw1"])
+        assert topic.name == "my topic"
+
     def test_add_topic_with_weight(self):
         cat = ContentCategorizer()
         topic = cat.add_topic("weighted", ["kw1"], weight=3.0)
