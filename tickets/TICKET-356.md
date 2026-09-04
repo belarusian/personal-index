@@ -1,6 +1,6 @@
 # TICKET-356: TfidfScorer.rank_documents docstring over-promises "all documents"
 
-Status: OPEN
+Status: RESOLVED
 Issue: #550
 Module: personal_index/tfidf.py
 Symptom: rank_documents docstring says "Rank all documents by relevance to query"
