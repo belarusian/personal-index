@@ -18,6 +18,8 @@ class IndexStats:
     total_words: int = 0
     unique_domains: int = 0
     avg_content_length: float = 0.0
+    # Total interest matches across all pages (one per matched interest,
+    # not one per page).
     pages_with_interests: int = 0
     top_domains: list[tuple[str, int]] = field(default_factory=list)
     top_interests: list[tuple[str, int]] = field(default_factory=list)
@@ -132,7 +134,7 @@ class StatsCollector:
             f"Total words: {stats.total_words}",
             f"Unique domains: {stats.unique_domains}",
             f"Avg content length: {stats.avg_content_length:.0f}",
-            f"Pages with interests: {stats.pages_with_interests}",
+            f"Interest matches: {stats.pages_with_interests}",
         ]
 
         if stats.top_domains:

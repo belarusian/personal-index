@@ -78,6 +78,19 @@ class TestStatsCollector:
         assert stats.unique_domains == 1
         assert stats.pages_with_interests == 1
 
+    def test_pages_with_interests_counts_matches_not_pages(self, collector):
+        """Pin corrected claim: value counts interest matches, not distinct pages."""
+        collector.search_index.add(CrawledPage(
+            url="https://example.com/page1",
+            title="Multi Interest",
+            content="Some content here",
+            matched_interests=["Py", "Go", "Rust"],
+        ))
+        stats = collector.get_index_stats()
+        assert stats.total_pages == 1
+        assert stats.pages_with_interests == 3
+        assert "Interest matches: 3" in collector.format_index_stats()
+
     def test_top_domains(self, collector):
         collector.search_index.add(CrawledPage(
             url="https://a.com/page1",
