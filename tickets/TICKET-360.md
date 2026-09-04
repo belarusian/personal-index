@@ -1,6 +1,6 @@
 # TICKET-360: storage.add_interest docstring over-promises "Add a new interest" (omits update branch)
 
-Status: OPEN
+Status: RESOLVED (merged to main 0d72a9c, gh #558 closed)
 Module: personal_index/storage.py
 Class: (b) doc-drift
 
