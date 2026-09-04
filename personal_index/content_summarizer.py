@@ -154,7 +154,7 @@ def summarize_page(
 ) -> SummaryResult:
     """Summarize a page using title and content.
 
-    The title is used as a keyword boost for sentence scoring.
+    The title is prepended to the content before summarizing.
 
     Args:
         title: Page title.
