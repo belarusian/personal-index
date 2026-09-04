@@ -1,6 +1,6 @@
 # TICKET-366: content_health.ContentHealthChecker class docstring "indexed content" over-promise
 
-Status: OPEN
+Status: RESOLVED
 Issue: #570
 Module: personal_index/content_health.py
 Class: (b) doc-drift (docstring over-promise)
