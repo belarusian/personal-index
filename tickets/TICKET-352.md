@@ -13,5 +13,5 @@
   descending direction, and the default limit (10). Add ONE behavior test pinning
   the corrected claim: annotations with distinct `created_at` values are returned
   in descending `created_at` order (newest first) against the returned list.
-**Status:** OPEN
+**Status:** RESOLVED (merged to main 60d3b3d, gh #542 closed)
 **Issue:** #542
