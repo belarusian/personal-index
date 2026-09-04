@@ -9,5 +9,5 @@
 **Fix:** Reword docstring to state the exact sort key/direction, page clamping, and
   ValueError condition. Add ONE behavior test pinning the default sort order
   (score descending) against the returned PageView.items.
-**Status:** OPEN
+**Status:** RESOLVED (merged to main d281e57, gh #540 closed)
 **Issue:** #540
