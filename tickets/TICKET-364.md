@@ -11,5 +11,5 @@
   the body actually reads (search history, tags, keywords, trending queries), and
   add ONE behavior test pinning the corrected claim against the returned
   suggestions (suggestions drawn from the added sources; empty when nothing added).
-- Status: OPEN
+- Status: RESOLVED (merged to main ed5bbc1, gh #566 closed)
 - Issue: #566
