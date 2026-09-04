@@ -1,6 +1,6 @@
 # TICKET-367: content_notifications module docstring "delivery" over-promise
 
-Status: OPEN
+Status: RESOLVED
 Issue: #572
 Module: personal_index/content_notifications.py
 Class: (b) doc-drift (docstring over-promise)
