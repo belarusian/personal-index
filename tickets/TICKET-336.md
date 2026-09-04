@@ -1,6 +1,6 @@
 # TICKET-336: queue.TaskQueue.completed_count docstring over-promises "completed"
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/queue.py
 Class: (b) docstring over-promises behavior the code does not do
 
