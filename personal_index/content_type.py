@@ -12,7 +12,7 @@ class ContentTypeInfo:
     """Information about detected content type."""
 
     mime_type: str
-    category: str  # "text", "image", "video", "audio", "document", "archive", "unknown"
+    category: str  # "text", "image", "video", "audio", "media", "document", "archive", "unknown"
     extension: str
     is_text: bool
     is_media: bool
