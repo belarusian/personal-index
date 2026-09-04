@@ -1,6 +1,6 @@
 # TICKET-340: content_enricher docstring over-promises "computed metadata" (language never computed)
 
-Status: OPEN
+Status: RESOLVED
 
 ## File
 personal_index/content_enricher.py
