@@ -94,6 +94,19 @@ class TestTaskQueue:
         task = q.get_task("t1")
         assert task.error == "oops"
 
+    def test_completed_count_counts_failed_tasks(self):
+        q = TaskQueue()
+        q.enqueue("t1")
+        q.dequeue()
+        assert q.fail_task("t1", "oops") is True
+        assert q.completed_count == 1
+
+    def test_completed_count_docstring_not_overpromise(self):
+        import inspect
+        src = inspect.getsource(TaskQueue.completed_count.fget)
+        assert "Number of completed tasks retained" not in src
+        assert "completed or failed" in src
+
     def test_pending_count(self):
         q = TaskQueue()
         q.enqueue("t1")

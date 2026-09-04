@@ -219,7 +219,7 @@ class TaskQueue:
 
     @property
     def completed_count(self) -> int:
-        """Number of completed tasks retained."""
+        """Number of finished (completed or failed) tasks retained."""
         with self._lock:
             return len(self._completed)
 
