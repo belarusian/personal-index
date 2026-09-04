@@ -1,6 +1,6 @@
 # TICKET-330 — content_validation.ContentValidator class docstring over-promises "configurable custom rules"
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc/behavior drift
 - Module: personal_index/content_validation.py
 - Issue: #498
