@@ -240,3 +240,37 @@ class TestNotificationManagerDocstring:
         """
         doc = (NotificationManager.__doc__ or "").lower()
         assert "delivers notifications" not in doc
+
+
+class TestModuleDeliveryStateDocstring:
+    """Pin the corrected module docstring claim (TICKET-367).
+
+    The module docstring previously claimed it manages "delivery". The code
+    never dispatches to a channel: it records notifications and toggles their
+    delivered flag via mark_delivered/mark_all_delivered. This test witnesses
+    the real mechanism against the returned object, not the docstring wording.
+    """
+
+    def test_fresh_manager_holds_no_notifications(self) -> None:
+        mgr = NotificationManager()
+        assert mgr.get_undelivered() == []
+        assert mgr.notifications == []
+
+    def test_evaluate_records_undelivered_not_delivered(self) -> None:
+        mgr = NotificationManager()
+        rule = NotificationRule(
+            rule_id="r1",
+            name="Alert",
+            notification_type=NotificationType.NEW_BOOKMARK,
+            channels=[NotificationChannel.WEBHOOK],
+            conditions={"type": "bookmark"},
+        )
+        mgr.add_rule(rule)
+        generated = mgr.evaluate_event({"type": "bookmark"})
+        assert len(generated) == 1
+        assert generated[0].delivered is False
+        assert mgr.get_undelivered() == generated
+        # mark_delivered only flips the flag; nothing was dispatched.
+        assert mgr.mark_delivered(generated[0].notification_id) is True
+        assert generated[0].delivered is True
+        assert mgr.get_undelivered() == []

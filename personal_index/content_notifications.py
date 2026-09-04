@@ -1,8 +1,11 @@
 """Content notification system for personal-index.
 
-Manages notification rules, triggers, and delivery for
-content-related events such as new bookmarks, score changes,
-and crawl results.
+Manages notification rules, evaluates events to generate
+notifications, and tracks their delivery state for content-related
+events such as new bookmarks, score changes, and crawl results.
+
+Notifications are recorded and their delivered flag toggled by
+mark_delivered/mark_all_delivered; no channel dispatch is performed.
 """
 
 from __future__ import annotations
