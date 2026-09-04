@@ -141,6 +141,32 @@ class TestFuzzySearcher:
         assert len(results) == 1
         assert results[0].score == 0.9
 
+    def test_match_indices_when_query_longer_than_text(self):
+        """TICKET-380: when the query is longer than the text, a returned
+        match must still carry matched_indices so it can be highlighted.
+
+        Pre-fix, _find_match_indices left matched_indices empty in this case
+        (the best-substring loop range was empty), so search() returned a
+        match with score 0.7 but highlight() produced no marker.
+        """
+        results = self.searcher.search("hello world", ["hello"])
+        assert len(results) == 1
+        assert results[0].text == "hello"
+        # The whole text is the matching region.
+        assert results[0].matched_indices == [0, 1, 2, 3, 4]
+        # And the match is actually highlightable (was the pre-fix bug).
+        _match, highlighted = self.searcher.search_with_highlight(
+            "hello world", ["hello"]
+        )[0]
+        assert "\033[1m" in highlighted
+
+    def test_match_indices_query_longer_than_text_no_match(self):
+        """TICKET-380: a query longer than the text that does NOT match
+        still yields no indices (and no highlight), preserving the
+        no-false-positive behavior."""
+        results = self.searcher.search("completely different", ["hi"])
+        assert results == []
+
 
 class TestFuzzyMatchTypeFix:
     """Tests for TICKET-26: matched_indices type annotation fix."""

@@ -180,17 +180,33 @@ class FuzzySearcher:
             start = text.index(query)
             indices = list(range(start, start + len(query)))
         else:
-            # Find best matching substring
-            best_start = 0
-            best_len: float = 0.0
-            for i in range(len(text) - len(query) + 1):
-                substring = text[i:i + len(query)]
-                ratio = SequenceMatcher(None, query, substring).ratio()
-                if ratio > best_len:
-                    best_len = ratio
-                    best_start = i
-            if best_len > 0.5:
-                indices = list(range(best_start, best_start + len(query)))
+            if len(query) > len(text):
+                # Query is longer than text: the best-substring loop below
+                # would be empty (range(len(text) - len(query) + 1) is empty),
+                # leaving indices [] even when text matches query well. Find
+                # the best window of query (of length len(text)) that matches
+                # text; if it matches well enough, the whole text is the
+                # matching region so highlight() can mark it.
+                window_best: float = 0.0
+                for i in range(len(query) - len(text) + 1):
+                    window = query[i:i + len(text)]
+                    ratio = SequenceMatcher(None, text, window).ratio()
+                    if ratio > window_best:
+                        window_best = ratio
+                if window_best > 0.5:
+                    indices = list(range(len(text)))
+            else:
+                # Find best matching substring
+                best_start = 0
+                best_len: float = 0.0
+                for i in range(len(text) - len(query) + 1):
+                    substring = text[i:i + len(query)]
+                    ratio = SequenceMatcher(None, query, substring).ratio()
+                    if ratio > best_len:
+                        best_len = ratio
+                        best_start = i
+                if best_len > 0.5:
+                    indices = list(range(best_start, best_start + len(query)))
         return indices
 
     def highlight(self, text: str, indices: list[int]) -> str:
