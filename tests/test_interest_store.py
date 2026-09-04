@@ -41,6 +41,15 @@ class TestInterestStore:
         store.add(Interest("ML", InterestType.TOPIC, "machine learning", priority=8))
         assert len(store.list_all()) == 2
 
+    def test_add_same_name_replaces_in_place(self, store: InterestStore):
+        store.add(Interest("Py", InterestType.KEYWORD, "python", priority=5))
+        store.add(Interest("Py", InterestType.KEYWORD, "python3", priority=9))
+        assert len(store.list_all()) == 1
+        updated = store.get("Py")
+        assert updated is not None
+        assert updated.value == "python3"
+        assert updated.priority == 9
+
     def test_remove_interest(self, store: InterestStore):
         store.add(Interest("Py", InterestType.KEYWORD, "python", priority=5))
         assert store.remove("Py") is True
