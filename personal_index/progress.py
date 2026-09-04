@@ -264,7 +264,7 @@ class ProgressStore:
             json.dump(data, f, indent=2)
 
     def load_all(self) -> int:
-        """Load trackers from disk. Returns count loaded."""
+        """Load trackers from disk. Returns total number of trackers in the store."""
         if not self._storage_path:
             return 0
         path = Path(self._storage_path)
