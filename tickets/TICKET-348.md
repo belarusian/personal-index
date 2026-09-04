@@ -1,6 +1,6 @@
 # TICKET-348: content_filter._matches_interests docstring over-promises (class b)
 
-Status: OPEN
+Status: RESOLVED (merged to main 0c97dfc, gh #535 merged, gh #534 closed)
 Module: personal_index/content_filter.py
 Method: ContentFilter._matches_interests (line ~113)
 
