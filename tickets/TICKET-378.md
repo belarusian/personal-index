@@ -1,6 +1,6 @@
 # TICKET-378: format_schedule_job crashes on dict job with seed_urls=None
 
-- Status: OPEN
+- Status: RESOLVED (merged to main b4c1286, gh #594 closed)
 - Issue: #594
 - File: personal_index/formatter.py
 - Function: format_schedule_job (line 73)
