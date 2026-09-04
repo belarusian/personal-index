@@ -100,7 +100,14 @@ def validate_sync(html_path: Path, json_path: Path) -> dict:
 
 
 def _copy_dashboard_files(html_path: Path, json_path: Path, search_repo: Path, dry_run: bool) -> None:
-    """Copy HTML and JSON dashboard files to the search repo.
+    """Copy the dashboard files into the search repo.
+
+    Writes three files into ``search_repo``: ``index.html`` (the HTML
+    dashboard), ``codemap.json`` (the JSON codemap), and ``signals.json``
+    (cycle signals, generated via ``personal_index.cycle_signals`` from the
+    fresh codemap). The two dashboard files are copied only when
+    ``dry_run`` is False; ``signals.json`` is likewise written only when
+    ``dry_run`` is False and the signal extraction succeeds.
 
     Args:
         html_path: Source HTML dashboard file.

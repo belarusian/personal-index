@@ -363,3 +363,66 @@ class TestPublish:
             # Should have called git add and git diff --cached
             calls = [str(c) for c in mock_run.call_args_list]
             assert any("git" in c for c in calls)
+
+
+class TestCopyDashboardFiles:
+    """Tests for publish_dashboard._copy_dashboard_files()."""
+
+    def test_writes_three_files_when_not_dry_run(self, tmp_path):
+        """_copy_dashboard_files writes index.html, codemap.json AND signals.json.
+
+        Pins the corrected docstring claim: the function produces three files
+        in the search repo (not just the two dashboard files).
+        """
+        html = tmp_path / "src" / "dashboard.html"
+        json_path = tmp_path / "src" / "codemap.json"
+        html.parent.mkdir(parents=True, exist_ok=True)
+        html.write_text("<html>dash</html>")
+        json_path.write_text("{}")
+
+        search_repo = tmp_path / "search"
+        search_repo.mkdir()
+
+        with patch.object(publish_dashboard, "run") as mock_run:
+            mock_result = MagicMock(spec=subprocess.CompletedProcess)
+            mock_result.returncode = 0
+            mock_result.stdout = '{"signals": []}'
+            mock_result.stderr = ""
+            mock_run.return_value = mock_result
+
+            publish_dashboard._copy_dashboard_files(
+                html, json_path, search_repo, dry_run=False
+            )
+
+        # The two dashboard files are copied...
+        assert (search_repo / "index.html").read_text() == "<html>dash</html>"
+        assert (search_repo / "codemap.json").read_text() == "{}"
+        # ...and the third file (cycle signals) is also written.
+        assert (search_repo / "signals.json").exists()
+        assert (search_repo / "signals.json").read_text() == '{"signals": []}'
+
+    def test_writes_no_files_when_dry_run(self, tmp_path):
+        """In dry_run mode no file is written into the search repo."""
+        html = tmp_path / "src" / "dashboard.html"
+        json_path = tmp_path / "src" / "codemap.json"
+        html.parent.mkdir(parents=True, exist_ok=True)
+        html.write_text("<html>dash</html>")
+        json_path.write_text("{}")
+
+        search_repo = tmp_path / "search"
+        search_repo.mkdir()
+
+        with patch.object(publish_dashboard, "run") as mock_run:
+            mock_result = MagicMock(spec=subprocess.CompletedProcess)
+            mock_result.returncode = 0
+            mock_result.stdout = ""
+            mock_result.stderr = ""
+            mock_run.return_value = mock_result
+
+            publish_dashboard._copy_dashboard_files(
+                html, json_path, search_repo, dry_run=True
+            )
+
+        assert not (search_repo / "index.html").exists()
+        assert not (search_repo / "codemap.json").exists()
+        assert not (search_repo / "signals.json").exists()
