@@ -324,3 +324,19 @@ class TestRequestLogger:
         logger = api_module.RequestLogger(api)
         logger.handle_request("GET", "/api/v1/health")
         assert "timestamp" in logger.log[0]
+
+
+class TestContentApiDocstring:
+    def test_docstring_does_not_promise_wsgi_asgi_compatibility(self) -> None:
+        """Regression: module docstring must not over-promise WSGI/ASGI.
+
+        ContentAPI exposes a custom request/response interface
+        (handle_request(method, path, body, query_string) -> (status,
+        payload)); there is no WSGI __call__(environ, start_response) and no
+        ASGI __call__(scope, receive, send) method, so the module docstring
+        must not claim it is 'compatible with any WSGI/ASGI framework'
+        (TICKET-332).
+        """
+        doc = (api_module.__doc__ or "").lower()
+        assert "wsgi" not in doc
+        assert "asgi" not in doc
