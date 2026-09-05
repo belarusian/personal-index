@@ -1,6 +1,6 @@
 # TICKET-444: content_health.py ContentHealthChecker.check_item docstring over-promises (blanket)
 
-Status: OPEN
+Status: RESOLVED
 Issue: #726
 Module: personal_index/content_health.py
 Method: ContentHealthChecker.check_item
