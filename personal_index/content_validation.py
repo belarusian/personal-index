@@ -70,7 +70,19 @@ class ValidationResult:
         ))
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert to a dictionary with 6 keys.
+
+        Returns a dict with:
+          - is_valid: the boolean validity flag.
+          - error_count: len(self.errors) (derived integer).
+          - warning_count: len(self.warnings) (derived integer).
+          - items_valid: the valid-item tally.
+          - items_invalid: the invalid-item tally.
+          - errors: a projected list of {"field": ..., "message": ...}
+            dicts (drops severity and value from each ValidationError).
+
+        The warnings list is NOT included in the output (only its count).
+        """
         return {
             "is_valid": self.is_valid,
             "error_count": len(self.errors),

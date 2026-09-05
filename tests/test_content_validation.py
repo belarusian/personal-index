@@ -196,3 +196,52 @@ class TestValidateDocstringDefaults:
         assert err_result.items_invalid == 1
         assert len(err_result.errors) == 1
         assert err_result.warnings == []
+
+
+class TestValidationResultToDictPinning:
+    """Pin ValidationResult.to_dict keys, derived counts, and errors projection."""
+
+    def test_to_dict_pins_keys_and_projection(self):
+        from personal_index.content_validation import ValidationResult
+
+        result = ValidationResult()
+        result.add_error("item[0].url", "Invalid URL: bad", value="bad")
+        result.add_warning("item[0].title", "Title too long")
+
+        d = result.to_dict()
+
+        # exactly 6 keys
+        assert set(d.keys()) == {
+            "is_valid", "error_count", "warning_count",
+            "items_valid", "items_invalid", "errors",
+        }
+        # derived counts
+        assert d["error_count"] == 1
+        assert d["warning_count"] == 1
+        # is_valid is False (add_error set it)
+        assert d["is_valid"] is False
+        # items tallies
+        assert d["items_valid"] == 0
+        assert d["items_invalid"] == 0
+        # errors is a projected list of {field, message} — no severity/value
+        assert d["errors"] == [
+            {"field": "item[0].url", "message": "Invalid URL: bad"},
+        ]
+        assert "severity" not in d["errors"][0]
+        assert "value" not in d["errors"][0]
+        # warnings list is NOT in the output
+        assert "warnings" not in d
+
+    def test_to_dict_guard_path_empty_result(self):
+        from personal_index.content_validation import ValidationResult
+
+        result = ValidationResult()
+        d = result.to_dict()
+
+        assert d["is_valid"] is True
+        assert d["error_count"] == 0
+        assert d["warning_count"] == 0
+        assert d["items_valid"] == 0
+        assert d["items_invalid"] == 0
+        assert d["errors"] == []
+        assert "warnings" not in d
