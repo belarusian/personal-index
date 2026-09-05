@@ -1,5 +1,9 @@
 # TICKET-429: content_notifications.NotificationManager.evaluate_event doc-drift
 
+Status: RESOLVED
+Merged: 1dbe74f (PR #697)
+Issue: #696 CLOSED
+
 ## File
 personal_index/content_notifications.py
 
