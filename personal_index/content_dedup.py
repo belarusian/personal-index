@@ -375,9 +375,10 @@ class ContentDeduplicator:
         self,
         items: list[dict[str, Any]],
     ) -> DedupResult:
-        """Run URL dedup then content-hash dedup and combine the two results.
+        """Run all deduplication strategies and combine results.
 
-        Pipeline (two stages, in order):
+        Pipeline (three stages, in order; each stage reduces the list fed to
+        the next):
           1. ``url_result = self.dedup_by_url(items)`` on the FULL input list.
           2. Rebuild ``unique_items`` by keeping the FIRST item per
              ``normalize_url(item.get("url", ""))``. Items whose URL normalizes
@@ -385,12 +386,19 @@ class ContentDeduplicator:
              FIRST empty-URL item survives this stage.
           3. ``hash_result = self.dedup_by_hash(unique_items)`` on that reduced
              list (NOT on ``url_result.unique_items``).
+          4. Rebuild ``unique_items`` again by keeping the FIRST item per
+             ``content_hash(item.get("content", ""))``. Items with empty
+             content hash to the empty string, so only the FIRST empty-content
+             item survives this stage (mirroring the URL stage).
+          5. ``sim_result = self.dedup_by_similarity(unique_items)`` on that
+             reduced list, catching near-duplicate content that neither the
+             exact-URL nor the exact-hash stage grouped.
 
         Combine:
           * ``duplicate_groups = url_result.duplicate_groups +
-            hash_result.duplicate_groups``
+            hash_result.duplicate_groups + sim_result.duplicate_groups``
           * ``removed_count = url_result.removed_count +
-            hash_result.removed_count``
+            hash_result.removed_count + sim_result.removed_count``
 
         Args:
             items: List of content item dicts.
@@ -416,9 +424,32 @@ class ContentDeduplicator:
         # Then dedup by content hash
         hash_result = self.dedup_by_hash(unique_items)
 
+        # Rebuild the reduced list keeping the FIRST item per content hash so
+        # the similarity stage only sees content-hash-unique items (mirrors
+        # the URL stage above; empty content hashes to "" and the first such
+        # item survives).
+        seen_hashes = set()
+        hash_unique = []
+        for item in unique_items:
+            h = content_hash(item.get("content", ""))
+            if h not in seen_hashes:
+                seen_hashes.add(h)
+                hash_unique.append(item)
+
+        # Finally dedup by content similarity (near-duplicates)
+        sim_result = self.dedup_by_similarity(hash_unique)
+
         # Combine groups
-        all_groups = url_result.duplicate_groups + hash_result.duplicate_groups
-        total_removed = url_result.removed_count + hash_result.removed_count
+        all_groups = (
+            url_result.duplicate_groups
+            + hash_result.duplicate_groups
+            + sim_result.duplicate_groups
+        )
+        total_removed = (
+            url_result.removed_count
+            + hash_result.removed_count
+            + sim_result.removed_count
+        )
 
         return DedupResult(
             total_items=len(items),

@@ -468,20 +468,51 @@ class TestContentDeduplicator:
         assert result.removed_count == 1
 
 
-# ── docstring contract (TICKET-333) ────────────────────────────────
+# ── docstring contract (TICKET-413, CLAIM TRUTH) ───────────────────
 
 class TestContentDedupDocstring:
-    def test_dedup_all_docstring_does_not_promise_all_strategies(self) -> None:
-        """Regression: dedup_all docstring must not over-promise 'all strategies'.
+    def test_dedup_all_docstring_promises_all_strategies(self) -> None:
+        """Pin the ORIGINAL claim: dedup_all runs ALL dedup strategies.
 
         ContentDeduplicator defines three strategies (dedup_by_hash,
-        dedup_by_url, dedup_by_similarity), but dedup_all invokes only the
-        URL and content-hash strategies (it never calls dedup_by_similarity).
-        The docstring must therefore not claim it runs 'all deduplication
-        strategies' (TICKET-333).
+        dedup_by_url, dedup_by_similarity) and dedup_all now invokes all
+        three (URL -> content-hash -> similarity cascade), so the original
+        claim "Run all deduplication strategies and combine results." is
+        delivered by the code (TICKET-413). The docstring must therefore
+        promise all strategies and name each of the three.
         """
         doc = (ContentDeduplicator.dedup_all.__doc__ or "").lower()
-        assert "all deduplication strategies" not in doc
-        # The corrected contract names the two strategies actually run.
+        assert "all deduplication strategies" in doc
+        # The contract names all three strategies actually run.
         assert "url" in doc
         assert "hash" in doc
+        assert "similarity" in doc
+
+    def test_dedup_all_runs_similarity_stage(self) -> None:
+        """Behavioral regression: dedup_all removes a pair caught ONLY by
+        similarity (distinct URLs, distinct content hashes, Jaccard >=
+        threshold). This pair is invisible to the URL and content-hash
+        stages, so only the similarity stage can remove it - proving all
+        three strategies run (TICKET-413).
+        """
+        # Two items with different URLs and different (but near-identical)
+        # content. Jaccard on the word sets is 9/11 ~= 0.818 >= 0.8 (the
+        # threshold), so the similarity stage groups them; the URL and
+        # content-hash stages do not (distinct URLs and distinct content
+        # hashes).
+        dedup = ContentDeduplicator(similarity_threshold=0.8)
+        items = [
+            {"url": "https://a.com", "content": "w1 w2 w3 w4 w5 w6 w7 w8 w9 x"},
+            {"url": "https://b.com", "content": "w1 w2 w3 w4 w5 w6 w7 w8 w9 y"},
+        ]
+        result = dedup.dedup_all(items)
+        assert result.method == "combined"
+        assert result.total_items == 2
+        assert result.removed_count == 1
+        assert result.unique_items == 1
+        # Exactly one group, produced by the similarity stage.
+        assert len(result.duplicate_groups) == 1
+        group = result.duplicate_groups[0]
+        assert group.dedup_method == "similarity"
+        assert group.representative == "https://a.com"
+        assert group.duplicates == ["https://b.com"]
