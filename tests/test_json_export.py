@@ -151,3 +151,44 @@ class TestJsonExporter:
         result = exporter.export_item(self.items[0])
         data = json.loads(result)
         assert next(iter(data.keys())) == "id"
+
+
+class TestFilterFields:
+    def test_filter_fields_exact_substeps(self) -> None:
+        # Normal path: include_scores defaults to False -> "score" and
+        # "score_details" are both dropped; include_tags=False -> "tags"
+        # dropped; include_metadata=True -> "metadata" kept.
+        opts = JsonExportOptions(include_tags=False)
+        exporter = JsonExporter(options=opts)
+        item = {
+            "id": "1",
+            "title": "T",
+            "tags": ["a"],
+            "metadata": {"author": "X"},
+            "score": 0.5,
+            "score_details": {"recency": 0.1},
+        }
+        result = exporter._filter_fields(item)
+        assert "score" not in result
+        assert "score_details" not in result
+        assert "tags" not in result
+        assert "metadata" in result
+        assert "id" in result
+        # input not mutated
+        assert "score" in item
+
+    def test_filter_fields_whitelist_applied_last(self) -> None:
+        # Guard path: fields whitelist is applied last and overrides the
+        # earlier pops, so only whitelisted keys survive even if a dropped
+        # key is not in the whitelist.
+        opts = JsonExportOptions(include_tags=False, fields=["id", "title"])
+        exporter = JsonExporter(options=opts)
+        item = {
+            "id": "1",
+            "title": "T",
+            "tags": ["a"],
+            "metadata": {"author": "X"},
+            "score": 0.5,
+        }
+        result = exporter._filter_fields(item)
+        assert set(result.keys()) == {"id", "title"}
