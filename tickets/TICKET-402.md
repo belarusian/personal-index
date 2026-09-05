@@ -1,6 +1,7 @@
 # TICKET-402: importer.import_from_file docstring over-promises "auto-detecting format"
 
 - Status: OPEN
+- Issue: #642
 - File: personal_index/importer.py
 - Function: `Importer.import_from_file` (line 50)
 - Symptom: docstring `"""Import bookmarks from a file, auto-detecting format."""`
