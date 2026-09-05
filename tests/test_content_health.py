@@ -295,3 +295,48 @@ class TestCheckItemDocstringDefaults:
         assert result.score == 5 / 7 * 100
         # both issues are LOW severity -> WARNING (not UNHEALTHY)
         assert result.status == HealthStatus.WARNING
+
+
+class TestCheckItemOrder:
+    """Pin the documented check order for check_item (TICKET-447).
+
+    The docstring claims the seven checks run in order:
+    url, title presence, title length, content length, status code,
+    tags, score. This test pins that the ``issues`` list is emitted in
+    exactly that order (status code before tags and score).
+    """
+
+    def test_issue_order_matches_docstring(self):
+        config = ContentHealthCheck(
+            min_content_length=50,
+            min_title_length=3,
+            max_title_length=200,
+            require_tags=True,
+            min_tags=1,
+            require_score=True,
+            min_score=0.5,
+        )
+        checker = ContentHealthChecker(config)
+        # url "" -> invalid_url
+        # title 250 chars -> presence passes, title_too_long fires
+        # content "" -> low_content
+        # status_code 500 -> bad_status
+        # tags None + require_tags -> missing_tags
+        # score 0.0 < 0.5 + require_score -> low_score
+        result = checker.check_item(
+            url="",
+            title="a" * 250,
+            content="",
+            tags=None,
+            score=0.0,
+            status_code=500,
+        )
+        types = [i.issue_type for i in result.issues]
+        assert types == [
+            "invalid_url",
+            "title_too_long",
+            "low_content",
+            "bad_status",
+            "missing_tags",
+            "low_score",
+        ]
