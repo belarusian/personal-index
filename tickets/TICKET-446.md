@@ -1,6 +1,6 @@
 # TICKET-446: content_extractor.py ContentExtractor.extract docstring drift
 
-Status: OPEN
+Status: RESOLVED
 Issue: #730
 Module: personal_index/content_extractor.py
 Function: ContentExtractor.extract (line 33)
