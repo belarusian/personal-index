@@ -1,6 +1,6 @@
 # TICKET-439: collect_system_metrics docstring over-promises CPU collection
 
-- Status: OPEN
+- Status: RESOLVED (d0bb39b)
 - Issue: #716
 - File: personal_index/metrics.py
 - Method: MetricsCollector.collect_system_metrics
