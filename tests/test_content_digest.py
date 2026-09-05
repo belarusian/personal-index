@@ -195,3 +195,48 @@ class TestGeneratorDocstringClaim:
         assert {e.url for e in all_entries} == {"https://a.com", "https://b.com", "https://c.com"}
         # Source grouping yields one section per distinct source.
         assert {s.topic for s in digest.sections} == {"blog", "docs"}
+
+
+class TestGenerateDocstringDefaults:
+    def test_generate_default_args_pin_returned_fields(self):
+        """Pin the corrected generate() docstring: with default args the
+        returned ContentDigest carries title="Content Digest", a period_start
+        ~7 days before period_end (both ISO-8601 UTC), total_entries equal to
+        the number of accumulated entries, and a non-empty summary."""
+        from datetime import datetime, timezone
+
+        gen = DigestGenerator()
+        gen.add_entry(make_entry(title="A", tags=["t1"], score=1.0))
+        gen.add_entry(make_entry(title="B", tags=["t2"], score=2.0))
+        before = datetime.now(timezone.utc)
+        digest = gen.generate()
+        after = datetime.now(timezone.utc)
+
+        # title default
+        assert digest.title == "Content Digest"
+        # total_entries reflects the accumulated entries (not the capped sections)
+        assert digest.total_entries == 2
+        # summary is generated (non-empty) for a non-empty digest
+        assert digest.summary
+        # period_end is ~now; period_start is ~7 days before period_end
+        end = datetime.fromisoformat(digest.period_end)
+        start = datetime.fromisoformat(digest.period_start)
+        assert abs((end - after).total_seconds()) < 5
+        assert abs((end - before).total_seconds()) < 5
+        delta_days = (end - start).total_seconds() / 86400.0
+        assert 6.9 <= delta_days <= 7.1
+
+    def test_generate_explicit_period_args_pin_returned_fields(self):
+        """Pin the corrected generate() docstring: explicit period_start /
+        period_end / title are carried verbatim onto the returned digest."""
+        gen = DigestGenerator()
+        gen.add_entry(make_entry(title="A", tags=["t1"], score=1.0))
+        digest = gen.generate(
+            title="Weekly",
+            period_start="2026-01-01T00:00:00+00:00",
+            period_end="2026-01-07T00:00:00+00:00",
+        )
+        assert digest.title == "Weekly"
+        assert digest.period_start == "2026-01-01T00:00:00+00:00"
+        assert digest.period_end == "2026-01-07T00:00:00+00:00"
+        assert digest.total_entries == 1
