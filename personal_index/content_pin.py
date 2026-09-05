@@ -88,15 +88,21 @@ class ContentPinner:
             metadata: Optional metadata dictionary.
 
         Returns:
-            True. The item is pinned (or re-pinned/overwritten) unconditionally;
-            there is no failure path, so this always returns True.
+            True if successfully pinned. Returns False if the pin could not be
+            persisted (e.g. a disk I/O error in ``_save``); on failure the
+            in-memory state is rolled back so the item is not left pinned.
         """
+        snapshot = dict(self._pinned)
         self._pinned[item_id] = PinnedItem(
             item_id=item_id,
             reason=reason,
             metadata=metadata or {},
         )
-        self._save()
+        try:
+            self._save()
+        except OSError:
+            self._pinned = snapshot
+            return False
         return True
 
     def unpin(self, item_id: str) -> bool:

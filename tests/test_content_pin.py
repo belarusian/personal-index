@@ -54,15 +54,41 @@ class TestContentPinner:
     def test_pin_returns_true(self, pinner):
         assert pinner.pin("item-1") is True
 
-    def test_pin_always_returns_true_no_failure_path(self, pinner):
-        # Regression (TICKET-322): the docstring contract is that pin()
-        # unconditionally pins and always returns True — there is no
-        # False failure path. Re-pinning an already-pinned id must still
-        # return True (not False).
+    def test_pin_returns_true_on_success(self, pinner):
+        # Regression (TICKET-415, original claim "True if successfully
+        # pinned."): the success path returns True. Re-pinning an
+        # already-pinned id (overwrite) must still return True.
         assert pinner.pin("item-1") is True
         assert pinner.pin("item-1", reason="again") is True
         assert pinner.pin("item-1", metadata={"k": "v"}) is True
         assert pinner.is_pinned("item-1") is True
+
+    def test_pin_returns_false_and_rolls_back_on_save_failure(self, pinner, monkeypatch):
+        # Regression (TICKET-415, original claim "True if successfully
+        # pinned."): when persistence fails (OSError in _save), pin()
+        # returns False and the in-memory state is rolled back so the
+        # item is not left pinned.
+        def _boom():
+            raise OSError("disk full")
+
+        monkeypatch.setattr(pinner, "_save", _boom)
+        assert pinner.pin("item-1") is False
+        assert pinner.is_pinned("item-1") is False
+        assert pinner.get_pinned_items() == []
+
+    def test_pin_rollback_preserves_prior_items_on_save_failure(self, pinner, monkeypatch):
+        # Regression (TICKET-415): a failed pin must not drop items that
+        # were already pinned before the failed call.
+        pinner.pin("existing")
+        assert pinner.is_pinned("existing") is True
+
+        def _boom():
+            raise OSError("disk full")
+
+        monkeypatch.setattr(pinner, "_save", _boom)
+        assert pinner.pin("new-item") is False
+        assert pinner.is_pinned("new-item") is False
+        assert pinner.is_pinned("existing") is True
 
     def test_pin_with_reason(self, pinner):
         pinner.pin("item-1", reason="important")
