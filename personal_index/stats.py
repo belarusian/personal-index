@@ -45,7 +45,17 @@ class StatsCollector:
     search_index: SearchIndex | None = None
 
     def get_index_stats(self) -> IndexStats:
-        """Calculate current index statistics."""
+        """Calculate current index statistics.
+
+        If ``self.search_index`` is falsy, returns an all-default
+        ``IndexStats`` (every field at its dataclass default) without
+        touching the index. Otherwise populates total_pages, total_words,
+        unique_domains, avg_content_length, and pages_with_interests;
+        ``top_domains`` and ``top_interests`` are capped to the top 10
+        entries (sorted by count descending); ``oldest_page`` and
+        ``newest_page`` are set only when at least one page has a
+        ``crawled_at`` timestamp, otherwise they remain ``None``.
+        """
         stats = IndexStats()
         if not self.search_index:
             return stats
