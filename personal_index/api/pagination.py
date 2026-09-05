@@ -66,7 +66,29 @@ def paginate(
     page: int = 1,
     page_size: int = 20,
 ) -> PaginatedResult[T]:
-    """Paginate a sequence of items."""
+    """Return one page of ``items`` as a PaginatedResult[T].
+
+    Guard paths (raise before any slicing):
+        page < 1        -> ValueError("Page must be >= 1")
+        page_size < 1   -> ValueError("Page size must be >= 1")
+
+    Computation (after validation):
+        total_items = len(items)
+        total_pages = max(1, ceil(total_items / page_size))
+        page        = _clamp_page(page, total_pages, total_items)
+            - if total_items == 0, page is forced to 1
+            - otherwise page is clamped to [1, total_pages]
+        start       = (page - 1) * page_size
+        page_items  = list(items[start : start + page_size])
+
+    Returns:
+        PaginatedResult(items=page_items, page_info=PageInfo(...)) where
+        PageInfo carries: page (clamped), page_size, total_items,
+        total_pages, has_next = (page < total_pages),
+        has_prev = (page > 1); PageInfo also exposes the properties
+        start_index = (page - 1) * page_size and
+        end_index = min(start_index + page_size, total_items).
+    """
     _validate_page(page, page_size)
     total_items = len(items)
     total_pages = max(1, (total_items + page_size - 1) // page_size)
