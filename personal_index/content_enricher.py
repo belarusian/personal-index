@@ -79,13 +79,26 @@ class ContentEnricher:
     def enrich(self, title: str, text: str, html: str | None = None) -> EnrichedContent:
         """Enrich content with computed metrics, keywords, sentiment, and complexity analysis.
 
+        Sets on the returned EnrichedContent:
+          - word_count: count_words(text)
+          - reading_time: read_time_minutes(text)
+          - keywords: extract_keywords(text, top_n=self.top_n_keywords, min_freq=1)
+          - has_code / has_links / has_images: set only when html is truthy
+            (via _detect_code / _detect_links / _detect_images); otherwise left
+            at the dataclass default False
+          - sentiment_score: _compute_sentiment(text), in [-1.0, 1.0]
+          - complexity_score: _compute_complexity(text), in [0.0, 1.0]
+
+        The language field is NEVER computed here; it stays at the dataclass
+        default 'en'.
+
         Args:
             title: Content title.
             text: Plain text content.
             html: Optional HTML source for additional analysis.
 
         Returns:
-            EnrichedContent with the computed fields.
+            EnrichedContent with the fields above set.
         """
         enriched = EnrichedContent(
             title=title,
