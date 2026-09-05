@@ -86,7 +86,17 @@ class Importer:
         return self.import_from_content(content, ext, source=filepath)
 
     def import_from_content(self, content: str, fmt: str, source: str = "") -> ImportResult:
-        """Import bookmarks from content string with specified format."""
+        """Import bookmarks from a content string in the given format.
+
+        Normalizes ``fmt`` via ``fmt.lower().lstrip(".")`` (so "JSON", ".csv",
+        "Html" all match), then dispatches to the matching private helper:
+        "json" -> ``_import_json``, "csv" -> ``_import_csv``, "html"/"necko"/
+        "netscape" -> ``_import_html``, "xml" -> ``_import_xml``. On no match
+        returns ``ImportResult(errors=[f"Unsupported format: {fmt}"],
+        source=source, format=fmt)`` with total_imported/total_skipped at 0.
+        Returns the helper's ImportResult (or the unsupported-format result);
+        does not mutate self.
+        """
         fmt = fmt.lower().lstrip(".")
 
         if fmt == "json":

@@ -394,3 +394,15 @@ def test_sitemap_uses_defusedxml():
     with open(sitemap_path) as f:
         source = f.read()
     assert "defusedxml" in source, "sitemap.py should use defusedxml for safe XML parsing"
+
+
+class TestImportFromContentUnsupportedFormat:
+    def test_unsupported_fmt_returns_error_result_fields(self):
+        """TICKET-404: pin the unsupported-format return of import_from_content."""
+        imp = Importer()
+        result = imp.import_from_content("anything", "yaml", source="src")
+        assert result.errors == ["Unsupported format: yaml"]
+        assert result.source == "src"
+        assert result.format == "yaml"
+        assert result.total_imported == 0
+        assert result.total_skipped == 0
