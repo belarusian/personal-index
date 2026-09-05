@@ -92,7 +92,15 @@ def _word_frequency(text: str) -> dict[str, int]:
 
 
 def _score_sentence(sentence: str, word_freq: dict[str, int]) -> float:
-    """Score a sentence based on word frequencies."""
+    """Return the mean per-token frequency score of a sentence.
+
+    Tokenizes ``sentence`` via ``_tokenize``. If no tokens are produced
+    (empty or all-punctuation input) returns ``0.0``. Otherwise returns
+    the sum of ``word_freq.get(w, 0)`` over the tokens divided by the
+    token count (the mean per-token frequency, not the raw sum), so a
+    short sentence of frequent words can outscore a long one. Returns
+    ``float``.
+    """
     words = _tokenize(sentence)
     if not words:
         return 0.0
