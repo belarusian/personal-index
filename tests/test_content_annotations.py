@@ -304,3 +304,54 @@ class TestAnnotationManager:
         manager2.deserialize(data)
         assert manager2.count() == 2
         assert manager2.get_by_author("alice")
+
+
+class TestAnnotationAddIndexPinning:
+    """Pin the five index updates documented on AnnotationManager.add."""
+
+    def test_add_updates_all_indexes_normal_case(self):
+        mgr = AnnotationManager()
+        ann = Annotation(
+            content_id="c1",
+            text="hello",
+            annotation_type=AnnotationType.HIGHLIGHT,
+            author="alice",
+            tags=["t1", "t2"],
+        )
+        mgr.add(ann)
+        # 1. _annotations: retrievable by id, fields intact
+        got = mgr.get(ann.annotation_id)
+        assert got is not None
+        assert got.content_id == "c1"
+        assert got.text == "hello"
+        assert got.annotation_type is AnnotationType.HIGHLIGHT
+        # 2. _by_content
+        by_content = mgr.get_by_content_id("c1")
+        assert [a.annotation_id for a in by_content] == [ann.annotation_id]
+        # 3. _by_author (author truthy)
+        by_author = mgr.get_by_author("alice")
+        assert [a.annotation_id for a in by_author] == [ann.annotation_id]
+        # 4. _by_type keyed on annotation_type.value
+        by_type = mgr.get_by_type(AnnotationType.HIGHLIGHT)
+        assert [a.annotation_id for a in by_type] == [ann.annotation_id]
+        # 5. _by_tag per tag
+        assert [a.annotation_id for a in mgr.get_by_tag("t1")] == [ann.annotation_id]
+        assert [a.annotation_id for a in mgr.get_by_tag("t2")] == [ann.annotation_id]
+
+    def test_add_falsy_author_guard_path(self):
+        mgr = AnnotationManager()
+        ann = Annotation(
+            content_id="c2",
+            text="no author",
+            annotation_type=AnnotationType.NOTE,
+            author="",
+            tags=["solo"],
+        )
+        mgr.add(ann)
+        # guard path: falsy author leaves _by_author untouched
+        assert mgr.get_by_author("") == []
+        # but the other four indexes still update
+        assert [a.annotation_id for a in mgr.get_by_content_id("c2")] == [ann.annotation_id]
+        assert [a.annotation_id for a in mgr.get_by_type(AnnotationType.NOTE)] == [ann.annotation_id]
+        assert [a.annotation_id for a in mgr.get_by_tag("solo")] == [ann.annotation_id]
+        assert mgr.get(ann.annotation_id) is not None
