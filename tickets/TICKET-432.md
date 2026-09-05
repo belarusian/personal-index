@@ -30,5 +30,5 @@
   warnings/critical, disk_usage set, source_freshness/error_rates populated) AND
   the guard path (no data -> overall_status "no_data", score 1.0, disk_usage
   None, source_freshness {}, error_rates None).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #702
