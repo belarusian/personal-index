@@ -1,6 +1,6 @@
 # TICKET-405
 
-- Status: OPEN
+- Status: RESOLVED (PR #649 merged, issue #648 closed)
 - Class: (b) doc-drift
 - File: personal_index/content_dedup.py
 - Function: ContentDeduplicator.dedup_by_hash (line 145)
