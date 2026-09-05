@@ -31,7 +31,19 @@ class ContentExtractor:
         self.max_text_length = max_text_length
 
     def extract(self, html: str) -> ExtractedContent:
-        """Extract content from HTML string."""
+        """Extract content from an HTML string into an ExtractedContent.
+
+        If `html` is empty/falsy, returns an empty ExtractedContent (all
+        fields at defaults, no parsing). Otherwise parses with
+        BeautifulSoup and populates: title (og:title preferred over the
+        <title> tag), meta_description, meta_keywords (comma-split,
+        stripped, empties dropped), author, canonical_url, and language.
+        Then decomposes script/style/noscript/title tags so the page title
+        is not double-counted, and extracts headings (h1-h6, non-empty
+        text), links as (text, href) tuples, and images as (alt, src)
+        tuples. Visible text is whitespace-normalized and truncated to
+        max_text_length; word_count is len(text.split()).
+        """
         if not html:
             return ExtractedContent()
 
