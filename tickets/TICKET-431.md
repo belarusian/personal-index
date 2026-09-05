@@ -21,5 +21,5 @@
   asserting the returned HealthStatus fields for the normal case (all healthy
   -> healthy True, score 1.0, 3 checks) AND the guard path (empty items ->
   healthy False, score 0.0).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #700
