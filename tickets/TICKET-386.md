@@ -1,6 +1,6 @@
 # TICKET-386: csv_export.py _process_item placeholder docstring (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged to main, gh #610 closed)
 
 ## File
 personal_index/content_export/csv_export.py
