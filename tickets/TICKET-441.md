@@ -1,6 +1,6 @@
 # TICKET-441: get_search_events/get_crawl_events docstring over-promise (blanket "optionally limited")
 
-Status: OPEN
+Status: RESOLVED (0866302)
 Issue: #720
 Module: personal_index/analytics.py
 Class: (b) doc-drift
