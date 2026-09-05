@@ -1,6 +1,6 @@
 # TICKET-443: DigestGenerator.generate docstring omits parameter defaults and return structure
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/content_digest.py
 Function: DigestGenerator.generate (line 147)
 
