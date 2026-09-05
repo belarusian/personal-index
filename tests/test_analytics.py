@@ -161,6 +161,26 @@ class TestAnalyticsTracker:
         assert stats["min_results"] == 3
         assert stats["click_through_rate"] > 0
 
+    def test_get_search_stats_fields_pinned(self):
+        # Guard path: no events -> exactly {"total": 0}.
+        empty = self.tracker.get_search_stats()
+        assert empty == {"total": 0}
+
+        # Normal path: pin every returned field against the returned object.
+        self.tracker.record_search("q1", result_count=5, duration_ms=100)
+        self.tracker.record_search("q2", result_count=10, duration_ms=200)
+        self.tracker.record_search("q1", result_count=3, duration_ms=150,
+                                   clicked_url="http://x.com")
+        stats = self.tracker.get_search_stats()
+        assert stats["total"] == 3
+        assert stats["avg_results"] == (5 + 10 + 3) / 3
+        assert stats["max_results"] == 10
+        assert stats["min_results"] == 3
+        assert stats["avg_duration_ms"] == (100 + 200 + 150) / 3
+        assert stats["max_duration_ms"] == 200
+        assert stats["click_through_rate"] == 1 / 3
+        assert stats["unique_queries"] == 2
+
     def test_get_crawl_stats_empty(self):
         stats = self.tracker.get_crawl_stats()
         assert stats["total"] == 0
