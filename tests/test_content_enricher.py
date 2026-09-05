@@ -212,3 +212,52 @@ class TestEnrichDocstringContract:
         text = "Bonjour le monde. Ceci est un test en français."
         enriched = enricher.enrich("Titre", text)
         assert enriched.language == "en"
+
+
+class TestEnrichReturnedObjectPinning:
+    """TICKET-423: pin the returned EnrichedContent object fields.
+
+    One returned object pins both the main behavior (html present -> the
+    has_code/has_links/has_images fields are set from the HTML) and the guard
+    path (html=None -> those fields stay at the dataclass default False and
+    language stays at the default 'en').
+    """
+
+    def test_enrich_normal_case_pins_returned_fields(self):
+        """Normal case: html with code/links/images sets the returned fields."""
+        enricher = ContentEnricher()
+        html = (
+            '<html><body>'
+            '<pre>def f(): pass</pre>'
+            '<a href="http://example.com">link</a>'
+            '<img src="p.jpg" alt="p"/>'
+            '</body></html>'
+        )
+        text = "This is great and amazing and wonderful and excellent"
+        enriched = enricher.enrich("Pin", text, html=html)
+        # metrics / keywords / scores on the returned object
+        assert enriched.title == "Pin"
+        assert enriched.word_count > 0
+        assert enriched.reading_time >= 1
+        assert len(enriched.keywords) > 0
+        assert enriched.sentiment_score > 0
+        assert 0.0 <= enriched.complexity_score <= 1.0
+        # html-present path sets the detection fields on the returned object
+        assert enriched.has_code is True
+        assert enriched.has_links is True
+        assert enriched.has_images is True
+
+    def test_enrich_guard_path_pins_returned_fields(self):
+        """Guard path: html=None leaves detection fields at default False."""
+        enricher = ContentEnricher()
+        text = "The cat sat on the mat near the window"
+        enriched = enricher.enrich("Guard", text)  # html omitted -> None
+        # metrics still computed on the returned object
+        assert enriched.word_count > 0
+        assert enriched.sentiment_score == 0.0
+        # guard path: detection fields stay at the dataclass default False
+        assert enriched.has_code is False
+        assert enriched.has_links is False
+        assert enriched.has_images is False
+        # language is never computed; stays at the dataclass default 'en'
+        assert enriched.language == "en"
