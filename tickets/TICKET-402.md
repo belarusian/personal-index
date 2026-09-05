@@ -1,6 +1,6 @@
 # TICKET-402: importer.import_from_file docstring over-promises "auto-detecting format"
 
-- Status: OPEN
+- Status: RESOLVED (PR #643 merged, issue #642 closed)
 - Issue: #642
 - File: personal_index/importer.py
 - Function: `Importer.import_from_file` (line 50)
