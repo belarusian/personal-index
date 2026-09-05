@@ -67,7 +67,14 @@ STOPWORDS = frozenset({
 
 
 def _word_frequency(text: str) -> dict[str, int]:
-    """Calculate word frequency from text."""
+    """Calculate word frequency from text.
+
+    Tokenizes *text* via :func:`_tokenize` (lowercase alphanumeric tokens),
+    skips tokens present in the module-level :data:`STOPWORDS` frozenset,
+    skips tokens with length <= 2, and accumulates counts in a plain dict
+    (freq[word] = freq.get(word, 0) + 1).  Returns the resulting
+    :obj:`dict[str, int]` mapping.
+    """
     words = _tokenize(text)
     freq: dict[str, int] = {}
     for word in words:
