@@ -111,3 +111,39 @@ class TestCsvExporter:
         exporter = CsvExporter(options=opts)
         result = exporter.export_items(self.items)
         assert "metadata_author" in result
+
+
+class TestProcessItemFlatteningPinning:
+    """Pinning test for TICKET-386: _process_item flattens nested dicts and formats values."""
+
+    def test_nested_dict_flattened_with_separator(self):
+        from personal_index.content_export.csv_export import CsvExporter, CsvExportOptions
+
+        options = CsvExportOptions(flatten_nested=True, separator_nested=".")
+        exporter = CsvExporter(options)
+        item = {"title": "Test", "meta": {"author": "Alice", "year": "2024"}}
+        result = exporter._process_item(item)
+
+        # Assert the corrected docstring claim: nested dict is flattened
+        assert "meta.author" in result
+        assert result["meta.author"] == "Alice"
+        assert "meta.year" in result
+        assert result["meta.year"] == 2024  # numeric string "2024" → int
+
+        # Assert ABSENCE of the unflattened sibling key
+        assert "meta" not in result
+
+        # Top-level non-dict values are preserved
+        assert result["title"] == "Test"
+
+    def test_no_flatten_when_disabled(self):
+        from personal_index.content_export.csv_export import CsvExporter, CsvExportOptions
+
+        options = CsvExportOptions(flatten_nested=False)
+        exporter = CsvExporter(options)
+        item = {"title": "Test", "meta": {"author": "Alice"}}
+        result = exporter._process_item(item)
+
+        # When flatten_nested=False, the dict value is NOT flattened
+        assert "meta" in result
+        assert "meta.author" not in result

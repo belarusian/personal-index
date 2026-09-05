@@ -103,7 +103,7 @@ class CsvExporter:
         return len(items)
 
     def _process_item(self, item: dict[str, Any]) -> dict[str, Any]:
-        """Process a single item for CSV export."""
+        """Flatten nested dicts (when flatten_nested=True) into key.separator.sub_key entries and format all values via _format_value (None→"", datetime→isoformat, list/set→"; "-joined, bool→lowercase str, numeric-str→int/float, other→str)."""
         result: dict[str, Any] = {}
         for key, value in item.items():
             if self.options.flatten_nested and isinstance(value, dict):
