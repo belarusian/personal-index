@@ -182,3 +182,45 @@ class TestStatsCollector:
         stats = collector.get_index_stats()
         assert stats.oldest_page == datetime(2024, 1, 1, tzinfo=timezone.utc)
         assert stats.newest_page == datetime(2024, 6, 1, tzinfo=timezone.utc)
+
+
+class TestGetIndexStatsDocPinning:
+    """Pin the corrected get_index_stats docstring claim.
+
+    The docstring now states: (a) a falsy search_index returns an all-default
+    IndexStats (guard path), (b) top_domains/top_interests are capped to the
+    top 10, and (c) oldest/newest are set only when timestamps exist. One
+    returned object pins the main behavior and the guard path.
+    """
+
+    def test_guard_path_returns_all_defaults(self, interest_store):
+        # Guard path: no search_index -> every field at its dataclass default.
+        collector = StatsCollector(interest_store=interest_store)
+        stats = collector.get_index_stats()
+        assert stats.total_pages == 0
+        assert stats.total_words == 0
+        assert stats.unique_domains == 0
+        assert stats.avg_content_length == 0.0
+        assert stats.pages_with_interests == 0
+        assert stats.top_domains == []
+        assert stats.top_interests == []
+        assert stats.oldest_page is None
+        assert stats.newest_page is None
+
+    def test_top_domains_capped_at_10_and_oldest_newest_set(self, collector):
+        # Main behavior: 12 distinct domains -> top_domains capped to 10.
+        for i in range(12):
+            collector.search_index.add(CrawledPage(
+                url=f"https://d{i}.com/page",
+                title=f"Page {i}",
+                content="Some content here",
+                crawled_at=datetime(
+                    2024, 1, 1 + i, tzinfo=timezone.utc
+                ),
+            ))
+        stats = collector.get_index_stats()
+        assert stats.total_pages == 12
+        assert len(stats.top_domains) == 10
+        # oldest/newest set because timestamps exist.
+        assert stats.oldest_page == datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert stats.newest_page == datetime(2024, 1, 12, tzinfo=timezone.utc)
