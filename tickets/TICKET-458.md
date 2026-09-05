@@ -18,6 +18,6 @@
   `test_clear_items_guard_and_reverse_index` (guard path: missing collection ->
   False, reverse index untouched; success path: items cleared, reverse-index
   entries cleaned up, list entry deleted when empty, `updated_at` refreshed).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #757
 - Renumbered from 457 (collision with parallel pipeline's distinct finding)
