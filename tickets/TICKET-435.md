@@ -20,5 +20,5 @@
   returns {}. Add ONE pinning test asserting the returned dict fields for the
   normal case (mixed levels -> only present keys, counts correct) AND the
   empty-results guard path (returns {}).
-- Status: OPEN
+- Status: RESOLVED (90b0fc2)
 - Issue: #708
