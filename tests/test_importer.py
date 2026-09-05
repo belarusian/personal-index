@@ -100,6 +100,34 @@ class TestImporterJson:
         assert bm.tags == ["python", "web"]
         assert bm.is_favorite is True
 
+    def test_import_json_per_item_error_accumulates_and_continues(self, monkeypatch):
+        """Pin _import_json sub-component 4: a per-item (ValueError, TypeError)
+        raised during manager.add is caught, appended to result.errors, and the
+        loop continues to the next item (no abort)."""
+        calls = []
+
+        def fake_add(bookmark):
+            calls.append(bookmark.url)
+            if bookmark.url == "http://bad.com":
+                raise TypeError("boom")
+            return bookmark
+
+        monkeypatch.setattr(self.importer._manager, "add", fake_add)
+        data = [
+            {"url": "http://good.com", "title": "Good"},
+            {"url": "http://bad.com", "title": "Bad"},
+            {"url": "http://also-good.com", "title": "Also Good"},
+        ]
+        result = self.importer.import_from_content(json.dumps(data), "json")
+        # The loop did not abort: both good items were still imported.
+        assert result.total_imported == 2
+        assert result.total_skipped == 0
+        # Exactly one per-item error was accumulated for the failing item.
+        assert len(result.errors) == 1
+        assert result.errors[0].startswith("Error importing item:")
+        # The failing item was attempted (add called) but not counted as imported.
+        assert calls == ["http://good.com", "http://bad.com", "http://also-good.com"]
+
 
 class TestImporterCsv:
     def setup_method(self):
