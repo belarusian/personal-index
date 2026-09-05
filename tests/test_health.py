@@ -75,3 +75,31 @@ class TestHealthChecker:
         assert "item_count" in names
         assert "scores" in names
         assert "duplicates" in names
+
+
+class TestCheckPinning:
+    def test_all_healthy_normal_case(self):
+        checker = HealthChecker(min_items=1)
+        items = [{"id": "1", "score": 0.9}, {"id": "2", "score": 0.8}]
+        status = checker.check(items)
+        # returned object fields: all three checks healthy -> healthy True,
+        # score is the fraction of healthy checks (3/3) rounded to 4 places.
+        assert status.healthy is True
+        assert status.score == 1.0
+        assert [c.check_name for c in status.checks] == [
+            "item_count", "scores", "duplicates",
+        ]
+        assert all(c.healthy for c in status.checks)
+
+    def test_empty_items_guard_path(self):
+        checker = HealthChecker(min_items=1)
+        status = checker.check([])
+        # guard path: empty items -> item_count fails (0 < min_items),
+        # scores passes (empty list), duplicates passes -> not all healthy,
+        # score is the fraction healthy (2/3) rounded to 4 places.
+        assert status.healthy is False
+        assert status.score == round(2 / 3, 4)
+        checks = {c.check_name: c for c in status.checks}
+        assert checks["item_count"].healthy is False
+        assert checks["scores"].healthy is True
+        assert checks["duplicates"].healthy is True
