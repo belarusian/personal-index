@@ -256,3 +256,49 @@ class TestContentExtractor:
         # meta_description: 0.3
         # total: 0.8
         assert score == 0.8
+
+
+class TestExtractDocstringPinning:
+    """Pin the reworded extract docstring against the returned object."""
+
+    def test_normal_case_fields(self, extractor):
+        html = (
+            '<html lang="en"><head>'
+            '<title>Page Title</title>'
+            '<meta name="description" content="A description">'
+            '<meta name="keywords" content="a, b, , c">'
+            '<meta name="author" content="Jane">'
+            '<link rel="canonical" href="https://x.example/canonical">'
+            '</head><body>'
+            '<h1>Heading One</h1>'
+            '<a href="https://x.example/link">Link Text</a>'
+            '<img src="https://x.example/i.png" alt="An image">'
+            '<p>hello world</p>'
+            '</body></html>'
+        )
+        content = extractor.extract(html)
+        assert content.title == "Page Title"
+        assert content.meta_description == "A description"
+        assert content.meta_keywords == ["a", "b", "c"]
+        assert content.author == "Jane"
+        assert content.canonical_url == "https://x.example/canonical"
+        assert content.language == "en"
+        assert content.headings == ["Heading One"]
+        assert content.links == [("Link Text", "https://x.example/link")]
+        assert content.images == [("An image", "https://x.example/i.png")]
+        assert content.text == "Heading One Link Text hello world"
+        assert content.word_count == 6
+
+    def test_empty_html_guard_path(self, extractor):
+        content = extractor.extract("")
+        assert content.title == ""
+        assert content.text == ""
+        assert content.meta_description == ""
+        assert content.meta_keywords == []
+        assert content.author == ""
+        assert content.canonical_url == ""
+        assert content.language == ""
+        assert content.headings == []
+        assert content.links == []
+        assert content.images == []
+        assert content.word_count == 0
