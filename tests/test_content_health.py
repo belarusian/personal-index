@@ -295,3 +295,41 @@ class TestCheckItemDocstringDefaults:
         assert result.score == 5 / 7 * 100
         # both issues are LOW severity -> WARNING (not UNHEALTHY)
         assert result.status == HealthStatus.WARNING
+
+
+class TestCheckItemOrderPinning:
+    """Pin the check dispatch order documented in check_item (TICKET-447).
+
+    The docstring documents the seven checks in order
+    [url, title_presence, title_length, content_length, status_code, tags, score].
+    The issues list order is observable output, so the dispatch must match.
+    """
+
+    def test_reordered_checks_emit_in_documented_order(self):
+        # Enable the two conditional checks so all three reordered checks
+        # (status_code, tags, score) run and fail, while url/title/content pass.
+        config = ContentHealthCheck(
+            min_content_length=10,
+            require_tags=True,
+            min_tags=2,
+            require_score=True,
+            min_score=5.0,
+        )
+        checker = ContentHealthChecker(config=config)
+        result = checker.check_item(
+            url="https://example.com/page",
+            title="Title",
+            content="Content that is long enough to pass.",
+            tags=["one"],          # < min_tags -> missing_tags
+            score=1.0,             # < min_score -> low_score
+            status_code=500,       # bad_status
+        )
+        # Exactly the three reordered checks fail; url/title/content pass.
+        assert result.checks_total == 7
+        assert result.checks_passed == 4
+        # Pin the RETURNED issues list order: status_code, then tags, then score.
+        assert [i.issue_type for i in result.issues] == [
+            "bad_status",
+            "missing_tags",
+            "low_score",
+        ]

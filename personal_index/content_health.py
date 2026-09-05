@@ -187,9 +187,9 @@ class ContentHealthChecker:
         lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_title_presence(t, u, ct, cp, iss),
         lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_title_length(t, u, ct, cp, iss),
         lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_content_length(c, u, t, ct, cp, iss),
+        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_status_code(st, u, t, ct, cp, iss),
         lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_tags(tg, u, t, ct, cp, iss),
         lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_score(sc, u, t, ct, cp, iss),
-        lambda s, u, t, c, tg, sc, st, ct, cp, iss: s._check_status_code(st, u, t, ct, cp, iss),
     ]
 
     def _check_url(
