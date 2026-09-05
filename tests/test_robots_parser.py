@@ -250,3 +250,25 @@ class TestParseDirective:
         )
         assert agent is None
         assert rules == []
+
+    def test_parse_directive_returns_agent_and_rules_tuple(self):
+        """Pin the returned (current_agent, current_rules) tuple shape."""
+        from personal_index.robots_parser import _parse_directive
+
+        policy = RobotsPolicy(domain="example.com")
+        # A Disallow line with an active agent returns (agent, [rule]).
+        agent, rules = _parse_directive(
+            "Disallow: /secret", "Googlebot", policy, []
+        )
+        assert agent == "Googlebot"
+        assert len(rules) == 1
+        assert rules[0].user_agent == "Googlebot"
+        assert rules[0].allowed is False
+        assert rules[0].pattern == "/secret"
+        # A comment line is not a directive: it returns the unchanged
+        # (current_agent, current_rules) pair with no new rule added.
+        agent, rules = _parse_directive(
+            "# a comment", "Googlebot", policy, rules
+        )
+        assert agent == "Googlebot"
+        assert len(rules) == 1

@@ -80,7 +80,16 @@ def _parse_directive(
     policy: RobotsPolicy,
     current_rules: list[RobotsRule],
 ) -> tuple[str | None, list[RobotsRule]]:
-    """Handle one line's directive parsing."""
+    """Parse one robots.txt line into a directive key and value.
+
+    Splits the line on the first ":" into key and value, lowercases and
+    strips the key, and dispatches on the key (user-agent, disallow, allow,
+    crawl-delay, sitemap). Side effects on ``policy``: extends ``policy.rules``
+    when a new user-agent is encountered, sets ``policy.crawl_delay``, and
+    appends to ``policy.sitemap_urls``. Returns ``(current_agent, current_rules)``
+    where ``current_agent`` is the agent string (or None) and ``current_rules``
+    is the accumulated rule list for the current agent.
+    """
     key, value = (line.split(":", 1) + ["", ""])[:2]
     key_lower = key.lower().strip()
     value = value.strip()
