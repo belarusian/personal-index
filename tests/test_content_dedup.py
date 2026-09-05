@@ -347,6 +347,28 @@ class TestContentDeduplicator:
         result = dedup.dedup_by_similarity(items)
         assert result.removed_count == 0
 
+    def test_dedup_by_similarity_pins_returned_fields_and_empty_content_guard(self) -> None:
+        """Pin the RETURNED DedupResult fields for the grouping rule and
+        the empty-content guard path (empty text -> similarity 0.0 -> unique).
+        """
+        items = [
+            {"url": "https://a.com", "content": "Python is a great programming language"},
+            {"url": "https://b.com", "content": "Python is a great programming language"},
+            {"url": "https://c.com", "content": ""},
+        ]
+        dedup = ContentDeduplicator(similarity_threshold=0.9)
+        result = dedup.dedup_by_similarity(items)
+        assert result.method == "similarity"
+        assert result.total_items == 3
+        assert result.removed_count == 1
+        assert result.unique_items == 2
+        assert len(result.duplicate_groups) == 1
+        group = result.duplicate_groups[0]
+        assert group.representative == "https://a.com"
+        assert group.duplicates == ["https://b.com"]
+        assert group.similarity_score == 0.9
+        assert group.dedup_method == "similarity"
+
     # ── dedup_all ────────────────────────────────────────────────
 
     def test_dedup_all_combined(self) -> None:
