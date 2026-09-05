@@ -133,3 +133,38 @@ class TestPaginateWithOffset:
         data = result.to_dict()
         assert len(data["items"]) == 3
         assert data["page_info"]["total_items"] == 5
+
+
+class TestPaginatePinning:
+    """Pin the returned PaginatedResult/PageInfo fields for the normal case
+    and the empty-sequence guard path (TICKET-433)."""
+
+    def test_normal_page_pins_returned_fields(self):
+        items = list(range(25))
+        result = paginate(items, page=2, page_size=10)
+        # items slice for page 2 of 3
+        assert result.items == list(range(10, 20))
+        pi = result.page_info
+        assert pi.page == 2
+        assert pi.page_size == 10
+        assert pi.total_items == 25
+        assert pi.total_pages == 3
+        assert pi.has_next is True
+        assert pi.has_prev is True
+        # derived properties
+        assert pi.start_index == 10
+        assert pi.end_index == 20
+
+    def test_empty_sequence_guard_pins_returned_fields(self):
+        result = paginate([], page=1, page_size=10)
+        assert result.items == []
+        pi = result.page_info
+        # empty-sequence clamp forces page to 1, total_pages to 1
+        assert pi.page == 1
+        assert pi.page_size == 10
+        assert pi.total_items == 0
+        assert pi.total_pages == 1
+        assert pi.has_next is False
+        assert pi.has_prev is False
+        assert pi.start_index == 0
+        assert pi.end_index == 0
