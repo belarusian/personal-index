@@ -1,4 +1,4 @@
-# TICKET-425
+# TICKET-425 (RESOLVED)
 
 - file: personal_index/content_annotations.py
 - function: AnnotationManager.add
