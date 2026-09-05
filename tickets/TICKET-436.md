@@ -30,5 +30,5 @@
   returned dict fields for the normal case (mixed public/private, an item in
   two collections -> total_items double-counts) AND the empty-manager guard
   path (all four keys 0).
-- Status: OPEN
+- Status: RESOLVED (3e38fed)
 - Issue: #710
