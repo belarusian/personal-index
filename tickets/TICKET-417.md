@@ -1,6 +1,6 @@
 # TICKET-417
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc-drift (blanket docstring, no sub-component enumeration)
 - File: personal_index/content_search.py
 - Function: SnippetExtractor.extract (lines 52-89)
