@@ -161,7 +161,34 @@ class ContentScorer:
         last_crawled: datetime | None = None,
         change_frequency: str = "monthly",
     ) -> ContentScore:
-        """Calculate composite score for a content item."""
+        """Calculate the composite score for a content item.
+
+        Computes six factor scores, each via a dedicated helper:
+          recency   = _score_recency(published_at, updated_at) - exponential
+                      decay with a 30-day half-life; naive datetimes are made
+                      UTC-aware; the reference date is updated_at or
+                      published_at or now.
+          relevance = _score_relevance(keyword_matches, total_keywords) - 0.0
+                      when total_keywords == 0, else min(1.0, matches/total).
+          engagement= _score_engagement(view_count, bookmark_count, share_count)
+                      - log1p weighted 0.4/0.4/0.2, capped at log1p(1000).
+          quality   = _score_quality(word_count, has_images, has_code) - log1p
+                      length scaled to log1p(3000) + 0.1 image bonus + 0.05 code
+                      bonus, capped at 1.0.
+          authority = _score_authority(domain_authority, is_verified_source) -
+                      domain_authority + 0.1 only when verified, capped at 1.0.
+          freshness = _score_freshness(last_crawled, change_frequency,
+                      updated_at) - 0.5 when last_crawled is None; 1.0 when the
+                      frequency is "never"; else 1.0 - 0.5 * age_hours / expected,
+                      clamped to [0.0, 1.0].
+
+        total = _compute_total(...) is the weighted sum of the six factors
+        using self.weights (normalized in __init__).
+
+        Returns a ContentScore whose total/recency/relevance/engagement/quality/
+        authority/freshness are each rounded to 4 places, plus a factors dict
+        mapping each factor name to its unrounded value.
+        """
         recency = self._score_recency(published_at, updated_at)
         relevance = self._score_relevance(keyword_matches, total_keywords)
         engagement = self._score_engagement(view_count, bookmark_count, share_count)

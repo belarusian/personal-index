@@ -308,3 +308,51 @@ class TestContentScorer:
     def test_rank_empty_items(self, scorer: ContentScorer) -> None:
         ranked = scorer.rank([])
         assert ranked == []
+
+    def test_score_pins_returned_object_fields_normal_and_guard(self, scorer: ContentScorer) -> None:
+        # Normal case: pins the returned ContentScore object fields (not counters).
+        normal = scorer.score(
+            keyword_matches=10, total_keywords=10,
+            view_count=100, bookmark_count=10, share_count=5,
+            word_count=3000, has_images=True, has_code=True,
+            domain_authority=0.9, is_verified_source=True,
+        )
+        assert isinstance(normal, ContentScore)
+        assert normal.relevance == 1.0
+        assert normal.authority == 1.0
+        assert normal.quality == 1.0
+        assert 0.0 < normal.engagement <= 1.0
+        assert 0.0 <= normal.recency <= 1.0
+        assert 0.0 <= normal.freshness <= 1.0
+        # factors dict maps each factor name to its (unrounded) value.
+        assert set(normal.factors) == {
+            "recency", "relevance", "engagement",
+            "quality", "authority", "freshness",
+        }
+        assert normal.factors["relevance"] == 1.0
+        assert normal.factors["authority"] == 1.0
+        # total is the weighted sum of the six factors (normalized weights).
+        expected_total = (
+            scorer.weights.recency * normal.recency
+            + scorer.weights.relevance * normal.relevance
+            + scorer.weights.engagement * normal.engagement
+            + scorer.weights.quality * normal.quality
+            + scorer.weights.authority * normal.authority
+            + scorer.weights.freshness * normal.freshness
+        )
+        assert abs(normal.total - round(expected_total, 4)) < 0.001
+
+        # Guard path: no-arg default call pins the guard/early-return fields.
+        guard = scorer.score()
+        assert isinstance(guard, ContentScore)
+        assert guard.relevance == 0.0
+        assert guard.engagement == 0.0
+        assert guard.quality == 0.0
+        assert guard.authority == 0.5
+        assert guard.freshness == 0.5
+        assert set(guard.factors) == {
+            "recency", "relevance", "engagement",
+            "quality", "authority", "freshness",
+        }
+        assert guard.factors["authority"] == 0.5
+        assert guard.factors["freshness"] == 0.5
