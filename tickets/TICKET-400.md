@@ -1,6 +1,6 @@
 # TICKET-400
 
-- Status: OPEN
+- Status: RESOLVED (PR #639 merged, issue #638 closed)
 - File: personal_index/importer.py
 - Function: `_import_html` (line 166, docstring line 167)
 - Symptom: docstring `"""Import from HTML bookmark format (Netscape/Neko)."""`
