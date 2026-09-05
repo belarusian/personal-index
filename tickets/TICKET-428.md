@@ -1,6 +1,6 @@
 # TICKET-428: bookmark_export.export_to_file - implement missing write-failure path so ORIGINAL "result with errors on failure" claim is true
 
-Status: OPEN
+Status: RESOLVED
 Issue: #694
 
 ## File
