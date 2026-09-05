@@ -70,13 +70,29 @@ class ContentMerger:
         self.strategy = strategy
 
     def merge(self, sources: list[MergeSource]) -> MergedContent | None:
-        """Merge multiple content sources.
+        """Merge multiple content sources into a single MergedContent.
+
+        Behavior:
+        - Guard: if ``sources`` is empty, return ``None`` (no merge performed).
+        - Sort: sources are sorted by ``priority`` descending before merging,
+          so the highest-priority source is treated as primary.
+        - Strategy dispatch on ``self.strategy``:
+          - ``"longest"`` -> ``_merge_longest`` (longest content wins)
+          - ``"highest_priority"`` -> ``_merge_highest_priority``
+          - ``"unique_paragraphs"`` -> ``_merge_unique_paragraphs``
+          - anything else (default ``"concatenate"``) -> ``_merge_concatenate``
+            (joins non-empty content with a ``\n\n---\n\n`` separator)
+        - Returns a ``MergedContent`` with fields: ``url`` (primary source),
+          ``title`` (primary, else longest non-empty), ``content``,
+          ``tags`` (sorted, lowercased, deduped), ``metadata`` (merged,
+          higher priority wins), ``source_count`` (len of sources),
+          ``sources`` (all source urls), and ``merge_strategy``.
 
         Args:
             sources: List of MergeSource objects to merge.
 
         Returns:
-            MergedContent or None if no sources provided.
+            MergedContent, or None if ``sources`` is empty.
         """
         if not sources:
             return None

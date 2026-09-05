@@ -198,3 +198,52 @@ class TestNonStringTagGuard:
         result = merger.merge([self._bad_source()])
         assert result is not None
         assert result.tags == ["valid"]
+
+
+class TestMergeDocstringPinning:
+    """TICKET-421: pin the reworded merge() docstring against the returned object.
+
+    One returned MergedContent pins both the normal concatenate behavior and
+    the empty-sources guard path (merge([]) is None).
+    """
+
+    def test_concatenate_pins_returned_fields_and_guard(self):
+        # Guard path: empty sources -> None (no merge performed).
+        merger = ContentMerger(strategy="concatenate")
+        assert merger.merge([]) is None
+
+        # Normal case: pin every MergedContent field the docstring now states.
+        sources = [
+            make_source(
+                url="https://a.com",
+                title="A",
+                content="Content A",
+                tags=["Python", "web"],
+                priority=1,
+                metadata={"origin": "a"},
+            ),
+            make_source(
+                url="https://b.com",
+                title="B",
+                content="Content B",
+                tags=["WEB"],
+                priority=0,
+                metadata={"origin": "b"},
+            ),
+        ]
+        result = merger.merge(sources)
+        assert result is not None
+        # url = primary (highest priority, sorted desc) -> a.com
+        assert result.url == "https://a.com"
+        # title = primary's non-empty title
+        assert result.title == "A"
+        # content = non-empty content joined with the \n\n---\n\n separator
+        assert result.content == "Content A\n\n---\n\nContent B"
+        # tags = sorted, lowercased, deduped
+        assert result.tags == ["python", "web"]
+        # source_count = len(sources)
+        assert result.source_count == 2
+        # sources = all source urls
+        assert result.sources == ["https://a.com", "https://b.com"]
+        # merge_strategy echoes the strategy used
+        assert result.merge_strategy == "concatenate"
