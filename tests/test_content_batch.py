@@ -61,6 +61,23 @@ class TestBatchProcessor:
         assert result.failed == 25
         assert len(result.errors) > 0
 
+    def test_process_error_entry_keyed_by_batch(self) -> None:
+        def failing_processor(batch):
+            raise ValueError("Processing failed")
+
+        processor = BatchProcessor(batch_size=10, processor=failing_processor)
+        result = processor.process(self.items)
+        # 25 items / batch_size 10 -> 3 batches, each failing
+        assert result.failed == 25
+        assert len(result.errors) == 3
+        # corrected claim: batch error entries are keyed by batch_start/batch_size
+        assert result.errors[0]["batch_start"] == 0
+        assert result.errors[0]["batch_size"] == 10
+        assert result.errors[1]["batch_start"] == 10
+        assert result.errors[2]["batch_start"] == 20
+        assert result.errors[2]["batch_size"] == 5
+        assert "item_index" not in result.errors[0]
+
     def test_process_progress(self) -> None:
         progress_calls = []
 
