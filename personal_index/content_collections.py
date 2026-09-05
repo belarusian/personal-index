@@ -229,7 +229,21 @@ class CollectionManager:
         return False
 
     def clear_items(self, collection_id: str) -> bool:
-        """Remove all items from a collection."""
+        """Remove all items from a collection.
+
+        Guard path: if ``collection_id`` is not in ``_collections``, returns
+        False without touching the collection or the ``_item_to_collections``
+        reverse index.
+
+        On success (collection exists):
+          1. The ``_item_to_collections`` reverse index is cleaned up for each
+             item in the collection: ``collection_id`` is removed from the
+             item's list, and the list entry is deleted entirely when it
+             becomes empty.
+          2. ``c.item_ids`` is cleared and ``c.updated_at`` is refreshed.
+        Returns True whenever the collection exists (regardless of whether it
+        held any items), False on the guard path.
+        """
         c = self._collections.get(collection_id)
         if c:
             for item_id in c.item_ids:

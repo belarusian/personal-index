@@ -454,3 +454,43 @@ class TestCollectionDeletePinning:
         # deleting the last collection removes the reverse-index entry entirely
         assert self.manager.delete(cid2) is True
         assert self.manager.get_collections_for_item("x") == []
+
+
+class TestCollectionClearItemsPinning:
+    """Pin CollectionManager.clear_items guard path + reverse-index cleanup."""
+
+    def setup_method(self):
+        self.manager = CollectionManager()
+
+    def test_clear_items_guard_path_pins_false_and_untouched_index(self):
+        # guard path: nonexistent collection -> False, reverse index untouched
+        cid = self.manager.create("Keep")
+        assert self.manager.add_item(cid, "item1") is True
+        result = self.manager.clear_items("nonexistent")
+        assert result is False
+        # the existing collection and its reverse index are untouched
+        assert self.manager.get(cid) is not None
+        assert self.manager.get(cid).item_ids == ["item1"]
+        assert [c.collection_id for c in
+                self.manager.get_collections_for_item("item1")] == [cid]
+
+    def test_clear_items_success_pins_true_and_reverse_index_cleanup(self):
+        # item "x" in TWO collections; clearing one leaves it in the other
+        cid1 = self.manager.create("A")
+        cid2 = self.manager.create("B")
+        assert self.manager.add_item(cid1, "x") is True
+        assert self.manager.add_item(cid2, "x") is True
+        # set a sentinel so the refresh is deterministic (not a now() race)
+        self.manager.get(cid1).updated_at = "sentinel-old"
+        assert self.manager.clear_items(cid1) is True
+        c1 = self.manager.get(cid1)
+        assert c1.item_ids == []
+        # updated_at refreshed on success (no longer the sentinel)
+        assert c1.updated_at is not None
+        assert c1.updated_at != "sentinel-old"
+        # "x" still resolves to the surviving collection only
+        assert [c.collection_id for c in
+                self.manager.get_collections_for_item("x")] == [cid2]
+        # clearing the last collection removes the reverse-index entry entirely
+        assert self.manager.clear_items(cid2) is True
+        assert self.manager.get_collections_for_item("x") == []
