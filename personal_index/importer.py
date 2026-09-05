@@ -279,7 +279,19 @@ class Importer:
         return result
 
     def import_opml(self, content: str, source: str = "") -> ImportResult:
-        """Import from OPML format."""
+        """Parse OPML content via ET_fromstring and import bookmarks into self._manager.
+
+        On ET_ParseError, appends "Invalid OPML: {e}" to result.errors and
+        returns early. Iterates root.findall(".//outline[@text]") (only
+        outlines with a text attribute). For each outline: url is taken from
+        the xmlUrl attribute (falling back to htmlUrl, then empty string);
+        title is taken from the title attribute (falling back to the text
+        attribute, then empty string). When url is truthy, a Bookmark(url,
+        title, category="imported") is added to self._manager and
+        result.total_imported is incremented. When url is falsy, no bookmark
+        is created and no counter is incremented. Returns
+        ImportResult(source=source, format="opml").
+        """
         result = ImportResult(source=source, format="opml")
         try:
             root = ET_fromstring(content)
