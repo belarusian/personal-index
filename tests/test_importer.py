@@ -281,6 +281,19 @@ class TestImporterOpml:
         assert result.total_imported == 0
         assert len(result.errors) > 0
 
+    def test_import_opml_title_attr_and_category(self):
+        """Pin: title attr takes precedence over text attr; category defaults to imported."""
+        content = ('<opml><body><outline text="FeedText" title="My Title" '
+                   'xmlUrl="http://a.com/rss"/></body></opml>')
+        result = self.importer.import_opml(content)
+        assert result.total_imported == 1
+        assert result.format == "opml"
+        assert result.total_skipped == 0
+        bm = self.importer.manager.get("http://a.com/rss")
+        assert bm is not None
+        assert bm.title == "My Title"
+        assert bm.category == "imported"
+
 
 class TestImporterFileErrors:
     def test_import_nonexistent_file(self):
