@@ -191,6 +191,18 @@ class TestFormatValidation:
     def test_supported_formats_list(self):
         assert ContentExporter.SUPPORTED_FORMATS == ("html", "json", "markdown", "rss")
 
+    def test_export_normalizes_and_guard_path(self, exporter, sample_items):
+        # Normal case: a padded, mixed-case token is normalized (lower+strip)
+        # and succeeds, returning the same JSON as the exact lowercase token.
+        normalized = exporter.export(sample_items, " JSON ")
+        exact = exporter.export(sample_items, "json")
+        assert normalized == exact
+        assert json.loads(normalized)[0]["title"] == "First Post"
+        # Guard path: a format that does not normalize into SUPPORTED_FORMATS
+        # raises ValueError before any handler runs.
+        with pytest.raises(ValueError, match="Unsupported format"):
+            exporter.export(sample_items, "  pdf  ")
+
 
 # --- Edge Cases ---
 
