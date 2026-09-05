@@ -122,6 +122,28 @@ class TestSnippetExtractor:
         assert len(snippets) >= 1
         assert "python" in snippets[0].matched_terms or "javascript" in snippets[0].matched_terms
 
+    def test_extract_pins_returned_snippet_fields_and_guard_path(self):
+        # Normal match case: pin the RETURNED Snippet object fields.
+        text = "The quick brown fox jumps over the lazy dog"
+        snippets = SnippetExtractor(max_snippet_length=100, max_snippets=3).extract(
+            text, ["fox"]
+        )
+        assert len(snippets) == 1
+        sn = snippets[0]
+        # text is a window of the source containing the matched term
+        assert "fox" in sn.text.lower()
+        # highlighted wraps the term in the open/close markers
+        assert "<mark>" in sn.highlighted and "</mark>" in sn.highlighted
+        # offsets bound the window within the source text
+        assert 0 <= sn.start_offset < sn.end_offset <= len(text)
+        assert text[sn.start_offset:sn.end_offset] == sn.text
+        # matched_terms records the query term that matched
+        assert sn.matched_terms == ["fox"]
+        # Guard path: empty text -> [] (no snippet produced)
+        assert SnippetExtractor().extract("", ["fox"]) == []
+        # Guard path: empty query list -> []
+        assert SnippetExtractor().extract(text, []) == []
+
 
 # ---------------------------------------------------------------------------
 # SearchIndex tests
