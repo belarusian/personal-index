@@ -1,6 +1,6 @@
 # TICKET-409
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc-drift / docstring over-promise
 - File: personal_index/analytics.py
 - Function: AnalyticsTracker.get_analytics (line ~169)
