@@ -40,7 +40,15 @@ def _split_sentences(text: str) -> list[str]:
 
 
 def _tokenize(text: str) -> list[str]:
-    """Tokenize text into words."""
+    """Tokenize text into lowercase alphanumeric tokens.
+
+    Lowercases the input, then returns every maximal run of lowercase
+    letters and digits found by ``re.findall(r'[a-z0-9]+', text.lower())``.
+    Splits on any non-alphanumeric character (punctuation, spaces, and
+    apostrophes all act as separators) and keeps digit runs as their own
+    tokens. Returns ``list[str]``; an empty or all-punctuation input
+    yields an empty list.
+    """
     return re.findall(r'[a-z0-9]+', text.lower())
 
 

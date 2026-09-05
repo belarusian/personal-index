@@ -241,3 +241,18 @@ def test_word_frequency_filters_stopwords_and_short_words():
     # "on" has len <= 2
     assert "on" not in result
     assert isinstance(result, dict)
+
+
+def test_tokenize_splits_on_non_alphanumeric_and_keeps_digit_runs():
+    """Pin the corrected docstring: lowercase + re.findall [a-z0-9]+ behavior."""
+    # Apostrophe splits (don't -> don, t), punctuation splits, digits kept as
+    # their own tokens, all lowercased.
+    assert _tokenize("Don't stop! 3.14 is pi") == [
+        "don", "t", "stop", "3", "14", "is", "pi",
+    ]
+    # All-punctuation input yields an empty list.
+    assert _tokenize("!!! ... ???") == []
+    # Uppercase is lowercased.
+    assert _tokenize("ABC") == ["abc"]
+    # Return type is a list of strings.
+    assert isinstance(_tokenize("hello"), list)
