@@ -1,6 +1,6 @@
 # TICKET-390: rate_limit_middleware.py RateLimitMiddleware.__call__ placeholder docstring (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED
 
 ## File
 personal_index/api/rate_limit_middleware.py
@@ -47,4 +47,4 @@ header-injection claim, not just that the app ran).
 Issue: #618
 
 ## Status
-OPEN
+RESOLVED - merged to main 71a8a75 via PR #619 (squash); gh #618 closed; CI run 33942532581 green (test 3.10/3.11/3.12 all pass).
