@@ -262,7 +262,21 @@ class AnnotationManager:
         return len(self._annotations)
 
     def get_stats(self) -> dict:
-        """Get annotation statistics."""
+        """Return a dict with exactly three keys describing the stored annotations.
+
+        Keys and their exact semantics:
+        1. ``"total"``: ``len(self._annotations)`` - the total number of
+           annotations currently stored.
+        2. ``"by_content"``: ``len(self._by_content)`` - the number of DISTINCT
+           content ids that have at least one annotation (NOT the total
+           annotation count; multiple annotations on one content id count once).
+        3. ``"by_type"``: a ``dict[str, int]`` mapping each
+           ``AnnotationType.value`` present among the stored annotations to the
+           number of annotations of that type; types with no annotations are
+           absent from the mapping.
+
+        Returns the dict; makes no mutation.
+        """
         by_type: dict[str, int] = {}
         for ann in self._annotations.values():
             t = ann.annotation_type.value

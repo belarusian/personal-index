@@ -355,3 +355,24 @@ class TestAnnotationAddIndexPinning:
         assert [a.annotation_id for a in mgr.get_by_type(AnnotationType.NOTE)] == [ann.annotation_id]
         assert [a.annotation_id for a in mgr.get_by_tag("solo")] == [ann.annotation_id]
         assert mgr.get(ann.annotation_id) is not None
+
+
+class TestGetStatsPinning:
+    """Pin the returned dict fields of AnnotationManager.get_stats."""
+
+    def test_get_stats_normal_and_empty_guard(self):
+        # normal case: 3 annotations across 2 content ids, 2 types
+        mgr = AnnotationManager()
+        mgr.add(Annotation(content_id="c1", text="A", annotation_type=AnnotationType.NOTE))
+        mgr.add(Annotation(content_id="c1", text="B", annotation_type=AnnotationType.NOTE))
+        mgr.add(Annotation(content_id="c2", text="C", annotation_type=AnnotationType.HIGHLIGHT))
+        stats = mgr.get_stats()
+        assert set(stats.keys()) == {"total", "by_content", "by_type"}
+        assert stats["total"] == 3
+        # by_content counts DISTINCT content ids, not total annotations
+        assert stats["by_content"] == 2
+        assert stats["by_type"] == {"note": 2, "highlight": 1}
+
+        # empty-manager guard path: all three keys present, zeroed
+        empty = AnnotationManager().get_stats()
+        assert empty == {"total": 0, "by_content": 0, "by_type": {}}
