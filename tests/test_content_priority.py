@@ -246,3 +246,32 @@ class TestCalculatePinning:
         assert guard.breakdown["content_score"] == 0.0
         assert guard.breakdown["interest_match"] == 0.0
         assert guard.breakdown["engagement"] == 0.0
+
+
+class TestGetSummaryPinning:
+    """Pin the CORRECTED get_summary docstring claim against the returned dict."""
+
+    def _mk(self, url: str, level: PriorityLevel) -> PriorityResult:
+        return PriorityResult(
+            url=url, title=url, priority=level, score=0.5,
+            breakdown={}, factors=[],
+        )
+
+    def test_normal_case_only_present_levels_keyed(self):
+        calc = PriorityCalculator()
+        results = [
+            self._mk("https://a.com", PriorityLevel.HIGH),
+            self._mk("https://b.com", PriorityLevel.HIGH),
+            self._mk("https://c.com", PriorityLevel.LOW),
+        ]
+        summary = calc.get_summary(results)
+        # Only the PRESENT levels are keyed; absent levels (critical/medium/
+        # archive) are OMITTED, not present as zero-valued keys.
+        assert summary == {"high": 2, "low": 1}
+        assert set(summary.keys()) == {"high", "low"}
+        assert sum(summary.values()) == 3
+
+    def test_empty_results_guard_path(self):
+        calc = PriorityCalculator()
+        # Guard path: empty results -> {} (no zero-valued keys for any level).
+        assert calc.get_summary([]) == {}

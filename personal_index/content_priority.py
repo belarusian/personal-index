@@ -229,7 +229,10 @@ class PriorityCalculator:
             results: List of PriorityResult objects.
 
         Returns:
-            Dict mapping priority level names to counts.
+            A dict mapping each ``PriorityLevel.value`` that is PRESENT in
+            ``results`` to the number of results at that level. Levels with no
+            matching result are OMITTED (not present as a zero-valued key), and
+            an empty ``results`` list returns ``{}``.
         """
         summary: dict[str, int] = {}
         for result in results:
