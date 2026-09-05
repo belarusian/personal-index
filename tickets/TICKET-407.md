@@ -19,5 +19,5 @@
 - Minimal additive fix: reword docstring to the exact conditional + guard path;
   add ONE pinning test asserting the RETURNED DedupResult fields + the
   empty-URL guard path (an item with no URL stays unique, not grouped).
-- Status: OPEN
+- Status: RESOLVED (cycle 165, PR #653, merge on main)
 - Issue: #652
