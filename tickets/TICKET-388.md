@@ -1,6 +1,6 @@
 # TICKET-388: sitemap_builder.py placeholder docstrings (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged to main 4ecb859, gh #614 closed)
 
 ## File
 personal_index/sitemap_builder.py
@@ -29,4 +29,4 @@ caller's arguments) so the doc-only fix is witnessed.
 Issue: #614
 
 ## Status
-OPEN
+RESOLVED
