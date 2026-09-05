@@ -22,7 +22,14 @@ class ContentExporter:
         self.base_url = base_url.rstrip("/")
 
     def export(self, items: list[dict[str, Any]], fmt: str) -> str:
-        """Export a list of content items to the specified format."""
+        """Export a list of content items to the specified format.
+
+        The format is normalized with ``fmt.lower().strip()`` before use, so
+        padded or mixed-case tokens (e.g. ``"JSON "`` / ``" Html"``) are
+        accepted. If the normalized format is not one of
+        ``SUPPORTED_FORMATS`` (``"html"``, ``"json"``, ``"markdown"``,
+        ``"rss"``), a ``ValueError`` is raised before any handler runs.
+        """
         fmt = fmt.lower().strip()
         if fmt not in self.SUPPORTED_FORMATS:
             raise ValueError(f"Unsupported format: {fmt}. Supported: {self.SUPPORTED_FORMATS}")
