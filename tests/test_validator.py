@@ -21,6 +21,15 @@ class TestValidationResult:
         assert result.valid is True
         assert "caution" in result.warnings
 
+    def test_add_warning_does_not_change_valid(self):
+        """Pin the corrected docstring: add_warning appends to warnings and
+        leaves valid unchanged (does not mark the result invalid)."""
+        result = ValidationResult(valid=True)
+        result.add_warning("note")
+        assert result.valid is True
+        assert result.errors == []
+        assert result.warnings == ["note"]
+
 
 class TestURLValidator:
     def test_valid_url(self):

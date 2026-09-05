@@ -19,7 +19,7 @@ class ValidationResult:
     warnings: list[str] = field(default_factory=list)
 
     def add_error(self, message: str) -> None:
-        """Process add_error.
+        """Mark the result invalid and append message to errors.
 
         Args:
         message.
@@ -28,7 +28,7 @@ class ValidationResult:
         self.errors.append(message)
 
     def add_warning(self, message: str) -> None:
-        """Process add_warning.
+        """Append message to warnings; does not change valid.
 
         Args:
         message.
@@ -56,7 +56,8 @@ class URLValidator:
         self.max_url_length = max_url_length
 
     def validate(self, url: str) -> ValidationResult:
-        """Process validate."""
+        """Run length, scheme, domain, path and fragment checks; return a
+        ValidationResult that is valid iff no errors were added."""
         result = ValidationResult(valid=True)
         if not url or not url.strip():
             result.add_error("URL is empty")
@@ -138,11 +139,9 @@ class ContentValidator:
         self.min_words = min_words
 
     def validate(self, content: str) -> ValidationResult:
-        """Process validate.
-
-        Args:
-        content.
-        """
+        """Check length, word count, link ratio and whitespace; return a
+        ValidationResult with warnings for soft limits and errors for empty
+        or mostly-whitespace content."""
         result = ValidationResult(valid=True)
 
         if not content:
