@@ -106,7 +106,23 @@ class AnnotationManager:
         self._by_tag: dict[str, list[str]] = {}
 
     def add(self, annotation: Annotation) -> None:
-        """Add an annotation."""
+        """Add an annotation and update all five lookup indexes.
+
+        Indexes updated, in order:
+        1. ``_annotations[annotation.annotation_id]`` is set to the
+           annotation (always).
+        2. ``annotation.annotation_id`` is appended to
+           ``_by_content[annotation.content_id]`` (always).
+        3. ``annotation.annotation_id`` is appended to
+           ``_by_author[annotation.author]`` ONLY when ``annotation.author``
+           is truthy; a falsy author leaves ``_by_author`` untouched.
+        4. ``annotation.annotation_id`` is appended to
+           ``_by_type[annotation.annotation_type.value]`` (always).
+        5. ``annotation.annotation_id`` is appended to ``_by_tag[tag]`` for
+           each ``tag`` in ``annotation.tags``.
+
+        Returns None.
+        """
         self._annotations[annotation.annotation_id] = annotation
 
         cid = annotation.content_id
