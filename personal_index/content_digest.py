@@ -154,10 +154,26 @@ class DigestGenerator:
     ) -> ContentDigest:
         """Generate a content digest from the accumulated entries.
 
-        Entries are sorted by score (descending), grouped by the
-        `group_by` strategy ("tags" by default, "source", or "none"),
-        and each section is capped at `max_entries_per_section`
-        (default 10) entries.
+        Behavior:
+        - Sort: entries are sorted by ``score`` descending before grouping.
+        - Group: entries are grouped by the ``group_by`` strategy
+          (``"tags"`` by default, ``"source"``, or ``"none"``); each section
+          is capped at ``max_entries_per_section`` (default 10) entries.
+        - Summary: a one-line summary is generated from the sections
+          (``"No new content found."`` when there are no entries).
+
+        Args:
+            title: Digest title (default ``"Content Digest"``).
+            period_start: ISO-8601 period start; defaults to 7 days before
+                now (UTC).
+            period_end: ISO-8601 period end; defaults to now (UTC).
+            group_by: Grouping strategy (``"tags"``, ``"source"``, ``"none"``).
+            max_entries_per_section: Per-section entry cap (default 10).
+
+        Returns:
+            A ``ContentDigest`` with fields ``title``, ``generated_at`` (now,
+            ISO-8601 UTC), ``period_start``, ``period_end``, ``sections``,
+            ``total_entries`` (count of accumulated entries), and ``summary``.
         """
         now = datetime.now(timezone.utc).isoformat()
         entries = sorted(self._entries, key=lambda e: e.score, reverse=True)
