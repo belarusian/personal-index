@@ -3,7 +3,7 @@
 - Module: personal_index/content_webhooks.py
 - Method: WebhookManager.mark_failed
 - Issue: #739
-- Status: OPEN
+- Status: RESOLVED
 
 ## Symptom
 `mark_failed` increments `attempts`/`last_error`/`failure_count` and, when
