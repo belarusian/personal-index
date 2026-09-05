@@ -97,7 +97,29 @@ class PriorityCalculator:
         days_since_indexed: float = 0.0,
         tags: list[str] | None = None,
     ) -> PriorityResult:
-        """Calculate priority for a content item."""
+        """Calculate priority for a content item.
+
+        Computes four sub-factors, each recorded in ``breakdown``:
+
+        - ``recency``: ``_recency_score(days_since_indexed)`` = e^(-days/30);
+          added to ``factors`` as "recently indexed" when > 0.7.
+        - ``content_score``: ``content_score / 10.0`` clamped to [0, 1];
+          added to ``factors`` as "high content score" when > 0.7.
+        - ``interest_match``: ``_interest_score(interest_matches or [])``;
+          when ``interest_matches`` is non-empty, a "matches interests: ..."
+          factor (first 3) is appended.
+        - ``engagement``: ``_engagement_score(view_count)``; a "high
+          engagement (N views)" factor is appended when ``view_count > 10``.
+
+        The weighted total is ``_weighted_total(recency, content_score,
+        interest_match, engagement)`` using the ``PriorityConfig`` weights
+        (recency 0.2, score 0.3, interest 0.3, engagement 0.2).
+
+        Returns:
+            A ``PriorityResult`` with ``url``, ``title``, ``priority``
+            (``_level_for_score(total)`` against the config thresholds),
+            ``score`` (the weighted total), ``breakdown`` and ``factors``.
+        """
         factors: list[str] = []
         breakdown: dict[str, float] = {}
 

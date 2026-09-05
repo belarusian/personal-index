@@ -203,3 +203,46 @@ class TestPriorityCalculator:
         )
         assert result.score >= 0
         assert result.priority in PriorityLevel
+
+
+class TestCalculatePinning:
+    def test_calculate_pins_returned_object_fields_normal_and_guard(self):
+        calc = PriorityCalculator()
+        # Normal case: pin the returned PriorityResult object fields.
+        normal = calc.calculate(
+            url="https://example.com",
+            title="Important Article",
+            content_score=9.0,
+            interest_matches=["python", "programming"],
+            view_count=50,
+            days_since_indexed=1.0,
+        )
+        assert normal.url == "https://example.com"
+        assert normal.title == "Important Article"
+        assert isinstance(normal.priority, PriorityLevel)
+        assert normal.priority in (PriorityLevel.CRITICAL, PriorityLevel.HIGH)
+        assert normal.score > 0.5
+        # breakdown enumerates exactly the four sub-factors
+        assert set(normal.breakdown.keys()) == {
+            "recency", "content_score", "interest_match", "engagement",
+        }
+        assert normal.breakdown["content_score"] == 0.9
+        assert "high content score" in normal.factors
+        assert any(f.startswith("matches interests:") for f in normal.factors)
+        assert any(f.startswith("high engagement") for f in normal.factors)
+
+        # Guard path: no-arg inputs -> recency=1.0, total=0.2 -> LOW,
+        # only the "recently indexed" factor, breakdown still four keys.
+        guard = calc.calculate(url="https://g.com", title="Guard")
+        assert guard.url == "https://g.com"
+        assert guard.title == "Guard"
+        assert guard.priority == PriorityLevel.LOW
+        assert guard.score == 0.2
+        assert guard.factors == ["recently indexed"]
+        assert set(guard.breakdown.keys()) == {
+            "recency", "content_score", "interest_match", "engagement",
+        }
+        assert guard.breakdown["recency"] == 1.0
+        assert guard.breakdown["content_score"] == 0.0
+        assert guard.breakdown["interest_match"] == 0.0
+        assert guard.breakdown["engagement"] == 0.0
