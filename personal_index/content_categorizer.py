@@ -343,7 +343,25 @@ class ContentCategorizer:
         url: str = "",
         meta_description: str = "",
     ) -> CategorizationResult:
-        """Categorize content into topics."""
+        """Categorize content into topic categories.
+
+        Guard path: if ``text``, ``title`` and ``meta_description`` are
+        all falsy, return ``CategorizationResult(primary_topic="unknown",
+        topics=[], confidence=0.0, reasons=["no content provided"])``
+        (``text_length`` and ``keyword_count`` stay at their dataclass
+        defaults of 0).
+
+        Normal path: tokenize ``text``/``title``/``meta_description``
+        (lowercased, stopword-removed), extract URL hints from ``url``,
+        score every topic, drop scores below ``min_score``, cap the list
+        at ``max_topics``, then return a ``CategorizationResult`` with
+        ``primary_topic`` set to the top topic's name (or
+        ``"uncategorized"`` when no topic clears the threshold),
+        ``confidence`` set to the top score rounded to 4 places,
+        ``reasons`` set to the built human-readable list, ``text_length``
+        set to ``len(text.split())``, and ``keyword_count`` set to the
+        number of distinct text tokens.
+        """
         if not text and not title and not meta_description:
             return CategorizationResult(
                 primary_topic="unknown",

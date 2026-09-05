@@ -62,13 +62,14 @@ def _method_line_span(source, func_name):
 
 
 class TestContentCategorizerExceptionHandling:
-    """content_categorizer.py:559 - urlparse should catch ValueError, not Exception."""
+    """content_categorizer.py _extract_url_hints - urlparse should catch ValueError, not Exception."""
 
     def test_urlparse_catches_value_error(self):
         from personal_index import content_categorizer
         source = _get_source_lines(content_categorizer)
         blocks = _find_except_blocks(source)
-        url_hints_blocks = [b for b in blocks if 535 < b["lineno"] < 550]
+        start, end = _method_line_span(source, "_extract_url_hints")
+        url_hints_blocks = [b for b in blocks if start < b["lineno"] < end]
         assert len(url_hints_blocks) == 1
         assert url_hints_blocks[0]["exc_type"] == "ValueError"
 
