@@ -222,6 +222,45 @@ class TestAnalyticsTracker:
         assert events[0].error == "connection refused"
         assert events[0].status_code == 500
 
+    def test_get_analytics_pins_merged_fields_and_empty_guard(self):
+        # Normal case: both search and crawl events present.
+        self.tracker.record_search("python", result_count=5, duration_ms=100)
+        self.tracker.record_search("python", result_count=8, duration_ms=200)
+        self.tracker.record_search("rust", result_count=3)
+        self.tracker.record_crawl("http://example.com/a", status_code=200, duration_ms=50)
+        self.tracker.record_crawl("http://example.com/b", status_code=200)
+        self.tracker.record_crawl("http://other.com/c", status_code=404)
+
+        data = self.tracker.get_analytics()
+        # Search-source fields.
+        assert data.total_searches == 3
+        assert data.avg_search_duration_ms == 150.0
+        assert data.top_queries[0] == ("python", 2)
+        assert data.top_queries[1] == ("rust", 1)
+        # Crawl-source fields.
+        assert data.total_crawls == 3
+        assert data.avg_crawl_duration_ms == 50.0
+        assert data.top_domains[0] == ("example.com", 2)
+        assert data.success_count == 2
+        assert data.error_count == 1
+        # total_pages_indexed is never set by either sub-compute.
+        assert data.total_pages_indexed == 0
+
+        # Guard path: empty tracker -> both sub-computes return defaults.
+        empty = AnalyticsTracker().get_analytics()
+        assert empty.total_searches == 0
+        assert empty.total_crawls == 0
+        assert empty.avg_search_duration_ms == 0.0
+        assert empty.avg_crawl_duration_ms == 0.0
+        assert empty.top_queries == []
+        assert empty.top_domains == []
+        assert empty.hourly_searches == {}
+        assert empty.daily_searches == {}
+        assert empty.error_count == 0
+        assert empty.success_count == 0
+        assert empty.total_pages_indexed == 0
+
+
 
 class TestComputeSearchAnalytics:
     """Tests for _compute_search_analytics helper."""

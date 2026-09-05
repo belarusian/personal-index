@@ -167,7 +167,20 @@ class AnalyticsTracker:
         return data
 
     def get_analytics(self, top_n: int = 10) -> AnalyticsData:
-        """Compute aggregated analytics."""
+        """Merge search and crawl analytics into one AnalyticsData.
+
+        Calls ``_compute_search_analytics(top_n)`` and
+        ``_compute_crawl_analytics(top_n)`` and merges the two results
+        into a single AnalyticsData: search fields (total_searches,
+        avg_search_duration_ms, top_queries, hourly_searches,
+        daily_searches) come from the search result; crawl fields
+        (total_crawls, avg_crawl_duration_ms, top_domains, error_count,
+        success_count) come from the crawl result. ``total_pages_indexed``
+        is never set by either sub-compute, so it stays the dataclass
+        default 0. When both event lists are empty, both sub-computes
+        return a default AnalyticsData, so the merged result is all
+        zeros/empty.
+        """
         search_data = self._compute_search_analytics(top_n)
         crawl_data = self._compute_crawl_analytics(top_n)
 
