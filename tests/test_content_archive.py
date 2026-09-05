@@ -153,6 +153,16 @@ class TestContentArchiver:
         archived = archiver.archive_old(days_threshold=30)
         assert len(archived) >= 1
 
+    def test_archive_old_no_saved_at_never_archived(self):
+        """Pinning: item added without saved_at is never archived."""
+        archiver = ContentArchiver()
+        archiver.add_item("no_ts", "content")  # saved_at=None default
+        old_time = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+        archiver.add_item("old_ts", "content", saved_at=old_time)
+        archived = archiver.archive_old(days_threshold=30)
+        assert "no_ts" not in archived
+        assert "old_ts" in archived
+
     def test_archive_empty(self):
         archiver = ContentArchiver()
         archived = archiver.archive_old(days_threshold=30)
