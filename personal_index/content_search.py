@@ -290,7 +290,25 @@ class SearchIndex:
         ranking: str = "tf",
         highlight: bool = False,
     ) -> dict[str, Any]:
-        """Search the index and return ranked results."""
+        """Search the index and return ranked results.
+
+        Tokenizes the query (lowercase, punctuation stripped, stop-words and
+        single characters dropped). If no tokens remain, returns exactly
+        {"results": [], "total": 0, "query": query} without touching the index.
+
+        Otherwise finds candidate items, scores them with the requested
+        ranking ("tf" default = summed term frequency, "tfidf", or "bm25"),
+        optionally narrows them with `filters`, sorts by score descending,
+        and returns a dict with:
+          - "results": the offset:offset+limit page of entries, each a dict
+            with "item" (the stored item with its "content" key removed) and
+            "score" (rounded to 4 decimals); when highlight=True each entry
+            also carries "snippets" (list of Snippet.to_dict() dicts), and the
+            key is absent when highlight=False.
+          - "total": len(ranked) = the count of ALL ranked candidates BEFORE
+            the offset/limit page slice, so it can exceed len(results).
+          - "query": the original query string, echoed back unchanged.
+        """
         tokens = self._tokenize(query)
         if not tokens:
             return {"results": [], "total": 0, "query": query}

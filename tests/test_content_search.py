@@ -305,6 +305,39 @@ class TestSearchIndex:
         if len(r1["results"]) > 0 and len(r2["results"]) > 0:
             assert r1["results"][0]["item"]["id"] != r2["results"][0]["item"]["id"]
 
+    def test_search_returns_exact_fields_normal_and_guard(self, index):
+        # Normal case: 5 matching items, page sliced to limit=2.
+        index.add_items([
+            {"id": str(i), "title": "Python Tutorial",
+             "description": "Learn Python", "content": "python body"}
+            for i in range(5)
+        ])
+        result = index.search("python", limit=2)
+        # query echoed back unchanged
+        assert result["query"] == "python"
+        # total = ALL ranked candidates BEFORE the page slice (5), not the page len (2)
+        assert result["total"] == 5
+        assert len(result["results"]) == 2
+        # each entry: exactly {item, score}; content key stripped; score rounded to 4
+        for entry in result["results"]:
+            assert set(entry.keys()) == {"item", "score"}
+            assert "content" not in entry["item"]
+            assert entry["item"]["id"] in {str(i) for i in range(5)}
+            assert isinstance(entry["score"], float)
+            assert entry["score"] == round(entry["score"], 4)
+        # highlight=True adds a "snippets" key with 5-field snippet dicts
+        hl = index.search("python", limit=2, highlight=True)
+        for entry in hl["results"]:
+            assert set(entry.keys()) == {"item", "score", "snippets"}
+            assert entry["snippets"]
+            for snip in entry["snippets"]:
+                assert set(snip.keys()) == {
+                    "text", "highlighted", "start_offset", "end_offset", "matched_terms",
+                }
+        # Guard path: stop-word-only query tokenizes to nothing -> exact empty dict
+        guard = index.search("the and of")
+        assert guard == {"results": [], "total": 0, "query": "the and of"}
+
 
 class TestSearchIndexLoadNonDictGuard:
     """Regression: non-dict JSON in index file must not crash SearchIndex.load_index."""
