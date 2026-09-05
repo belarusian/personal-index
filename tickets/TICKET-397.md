@@ -1,6 +1,6 @@
 # TICKET-397
 
-- STATUS: OPEN
+- STATUS: RESOLVED (merged to main c8e3e59 via PR #633, gh #632 closed)
 - File: personal_index/content_summarizer.py
 - Function: `_tokenize` (line 42)
 - Symptom: class-(b) doc-drift. Docstring `"""Tokenize text into words."""` is a
