@@ -21,5 +21,5 @@ side effects on policy). Add ONE pinning behavior test that witnesses the
 returned tuple for a directive line (Disallow) and a comment/blank line
 (returning None agent).
 
-**Status:** OPEN
+**Status:** RESOLVED (merged to main 8f0d470 via PR #621, gh #620 closed)
 **Issue:** #620
