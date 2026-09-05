@@ -258,6 +258,27 @@ class TestContentDeduplicator:
         assert result.total_items == 0
         assert result.removed_count == 0
 
+    def test_dedup_by_hash_pins_returned_fields_and_empty_content_guard(self) -> None:
+        # Two items share content, one has empty content (guard: skipped).
+        items = [
+            {"url": "https://a.com", "content": "Shared body"},
+            {"url": "https://b.com", "content": "Shared body"},
+            {"url": "https://c.com", "content": ""},
+        ]
+        result = self.dedup.dedup_by_hash(items)
+        # Returned DedupResult fields.
+        assert result.total_items == 3
+        assert result.removed_count == 1
+        assert result.unique_items == 2
+        assert result.method == "hash"
+        # The single DuplicateGroup's fields.
+        assert len(result.duplicate_groups) == 1
+        group = result.duplicate_groups[0]
+        assert group.representative == "https://a.com"
+        assert group.duplicates == ["https://b.com"]
+        assert group.similarity_score == 1.0
+        assert group.dedup_method == "exact_hash"
+
     # ── dedup_by_url ─────────────────────────────────────────────
 
     def test_dedup_by_url_normalized(self) -> None:

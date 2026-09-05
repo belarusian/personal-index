@@ -147,7 +147,21 @@ class ContentDeduplicator:
         items: list[dict[str, Any]],
         hash_field: str = "content",
     ) -> DedupResult:
-        """Deduplicate items by content hash."""
+        """Deduplicate items by content hash.
+
+        Groups items by the sha256 hash of ``item.get(hash_field, "")``
+        (``hash_field`` defaults to ``"content"``). Items whose content hash
+        is empty (empty content) are skipped and never grouped. A
+        ``DuplicateGroup`` is built only for a hash group holding more than
+        one item: its ``representative`` is the first item's ``url``,
+        ``duplicates`` are the remaining items' ``url`` values,
+        ``similarity_score`` is 1.0 and ``dedup_method`` is ``"exact_hash"``.
+
+        Returns a ``DedupResult`` with ``total_items=len(items)``,
+        ``unique_items=len(items) - removed``, ``duplicate_groups`` the built
+        groups, ``removed_count`` the number of removed duplicates and
+        ``method="hash"``.
+        """
         hash_groups = self._group_by_hash(items, hash_field)
         groups, removed = self._build_dup_groups(hash_groups)
         return DedupResult(
