@@ -1,6 +1,6 @@
 # TICKET-418
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc-drift (blanket docstring, no sub-component enumeration)
 - File: personal_index/content_summarizer.py
 - Function: summarize (lines 155-171)
