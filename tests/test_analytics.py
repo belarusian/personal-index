@@ -467,3 +467,53 @@ class TestAnalyticsTrackerCorruptJsonGuard:
         assert self.tracker.load(path) == 0
         assert self.tracker.get_analytics().total_searches == 0
         assert self.tracker.get_analytics().total_crawls == 0
+
+
+class TestGetEventsDocPinning:
+    """Pin the corrected get_search_events/get_crawl_events docstring claim.
+
+    The docstring now states: a positive ``limit`` returns only the LAST
+    ``limit`` events (the most recent tail); a falsy ``limit`` (``None`` or
+    ``0``) returns all recorded events. These tests pin both the guard path
+    (falsy limit -> all) and the main behavior (positive limit -> tail)
+    against the returned list fields.
+    """
+
+    def setup_method(self):
+        self.tracker = AnalyticsTracker()
+
+    def test_search_events_falsy_limit_returns_all(self):
+        # Guard path: limit=0 is falsy -> ALL events, in order.
+        self.tracker.record_search("q1")
+        self.tracker.record_search("q2")
+        self.tracker.record_search("q3")
+        events = self.tracker.get_search_events(limit=0)
+        assert [e.query for e in events] == ["q1", "q2", "q3"]
+
+    def test_search_events_positive_limit_returns_tail(self):
+        # Main behavior: limit=2 -> the LAST 2 events (most recent tail).
+        self.tracker.record_search("q1")
+        self.tracker.record_search("q2")
+        self.tracker.record_search("q3")
+        events = self.tracker.get_search_events(limit=2)
+        assert [e.query for e in events] == ["q2", "q3"]
+
+    def test_crawl_events_falsy_limit_returns_all(self):
+        # Guard path: limit=0 is falsy -> ALL crawl events, in order.
+        self.tracker.record_crawl("http://a.com")
+        self.tracker.record_crawl("http://b.com")
+        self.tracker.record_crawl("http://c.com")
+        events = self.tracker.get_crawl_events(limit=0)
+        assert [e.url for e in events] == [
+            "http://a.com",
+            "http://b.com",
+            "http://c.com",
+        ]
+
+    def test_crawl_events_positive_limit_returns_tail(self):
+        # Main behavior: limit=1 -> the LAST crawl event (most recent tail).
+        self.tracker.record_crawl("http://a.com")
+        self.tracker.record_crawl("http://b.com")
+        self.tracker.record_crawl("http://c.com")
+        events = self.tracker.get_crawl_events(limit=1)
+        assert [e.url for e in events] == ["http://c.com"]

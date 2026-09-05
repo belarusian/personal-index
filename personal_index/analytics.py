@@ -198,14 +198,24 @@ class AnalyticsTracker:
         )
 
     def get_search_events(self, limit: int | None = None) -> list[SearchEvent]:
-        """Get search events, optionally limited."""
+        """Return the recorded search events in order.
+
+        A positive ``limit`` returns only the last ``limit`` events
+        (the most recent tail). A falsy ``limit`` (``None`` or ``0``)
+        returns all recorded events.
+        """
         events = self._search_events
         if limit:
             events = events[-limit:]
         return events
 
     def get_crawl_events(self, limit: int | None = None) -> list[CrawlEvent]:
-        """Get crawl events, optionally limited."""
+        """Return the recorded crawl events in order.
+
+        A positive ``limit`` returns only the last ``limit`` events
+        (the most recent tail). A falsy ``limit`` (``None`` or ``0``)
+        returns all recorded events.
+        """
         events = self._crawl_events
         if limit:
             events = events[-limit:]
