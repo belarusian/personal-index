@@ -91,6 +91,14 @@ class TestScoreSentence:
         score = _score_sentence("Hello world", word_freq)
         assert score == 0.0
 
+    def test_score_is_mean_not_sum(self):
+        # Two tokens each with frequency 3: raw sum would be 6.0, but the
+        # documented behavior is the MEAN per-token frequency (6 / 2 = 3.0).
+        word_freq = {"python": 3, "language": 3}
+        score = _score_sentence("python language", word_freq)
+        assert score == 3.0
+        assert score != 6.0
+
 
 class TestSummarize:
     def test_short_text_returns_as_is(self):
