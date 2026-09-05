@@ -27,7 +27,20 @@ class ContentChangelog:
         self._entries.append(entry)
 
     def get_entries(self, url: str | None = None) -> list[ChangeEntry]:
-        """Get change entries, optionally filtered by URL."""
+        """Return change entries, optionally filtered by exact URL.
+
+        Args:
+            url: When truthy, only entries whose ``e.url`` equals ``url``
+                (exact string match, not substring or prefix) are returned.
+                When falsy (``None`` or empty string), ALL entries are
+                returned.
+
+        Returns:
+            A NEW list of ``ChangeEntry`` objects (a copy, not the internal
+            list) - the filtered subset when ``url`` is truthy, otherwise a
+            copy of every stored entry. An empty changelog returns an empty
+            list in both cases.
+        """
         if url:
             return [e for e in self._entries if e.url == url]
         return list(self._entries)
