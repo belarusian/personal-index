@@ -1,6 +1,6 @@
 # TICKET-451: json_export.py _filter_fields generic docstring (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged to main, gh #745 closed)
 
 ## Module
 personal_index/content_export/json_export.py
