@@ -123,7 +123,21 @@ class JsonExporter:
                          default=str)
 
     def _filter_fields(self, item: dict[str, Any]) -> dict[str, Any]:
-        """Filter item fields based on export options."""
+        """Filter item fields based on export options.
+
+        Sub-steps, in order:
+          1. Copy the item into a new dict (the input is not mutated).
+          2. Pop "metadata" when include_metadata is False.
+          3. Pop "tags" when include_tags is False.
+          4. Pop BOTH "score" and "score_details" when include_scores
+             is False.
+          5. Pop every name in exclude_fields.
+          6. When fields is a non-empty whitelist, keep only the keys
+             present in fields (applied last, so it can override the
+             earlier pops).
+
+        Returns the filtered dict.
+        """
         result = dict(item)
 
         if not self.options.include_metadata:
