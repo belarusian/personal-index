@@ -237,3 +237,30 @@ class TestGetFilterReasonsReturnedObjectPinning:
         )
         reasons = filter_no_store.get_filter_reasons(page)
         assert reasons == []
+
+
+class TestGetFilterReasonsRelevanceTitleContentPinning:
+    """Pin check 8 (minimum relevance score) scoring the combined title+content.
+
+    The docstring claims the store total_score is computed over title+content,
+    matching sibling check 7 (_matches_interests). A page whose keyword appears
+    ONLY in the title (not the content) must still score high enough to pass
+    the minimum — proving the title is counted.
+    """
+
+    def test_keyword_only_in_title_counts_toward_relevance(self, tmp_path):
+        store = InterestStore(store_path=str(tmp_path / "interests.json"))
+        store.add(Interest("Py", InterestType.KEYWORD, "python", 5))
+        config = FilterConfig(min_relevance_score=3.0)
+        f = ContentFilter(config=config, interest_store=store)
+        # "python" appears once in the title, zero times in the content.
+        page = CrawledPage(
+            url="https://example.com",
+            title="Python",
+            content="x" * 150,
+        )
+        # title+content score = 1 occurrence * priority 5 = 5.0 >= 3.0 -> pass.
+        # (content-only would be 0.0 < 3.0 -> a "relevance score" reason.)
+        reasons = f.get_filter_reasons(page)
+        assert not any("relevance score" in r for r in reasons)
+        assert f.should_include(page) is True
