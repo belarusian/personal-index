@@ -260,7 +260,15 @@ def _run_tag_index(tag_store: TagStore, search_index: SearchIndex, page: Crawled
 
 
 def _check_full_pipeline(data_dir: str) -> tuple[bool, str]:
-    """Run a full pipeline self-test."""
+    """Run a full pipeline self-test.
+
+    Creates test content via _create_test_content(data_dir), sets up a mini
+    pipeline via _setup_mini_pipeline(test_data_dir), creates a test page via
+    _create_test_page(test_data_dir), then runs the filter stage
+    (_verify_filter), score stage (_run_score), and tag-index stage
+    (_run_tag_index). Returns (True, "") on success; (False, <reason>) on
+    any stage failure or exception.
+    """
     import shutil
     test_data_dir, _ = _create_test_content(data_dir)
     try:
