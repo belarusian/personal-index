@@ -1,6 +1,6 @@
 # TICKET-394 — importer.py _import_json placeholder docstring (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged to main 5ad5e64 via PR #627, gh #626 closed)
 
 ## File
 personal_index/importer.py
