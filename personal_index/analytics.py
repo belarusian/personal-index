@@ -212,7 +212,21 @@ class AnalyticsTracker:
         return events
 
     def get_search_stats(self) -> dict[str, Any]:
-        """Get detailed search statistics."""
+        """Compute per-search statistics over the recorded search events.
+
+        Guard path: when no search events have been recorded, returns
+        exactly ``{"total": 0}`` (no other keys).
+
+        Normal path: returns a dict with these fields:
+            total: number of recorded search events.
+            avg_results: mean of each event's result_count.
+            max_results / min_results: max / min result_count.
+            avg_duration_ms / max_duration_ms: computed only over events
+                whose duration_ms > 0 (0 when none qualify).
+            click_through_rate: fraction of events with a truthy
+                clicked_url (clicked / total).
+            unique_queries: count of distinct query strings.
+        """
         if not self._search_events:
             return {"total": 0}
 
