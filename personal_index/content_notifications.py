@@ -139,13 +139,23 @@ class NotificationManager:
         return False
 
     def evaluate_event(self, event: dict[str, Any]) -> list[Notification]:
-        """Evaluate an event against all rules and generate notifications.
+        """Evaluate an event against all enabled rules and generate notifications.
+
+        For each rule in self.rules:
+        - Skip if rule.matches(event) is False (disabled rule or
+          condition mismatch).
+        - Skip if the rule's cooldown has not elapsed since its last
+          notification (_last_sent[rule.rule_id] within
+          rule.cooldown_seconds of now).
+        - Otherwise create a notification via _create_notification,
+          append it to self.notifications, record now in
+          _last_sent[rule.rule_id], and add it to the returned list.
 
         Args:
             event: Event data to evaluate.
 
         Returns:
-            List of generated notifications.
+            List of generated Notification objects (empty if no rule fired).
         """
         generated = []
         now = datetime.now(timezone.utc)
