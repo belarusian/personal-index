@@ -106,6 +106,19 @@ class TestAnnotation:
         a.remove_tag("a")
         assert "a" not in a.tags
 
+    def test_add_tag_dedup_guard_and_updated_at(self):
+        # normal case: new tag is appended and updated_at is set
+        a = Annotation(content_id="c1", text="Note", tags=["a"])
+        before = a.updated_at
+        a.add_tag("b")
+        assert a.tags == ["a", "b"]
+        assert a.updated_at is not None
+        assert a.updated_at != before
+        # guard path: duplicate tag is a no-op (no duplicate appended)
+        a.add_tag("b")
+        assert a.tags == ["a", "b"]
+        assert a.tags.count("b") == 1
+
     def test_annotation_serialization_roundtrip(self):
         a = Annotation(
             content_id="c1",
