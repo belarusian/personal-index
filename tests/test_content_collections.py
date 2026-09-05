@@ -171,6 +171,19 @@ class TestCollectionManager:
         result = self.manager.remove_item("nonexistent", "item1")
         assert result is False
 
+    def test_remove_item_guard_and_reverse_index(self):
+        # Guard path: missing collection -> False, reverse index untouched.
+        cid = self.manager.create("T")
+        self.manager.add_item(cid, "item1")
+        assert self.manager._item_to_collections["item1"] == [cid]
+        assert self.manager.remove_item("nonexistent", "item1") is False
+        assert self.manager._item_to_collections["item1"] == [cid]
+        # Success path: item removed from collection AND reverse index;
+        # reverse-index list entry deleted when it becomes empty.
+        assert self.manager.remove_item(cid, "item1") is True
+        assert "item1" not in self.manager.get(cid).item_ids
+        assert "item1" not in self.manager._item_to_collections
+
     def test_update_collection_name(self):
         cid = self.manager.create("Old Name")
         self.manager.update_name(cid, "New Name")
