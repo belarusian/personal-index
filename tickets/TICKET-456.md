@@ -18,5 +18,5 @@
   path: missing collection -> False, reverse index untouched; success path:
   collection removed and its items' reverse-index entries cleaned up, list
   entry deleted when empty).
-- Status: OPEN
+- Status: RESOLVED (1a150c0); renumbered from 455 (collision)
 - Issue: #751
