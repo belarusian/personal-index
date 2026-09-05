@@ -83,8 +83,11 @@ class TestContentExtractionE2E:
         html = "<html><head><title>Empty</title></head><body></body></html>"
         result = extractor.extract(html)
         assert result.title == "Empty"
-        # Text includes title by default
-        assert "Empty" in result.text
+        # The page <title> is captured in result.title and decomposed out of the
+        # visible body text, so it must NOT leak into result.text (TICKET-381).
+        # With an empty <body>, the extracted text is empty.
+        assert "Empty" not in result.text
+        assert result.text == ""
 
     def test_extract_no_title(self):
         """Handle page without title tag."""
