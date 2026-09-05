@@ -133,17 +133,28 @@ class TestContentPinner:
         assert "item-2" in pinner._pinned
         assert "item-1" not in pinner._pinned
 
-    def test_unpin_always_returns_true_no_failure_path(self, pinner):
-        # Regression (TICKET-324): the docstring contract is that unpin()
-        # unconditionally returns True — there is no False failure path.
-        # Unpinning a pinned id and unpinning a never-pinned id must both
-        # return True (not False).
+    def test_unpin_returns_false_and_rolls_back_on_save_failure(self, pinner, monkeypatch):
+        # Regression (TICKET-426): the original claim is "True if
+        # successfully unpinned (or was not pinned)." When persistence
+        # fails (OSError in _save), unpin() returns False and the item
+        # is restored to pinned state.
+        pinner.pin("item-1")
+        assert pinner.is_pinned("item-1") is True
+
+        def fake_save():
+            raise OSError("disk full")
+
+        monkeypatch.setattr(pinner, "_save", fake_save)
+        assert pinner.unpin("item-1") is False
+        assert pinner.is_pinned("item-1") is True
+
+    def test_unpin_noop_returns_true(self, pinner):
+        # Unpinning a never-pinned id is a no-op and returns True.
+        assert pinner.unpin("never-pinned") is True
+        # Unpinning an already-unpinned id is also a no-op, still True.
         pinner.pin("item-1")
         assert pinner.unpin("item-1") is True
-        # Unpinning the same id again (now absent) is a no-op, still True.
         assert pinner.unpin("item-1") is True
-        # Unpinning a never-pinned id is also a no-op, still True.
-        assert pinner.unpin("never-pinned") is True
 
     # -- is_pinned() --
     def test_is_pinned_true(self, pinner):
