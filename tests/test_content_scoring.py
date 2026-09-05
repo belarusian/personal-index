@@ -356,3 +356,54 @@ class TestContentScorer:
         }
         assert guard.factors["authority"] == 0.5
         assert guard.factors["freshness"] == 0.5
+
+
+# ── score_page doc-drift pinning (TICKET-430) ──────────────────────
+
+class _FakeInterest:
+    def __init__(self, keywords, topics=(), value=""):
+        self.keywords = keywords
+        self.topics = list(topics)
+        self.value = value
+
+
+class _FakeInterestStore:
+    def __init__(self, interests):
+        self._interests = interests
+
+    def list_all(self):
+        return self._interests
+
+
+class _FakePage:
+    def __init__(self, content, word_count=0, domain_authority=0.5, crawled_at=None):
+        self.content = content
+        self.word_count = word_count
+        self.domain_authority = domain_authority
+        self.crawled_at = crawled_at
+
+
+class TestScorePagePinning:
+    """Pin the corrected score_page contract (normal + guard path)."""
+
+    def test_normal_interest_matching(self):
+        """Normal case: a matching keyword drives relevance > 0."""
+        scorer = ContentScorer()
+        store = _FakeInterestStore([
+            _FakeInterest(keywords=["python", "django"]),
+        ])
+        page = _FakePage(content="Learning python and django today")
+        score = scorer.score_page(page, interest_store=store)
+        assert isinstance(score, ContentScore)
+        # 2 candidates (python, django), both match -> relevance 1.0
+        assert score.relevance == 1.0
+        assert score.factors["relevance"] == 1.0
+
+    def test_guard_path_no_interest_store(self):
+        """Guard path: falsy interest_store -> relevance 0.0."""
+        scorer = ContentScorer()
+        page = _FakePage(content="Learning python and django today")
+        score = scorer.score_page(page, interest_store=None)
+        assert isinstance(score, ContentScore)
+        assert score.relevance == 0.0
+        assert score.factors["relevance"] == 0.0

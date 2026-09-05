@@ -314,7 +314,33 @@ class ContentScorer:
         page: Any,
         interest_store: Any = None,
     ) -> ContentScore:
-        """Score a CrawledPage using interest matching."""
+        """Score a CrawledPage using interest matching.
+
+        Reads from the page object (via getattr with defaults):
+          content = page.content or "" (empty string when missing),
+          word_count = page.word_count or len(content.split()),
+          domain_authority = page.domain_authority or 0.5,
+          last_crawled = page.crawled_at or None.
+
+        Interest matching (relevance): only when ``interest_store`` is
+        truthy, iterates ``interest_store.list_all()`` and, for each
+        interest, counts a keyword match for every keyword (str, case-
+        insensitive substring of content), every topic (case-insensitive
+        substring) and, when ``interest.value`` is non-empty, the value
+        itself; each counted candidate increments ``total_keywords`` and
+        a match increments ``keyword_matches``.
+
+        Guard path: when ``interest_store`` is falsy the loop is skipped
+        entirely, so ``keyword_matches`` stays 0 and ``total_keywords``
+        stays 0 (floored to 1 below) -> relevance 0.0.
+
+        Also detects has_code (regex ``<code>``/triple-backtick/def/
+        class/import) and has_images (regex ``<img``/png/jpg/gif) from
+        the content, then delegates to ``self.score(...)`` with
+        ``total_keywords=max(total_keywords, 1)`` so relevance is
+        matches/total (0.0 when no matches). Returns the resulting
+        ContentScore.
+        """
         content = getattr(page, "content", "") or ""
         word_count = getattr(page, "word_count", 0) or len(content.split())
         keyword_matches = 0
