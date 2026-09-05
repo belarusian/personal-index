@@ -52,6 +52,15 @@ def _find_except_blocks(source):
     return results
 
 
+def _method_line_span(source, func_name):
+    """Return (start_line, end_line) of the top-level method named ``func_name``."""
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == func_name:
+            return node.lineno, node.end_lineno
+    raise AssertionError(f"method {func_name!r} not found in source")
+
+
 class TestContentCategorizerExceptionHandling:
     """content_categorizer.py:559 - urlparse should catch ValueError, not Exception."""
 
@@ -83,7 +92,12 @@ class TestImporterExceptionHandling:
         from personal_index import importer
         source = _get_source_lines(importer)
         blocks = _find_except_blocks(source)
-        json_blocks = [b for b in blocks if 85 < b["lineno"] < 95]
+        start, end = _method_line_span(source, "_import_json")
+        json_blocks = [
+            b
+            for b in blocks
+            if start < b["lineno"] < end and "JSONDecodeError" in b["exc_type"]
+        ]
         assert len(json_blocks) == 1
         # json.JSONDecodeError is a subclass of ValueError
         assert "JSONDecodeError" in json_blocks[0]["exc_type"] or "ValueError" in json_blocks[0]["exc_type"]
@@ -92,7 +106,12 @@ class TestImporterExceptionHandling:
         from personal_index import importer
         source = _get_source_lines(importer)
         blocks = _find_except_blocks(source)
-        csv_blocks = [b for b in blocks if 130 < b["lineno"] < 140]
+        start, end = _method_line_span(source, "_import_csv")
+        csv_blocks = [
+            b
+            for b in blocks
+            if start < b["lineno"] < end and "ValueError" in b["exc_type"]
+        ]
         assert len(csv_blocks) == 1
         assert "ValueError" in csv_blocks[0]["exc_type"]
 
@@ -100,7 +119,12 @@ class TestImporterExceptionHandling:
         from personal_index import importer
         source = _get_source_lines(importer)
         blocks = _find_except_blocks(source)
-        xml_blocks = [b for b in blocks if 220 < b["lineno"] < 230]
+        start, end = _method_line_span(source, "_import_xml")
+        xml_blocks = [
+            b
+            for b in blocks
+            if start < b["lineno"] < end and "ValueError" in b["exc_type"]
+        ]
         assert len(xml_blocks) == 1
         assert "ValueError" in xml_blocks[0]["exc_type"]
 

@@ -81,7 +81,21 @@ class Importer:
         return ImportResult(errors=[f"Unsupported format: {fmt}"], source=source, format=fmt)
 
     def _import_json(self, content: str, source: str = "") -> ImportResult:
-        """Import from JSON format."""
+        """Import bookmarks from a JSON document or array.
+
+        Decodes ``content`` with :func:`json.loads`; on ``JSONDecodeError``
+        appends ``"Invalid JSON: ..."`` to ``result.errors`` and returns
+        early with zero items processed. A top-level JSON object (dict) is
+        normalized to a single-element list so dict and array inputs are
+        handled uniformly. For each item: if the resulting ``Bookmark.url``
+        is non-empty the bookmark is written via ``self._manager.add`` and
+        ``result.total_imported`` is incremented; if the url is empty the
+        item is counted in ``result.total_skipped`` with no manager write.
+        A per-item ``ValueError``/``TypeError`` (raised during ``Bookmark``
+        construction or ``manager.add``) is caught, appended to
+        ``result.errors`` as ``"Error importing item: ..."`` and the loop
+        continues to the next item rather than aborting.
+        """
         result = ImportResult(source=source, format="json")
         try:
             data = json.loads(content)
