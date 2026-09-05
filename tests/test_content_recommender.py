@@ -215,6 +215,36 @@ class TestRecommender:
         assert "python" in recs_kw[0].url
 
 
+    def test_recommend_pins_returned_fields_and_empty_pool_guard(self):
+        """Pin the returned Recommendation object fields (normal case)
+        and the empty-pool guard path (TICKET-422)."""
+        rec = Recommender(min_score=0.0)
+        rec.add_item(ContentItem(
+            url="https://example.com/python",
+            title="Python Tutorial",
+            content="Learn Python programming",
+            keywords=["python", "tutorial"],
+            tags=["programming"],
+            score=8.0,
+        ))
+        seed = ContentItem(
+            url="https://example.com/seed",
+            title="Python Basics",
+            content="Introduction to Python",
+            keywords=["python"],
+        )
+        recs = rec.recommend(seed, top_n=5)
+        assert len(recs) == 1
+        r = recs[0]
+        assert r.url == "https://example.com/python"
+        assert r.title == "Python Tutorial"
+        assert isinstance(r.score, float) and r.score > 0.0
+        assert "python" in r.matching_keywords
+        assert r.matching_tags == []  # seed has no tags
+        assert "keywords:" in r.reason
+        # Guard path: an empty pool returns [].
+        assert Recommender().recommend(seed) == []
+
 class TestModuleDocstringContract:
     def test_docstring_does_not_promise_interest_matching(self):
         """Regression: module docstring must not over-promise capabilities.

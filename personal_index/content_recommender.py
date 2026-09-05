@@ -141,7 +141,35 @@ class Recommender:
         tag_weight: float = 0.3,
         score_weight: float = 0.1,
     ) -> list[Recommendation]:
-        """Generate recommendations based on a seed content item."""
+        """Recommend content items related to ``seed``.
+
+        If the pool is empty (no items added) this returns ``[]``.
+        The seed itself is excluded by matching ``item.url == seed.url``.
+        For each remaining item two Jaccard sub-scores are computed:
+        keyword overlap (``_keyword_overlap_score``) and tag similarity
+        (``_tag_similarity_score``), each ``len(common) / len(union)``
+        (0.0 when either side has no keywords/tags). The combined score is
+        ``kw_score * keyword_weight + tag_score * tag_weight + norm *
+        score_weight`` where ``norm = min(item.score / 10.0, 1.0)`` when
+        ``item.score > 0`` else ``0.0``. Items whose combined score is below
+        ``min_score`` are dropped. Each surviving Recommendations reason is
+        ``"keywords: <top-5 common>"`` and/or ``"tags: <all common>"``
+        (semicolon-joined), or ``"score-based"`` when neither matched. The
+        survivors are sorted by score (descending) and truncated to
+        ``top_n``.
+
+        Args:
+            seed: The seed content item to recommend against.
+            top_n: Maximum number of recommendations to return.
+            keyword_weight: Weight for the keyword-overlap sub-score.
+            tag_weight: Weight for the tag-similarity sub-score.
+            score_weight: Weight for the normalized existing score.
+
+        Returns:
+            List of Recommendation objects, each with url/title/score/
+            reason/matching_keywords/matching_tags, sorted by score
+            (descending) and truncated to ``top_n``.
+        """
         if not self._items:
             return []
         candidates: list[Recommendation] = []
