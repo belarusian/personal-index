@@ -1,6 +1,6 @@
 # TICKET-399
 
-- Status: OPEN
+- Status: RESOLVED (PR #637 merged, issue #636 closed)
 - File: personal_index/importer.py
 - Function: `_import_xml` (line 220, docstring line 221)
 - Symptom: docstring `"""Import from generic XML format."""` is a generic
