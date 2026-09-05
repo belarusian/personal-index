@@ -20,3 +20,4 @@
   is grouped/removed exactly as before; only the empty-URL case changes.
 - class: (a) behavioral
 - Issue: #601
+- status: RESOLVED (merged to main ad03d36, gh #601 closed)
