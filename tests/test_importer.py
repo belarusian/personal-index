@@ -188,6 +188,18 @@ class TestImporterHtml:
         result = self.importer.import_from_file(str(path))
         assert result.total_imported == 2
         assert result.format == "html"
+    def test_import_html_title_attr_and_category(self, tmp_path):
+        content = '<!DOCTYPE NETSCAPE-Bookmark-file><ROOT><a href="http://a.com" title="My Title">A</a></ROOT>'
+        path = tmp_path / "bookmarks.html"
+        path.write_text(content)
+        result = self.importer.import_from_file(str(path))
+        assert result.total_imported == 1
+        assert result.format == "html"
+        assert result.total_skipped == 0
+        bm = self.importer.manager.get("http://a.com")
+        assert bm is not None
+        assert bm.title == "My Title"
+        assert bm.category == "imported"
 
     def test_import_html_invalid(self, tmp_path):
         content = "<not valid html"

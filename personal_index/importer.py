@@ -164,7 +164,21 @@ class Importer:
         return result
 
     def _import_html(self, content: str, source: str = "") -> ImportResult:
-        """Import from HTML bookmark format (Netscape/Neko)."""
+        """Import bookmarks from an HTML bookmark file (Netscape/Neko).
+
+        Validates that ``content.strip()`` starts with ``"<"`` and contains
+        ``">"``; otherwise appends ``"Invalid HTML: content does not appear to
+        be HTML"`` to ``result.errors`` and returns early. Parses ``content``
+        with ``BeautifulSoup(content, "html.parser")``; on ``ImportError``
+        falls back to ``ET_fromstring`` + ``_parse_html_element`` (appending
+        ``"Invalid HTML/XML: ..."`` to ``result.errors`` on ``ET_ParseError``
+        and returning early). With BeautifulSoup, iterates
+        ``soup.find_all("a", href=True)`` and, per anchor, builds a
+        ``Bookmark`` from ``href`` (url), the ``title`` attribute or
+        ``get_text(strip=True)`` (title) and ``category="imported"``; adds it
+        to ``self._manager`` and increments ``result.total_imported``. Returns
+        the accumulated ``ImportResult`` (``format="html"``).
+        """
         result = ImportResult(source=source, format="html")
 
         # Basic validation: content must look like HTML
