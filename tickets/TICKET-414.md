@@ -2,7 +2,7 @@
 
 - Module: personal_index/content_search.py
 - Function: SearchIndex.search (line 284, docstring line 293)
-- Status: OPEN
+- Status: RESOLVED (cycle 172, PR #667, gh #664 closed, main a15339a)
 - Class: (b) doc-drift (docstring under-promises / does not enumerate behavior)
 
 ## Symptom
