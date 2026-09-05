@@ -61,10 +61,12 @@ class WebhookConfig:
     enabled: bool = True
 
     def should_send(self, event: WebhookEvent) -> bool:
-        """Process should_send.
+        """Return whether this endpoint should receive the given event.
 
-        Args:
-        event.
+        Returns False when ``enabled`` is False (checked before any event
+        matching). When enabled and ``events`` is empty, returns True for every
+        event. Otherwise returns True only when ``event`` is a member of
+        ``self.events``.
         """
         if not self.enabled:
             return False
@@ -80,18 +82,19 @@ class WebhookSender:
         self._configs: list[WebhookConfig] = []
 
     def add_endpoint(self, config: WebhookConfig) -> None:
-        """Process add_endpoint.
+        """Append a webhook endpoint config to the sender's endpoint list.
 
-        Args:
-        config.
+        Adds ``config`` to the internal ``_configs`` list in call order, with
+        no URL validation or de-duplication. Returns None.
         """
         self._configs.append(config)
 
     def remove_endpoint(self, url: str) -> bool:
-        """Process remove_endpoint.
+        """Remove the first endpoint whose URL matches, if any.
 
-        Args:
-        url.
+        Scans the internal ``_configs`` list in order; when a config's ``url``
+        equals ``url``, removes that config and returns True. When no config
+        matches, leaves the list unchanged and returns False.
         """
         for i, config in enumerate(self._configs):
             if config.url == url:

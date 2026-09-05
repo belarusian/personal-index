@@ -56,6 +56,20 @@ class TestWebhookConfig:
         config = WebhookConfig(url="http://hook.example.com", enabled=False)
         assert config.should_send(WebhookEvent.CRAWL_COMPLETE) is False
 
+    def test_disabled_config_short_circuits_before_event_match(self):
+        # Pin the corrected should_send claim: the enabled check fires BEFORE
+        # the event-membership check, so a disabled config returns False even
+        # when the event IS in its events list.
+        config = WebhookConfig(
+            url="http://hook.example.com",
+            events=[WebhookEvent.CRAWL_COMPLETE],
+            enabled=False,
+        )
+        # sibling condition present: the event is a member of the list
+        assert WebhookEvent.CRAWL_COMPLETE in config.events
+        # but the send is absent because enabled is False
+        assert config.should_send(WebhookEvent.CRAWL_COMPLETE) is False
+
     def test_custom_headers(self):
         config = WebhookConfig(
             url="http://hook.example.com",
