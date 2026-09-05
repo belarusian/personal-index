@@ -1,6 +1,6 @@
 # TICKET-419
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc-drift (blanket docstring, no sub-component enumeration)
 - File: personal_index/content_scoring.py
 - Function: ContentScorer.score (line 146)
