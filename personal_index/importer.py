@@ -232,7 +232,22 @@ class Importer:
         return result
 
     def _parse_html_element(self, element, result: ImportResult, path: list[str]):
-        """Recursively parse HTML bookmark elements (ElementTree fallback)."""
+        """Recursively walk the ElementTree fallback tree, importing
+        ``<a>`` anchors into ``self._manager``.
+
+        Reads ``element.tag`` (lowercased). Only when it equals ``"a"``
+        does it read the ``href`` attribute (default ``""``) and the
+        ``title`` attribute (falling back to ``element.text`` or ``""``);
+        a ``Bookmark`` (``url=href``, ``title=title``,
+        ``category="imported"``) is added to ``self._manager`` and
+        ``result.total_imported`` incremented ONLY when ``href`` is
+        truthy - an ``<a>`` with no ``href`` is silently skipped (no
+        ``total_skipped`` increment, no error). Every child element is
+        then recursed into via ``self._parse_html_element(child, result,
+        path)``. The ``path`` parameter is accepted but never used. The
+        method returns ``None``; it mutates ``result`` and
+        ``self._manager`` in place.
+        """
         tag = element.tag.lower()
 
         if tag == "a":
