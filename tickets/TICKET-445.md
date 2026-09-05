@@ -1,6 +1,6 @@
 # TICKET-445: content_validation.py ContentValidator.validate docstring over-promises (blanket)
 
-Status: OPEN
+Status: RESOLVED
 Issue: #728
 Module: personal_index/content_validation.py
 Method: ContentValidator.validate
