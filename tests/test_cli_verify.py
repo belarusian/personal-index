@@ -132,3 +132,20 @@ class TestPipelineHelpers:
         page = CrawledPage(url="http://x.com", title="Python", content="python programming")
         results = _run_tag_index(tag_store, search_index, page)
         assert len(results) > 0
+
+    def test_check_full_pipeline_success(self, tmp_path):
+        """_check_full_pipeline returns (True, '') on success."""
+        from personal_index.cli_verify import _check_full_pipeline
+
+        passed, error = _check_full_pipeline(str(tmp_path))
+        assert passed is True
+        assert error == ""
+
+    def test_check_full_pipeline_failure(self, tmp_path, monkeypatch):
+        """_check_full_pipeline returns (False, reason) when filter rejects."""
+        from personal_index import cli_verify
+
+        monkeypatch.setattr(cli_verify, "_verify_filter", lambda f, p: False)
+        passed, error = cli_verify._check_full_pipeline(str(tmp_path))
+        assert passed is False
+        assert "Filter rejected valid content" in error
