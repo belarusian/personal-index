@@ -120,10 +120,31 @@ class TestWebhookManager:
         assert self.manager.mark_failed(payload_id, "Connection error") is True
         assert len(self.manager.get_pending()) == 0
 
-    def test_mark_failed_no_retry_scheduling_docstring(self) -> None:
-        import inspect
-        src = inspect.getsource(self.manager.mark_failed)
-        assert "schedule retry" not in src
+    def test_mark_failed_schedules_retry_when_retries_remain(self) -> None:
+        from datetime import datetime, timezone
+
+        self.manager.register_endpoint(
+            "https://example.com/webhook",
+            events=[WebhookEventType.CONTENT_ADDED],
+            max_retries=3,
+            retry_delay=60.0,
+        )
+        payloads = self.manager.dispatch_event(
+            WebhookEventType.CONTENT_ADDED,
+            {"title": "New Content"},
+        )
+        payload_id = payloads[0].payload_id
+        before = datetime.now(timezone.utc)
+        assert self.manager.mark_failed(payload_id, "Connection error") is True
+        # Retry is possible (failure_count 1 < max_retries 3): the payload
+        # stays pending and a next retry time is scheduled.
+        assert len(self.manager.get_pending()) == 1
+        assert len(self.manager.get_delivered()) == 0
+        payload = self.manager.get_pending()[0]
+        assert payload.next_retry_at is not None
+        assert payload.next_retry_at >= before
+        assert payload.attempts == 1
+        assert payload.last_error == "Connection error"
 
     def test_mark_failed_moves_to_delivered_when_retries_exhausted(self) -> None:
         self.manager.register_endpoint(

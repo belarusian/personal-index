@@ -11,7 +11,7 @@ import hmac
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
 
@@ -95,6 +95,7 @@ class WebhookPayload:
     delivered_at: datetime | None = None
     last_error: str | None = None
     signature: str | None = None
+    next_retry_at: datetime | None = None
 
 
 class WebhookManager:
@@ -200,7 +201,7 @@ class WebhookManager:
         return False
 
     def mark_failed(self, payload_id: str, error: str) -> bool:
-        """Mark a payload as failed; drop it to delivered once retries are exhausted."""
+        """Mark a payload as failed and schedule retry if possible."""
         for payload in self.pending:
             if payload.payload_id == payload_id:
                 payload.attempts += 1
@@ -208,7 +209,14 @@ class WebhookManager:
                 endpoint = self.endpoints.get(payload.endpoint_id)
                 if endpoint:
                     endpoint.failure_count += 1
-                    if not endpoint.should_retry():
+                    if endpoint.should_retry():
+                        # Schedule the next retry attempt.
+                        payload.next_retry_at = (
+                            datetime.now(timezone.utc)
+                            + timedelta(seconds=endpoint.retry_delay)
+                        )
+                    else:
+                        payload.next_retry_at = None
                         self.pending.remove(payload)
                         self.delivered.append(payload)
                 return True
