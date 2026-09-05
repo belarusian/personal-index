@@ -1,6 +1,6 @@
 # TICKET-415
 
-- Status: OPEN
+- Status: RESOLVED (cycle 54, PR #670, gh #668 closed, main 9a39f41)
 - Class: (b) doc-drift / docstring over-promise (CLAIM TRUTH)
 - File: personal_index/content_pin.py
 - Function: ContentPinner.pin (line 82)
