@@ -2,7 +2,7 @@
 
 - Module: personal_index/analytics.py
 - Function: AnalyticsTracker.get_search_stats (line 214)
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc-drift (docstring under-promises / does not enumerate behavior)
 
 ## Symptom
