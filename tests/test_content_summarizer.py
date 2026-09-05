@@ -218,3 +218,26 @@ class TestSummarizePageTitleDocstringContract:
         assert result.original_text.startswith(title)
         # The title becomes the first sentence of the combined text.
         assert result.sentences[0].startswith(title)
+
+
+def test_word_frequency_filters_stopwords_and_short_words():
+    """Pin the corrected docstring: STOPWORDS and len<=2 tokens are excluded."""
+    from personal_index.content_summarizer import _word_frequency
+
+    # "the" is a stopword, "a" is len<=2, "cat" and "sat" should appear
+    result = _word_frequency("The cat sat on the mat. A cat is a cat.")
+    assert "cat" in result
+    assert result["cat"] == 3
+    assert "sat" in result
+    assert result["sat"] == 1
+    assert "mat" in result
+    assert result["mat"] == 1
+    # "the" is in STOPWORDS
+    assert "the" not in result
+    # "a" has len <= 2
+    assert "a" not in result
+    # "is" is in STOPWORDS
+    assert "is" not in result
+    # "on" has len <= 2
+    assert "on" not in result
+    assert isinstance(result, dict)
