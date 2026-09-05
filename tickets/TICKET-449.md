@@ -1,6 +1,6 @@
 # TICKET-449: content_pin.pin_content docstring under-describes its False return path
 
-Status: OPEN
+Status: RESOLVED
 
 ## File
 personal_index/content_pin.py
