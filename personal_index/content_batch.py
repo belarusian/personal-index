@@ -84,7 +84,13 @@ class BatchProcessor:
         self,
         items: list[dict[str, Any]],
     ) -> BatchResult:
-        """Process all items in batches."""
+        """Process all items in batches.
+
+        Increments the batch counter, builds a BatchResult (batch_id,
+        total_items, started_at), chunks items by ``batch_size``, runs
+        each chunk through ``_process_single_batch``, reports progress
+        via ``on_progress``, finalizes timing, and returns the result.
+        """
         self._batch_counter += 1
         result = BatchResult(
             batch_id=f"batch-{self._batch_counter}",
@@ -112,7 +118,14 @@ class BatchProcessor:
         batch_start: int,
         result: BatchResult,
     ) -> None:
-        """Process a single batch, catching ValueError on failure."""
+        """Run one batch through the processor, recording success or failure.
+
+        On success, extends ``result.output`` with the processor output
+        and increments ``result.processed`` by the batch length. On
+        ``ValueError``, increments ``result.failed`` by the batch length
+        and appends an error entry keyed by ``batch_start``,
+        ``batch_size`` and ``error``.
+        """
         try:
             output = self.processor(batch)
             result.output.extend(output)
@@ -130,7 +143,12 @@ class BatchProcessor:
         items: list[dict[str, Any]],
         max_retries: int = 3,
     ) -> BatchResult:
-        """Process items with retry logic for failed batches."""
+        """Process all items in batches, retrying failed batches.
+
+        Like ``process``, but each chunk goes through
+        ``_try_process_batch``, which retries the processor up to
+        ``max_retries`` times before recording a failure.
+        """
         self._batch_counter += 1
         batch_id = f"batch-{self._batch_counter}"
         result = BatchResult(
@@ -196,7 +214,13 @@ class BatchProcessor:
         items: list[dict[str, Any]],
         item_processor: Callable[[dict[str, Any]], dict[str, Any]],
     ) -> BatchResult:
-        """Process items individually with per-item error handling."""
+        """Process items individually with per-item error handling.
+
+        Runs each item through ``item_processor`` (not batched),
+        accumulating per-item output, processed and failed counts and
+        error entries, reports progress per item, finalizes timing, and
+        returns the result.
+        """
         self._batch_counter += 1
         result = BatchResult(
             batch_id=f"batch-{self._batch_counter}",
@@ -215,7 +239,13 @@ class BatchProcessor:
         processor: Callable[[dict[str, Any]], dict[str, Any]],
         result: BatchResult,
     ) -> None:
-        """Process a single item with error handling."""
+        """Run one item through the processor, recording success or failure.
+
+        On success, appends the processor output to ``result.output``
+        and increments ``result.processed`` by 1. On ``ValueError``,
+        increments ``result.failed`` by 1 and appends an error entry
+        keyed by ``item_index``, ``item_id`` and ``error``.
+        """
         try:
             output = processor(item)
             result.output.append(output)
