@@ -139,7 +139,36 @@ class ContentHealthChecker:
         score: float = 0.0,
         status_code: int = 200,
     ) -> HealthCheckResult:
-        """Check health of a single content item."""
+        """Check health of a single content item against the configured rules.
+
+        Runs up to seven checks in order, appending one HealthIssue per failure
+        and accumulating checks_total / checks_passed:
+
+        1. url: passes when ``url`` is truthy and ``len(url) > 5``
+           (else issue_type ``invalid_url``, severity HIGH)
+        2. title presence: passes when ``title`` is truthy and
+           ``len(title) >= config.min_title_length``
+           (else ``missing_title``, MEDIUM)
+        3. title length: passes when ``len(title) <= config.max_title_length``
+           (else ``title_too_long``, LOW)
+        4. content length: passes when ``len(content) >= config.min_content_length``
+           (else ``low_content``, MEDIUM)
+        5. status code: passes when ``200 <= status_code < 400``
+           (else ``bad_status``, HIGH)
+        6. tags: runs ONLY when ``config.require_tags`` is set; passes when
+           ``tags`` is truthy and ``len(tags) >= config.min_tags``
+           (else ``missing_tags``, LOW)
+        7. score: runs ONLY when ``config.require_score`` is set; passes when
+           ``score >= config.min_score`` (else ``low_score``, LOW)
+
+        The status is UNHEALTHY if any issue is HIGH or CRITICAL, WARNING if any
+        issue is MEDIUM or any issue at all, else HEALTHY. The score is
+        ``checks_passed / checks_total * 100`` (0.0 when no check ran).
+
+        Returns:
+            HealthCheckResult with url, title, status, issues, score,
+            checks_passed, checks_total set.
+        """
         issues: list[HealthIssue] = []
         ct = 0
         cp = 0
