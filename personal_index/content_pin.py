@@ -173,7 +173,9 @@ def pin_content(item_id: str, reason: str = "", metadata: dict | None = None) ->
         metadata: Optional metadata dictionary.
 
     Returns:
-        True if successfully pinned.
+        True if successfully pinned. Returns False if the pin could not be
+        persisted (e.g. a disk I/O error in ``_save``); on failure the
+        in-memory state is rolled back so the item is not left pinned.
     """
     return _get_default_pinner().pin(item_id, reason, metadata)
 
