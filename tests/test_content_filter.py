@@ -206,3 +206,34 @@ class TestContentFilter:
             content="x" * 200,
         )
         assert f.should_include(page) is True
+
+
+class TestGetFilterReasonsReturnedObjectPinning:
+    """Pin the returned list fields of get_filter_reasons (normal + guard path)."""
+
+    def test_normal_case_returns_reasons_in_order(self, filter_no_store):
+        # Fails checks 1 (content too short), 3 (title too short), 4 (blocked domain).
+        page = CrawledPage(
+            url="https://evil.example.com",
+            title="AB",
+            content="short",
+        )
+        f = ContentFilter(
+            config=FilterConfig(blocked_domains=["evil.example.com"]),
+        )
+        reasons = f.get_filter_reasons(page)
+        assert isinstance(reasons, list)
+        assert len(reasons) == 3
+        assert "content length" in reasons[0]
+        assert "title too short" in reasons[1]
+        assert reasons[2] == "domain is blocked"
+
+    def test_guard_path_passing_page_returns_empty_list(self, filter_no_store):
+        # Passes every check -> empty list (the guard/early-return outcome).
+        page = CrawledPage(
+            url="https://example.com",
+            title="A valid title",
+            content="x" * 200,
+        )
+        reasons = filter_no_store.get_filter_reasons(page)
+        assert reasons == []
