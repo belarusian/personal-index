@@ -20,5 +20,5 @@
   Recommendation fields url/title/score/reason/matching_keywords/matching_tags).
   Add ONE pinning test asserting the returned Recommendation object fields for a
   normal case AND the empty-pool guard path (recommend on empty pool == []).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #682
