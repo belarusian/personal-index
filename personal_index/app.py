@@ -246,7 +246,21 @@ class PersonalIndexApp:
         logger.info("PersonalIndexApp shutdown complete")
 
     def process_content(self, url: str, raw_content: str, title: str = "") -> dict:
-        """Process content through the full pipeline."""
+        """Process content through the full pipeline and index it.
+
+        Steps:
+        1. ``initialize()`` (idempotent) so all components are ready.
+        2. Build the input dict ``{"url", "title", "raw_content"}``.
+        3. ``pipeline.run(data)`` runs the extract -> filter -> score -> tag
+           steps (all ``on_error="continue"``), which add to the dict:
+           ``extracted_text``, ``title`` (falls back to "Untitled"),
+           ``passes_filter`` (bool), ``score`` (float), and ``tags`` (list).
+        4. GUARD: only when ``result.get("passes_filter", True)`` is truthy is
+           the item added to ``search_index`` with fields id/url (both the
+           url), title (default "Untitled"), content (extracted_text),
+           score (default 0), and tags (default []).
+        5. Return the result dict (the same dict the pipeline mutated).
+        """
         self.initialize()
 
         data = {
