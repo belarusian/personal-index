@@ -110,3 +110,26 @@ class TestThrottleManager:
             request_times=[time.time() - 10, time.time() - 9],
         )
         assert mgr.should_throttle("http://example.com/page") is False
+
+
+class TestShouldThrottleBoundary:
+    """Pin the corrected should_throttle claim: True iff the domain has made
+    at least max_requests requests within the window (max_requests-1 is False)."""
+
+    def test_boundary_below_max_is_false(self):
+        mgr = ThrottleManager()
+        mgr.set_rule("example.com", ThrottleRule(max_requests=3, window_seconds=60.0))
+        now = time.time()
+        mgr._states["example.com"] = ThrottleState(
+            request_times=[now - 1, now - 0.5],  # 2 < max_requests=3
+        )
+        assert mgr.should_throttle("http://example.com/page") is False
+
+    def test_boundary_at_max_is_true(self):
+        mgr = ThrottleManager()
+        mgr.set_rule("example.com", ThrottleRule(max_requests=3, window_seconds=60.0))
+        now = time.time()
+        mgr._states["example.com"] = ThrottleState(
+            request_times=[now - 1, now - 0.5, now - 0.1],  # 3 == max_requests
+        )
+        assert mgr.should_throttle("http://example.com/page") is True
