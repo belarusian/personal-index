@@ -23,5 +23,5 @@
   object fields for a normal case (html with code/links/images) AND the
   guard path (html=None -> has_code/has_links/has_images stay False,
   language stays 'en').
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #684
