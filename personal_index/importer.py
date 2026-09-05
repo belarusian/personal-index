@@ -127,7 +127,19 @@ class Importer:
         return result
 
     def _import_csv(self, content: str, source: str = "") -> ImportResult:
-        """Import from CSV format."""
+        """Import bookmarks from CSV content.
+
+        Iterates ``csv.DictReader`` rows over ``content`` and, per row,
+        builds a ``Bookmark`` using case-insensitive header fallback
+        (``url``/``URL``, ``title``/``Title``, ``description``/``Description``,
+        ``category``/``Category`` defaulting to ``"imported"``, ``tags``/``Tags``
+        comma-split and stripped, ``favorite``/``Favorite`` lowercased and
+        compared to ``"true"``). Rows with a non-empty ``url`` are added to
+        ``self._manager`` and counted in ``total_imported``; rows with an empty
+        ``url`` are counted in ``total_skipped``. A per-row
+        ``(ValueError, TypeError)`` is appended to ``result.errors`` and the
+        loop continues. Returns the accumulated ``ImportResult``.
+        """
         result = ImportResult(source=source, format="csv")
         reader = csv.DictReader(StringIO(content))
 
