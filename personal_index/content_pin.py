@@ -112,12 +112,19 @@ class ContentPinner:
             item_id: ID of the item to unpin.
 
         Returns:
-            True. The item is unpinned if present (or is a no-op if it was not
-            pinned); there is no failure path, so this always returns True.
+            True if successfully unpinned (or was not pinned). Returns False
+            if the unpin could not be persisted (e.g. a disk I/O error in
+            ``_save``); on failure the in-memory state is rolled back so the
+            item is not left unpinned.
         """
         if item_id in self._pinned:
+            snapshot = dict(self._pinned)
             del self._pinned[item_id]
-            self._save()
+            try:
+                self._save()
+            except OSError:
+                self._pinned = snapshot
+                return False
         return True
 
     def is_pinned(self, item_id: str) -> bool:
@@ -178,7 +185,9 @@ def unpin_content(item_id: str) -> bool:
         item_id: ID of the item to unpin.
 
     Returns:
-        True. The item is unpinned if present (or is a no-op if it was not
-        pinned); there is no failure path, so this always returns True.
+        True if successfully unpinned (or was not pinned). Returns False
+        if the unpin could not be persisted (e.g. a disk I/O error in
+        _save); on failure the in-memory state is rolled back so the
+        item is not left unpinned.
     """
     return _get_default_pinner().unpin(item_id)
