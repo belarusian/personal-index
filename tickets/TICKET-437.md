@@ -13,4 +13,4 @@
   exact match) and that a new list is returned; add ONE pinning test asserting the
   RETURNED OBJECT fields for the normal filtered case AND the falsy-url guard path.
 - Issue: #712
-- Status: OPEN
+- Status: RESOLVED (PR #713, merged 4f58b87)
