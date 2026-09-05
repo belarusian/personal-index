@@ -19,7 +19,20 @@ class MarkdownExporter:
     """
 
     def export_item(self, item: dict[str, Any]) -> str:
-        """Export a single content item to Markdown."""
+        """Export a single content item to a Markdown fragment.
+
+        Renders, in order:
+        1. A level-2 heading with the item title (default "Untitled").
+        2. A Markdown link [title](url) if the item has a non-empty url.
+        3. The item description as a paragraph, if present.
+        4. A tags section (backtick-wrapped, comma-separated) if tags exist.
+        5. An italic *Bookmarked* marker if the item is bookmarked.
+        6. A bold **Score:** line (2-decimal) if score is not None.
+        7. A metadata section (key-value bullet list) if metadata is present.
+
+        Returns:
+            The rendered Markdown fragment as a string.
+        """
         lines = [f"## {item.get('title', 'Untitled')}", ""]
         url = item.get("url", "")
         if url:
