@@ -126,3 +126,15 @@ class TestSitemapBuilder:
             builder.add_entry(f"http://example.com/page{i}")
         xml = builder.build().decode("utf-8")
         assert xml.count("<loc>") == 1000
+
+    def test_add_entry_stores_exact_fields(self):
+        # Pins the corrected add_entry claim: the entry stores the exact
+        # change_frequency and priority passed, and auto-fills last_modified
+        # (the sibling field the caller did not supply).
+        builder = SitemapBuilder()
+        builder.add_entry("http://example.com/x", change_frequency="hourly", priority=0.3)
+        entry = builder.entries[-1]
+        assert entry.change_frequency == "hourly"
+        assert entry.priority == 0.3
+        # last_modified was not passed -> auto-filled default, not None
+        assert entry.last_modified is not None

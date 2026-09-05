@@ -55,18 +55,20 @@ class SitemapBuilder:
         change_frequency: str = "monthly",
         priority: float = 0.5,
     ) -> None:
-        """Process add_entry.
+        """Append a new SitemapEntry to the builder.
 
-        Args:
-            url, last_modified, change_frequency, priority.
+        Constructs a SitemapEntry from the four arguments (url, last_modified,
+        change_frequency, priority) and appends it to self.entries. When
+        last_modified is None the entry auto-fills it with the current UTC
+        time; priority is clamped to [0.0, 1.0]. Returns None.
         """
         self.entries.append(SitemapEntry(url, last_modified, change_frequency, priority))
 
     def add_entries(self, entries: list[SitemapEntry]) -> None:
-        """Process add_entries.
+        """Extend the builder's entries in place.
 
-        Args:
-        entries.
+        Extends self.entries with the passed entries list in order (no copy or
+        de-duplication). Returns None.
         """
         self.entries.extend(entries)
 
