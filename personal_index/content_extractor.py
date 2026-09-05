@@ -48,8 +48,10 @@ class ContentExtractor:
         content.canonical_url = self._extract_canonical(soup)
         content.language = self._extract_language(soup)
 
-        # Remove script and style tags
-        for tag in soup(["script", "style", "noscript"]):
+        # Remove script, style, noscript and title tags (title is already
+        # captured in content.title; decomposing it keeps the page title out of
+        # the visible body text so it is not double-counted in word_count).
+        for tag in soup(["script", "style", "noscript", "title"]):
             tag.decompose()
 
         # Extract headings
