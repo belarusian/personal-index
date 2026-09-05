@@ -1,6 +1,6 @@
 # TICKET-383: throttle.py placeholder docstrings do not describe behavior
 
-Status: OPEN
+Status: RESOLVED
 Issue: #604
 
 ## File
