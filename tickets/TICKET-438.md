@@ -1,6 +1,6 @@
 # TICKET-438: ScoreWeights.normalize docstring over-promise (blanket statement)
 
-- Status: OPEN
+- Status: RESOLVED (PR #715, merged commit 3da3fc8)
 - Module: personal_index/content_scoring.py
 - Function: ScoreWeights.normalize (line 48)
 
