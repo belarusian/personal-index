@@ -1,6 +1,6 @@
 # TICKET-403: importer._parse_html_element docstring over-promises "Recursively parse HTML bookmark elements"
 
-- Status: OPEN
+- Status: RESOLVED (PR #645 merged, issue #644 closed)
 - Issue: #644
 - File: personal_index/importer.py
 - Function: `Importer._parse_html_element` (line ~236)
