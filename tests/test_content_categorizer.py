@@ -267,6 +267,24 @@ class TestContentCategorizerCategorize:
     def test_categorize_all_empty(self, cat):
         result = cat.categorize("", "", "", "")
         assert result.primary_topic == "unknown"
+    def test_categorize_pins_returned_fields(self, cat):
+        # Guard path: all-falsy input pins the exact returned object.
+        guard = cat.categorize("", "", "", "")
+        assert guard.primary_topic == "unknown"
+        assert guard.topics == []
+        assert guard.confidence == 0.0
+        assert guard.reasons == ["no content provided"]
+        assert guard.text_length == 0
+        assert guard.keyword_count == 0
+
+        # Normal path: a technology text pins the main-behavior fields.
+        text = "Python programming software API developer framework"
+        result = cat.categorize(text)
+        assert result.primary_topic == "technology"
+        assert result.confidence > 0.0
+        assert result.text_length == len(text.split())
+        assert result.keyword_count > 0
+        assert len(result.topics) >= 1
 
     def test_categorize_no_match(self, cat):
         result = cat.categorize("xyz abc qwe random gibberish")
