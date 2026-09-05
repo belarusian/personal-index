@@ -164,6 +164,20 @@ class TestContentExtractor:
         content = extractor.extract(html)
         assert content.word_count == 5
 
+    def test_title_not_leaked_into_text(self, extractor):
+        html = (
+            "<html><head><title>My Page Title</title></head>"
+            "<body><p>Body content here</p></body></html>"
+        )
+        content = extractor.extract(html)
+        # title is captured separately
+        assert content.title == "My Page Title"
+        # title text must NOT leak into the visible body text
+        assert "My Page Title" not in content.text
+        assert content.text == "Body content here"
+        # word_count reflects only the body, not the title words
+        assert content.word_count == 3
+
     def test_max_text_length(self, extractor):
         html = """
         <html>
