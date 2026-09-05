@@ -274,3 +274,74 @@ class TestModuleDeliveryStateDocstring:
         assert mgr.mark_delivered(generated[0].notification_id) is True
         assert generated[0].delivered is True
         assert mgr.get_undelivered() == []
+
+
+class TestEvaluateEventPinning:
+    """Pin the evaluate_event docstring claim against the returned object."""
+
+    def test_normal_case_matching_rule_returns_notification(self):
+        """Normal case: a matching rule with no cooldown fires and the
+        returned list contains the notification with the expected fields."""
+        from personal_index.content_notifications import (
+            NotificationManager,
+            NotificationRule,
+            NotificationType,
+            NotificationChannel,
+        )
+
+        mgr = NotificationManager()
+        rule = NotificationRule(
+            rule_id="r1",
+            name="Test Rule",
+            notification_type=NotificationType.NEW_BOOKMARK,
+            channels=[NotificationChannel.LOG],
+            conditions={"type": "new_bookmark"},
+            enabled=True,
+            cooldown_seconds=0,
+        )
+        mgr.add_rule(rule)
+
+        event = {"type": "new_bookmark", "url": "http://example.com"}
+        result = mgr.evaluate_event(event)
+
+        # Returned list has exactly one notification
+        assert len(result) == 1
+        notif = result[0]
+        assert notif.notification_type == NotificationType.NEW_BOOKMARK
+        assert notif.title == "Test Rule"
+        assert notif.channels == [NotificationChannel.LOG]
+        assert notif.data == event
+        # Side effect: appended to self.notifications
+        assert len(mgr.notifications) == 1
+        assert mgr.notifications[0] is notif
+
+    def test_guard_path_non_matching_rule_returns_empty_list(self):
+        """Guard path: a rule whose conditions do not match the event is
+        skipped; the returned list is empty and no notification is created."""
+        from personal_index.content_notifications import (
+            NotificationManager,
+            NotificationRule,
+            NotificationType,
+            NotificationChannel,
+        )
+
+        mgr = NotificationManager()
+        rule = NotificationRule(
+            rule_id="r1",
+            name="Test Rule",
+            notification_type=NotificationType.NEW_BOOKMARK,
+            channels=[NotificationChannel.LOG],
+            conditions={"type": "new_bookmark"},
+            enabled=True,
+            cooldown_seconds=0,
+        )
+        mgr.add_rule(rule)
+
+        # Event does NOT match the rule's conditions
+        event = {"type": "crawl_complete", "url": "http://example.com"}
+        result = mgr.evaluate_event(event)
+
+        # Returned list is empty
+        assert result == []
+        # No side effect: nothing appended to self.notifications
+        assert len(mgr.notifications) == 0
