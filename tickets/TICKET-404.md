@@ -13,5 +13,5 @@
   dispatch table, unsupported-format return) and add ONE pinning test that
   calls `import_from_content` directly with an unsupported fmt and asserts the
   RETURNED ImportResult fields (errors/source/format/total_imported).
-- Status: OPEN
+- Status: RESOLVED (cycle 162, PR #647, merged 16e926c)
 - Issue: #646
