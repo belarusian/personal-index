@@ -277,6 +277,35 @@ class TestContentDeduplicator:
         result = self.dedup.dedup_by_url(items)
         assert result.removed_count == 0
 
+    def test_dedup_by_url_empty_urls_not_duplicates(self) -> None:
+        """Items with no URL cannot be deduplicated by URL.
+
+        An empty URL must not be grouped with other empty-URL items (mirrors
+        the `if h:` guard in _group_by_hash for empty content).
+        """
+        items = [
+            {"url": "", "content": "a"},
+            {"url": "", "content": "b"},
+            {"url": "", "content": "c"},
+        ]
+        result = self.dedup.dedup_by_url(items)
+        assert result.removed_count == 0
+        assert result.unique_items == 3
+        assert result.duplicate_groups == []
+
+    def test_dedup_by_url_mixed_empty_and_real(self) -> None:
+        """Empty-URL items are kept; real URL duplicates are still removed."""
+        items = [
+            {"url": "", "content": "a"},
+            {"url": "https://x.com/"},
+            {"url": "https://x.com"},
+        ]
+        result = self.dedup.dedup_by_url(items)
+        assert result.removed_count == 1
+        assert result.unique_items == 2
+        assert len(result.duplicate_groups) == 1
+        assert result.duplicate_groups[0].representative == "https://x.com/"
+
     # ── dedup_by_similarity ──────────────────────────────────────
 
     def test_dedup_by_similarity_above_threshold(self) -> None:

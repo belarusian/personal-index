@@ -204,6 +204,11 @@ class ContentDeduplicator:
         for item in items:
             url = item.get("url", "")
             normalized = normalize_url(url)
+            # Skip items with no URL: an empty URL cannot be deduplicated by
+            # URL, so it must not be grouped (mirrors the `if h:` guard in
+            # _group_by_hash for empty content).
+            if not normalized:
+                continue
             url_groups.setdefault(normalized, []).append(item)
 
         groups = []
