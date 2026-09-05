@@ -88,7 +88,14 @@ class MetricsCollector:
         self._histograms[name].append(value)
 
     def collect_system_metrics(self, target_path: str = "/") -> SystemMetrics:
-        """Collect current system metrics.
+        """Collect a system metrics snapshot.
+
+        Populates exactly these fields on the returned SystemMetrics:
+        uptime_seconds (time since collector start), memory_used_mb (via
+        resource.getrusage, left at 0.0 if the resource module is unavailable),
+        and disk_total_mb / disk_free_mb / disk_used_mb (via os.statvfs on
+        target_path, left at 0.0 if statvfs raises OSError). cpu_percent is
+        NOT collected and remains at its dataclass default of 0.0.
 
         Args:
             target_path: Filesystem path to check disk usage for.

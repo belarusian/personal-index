@@ -120,3 +120,24 @@ class TestSystemMetricsDiskFreeMb:
         metrics = mc.collect_system_metrics()
         assert hasattr(metrics, 'disk_free_mb')
         assert metrics.disk_free_mb >= 0.0
+
+
+class TestCollectSystemMetricsCpuPinning:
+    """Pin the corrected collect_system_metrics docstring claim.
+
+    The docstring now states cpu_percent is NOT collected and remains at its
+    dataclass default of 0.0, while uptime/disk fields ARE populated. One
+    returned object pins both the main behavior and the cpu guard path.
+    """
+
+    def test_cpu_percent_stays_default_and_fields_populated(self):
+        mc = MetricsCollector()
+        metrics = mc.collect_system_metrics()
+        # Guard path: cpu_percent is never collected, stays at default 0.0.
+        assert metrics.cpu_percent == 0.0
+        # Main behavior: uptime and disk fields ARE populated.
+        assert metrics.uptime_seconds >= 0.0
+        assert metrics.disk_total_mb >= 0.0
+        assert metrics.disk_free_mb >= 0.0
+        assert metrics.disk_used_mb >= 0.0
+        assert metrics.process_pid > 0
