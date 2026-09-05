@@ -3,7 +3,7 @@
 - Module: personal_index/content.py
 - Method: ExtractedContent.get_keywords
 - Class: (b) doc-drift (docstring under-describes behavior; code is correct)
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #744 closed, squash b671c69)
 
 ## Symptom
 The `get_keywords` docstring reads:
