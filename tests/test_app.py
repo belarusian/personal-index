@@ -187,6 +187,27 @@ class TestPersonalIndexAppProcessContent:
         assert isinstance(results, list)
 
 
+    def test_process_content_pins_returned_fields_and_filter_guard(self, app):
+        """Pin the EXACT returned-dict fields and the passes_filter guard."""
+        app.initialize()
+        # Normal case: long enough content passes the filter (>=100 chars).
+        long_content = "python " * 30
+        result = app.process_content("https://example.com/a", long_content, "Python Guide")
+        # Returned dict carries the pipeline-added fields.
+        assert result["url"] == "https://example.com/a"
+        assert result["title"] == "Python Guide"
+        assert "extracted_text" in result
+        assert result["passes_filter"] is True
+        assert isinstance(result["score"], float)
+        assert isinstance(result["tags"], list)
+        # Side effect: item was added to the search index.
+        assert len(app.search_index._items) == 1
+        # Guard path: short content fails the filter (content < 100 chars)
+        # so passes_filter is False and NOTHING is added to the index.
+        result2 = app.process_content("https://example.com/b", "tiny", "T")
+        assert result2["passes_filter"] is False
+        assert len(app.search_index._items) == 1
+
 class TestPersonalIndexAppSearch:
     """Test search() behavior."""
 
