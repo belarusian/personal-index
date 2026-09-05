@@ -233,3 +233,65 @@ class TestContentHealthCheckerDocstringClaim:
         report = checker.check_all(items)
         assert report.total_items == len(items)
         assert [r.url for r in report.results] == [it["url"] for it in items]
+
+
+class TestCheckItemDocstringDefaults:
+    """TICKET-444: pin the corrected check_item docstring against the returned
+    HealthCheckResult object. The docstring now enumerates the 7 checks (5
+    always-run + 2 conditional), the status determination, the score formula,
+    and the returned fields. Witness both the normal case (default config: 5
+    checks) and the guard path (require_tags/require_score: 7 checks)."""
+
+    def test_check_item_default_config_pins_returned_fields(self):
+        """Default config runs the 5 always-run checks; a fully-valid item is
+        HEALTHY with score 100.0 and the returned object carries url/title/
+        checks_passed/checks_total verbatim."""
+        checker = ContentHealthChecker()
+        result = checker.check_item(
+            url="https://example.com/page",
+            title="A Great Article About Python",
+            content="This is a comprehensive article about Python programming that covers many topics.",
+            tags=["python", "programming"],
+            score=8.0,
+            status_code=200,
+        )
+        # returned object fields carried verbatim
+        assert result.url == "https://example.com/page"
+        assert result.title == "A Great Article About Python"
+        # default config: require_tags/require_score are False -> only 5 checks run
+        assert result.checks_total == 5
+        assert result.checks_passed == 5
+        assert result.status == HealthStatus.HEALTHY
+        assert result.score == 100.0
+        assert result.issues == []
+
+    def test_check_item_conditional_config_pins_guard_path(self):
+        """Guard path: with require_tags/require_score set, the two conditional
+        checks run (7 total) and a failing item surfaces the conditional issue
+        types on the returned object."""
+        config = ContentHealthCheck(
+            require_tags=True,
+            min_tags=2,
+            require_score=True,
+            min_score=5.0,
+        )
+        checker = ContentHealthChecker(config=config)
+        result = checker.check_item(
+            url="https://example.com/page",
+            title="A Great Article About Python",
+            content="This is a comprehensive article about Python programming that covers many topics.",
+            tags=["python"],  # only 1 tag, min_tags=2 -> missing_tags
+            score=1.0,  # below min_score=5.0 -> low_score
+            status_code=200,
+        )
+        # both conditional checks now run -> 7 total
+        assert result.checks_total == 7
+        # the two conditional failures are surfaced on the returned object
+        types = {i.issue_type for i in result.issues}
+        assert "missing_tags" in types
+        assert "low_score" in types
+        # 5 always-run checks pass, 2 conditional fail
+        assert result.checks_passed == 5
+        assert result.score == 5 / 7 * 100
+        # both issues are LOW severity -> WARNING (not UNHEALTHY)
+        assert result.status == HealthStatus.WARNING
