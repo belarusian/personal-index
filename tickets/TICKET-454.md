@@ -3,7 +3,7 @@
 - Module: personal_index/content_collections.py
 - Class: CollectionManager
 - Function: remove_item
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #749 closed, squash 1c28fce)
 - Issue: #749
 - Type: doc-drift (class-(b): generic docstring omits guard path + reverse-index cleanup)
 
