@@ -24,6 +24,6 @@
   3. Rework the test_exception_handling urlparse pin from a hardcoded line
      range to AST `_method_line_span` (the added docstring lines shifted the
      except block).
-- **Status:** OPEN
+- **Status:** RESOLVED (PR #671, merged 786d009)
 - **Issue:** #669
 - **Note:** renumbered from TICKET-415 (owned by content_pin.pin, PR #670).
