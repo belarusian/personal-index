@@ -252,7 +252,28 @@ class ContentDeduplicator:
         items: list[dict[str, Any]],
         compare_field: str = "content",
     ) -> DedupResult:
-        """Deduplicate items by content similarity."""
+        """Deduplicate items by content similarity (Jaccard word overlap).
+
+        Iterates items in order; for each unvisited seed ``i`` it calls
+        ``_find_similarity_group``, which compares item ``i``'s
+        ``compare_field`` text against every LATER item ``j`` and groups
+        those whose ``text_similarity`` is >= ``self.similarity_threshold``
+        (earlier items are never re-scanned). Only groups with >1 item
+        become a ``DuplicateGroup`` (representative = first url,
+        duplicates = remaining urls, similarity_score =
+        ``self.similarity_threshold``, dedup_method="similarity");
+        ``removed_count`` += len(group) - 1.
+
+        An empty or missing ``compare_field`` text yields
+        ``text_similarity`` 0.0, so such items never group (guard path:
+        they stay unique).
+
+        Returns:
+            DedupResult(total_items=len(items),
+                unique_items=len(items) - removed,
+                duplicate_groups=groups, removed_count=removed,
+                method="similarity").
+        """
         n = len(items)
         visited: set[int] = set()
         groups: list[DuplicateGroup] = []
