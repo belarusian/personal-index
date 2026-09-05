@@ -1,6 +1,6 @@
 # TICKET-424 — content_filter.ContentFilter.get_filter_reasons blanket docstring
 
-- Status: OPEN
+- Status: RESOLVED
 - Class: (b) doc-drift (over-promise / non-enumerating docstring)
 - File: personal_index/content_filter.py
 - Function: ContentFilter.get_filter_reasons (line ~54)
