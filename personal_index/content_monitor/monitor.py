@@ -162,7 +162,33 @@ class ContentMonitor:
         return self.error_rates
 
     def generate_health_report(self) -> HealthReport:
-        """Generate a comprehensive health report."""
+        """Generate a comprehensive health report.
+
+        Guard path: when there is no data at all - ``source_freshness`` is
+        empty, ``error_rates.total_crawls`` is 0, and ``index_dir`` is None or
+        does not exist - returns ``HealthReport(overall_status="no_data",
+        score=1.0)`` with no checks run.
+
+        Otherwise runs three checks in order, each adjusting ``score``:
+
+        - ``_check_disk``: critical (``score -= 0.3``) when
+          ``disk_usage.total_mb > max_disk_mb``; warning (``score -= 0.1``) when
+          ``disk_usage.total_mb > 0.8 * max_disk_mb``.
+        - ``_check_errors``: critical (``score -= 0.3``) when
+          ``error_rates.error_rate >= 5 * max_error_rate``; warning
+          (``score -= 0.1``) when ``error_rates.error_rate > max_error_rate``.
+        - ``_check_staleness``: critical (``score -= 0.3``) when the stale
+          ratio is > 0.5 and more than one source is stale; warning
+          (``score -= 0.1``) when any source is stale.
+
+        ``score`` is then clamped to ``[0.0, 1.0]``. ``overall_status`` is
+        ``"critical"`` when any critical issue was raised, ``"degraded"`` when
+        only warnings were raised, else ``"healthy"``.
+
+        Returns:
+            HealthReport with overall_status, warnings, critical_issues, score,
+            disk_usage, source_freshness (a copy of the dict), and error_rates.
+        """
         warnings: list[str] = []
         critical_issues: list[str] = []
         score = 1.0

@@ -720,3 +720,49 @@ class TestContentMonitorIntegration:
         assert "b.com" in summary
         assert "Error Rates" in summary
         assert "Source Freshness" in summary
+
+
+# ---------------------------------------------------------------------------
+# generate_health_report pinning tests (TICKET-432)
+# ---------------------------------------------------------------------------
+class TestGenerateHealthReportPinning:
+    """Pin the corrected docstring claim against the returned HealthReport."""
+
+    def test_healthy_pins_returned_fields(self) -> None:
+        monitor = ContentMonitor()
+        now = datetime.now(timezone.utc)
+        monitor.record_crawl("a.com", success=True, timestamp=now)
+        monitor.record_crawl("b.com", success=True, timestamp=now)
+
+        report = monitor.generate_health_report()
+
+        # overall_status / score / no issues
+        assert report.overall_status == "healthy"
+        assert report.score == 1.0
+        assert report.warnings == []
+        assert report.critical_issues == []
+        # disk_usage is populated (index_dir is None -> empty DiskUsageInfo)
+        assert isinstance(report.disk_usage, DiskUsageInfo)
+        assert report.disk_usage.total_bytes == 0
+        # source_freshness is a copy of the two recorded sources
+        assert set(report.source_freshness.keys()) == {"a.com", "b.com"}
+        # error_rates is the aggregate tracker (2 successful crawls)
+        assert report.error_rates is not None
+        assert report.error_rates.total_crawls == 2
+        assert report.error_rates.successful_crawls == 2
+        assert report.error_rates.failed_crawls == 0
+
+    def test_no_data_guard_pins_returned_fields(self) -> None:
+        monitor = ContentMonitor()
+
+        report = monitor.generate_health_report()
+
+        # guard path: no source data, no error data, no disk data
+        assert report.overall_status == "no_data"
+        assert report.score == 1.0
+        assert report.warnings == []
+        assert report.critical_issues == []
+        # no checks ran -> disk_usage / source_freshness / error_rates unset
+        assert report.disk_usage is None
+        assert report.source_freshness == {}
+        assert report.error_rates is None
