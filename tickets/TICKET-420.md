@@ -1,6 +1,6 @@
 # TICKET-420
 
-- Status: OPEN
+- Status: RESOLVED
 - File: personal_index/content_priority.py
 - Function: PriorityCalculator.calculate (line 90)
 - Symptom: class-(b) doc-drift. Docstring is the blanket one-liner
