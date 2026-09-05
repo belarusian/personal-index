@@ -197,3 +197,58 @@ class TestRateLimitMiddleware:
 
         import asyncio
         asyncio.run(middleware({"type": "websocket"}, receive, send))
+
+    def test_middleware_allowed_path_injects_rate_limit_headers(self):
+        """Pinning: an allowed request passes through AND the app's
+        http.response.start is augmented with the X-RateLimit-* headers.
+
+        This witnesses the docstring claim that, on the allowed path, the
+        middleware wraps ``send`` so the response start carries the
+        ``X-RateLimit-Limit`` / ``X-RateLimit-Remaining`` headers (not merely
+        that the app ran).
+        """
+        import asyncio
+
+        rules = [RateLimitRule(max_requests=5, window_seconds=60)]
+        limiter = SlidingWindowRateLimiter(rules=rules)
+
+        app_start_headers = []
+
+        class FakeApp:
+            async def __call__(self, scope, receive, send):
+                await send({
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [],
+                })
+                await send({"type": "http.response.body", "body": b"ok"})
+
+        middleware = RateLimitMiddleware(FakeApp(), limiter=limiter)
+
+        async def receive():
+            return {}
+
+        async def send(msg):
+            # Capture the headers the app's response.start actually carries
+            # after the middleware's add_headers wrapper has run.
+            if msg["type"] == "http.response.start":
+                app_start_headers.append(
+                    {k.decode(): v.decode() for k, v in msg.get("headers", [])}
+                )
+
+        scope = {
+            "type": "http",
+            "method": "GET",
+            "path": "/test",
+            "client": ("127.0.0.1", 12345),
+        }
+
+        asyncio.run(middleware(scope, receive, send))
+
+        # The request was allowed (within the limit of 5), so the app ran and
+        # its response.start was augmented with the rate-limit headers.
+        assert len(app_start_headers) == 1
+        headers = app_start_headers[0]
+        assert headers["X-RateLimit-Limit"] == "5"
+        # One request was recorded, so 4 remain.
+        assert headers["X-RateLimit-Remaining"] == "4"
