@@ -207,11 +207,23 @@ class ContentDeduplicator:
     ) -> DedupResult:
         """Deduplicate items by normalized URL.
 
+        Groups items by ``normalize_url(item["url"])`` (trailing slash and
+        fragment removed, scheme and host lowercased). Items whose normalized
+        URL is empty are SKIPPED and never grouped (an empty URL cannot be
+        deduplicated by URL, mirroring the ``if h:`` guard in
+        ``_group_by_hash``). Only groups with more than one item become a
+        ``DuplicateGroup``: ``representative`` is the first item's raw url,
+        ``duplicates`` are the remaining raw urls, ``similarity_score`` is
+        1.0 and ``dedup_method`` is ``"normalized_url"``.
+
         Args:
             items: List of content item dicts.
 
         Returns:
-            DedupResult with duplicate groups.
+            DedupResult with ``total_items=len(items)``,
+            ``unique_items=len(items) - removed_count``,
+            ``duplicate_groups`` (the >1-item groups), ``removed_count``
+            (sum of ``len(duplicates)`` over groups) and ``method="url"``.
         """
         url_groups: dict[str, list[dict[str, Any]]] = {}
 
