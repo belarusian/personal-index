@@ -309,6 +309,23 @@ class TestImporterFileErrors:
         assert "Unsupported format" in result.errors[0]
 
 
+    def test_import_from_file_error_paths_pin_fields(self, tmp_path):
+        # File-not-found path: exact error message + source, no format.
+        missing = "/tmp/definitely_not_here_402.json"
+        result = Importer().import_from_file(missing)
+        assert result.errors == [f"File not found: {missing}"]
+        assert result.source == missing
+        assert result.format == ""
+        assert result.total_imported == 0
+        # Unsupported-extension path: exact error + format == ext + source.
+        path = tmp_path / "bookmarks.xyz"
+        path.write_text("data")
+        result2 = Importer().import_from_file(str(path))
+        assert result2.errors == ["Unsupported format: xyz"]
+        assert result2.source == str(path)
+        assert result2.format == "xyz"
+        assert result2.total_imported == 0
+
 class TestImporterContent:
     def test_import_from_content_json(self):
         importer = Importer()

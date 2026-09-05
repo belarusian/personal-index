@@ -48,7 +48,26 @@ class Importer:
         return self._manager
 
     def import_from_file(self, filepath: str) -> ImportResult:
-        """Import bookmarks from a file, auto-detecting format."""
+        """Import bookmarks from a file, dispatching on its extension.
+
+        Args:
+            filepath: path to the source file.
+
+        Behavior:
+            - Builds ``path = Path(filepath)``; if ``not path.exists()``
+              returns ``ImportResult(errors=[f"File not found: {filepath}"],
+              source=filepath)`` (no ``format`` set).
+            - Derives ``ext = path.suffix.lstrip(".").lower()``; if
+              ``ext not in self.SUPPORTED_FORMATS`` ({"json", "csv", "html",
+              "xml", "necko", "netscape"}) returns
+              ``ImportResult(errors=[f"Unsupported format: {ext}"],
+              source=filepath, format=ext)``.
+            - Otherwise opens the file (utf-8), reads its content, and
+              delegates to ``self.import_from_content(content, ext,
+              source=filepath)`` - returning that result unchanged.
+            - No direct side effects on ``self._manager``; storage is
+              handled by the delegated ``import_from_content``.
+        """
         path = Path(filepath)
         if not path.exists():
             return ImportResult(errors=[f"File not found: {filepath}"], source=filepath)
