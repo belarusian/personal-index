@@ -15,3 +15,5 @@
   the returned object, including the guard-path (duplicate-tag) input alongside
   the normal case.
 - Issue: #752
+
+- Status: RESOLVED (merged to main, gh #752 closed, squash 6fa6405)
