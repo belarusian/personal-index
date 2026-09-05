@@ -196,7 +196,26 @@ class RateLimitMiddleware:
         return "unknown"
 
     async def __call__(self, scope, receive, send):
-        """Process request with rate limiting."""
+        """Apply rate limiting to an ASGI request.
+
+        For non-HTTP scopes (``scope["type"] != "http"``) the request is
+        delegated to the wrapped app unchanged, with no rate limiting.
+
+        For HTTP scopes the client identifier is resolved via
+        ``self.key_extractor`` (default: the client IP, or ``"unknown"``),
+        along with the method (default ``"GET"``) and path (default
+        ``"/"``). The limiter is asked whether the request is allowed:
+
+        - If NOT allowed, the middleware short-circuits: it sends an
+          ``http.response.start`` with status 429 and the rate-limit
+          headers (e.g. ``Retry-After``, ``X-RateLimit-Limit``,
+          ``X-RateLimit-Remaining``) followed by an ``http.response.body``
+          of ``b'{"error": "Rate limit exceeded"}'``, and does NOT invoke
+          the wrapped app.
+        - If allowed, it wraps ``send`` so the ``http.response.start``
+          message is augmented with the ``X-RateLimit-*`` headers, then
+          invokes the wrapped app with that wrapped ``send``.
+        """
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
