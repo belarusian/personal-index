@@ -86,6 +86,27 @@ class TestExtractedContent:
         # ...but the stopword "to" is NOT returned as a keyword.
         assert "to" not in keywords
 
+    def test_get_keywords_dedups_and_strips_markers(self):
+        content = ExtractedContent(
+            url="http://example.com",
+            meta_keywords=["alpha"],
+            headings=["h1: Alpha Beta", "h2: gamma the delta"],
+        )
+        keywords = content.get_keywords()
+        # Real words from meta keywords and heading text are present...
+        assert "alpha" in keywords
+        assert "beta" in keywords
+        assert "gamma" in keywords
+        assert "delta" in keywords
+        # ...but the stopword "the" and the hN: level markers are NOT.
+        assert "the" not in keywords
+        assert "h1" not in keywords
+        assert "h2" not in keywords
+        # The result is deduplicated: "alpha" comes from both the meta
+        # keywords and the "h1: Alpha Beta" heading, so it appears once.
+        assert keywords.count("alpha") == 1
+        assert len(keywords) == len(set(keywords))
+
 
 class TestExtractContent:
     def test_extract_title(self):
