@@ -1,6 +1,6 @@
 # TICKET-406
 
-- Status: OPEN
+- Status: RESOLVED (PR #651 merged, issue #650 closed)
 - Issue: #650
 - Module: personal_index/content_dedup.py
 - Function: ContentDeduplicator.dedup_by_similarity
