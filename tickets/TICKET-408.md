@@ -25,5 +25,5 @@
   DedupResult fields (total_items / unique_items / removed_count /
   method="combined" / duplicate_groups) for an input that exercises both the
   URL-duplicate path and the content-hash-duplicate path.
-- Status: OPEN
+- Status: RESOLVED (cycle 166, PR #655, merge on main)
 - Issue: #654
