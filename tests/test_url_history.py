@@ -35,6 +35,27 @@ class TestURLVisit:
         assert v.url == "http://example.com"
         assert v.response_time_ms == 50.0
 
+    def test_from_dict_partial_dict_fills_defaults(self):
+        """Pin the corrected docstring: from_dict unpacks data as keyword
+        arguments (cls(**data)), so keys present map to fields and keys absent
+        fall back to the dataclass defaults."""
+        data = {
+            "url": "http://partial.example.com",
+            "status_code": 204,
+            "response_time_ms": 12.5,
+        }
+        v = URLVisit.from_dict(data)
+        # Keys present in data map to the exact field values.
+        assert v.url == "http://partial.example.com"
+        assert v.status_code == 204
+        assert v.response_time_ms == 12.5
+        # Sibling keys absent from data fall back to their dataclass defaults
+        # (witnessing the doc-only fix against the returned object).
+        assert v.title == ""
+        assert v.content_length == 0
+        assert v.user_agent == ""
+        assert v.error == ""
+
     def test_defaults(self):
         v = URLVisit(url="http://example.com")
         assert v.status_code == 0

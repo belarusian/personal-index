@@ -41,10 +41,13 @@ class URLVisit:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> URLVisit:
-        """Process from_dict.
+        """Construct a URLVisit by unpacking data as keyword arguments.
 
-        Args:
-        data.
+        Each key in data is passed as a keyword argument to the URLVisit
+        constructor (cls(**data)), so every key must correspond to a URLVisit
+        field (url, timestamp, status_code, content_length, title,
+        user_agent, response_time_ms, error). Keys absent from data fall back
+        to the dataclass defaults. Returns a new URLVisit instance.
         """
         return cls(**data)
 
