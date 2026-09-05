@@ -1,6 +1,6 @@
 # TICKET-385: content_batch.py placeholder docstrings (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged to main cedcab5, gh #608 closed)
 
 ## File
 personal_index/content_batch.py
