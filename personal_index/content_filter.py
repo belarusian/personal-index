@@ -52,7 +52,24 @@ class ContentFilter:
         return len(reasons) == 0
 
     def get_filter_reasons(self, page: CrawledPage) -> list[str]:
-        """Get list of reasons why a page was filtered out."""
+        """Return the list of reasons a page fails the filter (empty if it passes).
+
+        Runs up to eight checks in order, appending one reason string per
+        failure and returning the accumulated list (empty when the page
+        passes every check):
+
+        1. content length below config.min_content_length
+        2. content length above config.max_content_length
+        3. title length below config.min_title_length
+        4. page.url domain is blocked (exact match or a subdomain of a
+           config.blocked_domains entry)
+        5. page title+content matches any config.blocked_patterns regex
+        6. config.required_patterns is non-empty and none match title+content
+        7. config.require_interest_match is set, an interest_store exists, and
+           no interest matches the page
+        8. an interest_store exists, config.min_relevance_score > 0, and the
+           store total_score for title+content is below that minimum
+        """
         reasons = []
 
         # Check content length
