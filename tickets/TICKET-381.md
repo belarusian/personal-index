@@ -1,5 +1,7 @@
 # TICKET-381
 
+- Status: RESOLVED (merged to main 63df94f, gh #600 closed)
+
 - file: personal_index/content_extractor.py
 - symptom: ContentExtractor.extract() leaks the page <title> text into
   content.text (and therefore into word_count and the readability score),
