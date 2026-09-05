@@ -11,7 +11,7 @@ import hmac
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
 
@@ -83,6 +83,8 @@ class WebhookPayload:
         delivered_at: When delivery succeeded.
         last_error: Last error message.
         signature: HMAC signature of the payload.
+        next_retry_at: When the next retry attempt is scheduled (None when
+            delivered or when no retry is scheduled).
     """
 
     payload_id: str
@@ -95,6 +97,7 @@ class WebhookPayload:
     delivered_at: datetime | None = None
     last_error: str | None = None
     signature: str | None = None
+    next_retry_at: datetime | None = None
 
 
 class WebhookManager:
@@ -208,7 +211,14 @@ class WebhookManager:
                 endpoint = self.endpoints.get(payload.endpoint_id)
                 if endpoint:
                     endpoint.failure_count += 1
-                    if not endpoint.should_retry():
+                    if endpoint.should_retry():
+                        # Schedule the next retry attempt.
+                        payload.next_retry_at = (
+                            datetime.now(timezone.utc)
+                            + timedelta(seconds=endpoint.retry_delay)
+                        )
+                    else:
+                        payload.next_retry_at = None
                         self.pending.remove(payload)
                         self.delivered.append(payload)
                 return True
