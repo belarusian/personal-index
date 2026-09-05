@@ -1,6 +1,6 @@
 # TICKET-447: content_health.check_item check-order not delivered by code
 
-Status: OPEN
+Status: RESOLVED
 Issue: #731
 Module: personal_index/content_health.py
 Method: ContentHealthChecker.check_item / _check_item_funcs
