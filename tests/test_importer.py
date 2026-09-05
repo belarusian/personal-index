@@ -235,6 +235,24 @@ class TestImporterXml:
         assert result.total_imported == 0
         assert result.total_skipped == 1
 
+    def test_import_xml_tags_and_empty_url_accounting(self, tmp_path):
+        """Pin _import_xml sub-components: comma-split tags and the
+        url-truthy import-vs-skip accounting (TICKET-399)."""
+        content = (
+            "<bookmarks>"
+            "<bookmark url=\"http://a.com\"><title>A</title>"
+            "<tags>python, web, </tags></bookmark>"
+            "<bookmark url=\"\"><title>B</title></bookmark>"
+            "</bookmarks>"
+        )
+        path = tmp_path / "bookmarks.xml"
+        path.write_text(content)
+        result = self.importer.import_from_file(str(path))
+        assert result.total_imported == 1
+        assert result.total_skipped == 1
+        bm = self.importer.manager.get("http://a.com")
+        assert bm.tags == ["python", "web"]
+
 
 class TestImporterOpml:
     def setup_method(self):

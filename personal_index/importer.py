@@ -218,7 +218,19 @@ class Importer:
             self._parse_html_element(child, result, path)
 
     def _import_xml(self, content: str, source: str = "") -> ImportResult:
-        """Import from generic XML format."""
+        """Import bookmarks from a generic XML document.
+
+        Parses ``content`` with ``ET_fromstring``; on ``ET_ParseError``
+        appends "Invalid XML: ..." to ``result.errors`` and returns the
+        result early. Otherwise iterates ``root.findall(".//bookmark")`` and
+        for each element extracts url (attribute or ``<url>`` child), title,
+        description, category (default "imported") and tags (comma-split,
+        whitespace-stripped, empties dropped). A ``Bookmark`` is added to
+        ``self._manager`` and ``result.total_imported`` incremented when its
+        url is truthy; otherwise ``result.total_skipped`` is incremented.
+        Per-element ``ValueError``/``TypeError`` are caught and appended to
+        ``result.errors``. Returns an ``ImportResult`` with ``format="xml"``.
+        """
         result = ImportResult(source=source, format="xml")
         try:
             root = ET_fromstring(content)
