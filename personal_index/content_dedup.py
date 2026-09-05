@@ -375,13 +375,31 @@ class ContentDeduplicator:
         self,
         items: list[dict[str, Any]],
     ) -> DedupResult:
-        """Run the URL and content-hash deduplication strategies and combine results.
+        """Run URL dedup then content-hash dedup and combine the two results.
+
+        Pipeline (two stages, in order):
+          1. ``url_result = self.dedup_by_url(items)`` on the FULL input list.
+          2. Rebuild ``unique_items`` by keeping the FIRST item per
+             ``normalize_url(item.get("url", ""))``. Items whose URL normalizes
+             to the empty string all share the same empty key, so only the
+             FIRST empty-URL item survives this stage.
+          3. ``hash_result = self.dedup_by_hash(unique_items)`` on that reduced
+             list (NOT on ``url_result.unique_items``).
+
+        Combine:
+          * ``duplicate_groups = url_result.duplicate_groups +
+            hash_result.duplicate_groups``
+          * ``removed_count = url_result.removed_count +
+            hash_result.removed_count``
 
         Args:
             items: List of content item dicts.
 
         Returns:
-            Combined DedupResult.
+            A ``DedupResult`` with ``total_items=len(items)``,
+            ``unique_items=len(items) - removed_count``, the combined
+            ``duplicate_groups``, the summed ``removed_count`` and
+            ``method="combined"``.
         """
         # First dedup by URL (exact matches)
         url_result = self.dedup_by_url(items)

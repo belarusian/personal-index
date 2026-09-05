@@ -405,6 +405,41 @@ class TestContentDeduplicator:
         assert result.removed_count >= 2
         assert result.method == "combined"
 
+    def test_dedup_all_pins_returned_fields_and_two_stage_pipeline(self) -> None:
+        # Exercises BOTH the URL-duplicate path and the content-hash-duplicate
+        # path, plus the empty-URL guard (only the FIRST empty-URL item survives
+        # the stage-2 rebuild).
+        items = [
+            {"url": "https://a.com/", "content": "Body A"},
+            {"url": "https://a.com", "content": "Body A"},   # URL dup of item0
+            {"url": "https://b.com", "content": "Body B"},
+            {"url": "https://c.com", "content": "Body B"},   # hash dup of item2
+            {"url": "", "content": "Body C"},                # first empty URL
+            {"url": "", "content": "Body D"},                # dropped at stage 2
+        ]
+        result = self.dedup.dedup_all(items)
+        # Returned DedupResult fields.
+        # Stage 1 (dedup_by_url) removes 1 (the a.com pair; empty-URL items are
+        # skipped, not grouped). Stage 3 (dedup_by_hash on the reduced list)
+        # removes 1 (the Body B pair). Total removed = 2.
+        assert result.total_items == 6
+        assert result.removed_count == 2
+        assert result.unique_items == 4
+        assert result.method == "combined"
+        # Combined groups: 1 URL group + 1 hash group.
+        assert len(result.duplicate_groups) == 2
+        # Stage-1 URL group comes first.
+        g0 = result.duplicate_groups[0]
+        assert g0.representative == "https://a.com/"
+        assert g0.duplicates == ["https://a.com"]
+        assert g0.dedup_method == "normalized_url"
+        # Stage-3 hash group (run on the reduced unique_items list).
+        g1 = result.duplicate_groups[1]
+        assert g1.representative == "https://b.com"
+        assert g1.duplicates == ["https://c.com"]
+        assert g1.similarity_score == 1.0
+        assert g1.dedup_method == "exact_hash"
+
     # ── _check_single_item ───────────────────────────────────────
 
     def test_check_single_item_not_duplicate(self) -> None:
