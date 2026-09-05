@@ -18,5 +18,5 @@
   → verify all 6 keys, error_count=1, warning_count=1, errors is a list of
   {field, message} dicts without severity/value; guard: empty result → error_count=0,
   warning_count=0, errors=[]).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #760
