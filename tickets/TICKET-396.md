@@ -22,5 +22,5 @@ Add one pinning test asserting that stopwords and short words are excluded
 from the returned dict.
 
 ## Status
-OPEN
+RESOLVED
 Issue: #630
