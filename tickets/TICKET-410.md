@@ -17,5 +17,5 @@
   (5) returns the result dict.
   Add ONE pinning test asserting the RETURNED dict fields (normal case) AND the
   guard path (passes_filter False -> not added to search index).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #658
