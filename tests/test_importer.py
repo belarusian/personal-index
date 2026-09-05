@@ -216,6 +216,31 @@ class TestImporterHtml:
         result = self.importer.import_from_file(str(path))
         assert result.total_imported == 1
 
+    def test_parse_html_element_pins_result_and_bookmark_fields(self):
+        """Pin _parse_html_element: href-present imports, href-absent skips."""
+        from xml.etree import ElementTree as ET
+
+        root = ET.fromstring(
+            "<ROOT><a href=\"http://a.com\" title=\"T1\">A</a>"
+            "<a>no-href</a><a href=\"http://b.com\">B</a></ROOT>"
+        )
+        result = ImportResult(source="s", format="html")
+        ret = self.importer._parse_html_element(root, result, [])
+        assert ret is None
+        assert result.total_imported == 2
+        assert result.total_skipped == 0
+        assert result.errors == []
+        bm_a = self.importer.manager.get("http://a.com")
+        assert bm_a is not None
+        assert bm_a.title == "T1"
+        assert bm_a.category == "imported"
+        bm_b = self.importer.manager.get("http://b.com")
+        assert bm_b is not None
+        assert bm_b.title == "B"
+        assert bm_b.category == "imported"
+        # the href-absent <a> must not have created any bookmark
+        assert self.importer.manager.get("no-href") is None
+
 
 class TestImporterXml:
     def setup_method(self):
