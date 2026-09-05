@@ -158,6 +158,24 @@ class TestImporterCsv:
         assert result.total_imported == 1
         assert result.total_skipped == 1
 
+    def test_import_csv_case_insensitive_headers_and_multi_tags(self):
+        # Uppercase headers (URL/Title/Tags) must be honored via the
+        # case-insensitive fallback, and the Tags value must be
+        # comma-split and stripped into a list.
+        content = (
+            "URL,Title,Tags\n"
+            "http://a.com,A,\"python, web,  ai\"\n"
+            "http://b.com,B,news\n"
+        )
+        result = self.importer.import_from_content(content, "csv")
+        assert result.total_imported == 2
+        a = self.importer.manager.get("http://a.com")
+        b = self.importer.manager.get("http://b.com")
+        assert a.title == "A"
+        assert a.tags == ["python", "web", "ai"]
+        assert b.title == "B"
+        assert b.tags == ["news"]
+
 
 class TestImporterHtml:
     def setup_method(self):
