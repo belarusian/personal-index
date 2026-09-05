@@ -17,4 +17,4 @@
   pinning test asserting the returned dict fields for the normal case AND the
   empty-manager guard path (total 0 / by_content 0 / by_type {}).
 - Issue: #706
-- Status: OPEN
+- Status: RESOLVED (306f08b, PR #707)
