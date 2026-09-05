@@ -517,3 +517,55 @@ class TestGetEventsDocPinning:
         self.tracker.record_crawl("http://c.com")
         events = self.tracker.get_crawl_events(limit=1)
         assert [e.url for e in events] == ["http://c.com"]
+
+
+class TestRecordCrawlDocPinning:
+    """Pin the corrected record_crawl docstring claim.
+
+    The docstring now states: record_crawl constructs a CrawlEvent from the
+    given fields, appends it to the internal crawl event list, and returns
+    the constructed event. The parameters status_code (default 200),
+    content_size (default 0), duration_ms (default 0.0), and error (default
+    None) are applied as given or as defaults. These tests pin both the main
+    behavior (explicit params) and the guard path (defaults) against the
+    returned CrawlEvent fields, and witness the internal-list side effect via
+    get_crawl_events().
+    """
+
+    def setup_method(self):
+        self.tracker = AnalyticsTracker()
+
+    def test_record_crawl_explicit_params_pinned(self):
+        # Main behavior: explicit params -> returned event carries them,
+        # and the event is appended to the internal crawl list.
+        event = self.tracker.record_crawl(
+            "http://example.com/page",
+            status_code=404,
+            content_size=1024,
+            duration_ms=50.0,
+            error="not found",
+        )
+        assert event.url == "http://example.com/page"
+        assert event.status_code == 404
+        assert event.content_size == 1024
+        assert event.duration_ms == 50.0
+        assert event.error == "not found"
+        # Side effect: appended to the internal crawl event list.
+        assert [e.url for e in self.tracker.get_crawl_events()] == [
+            "http://example.com/page"
+        ]
+
+    def test_record_crawl_defaults_pinned(self):
+        # Guard path: only url given -> defaults applied (status_code=200,
+        # content_size=0, duration_ms=0.0, error=None), and the event is
+        # appended to the internal crawl list.
+        event = self.tracker.record_crawl("http://example.com")
+        assert event.url == "http://example.com"
+        assert event.status_code == 200
+        assert event.content_size == 0
+        assert event.duration_ms == 0.0
+        assert event.error is None
+        # Side effect: appended to the internal crawl event list.
+        assert [e.url for e in self.tracker.get_crawl_events()] == [
+            "http://example.com"
+        ]

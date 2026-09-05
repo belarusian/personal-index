@@ -88,7 +88,23 @@ class AnalyticsTracker:
     def record_crawl(self, url: str, status_code: int = 200,
                      content_size: int = 0, duration_ms: float = 0.0,
                      error: str | None = None) -> CrawlEvent:
-        """Record a crawl event."""
+        """Record a crawl event.
+
+        Constructs a CrawlEvent from the given fields, appends it to the
+        internal crawl event list (``self._crawl_events``), and returns the
+        constructed event.
+
+        Args:
+            url: The URL that was crawled (required).
+            status_code: HTTP status code (default 200).
+            content_size: Content size in bytes (default 0).
+            duration_ms: Duration in ms (default 0.0).
+            error: Error message if the crawl failed (default None).
+
+        Returns:
+            The constructed CrawlEvent (its timestamp is auto-set by the
+            dataclass when not provided).
+        """
         event = CrawlEvent(
             url=url,
             status_code=status_code,
