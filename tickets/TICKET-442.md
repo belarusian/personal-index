@@ -1,6 +1,6 @@
 # TICKET-442: record_crawl docstring is a blanket one-liner (class-b doc-drift)
 
-Status: OPEN
+Status: RESOLVED (279927d)
 Issue: #722
 Module: personal_index/analytics.py
 Function: AnalyticsTracker.record_crawl (line 88)
