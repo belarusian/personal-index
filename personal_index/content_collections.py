@@ -147,7 +147,22 @@ class CollectionManager:
             self.add_item(collection_id, item_id)
 
     def remove_item(self, collection_id: str, item_id: str) -> bool:
-        """Remove an item from a collection."""
+        """Remove an item from a collection.
+
+        Guard path: if ``collection_id`` is not in ``_collections``, returns
+        False without touching the collection or the ``_item_to_collections``
+        reverse index.
+
+        On success (collection exists):
+          1. ``Collection.remove_item(item_id)`` removes ``item_id`` from the
+             collection's ``item_ids`` (a no-op when the item is not present,
+             in which case ``updated_at`` is NOT refreshed).
+          2. The ``_item_to_collections[item_id]`` reverse index is cleaned up:
+             ``collection_id`` is removed from the item's list, and the list
+             entry is deleted entirely when it becomes empty.
+        Returns True whenever the collection exists (regardless of whether the
+        item was actually present), False on the guard path.
+        """
         c = self._collections.get(collection_id)
         if c:
             c.remove_item(item_id)
