@@ -3,7 +3,7 @@
 - Module: personal_index/content_archive/archiver.py
 - Class: ContentArchiver
 - Function: archive_old
-- Status: OPEN
+- Status: RESOLVED
 
 ## Symptom
 Doc-drift. The docstring "Archive items older than the threshold." does not
