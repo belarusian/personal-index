@@ -156,6 +156,39 @@ class TestSummarize:
         )
         assert str(result) == "sum"
 
+    def test_summarize_pins_returned_fields_and_guard_path(self):
+        # Normal scoring path: text > min_length and > max_sentences sentences.
+        text = (
+            "Python is a programming language. "
+            "Python supports multiple paradigms. "
+            "Python is widely used in web development. "
+            "Python has a large standard library. "
+            "Python is easy to learn. "
+            "Python is popular among beginners. "
+            "Python runs on many platforms. "
+            "Python is open source software."
+        )
+        result = summarize(text, max_sentences=3)
+        # Returned object fields (not counters/substrings):
+        assert result.original_text == text
+        assert len(result.sentences) <= 3
+        # summary is the space-joined selected sentences
+        assert result.summary == " ".join(result.sentences)
+        # ratio is word_count_summary / max(word_count_original, 1)
+        assert result.word_count_original > 0
+        assert result.word_count_summary < result.word_count_original
+        assert result.ratio == result.word_count_summary / result.word_count_original
+        assert result.ratio < 1.0
+
+        # Guard path: empty text -> _no_op_result (no splitting/scoring).
+        guard = summarize("")
+        assert guard.original_text == ""
+        assert guard.summary == ""
+        assert guard.sentences == []
+        assert guard.ratio == 1.0
+        assert guard.word_count_original == 0
+        assert guard.word_count_summary == 0
+
 
 class TestSummarizePage:
     def test_page_summarization(self):

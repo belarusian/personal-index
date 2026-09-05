@@ -157,7 +157,29 @@ def summarize(
     max_sentences: int = 3,
     min_length: int = 50,
 ) -> SummaryResult:
-    """Generate an extractive summary of the given text."""
+    """Generate an extractive summary of *text* and return a SummaryResult.
+
+    Behavior, in order:
+      1. Guard path: if *text* is falsy or ``len(text) < min_length``
+         (default 50), return ``_no_op_result(text)`` -- a SummaryResult whose
+         ``summary`` equals *text*, ``ratio`` is 1.0, ``sentences`` is
+         ``[text]`` (or ``[]`` when *text* is empty), and both word counts are
+         ``len(_tokenize(text))``. No sentence splitting or scoring occurs.
+      2. Short-text path: split *text* via ``_split_sentences``; if the
+         sentence count is ``<= max_sentences`` (default 3), return
+         ``_build_summary_result(text, sentences)`` keeping ALL sentences
+         (no scoring, no selection).
+      3. Scoring path: otherwise compute ``_word_frequency(text)`` and select
+         the top ``max_sentences`` via ``_score_and_select`` (the first
+         sentence is boosted x2.5 and the last x1.1 before ranking), then
+         return ``_build_summary_result(text, selected)``.
+
+    Returns:
+        SummaryResult(original_text, summary, sentences, ratio,
+        word_count_original, word_count_summary) where ``summary`` is the
+        space-joined selected sentences and ``ratio`` is
+        ``word_count_summary / max(word_count_original, 1)``.
+    """
     if not text or len(text) < min_length:
         return _no_op_result(text)
 
