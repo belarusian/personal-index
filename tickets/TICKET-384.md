@@ -1,6 +1,6 @@
 # TICKET-384: validator.py placeholder docstrings (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged to main a7631f6, gh #606 closed)
 
 ## File
 personal_index/validator.py
