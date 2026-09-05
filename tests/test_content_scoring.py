@@ -62,6 +62,53 @@ class TestScoreWeights:
         assert abs(n.relevance - expected) < 0.001
 
 
+class TestScoreWeightsNormalizePinning:
+    """Pinning tests for ScoreWeights.normalize returned-object fields."""
+
+    def test_normalize_returns_new_instance_and_divides_by_total(self) -> None:
+        w = ScoreWeights(
+            recency=0.5, relevance=0.5,
+            engagement=0.0, quality=0.0, authority=0.0, freshness=0.0,
+        )
+        n = w.normalize()
+        # returned object is a NEW instance, not the original
+        assert n is not w
+        # each field == weight / total (total == 1.0 here)
+        assert abs(n.recency - 0.5) < 0.001
+        assert abs(n.relevance - 0.5) < 0.001
+        assert n.engagement == 0.0
+        assert n.quality == 0.0
+        assert n.authority == 0.0
+        assert n.freshness == 0.0
+        total = (
+            n.recency + n.relevance + n.engagement
+            + n.quality + n.authority + n.freshness
+        )
+        assert abs(total - 1.0) < 0.001
+        # original instance is NOT mutated
+        assert w.recency == 0.5
+        assert w.relevance == 0.5
+        assert w.engagement == 0.0
+
+    def test_normalize_all_zero_guard_returns_default_fields(self) -> None:
+        w = ScoreWeights(
+            recency=0, relevance=0, engagement=0,
+            quality=0, authority=0, freshness=0,
+        )
+        n = w.normalize()
+        # guard path: total == 0 -> DEFAULT ScoreWeights() fields, no ZeroDivisionError
+        assert n is not w
+        assert n.recency == 0.2
+        assert n.relevance == 0.25
+        assert n.engagement == 0.15
+        assert n.quality == 0.15
+        assert n.authority == 0.1
+        assert n.freshness == 0.15
+        # original all-zero instance is NOT mutated
+        assert w.recency == 0
+        assert w.relevance == 0
+
+
 # ── ContentScore ───────────────────────────────────────────────────
 
 class TestContentScore:

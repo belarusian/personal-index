@@ -46,7 +46,18 @@ class ScoreWeights:
     freshness: float = 0.15
 
     def normalize(self) -> ScoreWeights:
-        """Normalize weights so they sum to 1.0."""
+        """Return a NEW ScoreWeights whose six weights sum to 1.0.
+
+        Each of the six weights (recency, relevance, engagement, quality,
+        authority, freshness) is divided by the total (the sum of all six),
+        so the returned weights sum to 1.0. The original instance is NOT
+        mutated; a fresh ScoreWeights is returned.
+
+        Guard path: when the total is 0 (all six weights are 0), division
+        by zero is avoided and the DEFAULT ScoreWeights() is returned
+        (recency=0.2, relevance=0.25, engagement=0.15, quality=0.15,
+        authority=0.1, freshness=0.15) instead.
+        """
         total = sum([
             self.recency, self.relevance, self.engagement,
             self.quality, self.authority, self.freshness,
