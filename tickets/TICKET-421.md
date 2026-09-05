@@ -1,6 +1,6 @@
 # TICKET-421
 
-- Status: OPEN
+- Status: RESOLVED
 - File: personal_index/content_merger.py
 - Function: ContentMerger.merge (line 72)
 - Symptom: class-(b) doc-drift. Docstring is the blanket "Merge multiple
