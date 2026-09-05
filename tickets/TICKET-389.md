@@ -1,6 +1,6 @@
 # TICKET-389: url_history.py URLVisit.from_dict placeholder docstring (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged to main 5a1f55b, gh #616 closed)
 
 ## File
 personal_index/url_history.py
@@ -31,4 +31,4 @@ is witnessed against the returned object.
 Issue: #616
 
 ## Status
-OPEN
+RESOLVED
