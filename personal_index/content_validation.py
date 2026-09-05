@@ -105,7 +105,18 @@ class ContentValidator:
         self,
         items: list[dict[str, Any]],
     ) -> ValidationResult:
-        """Validate a list of content items."""
+        """Validate a list of content items.
+
+        For each item, runs the per-item checks via `_validate_item`:
+        required fields, URL validity/length, title length, score type/range,
+        and date formats. A title-length breach and an out-of-range score are
+        recorded as WARNINGS (they do not mark the item invalid); a missing
+        required field, an invalid/over-long URL, a non-numeric score, or an
+        invalid date is recorded as an ERROR and marks the item invalid.
+        Tallies `items_valid` / `items_invalid` per item and returns the
+        accumulated `ValidationResult` (is_valid, errors, warnings,
+        items_valid, items_invalid).
+        """
         result = ValidationResult()
 
         for i, item in enumerate(items):

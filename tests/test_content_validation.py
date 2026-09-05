@@ -154,3 +154,45 @@ class TestContentValidatorDocstring:
         """
         doc = (ContentValidator.__doc__ or "").lower()
         assert "custom rules" not in doc
+
+
+class TestValidateDocstringDefaults:
+    """TICKET-445: pin the corrected validate docstring against the returned
+    ValidationResult object. The docstring now enumerates the per-item checks,
+    the warning-vs-error distinction, the items_valid/items_invalid tally, and
+    the returned fields. Witness both the normal case (all-valid item) and the
+    guard path (a title-length breach is a WARNING that leaves the item valid,
+    vs a required-field breach that marks it invalid)."""
+
+    def test_validate_all_valid_pins_returned_fields(self) -> None:
+        """A fully-valid item is tallied valid with no errors/warnings and the
+        returned ValidationResult carries is_valid/items_valid/items_invalid."""
+        validator = ContentValidator()
+        result = validator.validate([{"id": "1", "url": "https://example.com"}])
+        assert result.is_valid is True
+        assert result.errors == []
+        assert result.warnings == []
+        assert result.items_valid == 1
+        assert result.items_invalid == 0
+
+    def test_validate_title_breach_is_warning_not_invalid(self) -> None:
+        """Guard path: a title-length breach is a WARNING (does not mark the
+        item invalid), while a missing required field is an ERROR (marks the
+        item invalid) - one returned object pins both distinctions."""
+        validator = ContentValidator()
+        # title breach -> warning, item still valid
+        warn_result = validator.validate(
+            [{"id": "1", "url": "https://example.com", "title": "x" * 501}]
+        )
+        assert warn_result.is_valid is True
+        assert warn_result.items_valid == 1
+        assert warn_result.items_invalid == 0
+        assert len(warn_result.warnings) == 1
+        assert warn_result.errors == []
+        # required-field breach -> error, item invalid
+        err_result = validator.validate([{"id": "1"}])
+        assert err_result.is_valid is False
+        assert err_result.items_valid == 0
+        assert err_result.items_invalid == 1
+        assert len(err_result.errors) == 1
+        assert err_result.warnings == []
