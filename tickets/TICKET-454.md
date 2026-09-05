@@ -1,4 +1,4 @@
-# TICKET-453
+# TICKET-454
 
 - Module: personal_index/content_collections.py
 - Class: CollectionManager
@@ -40,3 +40,6 @@ change. Add ONE pinning test asserting the guard path (missing collection ->
 False, reverse index untouched) and the success path (item removed from both
 the collection and the reverse index; reverse-index list entry deleted when it
 becomes empty).
+
+Note: renumbered from TICKET-453 (assigned to content.ExtractedContent.get_keywords
+by the parallel pipeline, merged as b671c69) to avoid a ticket-number collision.
