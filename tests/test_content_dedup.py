@@ -369,6 +369,29 @@ class TestContentDeduplicator:
         assert group.similarity_score == 0.9
         assert group.dedup_method == "similarity"
 
+    def test_dedup_by_url_pins_returned_fields_and_empty_url_guard(self) -> None:
+        """Pin the RETURNED DedupResult fields for the URL grouping rule and
+        the empty-URL guard path (no URL -> not grouped -> stays unique).
+        """
+        items = [
+            {"url": "https://A.com/page/"},
+            {"url": "https://a.com/page#frag"},
+            {"url": ""},
+            {"url": "https://b.com"},
+        ]
+        dedup = ContentDeduplicator()
+        result = dedup.dedup_by_url(items)
+        assert result.method == "url"
+        assert result.total_items == 4
+        assert result.removed_count == 1
+        assert result.unique_items == 3
+        assert len(result.duplicate_groups) == 1
+        group = result.duplicate_groups[0]
+        assert group.representative == "https://A.com/page/"
+        assert group.duplicates == ["https://a.com/page#frag"]
+        assert group.similarity_score == 1.0
+        assert group.dedup_method == "normalized_url"
+
     # ── dedup_all ────────────────────────────────────────────────
 
     def test_dedup_all_combined(self) -> None:
