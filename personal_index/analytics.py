@@ -246,7 +246,24 @@ class AnalyticsTracker:
         }
 
     def get_crawl_stats(self) -> dict[str, Any]:
-        """Get detailed crawl statistics."""
+        """Compute per-crawl statistics over the recorded crawl events.
+
+        Guard path: when no crawl events have been recorded, returns
+        exactly ``{"total": 0}`` (no other keys).
+
+        Normal path: returns a dict with these fields:
+            total: number of recorded crawl events.
+            avg_duration_ms: mean duration_ms over events whose
+                duration_ms > 0 (0 when none qualify).
+            avg_content_size: mean content_size over events whose
+                content_size > 0 (0 when none qualify).
+            total_content_size: sum of content_size over the same
+                content_size > 0 events (0 when none qualify).
+            status_codes: dict mapping each status_code to its count
+                over ALL events (a Counter, not filtered).
+            error_rate: fraction of events with a truthy error
+                (error events / total).
+        """
         if not self._crawl_events:
             return {"total": 0}
 

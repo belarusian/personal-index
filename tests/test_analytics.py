@@ -196,6 +196,31 @@ class TestAnalyticsTracker:
         assert 200 in stats["status_codes"]
         assert 404 in stats["status_codes"]
 
+    def test_get_crawl_stats_fields_pinned(self):
+        # Guard path: no events -> exactly {"total": 0}.
+        empty = self.tracker.get_crawl_stats()
+        assert empty == {"total": 0}
+
+        # Normal path: pin every returned field against the returned object.
+        # event3 has duration_ms=0 (filtered out of durations) and event2
+        # has content_size=0 (filtered out of sizes) so the sub-component
+        # filters are witnessed alongside the main behavior.
+        self.tracker.record_crawl("http://a.com", status_code=200,
+                                  content_size=1000, duration_ms=50)
+        self.tracker.record_crawl("http://b.com", status_code=404,
+                                  content_size=0, duration_ms=100,
+                                  error="not found")
+        self.tracker.record_crawl("http://c.com", status_code=200,
+                                  content_size=500, duration_ms=0)
+        stats = self.tracker.get_crawl_stats()
+        assert stats["total"] == 3
+        assert stats["avg_duration_ms"] == (50 + 100) / 2
+        assert stats["avg_content_size"] == (1000 + 500) / 2
+        assert stats["total_content_size"] == 1500
+        assert stats["status_codes"] == {200: 2, 404: 1}
+        assert stats["error_rate"] == 1 / 3
+
+
     def test_save_and_load(self, tmp_path):
         path = str(tmp_path / "analytics.json")
         self.tracker.record_search("python", result_count=5)
@@ -279,7 +304,6 @@ class TestAnalyticsTracker:
         assert empty.error_count == 0
         assert empty.success_count == 0
         assert empty.total_pages_indexed == 0
-
 
 
 class TestComputeSearchAnalytics:
