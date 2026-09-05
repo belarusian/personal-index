@@ -116,7 +116,21 @@ class CollectionManager:
         return [self._collections[cid] for cid in cids if cid in self._collections]
 
     def add_item(self, collection_id: str, item_id: str) -> bool:
-        """Add an item to a collection."""
+        """Add an item to a collection.
+
+        Guard path: if `collection_id` is not in `_collections`, returns
+        False without touching `Collection.item_ids` or the
+        `_item_to_collections` reverse index.
+
+        On success (collection exists):
+          1. `Collection.add_item(item_id)` appends `item_id` to the
+             collection's `item_ids` (skipping if already present) and
+             refreshes `updated_at`.
+          2. The `_item_to_collections[item_id]` reverse index is created
+             if absent and `collection_id` is appended to it if not already
+             listed.
+        Returns True on success, False on the guard path.
+        """
         c = self._collections.get(collection_id)
         if c:
             c.add_item(item_id)

@@ -338,3 +338,30 @@ class TestCollectionManager:
         self.manager.add_items(cid, ["a", "a", "b"])
         c = self.manager.get(cid)
         assert c.item_ids.count("a") == 1
+
+
+class TestCollectionAddItemIndexPinning:
+    """Pin CollectionManager.add_item returned bool + observable index state."""
+
+    def setup_method(self):
+        self.manager = CollectionManager()
+
+    def test_add_item_normal_pins_returned_bool_and_indexes(self):
+        cid = self.manager.create("Test")
+        result = self.manager.add_item(cid, "item1")
+        # returned object: True on success
+        assert result is True
+        # index 1: Collection.item_ids contains the item
+        c = self.manager.get(cid)
+        assert "item1" in c.item_ids
+        assert self.manager.get_items(cid) == ["item1"]
+        # index 2: _item_to_collections reverse index resolves the collection
+        for_coll = self.manager.get_collections_for_item("item1")
+        assert [col.collection_id for col in for_coll] == [cid]
+
+    def test_add_item_guard_path_pins_false_and_untouched_index(self):
+        # guard path: nonexistent collection -> False, reverse index untouched
+        result = self.manager.add_item("nonexistent", "item1")
+        assert result is False
+        # no collection was created for the item
+        assert self.manager.get_collections_for_item("item1") == []
