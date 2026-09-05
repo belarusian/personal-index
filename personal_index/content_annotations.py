@@ -41,13 +41,23 @@ class Annotation:
         self.updated_at = datetime.now(timezone.utc).isoformat()
 
     def add_tag(self, tag: str) -> None:
-        """Add a tag to this annotation."""
+        """Append ``tag`` to ``self.tags`` only if it is not already present.
+
+        A tag already in ``self.tags`` is a no-op (no duplicate is appended).
+        ``self.updated_at`` is set to the current UTC ISO-8601 timestamp on
+        every call, whether or not the tag was newly added.
+        """
         if tag not in self.tags:
             self.tags.append(tag)
         self.updated_at = datetime.now(timezone.utc).isoformat()
 
     def remove_tag(self, tag: str) -> None:
-        """Remove a tag from this annotation."""
+        """Remove ``tag`` from ``self.tags`` only if it is present.
+
+        A tag not in ``self.tags`` is a no-op (nothing is removed).
+        ``self.updated_at`` is set to the current UTC ISO-8601 timestamp on
+        every call, whether or not the tag was actually removed.
+        """
         if tag in self.tags:
             self.tags.remove(tag)
         self.updated_at = datetime.now(timezone.utc).isoformat()
