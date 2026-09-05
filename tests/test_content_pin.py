@@ -259,6 +259,39 @@ class TestContentPinner:
         assert unpin_content("module-test") is True
 
 
+class TestModulePinContentDocstring:
+    """TICKET-449: pin the corrected pin_content docstring against the
+    returned object. The docstring now states the exact two-path behavior:
+    True on success; False on persistence failure (OSError in _save) with the
+    in-memory state rolled back so the item is not left pinned. Witness both
+    the normal case (returns True, item pinned) and the guard path (returns
+    False, item not left pinned)."""
+
+    def test_module_pin_content_success_pins_item(self):
+        """Normal case: pin_content returns True and the item is pinned."""
+        import personal_index.content_pin as cp
+
+        cp._default_pinner = ContentPinner(storage_path="/tmp/t448_pin.json")
+        assert cp.pin_content("t448-item") is True
+        assert cp._get_default_pinner().is_pinned("t448-item") is True
+
+    def test_module_pin_content_false_rolls_back_on_save_failure(self, monkeypatch):
+        """Guard path: when _save raises OSError, pin_content returns False
+        and the item is not left pinned (rollback), matching the corrected
+        docstring claim."""
+        import personal_index.content_pin as cp
+
+        cp._default_pinner = ContentPinner(storage_path="/tmp/t448_pin2.json")
+
+        def _boom():
+            raise OSError("disk full")
+
+        monkeypatch.setattr(cp._default_pinner, "_save", _boom)
+        assert cp.pin_content("t448-fail") is False
+        assert cp._get_default_pinner().is_pinned("t448-fail") is False
+        assert cp._get_default_pinner().get_pinned_items() == []
+
+
 class TestContentPinnerNonDictJSON:
     """Regression tests for TICKET-266: non-dict JSON in storage file."""
 
