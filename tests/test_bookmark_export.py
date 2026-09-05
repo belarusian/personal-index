@@ -494,6 +494,33 @@ class TestExportToFile:
         assert isinstance(bad2, BookmarkExportResult)
         assert len(bad2.errors) > 0
 
+    def test_export_to_file_returns_result_with_errors_on_write_failure(
+        self, exporter, tmp_path, monkeypatch
+    ):
+        # TICKET-428 claim-truth: the ORIGINAL docstring claim
+        # "A BookmarkExportResult on success, or a result with errors on
+        # failure" must hold for the file-write failure path too. An OSError
+        # during the write must return a BookmarkExportResult with non-empty
+        # errors, not propagate.
+        import builtins
+
+        real_open = builtins.open
+
+        def fake_open(file, mode="r", *args, **kwargs):
+            if "w" in mode and str(file) == str(tmp_path / "denied.json"):
+                raise OSError("Permission denied")
+            return real_open(file, mode, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "open", fake_open)
+
+        result = exporter.export_to_file(str(tmp_path / "denied.json"), "json")
+        assert result is not None
+        assert isinstance(result, BookmarkExportResult)
+        assert len(result.errors) > 0
+        assert "denied.json" in result.errors[0]
+        # No file was written.
+        assert not os.path.exists(str(tmp_path / "denied.json"))
+
 
 # ---------------------------------------------------------------------------
 # Edge case tests

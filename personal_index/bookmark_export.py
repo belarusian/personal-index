@@ -194,8 +194,13 @@ class BookmarkExporter:
             )
 
         # Write to file
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(content)
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(content)
+        except OSError as exc:
+            return BookmarkExportResult(
+                errors=[f"Failed to write file: {filepath}: {exc}"]
+            )
 
         return BookmarkExportResult(
             format=fmt,
