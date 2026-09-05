@@ -17,6 +17,6 @@
   the normal case (a padded/upper-case format that normalizes and succeeds).
 - Issue: #755
 
-- Status: OPEN
+- Status: RESOLVED (merged to main, gh #755 closed, squash d0d82be)
 - Note: renumbered 456 -> 457 at merge (parallel run claimed 456 for
   content_collections.CollectionManager.delete, PR #754).
