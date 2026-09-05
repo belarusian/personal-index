@@ -1,6 +1,6 @@
 # TICKET-448: content_filter.get_filter_reasons check 8 scores content-only, not the documented title+content
 
-Status: OPEN
+Status: RESOLVED
 Issue: #735
 Module: personal_index/content_filter.py
 Method: ContentFilter.get_filter_reasons (check 8, minimum relevance score)
