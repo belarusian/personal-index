@@ -421,3 +421,36 @@ class TestCollectionGetStatsPinning:
             "public_collections": 0,
             "private_collections": 0,
         }
+
+
+class TestCollectionDeletePinning:
+    """Pin CollectionManager.delete guard path + reverse-index cleanup."""
+
+    def setup_method(self):
+        self.manager = CollectionManager()
+
+    def test_delete_guard_path_pins_false_and_untouched_index(self):
+        # guard path: nonexistent collection -> False, reverse index untouched
+        cid = self.manager.create("Keep")
+        assert self.manager.add_item(cid, "item1") is True
+        result = self.manager.delete("nonexistent")
+        assert result is False
+        # the existing collection and its reverse index are untouched
+        assert self.manager.get(cid) is not None
+        assert [c.collection_id for c in
+                self.manager.get_collections_for_item("item1")] == [cid]
+
+    def test_delete_success_pins_true_and_reverse_index_cleanup(self):
+        # item "x" in TWO collections; deleting one leaves it in the other
+        cid1 = self.manager.create("A")
+        cid2 = self.manager.create("B")
+        assert self.manager.add_item(cid1, "x") is True
+        assert self.manager.add_item(cid2, "x") is True
+        assert self.manager.delete(cid1) is True
+        assert self.manager.get(cid1) is None
+        # "x" still resolves to the surviving collection only
+        assert [c.collection_id for c in
+                self.manager.get_collections_for_item("x")] == [cid2]
+        # deleting the last collection removes the reverse-index entry entirely
+        assert self.manager.delete(cid2) is True
+        assert self.manager.get_collections_for_item("x") == []

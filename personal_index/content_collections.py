@@ -206,7 +206,14 @@ class CollectionManager:
         return False
 
     def delete(self, collection_id: str) -> bool:
-        """Delete a collection."""
+        """Delete a collection.
+
+        Returns True iff the collection existed; if it is absent, returns False
+        with no changes. On success, cleans up the ``_item_to_collections``
+        reverse index: for each item in the deleted collection, removes
+        ``collection_id`` from the item's list and deletes the list entry when
+        it becomes empty.
+        """
         c = self._collections.pop(collection_id, None)
         if c:
             # Clean up item-to-collection index
