@@ -3,7 +3,7 @@
 **Module:** personal_index/content_scoring.py
 **Function:** ContentScorer.score_page
 **Class:** (b) doc-drift — blanket docstring that does not enumerate sub-components
-**Status:** OPEN
+**Status:** RESOLVED
 **Issue:** #698
 
 ## Symptom
