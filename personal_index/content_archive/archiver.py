@@ -63,7 +63,17 @@ class ContentArchiver:
         self._items.pop(item_id, None)
 
     def archive_old(self, days_threshold: int | None = None) -> list[str]:
-        """Archive items older than the threshold."""
+        """Archive items whose saved timestamp is older than the threshold.
+
+        Only items whose ``archived_at`` field is non-None are considered;
+        items added via ``add_item(..., saved_at=None)`` (the default) are
+        never archived regardless of age.  The cutoff is ``now - threshold``
+        (threshold = *days_threshold* arg or ``config.days_threshold``);
+        an item is archived only when its parsed ``archived_at`` is strictly
+        before the cutoff.  Unparseable ``archived_at`` values are silently
+        skipped.  Returns the list of archived item ids (empty when none
+        qualify).
+        """
         threshold = days_threshold or self.config.days_threshold
         cutoff = datetime.now(timezone.utc) - timedelta(days=threshold)
         archived_ids: list[str] = []
