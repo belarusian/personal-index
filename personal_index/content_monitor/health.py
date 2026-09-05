@@ -51,13 +51,28 @@ class HealthChecker:
     max_stale_hours: int = 24
 
     def check(self, items: list[dict[str, Any]]) -> HealthStatus:
-        """Run all health checks on content items.
+        """Run the three built-in health checks on ``items`` and aggregate.
+
+        Runs, in order, appending each ``HealthCheck`` to ``checks``:
+
+        - ``item_count``: healthy when ``len(items) >= self.min_items``.
+        - ``scores``: healthy when every item has an ``int``/``float``
+          ``"score"`` value, or when ``items`` is empty.
+        - ``duplicates``: healthy when the count of unique ``str(id)`` values
+          equals ``len(items)`` (i.e. zero duplicates).
+
+        The aggregate ``healthy`` is ``True`` only when all three checks are
+        healthy. The aggregate ``score`` is the fraction of healthy checks
+        (``sum(healthy) / len(checks)``), rounded to 4 places, or ``0.0`` when
+        there are no checks.
 
         Args:
             items: Content items to check.
 
         Returns:
-            HealthStatus with check results.
+            A ``HealthStatus`` with ``healthy`` (all checks passed),
+            ``checks`` (the three ``HealthCheck`` results, in the order above),
+            and ``score`` (the rounded fraction of healthy checks).
         """
         checks: list[HealthCheck] = []
         checks.append(self._check_item_count(items))
