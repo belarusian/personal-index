@@ -56,8 +56,20 @@ class SnippetExtractor:
     ) -> list[Snippet]:
         """Extract highlighted snippets from text matching query terms.
 
-        Finds the most relevant portions of text containing query terms
-        and returns them as highlighted snippets.
+        Behavior:
+        - Guard path: if ``text`` is empty/falsy OR ``query_terms`` is an
+          empty list, return ``[]`` (no snippet is produced).
+        - No-match fallback: if no query term is found anywhere in the text,
+          return a single ``Snippet`` built by ``_make_fallback_snippet``
+          (the leading portion of the text, ellipsis-suffixed when truncated
+          past ``max_snippet_length``).
+        - Match case: every occurrence of each query term is located, the
+          positions are grouped into windows by ``_group_into_windows``, and
+          each window becomes a ``Snippet`` via ``_make_snippet`` carrying
+          ``text``, ``highlighted`` (terms wrapped in the open/close markers),
+          ``start_offset``, ``end_offset`` and ``matched_terms``.
+        - Cap: the returned list is truncated to ``max_snippets`` entries
+          (default 3).
         """
         if not text or not query_terms:
             return []
