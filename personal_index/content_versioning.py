@@ -175,7 +175,8 @@ class ContentVersioning:
     def rollback_to(self, item_id: str, version_id: str) -> bool:
         """Rollback an item to a specific version.
 
-        Creates a new version with the content of the specified version.
+        Creates a new version carrying the target version's content and
+        author, with a message of "rollback to <version_id>".
 
         Args:
             item_id: ID of the item.

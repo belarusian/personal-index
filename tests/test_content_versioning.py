@@ -235,3 +235,23 @@ class TestContentVersioning:
             json.dump(42, f)
         v = ContentVersioning(storage_path=tmp_storage)
         assert v.get_versions("item-1") == []
+
+    def test_rollback_copies_content_author_and_message(self, versioning):
+        """Rollback new version carries target's content, author, and message."""
+        versioning.create_version("item-1", "v1", author="alice", message="initial")
+        versioning.create_version("item-1", "v2", author="bob", message="second")
+        # Rollback to v1: new version should carry v1's content AND author
+        versioning.rollback_to("item-1", "item-1_v1")
+        versions = versioning.get_versions("item-1")
+        latest = versions[-1]
+        assert latest.content == "v1"
+        assert latest.author == "alice"
+        assert latest.message == "rollback to item-1_v1"
+
+    def test_rollback_nonexistent_returns_false(self, versioning):
+        """Guard path: rollback to a nonexistent version returns False."""
+        versioning.create_version("item-1", "v1")
+        result = versioning.rollback_to("item-1", "item-1_v999")
+        assert result is False
+        # No new version created
+        assert len(versioning.get_versions("item-1")) == 1
