@@ -365,3 +365,46 @@ class TestCollectionAddItemIndexPinning:
         assert result is False
         # no collection was created for the item
         assert self.manager.get_collections_for_item("item1") == []
+
+
+class TestCollectionGetStatsPinning:
+    """Pin CollectionManager.get_stats returned dict fields (normal + guard)."""
+
+    def setup_method(self):
+        self.manager = CollectionManager()
+
+    def test_get_stats_normal_pins_returned_dict_fields(self):
+        # 2 public + 1 private collection; item "x" in TWO collections,
+        # "y" in one -> total_items double-counts "x" (3, not 2 distinct).
+        cid1 = self.manager.create("A", is_public=True)
+        cid2 = self.manager.create("B", is_public=True)
+        cid3 = self.manager.create("C", is_public=False)
+        assert self.manager.get(cid3).is_public is False
+        assert self.manager.add_item(cid1, "x") is True
+        assert self.manager.add_item(cid2, "x") is True
+        assert self.manager.add_item(cid1, "y") is True
+        stats = self.manager.get_stats()
+        # returned object: exactly the four documented keys
+        assert set(stats.keys()) == {
+            "total_collections", "total_items",
+            "public_collections", "private_collections",
+        }
+        assert stats["total_collections"] == 3
+        # per-collection sum: 2 (cid1) + 1 (cid2) + 0 (cid3) = 3,
+        # NOT the 2 distinct items {x, y} -> pins the double-count semantics
+        assert stats["total_items"] == 3
+        assert stats["public_collections"] == 2
+        assert stats["private_collections"] == 1
+        # public + private partition total_collections
+        assert stats["public_collections"] + stats["private_collections"] == \
+            stats["total_collections"]
+
+    def test_get_stats_empty_manager_guard_path_pins_all_zero(self):
+        # guard path: no collections -> all four keys 0
+        stats = self.manager.get_stats()
+        assert stats == {
+            "total_collections": 0,
+            "total_items": 0,
+            "public_collections": 0,
+            "private_collections": 0,
+        }

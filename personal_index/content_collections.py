@@ -282,7 +282,22 @@ class CollectionManager:
         return len(self._collections)
 
     def get_stats(self) -> dict:
-        """Get collection statistics."""
+        """Return a dict of collection statistics.
+
+        Keys and exact semantics:
+          - "total_collections": len(self._collections) - number of collections
+            currently stored.
+          - "total_items": sum of len(c.item_ids) over every collection - the
+            PER-COLLECTION item count summed. An item present in N collections
+            is counted N times (this is NOT the number of distinct items).
+          - "public_collections": number of collections with is_public True
+            (== len(self.list_public())).
+          - "private_collections": number of collections with is_public False
+            (== len(self.list_private())); public + private ==
+            total_collections.
+
+        An empty manager returns all four keys as 0.
+        """
         total_items = sum(len(c.item_ids) for c in self._collections.values())
         return {
             "total_collections": len(self._collections),
