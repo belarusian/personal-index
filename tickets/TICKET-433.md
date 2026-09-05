@@ -26,4 +26,4 @@
   (empty sequence: items [], page_info.page 1, total_items 0, total_pages 1,
   has_next False, has_prev False, start_index 0, end_index 0).
 - Issue: #704
-- Status: OPEN
+- Status: RESOLVED (b90040f, PR #705)
