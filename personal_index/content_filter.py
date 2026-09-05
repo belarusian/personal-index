@@ -101,7 +101,8 @@ class ContentFilter:
 
         # Check minimum relevance score
         if self.interest_store and self.config.min_relevance_score > 0:
-            score = self.interest_store.total_score(page.content)
+            relevance_text = f"{page.title} {page.content}"
+            score = self.interest_store.total_score(relevance_text)
             if score < self.config.min_relevance_score:
                 reasons.append(f"relevance score ({score}) below minimum ({self.config.min_relevance_score})")
 
