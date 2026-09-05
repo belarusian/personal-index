@@ -118,6 +118,41 @@ class TestBatchProcessor:
         assert len(result.errors) == 1
         assert result.errors[0]["attempts"] == 2
 
+    def test_try_process_batch_success_and_final_failure(self) -> None:
+        """Pin the _try_process_batch docstring claim on the result object.
+
+        Success path: result.output is extended and result.processed is
+        incremented by len(batch). Final-failure path: result.failed is
+        incremented and an error dict is appended to result.errors.
+        """
+        batch = [{"id": "1", "value": 1}, {"id": "2", "value": 2}]
+
+        # Success path: processor returns the batch unchanged.
+        ok_processor = BatchProcessor(batch_size=10)
+        ok_result = BatchResult(batch_id="ok", total_items=2)
+        ok_processor._try_process_batch(batch, max_retries=3, batch_start=0,
+                                        result=ok_result)
+        assert ok_result.output == batch
+        assert ok_result.processed == 2
+        assert ok_result.failed == 0
+        assert ok_result.errors == []
+
+        # Final-failure path: processor always raises ValueError.
+        def always_fail(b):
+            raise ValueError("boom")
+
+        fail_processor = BatchProcessor(batch_size=10, processor=always_fail)
+        fail_result = BatchResult(batch_id="fail", total_items=2)
+        fail_processor._try_process_batch(batch, max_retries=2, batch_start=5,
+                                          result=fail_result)
+        assert fail_result.output == []
+        assert fail_result.processed == 0
+        assert fail_result.failed == 2
+        assert len(fail_result.errors) == 1
+        assert fail_result.errors[0]["batch_start"] == 5
+        assert fail_result.errors[0]["attempts"] == 2
+        assert fail_result.errors[0]["error"] == "boom"
+
     def test_process_item_by_item(self) -> None:
         processor = BatchProcessor(batch_size=10)
         result = processor.process_item_by_item(

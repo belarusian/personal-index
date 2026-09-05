@@ -178,7 +178,15 @@ class BatchProcessor:
         batch_start: int,
         result: BatchResult,
     ) -> None:
-        """Try to process a single batch with retries."""
+        """Process one batch with a bounded retry loop.
+
+        Runs ``for attempt in range(max_retries)``: on success it extends
+        ``result.output`` with the processor output and increments
+        ``result.processed`` by ``len(batch)`` (then breaks); on a
+        ``ValueError`` on the final attempt it increments ``result.failed``
+        by ``len(batch)`` and appends an error dict (``batch_start``,
+        ``attempts``, ``error``) to ``result.errors``.
+        """
         for attempt in range(max_retries):
             try:
                 output = self.processor(batch)
