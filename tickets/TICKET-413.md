@@ -1,6 +1,6 @@
 # TICKET-413: content_dedup.dedup_all over-promises "all deduplication strategies" (CLAIM TRUTH: implement the missing similarity stage)
 
-Status: OPEN
+Status: RESOLVED (cycle 53, PR #666, gh #665 closed, main 445156f)
 File: personal_index/content_dedup.py
 Function: ContentDeduplicator.dedup_all (line 374)
 Issue: #665
