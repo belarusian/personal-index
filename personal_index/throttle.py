@@ -20,7 +20,7 @@ class ThrottleRule:
 
     @property
     def rate_per_second(self) -> float:
-        """Rate_per_second."""
+        """Requests allowed per second (max_requests / window_seconds)."""
         return self.max_requests / self.window_seconds
 
 
@@ -43,26 +43,31 @@ class ThrottleManager:
         self._default_rule = default_rule or ThrottleRule()
 
     def set_rule(self, domain: str, rule: ThrottleRule) -> None:
-        """Process set_rule.
+        """Set the throttle rule for a specific domain.
 
         Args:
-        domain, rule.
+            domain: Domain to apply the rule to.
+            rule: ThrottleRule to use for that domain.
         """
         self._rules[domain] = rule
 
     def get_rule(self, domain: str) -> ThrottleRule:
-        """Process get_rule.
+        """Return the rule for a domain, or the default rule if none is set.
 
         Args:
-        domain.
+            domain: Domain to look up.
         """
         return self._rules.get(domain, self._default_rule)
 
     def should_throttle(self, url: str) -> bool:
-        """Process should_throttle.
+        """Return True if the url's domain has already made at least
+        max_requests requests within the current window_seconds.
+
+        Prunes request timestamps older than the window before counting.
+        Does not record the request; it only inspects the budget.
 
         Args:
-        url.
+            url: URL whose domain is checked.
         """
         domain = self._extract_domain(url)
         rule = self.get_rule(domain)
@@ -112,10 +117,15 @@ class ThrottleManager:
         return parsed.netloc or url
 
     def get_stats(self, domain: str | None = None) -> dict:
-        """Process get_stats.
+        """Return throttle statistics.
+
+        With a domain: per-domain total_requests, total_wait_time and the
+        rule fields (or just total_requests if the domain is untracked).
+        Without a domain: aggregate domains_tracked, total_requests and
+        total_wait_time across all tracked domains.
 
         Args:
-        domain.
+            domain: Domain to report on, or None for aggregate stats.
         """
         if domain:
             state = self._states.get(domain)
