@@ -1,6 +1,6 @@
 # TICKET-440: get_index_stats blanket docstring does not enumerate guard path or sub-components
 
-Status: OPEN
+Status: RESOLVED (PR #719, commit c857ca5)
 Module: personal_index/stats.py
 Function: StatsCollector.get_index_stats
 
