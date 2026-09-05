@@ -13,5 +13,5 @@
   and the observable index state (get_items / get_collections_for_item) for the
   normal case AND the guard path (nonexistent collection -> False, reverse index
   untouched).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #691
