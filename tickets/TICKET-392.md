@@ -24,5 +24,5 @@ corrected claim by asserting on the modified `BatchResult` object for a success
 path (output extended, processed incremented) and a final-failure path (failed
 incremented, error dict appended).
 
-**Status:** OPEN
+**Status:** RESOLVED (merged to main 4a97430 via PR #623, gh #622 closed)
 **Issue:** #622
