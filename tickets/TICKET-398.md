@@ -1,6 +1,6 @@
 # TICKET-398
 
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #634
 - Module: personal_index/content_summarizer.py
 - Function: _score_sentence (line 94)
