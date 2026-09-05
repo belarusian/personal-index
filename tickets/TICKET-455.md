@@ -14,4 +14,4 @@
   (test_add_tag_dedup_guard_and_updated_at) pinning the corrected claim against
   the returned object, including the guard-path (duplicate-tag) input alongside
   the normal case.
-- Issue: #<n>
+- Issue: #752
