@@ -28,7 +28,11 @@ class ExtractedContent:
         return " ".join(p for p in parts if p)
 
     def get_keywords(self) -> list[str]:
-        """Extract keywords from meta keywords and headings."""
+        """Return keywords from meta keywords plus heading text.
+        Heading words have their leading 'hN:' level prefix stripped,
+        are lowercased, tokenized to [a-z0-9]+, and filtered of
+        stopwords; meta keywords are kept as-is. The result is
+        deduplicated (a set) and order is not guaranteed."""
         keywords = list(self.meta_keywords)
         for heading in self.headings:
             # Strip the "hN:" level prefix so only the heading text
