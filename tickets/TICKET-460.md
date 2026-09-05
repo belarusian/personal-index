@@ -14,4 +14,4 @@
 7. Renders metadata section via `_render_metadata` (skipped if no metadata)
 **Fix:** Reword docstring to enumerate the conditional sections. NO behavior change. Add pinning test.
 **Issue:** #761
-**Status:** OPEN
+**Status:** RESOLVED
