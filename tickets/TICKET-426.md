@@ -1,6 +1,6 @@
 # TICKET-426: content_pin.unpin — implement missing failure path (CLAIM TRUTH)
 
-**Status:** OPEN
+**Status:** RESOLVED
 **Issue:** #690
 **File:** personal_index/content_pin.py
 **Function:** ContentPinner.unpin (line 108) + unpin_content (line 174)
