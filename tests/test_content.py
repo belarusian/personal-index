@@ -227,3 +227,24 @@ class TestComputeTF:
         tokens = ["hello"]
         tf = compute_tf(tokens)
         assert tf["hello"] == 1.0
+
+
+class TestExtractTitleInlineMarkup:
+    """TICKET-482: _extract_title must handle <title> with inline markup."""
+
+    def test_title_with_inline_markup(self):
+        html = """
+        <html><head><title>Hello <b>World</b></title></head>
+        <body><p>content</p></body></html>
+        """
+        content = extract_content(html, "http://example.com")
+        assert "Hello" in content.title
+        assert "World" in content.title
+
+    def test_plain_title_still_works(self):
+        html = """
+        <html><head><title>Plain Title</title></head>
+        <body><p>content</p></body></html>
+        """
+        content = extract_content(html, "http://example.com")
+        assert content.title == "Plain Title"

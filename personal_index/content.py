@@ -63,7 +63,7 @@ STOPWORDS = {
 
 def _extract_title(soup: BeautifulSoup) -> str:
     tag = soup.find("title")
-    return tag.string.strip() if tag and tag.string else ""
+    return tag.get_text(strip=True) if tag else ""
 
 
 def _extract_meta_desc(soup: BeautifulSoup) -> str:
