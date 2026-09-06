@@ -28,5 +28,5 @@
   `business` is NOT in the hints for a plain `*.com` URL, and that the intended
   topic is still detected for `dev-blog.com/api`. Fails pre-fix, passes post-fix.
 
-Status: OPEN
+Status: RESOLVED (merged via PR #823)
 Issue: #821
