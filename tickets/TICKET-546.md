@@ -11,5 +11,5 @@
   total_keywords == 0 -> 0.0; otherwise round(min(1.0, keyword_matches /
   total_keywords), 4)) and add ONE pinning test calling _score_relevance
   directly to pin the guard path (0.0) and the normal ratio path.
-- Status: OPEN
+- Status: RESOLVED (merged via PR #970, issue #968 closed)
 - Issue: #968
