@@ -20,5 +20,5 @@
   the returned list (main path: recent included, old excluded; guard paths:
   no-lastmod and unparseable-lastmod both skipped; plus an empty-sitemap case);
   do NOT assert on the docstring wording.
-- **Status:** OPEN
+- **Status:** RESOLVED
 - **Issue:** #910
