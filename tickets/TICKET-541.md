@@ -1,6 +1,6 @@
 # TICKET-541: Add CacheStats.hit_rate / miss_rate / reset exact-contract docstrings + pinning test
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/content_cache/cache_stats.py
 Methods: CacheStats.hit_rate (property), CacheStats.miss_rate (property), CacheStats.reset
 
