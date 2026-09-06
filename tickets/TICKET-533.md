@@ -1,6 +1,6 @@
 # TICKET-533: ContentRollback.clear docstring + pinning test
 
-Status: OPEN
+Status: RESOLVED
 File: personal_index/content_rollback.py
 Symptom: ContentRollback.clear (def at line 48) has a terse docstring
   ("Clear rollback points.") that does not state its two-path contract.
