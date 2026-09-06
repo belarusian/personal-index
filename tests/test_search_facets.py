@@ -494,3 +494,77 @@ class TestParseDateValue:
     def test_none_returns_none(self):
         fs = FacetedSearch()
         assert fs._parse_date_value(None) is None
+
+
+# ── TICKET-543: exact-contract docstrings + pinning test ──
+
+class TestFacetDocstring543:
+    """Pin the exact contract of Facet.add_value / Facet.sort_values (TICKET-543)."""
+
+    def test_add_value_docstring_states_contract(self):
+        doc = Facet.add_value.__doc__
+        assert doc is not None
+        assert "incremented" in doc
+        assert "existing.count += count" in doc
+        assert "appended" in doc
+        assert "defaults to" in doc
+        assert "returns" in doc.lower() and "None" in doc
+
+    def test_sort_values_docstring_states_contract(self):
+        doc = Facet.sort_values.__doc__
+        assert doc is not None
+        assert "in place" in doc
+        assert "reverse=True" in doc
+        assert "stable" in doc
+        assert "insertion" in doc
+        assert "returns" in doc.lower() and "None" in doc
+
+    def test_add_value_increments_existing_count(self):
+        facet = Facet(name="tag", facet_type=FacetType.TAG)
+        facet.add_value("a", count=5)
+        facet.add_value("a", count=3)
+        assert len(facet.values) == 1
+        assert facet.values[0].count == 8
+
+    def test_add_value_appends_new_value(self):
+        facet = Facet(name="tag", facet_type=FacetType.TAG)
+        facet.add_value("a", count=5)
+        facet.add_value("b", count=2)
+        assert len(facet.values) == 2
+        assert facet.values[1].name == "b"
+        assert facet.values[1].count == 2
+
+    def test_add_value_default_count_is_one(self):
+        facet = Facet(name="tag", facet_type=FacetType.TAG)
+        facet.add_value("x")
+        assert facet.values[0].count == 1
+
+    def test_add_value_returns_none(self):
+        facet = Facet(name="tag", facet_type=FacetType.TAG)
+        assert facet.add_value("a", count=1) is None
+
+    def test_sort_values_sorts_count_descending(self):
+        facet = Facet(name="tag", facet_type=FacetType.TAG)
+        facet.add_value("b", count=1)
+        facet.add_value("a", count=10)
+        facet.add_value("c", count=5)
+        facet.sort_values()
+        assert [v.name for v in facet.values] == ["a", "c", "b"]
+
+    def test_sort_values_stable_on_ties(self):
+        facet = Facet(name="tag", facet_type=FacetType.TAG)
+        facet.add_value("a", count=5)
+        facet.add_value("b", count=5)
+        facet.add_value("c", count=5)
+        facet.sort_values()
+        assert [v.name for v in facet.values] == ["a", "b", "c"]
+
+    def test_sort_values_mutates_in_place_and_returns_none(self):
+        facet = Facet(name="tag", facet_type=FacetType.TAG)
+        facet.add_value("a", count=1)
+        facet.add_value("b", count=9)
+        original = facet.values
+        result = facet.sort_values()
+        assert result is None
+        assert facet.values is original
+        assert facet.values[0].name == "b"

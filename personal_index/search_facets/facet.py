@@ -42,7 +42,14 @@ class Facet:
     values: list[FacetValue] = field(default_factory=list)
 
     def add_value(self, name: str, count: int = 1) -> None:
-        """Add or update a facet value."""
+        """Add or update a facet value in place.
+
+        If a value with the same ``name`` already exists in ``self.values``,
+        its ``count`` is incremented by ``count`` (``existing.count += count``);
+        it is never replaced. Otherwise a new ``FacetValue(name, count)`` is
+        appended to ``self.values``. ``count`` defaults to ``1`` when omitted.
+        Mutates ``self.values`` and returns ``None``.
+        """
         existing = next((v for v in self.values if v.name == name), None)
         if existing:
             existing.count += count
@@ -50,7 +57,13 @@ class Facet:
             self.values.append(FacetValue(name=name, count=count))
 
     def sort_values(self) -> None:
-        """Sort values by count descending."""
+        """Sort ``self.values`` in place by ``count`` descending.
+
+        Sorts the list in place (mutates ``self.values``; does not return a new
+        list). The key is ``count`` with ``reverse=True``, so the highest count
+        comes first. Python's sort is stable, so values with equal ``count``
+        preserve their prior (insertion) relative order. Returns ``None``.
+        """
         self.values.sort(key=lambda v: v.count, reverse=True)
 
     def to_dict(self) -> dict[str, Any]:
