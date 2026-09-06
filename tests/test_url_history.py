@@ -20,6 +20,36 @@ class TestURLVisit:
         assert d["url"] == "http://example.com"
         assert d["title"] == "Test"
 
+    def test_to_dict_exact_key_contract(self):
+        """Pin the corrected docstring: to_dict returns a dict with
+        EXACTLY the 8 documented keys, one per dataclass field, and
+        nothing else."""
+        v = URLVisit(
+            url="http://contract.example.com",
+            status_code=200,
+            content_length=42,
+            response_time_ms=17.5,
+        )
+        d = v.to_dict()
+        # The corrected docstring claims exactly these 8 keys.
+        assert set(d) == {
+            "url",
+            "timestamp",
+            "status_code",
+            "content_length",
+            "title",
+            "user_agent",
+            "response_time_ms",
+            "error",
+        }
+        # A field the corrected docstring newly claims maps to the value.
+        assert d["response_time_ms"] == 17.5
+        assert d["content_length"] == 42
+        # A sibling key NOT in the contract is absent (witnessing the
+        # doc-only fix against the returned object).
+        assert "id" not in d
+        assert "method" not in d
+
     def test_from_dict(self):
         data = {
             "url": "http://example.com",

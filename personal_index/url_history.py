@@ -27,7 +27,8 @@ class URLVisit:
             self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
-        """To_dict."""
+        """Return a dict with exactly 8 keys (url, timestamp, status_code,
+        content_length, title, user_agent, response_time_ms, error); no mutation."""
         return {
             "url": self.url,
             "timestamp": self.timestamp,
