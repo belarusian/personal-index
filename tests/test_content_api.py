@@ -340,3 +340,17 @@ class TestContentApiDocstring:
         doc = (api_module.__doc__ or "").lower()
         assert "wsgi" not in doc
         assert "asgi" not in doc
+
+
+# --- handle_request contract (TICKET-516) ---
+
+class TestHandleRequestContract:
+    def test_matched_route_returns_handler_tuple(self, api_with_data):
+        status, body = api_with_data.handle_request("GET", "/api/v1/health")
+        assert status == 200
+        assert body["status"] == "healthy"
+
+    def test_unknown_route_returns_404_guard(self, api):
+        status, body = api.handle_request("GET", "/api/v1/does-not-exist")
+        assert status == 404
+        assert body == {"error": "Not found", "path": "/api/v1/does-not-exist"}

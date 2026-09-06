@@ -26,7 +26,14 @@ class ContentAPI:
         self, method: str, path: str, body: str | None = None,
         query_string: str = ""
     ) -> tuple[int, dict[str, Any]]:
-        """Route and handle an HTTP request."""
+        """Route and handle one HTTP request.
+
+        Parses ``path`` with ``urlparse`` into path parts and parses
+        ``query_string`` with ``parse_qs``, then dispatches via
+        ``_match_route``. Returns the matched handler's
+        ``(status, payload)`` tuple, or ``(404, {"error": "Not found",
+        "path": path})`` when no route matches.
+        """
         parsed = urlparse(path)
         path_parts = [p for p in parsed.path.strip("/").split("/") if p]
         params = parse_qs(query_string)
