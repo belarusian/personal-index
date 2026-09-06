@@ -1,6 +1,6 @@
 # TICKET-512: ContentVersion.to_dict placeholder docstring (name-echo)
 
-Status: OPEN
+Status: RESOLVED (merged via PR #883, issue #882 closed)
 File: personal_index/versioning.py
 Line: 26
 Symptom: `ContentVersion.to_dict` docstring is the placeholder `"""To_dict."""`
