@@ -87,7 +87,7 @@ class TestEncodingDetector:
 
 
 class TestDetectContract:
-    """Pinning tests for EncodingDetector.detect's exact contract (TICKET-503)."""
+    """Pinning tests for EncodingDetector.detect's exact contract (TICKET-504)."""
 
     def test_returns_encoding_result(self):
         d = EncodingDetector()

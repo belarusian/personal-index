@@ -1,4 +1,4 @@
-# TICKET-503: EncodingDetector.detect docstring omits detection priority and confidence contract
+# TICKET-504: EncodingDetector.detect docstring omits detection priority and confidence contract
 
 ## Symptom
 The `EncodingDetector.detect` docstring reads `"""Detect the encoding of byte data."""` which is generic and omits the actual detection priority cascade and confidence values that the implementation delivers.
