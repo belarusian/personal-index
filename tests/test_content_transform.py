@@ -214,3 +214,45 @@ class TestNormalizeTitlePinning:
 
     def test_empty_stays_empty(self) -> None:
         assert self.n._normalize_title("") == ""
+
+
+class TestNormalizePinning:
+    """Pinning tests for ContentNormalizer.normalize actual behavior."""
+
+    def setup_method(self) -> None:
+        self.n = ContentNormalizer()
+
+    def test_full_item_normalizes_title_url_tags(self) -> None:
+        item = {
+            "title": "  hello world  ",
+            "url": "  https://X.com  ",
+            "tags": [" A ", "b "],
+        }
+        result = self.n.normalize(item)
+        assert result == {"title": "Hello World", "url": "https://X.com", "tags": ["a", "b"]}
+
+    def test_normalize_is_non_destructive(self) -> None:
+        item = {
+            "title": "  hello world  ",
+            "url": "  https://X.com  ",
+            "tags": [" A ", "b "],
+        }
+        original = dict(item)
+        self.n.normalize(item)
+        assert item == original
+
+    def test_absent_keys_pass_through(self) -> None:
+        item = {"foo": "bar"}
+        result = self.n.normalize(item)
+        assert result == {"foo": "bar"}
+
+    def test_non_list_tags_left_untouched(self) -> None:
+        item = {"tags": "notalist"}
+        result = self.n.normalize(item)
+        assert result == {"tags": "notalist"}
+
+    def test_flag_off_title_left_as_is(self) -> None:
+        n = ContentNormalizer(normalize_titles=False)
+        item = {"title": "  hello world  "}
+        result = n.normalize(item)
+        assert result == {"title": "  hello world  "}

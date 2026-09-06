@@ -22,13 +22,19 @@ class ContentNormalizer:
     normalize_tags: bool = True
 
     def normalize(self, content: dict[str, Any]) -> dict[str, Any]:
-        """Normalize a content item.
+        """Normalize a content item non-destructively.
+
+        Copies the input dict and returns a new dict; the input dict is not mutated.
+        Each field is normalized only when its flag is enabled and the key is present:
+        title when normalize_titles, url when normalize_urls, tags when normalize_tags.
+        tags is normalized element-wise only when it is a list; non-list tags are left
+        untouched. Absent keys pass through unchanged.
 
         Args:
             content: Content item to normalize.
 
         Returns:
-            Normalized content item.
+            A new normalized content item.
         """
         result = dict(content)
 
