@@ -35,11 +35,16 @@ class TransformPipeline:
     def transform(self, content: dict[str, Any]) -> dict[str, Any]:
         """Apply all transformers in sequence.
 
+        Returns a NEW dict: the input is copied first and never mutated, and
+        the result is not the input object. Transformers run in the order they
+        were added; an empty pipeline returns a copy equal to (but not
+        identical to) the input.
+
         Args:
             content: Content item to transform.
 
         Returns:
-            Transformed content item.
+            A new transformed content item.
         """
         result = dict(content)
         for transformer in self.transformers:
@@ -50,13 +55,18 @@ class TransformPipeline:
         self,
         items: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """Apply pipeline to multiple items.
+        """Apply the pipeline to multiple items.
+
+        Returns a NEW list: the input list is never mutated and the result is
+        not the input object. Each item is transformed via self.transform,
+        order is preserved, and each output item is a new dict. An empty input
+        list yields an empty list (no error).
 
         Args:
             items: List of content items.
 
         Returns:
-            List of transformed content items.
+            A new list of transformed content items.
         """
         return [self.transform(item) for item in items]
 
