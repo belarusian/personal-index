@@ -430,3 +430,41 @@ class TestRouteContentItemDispatch:
     def test_unmatched_method_returns_none(self, api):
         handler = api._route_content_item("PATCH", "1", None)
         assert handler is None
+
+
+class TestListContentContract:
+    """Pin the _list_content pagination contract (TICKET-523)."""
+
+    def test_main_path_page_slice_and_total(self, api_with_data):
+        # 2 items in the store; request page 1, per_page 1 -> 1-item slice.
+        status, body = api_with_data._list_content({"page": ["1"], "per_page": ["1"]})
+        assert status == 200
+        assert body["total"] == 2
+        assert len(body["items"]) == 1
+        assert body["page"] == 1
+        assert body["per_page"] == 1
+
+    def test_defaults_when_params_empty(self, api_with_data):
+        # No page/per_page keys -> defaults page=1, per_page=20 (>= item count).
+        status, body = api_with_data._list_content({})
+        assert status == 200
+        assert body["total"] == 2
+        assert len(body["items"]) == 2
+        assert body["page"] == 1
+        assert body["per_page"] == 20
+
+    def test_per_page_capped_at_100(self, api_with_data):
+        status, body = api_with_data._list_content({"per_page": ["999"]})
+        assert status == 200
+        assert body["per_page"] == 100
+
+    def test_guard_path_non_integer_page_returns_400(self, api_with_data):
+        # Non-integer page -> 400 with an "error" key (guard path).
+        status, body = api_with_data._list_content({"page": ["abc"]})
+        assert status == 400
+        assert "error" in body
+
+    def test_guard_path_non_integer_per_page_returns_400(self, api_with_data):
+        status, body = api_with_data._list_content({"per_page": ["xyz"]})
+        assert status == 400
+        assert "error" in body
