@@ -261,3 +261,34 @@ class TestBookmarkManager:
         loaded = manager.load(path)
         assert loaded == 0
         assert manager.count() == 0
+
+    def test_load_replaces_set_and_guard_preserves(self, tmp_path):
+        # Normal path: a valid top-level list replaces the current set and
+        # returns the number loaded.
+        manager = BookmarkManager()
+        manager.add(Bookmark(url="http://old.com", title="Old"))
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            json.dump(
+                [
+                    {"url": "http://a.com", "title": "A"},
+                    {"url": "http://b.com", "title": "B"},
+                ],
+                f,
+            )
+        loaded = manager.load(path)
+        assert loaded == 2
+        assert manager.count() == 2
+        assert manager.get("http://old.com") is None
+        assert manager.get("http://a.com").title == "A"
+        assert manager.get("http://b.com").title == "B"
+
+        # Guard path: a non-list top-level value returns 0 and leaves the
+        # existing set untouched (no clear, no replacement).
+        with open(path, "w") as f:
+            json.dump({"key": "val"}, f)
+        loaded = manager.load(path)
+        assert loaded == 0
+        assert manager.count() == 2
+        assert manager.get("http://a.com").title == "A"
+        assert manager.get("http://b.com").title == "B"
