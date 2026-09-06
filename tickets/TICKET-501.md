@@ -1,6 +1,6 @@
 # TICKET-501: Paginator.iterate_pages docstring omits its real contract
 
-Status: OPEN
+Status: RESOLVED
 Issue: #858
 
 ## File
