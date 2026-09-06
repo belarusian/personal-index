@@ -358,3 +358,39 @@ class TestCreateFieldRenameTransformerPinning:
     def test_transformer_name_format(self) -> None:
         t = create_field_rename_transformer("foo", "bar")
         assert t.name == "rename_foo_to_bar"
+
+
+class TestCreateFieldFilterTransformerPinning:
+    """Pinning tests for create_field_filter_transformer actual behavior."""
+
+    def test_keeps_only_listed_fields(self) -> None:
+        t = create_field_filter_transformer(["a", "b"])
+        result = t.transform({"a": 1, "b": 2, "c": 3})
+        assert result == {"a": 1, "b": 2}
+        assert "c" not in result
+
+    def test_empty_dict_when_no_match(self) -> None:
+        t = create_field_filter_transformer(["z"])
+        result = t.transform({"a": 1, "b": 2})
+        assert result == {}
+
+    def test_empty_dict_when_fields_empty(self) -> None:
+        t = create_field_filter_transformer([])
+        result = t.transform({"a": 1})
+        assert result == {}
+
+    def test_input_not_mutated(self) -> None:
+        t = create_field_filter_transformer(["a"])
+        d = {"a": 1, "b": 2}
+        original = dict(d)
+        result = t.transform(d)
+        assert d == original
+        # result is a new dict, not the input object
+        assert result is not d
+        # mutating the copy must not affect the input
+        result["a"] = "changed"
+        assert d["a"] == 1
+
+    def test_transformer_name_format(self) -> None:
+        t = create_field_filter_transformer(["a", "b"])
+        assert t.name == "filter_fields_2"
