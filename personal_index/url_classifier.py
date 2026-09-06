@@ -135,7 +135,28 @@ class URLClassifier:
         return None
 
     def classify(self, url: str) -> ClassificationResult:
-        """Classify a URL into a category."""
+        """Classify a URL into a category, always returning a ClassificationResult.
+
+        The input URL string is preserved as-is in the result (url field).
+        Matching is case-insensitive: the URL path and full URL are lowercased
+        before pattern matching.
+
+        Patterns are checked in fixed order and the first match wins:
+        REDIRECT (confidence 0.8), FEED (0.9), API (0.85), STATIC (0.9),
+        MEDIA (0.85), DOCUMENT (0.85). If no pattern matches, the result
+        defaults to PAGE with confidence 0.5 and reason "no specific pattern matched".
+
+        The reasons field is a single-element list containing the matching reason
+        string (e.g., "matches API pattern") or the default reason.
+
+        Args:
+            url: URL string to classify.
+
+        Returns:
+            A ClassificationResult with url preserved, category determined by
+            first matching pattern in order, confidence per rule, and reasons
+            as a single-element list. Never returns None.
+        """
         parsed = urlparse(url)
         path = parsed.path.lower()
         full_url = url.lower()
