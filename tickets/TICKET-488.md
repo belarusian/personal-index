@@ -15,5 +15,5 @@
   - normalize({'tags':'notalist'}) -> {'tags':'notalist'}
   - with normalize_titles=False, title left as-is
 - **Minimal additive fix:** Reword normalize docstring to state the four behaviors above; add pinning test class TestNormalizePinning in tests/test_content_transform.py covering full-item, non-destructive, absent-keys, non-list-tags, flag-off cases.
-Status: OPEN
+Status: RESOLVED (merged via PR #830)
 Issue: #826

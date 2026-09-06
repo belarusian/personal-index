@@ -22,11 +22,17 @@ class ContentTransformer:
     def transform(self, content: dict[str, Any]) -> dict[str, Any]:
         """Transform a content item.
 
+        If ``transform_fn`` is set, it is called with ``content`` and its
+        return value is returned. If ``transform_fn`` is None, a shallow
+        copy of the input dict is returned unchanged (not the same object,
+        same contents).
+
         Args:
             content: Content item to transform.
 
         Returns:
-            Transformed content item.
+            Transformed content item, or a shallow copy when no
+            ``transform_fn`` is set.
         """
         if self.transform_fn:
             return self.transform_fn(content)
