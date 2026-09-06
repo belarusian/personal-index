@@ -174,6 +174,7 @@ def truncate(text: str, max_length: int = 100) -> str:
     if len(text) <= max_length:
         return text
     if max_length < 3:
+    max_length = max(0, max_length)
         return text[:max_length]
     return text[: max_length - 3] + "..."
 

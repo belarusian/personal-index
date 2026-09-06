@@ -215,3 +215,8 @@ class TestHighlight:
         # inside the longer term's inserted markers.
         assert highlight("cat catalog", ["cat", "catalog"]) == "**cat** **catalog**"
         assert highlight("pythonic code", ["python", "pythonic"]) == "**pythonic** code"
+
+    def test_truncate_negative_max_length(self):
+        """Negative max_length must not produce a negative slice."""
+        assert truncate("hello world", max_length=-1) == ""
+        assert truncate("hello world", max_length=-5) == ""
