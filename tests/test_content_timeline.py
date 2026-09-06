@@ -370,3 +370,37 @@ class TestAddEntryPinning:
         tl.add_entry("i3", "T3", timestamp=_ts(3))
         tl.add_entry("i2", "T2", timestamp=_ts(2))
         assert [e.item_id for e in tl.entries] == ["i3", "i2", "i1"]
+
+
+class TestTimelineEntriesRoundTripPinning:
+    """Pins that to_dict/from_dict preserve entries (TICKET-467)."""
+
+    def test_entries_survive_round_trip(self) -> None:
+        tl = Timeline()
+        tl.add_entry("i1", "T1", timestamp=_ts(1), url="u1", description="d1")
+        tl.add_entry("i2", "T2", timestamp=_ts(2), metadata={"k": "v"})
+        data = tl.to_dict()
+        assert "entries" in data
+        assert len(data["entries"]) == 2
+        restored = Timeline.from_dict(data)
+        assert len(restored.entries) == 2
+        by_id = {e.item_id: e for e in restored.entries}
+        assert by_id["i1"].title == "T1"
+        assert by_id["i1"].url == "u1"
+        assert by_id["i1"].description == "d1"
+        assert by_id["i2"].metadata == {"k": "v"}
+
+    def test_entries_resorted_newest_first(self) -> None:
+        tl = Timeline()
+        tl.add_entry("i1", "T1", timestamp=_ts(1))
+        tl.add_entry("i3", "T3", timestamp=_ts(3))
+        tl.add_entry("i2", "T2", timestamp=_ts(2))
+        restored = Timeline.from_dict(tl.to_dict())
+        assert [e.item_id for e in restored.entries] == ["i3", "i2", "i1"]
+
+    def test_empty_entries_round_trip(self) -> None:
+        tl = Timeline()
+        tl.add_event(_event("e1", "c1", _ts(1)))
+        restored = Timeline.from_dict(tl.to_dict())
+        assert restored.entries == []
+        assert [e.event_id for e in restored.events] == ["e1"]

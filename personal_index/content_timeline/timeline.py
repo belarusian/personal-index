@@ -128,6 +128,7 @@ class Timeline:
         """Serialize timeline to dict."""
         return {
             "events": [e.to_dict() for e in self.events],
+            "entries": [e.to_dict() for e in self.entries],
             "event_count": self.get_event_count(),
         }
 
@@ -139,4 +140,8 @@ class Timeline:
             event = TimelineEvent.from_dict(event_data)
             timeline.events.append(event)
         timeline.events.sort(key=lambda e: e.timestamp)
+        for entry_data in data.get("entries", []):
+            entry = TimelineEntry.from_dict(entry_data)
+            timeline.entries.append(entry)
+        timeline.entries.sort(key=lambda e: e.timestamp, reverse=True)
         return timeline
