@@ -352,6 +352,54 @@ class TestEdgeCases:
         assert 123 not in result
 
 
+class TestTimelineViewElseBranchPinning:
+    """Pins TICKET-477: TimelineView.render else branch uses timeline.events."""
+
+    def test_render_else_branch_uses_events_not_entries(self) -> None:
+        from personal_index.content_timeline.timeline_view import TimelineView
+        from personal_index.content_timeline.timeline import Timeline
+        from personal_index.content_timeline.timeline_event import TimelineEvent, TimelineEventType
+        from datetime import datetime, timezone
+        
+        tl = Timeline()
+        # Add an event
+        event = TimelineEvent(
+            event_id="e1",
+            event_type=TimelineEventType.CREATED,
+            timestamp=datetime(2024, 1, 8, 12, 0, tzinfo=timezone.utc),
+            content_id="c1",
+            item_id="item1",
+            title="Event Title",
+            url="http://event.com",
+            description="Event Desc"
+        )
+        tl.add_event(event)
+        
+        # Add an entry with same item_id but different title
+        from personal_index.content_timeline.timeline_entry import TimelineEntry, TimelineEventType as EntryEventType
+        entry = TimelineEntry(
+            item_id="item1",
+            timestamp=datetime(2024, 1, 8, 12, 0, tzinfo=timezone.utc),
+            title="Entry Title",
+            event_type=EntryEventType.SAVED,
+            url="http://entry.com",
+            description="Entry Desc"
+        )
+        tl.entries.append(entry)
+        
+        view = TimelineView()
+        # Use a mock mode object to trigger else branch without AttributeError
+        class MockMode:
+            value = "invalid"
+        view.mode = MockMode()  # type: ignore
+        
+        result = view.render(tl, datetime(2024, 1, 8).date())
+        # Should use events, not entries, so title should be "Event Title" not "Entry Title"
+        assert len(result.events) == 1
+        assert result.events[0]["title"] == "Event Title"
+        assert result.events[0]["url"] == "http://event.com"
+
+
 class TestAddEntryPinning:
     """Pins the corrected add_entry claim (TICKET-466)."""
 
