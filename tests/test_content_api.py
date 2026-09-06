@@ -363,7 +363,10 @@ class TestMatchRouteDispatch:
 
     def test_health_route_returns_health_handler(self, api):
         handler = api._match_route("GET", ["api", "v1", "health"], {}, None)
-        assert handler is api._health_check
+        assert handler is not None
+        status, body = handler()
+        assert status == 200
+        assert body["status"] == "healthy"
 
     def test_content_item_route_returns_callable(self, api):
         handler = api._match_route("GET", ["api", "v1", "content", "42"], {}, None)
