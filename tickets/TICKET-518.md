@@ -1,6 +1,6 @@
 # TICKET-518: README.md truncated — no install/launch/usage instructions
 
-Status: OPEN (in progress on build139/readme-quick-start-518)
+Status: RESOLVED (merged PR #904, issue #897 closed)
 
 ## File
 README.md
