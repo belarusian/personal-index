@@ -29,15 +29,23 @@ class ViewResult:
     total: int = 0
     summary: dict[str, Any] = field(default_factory=dict)
 
+    # The exact key set exposed by the dict-style access contract
+    # (__getitem__/__contains__), kept in sync with to_dict().
+    _FIELDS: tuple[str, ...] = ("events", "date", "mode", "total", "summary")
+
     def __getitem__(self, key: str) -> Any:
-        """Allow dict-style access."""
+        """Allow dict-style access to the serialized fields.
+
+        Only the five fields returned by ``to_dict()`` are addressable;
+        any other key (including dunders) raises ``KeyError``.
+        """
+        if key not in self._FIELDS:
+            raise KeyError(key)
         return getattr(self, key)
 
     def __contains__(self, key: object) -> bool:
-        """Allow 'in' operator."""
-        if isinstance(key, str):
-            return hasattr(self, key)
-        return False
+        """Allow 'in' operator over the serialized fields only."""
+        return isinstance(key, str) and key in self._FIELDS
 
     def to_dict(self) -> dict[str, Any]:
         return {
