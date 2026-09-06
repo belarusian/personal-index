@@ -73,7 +73,37 @@ class ContentDiff:
         new_item: dict[str, Any],
         id_field: str = "id",
     ) -> ContentDiff:
-        """Compute the diff between two content items."""
+        """Compute the diff between two content items.
+
+        Builds a ContentDiff from the field-level differences between
+        ``old_item`` and ``new_item``.
+
+        Contract:
+          * ``item_id`` is resolved by the fallback chain
+            ``str(new_item.get(id_field, old_item.get(id_field,
+            "unknown")))`` -- the new item's value first, then the old
+            item's value, then the literal string ``"unknown"``.
+          * The diffed field set is the sorted union of the keys of both
+            items (``set(old_item) | set(new_item)``, iterated in sorted
+            order).
+          * Each field is classified ADDED (present only in new_item),
+            REMOVED (present only in old_item), or MODIFIED (present in
+            both but with differing values); unchanged fields are
+            dropped from ``changes``.
+          * ``summary`` is built by ``_summary_text`` as
+            ``"N added, N removed, N modified"`` (that fixed order, with
+            zero-count types omitted) or ``"No changes"`` when there are
+            no changes.
+
+        Args:
+            old_item: Previous content item.
+            new_item: Current content item.
+            id_field: Key used to resolve ``item_id`` (default ``"id"``).
+
+        Returns:
+            A ContentDiff with the resolved item_id, the list of field
+            changes, and the summary string.
+        """
         item_id = str(new_item.get(id_field, old_item.get(id_field, "unknown")))
         all_fields = set(old_item.keys()) | set(new_item.keys())
         changes = [c for fn in sorted(all_fields) if (c := cls._diff_field(fn, old_item, new_item))]
