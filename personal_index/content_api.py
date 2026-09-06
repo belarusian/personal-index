@@ -229,6 +229,13 @@ class ContentAPI:
         return 200, {"item": item}
 
     def _delete_content(self, item_id: str) -> tuple[int, dict[str, Any]]:
+        """Delete an existing content item by id.
+
+        Returns ``(404, {"error": "Content item '<item_id>' not found"})``
+        when ``item_id`` is not in ``self._store``. Otherwise removes the
+        item from ``self._store`` (``pop``) and returns
+        ``(200, {"deleted": True, "id": item_id})``.
+        """
         if item_id not in self._store:
             return 404, {"error": f"Content item '{item_id}' not found"}
         self._store.pop(item_id)
