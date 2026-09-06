@@ -19,4 +19,4 @@
   returned object, including the guard-path input (a link with an empty
   url is skipped) alongside the normal case.
 - Issue: #884
-- Status: OPEN
+- Status: RESOLVED (merged via PR #886)
