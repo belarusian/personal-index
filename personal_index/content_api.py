@@ -197,6 +197,20 @@ class ContentAPI:
         return 201, {"item": item}
 
     def _update_content(self, item_id: str, body: str | None) -> tuple[int, dict[str, Any]]:
+        """Partially update an existing content item from a JSON body.
+
+        Returns ``(404, {"error": "Content item '<item_id>' not found"})``
+        when ``item_id`` is not in ``self._store``. Returns
+        ``(400, {"error": "Request body is required"})`` when the body is
+        missing or empty. Returns ``(400, {"error": "Invalid JSON in request
+        body"})`` when the body is not valid JSON. Returns
+        ``(400, {"error": "Request body must be a JSON object"})`` when the
+        parsed body is not a JSON object (dict). Otherwise partial-updates the
+        stored item: for each of title/description/link/tags present in the
+        parsed data it sets ``item[key]``, always refreshes
+        ``item["updated_at"]`` to ``now(UTC).isoformat()``, and returns
+        ``(200, {"item": <item>})``.
+        """
         if item_id not in self._store:
             return 404, {"error": f"Content item '{item_id}' not found"}
         if not body:
