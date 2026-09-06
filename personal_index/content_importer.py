@@ -22,7 +22,15 @@ class ContentImporter:
         self._id_counter = 0
 
     def import_content(self, data: str, fmt: str) -> list[dict[str, Any]]:
-        """Import content from the given string data in the specified format."""
+        """Import content from the given string data in the specified format.
+
+        The format string is normalized with ``lower().strip()`` before use.
+        If the normalized format is not one of ``SUPPORTED_FORMATS``
+        (``json``, ``html``, ``markdown``, ``rss``, ``csv``), a ``ValueError``
+        is raised. Otherwise the call is dispatched to the private
+        ``_import_{fmt}`` handler, and that handler's list of item dicts is
+        returned unchanged.
+        """
         fmt = fmt.lower().strip()
         if fmt not in self.SUPPORTED_FORMATS:
             raise ValueError(f"Unsupported format: {fmt}. Supported: {self.SUPPORTED_FORMATS}")

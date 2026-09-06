@@ -233,3 +233,37 @@ class TestBatchImport:
     def test_batch_import_single_source(self, importer):
         items = importer.batch_import([('{"title": "T"}', "json")])
         assert len(items) == 1
+
+
+class TestImportContentPinning:
+    """Pinning tests for ContentImporter.import_content (TICKET-465)."""
+
+    def test_format_normalized_lower_and_strip(self, importer):
+        # "  JSON  " must be accepted: lower().strip() -> "json".
+        items = importer.import_content('[{"title": "T"}]', "  JSON  ")
+        assert len(items) == 1
+        assert items[0]["title"] == "T"
+
+    def test_format_case_insensitive(self, importer):
+        items = importer.import_content('[{"title": "T"}]', "Json")
+        assert len(items) == 1
+
+    def test_unsupported_format_raises_valueerror(self, importer):
+        with pytest.raises(ValueError, match="Unsupported format"):
+            importer.import_content("", "xml")
+
+    def test_unsupported_format_message_lists_supported(self, importer):
+        with pytest.raises(ValueError) as excinfo:
+            importer.import_content("", "pdf")
+        msg = str(excinfo.value)
+        for fmt in ContentImporter.SUPPORTED_FORMATS:
+            assert fmt in msg
+
+    def test_dispatches_to_private_handler(self, importer):
+        # Each supported format routes to its _import_{fmt} handler.
+        for fmt in ContentImporter.SUPPORTED_FORMATS:
+            assert hasattr(importer, f"_import_{fmt}")
+
+    def test_returns_handler_result_unchanged(self, importer):
+        items = importer.import_content('[{"title": "A"}, {"title": "B"}]', "json")
+        assert [i["title"] for i in items] == ["A", "B"]
