@@ -29,7 +29,14 @@ class SitemapEntry:
         self.priority = max(0.0, min(1.0, priority))
 
     def to_element(self) -> Element:
-        """To_element."""
+        """Build the <url> Element for this entry.
+
+        Creates a <url> Element and attaches exactly four SubElements:
+        loc (text = self.url), lastmod (text = self.last_modified formatted
+        as "%Y-%m-%dT%H:%M:%SZ"), changefreq (text = self.change_frequency),
+        and priority (text = self.priority formatted to one decimal place).
+        Returns the <url> Element.
+        """
         url_elem = Element("url")
         SubElement(url_elem, "loc").text = self.url
         SubElement(url_elem, "lastmod").text = self.last_modified.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -97,10 +104,18 @@ class SitemapBuilder:
         return chunks
 
     def clear(self) -> None:
-        """Clear."""
+        """Empty the builder's entries list in place.
+
+        Calls self.entries.clear(), removing every SitemapEntry currently
+        held. Returns None.
+        """
         self.entries.clear()
 
     @property
     def url_count(self) -> int:
-        """Url_count."""
+        """Return the number of entries currently held by the builder.
+
+        Returns len(self.entries) - the count of SitemapEntry objects in the
+        builder's entries list.
+        """
         return len(self.entries)
