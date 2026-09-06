@@ -256,6 +256,17 @@ class TestAnalyticsTracker:
         assert AnalyticsTracker._extract_domain("") is None
         assert AnalyticsTracker._extract_domain(None) is None
 
+    def test_extract_domain_pins_documented_contract(self):
+        # normal scheme-prefixed case: host between "://" and first "/"
+        assert AnalyticsTracker._extract_domain("http://example.com/path") == "example.com"
+        # port is NOT stripped (differs from url_utils.extract_domain)
+        assert AnalyticsTracker._extract_domain("http://example.com:8080/x") == "example.com:8080"
+        # scheme-less branch: segment before first "/"
+        assert AnalyticsTracker._extract_domain("example.com/path") == "example.com"
+        # guard path: falsy url -> None
+        assert AnalyticsTracker._extract_domain("") is None
+        assert AnalyticsTracker._extract_domain(None) is None
+
     def test_search_with_click_tracking(self):
         self.tracker.record_search("python", clicked_url="http://docs.python.org")
         events = self.tracker.get_search_events()

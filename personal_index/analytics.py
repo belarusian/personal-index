@@ -368,7 +368,16 @@ class AnalyticsTracker:
 
     @staticmethod
     def _extract_domain(url: str) -> str | None:
-        """Extract domain from URL."""
+        """Extract the host segment from a URL.
+
+        Returns None for a falsy url (empty string or None). For a
+        scheme-prefixed url (one containing "://") returns the segment
+        between "://" and the first "/" (the host, including any port;
+        the port is not stripped). For a scheme-less url returns the
+        segment before the first "/". Returns None if the split raises
+        IndexError or AttributeError. Unlike url_utils.extract_domain,
+        this does not strip a port and does not lowercase.
+        """
         if not url:
             return None
         try:
