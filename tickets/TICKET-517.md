@@ -6,4 +6,4 @@
 **Evidence:** Line 47: `"""Match path parts to a route handler."""` — no enumeration of branches.
 **Fix:** Reword docstring to enumerate all dispatch branches + None fallback. Add one pinning test.
 **Issue:** #895
-**Status:** OPEN
+**Status:** RESOLVED
