@@ -192,3 +192,25 @@ class TestNormalizeTagPinning:
 
     def test_empty_stays_empty(self) -> None:
         assert self.n._normalize_tag("") == ""
+
+
+class TestNormalizeTitlePinning:
+    """Pinning tests for ContentNormalizer._normalize_title actual behavior."""
+
+    def setup_method(self) -> None:
+        self.n = ContentNormalizer()
+
+    def test_strip_and_title(self) -> None:
+        assert self.n._normalize_title("  hello world  ") == "Hello World"
+
+    def test_title_lowercases_rest(self) -> None:
+        assert self.n._normalize_title("HELLO WORLD") == "Hello World"
+
+    def test_each_word_capitalized(self) -> None:
+        assert self.n._normalize_title("a b c") == "A B C"
+
+    def test_non_alnum_boundary_splits_words(self) -> None:
+        assert self.n._normalize_title("hello-world") == "Hello-World"
+
+    def test_empty_stays_empty(self) -> None:
+        assert self.n._normalize_title("") == ""
