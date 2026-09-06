@@ -1,6 +1,6 @@
 # TICKET-548: SchemaValidator.validate / is_valid / validate_batch exact-contract docstrings + pinning test
 
-Status: OPEN
+Status: RESOLVED (merged via PR #976, issue #974 closed; merge commit 90b81da)
 Module: personal_index/content_validator/schema.py
 Methods: SchemaValidator.validate, SchemaValidator.is_valid, SchemaValidator.validate_batch
 Type: (a) public methods lacking an exact-contract docstring + pinning test
