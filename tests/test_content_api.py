@@ -354,3 +354,23 @@ class TestHandleRequestContract:
         status, body = api.handle_request("GET", "/api/v1/does-not-exist")
         assert status == 404
         assert body == {"error": "Not found", "path": "/api/v1/does-not-exist"}
+
+
+# --- _match_route dispatch contract (TICKET-517) ---
+
+class TestMatchRouteDispatch:
+    """Pin the _match_route dispatch contract (TICKET-517)."""
+
+    def test_health_route_returns_health_handler(self, api):
+        handler = api._match_route("GET", ["api", "v1", "health"], {}, None)
+        assert handler is api._health_check
+
+    def test_content_item_route_returns_callable(self, api):
+        handler = api._match_route("GET", ["api", "v1", "content", "42"], {}, None)
+        assert handler is not None
+        result = handler()
+        assert isinstance(result, tuple)
+
+    def test_unmatched_path_returns_none(self, api):
+        handler = api._match_route("GET", ["api", "v1", "nonexistent"], {}, None)
+        assert handler is None
