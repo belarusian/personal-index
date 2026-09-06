@@ -432,3 +432,39 @@ class TestSearchSuggestionsDocstringClaim:
     def test_empty_when_nothing_added(self) -> None:
         s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
         assert s.suggest("pyt") == []
+
+
+class TestSuggestionToDictContract:
+    """Pinning tests for Suggestion.to_dict exact contract (TICKET-508)."""
+
+    def test_returns_dict(self) -> None:
+        s = Suggestion(text="python")
+        assert isinstance(s.to_dict(), dict)
+
+    def test_exact_key_set(self) -> None:
+        s = Suggestion(text="python", score=0.5, source="history", category="tag")
+        d = s.to_dict()
+        assert set(d.keys()) == {"text", "score", "source", "category"}
+
+    def test_score_rounded_to_4_decimals(self) -> None:
+        s = Suggestion(text="test", score=0.123456789)
+        d = s.to_dict()
+        assert d["score"] == 0.1235
+        assert d["score"] == round(0.123456789, 4)
+
+    def test_text_source_category_copied(self) -> None:
+        s = Suggestion(text="python", score=0.5, source="history", category="tag")
+        d = s.to_dict()
+        assert d["text"] == "python"
+        assert d["source"] == "history"
+        assert d["category"] == "tag"
+
+    def test_suggestion_not_mutated(self) -> None:
+        s = Suggestion(text="python", score=0.123456789, source="history", category="tag")
+        d = s.to_dict()
+        d["score"] = 999.0
+        d["text"] = "mutated"
+        assert s.score == 0.123456789
+        assert s.text == "python"
+        assert s.source == "history"
+        assert s.category == "tag"
