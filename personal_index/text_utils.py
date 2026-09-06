@@ -274,7 +274,7 @@ def count_characters(text: str, include_spaces: bool = True) -> int:
         return 0
     if include_spaces:
         return len(text)
-    return len(text.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", ""))
+    return len(re.sub(r"\s+", "", text))
 
 
 def read_time_minutes(text: str, wpm: int = 200) -> int:

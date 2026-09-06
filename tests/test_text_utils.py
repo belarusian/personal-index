@@ -287,6 +287,14 @@ class TestCountCharacters:
     def test_empty(self):
         assert count_characters("") == 0
 
+    def test_without_all_whitespace(self):
+        # form feed and vertical tab are whitespace too; include_spaces=False
+        # must strip every whitespace char, not just space/tab/newline/CR
+        assert count_characters("a b", include_spaces=False) == 2
+        assert count_characters("a\t\n\r\x0c\x0bb", include_spaces=False) == 2
+        assert count_characters("a\x0cb", include_spaces=False) == 2
+        assert count_characters("a\x0bb", include_spaces=False) == 2
+
 
 class TestReadTimeMinutes:
     def test_basic(self):
