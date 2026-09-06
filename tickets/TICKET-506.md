@@ -21,4 +21,4 @@
    Note: unlike url_utils.extract_domain, this does NOT strip a port and does NOT lowercase.
 - **Minimal additive fix:** Reword the docstring to enumerate the exact conditional branches above; add ONE behavior test pinning the corrected claim against the returned value, including the guard-path input (falsy url -> None) and the currently-untested scheme-less branch alongside the normal case.
 - **Issue:** #866
-- **Status:** OPEN
+- **Status:** RESOLVED (merged via PR #867, CI run 34034871507, gh #866 closed)
