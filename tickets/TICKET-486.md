@@ -16,4 +16,4 @@ The calculate method body (lines 110-145) never references `tags`
 Remove the unused `tags` parameter from `calculate()` signature and from `batch_calculate()` docstring and call site, or alternatively implement tag-based scoring. Removing the unused parameter is the minimal fix that eliminates the misleading API.
 
 ## Issue
-Issue: #825
+Issue: #825 (CLOSED)
