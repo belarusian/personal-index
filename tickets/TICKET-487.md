@@ -27,4 +27,4 @@ Add a test that pins `get_page(1, per_page=0).per_page == 1` (guard path) alongs
 normal `per_page=5` case.
 
 ## Issue
-Issue: #827
+Issue: #827 (CLOSED)
