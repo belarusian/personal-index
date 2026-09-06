@@ -285,6 +285,15 @@ class ContentAPI:
         return 200, {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
     def _get_stats(self) -> tuple[int, dict[str, Any]]:
+        """Return aggregate statistics over the content store.
+
+        Reads no params. Returns ``(200, {"total_items": <n>, "tags":
+        <tag_counts>})`` where ``<n>`` is ``len(self._store)`` and
+        ``<tag_counts>`` is the ``dict[str, int]`` produced by
+        ``self._collect_tags()`` (a mapping of each tag to its count
+        across all items). The response is always 200 with the fixed
+        ``total_items``/``tags`` shape.
+        """
         return 200, {
             "total_items": len(self._store),
             "tags": self._collect_tags(),

@@ -557,3 +557,15 @@ class TestHealthCheckDocstring530:
         assert "healthy" in doc
         assert "timestamp" in doc
         assert "200" in doc
+
+
+class TestGetStatsDocstring531:
+    """Pin the _get_stats dispatch contract (TICKET-531)."""
+
+    def test_docstring_states_exact_contract(self) -> None:
+        doc = ContentAPI._get_stats.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "total_items" in doc
+        assert "tags" in doc
+        assert "200" in doc
