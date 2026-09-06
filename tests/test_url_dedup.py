@@ -241,3 +241,25 @@ class TestURLDeduplicatorFuzzyThreshold:
         dedup.add_url("http://a.com/page")
         result = dedup.check_duplicate("http://a.com/pagex")
         assert result.is_duplicate is False
+
+
+class TestURLDeduplicatorSeenCount:
+    def test_seen_count_pins_documented_contract(self):
+        """Pin the corrected seen_count docstring against the returned value.
+
+        Normal case: each distinct normalized URL added increments the count.
+        Guard path: a URL that normalizes to an already-seen form is NOT
+        counted again (the docstring's 'not counted again' claim).
+        """
+        dedup = URLDeduplicator()
+        assert dedup.seen_count == 0  # empty map -> 0
+
+        # Normal case: two distinct normalized URLs -> count 2.
+        dedup.add_url("http://a.com/page-one")
+        dedup.add_url("http://a.com/page-two")
+        assert dedup.seen_count == 2
+
+        # Guard path: a URL that normalizes to an already-seen form
+        # (trailing slash stripped) must NOT increment the count.
+        dedup.add_url("http://a.com/page-one/")
+        assert dedup.seen_count == 2

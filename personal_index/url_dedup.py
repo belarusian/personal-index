@@ -27,7 +27,12 @@ class URLDeduplicator:
 
     @property
     def seen_count(self) -> int:
-        """Seen_count."""
+        """Return the number of distinct normalized URLs seen so far.
+
+        A read-only ``@property`` returning ``len(self._seen_urls)`` —
+        the size of the internal ``normalized -> original`` map. A URL
+        that normalizes to an already-seen form is not counted again.
+        """
         return len(self._seen_urls)
 
     def normalize_url(self, url: str) -> str:
