@@ -1,5 +1,6 @@
 """Tests for content transform module."""
 
+from typing import Any
 
 from personal_index.content_transform.normalizer import ContentNormalizer
 from personal_index.content_transform.pipeline import TransformPipeline
@@ -421,3 +422,37 @@ class TestTransformBatchPinning:
         assert result == []
         assert isinstance(result, list)
 
+
+
+class TestNormalizeBatchPinning:
+    """Pinning tests for ContentNormalizer.normalize_batch actual behavior."""
+
+    def test_returns_new_list_and_input_not_mutated(self) -> None:
+        n = ContentNormalizer()
+        items = [{"title": "  hello world  "}, {"url": "example.com"}]
+        original = [dict(d) for d in items]
+        result = n.normalize_batch(items)
+        assert result is not items
+        assert items == original
+
+    def test_order_preserved_and_each_item_normalized(self) -> None:
+        n = ContentNormalizer()
+        items: list[dict[str, Any]] = [
+            {"title": "  hello world  ", "url": "example.com", "tags": ["A B", "C"]},
+            {"title": "X"},
+        ]
+        result = n.normalize_batch(items)
+        assert result == [
+            {"title": "Hello World", "url": "https://example.com", "tags": ["a-b", "c"]},
+            {"title": "X"},
+        ]
+        # each output item is a new dict, not the input item
+        for out, inp in zip(result, items):
+            assert out is not inp
+
+    def test_empty_input_returns_empty_list(self) -> None:
+        n = ContentNormalizer()
+        items: list[dict[str, Any]] = []
+        result = n.normalize_batch(items)
+        assert result == []
+        assert isinstance(result, list)
