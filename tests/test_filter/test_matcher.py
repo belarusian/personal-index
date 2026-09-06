@@ -73,6 +73,28 @@ class TestContentMatcher:
         assert matcher.matches_content("python is great")
         assert not matcher.matches_content("java is great")
 
+    def test_regex_relevance_score_positive_on_match(self):
+        # A REGEX-mode interest whose pattern matches the content must score
+        # > 0 (a literal substring count of the pattern string is always 0).
+        interest = Interest(name="test", keywords=[r"py\w+"], match_mode=MatchMode.REGEX, priority=5)
+        matcher = ContentMatcher(interest)
+        assert matcher.matches_content("python is great")
+        assert matcher.relevance_score("python is great") > 0.0
+        # Guard path: a REGEX pattern that does not match scores 0.0.
+        assert matcher.relevance_score("java is great") == 0.0
+
+    def test_regex_interest_kept_by_filter(self):
+        # A REGEX-mode interest that matches content must be kept by
+        # InterestFilter.matches / should_index (previously dropped because
+        # relevance_score was 0.0 and the `score > best_score` gate failed).
+        interest = Interest(name="test", keywords=[r"py\w+"], match_mode=MatchMode.REGEX, priority=5)
+        filter_ = InterestFilter([interest])
+        assert filter_.matches("python is great") is not None
+        assert filter_.should_index("python is great")
+        # Guard path: non-matching content is not indexed.
+        assert filter_.matches("java is great") is None
+        assert not filter_.should_index("java is great")
+
 
 class TestInterestFilter:
     def test_init_with_interests(self):
