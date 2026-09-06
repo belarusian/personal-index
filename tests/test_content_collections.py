@@ -294,6 +294,16 @@ class TestCollectionManager:
         result = self.manager.merge(cid, "nonexistent")
         assert result is False
 
+    def test_merge_self_is_noop(self):
+        cid = self.manager.create("A")
+        self.manager.add_item(cid, "i1")
+        self.manager.add_item(cid, "i2")
+        result = self.manager.merge(cid, cid)
+        assert result is False
+        assert self.manager.get(cid) is not None
+        assert self.manager.get_items(cid) == ["i1", "i2"]
+        assert self.manager.count() == 1
+
     def test_clear_collection(self):
         cid = self.manager.create("Test")
         self.manager.add_item(cid, "a")
