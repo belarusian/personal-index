@@ -1,6 +1,6 @@
 # TICKET-462: RobotsPolicy.can_fetch docstring omits matching predicates
 
-Status: OPEN
+Status: RESOLVED
 Issue: #765
 Module: personal_index/robots_parser.py
 Symptom: can_fetch() docstring is the blanket claim "Check if a URL can be
