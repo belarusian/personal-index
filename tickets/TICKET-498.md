@@ -28,6 +28,6 @@ pinning tests to tests/test_content_categorizer.py pinning: default n=3,
 new-list (not the internal list), n=0 -> [], n > len -> all, no mutation.
 
 ## Status
-OPEN
+RESOLVED (merged via PR #853)
 
 Issue: #852
