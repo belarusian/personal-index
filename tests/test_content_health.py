@@ -333,3 +333,47 @@ class TestCheckItemOrderPinning:
             "missing_tags",
             "low_score",
         ]
+
+
+class TestCheckAllDocstringClaim:
+    """Pin the corrected check_all docstring claim: each item dict is mapped
+    through check_item (with defaults) and the HealthReport aggregates the
+    per-item scores as a MEAN (100.0 when empty) plus status counts and
+    total_issues. Witness the normal path (recompute the mean) and the guard
+    path (empty list -> overall_score 100.0, total_items 0)."""
+
+    def test_check_all_normal_pins_mean_score_and_counts(self):
+        checker = ContentHealthChecker()
+        items = [
+            {
+                "url": "https://a.com",
+                "title": "Good Page",
+                "content": "This is good content that passes all checks easily.",
+                "tags": ["tech"],
+                "score": 8.0,
+                "status_code": 200,
+            },
+            {
+                "url": "https://b.com",
+                "title": "",
+                "content": "Short",
+                "status_code": 404,
+            },
+        ]
+        report = checker.check_all(items)
+        # Recompute the exact mean the body performs over per-item scores.
+        per_item = [checker._check_from_dict(it) for it in items]
+        expected_mean = sum(r.score for r in per_item) / len(per_item)
+        assert report.overall_score == expected_mean
+        # Status counts + total_issues aggregated from the per-item results.
+        assert report.total_items == 2
+        assert report.healthy_count == 1
+        assert report.unhealthy_count == 1
+        assert report.total_issues == sum(len(r.issues) for r in per_item)
+
+    def test_check_all_empty_pins_100_score_guard(self):
+        checker = ContentHealthChecker()
+        report = checker.check_all([])
+        assert report.total_items == 0
+        assert report.overall_score == 100.0
+        assert report.total_issues == 0
