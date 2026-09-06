@@ -502,7 +502,6 @@ class TestContentCategorizerInternal:
         hints = cat._extract_url_hints("")
         assert hints == set()
 
-
     def test_extract_url_hints_no_tld_false_positive(self):
         """A plain *.com URL must not yield a spurious business hint.
 
@@ -517,6 +516,7 @@ class TestContentCategorizerInternal:
         hints2 = cat._extract_url_hints("https://dev-blog.com/api")
         assert "technology" in hints2
         assert "business" not in hints2
+
     def test_add_matches_dedup_and_source_guard(self):
         """Pin _add_matches: in-place dedup into kw, conditional src append.
 
@@ -539,7 +539,6 @@ class TestContentCategorizerInternal:
         assert returned2 is kw2
         assert kw2 == ["x"]
         assert src2 == ["text"]
-
 
     def test_score_topic_returns_tuple(self):
         cat = ContentCategorizer()

@@ -1,35 +1,32 @@
-# TICKET-484: ContentNormalizer._normalize_title docstring is generic (class-(b) doc-drift)
+# TICKET-484: _extract_url_hints false-positives on TLDs via `part in hint_word`
 
-Status: RESOLVED (merged via PR #820)
-File: personal_index/content_transform/normalizer.py
-Method: ContentNormalizer._normalize_title
+- **File:** personal_index/content_categorizer.py
+- **Symptom:** `_extract_url_hints` matches a URL part against a hint word in
+  BOTH directions: `if hint_word in part or part in hint_word` (line 571).
+  The `part in hint_word` direction lets a short URL part (notably the TLD
+  `com`) match a longer hint word that merely contains it:
+  - `com` is a substring of `corp` (business) -> EVERY `*.com` URL gets a
+    spurious `business` hint.
+  - `com` is a substring of `eco` (environment) -> `*.com` URLs can also get
+    a spurious `environment` hint.
+  Observed: `_extract_url_hints("https://example.com/")` -> `{"business"}`;
+  `_extract_url_hints("https://news.com/")` -> `{"business","politics"}`;
+  `_extract_url_hints("https://healthcare.com/clinic")` -> `{"business","health"}`.
+  The spurious `business` hint inflates the business topic score (URL_HINT_BOOST
+  0.3 * weight) and can surface "business" as a topic for content that has no
+  business signal at all.
+- **Evidence:** line 571 `if hint_word in part or part in hint_word:`.
+- **Minimal additive fix:** drop the `part in hint_word` direction so a hint
+  word must appear WITHIN a URL part (the intended direction). The hint lists
+  already contain the short forms ("tech", "dev", "eco", ...), so no intended
+  match is lost. After the fix:
+  - `https://example.com/` -> `set()`
+  - `https://news.com/` -> `{"politics"}`
+  - `https://healthcare.com/clinic` -> `{"health"}`
+  - `https://dev-blog.com/api` -> `{"technology"}`
+- **Test:** add `test_extract_url_hints_no_tld_false_positive` asserting
+  `business` is NOT in the hints for a plain `*.com` URL, and that the intended
+  topic is still detected for `dev-blog.com/api`. Fails pre-fix, passes post-fix.
 
-## Symptom
-The docstring is the generic "Normalize title to title case." but the code does
-two specific, contract-bearing things:
-1. strips surrounding whitespace (str.strip());
-2. applies Python's str.title(), which capitalizes the first character of each
-   "word" (words split on non-alphanumeric boundaries) and lowercases the
-   remaining characters of each word.
-
-## Evidence (lines 64-66)
-```python
-def _normalize_title(self, title: str) -> str:
-    """Normalize title to title case."""
-    return title.strip().title()
-```
-
-## Actual behavior (verified)
-- "  hello world  " -> "Hello World"  (strip + title)
-- "HELLO WORLD"     -> "Hello World"  (title lowercases the rest)
-- "a b c"           -> "A B C"        (each word capitalized)
-- "hello-world"     -> "Hello-World"  (non-alnum boundary splits words)
-- ""                -> ""             (empty stays empty)
-
-## Minimal additive fix
-- Reword the _normalize_title docstring to state exactly those two behaviors
-  (strip, then str.title() with its word-boundary capitalization rule).
-- Append a TestNormalizeTitlePinning class to tests/test_content_transform.py
-  covering the 5 examples above.
-
-Issue: #819
+Status: OPEN
+Issue: #821
