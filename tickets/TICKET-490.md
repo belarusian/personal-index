@@ -1,6 +1,6 @@
 # TICKET-490: create_field_add_transformer docstring omits overwrite behavior
 
-Status: OPEN
+Status: RESOLVED (merged via PR #835)
 
 ## File
 personal_index/content_transform/transformer.py
