@@ -232,7 +232,15 @@ class ContentScorer:
         keyword_matches: int,
         total_keywords: int,
     ) -> float:
-        """Score based on keyword relevance."""
+        """Score based on keyword relevance.
+
+        Guard path: if ``total_keywords == 0`` there is nothing to match
+        against, so return ``0.0`` (no division by zero).
+
+        Otherwise return ``round(min(1.0, keyword_matches / total_keywords),
+        4)``: the fraction of keywords matched, capped at 1.0 and rounded
+        to 4 decimal places.
+        """
         if total_keywords == 0:
             return 0.0
         return round(min(1.0, keyword_matches / total_keywords), 4)

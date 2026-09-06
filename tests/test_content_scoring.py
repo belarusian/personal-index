@@ -216,6 +216,21 @@ class TestContentScorer:
         result = scorer.score(keyword_matches=5, total_keywords=10)
         assert result.relevance == 0.5
 
+    def test_score_relevance_direct_contract(self, scorer: ContentScorer) -> None:
+        """Pin the exact _score_relevance contract against the returned float.
+
+        Guard path (total_keywords == 0) -> 0.0; normal path ->
+        round(min(1.0, keyword_matches / total_keywords), 4).
+        """
+        # Guard path: no keywords to match against -> 0.0 (no division by zero).
+        assert scorer._score_relevance(0, 0) == 0.0
+        # Normal path: exact fraction, rounded to 4 places.
+        assert scorer._score_relevance(5, 10) == 0.5
+        # Capped at 1.0 when matches exceed the total.
+        assert scorer._score_relevance(15, 10) == 1.0
+        # Non-terminating fraction rounded to 4 places.
+        assert scorer._score_relevance(1, 3) == 0.3333
+
     # ── _score_engagement() ──────────────────────────────────────
 
     def test_score_engagement_log_scaling(self, scorer: ContentScorer) -> None:
