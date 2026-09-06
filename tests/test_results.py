@@ -89,6 +89,23 @@ class TestResultsFormatter:
         snippet = formatter.create_snippet(text, "a")
         assert len(snippet) <= 250  # max_length + ellipsis
 
+    def test_create_snippet_uses_configured_max_snippet_length(self, formatter):
+        """Pin the corrected claim: create_snippet honors max_snippet_length.
+
+        The fixture sets max_snippet_length=100. Both the no-match guard path
+        (truncation) and the normal match path must be bounded by that value,
+        not by a hardcoded 200.
+        """
+        # guard path: no match -> truncated to max_snippet_length + 50
+        no_match = formatter.create_snippet("x" * 500, "zzz")
+        assert len(no_match) == 150  # 100 + 50
+        # normal path: match window = len(query) + max_snippet_length, +3 ellipsis
+        match = formatter.create_snippet("python " + "y" * 500, "python")
+        assert len(match) == 6 + 100 + 3  # len(query) + max_snippet_length + "..."
+        # explicit override still wins over the configured value
+        override = formatter.create_snippet("x" * 500, "zzz", max_length=10)
+        assert len(override) == 60  # 10 + 50
+
 
     def test_create_snippet_no_highlight_markup(self, formatter):
         # behavior unchanged: the snippet is a plain window around the
