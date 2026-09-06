@@ -1,6 +1,6 @@
 # TICKET-489: ContentTransformer.transform docstring omits passthrough behavior
 
-Status: OPEN
+Status: RESOLVED (merged via PR #832)
 
 ## File
 personal_index/content_transform/transformer.py
