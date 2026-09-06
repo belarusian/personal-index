@@ -163,6 +163,17 @@ class ContentAPI:
         return 200, {"item": item}
 
     def _create_content(self, body: str | None) -> tuple[int, dict[str, Any]]:
+        """Create a new content item from a JSON request body.
+
+        Returns ``(400, {"error": "Request body is required"})`` when the
+        body is missing or empty. Returns ``(400, {"error": "Invalid JSON in
+        request body"})`` when the body is not valid JSON. Returns
+        ``(400, {"error": "Request body must be a JSON object"})`` when the
+        parsed body is not a JSON object (dict). Otherwise builds an item
+        (id from ``self._next_id``, title/description/link/tags with
+        defaults, created_at/updated_at), stores it in ``self._store``, and
+        returns ``(201, {"item": <item>})``.
+        """
         if not body:
             return 400, {"error": "Request body is required"}
         try:
