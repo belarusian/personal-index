@@ -126,3 +126,67 @@ class TestUrlFilter:
         self.filter.add_whitelist("http://c.com")
         assert self.filter.blacklist_count == 2
         assert self.filter.whitelist_count == 1
+
+
+class TestGetMatchingRuleContract:
+    """Pinning tests for UrlFilter.get_matching_rule exact contract (TICKET-499)."""
+
+    def setup_method(self):
+        self.filter = UrlFilter()
+
+    def test_whitelist_precedence_over_blacklist(self):
+        # A URL matching BOTH a whitelist and a blacklist rule returns the
+        # WHITELIST rule, even when the blacklist rule was added first.
+        self.filter.add_blacklist("*.both.com", description="blk")
+        self.filter.add_whitelist("*.both.com", description="wl")
+        rule = self.filter.get_matching_rule("http://x.both.com")
+        assert rule is not None
+        assert rule.is_blacklist is False
+        assert rule.description == "wl"
+
+    def test_blacklist_returned_when_no_whitelist_match(self):
+        self.filter.add_blacklist("*.bad.com", description="blk")
+        rule = self.filter.get_matching_rule("http://x.bad.com")
+        assert rule is not None
+        assert rule.is_blacklist is True
+        assert rule.description == "blk"
+
+    def test_first_in_insertion_order_within_whitelist(self):
+        self.filter.add_whitelist("*.a.com", description="wl-a")
+        self.filter.add_whitelist("*.a.com", description="wl-a2")
+        rule = self.filter.get_matching_rule("http://x.a.com")
+        assert rule is not None
+        assert rule.description == "wl-a"
+
+    def test_first_in_insertion_order_within_blacklist(self):
+        self.filter.add_blacklist("re:.*evil.*", description="blk-1")
+        self.filter.add_blacklist("re:.*evil.*", description="blk-2")
+        rule = self.filter.get_matching_rule("http://evil.example")
+        assert rule is not None
+        assert rule.description == "blk-1"
+
+    def test_returns_stored_object_identity(self):
+        # Returns the actual stored rule object, not a copy.
+        self.filter.add_blacklist("*.z.com", description="z")
+        rule = self.filter.get_matching_rule("http://x.z.com")
+        assert rule is self.filter._blacklist[0]
+
+    def test_none_when_no_match(self):
+        self.filter.add_blacklist("*.bad.com")
+        self.filter.add_whitelist("*.good.com")
+        assert self.filter.get_matching_rule("http://nothing.example") is None
+
+    def test_none_for_empty_filter(self):
+        assert self.filter.get_matching_rule("http://x.com") is None
+
+    def test_no_mutation(self):
+        # Pure accessor: the rule lists are unchanged after the call.
+        self.filter.add_blacklist("*.bad.com", description="blk")
+        self.filter.add_whitelist("*.good.com", description="wl")
+        before_blk = list(self.filter._blacklist)
+        before_wl = list(self.filter._whitelist)
+        self.filter.get_matching_rule("http://x.bad.com")
+        self.filter.get_matching_rule("http://x.good.com")
+        self.filter.get_matching_rule("http://x.other.com")
+        assert self.filter._blacklist == before_blk
+        assert self.filter._whitelist == before_wl

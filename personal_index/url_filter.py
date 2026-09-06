@@ -102,13 +102,21 @@ class UrlFilter:
         return [url for url in urls if self.is_blocked(url)]
 
     def get_matching_rule(self, url: str) -> UrlFilterRule | None:
-        """Get the first matching rule for a URL, or None.
+        """Return the first rule matching ``url``, or ``None`` if none matches.
+
+        The WHITELIST is scanned first (whitelist takes precedence over
+        blacklist); only when no whitelist rule matches is the BLACKLIST
+        scanned. Within each list, rules are checked in insertion order and
+        the FIRST rule whose ``matches(url)`` is True is returned.
 
         Args:
             url: URL to check.
 
         Returns:
-            Matching UrlFilterRule or None.
+            The actual stored ``UrlFilterRule`` object (identity, not a copy)
+            for the first matching rule, or ``None`` when neither list has a
+            matching rule (including an empty filter). Pure accessor: does not
+            mutate ``_whitelist`` or ``_blacklist``.
         """
         for rule in self._whitelist:
             if rule.matches(url):
