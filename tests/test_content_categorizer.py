@@ -140,6 +140,62 @@ class TestCategorizationResult:
         assert len(top2) == 2
         assert top2[0].topic == "tech"
 
+    def test_top_n_default_is_three(self):
+        result = CategorizationResult(
+            primary_topic="tech",
+            topics=[
+                TopicScore(topic="a", score=0.9),
+                TopicScore(topic="b", score=0.5),
+                TopicScore(topic="c", score=0.3),
+                TopicScore(topic="d", score=0.1),
+            ],
+        )
+        top = result.top_n()
+        assert [t.topic for t in top] == ["a", "b", "c"]
+
+    def test_top_n_returns_new_list_not_internal(self):
+        topics = [
+            TopicScore(topic="a", score=0.9),
+            TopicScore(topic="b", score=0.5),
+        ]
+        result = CategorizationResult(primary_topic="a", topics=topics)
+        top = result.top_n()
+        assert top is not result.topics
+        assert top is not topics
+        # mutating the returned list does not affect the internal list
+        top.append(TopicScore(topic="z", score=0.0))
+        assert len(result.topics) == 2
+
+    def test_top_n_zero_returns_empty(self):
+        result = CategorizationResult(
+            primary_topic="a",
+            topics=[TopicScore(topic="a", score=0.9)],
+        )
+        assert result.top_n(0) == []
+
+    def test_top_n_larger_than_len_returns_all(self):
+        result = CategorizationResult(
+            primary_topic="a",
+            topics=[
+                TopicScore(topic="a", score=0.9),
+                TopicScore(topic="b", score=0.5),
+            ],
+        )
+        top = result.top_n(10)
+        assert [t.topic for t in top] == ["a", "b"]
+
+    def test_top_n_preserves_order_and_no_mutation(self):
+        topics = [
+            TopicScore(topic="a", score=0.9),
+            TopicScore(topic="b", score=0.5),
+            TopicScore(topic="c", score=0.3),
+        ]
+        result = CategorizationResult(primary_topic="a", topics=topics)
+        before = [t.topic for t in result.topics]
+        top = result.top_n(2)
+        assert [t.topic for t in top] == ["a", "b"]
+        assert [t.topic for t in result.topics] == before
+
 
 # ---------------------------------------------------------------------------
 # BUILTIN_TOPICS tests
