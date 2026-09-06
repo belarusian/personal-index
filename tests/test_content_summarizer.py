@@ -43,6 +43,21 @@ class TestSplitSentences:
         result = _split_sentences(text)
         assert len(result) == 3
 
+    def test_split_contract_and_empty_guard(self):
+        # Main path: split on [.!?] + whitespace + uppercase, strip,
+        # drop empties; no abbreviation handling (a lowercase letter
+        # after the punctuation keeps the fragment joined).
+        text = "First one. Second one? Third! fourth stays. End."
+        result = _split_sentences(text)
+        assert result == [
+            "First one.",
+            "Second one?",
+            "Third! fourth stays.",
+            "End.",
+        ]
+        # Guard path: whitespace-only text normalizes to empty -> [].
+        assert _split_sentences("   \n\t  ") == []
+
 
 class TestTokenize:
     def test_basic_tokenize(self):

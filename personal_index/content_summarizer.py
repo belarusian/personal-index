@@ -25,7 +25,16 @@ class SummaryResult:
 
 
 def _split_sentences(text: str) -> list[str]:
-    """Split text into sentences, handling common abbreviations."""
+    """Split *text* into a list of sentence strings.
+
+    Normalizes all runs of whitespace to a single space and strips the
+    ends. Returns ``[]`` immediately when the normalized text is empty.
+    Otherwise splits on sentence-ending punctuation (``.``/``!``/``?``)
+    followed by whitespace and an uppercase letter
+    (``re.split(r'(?<=[.!?])\\s+(?=[A-Z])', text)``), then strips each
+    fragment and drops any that are empty. No abbreviation table or
+    lookahead is applied. Returns the list of non-empty sentence strings.
+    """
     # Normalize whitespace
     text = re.sub(r'\s+', ' ', text).strip()
     if not text:
