@@ -22,5 +22,5 @@
   Add ONE pinning test class that calls the handler and asserts the result
   (main matched branch AND the None fallback); do NOT assert bound-method
   identity.
-- **Status:** OPEN
+- **Status:** RESOLVED
 - **Issue:** #902
