@@ -1,4 +1,4 @@
-# TICKET-546: Add CacheStore.get / set / has exact-contract docstrings + pinning test
+# TICKET-547: Add CacheStore.get / set / has exact-contract docstrings + pinning test
 
 Status: OPEN
 Module: personal_index/content_cache/cache_store.py
@@ -44,7 +44,7 @@ docstring contract phrases.
 Reword the three docstrings to state the exact contract (expired-entry miss +
 lazy deletion + access tracking for get; default_ttl fallback + LRU eviction for
 set; lazy deletion on expired miss for has). Add a pinning test class
-TestCacheStoreDocstring546 asserting the key contract phrases appear in the
+TestCacheStoreDocstring547 asserting the key contract phrases appear in the
 docstrings AND re-pinning the non-obvious behaviors (lazy deletion after an
 expired get/has, default_ttl fallback, LRU eviction).
 

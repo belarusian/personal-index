@@ -91,8 +91,8 @@ class TestCacheStore:
         assert c.has("key1") is False
 
 
-class TestCacheStoreDocstring546:
-    """Pinning test for TICKET-546: exact-contract docstrings + behavior."""
+class TestCacheStoreDocstring547:
+    """Pinning test for TICKET-547: exact-contract docstrings + behavior."""
 
     def test_get_docstring_contract(self) -> None:
         doc = CacheStore.get.__doc__ or ""
