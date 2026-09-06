@@ -139,7 +139,20 @@ class Paginator:
         return max(1, math.ceil(len(self._items) / self._per_page))
 
     def iterate_pages(self, per_page: int | None = None) -> list[PageResult]:
-        """Get all pages as a list."""
+        """Return every page of the collection as a list of PageResult.
+
+        Args:
+            per_page: Items per page; when given, overrides the
+                constructor default for both the slicing and the
+                total_pages computation. Uses the constructor default
+                when None.
+
+        Returns:
+            A list[PageResult] in page order (page 1 first). Always
+            contains at least one page, even for an empty collection
+            (total_pages is max(1, ceil(total / per_page))). The last
+            page may be partial (fewer than per_page items).
+        """
         pages = []
         page_num = 1
         while True:
