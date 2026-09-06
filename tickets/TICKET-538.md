@@ -1,6 +1,6 @@
 # TICKET-538: ContentCategorizer.get_topics docstring omits sorted behavior
 
-Status: OPEN
+Status: RESOLVED (merged via PR #952, issue #951 closed)
 - File: personal_index/content_categorizer.py
 - Function: ContentCategorizer.get_topics (def line 338, docstring line 339)
 - Issue: #951
