@@ -18,4 +18,4 @@
   the mean of per-item scores and asserts overall_score equality + status counts;
   guard path pins check_all([]) -> overall_score 100.0, total_items 0.
 - **Issue:** #785
-- **Status:** OPEN
+- **Status:** RESOLVED (PR #786, issue #785 closed, merge 987a792)
