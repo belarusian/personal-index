@@ -1,4 +1,4 @@
-# TICKET-532: ContentRollback.clear docstring + pinning test
+# TICKET-533: ContentRollback.clear docstring + pinning test
 
 Status: OPEN
 File: personal_index/content_rollback.py
@@ -25,4 +25,4 @@ Minimal additive fix:
     TestGetStatsDocstring531 pattern, asserting key phrases present
     (pop, clear, url, None).
 
-Issue: #937
+Issue: #941
