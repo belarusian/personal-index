@@ -1,7 +1,7 @@
 # TICKET-523: Reword ContentAPI._list_content docstring to exact contract + pinning test
 
 **Status:** RESOLVED
-**Issue:** Issue: #908
+**Issue:** #912 (merged via PR #913; supersedes stale #908/#914)
 
 ## Title
 Reword personal_index/content_api.py ContentAPI._list_content docstring to state its exact dispatch contract, and add a pinning test that asserts the docstring contains the key contract phrases.
@@ -24,3 +24,6 @@ Behavior (verified in tests/test_content_api.py TestListContent):
 
 ## Status
 RESOLVED
+
+## Resolution
+Docstring added to ContentAPI._list_content and pinning test merged on main via PR #913 (issue #912). Duplicate PR #915 / issue #914 (this cycle) and stale PR #909 / issue #908 closed as superseded.
