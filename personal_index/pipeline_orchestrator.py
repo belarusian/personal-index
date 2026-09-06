@@ -1,7 +1,7 @@
 """Pipeline orchestrator - ties all components together end-to-end.
 
 This module provides the unified pipeline that connects:
-  crawl → extract → filter → score → tag → index → search
+  crawl → filter → score → tag → index (search is a separate method)
 
 Usage:
     from personal_index.pipeline_orchestrator import PipelineOrchestrator
@@ -62,7 +62,7 @@ class PipelineOrchestrator:
     """Orchestrates the full content pipeline end-to-end.
 
     Manages all pipeline components and coordinates data flow
-    between stages: crawl → extract → filter → score → tag → index.
+    between stages: crawl → filter → score → tag → index.
     """
 
     def __init__(
