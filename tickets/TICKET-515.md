@@ -30,4 +30,4 @@
 - Line-shift guard: no test pins cli.py by line number (grep of tests/ for
   lineno/getsource/_method_line_span on cli returned nothing) -> adding lines is safe.
 - Issue: #889
-- Status: OPEN
+- Status: RESOLVED (merged via PR #890, issue #889 closed)
