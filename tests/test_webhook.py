@@ -239,3 +239,59 @@ class TestWebhookSenderExceptionHandling:
 
         with patch("urllib.request.urlopen", side_effect=ValueError("unexpected")), pytest.raises(ValueError, match="unexpected"):
             sender.send(payload)
+
+
+class TestWebhookPayloadToDictContract:
+    """Pinning tests for WebhookPayload.to_dict exact contract (TICKET-507)."""
+
+    def test_returns_dict(self):
+        payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
+        assert isinstance(payload.to_dict(), dict)
+
+    def test_exact_key_set(self):
+        payload = WebhookPayload(
+            event=WebhookEvent.INDEX_UPDATE,
+            data={"k": "v"},
+            timestamp=123.0,
+            source="src",
+        )
+        d = payload.to_dict()
+        assert set(d.keys()) == {"event", "data", "timestamp", "source"}
+
+    def test_event_is_value_string_not_enum(self):
+        payload = WebhookPayload(event=WebhookEvent.CRAWL_FAILED)
+        d = payload.to_dict()
+        assert d["event"] == "crawl_failed"
+        assert d["event"] == WebhookEvent.CRAWL_FAILED.value
+        assert not isinstance(d["event"], WebhookEvent)
+
+    def test_data_timestamp_source_copied_by_reference(self):
+        data = {"a": 1}
+        payload = WebhookPayload(
+            event=WebhookEvent.ERROR_OCCURRED,
+            data=data,
+            timestamp=99.5,
+            source="my-source",
+        )
+        d = payload.to_dict()
+        assert d["data"] is data
+        assert d["timestamp"] == 99.5
+        assert d["source"] == "my-source"
+
+    def test_payload_not_mutated(self):
+        data = {"a": 1}
+        payload = WebhookPayload(
+            event=WebhookEvent.HEALTH_CHECK,
+            data=data,
+            timestamp=7.0,
+            source="orig",
+        )
+        d = payload.to_dict()
+        # Mutating the returned dict must not change the payload's own fields.
+        d["event"] = "mutated"
+        d["source"] = "mutated"
+        d["timestamp"] = 0.0
+        assert payload.event is WebhookEvent.HEALTH_CHECK
+        assert payload.source == "orig"
+        assert payload.timestamp == 7.0
+        assert payload.data == {"a": 1}

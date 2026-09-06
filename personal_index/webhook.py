@@ -35,7 +35,12 @@ class WebhookPayload:
     source: str = "personal-index"
 
     def to_dict(self) -> dict[str, Any]:
-        """To_dict."""
+        """Return a new dict with exactly the keys ``event``, ``data``, ``timestamp``, ``source``.
+
+        ``event`` is the enum's ``.value`` string (not the enum member);
+        ``data``, ``timestamp``, and ``source`` are copied by reference.
+        The payload object is NOT mutated.
+        """
         return {
             "event": self.event.value,
             "data": self.data,
