@@ -23,3 +23,6 @@ so negative values behave identically to 0 (return empty string).
 Add `test_truncate_negative_max_length` asserting
 `truncate("hello world", max_length=-1) == ""`.
 Issue: #807
+
+## Status
+- Status: RESOLVED (merged via PR #808, issue #807 closed)
