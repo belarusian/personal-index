@@ -46,7 +46,18 @@ class ContentRollback:
         return points[index]
 
     def clear(self, url: str | None = None) -> None:
-        """Clear rollback points."""
+        """Clear rollback points, either for one url or for all urls.
+
+        Two paths, selected by the ``url`` argument:
+          - url truthy: pop only that url's rollback points
+            (``self._rollback_points.pop(url, None)``); other urls are
+            untouched.
+          - url falsy (``None`` or empty): clear ALL urls
+            (``self._rollback_points.clear()``).
+
+        This mutates only the internal store and returns ``None``; it does
+        not apply any rollback to current content.
+        """
         if url:
             self._rollback_points.pop(url, None)
         else:

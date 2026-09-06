@@ -79,5 +79,18 @@ class TestContentRollback(unittest.TestCase):
         self.assertEqual(len(self.rollback.get_rollback_points("http://example.com")), 0)
 
 
+class TestClearDocstring533(unittest.TestCase):
+    """Pin the ContentRollback.clear two-path contract (TICKET-533)."""
+
+    def test_docstring_states_exact_contract(self):
+        doc = ContentRollback.clear.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "pop" in doc
+        assert "clear" in doc
+        assert "url" in doc
+        assert "None" in doc
+
+
 if __name__ == "__main__":
     unittest.main()
