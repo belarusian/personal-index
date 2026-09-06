@@ -572,3 +572,60 @@ class TestViewResultDictAccessPinning:
         assert set(r.to_dict().keys()) == set(r._FIELDS)
         for key in r._FIELDS:
             assert key in r
+
+
+class TestGetEventsForWeekDocstring539:
+    """Pin the Timeline.get_events_for_week exact week-window contract (TICKET-539)."""
+
+    def test_docstring_states_exact_contract(self) -> None:
+        doc = Timeline.get_events_for_week.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "MONDAY-based" in doc
+        assert "INCLUSIVE" in doc
+        assert "00:00:00" in doc
+        assert "23:59:59" in doc
+        assert "weekday" in doc
+        assert "ascending" in doc
+
+    def test_includes_event_at_exact_monday_start(self) -> None:
+        # Lower bound: Monday 00:00:00.000000 UTC is included.
+        tl = Timeline()
+        tl.add_event(_event("mon_start", "c1",
+                            datetime(2024, 1, 8, 0, 0, 0, 0, tzinfo=timezone.utc)))
+        res = tl.get_events_for_week(date(2024, 1, 10))
+        assert [e.event_id for e in res] == ["mon_start"]
+
+    def test_includes_event_at_exact_sunday_end(self) -> None:
+        # Upper bound: Sunday 23:59:59.999999 UTC is included.
+        tl = Timeline()
+        tl.add_event(_event("sun_end", "c1",
+                            datetime(2024, 1, 14, 23, 59, 59, 999999, tzinfo=timezone.utc)))
+        res = tl.get_events_for_week(date(2024, 1, 10))
+        assert [e.event_id for e in res] == ["sun_end"]
+
+    def test_excludes_previous_sunday_and_next_monday(self) -> None:
+        # Just outside the window on both sides.
+        tl = Timeline()
+        tl.add_event(_event("prev_sun", "c1",
+                            datetime(2024, 1, 7, 23, 59, 59, 999999, tzinfo=timezone.utc)))
+        tl.add_event(_event("next_mon", "c1",
+                            datetime(2024, 1, 15, 0, 0, 0, 0, tzinfo=timezone.utc)))
+        res = tl.get_events_for_week(date(2024, 1, 10))
+        assert res == []
+
+    def test_week_is_monday_based_for_any_weekday(self) -> None:
+        # A Monday input maps to itself; a Sunday input maps back to its Monday.
+        tl = Timeline()
+        tl.add_event(_event("m", "c1",
+                            datetime(2024, 1, 8, 12, 0, 0, 0, tzinfo=timezone.utc)))
+        assert [e.event_id for e in tl.get_events_for_week(date(2024, 1, 8))] == ["m"]
+        assert [e.event_id for e in tl.get_events_for_week(date(2024, 1, 14))] == ["m"]
+
+    def test_result_preserves_ascending_order(self) -> None:
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(8, 9)))
+        tl.add_event(_event("b", "c1", _ts(10, 12)))
+        tl.add_event(_event("c", "c1", _ts(14, 18)))
+        res = tl.get_events_for_week(date(2024, 1, 10))
+        assert [e.event_id for e in res] == ["a", "b", "c"]
