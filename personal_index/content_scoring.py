@@ -293,7 +293,26 @@ class ContentScorer:
         change_frequency: str,
         updated_at: datetime | None,
     ) -> float:
-        """Score based on content freshness."""
+        """Score based on content freshness.
+
+        Guard path: when ``last_crawled`` is ``None`` return ``0.5``
+        (a neutral mid-range score, no decay applied).
+
+        Otherwise, if ``last_crawled`` is naive (``tzinfo is None``) it is
+        treated as UTC (``replace(tzinfo=timezone.utc)``). ``age_hours`` is
+        ``max(0, (now - last_crawled).total_seconds() / 3600)``.
+
+        ``expected`` is looked up from a fixed frequency->hours table
+        (hourly 1, daily 24, weekly 168, monthly 720, yearly 8760, never
+        inf); an unknown ``change_frequency`` defaults to 720 (monthly).
+        When ``change_frequency`` is ``"never"`` (expected == inf) return
+        ``1.0`` unconditionally.
+
+        Otherwise return ``round(max(0.0, min(1.0, 1.0 - (age_hours /
+        expected) * 0.5)), 4)``: a linear decay that starts at 1.0 and
+        reaches 0.0 once the age is twice the expected interval, clamped
+        to [0, 1] and rounded to 4 places. ``updated_at`` is unused.
+        """
         now = datetime.now(timezone.utc)
         if last_crawled is None:
             return 0.5
