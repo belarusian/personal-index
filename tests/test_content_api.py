@@ -377,3 +377,21 @@ class TestMatchRouteDispatch:
     def test_unmatched_path_returns_none(self, api):
         handler = api._match_route("GET", ["api", "v1", "nonexistent"], {}, None)
         assert handler is None
+
+
+class TestRouteContentDispatch:
+    """Pin the _route_content dispatch contract (TICKET-519)."""
+
+    def test_get_returns_list_handler(self, api_with_data):
+        handler = api_with_data._route_content("GET", {}, None)
+        assert handler is not None
+        status, body = handler()
+        assert status == 200
+        assert body["total"] == 2
+        assert body["page"] == 1
+        assert body["per_page"] == 20
+        assert len(body["items"]) == 2
+
+    def test_unmatched_method_returns_none(self, api):
+        handler = api._route_content("PATCH", {}, None)
+        assert handler is None

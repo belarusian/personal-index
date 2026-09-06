@@ -74,7 +74,19 @@ class ContentAPI:
     def _route_content(
         self, method: str, params: dict, body: str | None
     ) -> Callable[..., Any] | None:
-        """Route /api/v1/content requests."""
+        """Dispatch /api/v1/content requests by HTTP method.
+
+        Inspects only ``method`` (``params`` and ``body`` are captured by
+        the returned closure, not inspected here). Returns:
+
+        - ``"GET"``  -> a zero-arg callable that runs
+          ``self._list_content(params)`` -> ``(200, {items, total, page,
+          per_page})`` (or ``(400, {error})`` on non-integer page/per_page).
+        - ``"POST"`` -> a zero-arg callable that runs
+          ``self._create_content(body)`` -> ``(201, {item})`` on success,
+          ``(400, {error})`` on a missing/invalid body.
+        - any other method -> ``None`` (the caller maps this to 404/405).
+        """
         if method == "GET":
             return lambda: self._list_content(params)
         if method == "POST":
