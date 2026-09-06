@@ -10,4 +10,4 @@
   - L170 `endpoint_count`: body is a `@property` returning `len(self._configs)` — i.e. the number of configured endpoints.
 - **Minimal additive fix:** Reword each placeholder to state the exact behavior the body performs (enumerate the four to_dict keys and that event is the `.value` string; to_json is json.dumps of to_dict; endpoint_count is len of the config list). Add ONE pinning behavior test that asserts the to_dict() returned object has exactly the four documented keys (event as the `.value` string, data, timestamp, source) and asserts the ABSENCE of any sibling key (e.g. the enum object itself is not a key), so the doc-only fix is witnessed.
 - **Issue:** #868
-- **Status:** OPEN
+- **Status:** RESOLVED (merged via PR #869, CI run 34035716818, gh #868 closed)
