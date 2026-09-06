@@ -1,6 +1,6 @@
 # TICKET-528: ContentAPI._search_content docstring + pinning test
 
-Status: OPEN
+Status: RESOLVED
 File: personal_index/content_api.py
 Symptom: ContentAPI._search_content (def at line 244) has no docstring, so its
   exact dispatch contract is undocumented. Sibling dispatch methods
