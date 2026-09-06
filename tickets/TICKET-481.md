@@ -21,5 +21,5 @@
 - Minimal additive fix: reword the docstring to state the three actual
   behaviors; add a pinning test class TestNormalizeUrlPinning in
   tests/test_content_transform.py covering the verified behaviors.
-- Status: OPEN
+- Status: RESOLVED (merged via PR #814)
 - Issue: #812
