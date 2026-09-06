@@ -100,7 +100,20 @@ class Timeline:
         return [e for e in self.events if start <= e.timestamp <= end]
 
     def get_events_for_week(self, d: date) -> list[TimelineEvent]:
-        """Get events for the week containing the given date."""
+        """Get events for the week containing the given date.
+
+        The week is MONDAY-based: ``monday = d - timedelta(days=d.weekday())``
+        and ``sunday = monday + timedelta(days=6)``. The window is INCLUSIVE
+        on both ends:
+
+          * ``start`` = ``datetime(monday.year, monday.month, monday.day,
+            tzinfo=timezone.utc)``  -- Monday 00:00:00.000000 UTC
+          * ``end``   = ``datetime(sunday.year, sunday.month, sunday.day,
+            23, 59, 59, 999999, tzinfo=timezone.utc)``  -- Sunday 23:59:59.999999 UTC
+
+        An event is returned iff ``start <= e.timestamp <= end``. The result
+        preserves ``self.events`` order (ascending by timestamp).
+        """
         # Monday of the week
         monday = d - timedelta(days=d.weekday())
         start = datetime(monday.year, monday.month, monday.day, tzinfo=timezone.utc)
