@@ -1,6 +1,6 @@
 # TICKET-524: Reword ContentAPI._get_content docstring to exact contract + pinning test
 
-**Status:** OPEN
+**Status:** RESOLVED (merged via PR #919, issue #918 closed)
 
 ## File
 - `personal_index/content_api.py` — `ContentAPI._get_content` (def at line ~153)
@@ -23,4 +23,4 @@ payload, but nothing in the source documents that contract.
 Issue: #918
 
 ## Status
-- OPEN
+- RESOLVED (merged via PR #919, issue #918 closed)
