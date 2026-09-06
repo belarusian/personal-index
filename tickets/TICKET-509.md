@@ -10,4 +10,4 @@
   - L105 `url_count`: body is a `@property` returning `len(self.entries)` — the number of entries currently held by the builder.
 - **Minimal additive fix:** Reword each placeholder to state the exact behavior the body performs (enumerate the four to_element SubElements and their text formats; clear empties self.entries in place; url_count is len of self.entries). Add ONE pinning behavior test that asserts the to_element() returned `<url>` Element has EXACTLY the four documented SubElements (loc/lastmod/changefreq/priority) with the documented text formats, and asserts the ABSENCE of any sibling SubElement (e.g. no `<url>` child / no extra tag), so the doc-only fix is witnessed.
 - **Issue:** #872
-- **Status:** OPEN
+- **Status:** RESOLVED (merged via PR #875, CI run 34037055201, gh #872 closed)
