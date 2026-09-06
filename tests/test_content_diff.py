@@ -107,3 +107,40 @@ class TestContentDiff:
         c = ContentDiff._diff_field("a", {"a": 1}, {})
         assert c is not None
         assert c.change_type == ChangeType.REMOVED
+
+
+class TestComputeDocstring535:
+    """Pin the ContentDiff.compute exact contract (TICKET-535)."""
+
+    def test_docstring_states_exact_contract(self):
+        doc = ContentDiff.compute.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "item_id" in doc
+        assert "union" in doc
+        assert "sorted" in doc
+        assert "ADDED" in doc
+        assert "REMOVED" in doc
+        assert "MODIFIED" in doc
+        assert "No changes" in doc
+
+    def test_item_id_fallback_chain(self):
+        # new item wins
+        assert ContentDiff.compute({"id": "1"}, {"id": "2"}).item_id == "2"
+        # old item fallback
+        assert ContentDiff.compute({"id": "1"}, {}).item_id == "1"
+        # literal "unknown" when neither has the id field
+        assert ContentDiff.compute({}, {}).item_id == "unknown"
+        # custom id_field
+        assert (
+            ContentDiff.compute({"uid": "x1"}, {"uid": "x2"}, id_field="uid").item_id
+            == "x2"
+        )
+
+    def test_summary_order_and_no_changes(self):
+        d = ContentDiff.compute(
+            {"id": "1", "a": "x", "b": "y", "c": "z"},
+            {"id": "1", "b": "Y", "d": "w"},
+        )
+        assert d.summary == "1 added, 2 removed, 1 modified"
+        assert ContentDiff.compute({"id": "1"}, {"id": "1"}).summary == "No changes"
