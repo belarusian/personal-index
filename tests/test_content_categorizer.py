@@ -622,3 +622,38 @@ class TestContentCategorizerInternal:
         assert len(reasons) > 0
         assert "tech" in reasons[0]
         assert "keywords=" in reasons[0]
+
+    def test_score_topic_title_match_and_empty_guard(self):
+        """Pin _score_topic 3-tuple contract: title match + empty guard."""
+        cat = ContentCategorizer()
+        # Topic with a keyword that appears in title tokens
+        topic = TopicCategory(name="tech", keywords=["machine"], weight=1.0)
+        result = cat._score_topic(
+            topic=topic,
+            text_tokens=set(),
+            title_tokens={"machine", "learning"},
+            meta_tokens=set(),
+            text_lower="",
+            title_lower="machine learning",
+            meta_lower="",
+            url_hints=set(),
+        )
+        # 3-tuple
+        assert len(result) == 3
+        score, matched, sources = result
+        assert score > 0.0
+        assert "title" in sources
+        assert "machine" in matched
+        # Guard path: no signals at all
+        empty_topic = TopicCategory(name="nomatch", keywords=["xyz"], weight=1.0)
+        empty_result = cat._score_topic(
+            topic=empty_topic,
+            text_tokens=set(),
+            title_tokens=set(),
+            meta_tokens=set(),
+            text_lower="",
+            title_lower="",
+            meta_lower="",
+            url_hints=set(),
+        )
+        assert empty_result == (0.0, [], [])
