@@ -371,10 +371,18 @@ def is_robotstxt(url: str) -> bool:
 
 
 def is_sitemap(url: str) -> bool:
-    """Check if URL is a sitemap file."""
+    """Check if URL is a sitemap file.
+
+    A sitemap is a path component whose filename starts with ``sitemap``
+    and carries a file extension (e.g. ``sitemap.xml``,
+    ``sitemap_index.xml``, ``sitemap-news.xml``). Pages that merely contain
+    the word in a longer name (``/about-sitemap``, ``/sitemap-backup``) are
+    not sitemaps.
+    """
     parsed = urlparse(url)
     path = parsed.path.lower()
-    return "sitemap" in path
+    basename = path.rsplit("/", 1)[-1]
+    return basename.startswith("sitemap") and "." in basename
 
 
 def is_excluded_url(url: str) -> bool:

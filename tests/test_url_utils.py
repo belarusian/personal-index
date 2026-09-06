@@ -534,6 +534,18 @@ class TestIsSitemap:
     def test_not_sitemap(self) -> None:
         assert is_sitemap("https://example.com/page") is False
 
+    def test_sitemap_variants(self) -> None:
+        assert is_sitemap("https://example.com/sitemap_index.xml") is True
+        assert is_sitemap("https://example.com/sitemap-news.xml") is True
+
+    def test_substring_overmatch_not_sitemap(self) -> None:
+        # Pages that merely contain the word "sitemap" in a longer name are
+        # not sitemaps (the old bare-substring check misclassified these).
+        assert is_sitemap("https://example.com/about-sitemap") is False
+        assert is_sitemap("https://example.com/sitemap-backup") is False
+        assert is_sitemap("https://example.com/mysitemap-page") is False
+        assert is_sitemap("https://example.com/sitemap") is False
+
 
 # ── is_excluded_url ────────────────────────────────────────────────
 
