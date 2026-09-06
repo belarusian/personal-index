@@ -88,13 +88,21 @@ def create_field_rename_transformer(
 def create_field_filter_transformer(
     fields: list[str],
 ) -> ContentTransformer:
-    """Create a transformer that filters to specific fields.
+    """Create a transformer that filters content down to specific fields.
+
+    The returned transformer's transform returns a NEW dict (a dict
+    comprehension over the input, so the input dict is never mutated) keeping
+    only the keys present in ``fields``; the input's key order is preserved.
+    If no key matches ``fields`` (or ``fields`` is empty) an empty dict is
+    returned (no error). The transformer is named
+    ``filter_fields_{len(fields)}``.
 
     Args:
         fields: Fields to keep.
 
     Returns:
-        ContentTransformer that filters fields.
+        ContentTransformer named ``filter_fields_{len(fields)}`` that keeps
+        only the listed fields.
     """
     def fn(content: dict[str, Any]) -> dict[str, Any]:
         return {k: v for k, v in content.items() if k in fields}
