@@ -1,25 +1,21 @@
-# TICKET-531: ContentAPI._get_stats docstring + pinning test
+# TICKET-531: Pin DedupResult.summary() contract + empty-state guard test
 
-Status: RESOLVED
-File: personal_index/content_api.py
-Symptom: ContentAPI._get_stats (def at line 287) has no docstring, so its
-  exact dispatch contract is undocumented. Sibling dispatch methods
-  (_create/_get/_list/_update/_delete/_search_content/_export_content/
-  _health_check) all carry exact-contract docstrings + pinning tests;
-  _get_stats is the last un-documented dispatch method.
+**Status:** OPEN
+**File:** personal_index/content_dedup.py
+**Issue:** #917
 
-Evidence (verified in code + TestStats):
-  - return 200, {"total_items": len(self._store), "tags": self._collect_tags()}
-  - No params read; reads only self._store (via len) and _collect_tags().
-  - _collect_tags() returns dict[str, int] counting each tag across items.
-  TestStats pins: GET /api/v1/stats -> 200, body["total_items"]==2,
-  body["tags"]["a"]==1.
+**Symptom:** `DedupResult.summary()` carried a generic one-line docstring
+("Generate a human-readable summary.") that over-promised the content without
+detailing the exact format.
 
-Minimal additive fix:
-  - Add a docstring to _get_stats stating the exact dispatch contract
-    (no params, 200 total_items/tags shape, tags is a tag->count mapping).
-  - Add pinning test TestGetStatsDocstring531 mirroring
-    TestHealthCheckDocstring530, asserting key phrases present
-    (total_items, tags, 200).
+**Fix:** Reword the docstring to enumerate the exact 7-line contract the body
+emits (Deduplication Results / Total items / Unique items / Duplicates found /
+Duplicate groups / Dedup ratio / Method) and state the empty-state behavior
+(total_items=0 -> "0.0%" ratio, numeric fields render as 0). Add a guard-path
+pinning test `test_summary_empty_state` that constructs an empty DedupResult and
+asserts the "0.0%" ratio + all-zero fields against the returned string.
 
-Issue: #935
+**Note (ticket renumber):** this work was originally filed as TICKET-524 and
+renumbered through 525/527/528/529/530 as parallel runs claimed those numbers.
+TICKET-530 on main is the ContentAPI._health_check docstring (PR #932, issue
+#931) — different work — so this DedupResult work lands as TICKET-531.

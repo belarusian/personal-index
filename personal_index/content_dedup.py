@@ -120,7 +120,21 @@ class DedupResult:
         return self.removed_count / self.total_items
 
     def summary(self) -> str:
-        """Generate a human-readable summary."""
+        """Return a multi-line human-readable summary of the dedup result.
+
+        The returned string always contains exactly these lines, in order:
+
+        1. "Deduplication Results:"
+        2. "  Total items: <total_items>"
+        3. "  Unique items: <unique_items>"
+        4. "  Duplicates found: <removed_count>"
+        5. "  Duplicate groups: <len(duplicate_groups)>"
+        6. "  Dedup ratio: <dedup_ratio as a percent>"
+        7. "  Method: <method>"
+
+        When total_items is 0 the dedup_ratio line renders as "0.0%" and the
+        numeric fields render as 0.
+        """
         return (
             f"Deduplication Results:\n"
             f"  Total items: {self.total_items}\n"
