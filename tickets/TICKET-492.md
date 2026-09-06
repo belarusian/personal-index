@@ -1,5 +1,6 @@
 # TICKET-492: ContentMatcher.relevance_score returns 0.0 for REGEX-mode interests that match content (class-(a) behavioral)
 
+Status: RESOLVED (merged via PR #833)
 - File: personal_index/filter/matcher.py
 - Method: ContentMatcher.relevance_score (and its consumers InterestFilter.matches / should_index / filter_content)
 - Symptom (class-(a) behavioral): `relevance_score` counts LITERAL substring
