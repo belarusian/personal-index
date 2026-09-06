@@ -1,6 +1,6 @@
 # TICKET-461: ContentVersioning.rollback_to docstring omits author transfer + message format
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/content_versioning.py
 Function: ContentVersioning.rollback_to
 Issue: #763
