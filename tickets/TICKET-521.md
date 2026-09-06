@@ -23,5 +23,5 @@
   Add ONE pinning test class that calls `parse` and asserts the returned
   `Sitemap` (main urlset branch AND the empty + parse-error guard paths); do NOT
   assert on the docstring wording.
-- **Status:** OPEN
+- **Status:** RESOLVED
 - **Issue:** #905
