@@ -256,3 +256,44 @@ class TestNormalizePinning:
         item = {"title": "  hello world  "}
         result = n.normalize(item)
         assert result == {"title": "  hello world  "}
+
+
+class TestTransformerTransformPinning:
+    def test_transform_fn_called_and_result_returned(self) -> None:
+        calls: list[dict] = []
+
+        def fn(c: dict) -> dict:
+            calls.append(c)
+            return {**c, "added": True}
+
+        t = ContentTransformer(name="pin", transform_fn=fn)
+        result = t.transform({"id": "1"})
+        assert result == {"id": "1", "added": True}
+        assert calls == [{"id": "1"}]
+
+    def test_no_fn_returns_shallow_copy_not_same_object(self) -> None:
+        t = ContentTransformer(name="pin")
+        d = {"id": "1", "tags": ["a", "b"]}
+        result = t.transform(d)
+        assert result is not d
+        assert result == d
+
+    def test_input_not_mutated_with_fn(self) -> None:
+        t = ContentTransformer(
+            name="pin",
+            transform_fn=lambda c: {**c, "added": True},
+        )
+        d = {"id": "1"}
+        original = dict(d)
+        t.transform(d)
+        assert d == original
+
+    def test_input_not_mutated_without_fn(self) -> None:
+        t = ContentTransformer(name="pin")
+        d = {"id": "1", "tags": ["a", "b"]}
+        original = dict(d)
+        result = t.transform(d)
+        assert d == original
+        # mutating the copy must not affect the input
+        result["id"] = "changed"
+        assert d["id"] == "1"
