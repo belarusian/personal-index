@@ -16,4 +16,4 @@
   that witnesses the split behavior AND the empty-text guard path against the
   returned list.
 - Status: OPEN
-- Issue: #
+- Issue: #939
