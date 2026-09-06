@@ -1,6 +1,6 @@
 # TICKET-543: Add exact-contract docstrings to Facet.add_value / Facet.sort_values + pinning test
 
-Status: OPEN
+Status: RESOLVED (merged via PR #963, issue #961 closed)
 Module: personal_index/search_facets/facet.py
 Methods: Facet.add_value, Facet.sort_values
 
