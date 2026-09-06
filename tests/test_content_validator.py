@@ -1,5 +1,6 @@
 """Tests for content validator module."""
 
+from typing import Any
 
 from personal_index.content_validator.quality import QualityChecker, QualityScore
 from personal_index.content_validator.rules import (
@@ -269,3 +270,97 @@ class TestRulesDocstring545:
         assert check({"score": False}) is True
         # a string score fails
         assert check({"score": "0.5"}) is False
+
+
+class TestSchemaValidatorDocstring548:
+    """Pin the SchemaValidator.validate/is_valid/validate_batch exact contract (TICKET-548)."""
+
+    def test_validate_docstring_states_exact_contract(self) -> None:
+        doc = SchemaValidator.validate.__doc__
+        assert doc is not None
+        low = doc.lower()
+        # three-stage order
+        assert "required_fields" in low
+        assert "field_type" in low
+        assert "self.rules" in low
+        # the subtle None-tolerance point
+        assert "none" in low
+        assert "tolerated" in low
+
+    def test_is_valid_docstring_states_exact_contract(self) -> None:
+        doc = SchemaValidator.is_valid.__doc__
+        assert doc is not None
+        low = doc.lower()
+        assert "all(r.passed" in low
+        assert "never empty" in low
+
+    def test_validate_batch_docstring_states_exact_contract(self) -> None:
+        doc = SchemaValidator.validate_batch.__doc__
+        assert doc is not None
+        low = doc.lower()
+        assert "unknown" in low
+        assert "last item" in low
+
+    def test_validate_three_stage_order(self) -> None:
+        schema = ContentSchema(
+            required_fields=["id", "title"],
+            field_types={"score": float},
+        )
+        validator = SchemaValidator(
+            schema=schema,
+            rules=[
+                ValidationRule(
+                    name="custom_rule",
+                    check=lambda item: True,
+                    message="custom",
+                ),
+            ],
+        )
+        results = validator.validate({"id": "1", "title": "T", "score": 0.5})
+        # stage 1 required_fields, stage 3 custom_rule; no field_type (score ok)
+        assert [r.rule_name for r in results] == ["required_fields", "custom_rule"]
+        assert all(r.passed for r in results)
+
+    def test_validate_field_type_none_tolerated(self) -> None:
+        # a typed field present as None appends NO field_type result
+        schema = ContentSchema(field_types={"score": float})
+        validator = SchemaValidator(schema=schema)
+        results = validator.validate({"id": "1", "title": "T", "score": None})
+        assert [r.rule_name for r in results] == ["required_fields"]
+        assert all(r.passed for r in results)
+
+    def test_validate_field_type_mismatch_fails(self) -> None:
+        schema = ContentSchema(field_types={"score": float})
+        validator = SchemaValidator(schema=schema)
+        results = validator.validate({"id": "1", "title": "T", "score": "bad"})
+        names = [r.rule_name for r in results]
+        assert "field_type_score" in names
+        failed = [r for r in results if not r.passed]
+        assert any(r.rule_name == "field_type_score" for r in failed)
+
+    def test_is_valid_true_when_all_pass(self) -> None:
+        # required_fields=[] -> stage 1 appends a passing required_fields
+        # result (all([]) is True); no field_types, no rules -> all pass
+        schema = ContentSchema(required_fields=[])
+        validator = SchemaValidator(schema=schema)
+        results = validator.validate({})
+        assert [r.rule_name for r in results] == ["required_fields"]
+        assert all(r.passed for r in results)
+        assert validator.is_valid({}) is True
+
+    def test_is_valid_false_when_any_fails(self) -> None:
+        validator = SchemaValidator()
+        assert validator.is_valid({"id": "1"}) is False
+
+    def test_validate_batch_unknown_keying_and_last_wins(self) -> None:
+        validator = SchemaValidator()
+        items: list[dict[str, Any]] = [
+            {"id": 1, "title": "A"},
+            {"title": "no id"},
+            {"id": 1, "title": "B"},
+        ]
+        results = validator.validate_batch(items)
+        # id stringified; missing id -> "unknown"; duplicate id 1 -> last wins
+        assert set(results.keys()) == {"1", "unknown"}
+        # last item with id 1 wins: its title is "B"
+        assert results["1"] == validator.validate({"id": 1, "title": "B"})

@@ -44,11 +44,25 @@ class SchemaValidator:
     def validate(self, item: dict[str, Any]) -> list[RuleResult]:
         """Validate an item against the schema and rules.
 
+        The result list is built in a fixed three-stage order:
+
+        1. A single "required_fields" RuleResult (severity "error") is
+           appended first; its passed flag is True iff every name in
+           ``schema.required_fields`` is present in ``item``.
+        2. For each ``(field_name, expected_type)`` in
+           ``schema.field_types`` (insertion order), a FAILING RuleResult
+           with rule_name ``"field_type_<field_name>"`` (severity "error")
+           is appended ONLY when ``item.get(field_name)`` is not None AND
+           ``not isinstance(value, expected_type)``. A value present as
+           None is tolerated: no field_type result is appended for it.
+        3. ``rule.validate(item)`` is appended for each rule in
+           ``self.rules``, in ``self.rules`` order.
+
         Args:
             item: Content item to validate.
 
         Returns:
-            List of RuleResult objects.
+            List of RuleResult objects in the three-stage order above.
         """
         results: list[RuleResult] = []
 
@@ -84,6 +98,11 @@ class SchemaValidator:
     def is_valid(self, item: dict[str, Any]) -> bool:
         """Check if an item passes all validations.
 
+        Exactly ``all(r.passed for r in self.validate(item))``: True iff
+        every RuleResult produced by ``validate`` has ``passed`` True.
+        (``validate`` always appends at least the ``required_fields``
+        result, so the list is never empty.)
+
         Args:
             item: Content item to validate.
 
@@ -98,6 +117,11 @@ class SchemaValidator:
         items: list[dict[str, Any]],
     ) -> dict[str, list[RuleResult]]:
         """Validate multiple items.
+
+        The returned dict maps each item to its ``validate`` results. The
+        key is ``str(item.get("id", "unknown"))``: the id is stringified,
+        and a missing id maps to ``"unknown"``. Duplicate ids overwrite
+        (the last item with a given id wins).
 
         Args:
             items: List of content items.
