@@ -1,6 +1,6 @@
 # TICKET-535: ContentDiff.compute docstring omits exact contract
 
-Status: OPEN
+Status: RESOLVED (merged via PR #948, issue #946 closed)
 Module: personal_index/content_diff/changes.py
 Method: ContentDiff.compute (classmethod, def at line ~70)
 
