@@ -65,7 +65,26 @@ class TimelineView:
         reference_date: date,
         event_type: TimelineEventType | None = None,
     ) -> ViewResult:
-        """Render the timeline view."""
+        """Render the timeline view for the current mode.
+
+        Dispatches on ``self.mode`` to select the candidate events:
+          * DAY   -> ``timeline.get_events_for_day(reference_date)``
+          * WEEK  -> ``timeline.get_events_for_week(reference_date)``
+          * MONTH -> ``timeline.get_events_for_month(reference_date.year,
+                     reference_date.month)``
+
+        When ``event_type`` is not None, the selected events are further
+        filtered to those whose ``event_type`` equals the given type.
+
+        Each surviving event is rendered as a dict with exactly the keys
+        ``item_id``, ``title``, ``event_type`` (its ``.value``),
+        ``timestamp`` (``isoformat()``), ``url`` and ``description``.
+
+        Returns a ``ViewResult`` with ``events`` set to that list, ``date``
+        to ``reference_date.isoformat()``, ``mode`` to ``self.mode.value``,
+        ``total`` to the number of rendered events, and ``summary`` to
+        ``timeline.get_summary()``.
+        """
         if self.mode == ViewMode.DAY:
             entries = timeline.get_events_for_day(reference_date)
         elif self.mode == ViewMode.WEEK:
