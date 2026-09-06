@@ -1,6 +1,6 @@
 # TICKET-497: signal_coverage docstring over-promises a codemap `tests` fallback that does not exist
 
-Status: OPEN
+Status: RESOLVED (merged via PR #849)
 Issue: #848
 Module: personal_index/cycle_signals.py
 Function: signal_coverage
