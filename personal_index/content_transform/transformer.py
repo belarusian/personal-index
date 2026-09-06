@@ -57,14 +57,21 @@ def create_field_rename_transformer(
     old_name: str,
     new_name: str,
 ) -> ContentTransformer:
-    """Create a transformer that renames a field.
+    """Create a transformer that renames a field (move, not copy).
+
+    Behavior:
+        - Returns a NEW dict (shallow copy); the input dict is never mutated.
+        - If old_name is present in content, it is MOVED to new_name
+          (pop old_name, set new_name). The old key disappears.
+        - If old_name is absent, content is returned unchanged (no-op, no error,
+          no new key is created).
 
     Args:
-        old_name: Original field name.
-        new_name: New field name.
+        old_name: Original field name to rename from.
+        new_name: New field name to rename to.
 
     Returns:
-        ContentTransformer that renames the field.
+        ContentTransformer named rename_{old_name}_to_{new_name}.
     """
     def fn(content: dict[str, Any]) -> dict[str, Any]:
         result = dict(content)
