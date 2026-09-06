@@ -241,3 +241,40 @@ class TestURLDeduplicatorFuzzyThreshold:
         dedup.add_url("http://a.com/page")
         result = dedup.check_duplicate("http://a.com/pagex")
         assert result.is_duplicate is False
+
+
+class TestURLDeduplicatorSeenCount:
+    def test_initial_zero(self):
+        dedup = URLDeduplicator()
+        assert dedup.seen_count == 0
+
+    def test_increments_for_unique_urls(self):
+        dedup = URLDeduplicator()
+        dedup.add_url("http://a.com/one")
+        dedup.add_url("http://a.com/two")
+        assert dedup.seen_count == 2
+
+    def test_duplicate_not_counted(self):
+        dedup = URLDeduplicator()
+        dedup.add_url("http://a.com/page")
+        dedup.add_url("http://a.com/page")
+        assert dedup.seen_count == 1
+
+    def test_read_only_no_mutation(self):
+        dedup = URLDeduplicator()
+        dedup.add_url("http://a.com/x")
+        before = dict(dedup._seen_urls)
+        _ = dedup.seen_count
+        assert dedup._seen_urls == before
+
+    def test_matches_len_entries(self):
+        dedup = URLDeduplicator()
+        dedup.add_url("http://a.com/a")
+        dedup.add_url("http://b.com/b")
+        assert dedup.seen_count == len(dedup._seen_urls)
+
+    def test_clear_resets_count(self):
+        dedup = URLDeduplicator()
+        dedup.add_url("http://a.com/c")
+        dedup.clear()
+        assert dedup.seen_count == 0
