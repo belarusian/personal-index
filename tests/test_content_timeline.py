@@ -16,6 +16,7 @@ from personal_index.content_timeline import (
     TimelineEventType,
     TimelineView,
     ViewMode,
+    ViewResult,
 )
 
 
@@ -472,3 +473,54 @@ class TestRenderPinning:
         assert result.summary == tl.get_summary()
         assert result.summary["total_events"] == 3
         assert result.date == date(2024, 1, 8).isoformat()
+
+
+class TestViewResultDictAccessPinning:
+    """Pins the scoped ViewResult dict-style access contract (TICKET-476).
+
+    __getitem__/__contains__ must expose exactly the five serialized fields
+    (the same key set as to_dict()), not the whole object attribute
+    namespace (no dunders).
+    """
+
+    def _result(self) -> ViewResult:
+        return ViewResult(
+            events=[{"item_id": "e1"}],
+            date="2024-01-08",
+            mode="day",
+            total=1,
+            summary={"total_events": 1},
+        )
+
+    def test_contains_only_serialized_fields(self) -> None:
+        r = self._result()
+        for key in ("events", "date", "mode", "total", "summary"):
+            assert key in r
+        # dunders and arbitrary names are NOT part of the dict contract
+        assert "__class__" not in r
+        assert "__dict__" not in r
+        assert "missing" not in r
+
+    def test_getitem_serialized_fields(self) -> None:
+        r = self._result()
+        assert r["total"] == 1
+        assert r["mode"] == "day"
+        assert r["date"] == "2024-01-08"
+        assert r["events"] == [{"item_id": "e1"}]
+        assert r["summary"] == {"total_events": 1}
+
+    def test_getitem_out_of_set_raises_keyerror(self) -> None:
+        r = self._result()
+        for bad in ("__class__", "__dict__", "missing"):
+            try:
+                r[bad]
+            except KeyError:
+                pass
+            else:
+                raise AssertionError(f"{bad!r} should raise KeyError")
+
+    def test_access_contract_matches_to_dict_keys(self) -> None:
+        r = self._result()
+        assert set(r.to_dict().keys()) == set(r._FIELDS)
+        for key in r._FIELDS:
+            assert key in r
