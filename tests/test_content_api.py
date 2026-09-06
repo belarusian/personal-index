@@ -447,3 +447,18 @@ class TestListContentDocstring523:
         assert "100" in doc
         assert "default 1" in doc
         assert "default 20" in doc
+
+
+class TestGetContentDocstring524:
+    """Pin the _get_content dispatch contract (TICKET-524)."""
+
+    def test_docstring_states_exact_contract(self) -> None:
+        doc = ContentAPI._get_content.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "item_id" in doc
+        assert "store" in doc
+        assert "404" in doc
+        assert "200" in doc
+        assert "item" in doc
+        assert "not found" in doc

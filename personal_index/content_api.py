@@ -151,6 +151,12 @@ class ContentAPI:
         }
 
     def _get_content(self, item_id: str) -> tuple[int, dict[str, Any]]:
+        """Look up a content item by id.
+
+        Looks up ``item_id`` in the store. Returns ``(404, {"error": ...})``
+        when the item is not found. Returns ``(200, {"item": <item>})`` when
+        the item is found.
+        """
         item = self._store.get(item_id)
         if item is None:
             return 404, {"error": f"Content item '{item_id}' not found"}
