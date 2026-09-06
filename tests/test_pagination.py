@@ -127,3 +127,38 @@ class TestPaginator:
         result = p.get_page(1, per_page=5)
         assert result.per_page == 5
         assert len(result.items) == 5
+
+
+class TestIteratePagesContract:
+    """Pin the exact contract of Paginator.iterate_pages (TICKET-501)."""
+
+    def test_returns_list_of_pageresult(self):
+        pages = Paginator(list(range(5))).iterate_pages()
+        assert isinstance(pages, list)
+        assert all(isinstance(p, PageResult) for p in pages)
+
+    def test_empty_collection_yields_one_page(self):
+        pages = Paginator([]).iterate_pages()
+        assert len(pages) == 1
+        assert pages[0].items == []
+        assert pages[0].total == 0
+        assert pages[0].total_pages == 1
+
+    def test_per_page_override_affects_page_count(self):
+        pages = Paginator(list(range(10))).iterate_pages(per_page=3)
+        assert len(pages) == 4
+        assert [len(p.items) for p in pages] == [3, 3, 3, 1]
+        # total_pages reflects the override, not the constructor default
+        assert pages[-1].total_pages == 4
+
+    def test_per_page_override_slices_correctly(self):
+        pages = Paginator(list(range(10))).iterate_pages(per_page=4)
+        assert [p.items for p in pages] == [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
+
+    def test_pages_in_order(self):
+        pages = Paginator(list(range(10)), per_page=3).iterate_pages()
+        assert [p.page for p in pages] == [1, 2, 3, 4]
+
+    def test_partial_last_page(self):
+        pages = Paginator(list(range(10)), per_page=3).iterate_pages()
+        assert len(pages[-1].items) == 1
