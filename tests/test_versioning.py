@@ -1,5 +1,7 @@
 """Tests for content versioning module."""
 
+from datetime import datetime, timezone
+
 from personal_index.versioning import ContentVersion, VersionTracker
 
 
@@ -153,3 +155,66 @@ class TestVersioningSecurity:
         # Verify different input produces different version id
         vid3 = VersionTracker.generate_version_id("http://example.com", "def456")
         assert vid != vid3
+
+
+class TestContentVersionToDict:
+    """Pinning tests for ContentVersion.to_dict (TICKET-512)."""
+
+    def _make(self):
+        return ContentVersion(
+            url="http://x.com",
+            version_id="v1",
+            content_hash="abc",
+            title="T",
+            content_length=100,
+            captured_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            metadata={"k": "v"},
+        )
+
+    def test_returns_dict_type(self):
+        assert isinstance(self._make().to_dict(), dict)
+
+    def test_exact_key_set_and_order(self):
+        d = self._make().to_dict()
+        assert list(d.keys()) == [
+            "url",
+            "version_id",
+            "content_hash",
+            "title",
+            "content_length",
+            "captured_at",
+            "metadata",
+        ]
+
+    def test_captured_at_is_iso_string(self):
+        d = self._make().to_dict()
+        assert isinstance(d["captured_at"], str)
+        assert d["captured_at"] == "2024-01-01T12:00:00+00:00"
+
+    def test_values_match_fields(self):
+        v = self._make()
+        d = v.to_dict()
+        assert d["url"] == "http://x.com"
+        assert d["version_id"] == "v1"
+        assert d["content_hash"] == "abc"
+        assert d["title"] == "T"
+        assert d["content_length"] == 100
+
+    def test_metadata_same_reference(self):
+        v = self._make()
+        d = v.to_dict()
+        assert d["metadata"] is v.metadata
+
+    def test_fresh_object_each_call(self):
+        v = self._make()
+        assert v.to_dict() is not v.to_dict()
+
+    def test_does_not_mutate_self(self):
+        v = self._make()
+        before = (v.url, v.version_id, v.content_hash, v.title,
+                  v.content_length, v.captured_at, v.metadata)
+        d = v.to_dict()
+        d["url"] = "mutated"
+        after = (v.url, v.version_id, v.content_hash, v.title,
+                 v.content_length, v.captured_at, v.metadata)
+        assert before == after

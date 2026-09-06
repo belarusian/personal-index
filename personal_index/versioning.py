@@ -23,7 +23,18 @@ class ContentVersion:
     metadata: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
-        """To_dict."""
+        """Serialize this ContentVersion to a plain dict.
+
+        Returns a NEW dict (a fresh object on every call, not a
+        shared reference) containing exactly the seven ContentVersion
+        fields as keys, in dataclass declaration order: url,
+        version_id, content_hash, title, content_length, captured_at,
+        metadata. The captured_at datetime is serialized to an
+        ISO-8601 string via .isoformat(); all other values are the
+        corresponding field values. The metadata dict is the SAME
+        reference as self.metadata (not copied). The method is pure:
+        it does not mutate self.
+        """
         return {
             "url": self.url,
             "version_id": self.version_id,
