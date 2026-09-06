@@ -568,7 +568,7 @@ class ContentCategorizer:
         for topic_name, hint_words in self.URL_TOPIC_HINTS.items():
             for hint_word in hint_words:
                 for part in url_parts:
-                    if hint_word in part or part in hint_word:
+                    if hint_word in part:
                         hints.add(topic_name)
                         break
 
