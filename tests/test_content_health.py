@@ -377,3 +377,30 @@ class TestCheckAllDocstringClaim:
         assert report.total_items == 0
         assert report.overall_score == 100.0
         assert report.total_issues == 0
+
+def test_health_report_summary_pins_order_and_guard():
+    # Normal case
+    report = HealthReport(
+        total_items=5,
+        healthy_count=3,
+        warning_count=1,
+        unhealthy_count=1,
+        overall_score=72.5,
+    )
+    summary = report.summary()
+    lines = summary.split("\n")
+    assert lines[0] == "Content Health Report"
+    assert lines[1] == "=" * 40
+    assert lines[2] == "Total items: 5"
+    assert lines[3] == "Healthy: 3"
+    assert lines[4] == "Warnings: 1"
+    assert lines[5] == "Unhealthy: 1"
+    assert lines[6] == "Overall score: 72.5/100"
+    assert lines[7] == "Health percentage: 60.0%"
+
+    # Guard path: empty report
+    empty = HealthReport()
+    empty_summary = empty.summary()
+    e_lines = empty_summary.split("\n")
+    assert e_lines[2] == "Total items: 0"
+    assert e_lines[7] == "Health percentage: 100.0%"
