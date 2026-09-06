@@ -27,7 +27,17 @@ class URLVisit:
             self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
-        """To_dict."""
+        """Serialize this URLVisit to a plain dict.
+
+        Returns a NEW dict (a fresh object on every call, not a
+        shared reference) containing exactly the eight URLVisit
+        fields as keys, in dataclass declaration order: url,
+        timestamp, status_code, content_length, title, user_agent,
+        response_time_ms, error. Each value is the corresponding
+        field value. The method is pure: it does not mutate self.
+        The result round-trips through URLVisit.from_dict
+        (from_dict(to_dict(v)) == v).
+        """
         return {
             "url": self.url,
             "timestamp": self.timestamp,

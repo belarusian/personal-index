@@ -231,3 +231,65 @@ class TestURLHistoryCorruptJSONGuard:
         history = URLHistory()
         count = history.load(str(filepath))
         assert count == 0
+
+
+class TestURLVisitToDict:
+    """Pinning tests for URLVisit.to_dict (TICKET-511)."""
+
+    def _make(self):
+        return URLVisit(
+            url="http://x.com",
+            status_code=200,
+            content_length=1000,
+            title="T",
+            user_agent="bot",
+            response_time_ms=50.5,
+            error="err",
+        )
+
+    def test_returns_dict_type(self):
+        d = self._make().to_dict()
+        assert isinstance(d, dict)
+
+    def test_exact_key_set_and_order(self):
+        d = self._make().to_dict()
+        assert list(d.keys()) == [
+            "url",
+            "timestamp",
+            "status_code",
+            "content_length",
+            "title",
+            "user_agent",
+            "response_time_ms",
+            "error",
+        ]
+
+    def test_values_match_fields(self):
+        v = self._make()
+        d = v.to_dict()
+        assert d["url"] == "http://x.com"
+        assert d["status_code"] == 200
+        assert d["content_length"] == 1000
+        assert d["title"] == "T"
+        assert d["user_agent"] == "bot"
+        assert d["response_time_ms"] == 50.5
+        assert d["error"] == "err"
+        assert d["timestamp"] == v.timestamp
+
+    def test_fresh_object_each_call(self):
+        v = self._make()
+        assert v.to_dict() is not v.to_dict()
+
+    def test_round_trips_with_from_dict(self):
+        v = self._make()
+        assert URLVisit.from_dict(v.to_dict()) == v
+
+    def test_does_not_mutate_self(self):
+        v = self._make()
+        before = (v.url, v.status_code, v.content_length, v.title,
+                  v.user_agent, v.response_time_ms, v.error, v.timestamp)
+        d = v.to_dict()
+        d["url"] = "mutated"
+        after = (v.url, v.status_code, v.content_length, v.title,
+                 v.user_agent, v.response_time_ms, v.error, v.timestamp)
+        assert before == after
