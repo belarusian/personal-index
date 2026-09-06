@@ -16,4 +16,4 @@
   present in data, refresh updated_at to now(UTC).isoformat(), return
   (200, {"item": item}). Add a pinning test (TestUpdateContentDocstring526)
   asserting the key contract phrases are present.
-- Status: OPEN
+- Status: RESOLVED (merged via PR #924, issue #923 closed)
