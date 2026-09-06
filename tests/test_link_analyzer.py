@@ -131,3 +131,24 @@ class TestLinkAnalyzer:
         links = [{"url": "http://example.com", "text": "Very long anchor text"}]
         result = analyzer.analyze("http://example.com", links)
         assert "Very " in result.stats.anchor_text_distribution
+
+    def test_analyze_contract_pinning(self):
+        analyzer = LinkAnalyzer(base_domain="example.com")
+        links = [
+            {"url": "", "text": "skipped empty url"},
+            {"url": "http://example.com/a", "text": "Page A"},
+            {"url": "http://other.com/x", "text": "Other"},
+            {"url": "http://other.com/y", "text": ""},
+        ]
+        result = analyzer.analyze("http://example.com", links)
+        # guard path: empty-url link is skipped, not counted
+        assert result.stats.total_links == 3
+        assert result.stats.internal_links == 1
+        assert result.stats.external_links == 2
+        # unique_domains counts distinct external domains only
+        assert result.stats.unique_domains == 1
+        # top_anchor_texts / top_domains are top-10 lists of (key, count)
+        assert result.top_anchor_texts == [("Page A", 1), ("Other", 1)]
+        assert result.top_domains == [("other.com", 2)]
+        # suspicious: empty anchor on an external link is flagged
+        assert "http://other.com/y" in result.suspicious_links

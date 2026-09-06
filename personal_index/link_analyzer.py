@@ -42,7 +42,22 @@ class LinkAnalyzer:
         self.max_anchor_length = max_anchor_length
 
     def analyze(self, url: str, links: list[dict]) -> LinkAnalysisResult:
-        """Analyze links found on a page."""
+        """Analyze links found on a page.
+
+        Skips any link whose ``url`` is empty. For each remaining link
+        it increments ``stats.total_links`` and classifies it as
+        internal (``stats.internal_links``) or external
+        (``stats.external_links``); external links also feed the domain
+        counter. Anchor text is stripped and truncated to
+        ``max_anchor_length`` before counting. Links flagged by
+        ``_is_suspicious`` are appended to the suspicious list.
+
+        Sets ``stats.unique_domains`` to the number of distinct external
+        domains and stores the top-20 anchor and domain distributions on
+        ``stats``. Returns a ``LinkAnalysisResult`` whose
+        ``top_anchor_texts`` and ``top_domains`` are the top-10 entries
+        and ``suspicious_links`` is the flagged list.
+        """
         stats = LinkStats()
         anchor_counter: Counter = Counter()
         domain_counter: Counter = Counter()
