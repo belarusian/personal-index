@@ -1,6 +1,6 @@
 # TICKET-503: URLClassifier.classify docstring is a one-liner that omits the exact contract
 
-Status: OPEN
+Status: RESOLVED (merged via PR #851)
 Issue: #850
 Module: personal_index/url_classifier.py
 Function: classify
