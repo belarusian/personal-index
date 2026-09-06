@@ -317,7 +317,17 @@ class ContentHealthChecker:
         self,
         items: list[dict[str, Any]],
     ) -> HealthReport:
-        """Check health of all content items."""
+        """Check health of every item dict in ``items`` and aggregate a report.
+
+        Each item dict is mapped through ``check_item`` with defaults for any
+        missing key: ``url``/``title``/``content`` default to ``""``, ``tags``
+        to ``[]``, ``score`` to ``0.0``, and ``status_code`` to ``200``.
+
+        Returns a ``HealthReport`` whose ``healthy_count`` / ``warning_count`` /
+        ``unhealthy_count`` / ``unknown_count`` count the per-item statuses,
+        ``total_issues`` sums the per-item issue counts, and ``overall_score``
+        is the MEAN of the per-item scores (``100.0`` when ``items`` is empty).
+        """
         results = [self._check_from_dict(item) for item in items]
         return self._build_report(results)
 
