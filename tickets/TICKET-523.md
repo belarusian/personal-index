@@ -1,6 +1,6 @@
 # TICKET-523: Reword ContentAPI._list_content docstring to exact contract + pinning test
 
-**Status:** OPEN
+**Status:** RESOLVED
 **Issue:** Issue: #908
 
 ## Title
@@ -23,4 +23,4 @@ Behavior (verified in tests/test_content_api.py TestListContent):
 2. Add a pinning test in tests/test_content_api.py asserting the docstring contains the key contract phrases.
 
 ## Status
-OPEN
+RESOLVED
