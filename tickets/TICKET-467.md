@@ -20,3 +20,4 @@
   corrected claim (normal: valid list replaces set + returns count; guard:
   non-list top-level returns 0 and leaves the existing set untouched).
 - Status: OPEN
+- Issue: #777
