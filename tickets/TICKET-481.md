@@ -1,4 +1,4 @@
-# TICKET-480: ContentNormalizer._normalize_url generic docstring (class-(b) doc-drift)
+# TICKET-481: ContentNormalizer._normalize_url generic docstring (class-(b) doc-drift)
 
 - File: personal_index/content_transform/normalizer.py
 - Method: ContentNormalizer._normalize_url
