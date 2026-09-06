@@ -21,5 +21,5 @@
   query + uppercase scheme/netloc + www + tracking param) alongside the
   guard-path input (a URL with no query/fragment that must be returned
   unchanged).
-- **Status:** OPEN
+- **Status:** RESOLVED
 - **Issue:** #864
