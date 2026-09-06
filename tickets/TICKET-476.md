@@ -21,5 +21,5 @@
   test class asserting the exact key set: the five fields are present, dunders
   are NOT present, out-of-set `__getitem__` raises KeyError, and the access
   contract matches `to_dict()` keys.
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #800
