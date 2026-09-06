@@ -133,3 +133,31 @@ class TestContentNormalizer:
         assert result["title"] == "HELLO"
         assert result["url"] == "x.com/"
         assert result["tags"] == ["A"]
+
+
+class TestNormalizeUrlPinning:
+    """Pinning tests for ContentNormalizer._normalize_url actual behavior."""
+
+    def setup_method(self) -> None:
+        self.n = ContentNormalizer()
+
+    def test_bare_domain_gets_https_prefix(self) -> None:
+        assert self.n._normalize_url("example.com") == "https://example.com"
+
+    def test_trailing_slash_removed(self) -> None:
+        assert self.n._normalize_url("https://example.com/") == "https://example.com"
+
+    def test_http_prefix_not_doubled(self) -> None:
+        assert self.n._normalize_url("http://example.com") == "http://example.com"
+
+    def test_whitespace_stripped_before_prefix(self) -> None:
+        assert self.n._normalize_url("  example.com  ") == "https://example.com"
+
+    def test_lone_slash_becomes_https_colon(self) -> None:
+        # The "https://" prefix is applied before the trailing-slash strip,
+        # so "/" -> "https:///" -> rstrip("/") -> "https:". There is no
+        # lone-slash exception.
+        assert self.n._normalize_url("/") == "https:"
+
+    def test_empty_stays_empty(self) -> None:
+        assert self.n._normalize_url("") == ""

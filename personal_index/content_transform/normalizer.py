@@ -66,7 +66,21 @@ class ContentNormalizer:
         return title.strip().title()
 
     def _normalize_url(self, url: str) -> str:
-        """Normalize URL format."""
+        """Normalize a URL value.
+
+        Behavior (in order):
+        1. Strip surrounding whitespace.
+        2. If the stripped value is non-empty and does not already start
+           with "http", prepend "https://".
+        3. Remove trailing "/" characters from the result when it is
+           longer than one character (a one-character value is returned
+           unchanged).
+
+        Note: because the "https://" prefix is applied before the
+        trailing-slash strip, a lone "/" becomes "https:" (the prefix
+        "https://" plus the slash, then the trailing slashes are
+        removed). There is no lone-slash exception.
+        """
         url = url.strip()
         if url and not url.startswith("http"):
             url = "https://" + url
