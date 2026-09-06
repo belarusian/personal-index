@@ -1,6 +1,6 @@
 # TICKET-531: ContentAPI._get_stats docstring + pinning test
 
-Status: OPEN
+Status: RESOLVED
 File: personal_index/content_api.py
 Symptom: ContentAPI._get_stats (def at line 287) has no docstring, so its
   exact dispatch contract is undocumented. Sibling dispatch methods
