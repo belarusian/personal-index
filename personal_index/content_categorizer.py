@@ -488,6 +488,19 @@ class ContentCategorizer:
         src: list[str],
         source: str = "text",
     ) -> list[str]:
+        """Merge keyword matches into the running matched/source accumulators.
+
+        Mutates both accumulators in place and returns the mutated `kw` list:
+        - `kw`: each string in `matches` is appended in place, but only if it
+          is not already present (dedup; order of first appearance preserved).
+        - `src`: the `source` label is appended in place ONLY when `matches`
+          is non-empty (the empty-match guard appends nothing). `src` is NOT
+          deduped, so the same label can appear multiple times.
+        - `source` defaults to "text" when omitted.
+
+        Returns:
+            The same `kw` list object, now extended with the new matches.
+        """
         for k in matches:
             if k not in kw:
                 kw.append(k)
