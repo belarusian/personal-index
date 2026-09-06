@@ -1,6 +1,6 @@
 # TICKET-508: Suggestion.to_dict placeholder docstring under-describes behavior
 
-Status: OPEN
+Status: RESOLVED
 
 ## File
 `personal_index/search_suggestions.py` — `Suggestion.to_dict` (line ~23)
