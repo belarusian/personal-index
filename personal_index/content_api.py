@@ -96,7 +96,23 @@ class ContentAPI:
     def _route_content_item(
         self, method: str, item_id: str, body: str | None
     ) -> Callable[..., Any] | None:
-        """Route /api/v1/content/{id} requests."""
+        """Dispatch /api/v1/content/{id} requests by HTTP method.
+
+        Inspects only ``method`` (``item_id`` and ``body`` are captured by
+        the returned closure, not inspected here). Returns:
+
+        - ``"GET"``    -> a zero-arg callable that runs
+          ``self._get_content(item_id)`` -> ``(200, {item})`` on a match,
+          ``(404, {error})`` when the id is absent.
+        - ``"PUT"``    -> a zero-arg callable that runs
+          ``self._update_content(item_id, body)`` -> ``(200, {item})`` on
+          success, ``(404, {error})`` / ``(400, {error})`` on a missing id
+          or missing/invalid body.
+        - ``"DELETE"`` -> a zero-arg callable that runs
+          ``self._delete_content(item_id)`` -> ``(200, {deleted, id})`` on a
+          match, ``(404, {error})`` when the id is absent.
+        - any other method -> ``None`` (the caller maps this to 404/405).
+        """
         if method == "GET":
             return lambda: self._get_content(item_id)
         if method == "PUT":

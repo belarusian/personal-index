@@ -395,3 +395,38 @@ class TestRouteContentDispatch:
     def test_unmatched_method_returns_none(self, api):
         handler = api._route_content("PATCH", {}, None)
         assert handler is None
+
+
+class TestRouteContentItemDispatch:
+    """Pin the _route_content_item dispatch contract (TICKET-520)."""
+
+    def test_get_returns_get_handler(self, api_with_data):
+        handler = api_with_data._route_content_item("GET", "1", None)
+        assert handler is not None
+        status, body = handler()
+        assert status == 200
+        assert body["item"]["id"] == "1"
+        assert body["item"]["title"] == "First"
+
+    def test_put_returns_update_handler(self, api_with_data):
+        handler = api_with_data._route_content_item(
+            "PUT", "1", json.dumps({"title": "Renamed"})
+        )
+        assert handler is not None
+        status, body = handler()
+        assert status == 200
+        assert body["item"]["id"] == "1"
+        assert body["item"]["title"] == "Renamed"
+
+    def test_delete_returns_delete_handler(self, api_with_data):
+        handler = api_with_data._route_content_item("DELETE", "1", None)
+        assert handler is not None
+        status, body = handler()
+        assert status == 200
+        assert body["deleted"] is True
+        assert body["id"] == "1"
+        assert "1" not in api_with_data._store
+
+    def test_unmatched_method_returns_none(self, api):
+        handler = api._route_content_item("PATCH", "1", None)
+        assert handler is None
