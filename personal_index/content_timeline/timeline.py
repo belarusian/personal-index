@@ -33,7 +33,14 @@ class Timeline:
         description: str = "",
         metadata: dict[str, Any] | None = None,
     ) -> TimelineEntry:
-        """Add a TimelineEntry to the timeline."""
+        """Add a TimelineEntry to the timeline.
+
+        Builds a TimelineEntry from the given fields, defaulting
+        ``timestamp`` to ``datetime.now(timezone.utc)`` when omitted and
+        ``metadata`` to ``{}`` when omitted, appends it to
+        ``self.entries``, re-sorts ``self.entries`` in reverse
+        (newest-first) order by timestamp, and returns the created entry.
+        """
         entry = TimelineEntry(
             item_id=item_id,
             title=title,
