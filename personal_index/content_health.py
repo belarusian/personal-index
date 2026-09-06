@@ -94,7 +94,17 @@ class HealthReport:
         return (self.healthy_count / self.total_items) * 100
 
     def summary(self) -> str:
-        """Generate a human-readable summary."""
+        """Generate a human-readable summary with the following lines in order:
+
+        1. "Content Health Report"
+        2. 40 equals signs
+        3. "Total items: {total_items}"
+        4. "Healthy: {healthy_count}"
+        5. "Warnings: {warning_count}"
+        6. "Unhealthy: {unhealthy_count}"
+        7. "Overall score: {overall_score:.1f}/100"
+        8. "Health percentage: {health_percentage:.1f}%"
+        """
         lines = [
             "Content Health Report",
             "=" * 40,
