@@ -514,3 +514,19 @@ class TestDeleteContentDocstring527:
         assert "200" in doc
         assert "deleted" in doc
         assert "id" in doc
+
+
+class TestSearchContentDocstring528:
+    """Pin the _search_content dispatch contract (TICKET-528)."""
+
+    def test_docstring_states_exact_contract(self) -> None:
+        doc = ContentAPI._search_content.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "q" in doc
+        assert "required" in doc
+        assert "400" in doc
+        assert "results" in doc
+        assert "total" in doc
+        assert "query" in doc
+        assert "200" in doc

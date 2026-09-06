@@ -242,6 +242,15 @@ class ContentAPI:
         return 200, {"deleted": True, "id": item_id}
 
     def _search_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
+        """Search content items by a case-insensitive substring query.
+
+        Reads ``q = params.get("q", [""])[0]``. When ``q`` is empty, returns
+        ``(400, {"error": "Search query parameter 'q' is required"})``.
+        Otherwise performs a case-insensitive substring match of ``q`` against
+        each item's ``title`` + ``description`` (lowercased), collecting matching
+        items into ``results``, and returns
+        ``(200, {"results": results, "total": len(results), "query": q})``.
+        """
         q = params.get("q", [""])[0]
         if not q:
             return 400, {"error": "Search query parameter 'q' is required"}
