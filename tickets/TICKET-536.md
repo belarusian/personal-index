@@ -1,6 +1,6 @@
 # TICKET-536: ContentCategorizer.get_topic docstring over-promise
 
-- Status: OPEN
+Status: RESOLVED (merged via PR #947, issue #942 closed)
 - File: personal_index/content_categorizer.py
 - Function: ContentCategorizer.get_topic (def line 342, docstring line 343)
 - Issue: #942
