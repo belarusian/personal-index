@@ -68,6 +68,20 @@ class TestHealthReport:
         report = HealthReport()
         assert report.health_percentage == 100.0
 
+    def test_report_aggregates_checked_items_only(self):
+        checker = ContentHealthChecker()
+        # Check two items explicitly via check_all
+        items = [
+            {"url": "https://a.com", "title": "A", "content": "x"*60},
+            {"url": "https://b.com", "title": "B", "content": "x"*10},
+        ]
+        report = checker.check_all(items)
+        # Report reflects only the items we passed, not an implicit index
+        assert report.total_items == 2
+        assert isinstance(report, HealthReport)
+        # Summary contains the counts we set
+        assert "Total items: 2" in report.summary()
+
 
 class TestContentHealthChecker:
     def test_healthy_item(self):
