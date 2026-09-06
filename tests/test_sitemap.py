@@ -201,3 +201,35 @@ class TestSitemapParseContract:
         assert sitemap.source_url == "http://example.com/s.xml"
         assert sitemap.url_count == 0
         assert sitemap.sitemaps == []
+
+
+class TestSitemapGetRecentEntriesContract:
+    """Pinning tests for SitemapParser.get_recent_entries exact contract."""
+
+    def setup_method(self):
+        self.parser = SitemapParser()
+
+    def test_recent_entries_main_and_guard_paths(self):
+        from datetime import datetime, timedelta, timezone
+
+        now = datetime.now(timezone.utc)
+        recent = (now - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        old = (now - timedelta(days=90)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            f"<url><loc>http://example.com/recent</loc><lastmod>{recent}</lastmod></url>"
+            f"<url><loc>http://example.com/old</loc><lastmod>{old}</lastmod></url>"
+            "<url><loc>http://example.com/nomod</loc></url>"
+            "<url><loc>http://example.com/bad</loc><lastmod>not-a-date</lastmod></url>"
+            "</urlset>"
+        )
+        sitemap = self.parser.parse(xml)
+        result = self.parser.get_recent_entries(sitemap, days=30)
+        # main path: recent included; old excluded (90 > 30)
+        # guard paths: no-lastmod and unparseable-lastmod both skipped
+        assert [e.loc for e in result] == ["http://example.com/recent"]
+
+    def test_recent_entries_empty_sitemap(self):
+        sitemap = self.parser.parse("", source_url="http://example.com/s.xml")
+        assert self.parser.get_recent_entries(sitemap, days=30) == []
