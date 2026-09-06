@@ -323,6 +323,22 @@ class TestContentScorer:
         )
         assert 0.0 <= result.freshness <= 1.0
 
+    def test_score_freshness_direct_contract(self, scorer: ContentScorer) -> None:
+        # Guard path: last_crawled is None -> neutral 0.5.
+        assert scorer._score_freshness(None, "daily", None) == 0.5
+        # 'never' frequency short-circuits to 1.0 regardless of age.
+        assert scorer._score_freshness(
+            datetime.now(tz=timezone.utc), "never", None
+        ) == 1.0
+        # Decay: just-crawled content (age ~0) scores ~1.0.
+        assert scorer._score_freshness(
+            datetime.now(tz=timezone.utc), "daily", None
+        ) == 1.0
+        # Decay clamp: 100 days old at daily (expected 24h) -> ratio 100,
+        # 1.0 - 100*0.5 clamps to 0.0.
+        old = datetime.now(tz=timezone.utc) - timedelta(days=100)
+        assert scorer._score_freshness(old, "daily", None) == 0.0
+
     # ── rank() ───────────────────────────────────────────────────
 
     def test_rank_sorted_by_score_desc(self, scorer: ContentScorer) -> None:
