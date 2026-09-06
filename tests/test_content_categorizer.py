@@ -517,6 +517,30 @@ class TestContentCategorizerInternal:
         hints2 = cat._extract_url_hints("https://dev-blog.com/api")
         assert "technology" in hints2
         assert "business" not in hints2
+    def test_add_matches_dedup_and_source_guard(self):
+        """Pin _add_matches: in-place dedup into kw, conditional src append.
+
+        Non-empty match path: new keywords are deduped into kw (existing
+        entries not duplicated) and the source label is appended to src.
+        Empty-match guard path: nothing is appended to kw or src.
+        """
+        cat = ContentCategorizer()
+        # non-empty match path: "a" already present, "b" new
+        kw = ["a"]
+        src = []
+        returned = cat._add_matches(["a", "b"], kw, src, "title")
+        assert returned is kw
+        assert kw == ["a", "b"]
+        assert src == ["title"]
+        # empty-match guard path: no mutation of kw or src
+        kw2 = ["x"]
+        src2 = ["text"]
+        returned2 = cat._add_matches([], kw2, src2, "meta_description")
+        assert returned2 is kw2
+        assert kw2 == ["x"]
+        assert src2 == ["text"]
+
+
     def test_score_topic_returns_tuple(self):
         cat = ContentCategorizer()
         topic = TopicCategory(name="tech", keywords=["python", "code"])
