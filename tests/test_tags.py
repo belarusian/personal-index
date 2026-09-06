@@ -117,6 +117,20 @@ class TestTagStore:
         tags = self.store.get_tags_for_page("http://example.com")
         assert tags == []
 
+    def test_get_tags_for_page_drops_dangling_names(self):
+        # normal case: two registered tags on the page -> both returned
+        self.store.create_tag("tag1")
+        self.store.create_tag("tag2")
+        self.store.add_tag_to_page("http://example.com", "tag1")
+        self.store.add_tag_to_page("http://example.com", "tag2")
+        tags = self.store.get_tags_for_page("http://example.com")
+        assert {t.name for t in tags} == {"tag1", "tag2"}
+        # guard path: a dangling (unregistered) name recorded on the page is dropped
+        self.store._page_tags["http://example.com"].add("ghost")
+        tags = self.store.get_tags_for_page("http://example.com")
+        assert {t.name for t in tags} == {"tag1", "tag2"}
+        assert all(t.name in self.store._tags for t in tags)
+
     def test_get_pages_for_tag(self):
         self.store.create_tag("important")
         self.store.add_tag_to_page("http://a.com", "important")
