@@ -100,3 +100,16 @@ class TestSnapshotManager:
         s1 = mgr.create_snapshot({"id": "1"})
         s2 = mgr.create_snapshot({"id": "1"})
         assert s1.snapshot_id != s2.snapshot_id
+
+
+class TestCreateSnapshotDocstring534:
+    """Pin the SnapshotManager.create_snapshot eviction contract (TICKET-534)."""
+
+    def test_docstring_states_exact_contract(self):
+        doc = SnapshotManager.create_snapshot.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "max_snapshots" in doc
+        assert "evicted" in doc
+        assert "oldest" in doc
+        assert "retain" in doc

@@ -45,7 +45,19 @@ class SnapshotManager:
         id_field: str = "id",
         label: str = "",
     ) -> Snapshot:
-        """Create a new snapshot of a content item.
+        """Create a new snapshot of a content item and return it.
+
+        Appends a new ``Snapshot`` for the item (keyed by
+        ``str(item.get(id_field, "unknown"))``) to the internal store and
+        returns the created ``Snapshot``. The ``snapshot_id`` is built from
+        the item id, a UTC timestamp, and a monotonically increasing
+        per-manager counter.
+
+        Eviction contract: after appending, if the item's snapshot count
+        exceeds ``self.max_snapshots``, the oldest snapshots are evicted so
+        that only the last ``max_snapshots`` are retained. Calling this
+        method can therefore drop previously-created snapshots of the same
+        item; snapshots of other items are never touched.
 
         Args:
             item: Content item to snapshot.
