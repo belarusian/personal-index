@@ -1,6 +1,6 @@
 # TICKET-510: url_dedup.py seen_count placeholder docstring under-describes behavior
 
-Status: OPEN
+Status: RESOLVED
 
 ## File
 personal_index/url_dedup.py
