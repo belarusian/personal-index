@@ -1,4 +1,4 @@
-# TICKET-490: ContentMatcher.relevance_score returns 0.0 for REGEX-mode interests that match content (class-(a) behavioral)
+# TICKET-491: ContentMatcher.relevance_score returns 0.0 for REGEX-mode interests that match content (class-(a) behavioral)
 
 - File: personal_index/filter/matcher.py
 - Method: ContentMatcher.relevance_score (and its consumers InterestFilter.matches / should_index / filter_content)
