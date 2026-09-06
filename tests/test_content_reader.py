@@ -200,3 +200,28 @@ class TestContentReaderDocstringClaim:
         reader.add(make_item("https://c.com", "Gamma"))
         urls = [item.url for item in reader.list_all()]
         assert urls == ["https://a.com", "https://b.com", "https://c.com"]
+
+class TestFormatItemTruncation:
+    """Pin the corrected format_item show_content contract against the returned string."""
+
+    def setup_method(self):
+        self.reader = ContentReader()
+
+    def test_long_content_truncated_to_500_with_ellipsis(self):
+        content = "a" * 600
+        item = make_item("https://x.com", "Test", content)
+        formatted = self.reader.format_item(item)
+        assert "a" * 500 in formatted
+        assert "a" * 501 not in formatted
+        assert "..." in formatted
+
+    def test_short_content_has_no_ellipsis(self):
+        item = make_item("https://x.com", "Test", "short content")
+        formatted = self.reader.format_item(item)
+        assert "short content" in formatted
+        assert "..." not in formatted
+
+    def test_show_content_false_omits_content(self):
+        item = make_item("https://x.com", "Test", "hidden content")
+        formatted = self.reader.format_item(item, show_content=False)
+        assert "hidden content" not in formatted

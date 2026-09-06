@@ -207,7 +207,11 @@ class ContentReader:
 
         Args:
             item: The ReadResult to format.
-            show_content: Whether to include content text.
+            show_content: When True and ``item.content`` is non-empty, a blank
+                line is appended followed by the first 500 characters of the
+                content and, if the content is longer than 500 characters, a
+                trailing ``"..."`` line; when False or content is empty, no
+                content line is added.
 
         Returns:
             Formatted string representation.
