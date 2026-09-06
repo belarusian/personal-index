@@ -327,3 +327,34 @@ class TestCreateFieldAddTransformerPinning:
     def test_transformer_name_is_add_prefixed(self) -> None:
         t = create_field_add_transformer("new_field", "value")
         assert t.name == "add_new_field"
+
+
+class TestCreateFieldRenameTransformerPinning:
+    """Pinning tests for create_field_rename_transformer actual behavior."""
+
+    def test_rename_when_old_name_present(self) -> None:
+        t = create_field_rename_transformer("old", "new")
+        result = t.transform({"old": "val", "x": 1})
+        assert result == {"new": "val", "x": 1}
+        assert "old" not in result
+
+    def test_noop_when_old_name_absent(self) -> None:
+        t = create_field_rename_transformer("old", "new")
+        result = t.transform({"x": 1})
+        assert result == {"x": 1}
+        assert "new" not in result
+
+    def test_input_not_mutated(self) -> None:
+        t = create_field_rename_transformer("old", "new")
+        d = {"old": "val", "x": 1}
+        original = dict(d)
+        result = t.transform(d)
+        assert d == original
+        assert result is not d
+        # mutating the copy must not affect the input
+        result["new"] = "changed"
+        assert d["old"] == "val"
+
+    def test_transformer_name_format(self) -> None:
+        t = create_field_rename_transformer("foo", "bar")
+        assert t.name == "rename_foo_to_bar"
