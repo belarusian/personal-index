@@ -1434,7 +1434,15 @@ def _index_file_once(fp: str, data_dir: str) -> None:
 
 
 def _watch_once(paths: tuple[str, ...], data_dir: str) -> None:
-    """Process paths in once mode — collect and index all files."""
+    """Process each path once and index the files it yields.
+
+    For each path: a regular file is collected non-recursively
+    (_collect_files(path, False)); a directory is collected
+    recursively (_collect_files(path, True)); any other path is
+    skipped. Every collected file is then indexed via
+    _index_file_once(fp, data_dir); a per-file exception is caught
+    and echoed to stderr, and the loop continues with the next file.
+    """
     for path in paths:
         if os.path.isfile(path):
             click.echo(f"  Importing: {path}")
