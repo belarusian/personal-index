@@ -27,4 +27,4 @@ NO behavior change. Add pinning tests for the normalization + guard + dispatch.
 Issue: #771
 
 ## Status
-OPEN
+RESOLVED
