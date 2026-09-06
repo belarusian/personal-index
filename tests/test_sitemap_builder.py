@@ -33,6 +33,40 @@ class TestSitemapEntry:
         assert loc is not None
         assert loc.text == "http://example.com/page"
 
+    def test_to_element_pins_documented_contract(self):
+        """Pin the corrected to_element docstring: exactly four SubElements.
+
+        The reworded docstring claims to_element attaches EXACTLY four
+        SubElements (loc/lastmod/changefreq/priority) with the documented text
+        formats. This test pins that claim against the returned Element and
+        asserts the ABSENCE of any sibling SubElement (no extra tag), so the
+        doc-only fix is witnessed.
+        """
+        entry = SitemapEntry(
+            "http://example.com/page",
+            change_frequency="weekly",
+            priority=0.7,
+        )
+        elem = entry.to_element()
+        assert elem.tag == "url"
+        # Exactly the four documented SubElements, no more, no less.
+        tags = [child.tag for child in elem]
+        assert tags == ["loc", "lastmod", "changefreq", "priority"]
+        # Documented text formats.
+        assert elem.find("loc").text == "http://example.com/page"
+        assert elem.find("changefreq").text == "weekly"
+        assert elem.find("priority").text == "0.7"
+        # lastmod is the documented "%Y-%m-%dT%H:%M:%SZ" format (Z-suffixed).
+        lastmod = elem.find("lastmod").text
+        assert lastmod is not None
+        assert lastmod.endswith("Z")
+        # Verify ISO-like format by parsing back.
+        from datetime import datetime
+        datetime.strptime(lastmod, "%Y-%m-%dT%H:%M:%SZ")
+        # ABSENCE of any sibling SubElement: no nested <url> or extra tag.
+        assert elem.find("url") is None
+        assert len(list(elem)) == 4
+
 
 class TestSitemapBuilder:
     def test_empty_sitemap(self):
