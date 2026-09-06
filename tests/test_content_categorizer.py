@@ -420,6 +420,21 @@ class TestContentCategorizerInternal:
         hints = cat._extract_url_hints("")
         assert hints == set()
 
+    def test_extract_url_hints_no_tld_false_positive(self):
+        """A plain *.com URL must not yield a spurious business hint.
+
+        The TLD "com" must not match hint words that merely contain it
+        (e.g. "corp" -> business, "eco" -> environment).
+        """
+        cat = ContentCategorizer()
+        hints = cat._extract_url_hints("https://example.com/")
+        assert "business" not in hints
+        assert "environment" not in hints
+        # intended match still works
+        hints2 = cat._extract_url_hints("https://dev-blog.com/api")
+        assert "technology" in hints2
+        assert "business" not in hints2
+
     def test_score_topic_returns_tuple(self):
         cat = ContentCategorizer()
         topic = TopicCategory(name="tech", keywords=["python", "code"])
