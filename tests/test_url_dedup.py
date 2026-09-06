@@ -64,6 +64,18 @@ class TestURLDeduplicatorNormalize:
         assert "utm_source" not in normalized
         assert "#top" not in normalized
 
+    def test_normalize_url_pins_documented_transformations(self):
+        # Pins the corrected docstring claim: the six transformations are
+        # applied in order. One complex URL exercises every transformation
+        # (fragment drop, trailing-slash strip, query sort, scheme/netloc
+        # lowercase, www removal, tracking-param removal).
+        url = "HTTP://WWW.A.COM/page/?utm_source=google&b=2&a=1#top"
+        assert self.dedup.normalize_url(url) == "http://a.com/page?a=1&b=2"
+        # Guard path: a URL with no fragment, no trailing slash, no query
+        # and no www must be returned unchanged (lowercase scheme/netloc
+        # already satisfied).
+        assert self.dedup.normalize_url("http://a.com/page") == "http://a.com/page"
+
 
 class TestURLDeduplicatorCheckDuplicate:
     def setup_method(self):

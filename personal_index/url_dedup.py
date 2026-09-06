@@ -31,7 +31,14 @@ class URLDeduplicator:
         return len(self._seen_urls)
 
     def normalize_url(self, url: str) -> str:
-        """Normalize a URL for comparison."""
+        """Normalize a URL for comparison.
+
+        Applies, in order: drop the fragment; strip a trailing slash from a
+        non-root path; sort query parameters alphabetically (first value
+        only); lowercase the scheme and netloc; remove a leading ``www.``
+        from the netloc; remove common tracking parameters (``utm_*``,
+        ``fbclid``, ``gclid``).
+        """
         parsed = urlparse(url)
         normalized = parsed._replace(fragment="").geturl()
         normalized = self._strip_trailing_slash(normalized, parsed.path)
