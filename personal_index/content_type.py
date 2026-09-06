@@ -234,7 +234,11 @@ class ContentTypeDetector:
         return None
 
     def detect_from_bytes(self, data: bytes) -> ContentTypeInfo:
-        """Detect content type from raw bytes (magic number detection).
+        """Detect content type from raw bytes.
+
+        Tries magic number detection first, then falls back to text detection
+        (UTF-8 decode with null-byte check), returning unknown if neither
+        matches. Empty input returns unknown.
 
         Args:
             data: Raw bytes to analyze.

@@ -278,3 +278,31 @@ class TestCheckMagicNumbers:
     def test_binary_no_magic(self):
         result = self.detector._check_magic_numbers(b"\x00\x01\x02\x03")
         assert result is None
+
+
+class TestDetectFromBytesDocstringClaim:
+    """Pin the corrected docstring claim: detect_from_bytes tries magic number
+    detection first, then falls back to text detection, returning unknown if
+    neither matches. Empty input returns unknown."""
+
+    def setup_method(self):
+        self.detector = ContentTypeDetector()
+
+    def test_magic_number_path(self):
+        """Normal path: PDF bytes match a magic number → application/pdf."""
+        info = self.detector.detect_from_bytes(b"%PDF-1.4 test content")
+        assert info.mime_type == "application/pdf"
+        assert info.category == "document"
+
+    def test_text_fallback_path(self):
+        """Guard path: non-magic-number text bytes (UTF-8, no null bytes) →
+        text/plain via the text detection fallback (not magic numbers)."""
+        info = self.detector.detect_from_bytes(b"Hello world, this is plain text")
+        assert info.mime_type == "text/plain"
+        assert info.is_text is True
+
+    def test_empty_input_guard(self):
+        """Guard path: empty bytes → unknown (empty input guard)."""
+        info = self.detector.detect_from_bytes(b"")
+        assert info.category == "unknown"
+        assert info.mime_type == "application/octet-stream"
