@@ -1,6 +1,6 @@
 # TICKET-542: content_categorizer._add_matches has no docstring
 
-**Status:** OPEN
+**Status:** RESOLVED (merged via PR #960, issue #959 closed)
 **Issue:** #646
 
 ## File
