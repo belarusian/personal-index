@@ -202,3 +202,70 @@ class TestCheckDocstring537:
             "Title is too short",
             "Content is too short",
         ]
+
+
+class TestRulesDocstring545:
+    """TICKET-545: pin the exact-contract docstrings + non-obvious behaviors."""
+
+    def test_has_min_length_docstring_contract(self) -> None:
+        doc = has_min_length.__doc__ or ""
+        low = doc.lower()
+        assert "missing field" in low
+        assert "str(value)" in doc
+        assert "inclusive" in low
+        assert ">= min_length" in doc
+
+    def test_has_valid_url_docstring_contract(self) -> None:
+        doc = has_valid_url.__doc__ or ""
+        low = doc.lower()
+        assert "http://" in doc
+        assert "https://" in doc
+        assert "only" in low
+        assert "empty string fails" in low
+        assert "missing field fails" in low
+
+    def test_has_valid_score_docstring_contract(self) -> None:
+        doc = has_valid_score.__doc__ or ""
+        low = doc.lower()
+        assert "missing score" in low
+        assert "inclusive" in low
+        assert "bool" in low
+        assert "subclass of" in low
+
+    def test_has_min_length_str_coercion(self) -> None:
+        check = has_min_length("title", 3)
+        # non-string value measured by its string form
+        assert check({"title": 12345}) is True
+        assert check({"title": 12}) is False
+        # missing field fails
+        assert check({}) is False
+        # inclusive boundary: exactly min_length passes
+        assert check({"title": "abc"}) is True
+        assert check({"title": "ab"}) is False
+
+    def test_has_valid_url_schemes(self) -> None:
+        check = has_valid_url("url")
+        assert check({"url": "http://x.com"}) is True
+        assert check({"url": "https://x.com"}) is True
+        assert check({"url": "ftp://x.com"}) is False
+        assert check({"url": "file:///x"}) is False
+        # empty string fails
+        assert check({"url": ""}) is False
+        # missing field fails
+        assert check({}) is False
+
+    def test_has_valid_score_bounds_and_types(self) -> None:
+        check = has_valid_score()
+        # missing score is valid
+        assert check({}) is True
+        # inclusive bounds: 0 and 1 pass, out-of-range fails
+        assert check({"score": 0}) is True
+        assert check({"score": 1}) is True
+        assert check({"score": 0.5}) is True
+        assert check({"score": 1.5}) is False
+        assert check({"score": -0.1}) is False
+        # bool is a subclass of int, so True/False pass
+        assert check({"score": True}) is True
+        assert check({"score": False}) is True
+        # a string score fails
+        assert check({"score": "0.5"}) is False
