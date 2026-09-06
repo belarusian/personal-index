@@ -1,6 +1,6 @@
 # TICKET-493: create_field_filter_transformer docstring drift
 
-Status: OPEN
+Status: RESOLVED (merged via PR #839)
 File: personal_index/content_transform/transformer.py
 Function: create_field_filter_transformer
 
