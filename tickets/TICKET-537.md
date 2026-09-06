@@ -1,6 +1,6 @@
 # TICKET-537: QualityChecker.check docstring omits exact scoring contract
 
-Status: OPEN
+Status: RESOLVED (merged via PR #950, issue #949 closed)
 Module: personal_index/content_validator/quality.py
 Method: QualityChecker.check (def at line 42)
 
