@@ -1,9 +1,9 @@
 """Content health monitoring for personal-index.
 
-Checks the health and quality of indexed content against configurable
-rules, flagging issues such as invalid URLs, missing or oversized
-titles, low-content items, missing tags, low scores, and bad HTTP
-status codes.
+Checks the health and quality of content items passed to
+check_item/check_all against configurable rules, flagging issues such
+as invalid URLs, missing or oversized titles, low-content items, missing
+tags, low scores, and bad HTTP status codes.
 """
 
 from __future__ import annotations

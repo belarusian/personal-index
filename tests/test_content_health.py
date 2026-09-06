@@ -205,6 +205,18 @@ class TestModuleDocstringContract:
         assert "stale" not in doc
         assert "stale entries" not in doc
 
+    def test_module_docstring_does_not_claim_indexed_content(self):
+        """TICKET-476: module docstring must not over-promise an index source.
+
+        The checker operates on content items passed to check_item/check_all;
+        it holds no index of its own. The module docstring must therefore not
+        claim to check 'indexed content' (it takes item dicts, not an index).
+        """
+        import personal_index.content_health as ch
+
+        doc = (ch.__doc__ or "").lower()
+        assert "indexed content" not in doc
+
 
 class TestContentHealthCheckerDocstringClaim:
     """TICKET-366: pin the corrected class docstring claim.
