@@ -262,6 +262,29 @@ class TestSerialization:
         assert summary["content_ids"] == ["c1"]
 
 
+class TestGetSummaryPinning:
+    """Pins the corrected Timeline.get_summary claim (TICKET-475)."""
+
+    def test_get_summary_exact_keys_and_values(self) -> None:
+        tl = Timeline()
+        tl.add_event(_event("e1", "c1", _ts(1)))
+        tl.add_event(_event("e2", "c2", _ts(2)))
+        tl.add_event(_event("e3", "c1", _ts(3)))
+        tl.add_entry("i1", "T1", timestamp=_ts(1))
+        tl.add_entry("i2", "T2", timestamp=_ts(2))
+        summary = tl.get_summary()
+        assert set(summary.keys()) == {"total_events", "total_entries", "content_ids"}
+        assert summary["total_events"] == len(tl.events) == 3
+        assert summary["total_entries"] == len(tl.entries) == 2
+        assert summary["content_ids"] == list(tl.content_ids)
+        assert set(summary["content_ids"]) == {"c1", "c2"}
+
+    def test_get_summary_empty(self) -> None:
+        tl = Timeline()
+        summary = tl.get_summary()
+        assert summary == {"total_events": 0, "total_entries": 0, "content_ids": []}
+
+
 class TestTimelineView:
     def _timeline(self) -> Timeline:
         tl = Timeline()

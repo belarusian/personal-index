@@ -117,7 +117,14 @@ class Timeline:
         return [e for e in self.events if start <= e.timestamp <= end]
 
     def get_summary(self) -> dict[str, Any]:
-        """Get a summary of the timeline."""
+        """Return a summary of the timeline.
+
+        Returns a dict with exactly the keys:
+          * ``total_events``  -> ``len(self.events)``
+          * ``total_entries`` -> ``len(self.entries)``
+          * ``content_ids``   -> ``list(self.content_ids)`` (the unique
+            content IDs referenced by the stored events, in set order).
+        """
         return {
             "total_events": len(self.events),
             "total_entries": len(self.entries),
