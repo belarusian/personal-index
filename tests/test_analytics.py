@@ -358,6 +358,42 @@ class TestComputeSearchAnalytics:
         assert data.success_count == 0
         assert data.error_count == 0
 
+    def test_compute_search_analytics_pins_returned_object_fields(self):
+        """Pin the exact returned-object fields for the normal case AND the
+        guard (empty-events) case, matching the reworded docstring."""
+        # Normal case: three events, one with a zero duration (excluded from
+        # the mean), two distinct queries.
+        self.tracker.record_search("python", result_count=5, duration_ms=100)
+        self.tracker.record_search("rust", result_count=3, duration_ms=0)
+        self.tracker.record_search("python", result_count=8, duration_ms=300)
+        data = self.tracker._compute_search_analytics(top_n=10)
+
+        # total_searches counts ALL events (including the zero-duration one).
+        assert data.total_searches == 3
+        # avg_search_duration_ms is the mean of durations > 0 only (100, 300).
+        assert data.avg_search_duration_ms == 200.0
+        # top_queries is a list of (query, count) tuples, most_common order.
+        assert data.top_queries == [("python", 2), ("rust", 1)]
+        # hourly/daily are non-empty dicts keyed by hour / day buckets.
+        assert isinstance(data.hourly_searches, dict)
+        assert isinstance(data.daily_searches, dict)
+        assert sum(data.hourly_searches.values()) == 3
+        assert sum(data.daily_searches.values()) == 3
+        # Crawl fields are untouched (stay at AnalyticsData defaults).
+        assert data.total_crawls == 0
+        assert data.top_domains == []
+        assert data.avg_crawl_duration_ms == 0.0
+        assert data.success_count == 0
+        assert data.error_count == 0
+
+        # Guard case: empty events -> the if-block is skipped entirely.
+        empty = AnalyticsTracker()._compute_search_analytics(top_n=10)
+        assert empty.total_searches == 0
+        assert empty.avg_search_duration_ms == 0.0
+        assert empty.top_queries == []
+        assert empty.hourly_searches == {}
+        assert empty.daily_searches == {}
+
 
 class TestComputeCrawlAnalytics:
     """Tests for _compute_crawl_analytics helper."""

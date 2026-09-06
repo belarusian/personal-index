@@ -118,11 +118,33 @@ class AnalyticsTracker:
     def _compute_search_analytics(self, top_n: int) -> AnalyticsData:
         """Compute search-related analytics metrics.
 
+        Always sets ``data.total_searches = len(self._search_events)``.
+
+        Guard path: when ``self._search_events`` is empty the ``if`` block
+        is skipped entirely, so ``avg_search_duration_ms`` stays 0.0,
+        ``top_queries`` stays ``[]``, ``hourly_searches`` stays ``{}`` and
+        ``daily_searches`` stays ``{}``.
+
+        When events exist:
+          avg_search_duration_ms = mean of the ``duration_ms`` values that
+              are ``> 0`` (zero/negative durations are excluded; stays 0.0
+              when none qualify).
+          top_queries = ``Counter(query).most_common(top_n)`` (a list of
+              ``(query, count)`` tuples, at most ``top_n``).
+          hourly_searches = dict keyed by ``"%H:00"`` (hour bucket) -> count.
+          daily_searches = dict keyed by ``"%Y-%m-%d"`` (day) -> count.
+          Timestamps that fail ``datetime.fromisoformat`` (ValueError /
+          TypeError) are silently skipped (not counted in hourly/daily).
+
+        Does NOT touch the crawl fields (``total_crawls``, ``top_domains``,
+        ``avg_crawl_duration_ms``, ``success_count``, ``error_count``) -
+        those stay at their ``AnalyticsData`` defaults.
+
         Args:
             top_n: Number of top queries to return.
 
         Returns:
-            AnalyticsData with search-related fields populated.
+            The populated ``AnalyticsData`` instance.
         """
         data = AnalyticsData()
         data.total_searches = len(self._search_events)
