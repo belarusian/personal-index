@@ -46,7 +46,17 @@ class ContentAPI:
     def _match_route(
         self, method: str, parts: list[str], params: dict, body: str | None
     ) -> Callable[..., Any] | None:
-        """Match path parts to a route handler."""
+        """Dispatch path parts to a route handler.
+
+        Branches (in order):
+        - ["api", "v1", "health"] -> self._health_check
+        - ["api", "v1", "stats"] -> self._get_stats
+        - ["api", "v1", "content"] -> self._route_content(method, params, body)
+        - ["api", "v1", "content", "search"] + GET -> lambda: self._search_content(params)
+        - ["api", "v1", "content", "export"] + GET -> lambda: self._export_content(params)
+        - len(parts)==4 and parts[:3]==["api", "v1", "content"] -> self._route_content_item(method, parts[3], body)
+        - otherwise -> None (caller returns 404)
+        """
         if parts == ["api", "v1", "health"]:
             return self._health_check
         if parts == ["api", "v1", "stats"]:
