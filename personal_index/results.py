@@ -57,9 +57,15 @@ class ResultsFormatter:
         return "\n".join(lines)
 
     def create_snippet(
-        self, text: str, query: str, max_length: int = 200
+        self, text: str, query: str, max_length: int | None = None
     ) -> str:
-        """Create a snippet centered on the query."""
+        """Create a snippet centered on the query.
+
+        The window is bounded by ``max_length`` when given explicitly,
+        otherwise by the formatter's configured ``max_snippet_length``.
+        """
+        if max_length is None:
+            max_length = self.max_snippet_length
         if not text:
             return ""
         query_lower = query.lower()
