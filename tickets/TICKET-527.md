@@ -1,6 +1,6 @@
 # TICKET-527: Add ContentAPI._delete_content docstring + pinning test
 
-Status: OPEN
+Status: RESOLVED (merged via PR #926, issue #925 closed)
 
 ## File
 personal_index/content_api.py (def _delete_content, line 231)
