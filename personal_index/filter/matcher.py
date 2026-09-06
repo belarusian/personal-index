@@ -58,8 +58,18 @@ class ContentMatcher:
             return 0.0
         text_lower = text.lower()
         total = 0.0
-        for kw in self.interest.keywords:
-            total += text_lower.count(kw.lower())
+        if self.interest.match_mode == MatchMode.REGEX:
+            # REGEX keywords are patterns, not literal substrings: count
+            # actual regex matches so a matching REGEX interest scores > 0
+            # (a literal substring count of the pattern string is always 0).
+            for kw in self.interest.keywords:
+                try:
+                    total += len(re.findall(kw, text, re.IGNORECASE))
+                except re.error:
+                    continue
+        else:
+            for kw in self.interest.keywords:
+                total += text_lower.count(kw.lower())
         num_kw = max(len(self.interest.keywords), 1)
         return min(
             total * self.interest.priority / num_kw,
