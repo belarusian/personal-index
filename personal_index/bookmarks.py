@@ -146,7 +146,15 @@ class BookmarkManager:
         return save_path
 
     def load(self, path: str | None = None) -> int:
-        """Load bookmarks from JSON file. Returns count loaded."""
+        """Load bookmarks from a JSON file and return the count loaded.
+
+        Raises ValueError when neither ``path`` nor the configured
+        storage path is set. Returns 0 without touching the current
+        set when the file is missing, the JSON is malformed
+        (``JSONDecodeError``), or the top-level JSON value is not a
+        list. Otherwise replaces the current set with the loaded
+        bookmarks and returns the number loaded.
+        """
         load_path = path or self._storage_path
         if not load_path:
             raise ValueError("No storage path specified")
