@@ -40,13 +40,32 @@ class QualityChecker:
     )
 
     def check(self, item: dict[str, Any]) -> QualityScore:
-        """Check the quality of a content item.
+        """Check the quality of a content item and return a QualityScore.
+
+        Scoring contract (exact):
+          * ``completeness`` = (count of ``required_fields`` present and
+            truthy in ``item``) / ``len(required_fields)``; ``0.0`` when
+            ``required_fields`` is empty.
+          * ``richness`` = (count of ``rich_fields`` present and truthy in
+            ``item``) / ``len(rich_fields)``; ``0.0`` when ``rich_fields``
+            is empty.
+          * ``overall`` = ``round(completeness * 0.6 + richness * 0.4, 4)``
+            -- a fixed 60/40 weighting, rounded to 4 decimal places.
+          * ``issues`` is built in a fixed order: one
+            ``"Missing required field: <f>"`` entry per absent/falsy
+            required field (in ``required_fields`` order), then
+            ``"Title is too short"`` when ``item["title"]`` is present and
+            ``len(str(title)) < 3``, then ``"Content is too short"`` when
+            ``item["content"]`` is present and ``len(str(content)) < 10``.
+          * ``completeness`` and ``richness`` are each rounded to 4 decimal
+            places in the returned ``QualityScore`` (``overall`` is rounded
+            to 4 as well).
 
         Args:
             item: Content item to check.
 
         Returns:
-            QualityScore with assessment details.
+            QualityScore with overall, completeness, richness and issues.
         """
         issues: list[str] = []
 
