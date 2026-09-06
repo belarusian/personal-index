@@ -1,6 +1,6 @@
 # TICKET-516
 
-- Status: OPEN
+- Status: RESOLVED (merged via PR #892)
 - File: personal_index/content_api.py
 - Function: ContentAPI.handle_request (line 33)
 - Symptom: class-(b) docstring under-description. The docstring
