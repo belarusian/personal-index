@@ -1,6 +1,6 @@
 # TICKET-525: ContentAPI._create_content docstring + pinning test
 
-Status: OPEN
+Status: RESOLVED
 
 ## File
 personal_index/content_api.py (def _create_content, line ~165)
@@ -27,6 +27,9 @@ Add a docstring to _create_content stating the exact dispatch contract above,
 and add a pinning test (TestCreateContentDocstring525) mirroring the
 TestGetContentDocstring524 pattern asserting the key contract phrases
 (body, 400, JSON, object, 201, item, store).
+
+## Resolution
+- Merged via PR #922 (merge commit a32ce63); issue #921 closed.
 
 ## Issue
 Issue: #921
