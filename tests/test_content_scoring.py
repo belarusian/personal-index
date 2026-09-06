@@ -485,3 +485,44 @@ class TestScorePagePinning:
         assert isinstance(score, ContentScore)
         assert score.relevance == 0.0
         assert score.factors["relevance"] == 0.0
+
+
+class TestBuildScoreContract:
+    """Pin the exact return structure of _build_score."""
+
+    def test_build_score_rounds_fields_and_factors_unrounded(self) -> None:
+        scorer = ContentScorer()
+        # Use values that will change under round(x, 4)
+        total = 0.123456789
+        recency = 0.987654321
+        relevance = 0.555555555
+        engagement = 0.111111111
+        quality = 0.333333333
+        authority = 0.777777777
+        freshness = 0.222222222
+
+        result = scorer._build_score(
+            total, recency, relevance, engagement, quality, authority, freshness
+        )
+
+        # All 7 fields are rounded to 4 dp
+        assert result.total == round(total, 4)
+        assert result.recency == round(recency, 4)
+        assert result.relevance == round(relevance, 4)
+        assert result.engagement == round(engagement, 4)
+        assert result.quality == round(quality, 4)
+        assert result.authority == round(authority, 4)
+        assert result.freshness == round(freshness, 4)
+
+        # factors dict: exactly six keys (NOT total), values are UNROUNDED
+        assert set(result.factors.keys()) == {
+            "recency", "relevance", "engagement",
+            "quality", "authority", "freshness",
+        }
+        assert "total" not in result.factors
+        assert result.factors["recency"] == recency
+        assert result.factors["relevance"] == relevance
+        assert result.factors["engagement"] == engagement
+        assert result.factors["quality"] == quality
+        assert result.factors["authority"] == authority
+        assert result.factors["freshness"] == freshness

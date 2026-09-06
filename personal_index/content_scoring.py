@@ -139,6 +139,21 @@ class ContentScorer:
         self, total: float, recency: float, relevance: float,
         engagement: float, quality: float, authority: float, freshness: float,
     ) -> ContentScore:
+        """Build the final ContentScore from pre-computed factor values.
+
+        Args:
+            total: Pre-computed weighted sum of the six factors.
+            recency, relevance, engagement, quality, authority, freshness:
+                Individual factor scores (each 0.0-1.0).
+
+        Returns:
+            ContentScore with:
+              - total, recency, relevance, engagement, quality, authority,
+                freshness: each round(x, 4)
+              - factors: dict keyed by the six factor names (recency,
+                relevance, engagement, quality, authority, freshness —
+                NOT total) mapping to the UNROUNDED input values.
+        """
         return ContentScore(
             total=round(total, 4),
             recency=round(recency, 4),
