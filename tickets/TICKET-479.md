@@ -16,5 +16,5 @@
   imported at module top.
 - Pinning test: add a test that includes form feed and vertical tab alongside a
   normal space, asserting the stripped count (fails pre-fix, passes post-fix).
-- Status: OPEN
+- Status: RESOLVED (merged via PR #810)
 - Issue: #805
