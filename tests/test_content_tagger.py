@@ -97,6 +97,42 @@ class TestTopicDetector:
         names = [t.name for t in tags]
         assert names.count("programming") <= 1
 
+    def test_detect_whitespace_only_returns_empty(self):
+        detector = TopicDetector()
+        assert detector.detect("   \n\t  ") == []
+
+    def test_detect_confidence_formula_exact(self):
+        detector = TopicDetector()
+        detector.add_topic("pin_topic", ["pinword"])
+        # 2 occurrences -> min(0.5 + 2*0.1, 1.0) = 0.7
+        tags = detector.detect("pinword and pinword")
+        assert len(tags) == 1
+        assert tags[0].name == "pin_topic"
+        assert tags[0].confidence == 0.7
+
+    def test_detect_confidence_capped_at_one(self):
+        detector = TopicDetector()
+        detector.add_topic("pin_topic", ["pinword"])
+        # 10 occurrences -> min(0.5 + 10*0.1, 1.0) = 1.0
+        text = " ".join(["pinword"] * 10)
+        tags = detector.detect(text)
+        assert tags[0].name == "pin_topic"
+        assert tags[0].confidence == 1.0
+
+    def test_detect_sorted_by_confidence_descending(self):
+        detector = TopicDetector()
+        detector.add_topic("low", ["lowword"])
+        detector.add_topic("high", ["highword"])
+        # high: 3 matches -> 0.8 ; low: 1 match -> 0.6
+        text = "highword highword highword lowword"
+        tags = detector.detect(text)
+        confs = [t.confidence for t in tags]
+        assert confs == sorted(confs, reverse=True)
+        assert tags[0].name == "high"
+        assert tags[0].confidence == 0.8
+        assert tags[1].name == "low"
+        assert tags[1].confidence == 0.6
+
     def test_remove_topic(self):
         detector = TopicDetector()
         detector.add_topic("temp", ["tempword"])

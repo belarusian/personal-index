@@ -119,7 +119,17 @@ class TopicDetector:
             self._topics[name] = _TopicDefinition(name=name, keywords=keywords)
 
     def detect(self, text: str) -> list[Tag]:
-        """Detect topics in the given text."""
+        """Detect topics in the given text.
+
+        Returns an empty list when ``text`` is falsy or whitespace-only.
+        Otherwise, for each registered topic the total number of
+        case-insensitive keyword occurrences (via ``re.findall``) is summed
+        across all of the topic's keywords. A topic is emitted at most once,
+        and only when that total is greater than zero. Each emitted
+        ``Tag`` carries confidence ``min(0.5 + match_count * 0.1, 1.0)``
+        rounded to two decimals, and the result is sorted by confidence
+        descending.
+        """
         if not text or not text.strip():
             return []
 
