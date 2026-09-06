@@ -1,4 +1,4 @@
-# TICKET-487: ContentNormalizer.normalize docstring drift (class-(b))
+# TICKET-488: ContentNormalizer.normalize docstring drift (class-(b))
 
 - **File:** personal_index/content_transform/normalizer.py
 - **Method:** ContentNormalizer.normalize (lines ~24-49)
