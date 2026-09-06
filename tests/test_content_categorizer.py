@@ -313,6 +313,21 @@ class TestContentCategorizerTopics:
         assert isinstance(topics, list)
         assert "technology" in topics
 
+    def test_get_topics_sorted_and_empty(self):
+        # sorting: add names out of lexicographic order
+        cat = ContentCategorizer()
+        cat.add_topic("zeta", ["z1"])
+        cat.add_topic("alpha", ["a1"])
+        # get_topics returns them sorted ascending, not in insertion order
+        topics = cat.get_topics()
+        assert topics == sorted(topics)
+        assert "alpha" in topics and "zeta" in topics
+        assert topics.index("alpha") < topics.index("zeta")
+        # guard path: an empty topic store returns an empty list
+        empty = ContentCategorizer()
+        empty._topics = {}
+        assert empty.get_topics() == []
+
 
 class TestContentCategorizerCategorize:
     """Tests for ContentCategorizer.categorize()."""

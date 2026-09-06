@@ -336,7 +336,13 @@ class ContentCategorizer:
         return False
 
     def get_topics(self) -> list[str]:
-        """Get list of all available topic names."""
+        """Return all stored topic names, sorted ascending.
+
+        Returns a list of every topic name currently stored in the
+        internal ``self._topics`` dict, sorted in ascending
+        (lexicographic) order. Returns an empty list when no topics
+        have been added.
+        """
         return sorted(self._topics.keys())
 
     def get_topic(self, name: str) -> TopicCategory | None:
