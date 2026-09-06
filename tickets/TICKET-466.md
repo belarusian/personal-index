@@ -30,4 +30,4 @@ the return value.
 Issue: #773
 
 ## Status
-OPEN
+RESOLVED
