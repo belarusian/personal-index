@@ -102,7 +102,7 @@ class TimelineView:
                 reference_date.year, reference_date.month
             )
         else:
-            entries = timeline.entries
+            entries = timeline.events
 
         # Filter by event type if specified
         if event_type:
