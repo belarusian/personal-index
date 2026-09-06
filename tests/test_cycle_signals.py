@@ -419,6 +419,39 @@ class TestSignalCoverage:
         assert result["total_modules"] == 0
         assert result["coverage_pct"] == 0
 
+    def test_no_fallback_to_codemap_tests_field(self, tmp_path):
+        """Pin the corrected contract: no codemap `tests` fallback.
+
+        Guard path: when test_dir is None (or not a dir), coverage is 0.0 even
+        though a module has tests>0 in its codemap entry. Normal case: a real
+        test dir counts the matching module.
+        """
+        mods = [
+            {"name": "pkg.analytics", "lines": 10, "functions": 1, "classes": 0,
+             "tests": 3, "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0},
+            {"name": "pkg.beta", "lines": 10, "functions": 1, "classes": 0,
+             "tests": 0, "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0},
+        ]
+        # Guard path: no test dir -> 0.0 even though analytics has tests=3.
+        guard = cycle_signals.signal_coverage(mods, test_dir=None)
+        assert guard["modules_with_tests"] == 0
+        assert guard["modules_without_tests"] == 2
+        assert guard["coverage_pct"] == 0.0
+        assert guard["test_dir_used"] is None
+        # A non-existent dir behaves the same (no fallback to the tests field).
+        guard2 = cycle_signals.signal_coverage(mods, test_dir=str(tmp_path / "missing"))
+        assert guard2["modules_with_tests"] == 0
+        assert guard2["coverage_pct"] == 0.0
+        # Normal case: a real test dir matching analytics counts it.
+        test_dir = tmp_path / "tests"
+        test_dir.mkdir()
+        (test_dir / "test_analytics.py").write_text("def test_x(): pass")
+        normal = cycle_signals.signal_coverage(mods, test_dir=str(test_dir))
+        assert normal["modules_with_tests"] == 1
+        assert normal["modules_without_tests"] == 1
+        assert normal["coverage_pct"] == 50.0
+        assert normal["test_dir_used"] == str(test_dir)
+
 
 # ---------------------------------------------------------------------------
 # format_for_auditor
