@@ -90,7 +90,13 @@ class ContentNormalizer:
         return url
 
     def _normalize_tag(self, tag: str) -> str:
-        """Normalize tag format."""
+        """Normalize a tag into a canonical slug form.
+
+        1. Strips surrounding whitespace and lowercases the value.
+        2. Replaces every character not in [a-z0-9-] with a single "-".
+        3. Collapses runs of consecutive "-" into a single "-".
+        4. Strips leading and trailing "-".
+        """
         tag = tag.strip().lower()
         tag = re.sub(r"[^a-z0-9-]", "-", tag)
         tag = re.sub(r"-+", "-", tag)
