@@ -1,6 +1,6 @@
 # TICKET-534: SnapshotManager.create_snapshot docstring omits max_snapshots eviction contract
 
-Status: OPEN
+Status: RESOLVED (merged via PR #944, issue #943 closed)
 Module: personal_index/content_diff/snapshot.py
 Method: SnapshotManager.create_snapshot
 
