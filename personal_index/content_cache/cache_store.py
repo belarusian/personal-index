@@ -42,12 +42,19 @@ class CacheStore:
     def get(self, key: str, default: T | None = None) -> T | None:
         """Get a value from the cache.
 
+        An entry whose TTL has elapsed is treated as a miss: the stored value
+        is not returned and the default (or None) is returned instead. A miss
+        on an expired entry lazily deletes the entry from the store, so a
+        subsequent has() or size() no longer counts it. A hit increments the
+        entry's access_count and refreshes its last_accessed timestamp (used
+        by LRU eviction).
+
         Args:
             key: Cache key.
-            default: Default value if key not found.
+            default: Default value if the key is missing or expired.
 
         Returns:
-            Cached value or default.
+            Cached value, or default if the key is missing or expired.
         """
         entry = self._entries.get(key)
         if entry is None or entry.is_expired:
@@ -62,10 +69,15 @@ class CacheStore:
     def set(self, key: str, value: Any, ttl: float | None = None) -> None:
         """Set a value in the cache.
 
+        When ttl is None the entry inherits self.default_ttl (which is itself
+        None for a store configured with no expiry). After inserting, if the
+        store now exceeds max_size the least-recently-used entry (the one with
+        the smallest last_accessed) is evicted via _evict_lru.
+
         Args:
             key: Cache key.
             value: Value to cache.
-            ttl: Time-to-live in seconds.
+            ttl: Time-to-live in seconds; None inherits self.default_ttl.
         """
         if ttl is None:
             ttl = self.default_ttl
@@ -103,11 +115,14 @@ class CacheStore:
     def has(self, key: str) -> bool:
         """Check if a key exists and is not expired.
 
+        A miss on an expired entry lazily deletes the entry from the store, so
+        the store shrinks as a side effect of this read.
+
         Args:
             key: Cache key.
 
         Returns:
-            True if key exists and is valid.
+            True if the key exists and is not expired.
         """
         entry = self._entries.get(key)
         if entry is None or entry.is_expired:
