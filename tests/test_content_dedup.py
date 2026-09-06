@@ -193,6 +193,16 @@ class TestDedupResult:
         assert "Duplicates found: 3" in summary
         assert "Method: hash" in summary
 
+    def test_summary_empty_state(self) -> None:
+        """Pin the guard path: an empty DedupResult renders 0.0% ratio."""
+        result = DedupResult()
+        summary = result.summary()
+        assert "Total items: 0" in summary
+        assert "Unique items: 0" in summary
+        assert "Duplicates found: 0" in summary
+        assert "Duplicate groups: 0" in summary
+        assert "Dedup ratio: 0.0%" in summary
+
 
 # ── DocumentHash ───────────────────────────────────────────────────
 
