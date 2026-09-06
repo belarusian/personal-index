@@ -1,4 +1,4 @@
-# TICKET-469: TfidfScorer.score_query docstring over-promises "TF-IDF dot product"
+# TICKET-469 (RESOLVED): TfidfScorer.score_query docstring over-promises "TF-IDF dot product"
 
 - File: personal_index/tfidf.py
 - Function: TfidfScorer.score_query (line 62)
