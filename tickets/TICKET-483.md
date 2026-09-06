@@ -1,6 +1,6 @@
 # TICKET-483: ContentNormalizer._normalize_tag docstring is generic (class-(b) doc-drift)
 
-Status: OPEN
+Status: RESOLVED (merged via PR #817)
 File: personal_index/content_transform/normalizer.py
 Method: ContentNormalizer._normalize_tag
 
