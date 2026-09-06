@@ -33,4 +33,4 @@ silently lost on a `to_dict()` -> `from_dict()` round-trip, even though
 Issue: #775
 
 ## Status
-OPEN
+RESOLVED (PR #776, gh #775)
