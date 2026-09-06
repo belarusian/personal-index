@@ -11,3 +11,4 @@ the title text is lost from ExtractedContent.title, get_searchable_text(), and
 any downstream search/indexing that relies on the title.
 
 ## EvidenceIssue: #815
+RESOLVED
