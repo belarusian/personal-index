@@ -1,6 +1,6 @@
 # TICKET-491: create_field_rename_transformer docstring drift
 
-Status: OPEN
+Status: RESOLVED (merged via PR #837)
 File: personal_index/content_transform/transformer.py
 Function: create_field_rename_transformer
 
