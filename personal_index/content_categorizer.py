@@ -340,7 +340,14 @@ class ContentCategorizer:
         return sorted(self._topics.keys())
 
     def get_topic(self, name: str) -> TopicCategory | None:
-        """Get a topic category by name."""
+        """Get a topic category by name.
+
+        The input ``name`` is lower-cased before lookup, so the match is
+        case-insensitive (a caller passing "Tech" matches a stored "tech").
+        Returns the matching ``TopicCategory`` from the internal
+        ``self._topics`` dict, or ``None`` when no topic with that
+        (case-insensitive) name exists.
+        """
         return self._topics.get(name.lower())
 
     def categorize(
