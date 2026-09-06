@@ -274,6 +274,14 @@ class ContentAPI:
         return 200, {"format": fmt, "items": items, "total": len(items)}
 
     def _health_check(self) -> tuple[int, dict[str, Any]]:
+        """Return the service health status.
+
+        Reads no params and touches no store state. Returns
+        ``(200, {"status": "healthy", "timestamp": <ts>})`` where ``<ts>``
+        is ``datetime.now(timezone.utc).isoformat()`` (a UTC ISO-8601
+        string). The response is always 200 with the fixed
+        ``status``/``timestamp`` shape.
+        """
         return 200, {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
     def _get_stats(self) -> tuple[int, dict[str, Any]]:

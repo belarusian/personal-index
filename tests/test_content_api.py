@@ -544,3 +544,16 @@ class TestExportContentDocstring529:
         assert "items" in doc
         assert "total" in doc
         assert "200" in doc
+
+
+class TestHealthCheckDocstring530:
+    """Pin the _health_check dispatch contract (TICKET-530)."""
+
+    def test_docstring_states_exact_contract(self) -> None:
+        doc = ContentAPI._health_check.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "status" in doc
+        assert "healthy" in doc
+        assert "timestamp" in doc
+        assert "200" in doc
