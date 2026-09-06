@@ -1,6 +1,6 @@
 # TICKET-502: ResultsFormatter.max_snippet_length is dead config - create_snippet ignores it
 
-Status: OPEN
+Status: RESOLVED
 Issue: #860
 Module: personal_index/results.py
 
