@@ -1,6 +1,6 @@
 # TICKET-530: ContentAPI._health_check docstring + pinning test
 
-Status: OPEN
+Status: RESOLVED
 File: personal_index/content_api.py
 Symptom: ContentAPI._health_check (def at line 276) has no docstring, so its
   exact dispatch contract is undocumented. Sibling dispatch methods
