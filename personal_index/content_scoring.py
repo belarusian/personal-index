@@ -126,6 +126,17 @@ class ContentScorer:
         self, recency: float, relevance: float, engagement: float,
         quality: float, authority: float, freshness: float,
     ) -> float:
+        """Return the raw float sum of the six weighted scoring products.
+
+        Each of the six factor values (recency, relevance, engagement, quality,
+        authority, freshness) is multiplied by the corresponding field of the
+        normalized ``self.weights`` (a ``ScoreWeights`` whose six weights sum to
+        1.0, set in ``__init__``), and the six products are added together.
+
+        The result is the raw, unrounded float sum. No clamping, rounding, or
+        normalization is applied here; rounding to 4 decimal places happens
+        later in ``_build_score``.
+        """
         return (
             self.weights.recency * recency
             + self.weights.relevance * relevance
