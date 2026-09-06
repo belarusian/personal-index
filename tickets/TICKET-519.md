@@ -22,4 +22,4 @@
   the returned handler and asserts on the result for the main branch (GET ->
   200 list) AND the guard/fallback path (unmatched method -> None).
 - **Issue:** #898
-- **Status:** OPEN
+- **Status:** RESOLVED (merged PR #900, issue #898 closed)
