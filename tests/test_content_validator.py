@@ -134,7 +134,7 @@ class TestQualityChecker:
         assert isinstance(results[0][1], QualityScore)
 
 
-class TestCheckDocstring536:
+class TestCheckDocstring537:
     """Pin the QualityChecker.check exact scoring contract (TICKET-536)."""
 
     def test_docstring_states_exact_contract(self):

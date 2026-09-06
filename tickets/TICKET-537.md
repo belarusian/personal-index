@@ -1,4 +1,4 @@
-# TICKET-536: QualityChecker.check docstring omits exact scoring contract
+# TICKET-537: QualityChecker.check docstring omits exact scoring contract
 
 Status: OPEN
 Module: personal_index/content_validator/quality.py
@@ -58,7 +58,7 @@ Reword the check docstring to state the exact contract (completeness /
 richness ratios, the 0.6/0.4 weighted overall rounded to 4 places, the fixed
 issue-message strings and their order, the <3 / <10 length thresholds, and
 the 4-place rounding of completeness/richness). Add a pinning test class
-TestCheckDocstring536 mirroring the TestComputeDocstring535 pattern,
+TestCheckDocstring537 mirroring the TestComputeDocstring535 pattern,
 asserting the docstring states the contract (key phrases: "0.6", "0.4",
 "Missing required field", "Title is too short", "Content is too short",
 "round") plus behavioral pins for the weighted formula, the exact issue
