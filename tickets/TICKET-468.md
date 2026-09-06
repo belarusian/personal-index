@@ -19,5 +19,5 @@
   the replace-vs-preserve semantics; add ONE behavior test pinning the
   corrected claim (normal: valid list replaces set + returns count; guard:
   non-list top-level returns 0 and leaves the existing set untouched).
-- Status: OPEN
+- Status: RESOLVED (PR #780, issue #779 closed, merge 1dc5718). Duplicate open issue #777 (mislabeled TICKET-467) closed in Cycle 103.
 - Issue: #779

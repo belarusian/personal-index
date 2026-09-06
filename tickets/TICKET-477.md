@@ -15,3 +15,6 @@ Change else branch to use timeline.events instead of timeline.entries to be cons
 
 ## Pinning Test
 Add test verifying render with unknown mode uses events not entries.
+
+- Status: RESOLVED (PR #803, issue #804 closed, merge 62c6b00)
+- Issue: #804
