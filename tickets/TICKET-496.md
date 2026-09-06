@@ -1,6 +1,6 @@
 # TICKET-496: pipeline.py transform/transform_batch docstring reword + pinning tests
 
-Status: OPEN
+Status: RESOLVED
 
 ## File
 personal_index/content_transform/pipeline.py
