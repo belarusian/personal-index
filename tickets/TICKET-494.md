@@ -1,6 +1,6 @@
 # TICKET-494: transform_batch docstring does not state the exact contract
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/content_transform/transformer.py
 Method: ContentTransformer.transform_batch (lines ~41-52)
 
@@ -27,3 +27,5 @@ self.transform(item), order preserved; (3) empty input list -> empty list
    empty -> empty).
 
 Issue: #840
+
+Resolved: 2026-09-06, merged via PR #842 (issue #840 closed).
