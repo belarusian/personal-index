@@ -1,4 +1,4 @@
-# TICKET-550: AnalyticsTracker._compute_search_analytics docstring is a placeholder
+# TICKET-551: AnalyticsTracker._compute_search_analytics docstring is a placeholder
 
 - **File:** personal_index/analytics.py
 - **Function:** `AnalyticsTracker._compute_search_analytics` (line 118)
