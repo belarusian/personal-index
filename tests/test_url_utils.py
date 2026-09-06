@@ -569,3 +569,50 @@ class TestIsExcludedUrl:
 
     def test_excluded_javascript_scheme(self) -> None:
         assert is_excluded_url("javascript:alert(1)") is True
+
+
+# ── normalize_url contract (TICKET-500) ───────────────────────────
+
+class TestNormalizeUrlContract:
+    """Pinning tests for the exact normalize_url contract (TICKET-500)."""
+
+    def test_exception_fallback_returns_original_not_none(self) -> None:
+        # A URL that raises during parsing is returned UNCHANGED, not None.
+        bad = "http://[invalid"
+        result = normalize_url(bad)
+        assert result is bad
+
+    def test_empty_url_returns_none(self) -> None:
+        assert normalize_url("") is None
+
+    def test_non_http_scheme_returns_none(self) -> None:
+        assert normalize_url("ftp://example.com/file") is None
+
+    def test_javascript_scheme_returns_none(self) -> None:
+        assert normalize_url("javascript:alert(1)") is None
+
+    def test_base_url_resolves_schemeless_url(self) -> None:
+        result = normalize_url("/relative/path", base_url="http://example.com/base/")
+        assert result == "http://example.com/relative/path"
+
+    def test_sort_query_params_opt_out(self) -> None:
+        result = normalize_url(
+            "http://example.com/path?b=2&a=1", sort_query_params=False
+        )
+        assert result == "http://example.com/path?b=2&a=1"
+
+    def test_lowercase_path_opt_out(self) -> None:
+        result = normalize_url("http://example.com/Path", lowercase_path=False)
+        assert result == "http://example.com/Path"
+
+    def test_remove_default_port_opt_out(self) -> None:
+        result = normalize_url(
+            "http://example.com:80/path", remove_default_port=False
+        )
+        assert result == "http://example.com:80/path"
+
+    def test_remove_fragment_opt_out(self) -> None:
+        result = normalize_url(
+            "http://example.com/path#section", remove_fragment=False
+        )
+        assert result == "http://example.com/path#section"
