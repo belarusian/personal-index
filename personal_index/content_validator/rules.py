@@ -78,14 +78,24 @@ def has_min_length(
     field: str,
     min_length: int,
 ) -> Callable[[dict[str, Any]], bool]:
-    """Create a rule that checks minimum string length.
+    """Create a rule that checks a field's minimum string length.
+
+    The returned callable returns True when the field is present and the
+    length of its string form is at least ``min_length``.
+
+    Contract:
+        - A missing field (``item.get(field) is None``) returns False.
+        - The value is coerced via ``str(value)``, so non-string values
+          (e.g. ``12345``) are measured by the length of their string form.
+        - The comparison is inclusive: ``len(str(value)) >= min_length``.
 
     Args:
         field: Field name to check.
-        min_length: Minimum required length.
+        min_length: Minimum required length (inclusive).
 
     Returns:
-        Callable that returns True if field meets length.
+        Callable that returns True if the field is present and its string
+        form is at least ``min_length`` characters long.
     """
     def check(item: dict[str, Any]) -> bool:
         value = item.get(field)
@@ -96,13 +106,23 @@ def has_min_length(
 
 
 def has_valid_url(field: str) -> Callable[[dict[str, Any]], bool]:
-    """Create a rule that checks URL validity.
+    """Create a rule that checks a field holds an http(s) URL.
+
+    The returned callable returns True only when the field's string form
+    starts with ``"http://"`` or ``"https://"``.
+
+    Contract:
+        - "Valid" means the string starts with ``http://`` or ``https://``
+          ONLY; other schemes (``ftp://``, ``file://``, ...) fail.
+        - An empty string fails.
+        - A missing field fails.
 
     Args:
         field: Field name containing URL.
 
     Returns:
-        Callable that returns True if URL is valid.
+        Callable that returns True if the field's value starts with
+        ``http://`` or ``https://``.
     """
     def check(item: dict[str, Any]) -> bool:
         url = item.get(field)
@@ -114,10 +134,22 @@ def has_valid_url(field: str) -> Callable[[dict[str, Any]], bool]:
 
 
 def has_valid_score() -> Callable[[dict[str, Any]], bool]:
-    """Create a rule that checks score is in valid range.
+    """Create a rule that checks the ``score`` field is in the valid range.
+
+    The returned callable returns True when the ``score`` field is absent or
+    is a number in the inclusive range ``[0.0, 1.0]``.
+
+    Contract:
+        - A missing score (``item.get("score") is None``) returns True
+          (treated as valid).
+        - The range is inclusive: both ``0`` and ``1`` pass.
+        - Only ``int``/``float`` values pass; a string such as ``"0.5"``
+          fails.
+        - ``bool`` is a subclass of ``int``, so ``True``/``False`` pass.
 
     Returns:
-        Callable that returns True if score is between 0 and 1.
+        Callable that returns True if the score is absent or is an
+        int/float in the inclusive range [0.0, 1.0].
     """
     def check(item: dict[str, Any]) -> bool:
         score = item.get("score")
