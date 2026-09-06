@@ -19,5 +19,5 @@
   the optional event_type filter, the event-dict keys, and the ViewResult fields;
   add ONE behavior test pinning the corrected claim (mode dispatch + event_type
   filter + event-dict keys + summary passthrough).
-- Status: OPEN
+- Status: RESOLVED
 - Issue: #793
