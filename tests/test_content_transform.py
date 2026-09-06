@@ -456,3 +456,77 @@ class TestNormalizeBatchPinning:
         result = n.normalize_batch(items)
         assert result == []
         assert isinstance(result, list)
+
+
+class TestPipelineTransformPinning:
+    def test_transform_returns_new_dict_input_not_mutated(self) -> None:
+        pipeline = TransformPipeline()
+        pipeline.add(ContentTransformer(
+            name="t1",
+            transform_fn=lambda c: {**c, "a": 1},
+        ))
+        items: list[dict[str, Any]] = [{"id": "1"}]
+        result = pipeline.transform(items[0])
+        assert result is not items[0]
+        assert items[0] == {"id": "1"}
+        assert result == {"id": "1", "a": 1}
+
+    def test_transform_applies_in_order(self) -> None:
+        pipeline = TransformPipeline()
+        pipeline.add(ContentTransformer(
+            name="t1",
+            transform_fn=lambda c: {**c, "a": 1},
+        )).add(ContentTransformer(
+            name="t2",
+            transform_fn=lambda c: {**c, "b": 2},
+        ))
+        result = pipeline.transform({"id": "1"})
+        assert result == {"id": "1", "a": 1, "b": 2}
+
+    def test_transform_empty_pipeline_returns_copy(self) -> None:
+        pipeline = TransformPipeline()
+        items: list[dict[str, Any]] = [{"id": "9"}]
+        result = pipeline.transform(items[0])
+        assert result is not items[0]
+        assert result == items[0]
+
+
+class TestPipelineTransformBatchPinning:
+    def test_batch_returns_new_list_input_not_mutated(self) -> None:
+        pipeline = TransformPipeline()
+        pipeline.add(ContentTransformer(
+            name="t1",
+            transform_fn=lambda c: {**c, "x": True},
+        ))
+        items: list[dict[str, Any]] = [{"id": "1"}, {"id": "2"}]
+        results = pipeline.transform_batch(items)
+        assert results is not items
+        assert items == [{"id": "1"}, {"id": "2"}]
+        assert all(r is not i for r, i in zip(results, items))
+
+    def test_batch_order_preserved_each_transformed(self) -> None:
+        pipeline = TransformPipeline()
+        pipeline.add(ContentTransformer(
+            name="t1",
+            transform_fn=lambda c: {**c, "a": 1},
+        )).add(ContentTransformer(
+            name="t2",
+            transform_fn=lambda c: {**c, "b": 2},
+        ))
+        items: list[dict[str, Any]] = [{"id": "1"}, {"id": "2"}]
+        results = pipeline.transform_batch(items)
+        assert results == [
+            {"id": "1", "a": 1, "b": 2},
+            {"id": "2", "a": 1, "b": 2},
+        ]
+
+    def test_batch_empty_returns_empty_list(self) -> None:
+        pipeline = TransformPipeline()
+        pipeline.add(ContentTransformer(
+            name="t1",
+            transform_fn=lambda c: {**c, "x": True},
+        ))
+        items: list[dict[str, Any]] = []
+        result = pipeline.transform_batch(items)
+        assert result == []
+        assert isinstance(result, list)
