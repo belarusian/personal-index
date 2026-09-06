@@ -76,7 +76,7 @@ class HealthCheckResult:
 
 @dataclass
 class HealthReport:
-    """Overall health report for all indexed content."""
+    """Overall health report aggregating results from checked content items."""
     total_items: int = 0
     healthy_count: int = 0
     warning_count: int = 0
