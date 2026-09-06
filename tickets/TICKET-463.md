@@ -1,6 +1,6 @@
 # TICKET-463
 
-- Status: OPEN
+- Status: RESOLVED (PR #768, merge 24d1505)
 - Module: personal_index/tags.py
 - Class: (b) doc-drift (blanket-adjective docstring where the body applies a NAMED predicate)
 
