@@ -60,7 +60,10 @@ class TfidfScorer:
         return scores
 
     def score_query(self, query: str, doc_id: int) -> float:
-        """Score a document against a query using TF-IDF dot product."""
+        """Score a document against a query as the dot product of the query
+        normalized-term-frequency vector and the document TF-IDF vector.
+        Returns 0.0 when the query yields no tokens after stopword removal
+        or the document is not in the corpus."""
         query_tokens = tokenize(query, remove_stopwords=True)
         if not query_tokens or doc_id not in self._doc_terms:
             return 0.0

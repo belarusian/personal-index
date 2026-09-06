@@ -153,3 +153,30 @@ class TestTfidfScorer:
         # Only the matching doc should appear; zero-score doc is excluded
         assert len(results) == 1
         assert results[0][0] == 0
+
+    def test_score_query_is_query_tf_dot_doc_tfidf(self):
+        """score_query = dot(query normalized-TF vector, doc TF-IDF vector).
+
+        Pins the corrected docstring claim: the query side uses raw normalized
+        term frequency (no IDF), only the document side is TF-IDF weighted.
+        """
+        from collections import Counter
+
+        from personal_index.text_utils import tokenize
+
+        doc_id = self.scorer.add_document("machine learning is great")
+        query = "machine learning"
+        # Guard path: all-stopword query yields no tokens -> 0.0
+        assert self.scorer.score_query("the of and", doc_id) == 0.0
+        # Guard path: unknown doc -> 0.0
+        assert self.scorer.score_query(query, 999) == 0.0
+        # Normal path: recompute the exact dot product the body performs.
+        q_tokens = tokenize(query, remove_stopwords=True)
+        q_counter = Counter(q_tokens)
+        q_total = sum(q_counter.values())
+        doc_tfidf = self.scorer.compute_tfidf(doc_id)
+        expected = sum(
+            (c / q_total) * doc_tfidf[t] for t, c in q_counter.items() if t in doc_tfidf
+        )
+        assert self.scorer.score_query(query, doc_id) == expected
+        assert expected > 0
