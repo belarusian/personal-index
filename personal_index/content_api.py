@@ -263,6 +263,12 @@ class ContentAPI:
         return 200, {"results": results, "total": len(results), "query": q}
 
     def _export_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
+        """Export all content items in the requested format.
+
+        Reads ``fmt = params.get("format", ["json"])[0]`` (default "json").
+        Collects ``items = list(self._store.values())`` and returns
+        ``(200, {"format": fmt, "items": items, "total": len(items)})``.
+        """
         fmt = params.get("format", ["json"])[0]
         items = list(self._store.values())
         return 200, {"format": fmt, "items": items, "total": len(items)}

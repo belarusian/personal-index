@@ -530,3 +530,17 @@ class TestSearchContentDocstring528:
         assert "total" in doc
         assert "query" in doc
         assert "200" in doc
+
+
+class TestExportContentDocstring529:
+    """Pin the _export_content dispatch contract (TICKET-529)."""
+
+    def test_docstring_states_exact_contract(self) -> None:
+        doc = ContentAPI._export_content.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "format" in doc
+        assert "json" in doc
+        assert "items" in doc
+        assert "total" in doc
+        assert "200" in doc
