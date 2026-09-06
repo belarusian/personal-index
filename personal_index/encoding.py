@@ -23,7 +23,32 @@ class EncodingDetector:
     COMMON_ENCODINGS: ClassVar[list[str]] = ["utf-8", "ascii", "iso-8859-1", "windows-1252", "utf-16", "utf-16-le", "utf-16-be"]
 
     def detect(self, data: bytes) -> EncodingResult:
-        """Detect the encoding of byte data."""
+        """Detect the encoding of byte data via a fixed priority cascade.
+
+        Checks, in order, returning the first match:
+
+        1. UTF-8 BOM (``\xef\xbb\xbf``) -> ``encoding="utf-8"``, ``confidence=1.0``.
+        2. UTF-16 BOM (``\xff\xfe`` LE or ``\xfe\xff`` BE) ->
+           ``encoding="utf-16"``, ``confidence=1.0``.
+        3. Pure ASCII (every byte < 0x80) -> ``encoding="ascii"``,
+           ``confidence=0.9``. This takes priority over valid UTF-8, so any
+           ASCII-only payload (including the empty ``b""``) is reported as
+           ``ascii`` rather than ``utf-8``.
+        4. Valid UTF-8 (decodes cleanly but is not pure ASCII) ->
+           ``encoding="utf-8"``, ``confidence=0.8``.
+        5. Fallback (not valid UTF-8) -> ``encoding="iso-8859-1"``,
+           ``confidence=0.5``.
+
+        The ``language`` field is always left at its default (``None``); this
+        method performs no language detection.
+
+        Args:
+            data: Raw bytes to inspect.
+
+        Returns:
+            An ``EncodingResult`` whose ``encoding`` and ``confidence`` reflect
+            the first matching rule above.
+        """
         if self._is_utf8_bom(data):
             return EncodingResult(encoding="utf-8", confidence=1.0)
 

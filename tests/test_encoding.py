@@ -84,3 +84,67 @@ class TestEncodingDetector:
         d = EncodingDetector()
         result = d.sanitize("  hello\x00world  ")
         assert result == "helloworld"
+
+
+class TestDetectContract:
+    """Pinning tests for EncodingDetector.detect's exact contract (TICKET-504)."""
+
+    def test_returns_encoding_result(self):
+        d = EncodingDetector()
+        result = d.detect(b"hello")
+        assert isinstance(result, EncodingResult)
+
+    def test_utf8_bom_confidence(self):
+        d = EncodingDetector()
+        result = d.detect(b"\xef\xbb\xbfhello")
+        assert result.encoding == "utf-8"
+        assert result.confidence == 1.0
+
+    def test_utf16_le_bom_confidence(self):
+        d = EncodingDetector()
+        result = d.detect(b"\xff\xfe\x00h")
+        assert result.encoding == "utf-16"
+        assert result.confidence == 1.0
+
+    def test_utf16_be_bom_confidence(self):
+        d = EncodingDetector()
+        result = d.detect(b"\xfe\xffh\x00")
+        assert result.encoding == "utf-16"
+        assert result.confidence == 1.0
+
+    def test_ascii_confidence(self):
+        d = EncodingDetector()
+        result = d.detect(b"hello world")
+        assert result.encoding == "ascii"
+        assert result.confidence == 0.9
+
+    def test_ascii_takes_priority_over_valid_utf8(self):
+        # ASCII-only bytes are valid UTF-8, but the cascade reports ascii first.
+        d = EncodingDetector()
+        result = d.detect(b"plain ascii text")
+        assert result.encoding == "ascii"
+        assert result.confidence == 0.9
+
+    def test_valid_utf8_non_ascii_confidence(self):
+        d = EncodingDetector()
+        result = d.detect("h\u00e9llo".encode("utf-8"))
+        assert result.encoding == "utf-8"
+        assert result.confidence == 0.8
+
+    def test_fallback_iso8859_1_confidence(self):
+        d = EncodingDetector()
+        # Bytes that are not valid UTF-8 fall back to iso-8859-1.
+        result = d.detect(b"caf\xe9")
+        assert result.encoding == "iso-8859-1"
+        assert result.confidence == 0.5
+
+    def test_empty_bytes_reported_as_ascii(self):
+        d = EncodingDetector()
+        result = d.detect(b"")
+        assert result.encoding == "ascii"
+        assert result.confidence == 0.9
+
+    def test_language_always_none(self):
+        d = EncodingDetector()
+        for data in (b"\xef\xbb\xbf", b"\xff\xfe", b"abc", "h\u00e9".encode("utf-8"), b"caf\xe9"):
+            assert d.detect(data).language is None
