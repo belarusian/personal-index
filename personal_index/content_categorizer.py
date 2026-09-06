@@ -223,7 +223,14 @@ class CategorizationResult:
         return self.topics[1:] if len(self.topics) > 1 else []
 
     def top_n(self, n: int = 3) -> list[TopicScore]:
-        """Return top N topics."""
+        """Return the first ``n`` topics (default ``n=3``) as a NEW list.
+
+        Returns ``self.topics[:n]`` — a fresh list (a slice), NOT the
+        internal ``self.topics`` list — preserving the existing order of
+        ``self.topics`` (score-descending, as produced by the categorizer).
+        ``n=0`` returns an empty list; ``n`` larger than ``len(topics)``
+        returns all topics. Does not mutate ``self.topics``.
+        """
         return self.topics[:n]
 
 # ---------------------------------------------------------------------------
