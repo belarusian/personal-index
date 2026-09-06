@@ -139,3 +139,77 @@ class TestClassifyDataDriven:
         assert result.category == URLCategory.PAGE
         assert result.confidence == 0.5
         assert "no specific pattern matched" in result.reasons
+
+class TestURLClassifierClassifyPinning:
+    """Pinning tests for URLClassifier.classify exact contract."""
+
+    def test_classify_returns_classification_result_never_none(self):
+        c = URLClassifier()
+        result = c.classify("http://example.com")
+        assert isinstance(result, ClassificationResult)
+        assert result is not None
+
+    def test_classify_preserves_url_as_is(self):
+        c = URLClassifier()
+        url = "HTTP://Example.COM/Path/To/Page"
+        result = c.classify(url)
+        assert result.url == url
+
+    def test_classify_confidence_values_per_category(self):
+        c = URLClassifier()
+        # REDIRECT confidence 0.8
+        r = c.classify("http://example.com/redirect?url=x")
+        assert r.category == URLCategory.REDIRECT
+        assert r.confidence == 0.8
+        # FEED confidence 0.9
+        r = c.classify("http://example.com/feed.rss")
+        assert r.category == URLCategory.FEED
+        assert r.confidence == 0.9
+        # API confidence 0.85
+        r = c.classify("http://example.com/api/")
+        assert r.category == URLCategory.API
+        assert r.confidence == 0.85
+        # STATIC confidence 0.9
+        r = c.classify("http://example.com/style.css")
+        assert r.category == URLCategory.STATIC
+        assert r.confidence == 0.9
+        # MEDIA confidence 0.85
+        r = c.classify("http://example.com/photo.jpg")
+        assert r.category == URLCategory.MEDIA
+        assert r.confidence == 0.85
+        # DOCUMENT confidence 0.85
+        r = c.classify("http://example.com/doc.pdf")
+        assert r.category == URLCategory.DOCUMENT
+        assert r.confidence == 0.85
+        # PAGE default confidence 0.5
+        r = c.classify("http://example.com/page")
+        assert r.category == URLCategory.PAGE
+        assert r.confidence == 0.5
+
+    def test_classify_default_page_reason(self):
+        c = URLClassifier()
+        result = c.classify("http://example.com/about")
+        assert result.category == URLCategory.PAGE
+        assert result.confidence == 0.5
+        assert result.reasons == ["no specific pattern matched"]
+
+    def test_classify_reasons_is_single_element_list(self):
+        c = URLClassifier()
+        result = c.classify("http://example.com/api/")
+        assert isinstance(result.reasons, list)
+        assert len(result.reasons) == 1
+        assert result.reasons[0] == "matches API pattern"
+
+    def test_classify_pattern_order_precedence(self):
+        c = URLClassifier()
+        # URL matching both redirect and feed patterns should pick redirect (first)
+        url = "http://example.com/redirect?url=http://example.com/feed.rss"
+        result = c.classify(url)
+        assert result.category == URLCategory.REDIRECT
+        assert result.confidence == 0.8
+
+    def test_classify_case_insensitive_matching(self):
+        c = URLClassifier()
+        result = c.classify("HTTP://EXAMPLE.COM/API/USERS")
+        assert result.category == URLCategory.API
+        assert result.confidence == 0.85
