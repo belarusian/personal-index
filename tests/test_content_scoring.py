@@ -156,6 +156,29 @@ class TestContentScorer:
     def scorer(self) -> ContentScorer:
         return ContentScorer()
 
+    # ── _compute_total() ─────────────────────────────────────────
+
+    def test_compute_total_weighted_sum_normal(self, scorer: ContentScorer) -> None:
+        """Pin the exact contract: raw float sum of six weighted products."""
+        total = scorer._compute_total(
+            recency=0.5, relevance=0.8, engagement=0.3,
+            quality=0.6, authority=0.4, freshness=0.2,
+        )
+        expected = (
+            0.2 * 0.5 + 0.25 * 0.8 + 0.15 * 0.3
+            + 0.15 * 0.6 + 0.1 * 0.4 + 0.15 * 0.2
+        )
+        assert isinstance(total, float)
+        assert total == pytest.approx(expected, abs=1e-9)
+
+    def test_compute_total_all_zero_factors_guard(self, scorer: ContentScorer) -> None:
+        """Guard path: all-zero factors yield a raw 0.0 sum."""
+        total = scorer._compute_total(
+            recency=0.0, relevance=0.0, engagement=0.0,
+            quality=0.0, authority=0.0, freshness=0.0,
+        )
+        assert total == 0.0
+
     # ── score() ──────────────────────────────────────────────────
 
     def test_score_default_weights(self, scorer: ContentScorer) -> None:
