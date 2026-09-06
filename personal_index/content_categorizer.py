@@ -506,7 +506,21 @@ class ContentCategorizer:
         meta_lower: str,
         url_hints: set,
     ) -> tuple[float, list[str], list[str]]:
-        """Score a single topic against content signals."""
+        """Score a single topic against content signals.
+
+        Returns a 3-tuple (score, matched, sources) where:
+        - score: non-negative float summing weighted, capped contributions
+          from up to four signal sources:
+          * text keyword matches: min(len(matches)*0.15, 1.0) * topic.weight
+          * title keyword matches: min(len(matches)*0.3*TITLE_BOOST, 1.0) * topic.weight
+          * meta_description keyword matches: min(len(matches)*0.2*META_DESC_BOOST, 1.0) * topic.weight
+          * URL hint: flat URL_HINT_BOOST * topic.weight (when topic.name in url_hints)
+        - matched: list of matched keyword strings across all sources
+        - sources: list of signal labels that contributed ("text", "title",
+          "meta_description", "url_hint")
+
+        Returns (0.0, [], []) when no signal matches.
+        """
         score = 0.0
         matched: list[str] = []
         sources: list[str] = []
