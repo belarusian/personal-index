@@ -235,3 +235,27 @@ class TestExportErrors:
         exporter = Exporter()
         content = exporter.export_to_content("xyz")
         assert content is None
+
+
+class TestExporterManager:
+    """Pinning tests for the Exporter.manager accessor contract (TICKET-514)."""
+
+    def test_default_returns_bookmark_manager(self):
+        exporter = Exporter()
+        assert isinstance(exporter.manager, BookmarkManager)
+
+    def test_default_is_same_reference_as_internal(self):
+        exporter = Exporter()
+        assert exporter.manager is exporter._manager
+
+    def test_injected_manager_returned_unchanged(self):
+        manager = BookmarkManager()
+        exporter = Exporter(manager=manager)
+        assert exporter.manager is manager
+
+    def test_access_is_pure_and_stable(self):
+        exporter = Exporter()
+        first = exporter.manager
+        second = exporter.manager
+        assert first is second
+        assert first is exporter._manager

@@ -48,7 +48,13 @@ class Exporter:
 
     @property
     def manager(self) -> BookmarkManager:
-        """Manager."""
+        """Return the underlying BookmarkManager.
+
+        Read-only accessor for the manager this exporter operates on: the
+        instance injected at construction, or a fresh default created in
+        ``__init__`` when none was supplied. Returns the same reference on
+        every call (no copy, no re-creation); pure.
+        """
         return self._manager
 
     def export_to_file(self, filepath: str, fmt: str | None = None) -> ExportResult:
