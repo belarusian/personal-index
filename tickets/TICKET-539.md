@@ -1,6 +1,6 @@
 # TICKET-539: Timeline.get_events_for_week docstring omits exact week-window contract
 
-Status: OPEN
+Status: RESOLVED (merged via PR #954, issue #953 closed)
 
 File: personal_index/content_timeline/timeline.py
 Method: Timeline.get_events_for_week (def at line 102)
