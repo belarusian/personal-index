@@ -115,7 +115,7 @@ class Paginator:
         """
         params = PageParams(
             page=page,
-            per_page=per_page or self._per_page,
+            per_page=self._per_page if per_page is None else per_page,
             max_per_page=self._max_per_page,
         )
         start = params.offset

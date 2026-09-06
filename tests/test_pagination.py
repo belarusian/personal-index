@@ -109,3 +109,21 @@ class TestPaginator:
         result = p.get_page(1)
         assert len(result.items) == 1
         assert result.total_pages == 1
+
+    def test_per_page_zero_clamped_to_one(self):
+        # Guard path: explicit per_page=0 must be clamped to 1 by PageParams,
+        # not silently coerced to the constructor default.
+        items = list(range(50))
+        p = Paginator(items, per_page=20)
+        result = p.get_page(1, per_page=0)
+        assert result.per_page == 1
+        assert len(result.items) == 1
+        assert result.items[0] == 0
+
+    def test_per_page_normal(self):
+        # Normal case: a valid per_page is respected.
+        items = list(range(50))
+        p = Paginator(items, per_page=20)
+        result = p.get_page(1, per_page=5)
+        assert result.per_page == 5
+        assert len(result.items) == 5
