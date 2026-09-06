@@ -20,7 +20,12 @@ class Suggestion:
     category: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        """To_dict."""
+        """Return a new dict with exactly the keys ``text``, ``score``, ``source``, ``category``.
+
+        ``score`` is rounded to 4 decimal places (``round(self.score, 4)``);
+        ``text``, ``source``, and ``category`` are copied by reference.
+        The suggestion object is NOT mutated.
+        """
         return {
             "text": self.text,
             "score": round(self.score, 4),
