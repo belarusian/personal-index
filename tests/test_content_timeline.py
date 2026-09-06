@@ -404,3 +404,48 @@ class TestTimelineEntriesRoundTripPinning:
         restored = Timeline.from_dict(tl.to_dict())
         assert restored.entries == []
         assert [e.event_id for e in restored.events] == ["e1"]
+
+
+class TestRenderPinning:
+    """Pins the corrected TimelineView.render claim (TICKET-474)."""
+
+    def _timeline(self) -> Timeline:
+        tl = Timeline()
+        tl.add_event(_event("e1", "c1", _ts(8, 9), TimelineEventType.CREATED))
+        tl.add_event(_event("e2", "c1", _ts(9, 9), TimelineEventType.TAGGED))
+        tl.add_event(_event("e3", "c1", _ts(15, 9), TimelineEventType.CREATED))
+        return tl
+
+    def test_render_day_dispatch_and_event_dict_keys(self) -> None:
+        view = TimelineView()  # default mode DAY
+        result = view.render(self._timeline(), date(2024, 1, 8))
+        # DAY dispatch -> only the Jan 8 event.
+        assert result.mode == "day"
+        assert result.total == 1
+        ev = result.events[0]
+        # Exactly the documented keys, in the documented shapes.
+        assert set(ev.keys()) == {
+            "item_id", "title", "event_type", "timestamp", "url", "description",
+        }
+        assert ev["item_id"] == "e1"
+        assert ev["event_type"] == "created"  # .value, not the enum
+        assert ev["timestamp"] == _ts(8, 9).isoformat()
+
+    def test_render_event_type_filter(self) -> None:
+        view = TimelineView()
+        view.set_mode(ViewMode.MONTH)
+        result = view.render(
+            self._timeline(), date(2024, 1, 10), event_type=TimelineEventType.TAGGED
+        )
+        assert result.total == 1
+        assert result.events[0]["item_id"] == "e2"
+        assert result.events[0]["event_type"] == "tagged"
+
+    def test_render_summary_passthrough(self) -> None:
+        view = TimelineView()
+        tl = self._timeline()
+        result = view.render(tl, date(2024, 1, 8))
+        # summary is timeline.get_summary() (whole-timeline, not filtered).
+        assert result.summary == tl.get_summary()
+        assert result.summary["total_events"] == 3
+        assert result.date == date(2024, 1, 8).isoformat()
