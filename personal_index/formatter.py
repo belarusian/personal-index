@@ -171,6 +171,7 @@ def truncate(text: str, max_length: int = 100) -> str:
     text is cut to exactly max_length characters (a negative slice index
     would otherwise count from the end and grow the string).
     """
+    max_length = max(0, max_length)
     if len(text) <= max_length:
         return text
     if max_length < 3:
