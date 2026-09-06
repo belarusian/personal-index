@@ -1,6 +1,6 @@
 # TICKET-547: Add CacheStore.get / set / has exact-contract docstrings + pinning test
 
-Status: OPEN
+Status: RESOLVED (merged via PR #971, issue #969 closed; merge commit 2bcb06b)
 Module: personal_index/content_cache/cache_store.py
 Methods: CacheStore.get, CacheStore.set, CacheStore.has
 Type: (a) public methods lacking an exact-contract docstring + pinning test
