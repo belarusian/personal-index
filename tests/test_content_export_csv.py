@@ -267,3 +267,11 @@ class TestCSVExporter:
         assert len(rows) == 1
         assert rows[0]["id"] == "1"
         assert rows[0]["title"] == "Test"
+
+    def test_export_get_stats_empty_pins_column_names_key(self):
+        """Pinning test: empty get_stats returns column_names key with empty list."""
+        stats = self.exporter.get_stats([])
+        assert "column_names" in stats
+        assert stats["column_names"] == []
+        assert stats["total_items"] == 0
+        assert stats["columns"] == 0

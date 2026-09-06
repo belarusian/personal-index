@@ -196,7 +196,7 @@ class CSVExporter:
     def get_stats(self, items: list[dict]) -> dict:
         """Get export statistics."""
         if not items:
-            return {"total_items": 0, "columns": 0}
+            return {"total_items": 0, "columns": 0, "column_names": []}
         columns: set[str] = set()
         for item in items:
             columns.update(item.keys())
