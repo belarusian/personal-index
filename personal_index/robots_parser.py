@@ -25,7 +25,13 @@ class RobotsPolicy:
     sitemap_urls: list[str] = field(default_factory=list)
 
     def can_fetch(self, url: str, user_agent: str = "personal-index") -> bool:
-        """Check if a URL can be fetched according to robots.txt."""
+        """Check if a URL can be fetched according to robots.txt.
+
+        Matching predicates applied in order:
+        1. Case-insensitive user-agent match (specific rules preferred over wildcard *).
+        2. Among applicable rules, the longest matching pattern wins (most specific).
+        3. If no rules apply to the requested user agent, the URL is allowed (default-allow).
+        """
         parsed = urlparse(url)
         path = parsed.path or "/"
 
