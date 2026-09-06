@@ -62,7 +62,21 @@ class ContentNormalizer:
         return [self.normalize(item) for item in items]
 
     def _normalize_title(self, title: str) -> str:
-        """Normalize title to title case."""
+        """Normalize a title value.
+
+        Behavior (in order):
+        1. Strip surrounding whitespace (str.strip()).
+        2. Apply Python's str.title(), which capitalizes the first character
+           of each "word" (words split on non-alphanumeric boundaries) and
+           lowercases the remaining characters of each word.
+
+        Examples:
+        - "  hello world  " -> "Hello World"
+        - "HELLO WORLD" -> "Hello World"
+        - "a b c" -> "A B C"
+        - "hello-world" -> "Hello-World"
+        - "" -> ""
+        """
         return title.strip().title()
 
     def _normalize_url(self, url: str) -> str:
