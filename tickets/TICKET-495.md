@@ -1,5 +1,7 @@
 # TICKET-495: normalize_batch docstring is generic — pin exact contract
 
+Status: RESOLVED
+
 - File: personal_index/content_transform/normalizer.py
 - Function: ContentNormalizer.normalize_batch (lines ~56-67)
 - Symptom: Docstring says only "Normalize multiple content items." with generic
