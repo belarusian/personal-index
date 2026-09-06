@@ -27,7 +27,12 @@ class URLDeduplicator:
 
     @property
     def seen_count(self) -> int:
-        """Seen_count."""
+        """Number of distinct URLs seen so far.
+
+        Read-only property returning ``len(self._seen_urls)`` (an int).
+        Entries are added only for non-duplicate URLs via :meth:`add_url`;
+        this property does not mutate any state.
+        """
         return len(self._seen_urls)
 
     def normalize_url(self, url: str) -> str:
