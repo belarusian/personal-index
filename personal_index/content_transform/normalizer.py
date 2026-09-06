@@ -57,13 +57,19 @@ class ContentNormalizer:
         self,
         items: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """Normalize multiple content items.
+        """Normalize multiple content items non-destructively.
+
+        Returns a NEW list (list comprehension); the input list is never mutated
+        and the result is not the input object. Each item is normalized via
+        self.normalize(item), so order is preserved and each output item is a new
+        dict (not the input item object). An empty input list returns an empty
+        list (no error).
 
         Args:
             items: List of content items.
 
         Returns:
-            List of normalized content items.
+            A new list of normalized content items.
         """
         return [self.normalize(item) for item in items]
 
