@@ -1,6 +1,6 @@
-# TICKET-472: CollectionManager.merge self-merge destroys the collection
+# TICKET-473: CollectionManager.merge self-merge destroys the collection
 
-Status: OPEN
+Status: RESOLVED (PR #791, issue #789 closed, merge 7b7f596)
 Issue: #789
 
 ## File
