@@ -59,7 +59,22 @@ def normalize_url(
     remove_default_port: bool = True,
     sort_query_params: bool = True,
 ) -> str | None:
-    """Normalize a URL by applying standard transformations."""
+    """Normalize a URL by applying standard transformations.
+
+    Returns:
+        The normalized URL string, or ``None`` when ``url`` is empty or its
+        scheme is not ``http``/``https`` (e.g. ``ftp://``, ``javascript:``).
+
+    Behavior:
+        When ``base_url`` is given and ``url`` has no scheme, ``url`` is first
+        resolved against ``base_url``. Each transformation is independently
+        opt-out-able via its flag: ``remove_fragment`` (drop ``#fragment``),
+        ``lowercase_path`` (lowercase the path), ``remove_default_port``
+        (strip ``:80``/``:443`` for http/https), and ``sort_query_params``
+        (sort the query string alphabetically). On a parse failure
+        (``ValueError``/``AttributeError``) the ORIGINAL ``url`` is returned
+        unchanged — not ``None``.
+    """
     if not url:
         return None
     try:
