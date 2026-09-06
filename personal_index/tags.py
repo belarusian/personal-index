@@ -142,7 +142,13 @@ class TagStore:
         return present
 
     def get_tags_for_page(self, url: str) -> list[Tag]:
-        """Get all tags for a page."""
+        """Return the Tag objects for a page whose tag names still exist.
+
+        Reads the tag names recorded for the page and returns the Tag object
+        for each name that is still present in the tag registry (self._tags).
+        A dangling name (recorded on the page but no longer registered) is
+        dropped, so the result may be shorter than the recorded name set.
+        """
         tag_names = self._page_tags.get(url, set())
         return [self._tags[name] for name in tag_names if name in self._tags]
 
