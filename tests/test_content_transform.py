@@ -394,3 +394,30 @@ class TestCreateFieldFilterTransformerPinning:
     def test_transformer_name_format(self) -> None:
         t = create_field_filter_transformer(["a", "b"])
         assert t.name == "filter_fields_2"
+
+class TestTransformBatchPinning:
+    """Pinning tests for ContentTransformer.transform_batch actual behavior."""
+
+    def test_returns_new_list_and_input_not_mutated(self) -> None:
+        t = create_field_add_transformer("k", "v")
+        items = [{"a": 1}, {"b": 2}]
+        original = [dict(d) for d in items]
+        result = t.transform_batch(items)
+        assert result is not items
+        assert items == original
+
+    def test_order_preserved_and_each_item_transformed(self) -> None:
+        t = create_field_add_transformer("k", "v")
+        items = [{"a": 1}, {"b": 2}, {"c": 3}]
+        result = t.transform_batch(items)
+        assert result == [{"a": 1, "k": "v"}, {"b": 2, "k": "v"}, {"c": 3, "k": "v"}]
+        # each output item is a new dict, not the input item
+        for out, inp in zip(result, items):
+            assert out is not inp
+
+    def test_empty_input_returns_empty_list(self) -> None:
+        t = create_field_add_transformer("k", "v")
+        result = t.transform_batch([])
+        assert result == []
+        assert isinstance(result, list)
+

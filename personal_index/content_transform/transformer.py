@@ -44,11 +44,18 @@ class ContentTransformer:
     ) -> list[dict[str, Any]]:
         """Transform multiple content items.
 
+        Each item is transformed via ``self.transform(item)`` and the results
+        are collected into a NEW list (list comprehension), so the input list
+        is never mutated and the returned list is not the input object. Item
+        order is preserved. An empty input list yields an empty list (no
+        error).
+
         Args:
             items: List of content items.
 
         Returns:
-            List of transformed content items.
+            A new list of transformed content items, in the same order as
+            ``items``.
         """
         return [self.transform(item) for item in items]
 
