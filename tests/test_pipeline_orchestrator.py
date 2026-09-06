@@ -506,3 +506,39 @@ class TestExecuteStages:
         returned = orch._execute_stages([], result, start_time)
         assert returned is result
         orch.close()
+
+
+class TestPipelineOrchestratorDocstringClaim:
+    """Pin the corrected docstring: pipeline stages are crawl→filter→score→tag→index.
+
+    There is no separate 'extract' stage; pages_extracted mirrors pages_crawled.
+    """
+
+    def test_no_separate_extract_stage(self, tmp_path):
+        """Normal path: pages_extracted equals pages_crawled (no extract stage)."""
+        data_dir = str(tmp_path / "data")
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "article.txt").write_text(
+            "Python is a programming language used for web development, "
+            "data science, and automation. It supports multiple paradigms "
+            "including procedural, object-oriented, and functional programming."
+        )
+        orch = PipelineOrchestrator(data_dir=data_dir)
+        files = [str(docs / "article.txt")]
+        result = orch.run_from_files(files)
+        assert result.success is True
+        assert result.stats.pages_crawled == 1
+        # Pin: no separate extract stage; extracted == crawled
+        assert result.stats.pages_extracted == result.stats.pages_crawled
+        orch.close()
+
+    def test_empty_files_no_extract(self, tmp_path):
+        """Guard path: empty file list yields zero extracted (no extract stage)."""
+        data_dir = str(tmp_path / "data")
+        orch = PipelineOrchestrator(data_dir=data_dir)
+        result = orch.run_from_files([])
+        assert result.success is True
+        assert result.stats.pages_crawled == 0
+        assert result.stats.pages_extracted == 0
+        orch.close()
