@@ -185,7 +185,16 @@ class SitemapParser:
     def get_recent_entries(
         self, sitemap: Sitemap, days: int = 30
     ) -> list[SitemapEntry]:
-        """Get entries modified within the last N days."""
+        """Return entries whose lastmod is within the last ``days`` days.
+
+        Iterates ``sitemap.entries`` in order. Entries whose ``lastmod`` is
+        falsy (None or empty) are skipped. Each remaining ``lastmod`` is parsed
+        with ``datetime.fromisoformat`` after replacing a trailing ``"Z"`` with
+        ``"+00:00"``; entries whose ``lastmod`` raises ``ValueError`` or
+        ``TypeError`` are skipped. An entry is included when
+        ``(datetime.now(timezone.utc) - lastmod).days <= days`` (inclusive
+        boundary). Returns the collected entries as a new list.
+        """
         cutoff = datetime.now(timezone.utc)
         entries = []
         for entry in sitemap.entries:
