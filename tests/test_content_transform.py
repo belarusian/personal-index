@@ -161,3 +161,34 @@ class TestNormalizeUrlPinning:
 
     def test_empty_stays_empty(self) -> None:
         assert self.n._normalize_url("") == ""
+
+
+class TestNormalizeTagPinning:
+    """Pinning tests for ContentNormalizer._normalize_tag actual behavior."""
+
+    def setup_method(self) -> None:
+        self.n = ContentNormalizer()
+
+    def test_strip_lower_and_space_to_dash(self) -> None:
+        assert self.n._normalize_tag("  My Tag  ") == "my-tag"
+
+    def test_underscore_to_dash(self) -> None:
+        assert self.n._normalize_tag("Hello_World") == "hello-world"
+
+    def test_consecutive_dashes_collapsed(self) -> None:
+        assert self.n._normalize_tag("a--b") == "a-b"
+
+    def test_leading_dash_stripped(self) -> None:
+        assert self.n._normalize_tag("-lead") == "lead"
+
+    def test_trailing_dash_stripped(self) -> None:
+        assert self.n._normalize_tag("trail-") == "trail"
+
+    def test_dots_to_dashes(self) -> None:
+        assert self.n._normalize_tag("a.b.c") == "a-b-c"
+
+    def test_digits_preserved(self) -> None:
+        assert self.n._normalize_tag("123") == "123"
+
+    def test_empty_stays_empty(self) -> None:
+        assert self.n._normalize_tag("") == ""
