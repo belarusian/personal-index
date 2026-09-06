@@ -1,6 +1,6 @@
 # TICKET-544: content_scoring._score_freshness placeholder docstring
 
-**Status:** OPEN
+**Status:** RESOLVED (merged on main 29e7a98, issue #962 closed)
 **File:** personal_index/content_scoring.py
 **Symptom:** `_score_freshness` (line 290) carries only the placeholder
 docstring "Score based on content freshness." while its siblings
