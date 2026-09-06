@@ -1,20 +1,10 @@
-# TICKET-476: content_health module docstring over-promises "indexed content" (module doc-drift)
+# TICKET-476: count_characters(include_spaces=False) does not strip all whitespace
 
-- File: personal_index/content_health.py
-- Location: module docstring (line 3)
-- Symptom (module doc drift): the module docstring claimed it "Checks the
-  health and quality of **indexed content** against configurable rules,"
-  implying the checker reads from some index. It does not: ContentHealthChecker
-  holds no content of its own and operates only on the item dicts passed to
-  check_item/check_all (the class docstring, pinned by TICKET-366, already
-  states "content items passed to check_item/check_all" and explicitly "not on
-  any 'indexed content' source"). The module docstring contradicted that.
-- Evidence line: module docstring line 3 ("indexed content") vs
-  ContentHealthChecker class docstring (line ~124) and check_all body
-  (maps each passed item dict through check_item; no index access).
-- Minimal additive fix: reword the module docstring to "Checks the health and
-  quality of content items passed to check_item/check_all against configurable
-  rules, ..."; add ONE behavior test pinning that the module docstring no
-  longer claims "indexed content".
-- Status: RESOLVED
-- Issue: #802
+- File: personal_index/text_utils.py
+- Function: count_characters (line ~263)
+- Class: (a) behavioral defect
+- Symptom: docstring promises include_spaces controls "Whether to count whitespace", but the body only strips 4 specific whitespace chars (" ", "\t", "\n", "\r"). Other whitespace (form feed, vertical tab, non-breaking space) is still counted when include_spaces=False.
+- Evidence: count_characters("a\fb", include_spaces=False) == 3 (expected 2); count_characters("a\x0bb", include_spaces=False) == 3 (expected 2); count_characters("a\u00a0b", include_spaces=False) == 3 (expected 2).
+- Minimal additive fix: replace the 4 chained .replace() calls with re.sub(r"\s+", "", text).
+- Witnessed by a pinning test covering the normal case (space) and the guard path (form feed / vertical tab / nbsp).
+- Issue: #805

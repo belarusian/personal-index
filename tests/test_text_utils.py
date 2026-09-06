@@ -295,6 +295,14 @@ class TestCountCharacters:
         assert count_characters("a\x0cb", include_spaces=False) == 2
         assert count_characters("a\x0bb", include_spaces=False) == 2
 
+    def test_without_spaces_strips_all_whitespace(self):
+        # normal case: plain space
+        assert count_characters("hello world", include_spaces=False) == 10
+        # guard path: form feed, vertical tab, non-breaking space
+        assert count_characters("a\fb", include_spaces=False) == 2
+        assert count_characters("a\x0bb", include_spaces=False) == 2
+        assert count_characters("a\u00a0b", include_spaces=False) == 2
+
 
 class TestReadTimeMinutes:
     def test_basic(self):
