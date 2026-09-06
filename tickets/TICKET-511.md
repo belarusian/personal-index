@@ -1,6 +1,6 @@
 # TICKET-511: url_history.py URLVisit.to_dict placeholder docstring under-describes behavior
 
-Status: OPEN
+Status: RESOLVED
 
 Issue: #878
 
