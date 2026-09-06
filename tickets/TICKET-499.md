@@ -32,6 +32,6 @@ over blacklist, first-in-insertion-order within a list, identity (returns the
 stored object, not a copy), None when no match / empty filter, and no mutation.
 
 ## Status
-OPEN
+RESOLVED (merged via PR #855)
 
 Issue: #854
