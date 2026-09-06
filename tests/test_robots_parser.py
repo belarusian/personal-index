@@ -72,6 +72,23 @@ class TestRobotsPolicy:
         assert "https://example.com/sitemap.xml" in policy.sitemap_urls
 
 
+
+    def test_can_fetch_case_insensitive_ua_and_default_allow(self):
+        """Pin: case-insensitive UA match + default-allow when no rules apply."""
+        policy = RobotsPolicy(
+            domain="example.com",
+            rules=[
+                RobotsRule(user_agent="personal-index", allowed=False, pattern="/secret"),
+            ],
+        )
+        # Normal: case-insensitive UA match - 'Personal-Index' matches 'personal-index'
+        assert policy.can_fetch("https://example.com/secret", "Personal-Index") is False
+        # Normal: different case still matches
+        assert policy.can_fetch("https://example.com/secret", "PERSONAL-INDEX") is False
+        # Guard: UA with no rules at all -> default-allow
+        assert policy.can_fetch("https://example.com/anything", "OtherBot") is True
+
+
 class TestParseRobotsTxt:
     """Tests for parse_robots_txt."""
 
