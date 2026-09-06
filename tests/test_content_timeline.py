@@ -326,3 +326,47 @@ class TestEdgeCases:
         view = TimelineView()
         result = view.render(Timeline(), date(2024, 1, 8))
         assert 123 not in result
+
+
+class TestAddEntryPinning:
+    """Pins the corrected add_entry claim (TICKET-466)."""
+
+    def test_add_entry_returns_created_entry(self) -> None:
+        tl = Timeline()
+        entry = tl.add_entry("i1", "T1", timestamp=_ts(1))
+        assert isinstance(entry, TimelineEntry)
+        assert entry.item_id == "i1"
+        assert entry.title == "T1"
+        assert entry.timestamp == _ts(1)
+        assert tl.entries[-1] is entry
+
+    def test_add_entry_defaults_timestamp_to_now_utc(self) -> None:
+        tl = Timeline()
+        before = datetime.now(timezone.utc)
+        entry = tl.add_entry("i1", "T1")
+        after = datetime.now(timezone.utc)
+        assert entry.timestamp.tzinfo is not None
+        assert before <= entry.timestamp <= after
+
+    def test_add_entry_defaults_metadata_to_empty_dict(self) -> None:
+        tl = Timeline()
+        entry = tl.add_entry("i1", "T1")
+        assert entry.metadata == {}
+
+    def test_add_entry_preserves_explicit_metadata(self) -> None:
+        tl = Timeline()
+        entry = tl.add_entry("i1", "T1", metadata={"k": "v"})
+        assert entry.metadata == {"k": "v"}
+
+    def test_add_entry_appends_to_entries(self) -> None:
+        tl = Timeline()
+        tl.add_entry("i1", "T1", timestamp=_ts(1))
+        tl.add_entry("i2", "T2", timestamp=_ts(2))
+        assert len(tl.entries) == 2
+
+    def test_add_entry_sorts_reverse_newest_first(self) -> None:
+        tl = Timeline()
+        tl.add_entry("i1", "T1", timestamp=_ts(1))
+        tl.add_entry("i3", "T3", timestamp=_ts(3))
+        tl.add_entry("i2", "T2", timestamp=_ts(2))
+        assert [e.item_id for e in tl.entries] == ["i3", "i2", "i1"]
