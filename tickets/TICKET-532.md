@@ -15,5 +15,5 @@
   filter, returned list). Add ONE pinning test in tests/test_content_summarizer.py
   that witnesses the split behavior AND the empty-text guard path against the
   returned list.
-- Status: OPEN
+- Status: RESOLVED (merged via PR #940, issue #939 closed)
 - Issue: #939
