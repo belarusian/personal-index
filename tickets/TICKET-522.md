@@ -21,4 +21,4 @@
   no-lastmod and unparseable-lastmod both skipped; plus an empty-sitemap case);
   do NOT assert on the docstring wording.
 - **Status:** OPEN
-- **Issue:** (to be created)
+- **Issue:** #910
