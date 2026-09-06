@@ -1,6 +1,6 @@
 # TICKET-545: exact-contract docstrings for content_validator.rules has_min_length / has_valid_url / has_valid_score + pinning test
 
-Status: OPEN
+Status: RESOLVED (merged via PR #966, issue #965 closed)
 Issue: #965
 Module: personal_index/content_validator/rules.py
 Type: type-a (public functions lacking exact-contract docstring + pinning test)
