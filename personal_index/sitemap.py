@@ -59,7 +59,18 @@ class SitemapParser:
     }
 
     def parse(self, xml_content: str, source_url: str = "") -> Sitemap:
-        """Parse sitemap XML content."""
+        """Parse sitemap XML content into a :class:`Sitemap`.
+
+        Returns an empty ``Sitemap(source_url=source_url)`` when
+        ``xml_content`` is empty/None, or when ``ET_fromstring`` raises
+        ``ET_ParseError``. Otherwise strips any ``{ns}`` prefix from the
+        root tag; if the root tag is ``sitemapindex`` (or the root contains
+        a ``ns:sitemapindex`` child) delegates to
+        ``_parse_sitemap_index_items`` and returns the sitemap (populating
+        ``sitemap.sitemaps``). Otherwise iterates the ``ns:url`` children,
+        appending each non-None ``_parse_url_element`` result to
+        ``sitemap.entries``, and returns the sitemap.
+        """
         if not xml_content:
             return Sitemap(source_url=source_url)
 

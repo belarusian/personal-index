@@ -163,3 +163,41 @@ class TestSitemapGetUrlsFiltering:
         urls = sitemap.get_urls()
         assert urls == ["https://example.com/page"]
         assert len(urls) == 1
+
+
+class TestSitemapParseContract:
+    """Pin the corrected SitemapParser.parse claim: guards + urlset dispatch."""
+
+    def setup_method(self):
+        from personal_index.sitemap import SitemapParser
+
+        self.parser = SitemapParser()
+
+    def test_parse_urlset_main_branch(self):
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            "<url><loc>http://example.com/a</loc></url>"
+            "<url><loc>http://example.com/b</loc></url>"
+            "</urlset>"
+        )
+        sitemap = self.parser.parse(xml, source_url="http://example.com/sitemap.xml")
+        assert sitemap.source_url == "http://example.com/sitemap.xml"
+        assert sitemap.url_count == 2
+        assert [e.loc for e in sitemap.entries] == [
+            "http://example.com/a",
+            "http://example.com/b",
+        ]
+        assert sitemap.sitemaps == []
+
+    def test_parse_empty_guard(self):
+        sitemap = self.parser.parse("", source_url="http://example.com/s.xml")
+        assert sitemap.source_url == "http://example.com/s.xml"
+        assert sitemap.url_count == 0
+        assert sitemap.sitemaps == []
+
+    def test_parse_error_guard(self):
+        sitemap = self.parser.parse("this is not xml", source_url="http://example.com/s.xml")
+        assert sitemap.source_url == "http://example.com/s.xml"
+        assert sitemap.url_count == 0
+        assert sitemap.sitemaps == []
