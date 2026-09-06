@@ -25,3 +25,6 @@ Issue: #862
 
 ## Status
 OPEN
+
+## Resolution
+RESOLVED via PR #863 (merged 2026-09-06)
