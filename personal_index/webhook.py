@@ -35,7 +35,12 @@ class WebhookPayload:
     source: str = "personal-index"
 
     def to_dict(self) -> dict[str, Any]:
-        """To_dict."""
+        """Return the payload as a dict with exactly four keys.
+
+        Keys: ``event`` (the WebhookEvent's ``.value`` string, not the
+        enum object), ``data`` (the payload dict), ``timestamp`` (float),
+        ``source`` (str).
+        """
         return {
             "event": self.event.value,
             "data": self.data,
@@ -44,7 +49,7 @@ class WebhookPayload:
         }
 
     def to_json(self) -> str:
-        """To_json."""
+        """Return the JSON string of ``self.to_dict()`` (json.dumps)."""
         return json.dumps(self.to_dict())
 
 
@@ -167,5 +172,5 @@ class WebhookSender:
 
     @property
     def endpoint_count(self) -> int:
-        """Endpoint_count."""
+        """Return the number of configured endpoints (len of the config list)."""
         return len(self._configs)

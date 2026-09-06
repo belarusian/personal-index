@@ -38,6 +38,25 @@ class TestWebhookPayload:
         assert parsed["event"] == "index_update"
         assert parsed["data"]["count"] == 42
 
+    def test_to_dict_pins_documented_contract(self):
+        payload = WebhookPayload(
+            event=WebhookEvent.CRAWL_COMPLETE,
+            data={"url": "http://example.com"},
+            source="custom-src",
+        )
+        d = payload.to_dict()
+        # Exactly the four documented keys, no more.
+        assert set(d.keys()) == {"event", "data", "timestamp", "source"}
+        # event is the enum's .value string, not the enum object.
+        assert d["event"] == "crawl_complete"
+        assert isinstance(d["event"], str)
+        # ABSENCE of the sibling key: the enum object itself is not a key.
+        assert WebhookEvent.CRAWL_COMPLETE not in d
+        # data / source round-trip as the payload fields.
+        assert d["data"] == {"url": "http://example.com"}
+        assert d["source"] == "custom-src"
+        assert isinstance(d["timestamp"], float)
+
 
 class TestWebhookConfig:
     def test_should_send_all_events(self):
