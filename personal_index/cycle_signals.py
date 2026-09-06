@@ -507,8 +507,18 @@ def signal_errors(modules: list[dict]) -> list[dict]:
 def signal_coverage(modules: list[dict], test_dir: str | None = None) -> dict:
     """Estimate coverage by matching test files to source module names.
 
-    e.g., tests/test_analytics.py → personal_index.analytics
-    Falls back to codemap `tests` field if no test directory found.
+    Coverage is estimated ONLY by matching test files in ``test_dir`` against
+    module short names: for each ``test_dir/test_*.py`` file, the ``test_``
+    prefix is stripped and the remaining stem is matched to a module whose
+    short name equals the stem (or ``_{stem}``). A module is counted as
+    covered when at least one test file matches it.
+
+    There is NO fallback to the codemap ``tests`` field: when ``test_dir`` is
+    None or is not an existing directory, no test files are matched and the
+    result reports ``modules_with_tests`` 0 and ``coverage_pct`` 0.0 (the
+    per-module ``tests`` counts are not consulted).
+
+    e.g., tests/test_analytics.py → personal_index.analytics.
     """
     import glob as globmod
 
