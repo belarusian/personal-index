@@ -297,3 +297,33 @@ class TestTransformerTransformPinning:
         # mutating the copy must not affect the input
         result["id"] = "changed"
         assert d["id"] == "1"
+
+
+class TestCreateFieldAddTransformerPinning:
+    """Pinning tests for create_field_add_transformer actual behavior."""
+
+    def test_field_absent_is_added(self) -> None:
+        t = create_field_add_transformer("new_field", "value")
+        result = t.transform({"id": "1"})
+        assert result == {"id": "1", "new_field": "value"}
+
+    def test_field_present_is_overwritten(self) -> None:
+        t = create_field_add_transformer("id", "OVERRIDDEN")
+        result = t.transform({"id": "1", "tags": ["a"]})
+        assert result == {"id": "OVERRIDDEN", "tags": ["a"]}
+
+    def test_input_not_mutated(self) -> None:
+        t = create_field_add_transformer("id", "X")
+        d = {"id": "1", "tags": ["a"]}
+        original = dict(d)
+        result = t.transform(d)
+        assert d == original
+        # result is a new dict, not the input object
+        assert result is not d
+        # mutating the copy must not affect the input
+        result["id"] = "changed"
+        assert d["id"] == "1"
+
+    def test_transformer_name_is_add_prefixed(self) -> None:
+        t = create_field_add_transformer("new_field", "value")
+        assert t.name == "add_new_field"

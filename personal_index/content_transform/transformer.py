@@ -102,14 +102,20 @@ def create_field_add_transformer(
     field_name: str,
     value: Any,
 ) -> ContentTransformer:
-    """Create a transformer that adds a field.
+    """Create a transformer that sets a field (add-or-overwrite).
+
+    The returned transformer's transform returns a NEW dict (a shallow copy of
+    the input, so the input dict is never mutated) with ``field_name`` set to
+    ``value``. If ``field_name`` already exists in the content it is
+    OVERWRITTEN with ``value``; if absent it is added. The transformer is named
+    ``add_{field_name}``.
 
     Args:
-        field_name: Name of field to add.
-        value: Value to set.
+        field_name: Name of the field to set.
+        value: Value to set the field to.
 
     Returns:
-        ContentTransformer that adds the field.
+        ContentTransformer named ``add_{field_name}`` that sets the field.
     """
     def fn(content: dict[str, Any]) -> dict[str, Any]:
         result = dict(content)
