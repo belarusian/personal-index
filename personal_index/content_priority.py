@@ -95,7 +95,6 @@ class PriorityCalculator:
         interest_matches: list[str] | None = None,
         view_count: int = 0,
         days_since_indexed: float = 0.0,
-        tags: list[str] | None = None,
     ) -> PriorityResult:
         """Calculate priority for a content item.
 
@@ -198,7 +197,7 @@ class PriorityCalculator:
         Args:
             items: List of item dicts with keys:
                 url, title, content_score, interest_matches,
-                view_count, days_since_indexed, tags.
+                view_count, days_since_indexed.
 
         Returns:
             List of PriorityResult objects sorted by score descending.
@@ -212,7 +211,6 @@ class PriorityCalculator:
                 interest_matches=item.get("interest_matches", []),
                 view_count=item.get("view_count", 0),
                 days_since_indexed=item.get("days_since_indexed", 0.0),
-                tags=item.get("tags", []),
             )
             results.append(result)
 
