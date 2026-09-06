@@ -1,6 +1,6 @@
 # TICKET-549: Add ContentScorer._compute_total exact-contract docstring + pinning test
 
-Status: OPEN
+Status: RESOLVED (merged via PR #977, issue #975 closed; merge commit 2a990f0)
 Module: personal_index/content_scoring.py
 Methods: ContentScorer._compute_total
 Type: (b) private method lacking an exact-contract docstring + pinning test
