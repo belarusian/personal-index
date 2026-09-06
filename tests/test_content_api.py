@@ -430,3 +430,20 @@ class TestRouteContentItemDispatch:
     def test_unmatched_method_returns_none(self, api):
         handler = api._route_content_item("PATCH", "1", None)
         assert handler is None
+
+class TestListContentDocstring:
+    """Pin the _list_content pagination contract (TICKET-522)."""
+
+    def test_docstring_states_exact_contract(self) -> None:
+        doc = ContentAPI._list_content.__doc__
+        assert doc is not None
+        # Key contract phrases the docstring must state.
+        assert "page" in doc
+        assert "per_page" in doc
+        assert "400" in doc
+        assert "200" in doc
+        assert "items" in doc
+        assert "total" in doc
+        assert "100" in doc
+        assert "default 1" in doc
+        assert "default 20" in doc

@@ -122,6 +122,16 @@ class ContentAPI:
         return None
 
     def _list_content(self, params: dict[str, list[str]]) -> tuple[int, dict[str, Any]]:
+        """List content items with pagination.
+
+        Reads the optional page (default 1) and per_page (default 20)
+        query parameters from params. Returns (400, {"error": ...})
+        when either page or per_page is not an integer. Otherwise
+        per_page is capped at 100 and the method returns
+        (200, {"items": [...], "total": int, "page": int,
+        "per_page": int}) where items is the requested page slice of
+        the store and total is the full item count.
+        """
         items = list(self._store.values())
         # Pagination
         try:
