@@ -1,6 +1,6 @@
 # TICKET-500: normalize_url docstring omits its real contract
 
-Status: OPEN
+Status: RESOLVED
 Module: personal_index/url_utils.py
 Function: normalize_url (line 54)
 
@@ -28,4 +28,4 @@ Reword the docstring to state the exact contract (None conditions, exception fal
 flag semantics). Append pinning tests (TestNormalizeUrlContract) covering: exception
 fallback returns original, opt-out flags, non-http scheme rejection, base_url resolution.
 
-Issue: #856
+Issue: #856 (closed via PR #857)
