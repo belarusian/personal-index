@@ -283,7 +283,19 @@ class CollectionManager:
         return False
 
     def merge(self, target_id: str, source_id: str) -> bool:
-        """Merge source collection into target collection, deleting source."""
+        """Merge source collection into target collection, deleting source.
+
+        Guard path: if ``target_id == source_id`` (a self-merge), returns
+        False without touching the collection or the ``_item_to_collections``
+        reverse index - merging a collection into itself is a no-op and must
+        not delete the collection or lose its items.
+
+        On success (both collections exist and differ): the source's items are
+        added to the target, the reverse index is updated, and the source is
+        deleted. Returns True on success, False on the guard path.
+        """
+        if target_id == source_id:
+            return False
         target = self._collections.get(target_id)
         source = self._collections.get(source_id)
         if target and source:
