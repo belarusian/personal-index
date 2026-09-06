@@ -296,6 +296,17 @@ class TestContentCategorizerTopics:
         cat = ContentCategorizer()
         assert cat.get_topic("nonexistent") is None
 
+    def test_get_topic_case_insensitive_and_missing(self):
+        cat = ContentCategorizer()
+        topic = cat.add_topic("Tech", ["kw"])
+        # same (lower-cased) name returns the stored object
+        assert cat.get_topic("tech") is topic
+        # a different case still matches (case-insensitive lookup)
+        assert cat.get_topic("TECH") is topic
+        assert cat.get_topic("Tech") is topic
+        # a missing name returns None
+        assert cat.get_topic("does-not-exist") is None
+
     def test_get_topics_returns_list(self):
         cat = ContentCategorizer()
         topics = cat.get_topics()
