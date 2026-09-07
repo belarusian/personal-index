@@ -1,26 +1,24 @@
-# TICKET-529: ContentAPI._export_content docstring + pinning test
+# TICKET-529: content_health.HealthReport class docstring "indexed content" over-promise
 
-Status: RESOLVED
-File: personal_index/content_api.py
-Symptom: ContentAPI._export_content (def at line 265) has no docstring, so its
-  exact dispatch contract is undocumented. Sibling dispatch methods
-  (_create/_get/_list/_update/_delete/_search_content) all carry exact-contract
-  docstrings + pinning tests; _export_content is the next un-documented
-  dispatch method.
+Status: OPEN
+Issue: #934
+Module: personal_index/content_health.py
+Class: HealthReport
+Type: (b) doc-drift (docstring over-promise)
 
-Evidence (verified in code + TestExport):
-  - fmt = params.get("format", ["json"])[0]
-  - items = list(self._store.values())
-  - return 200, {"format": fmt, "items": items, "total": len(items)}
-  TestExport pins: format=json -> 200, body["format"]=="json", body["total"]==2;
-  no format param -> body["format"]=="json" (default).
+## Symptom
+The `HealthReport` class docstring (line 79) reads:
+    "Overall health report for all indexed content."
+The phrase "indexed content" names a data SOURCE the code never touches.
 
-Minimal additive fix:
-  - Add a docstring to _export_content stating the exact dispatch contract
-    (format read with default "json", items = all store values, 200
-    format/items/total shape).
-  - Add pinning test TestExportContentDocstring529 mirroring
-    TestSearchContentDocstring528, asserting key phrases present
-    (format, json, items, total, 200).
+## Evidence
+- `HealthReport` is a dataclass with fields `total_items`, `healthy_count`, etc., initialized with defaults or via direct construction.
+- No `__init__` takes an index/store handle; the class is populated by `ContentHealthChecker._build_report(results)` which aggregates `HealthCheckResult` objects passed in via `check_item`/`check_all`.
+- The class never accesses an index, store, or crawler; it is a pure data container for check results supplied by the caller.
+- The docstring over-promises a source ("indexed content") the code does not use.
 
-Issue: #929
+## Minimal additive fix
+Reword the class docstring to state the exact mechanism the body performs:
+    "Overall health report aggregating results from checked content items."
+Add ONE behavior test pinning the corrected claim against the returned object:
+a fresh `HealthReport` can be constructed with arbitrary counts and `summary()` formats them correctly, and `HealthReport` built via `ContentHealthChecker.check_all` reflects only the items explicitly passed to `check_item`, not an implicit index.
