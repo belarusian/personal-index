@@ -49,8 +49,10 @@ ARCH-5 ValidationRule.validate drift).
 - `docs/cache.md` (spec) — `personal_index.cache`.
 - `docs/timeline.md` (spec) — `personal_index.content_timeline`.
 - `docs/validation.md` (spec) — `personal_index.content_validator`.
+- `docs/analytics.md` (spec) — `personal_index.analytics` (cycle 170).
 
 ## Contract holes found (each -> its own ARCH ticket)
 - `PipelineStats` field drift (API_REFERENCE.md vs models.py) -> ARCH-3.
 - `SearchIndex.add_page` "Returns page id." vs `len(self._pages)` -> ARCH-4.
 - `ValidationRule.validate` blanket docstring -> ARCH-5.
+- `_compute_crawl_analytics` blanket docstring (analytics.py) -> ARCH-6 (cycle 170).
