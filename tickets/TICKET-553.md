@@ -3,6 +3,7 @@
 **Status:** CLAIMED 2026-09-07
 **Module:** personal_index/content_linker/similarity.py
 **Kind:** type-a (public method lacking an exact-contract docstring + pinning test)
+**Issue:** #990
 
 ## Symptom
 `SimilarityEngine.similarity` (line 22) and `SimilarityEngine.find_similar`
