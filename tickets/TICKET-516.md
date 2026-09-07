@@ -1,18 +1,27 @@
 # TICKET-516
+## Status: OPEN
+## Module: personal_index/content_health.py
+## Class/Method: HealthReport.summary
+## Type: class-(b) doc-drift
 
-- Status: RESOLVED (merged via PR #892)
-- File: personal_index/content_api.py
-- Function: ContentAPI.handle_request (line 33)
-- Symptom: class-(b) docstring under-description. The docstring
-  `"""Route and handle an HTTP request."""` does not state the actual
-  behavior: it parses the path with urlparse, splits into path parts,
-  parses the query string, dispatches via _match_route, and returns the
-  handler's (status, payload) tuple, or (404, {"error": "Not found",
-  "path": path}) when no route matches.
-- Evidence: personal_index/content_api.py:33
-- Minimal additive fix: reword the docstring to the exact contract
-  (parse path/query, dispatch via _match_route, return handler result or
-  404 fallback) and add ONE pinning behavior test that witnesses the
-  returned (status, payload) tuple for a matched route AND the 404
-  guard-path (unknown route).
-- Issue: #
+### Symptom
+Docstring is blanket-adjective "Generate a human-readable summary." while body builds a named set of fields in fixed order.
+
+### Evidence
+File: personal_index/content_health.py
+Line ~ 70-85
+Docstring: """Generate a human-readable summary."""
+Body builds lines:
+- "Content Health Report"
+- "=" * 40
+- f"Total items: {self.total_items}"
+- f"Healthy: {self.healthy_count}"
+- f"Warnings: {self.warning_count}"
+- f"Unhealthy: {self.unhealthy_count}"
+- f"Overall score: {self.overall_score:.1f}/100"
+- f"Health percentage: {self.health_percentage:.1f}%"
+
+### Fix
+Update docstring to enumerate the named fields in order and add pinning test.
+
+### Issue: #
