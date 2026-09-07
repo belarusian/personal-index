@@ -1,6 +1,6 @@
 # TICKET-553: exact-contract docstrings for SimilarityEngine.similarity / find_similar + pinning test
 
-**Status:** CLAIMED 2026-09-07
+**Status:** RESOLVED (merged via PR #991, issue #990 closed; merge commit 4047d23)
 **Module:** personal_index/content_linker/similarity.py
 **Kind:** type-a (public method lacking an exact-contract docstring + pinning test)
 **Issue:** #990
