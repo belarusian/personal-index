@@ -1,6 +1,6 @@
 # TICKET-550: exact-contract docstrings for FacetBuilder.build / aggregate + pinning test
 
-Status: OPEN
+Status: RESOLVED (merged via PR #981, issue #979 closed; merge commit 3c290e9)
 Issue: #979
 
 ## File
