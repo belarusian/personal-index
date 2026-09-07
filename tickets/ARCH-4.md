@@ -1,4 +1,4 @@
-Status: IMPLEMENTED #994@bf53550
+Status: VERIFIED (validator cycle 133: pinning test + 6 adversarial CrawledPage tests pass)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #985
