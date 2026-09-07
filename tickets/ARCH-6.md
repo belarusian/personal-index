@@ -1,4 +1,4 @@
-Status: IMPLEMENTED #999@5dd595e
+Status: VERIFIED #999@5dd595e (verified cycle 137)
 Kind: ARCH
 Author: architect (cycle 170)
 Issue: #992
