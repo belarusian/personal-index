@@ -636,3 +636,54 @@ class TestFacetBuilderDocstring550:
         merged = builder.aggregate(f1, f2)
         assert merged["tags"] is f1["tags"]
         assert merged["domain"] is f2["domain"]
+
+
+# ── FacetedSearch.search docstring contract pinning (TICKET-552) ──
+
+class TestFacetedSearchDocstring552:
+    """Pin the exact-contract docstring for FacetedSearch.search."""
+
+    def test_search_docstring_states_contract(self):
+        doc = FacetedSearch.search.__doc__.lower()
+        assert "text filtering is skipped" in doc
+        assert "sorted by match score descending" in doc
+        assert "and-ed" in doc
+        assert "before pagination" in doc
+        assert "not the paginated slice" in doc
+
+    def test_empty_query_returns_all_documents(self):
+        search = FacetedSearch()
+        search.add_document("id1", {"title": "Python tutorial"})
+        search.add_document("id2", {"title": "JS guide"})
+        results = search.search("")
+        assert results.total == 2
+        assert len(results.results) == 2
+
+    def test_whitespace_query_returns_all_documents(self):
+        search = FacetedSearch()
+        search.add_document("id1", {"title": "Python tutorial"})
+        results = search.search("   ")
+        assert results.total == 1
+        assert len(results.results) == 1
+
+    def test_total_counts_before_pagination(self):
+        search = FacetedSearch()
+        for i in range(10):
+            search.add_document(f"id{i}", {"title": f"Doc {i}"})
+        results = search.search("", page=1, page_size=3)
+        assert results.total == 10
+        assert len(results.results) == 3
+
+    def test_facets_built_from_filtered_not_paginated_docs(self):
+        search = FacetedSearch()
+        for i in range(10):
+            search.add_document(f"id{i}", {"title": f"Doc {i}", "tags": ["common"]})
+        results = search.search("", page=1, page_size=3, facet_fields=["tags"])
+        # Facets reflect all 10 filtered docs, not the 3 paginated ones.
+        assert results.facets["tags"].values[0].count == 10
+
+    def test_no_facet_fields_returns_empty_facets(self):
+        search = FacetedSearch()
+        search.add_document("id1", {"title": "Python", "tags": ["python"]})
+        results = search.search("python")
+        assert results.facets == {}

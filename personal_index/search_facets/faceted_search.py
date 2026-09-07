@@ -102,7 +102,28 @@ class FacetedSearch:
         page: int = 1,
         page_size: int = 20,
     ) -> SearchResults:
-        """Search with optional filters and facets."""
+        """Search the indexed documents with optional text, filters and facets.
+
+        Contract:
+
+          * ``query`` -- when ``query.strip()`` is falsy (empty or whitespace),
+            text filtering is SKIPPED and every indexed document is considered.
+            When non-empty, only documents sharing at least one token with the
+            query are kept, sorted by match score DESCENDING (score = matched
+            query tokens / total query tokens).
+          * ``filters`` -- when truthy, applied on top of the text results and
+            AND-ed: a document must match every filter to survive.
+          * ``total`` -- the number of documents AFTER text + filter, i.e.
+            the count before pagination.
+          * pagination -- ``start = (page - 1) * page_size`` and the returned
+            ``results`` are the slice ``docs[start:start + page_size]``.
+          * ``facets`` -- built from the FILTERED (post-text, post-filter)
+            documents, NOT the paginated slice, and only when ``facet_fields``
+            is truthy; otherwise an empty dict.
+
+        Returns a ``SearchResults`` with ``results``, ``facets``, ``total``,
+        ``page`` and ``page_size``.
+        """
         docs = list(self._documents.values())
 
         if query.strip():
