@@ -48,6 +48,28 @@ class TestSearchIndex:
         retrieved = search_index.get_page("https://example.com/1")
         assert retrieved.title == "Page One Updated"
 
+    def test_add_page_returns_count_pinned(self, search_index):
+        """Pinning test: add_page returns the new page count (len(self._pages)).
+
+        Normal path: first add returns 1, second distinct add returns 2.
+        Guard path (overwrite): re-adding the same URL returns 2 (count unchanged).
+        """
+        page1 = _make_page("https://example.com/1", "Page One", "Hello world content")
+        page2 = _make_page("https://example.com/2", "Page Two", "Different content here")
+        page1_dup = _make_page("https://example.com/1", "Page One Updated", "Updated content")
+
+        # Normal path: first add -> count is 1
+        result1 = search_index.add_page(page1)
+        assert result1 == 1
+
+        # Normal path: second distinct add -> count is 2
+        result2 = search_index.add_page(page2)
+        assert result2 == 2
+
+        # Guard path (overwrite): re-add same URL -> count stays 2
+        result3 = search_index.add_page(page1_dup)
+        assert result3 == 2
+
     def test_remove_page(self, search_index):
         page = _make_page("https://example.com/1", "Page One", "Some content")
         search_index.add_page(page)

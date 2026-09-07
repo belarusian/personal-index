@@ -82,7 +82,23 @@ class SearchIndex:
         return [w for w in words if w not in STOP_WORDS and len(w) > 1]
 
     def add_page(self, page: IndexedPage | CrawledPage) -> int:
-        """Add a page to the index. Returns page id."""
+        """Add a page to the index.
+
+        Guard path: none on the input; both IndexedPage and CrawledPage are
+        accepted. A CrawledPage is converted to an IndexedPage (domain via
+        url_utils.extract_domain, content_length=len(content), crawled_at
+        isoformat'd when it has one, score from relevance_score); an IndexedPage
+        is used as-is.
+
+        Behavior: stores the page under page.url in _pages; tokenizes
+        f"{title} {content}" and adds page.url to each token's _word_index list
+        (deduped); persists via _save().
+
+        Returns the new page count, len(self._pages) (an int). NOT a page id.
+
+        Side effects: mutates _pages and _word_index; persists to db_path via
+        _save().
+        """
         if isinstance(page, CrawledPage):
             from personal_index.url_utils import extract_domain
             crawled_at = getattr(page, "crawled_at", "")
