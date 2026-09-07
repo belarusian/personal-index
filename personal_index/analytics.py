@@ -176,11 +176,38 @@ class AnalyticsTracker:
     def _compute_crawl_analytics(self, top_n: int) -> AnalyticsData:
         """Compute crawl-related analytics metrics.
 
+        Always sets ``data.total_crawls = len(self._crawl_events)``.
+
+        Guard path: when ``self._crawl_events`` is empty the ``if`` block
+        is skipped entirely, so ``avg_crawl_duration_ms`` stays 0.0,
+        ``top_domains`` stays ``[]``, ``success_count`` stays 0 and
+        ``error_count`` stays 0 (all ``AnalyticsData`` defaults).
+
+        When events exist:
+          avg_crawl_duration_ms = mean of the ``duration_ms`` values that
+              are ``> 0`` (zero/negative durations are excluded; stays 0.0
+              when none qualify).
+          top_domains = ``Counter(domain).most_common(top_n)`` where
+              ``domain = _extract_domain(url)`` and ``None`` domains are
+              skipped (not counted); a list of ``(domain, count)`` tuples,
+              at most ``top_n``.
+          success_count = count of events with ``200 <= status_code < 400``.
+          error_count = count of events with ``status_code >= 400`` OR a
+              truthy ``error``. NOTE: an event with
+              ``200 <= status_code < 400`` AND a truthy ``error`` is
+              counted in BOTH ``success_count`` and ``error_count`` (the
+              two predicates are independent, not mutually exclusive).
+
+        Does NOT touch the search fields (``total_searches``,
+        ``avg_search_duration_ms``, ``top_queries``, ``hourly_searches``,
+        ``daily_searches``) - those stay at their ``AnalyticsData``
+        defaults.
+
         Args:
             top_n: Number of top domains to return.
 
         Returns:
-            AnalyticsData with crawl-related fields populated.
+            The populated ``AnalyticsData`` instance.
         """
         data = AnalyticsData()
         data.total_crawls = len(self._crawl_events)
