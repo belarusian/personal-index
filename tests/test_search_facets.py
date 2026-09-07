@@ -568,3 +568,71 @@ class TestFacetDocstring543:
         assert result is None
         assert facet.values is original
         assert facet.values[0].name == "b"
+
+
+# ── FacetBuilder docstring contract pinning (TICKET-550) ──
+
+class TestFacetBuilderDocstring550:
+    """Pin the exact-contract docstrings for FacetBuilder.build / aggregate."""
+
+    def test_build_docstring_states_contract(self):
+        doc = FacetBuilder.build.__doc__.lower()
+        assert "returns an empty dict when" in doc
+        assert "stringified" in doc
+        assert "no values is skipped" in doc
+        assert "truncated to the top" in doc
+        assert "highest-count values are kept" in doc
+
+    def test_aggregate_docstring_states_contract(self):
+        doc = FacetBuilder.aggregate.__doc__.lower()
+        assert "union of keys" in doc
+        assert "sum of the two facets" in doc
+        assert "re-sorted by count descending" in doc
+        assert "passed through by reference" in doc
+
+    def test_build_empty_items_returns_empty_dict(self):
+        builder = FacetBuilder()
+        assert builder.build([], facet_fields=["tags"]) == {}
+
+    def test_build_skips_field_with_no_values(self):
+        builder = FacetBuilder()
+        items = [{"tags": []}, {"other": "x"}]
+        facets = builder.build(items, facet_fields=["tags", "other"])
+        assert "other" in facets
+        assert "tags" not in facets
+
+    def test_build_stringifies_values(self):
+        builder = FacetBuilder()
+        facets = builder.build([{"score": 5, "enabled": True}], facet_fields=["score", "enabled"])
+        assert [v.name for v in facets["score"].values] == ["5"]
+        assert [v.name for v in facets["enabled"].values] == ["True"]
+
+    def test_build_truncates_to_top_max_values_by_count(self):
+        builder = FacetBuilder()
+        items = [
+            {"tags": ["a"]},
+            {"tags": ["a"]},
+            {"tags": ["b"]},
+            {"tags": ["c"]},
+            {"tags": ["d"]},
+            {"tags": ["e"]},
+        ]
+        facets = builder.build(items, facet_fields=["tags"], max_values=3)
+        got = [(v.name, v.count) for v in facets["tags"].values]
+        assert got == [("a", 2), ("b", 1), ("c", 1)]
+
+    def test_aggregate_sums_counts_and_resorts(self):
+        builder = FacetBuilder()
+        fa = builder.build([{"tags": ["a", "b", "b"]}], facet_fields=["tags"])
+        fb = builder.build([{"tags": ["b", "c", "c", "c"]}], facet_fields=["tags"])
+        merged = builder.aggregate(fa, fb)
+        got = [(v.name, v.count) for v in merged["tags"].values]
+        assert got == [("b", 3), ("c", 3), ("a", 1)]
+
+    def test_aggregate_passes_through_by_reference(self):
+        builder = FacetBuilder()
+        f1 = builder.build([{"tags": ["a"]}], facet_fields=["tags"])
+        f2 = builder.build([{"domain": "x.com"}], facet_fields=["domain"])
+        merged = builder.aggregate(f1, f2)
+        assert merged["tags"] is f1["tags"]
+        assert merged["domain"] is f2["domain"]

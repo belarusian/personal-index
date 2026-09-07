@@ -28,7 +28,19 @@ class FacetBuilder:
         max_values: int = 50,
         facet_types: dict[str, str] | None = None,
     ) -> dict[str, Facet]:
-        """Build facets from a list of document items."""
+        """Build facets from a list of document items.
+
+        Returns an empty dict when ``items`` is empty. For each field in
+        ``facet_fields``, values are extracted (nested ``a.b`` paths supported) and
+        each value is stringified (``str(value)``) before being added to the facet.
+        A field whose facet ends up with no values is skipped (absent from the
+        result). Each facet's values are sorted by count descending and then
+        truncated to the top ``max_values`` (the highest-count values are kept).
+        The facet type is resolved from ``facet_types`` (by full field name, then by
+        the base name after the last dot), else from ``DEFAULT_FACET_TYPES`` by base
+        name, else STRING. Returns a dict mapping each included field name to its
+        ``Facet``.
+        """
         if not items:
             return {}
 
@@ -58,7 +70,15 @@ class FacetBuilder:
         facets_a: dict[str, Facet],
         facets_b: dict[str, Facet],
     ) -> dict[str, Facet]:
-        """Aggregate two facet dictionaries."""
+        """Aggregate two facet dictionaries into one.
+
+        The result contains the union of keys from both dicts. When a key is
+        present in both, a new ``Facet`` is built (its ``facet_type`` taken from
+        ``facets_a``) whose value counts are the sum of the two facets' counts per
+        value name, then re-sorted by count descending. When a key is present in
+        only one dict, that facet object is passed through by reference (not
+        copied). Returns the merged dict.
+        """
         merged: dict[str, Facet] = {}
 
         all_keys = set(facets_a.keys()) | set(facets_b.keys())
