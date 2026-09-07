@@ -98,3 +98,80 @@ class TestSimilarityEngine:
         eng = SimilarityEngine()
         score = eng.similarity("a b c", "c d e")
         assert score == 1 / 5
+
+
+class TestSimilarityEngineDocstring553:
+    """Pinning test for the exact-contract docstrings (TICKET-553)."""
+
+    def test_similarity_docstring_states_exact_contract(self) -> None:
+        doc = (SimilarityEngine.similarity.__doc__ or "").lower()
+        for fragment in (
+            "jaccard index",
+            "symmetric pair",
+            "no-token guard",
+            "no cache entry is written",
+        ):
+            assert fragment in doc, f"missing fragment: {fragment!r}"
+
+    def test_find_similar_docstring_states_exact_contract(self) -> None:
+        doc = (SimilarityEngine.find_similar.__doc__ or "").lower()
+        for fragment in (
+            "descending",
+            "truncated to the first",
+            "inclusive",
+            "exactly the keys",
+        ):
+            assert fragment in doc, f"missing fragment: {fragment!r}"
+
+    def test_empty_string_scores_zero(self) -> None:
+        eng = SimilarityEngine()
+        assert eng.similarity("", "hello") == 0.0
+        assert eng.similarity("hello", "") == 0.0
+
+    def test_whitespace_only_scores_zero(self) -> None:
+        eng = SimilarityEngine()
+        # whitespace-only is truthy -> falls through to the no-token guard
+        assert eng.similarity("   ", "hello") == 0.0
+        assert eng.similarity("hello", "\t\n") == 0.0
+
+    def test_cache_key_is_symmetric_raw_pair(self) -> None:
+        eng = SimilarityEngine()
+        a, b = "zzz aaa", "mmm nnn"
+        eng.similarity(a, b)
+        assert len(eng._cache) == 1
+        assert (min(a, b), max(a, b)) in eng._cache
+
+    def test_jaccard_score(self) -> None:
+        eng = SimilarityEngine()
+        # {a,b,c} & {c,d,e} = {c}; union = {a,b,c,d,e} -> 1/5
+        assert eng.similarity("a b c", "c d e") == 1 / 5
+
+    def test_find_similar_threshold_inclusive(self) -> None:
+        eng = SimilarityEngine()
+        # identical content scores 1.0, so threshold=1.0 keeps it
+        results = eng.find_similar("hello world", [("x", "hello world")], threshold=1.0)
+        assert results == [{"id": "x", "score": 1.0}]
+
+    def test_find_similar_sorted_descending(self) -> None:
+        eng = SimilarityEngine()
+        items = [
+            ("low", "completely different words here"),
+            ("high", "hello world"),
+            ("mid", "hello world foo"),
+        ]
+        results = eng.find_similar("hello world", items, threshold=0.0)
+        scores = [r["score"] for r in results]
+        assert scores == sorted(scores, reverse=True)
+
+    def test_find_similar_limit_truncates(self) -> None:
+        eng = SimilarityEngine()
+        items = [(f"i{n}", "hello world") for n in range(5)]
+        results = eng.find_similar("hello world", items, threshold=0.0, limit=3)
+        assert len(results) == 3
+
+    def test_find_similar_result_dict_shape(self) -> None:
+        eng = SimilarityEngine()
+        results = eng.find_similar("hello world", [("x", "hello world")], threshold=0.0)
+        assert results
+        for r in results:
+            assert set(r.keys()) == {"id", "score"}
