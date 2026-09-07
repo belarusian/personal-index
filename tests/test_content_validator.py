@@ -35,6 +35,33 @@ class TestValidationRule:
         assert result.passed is False
         assert result.message == "Failed"
 
+    def test_validation_rule_validate_pinned(self) -> None:
+        # Guard path (pass): check True -> passed=True, message="".
+        pass_rule = ValidationRule(
+            name="pass_rule",
+            check=lambda item: True,
+            message="should not surface",
+            severity="error",
+        )
+        pass_result = pass_rule.validate({})
+        assert pass_result.rule_name == "pass_rule"
+        assert pass_result.passed is True
+        assert pass_result.message == ""
+        assert pass_result.severity == "error"
+
+        # Normal path (fail): check False -> passed=False, message=self.message.
+        fail_rule = ValidationRule(
+            name="fail_rule",
+            check=lambda item: False,
+            message="boom",
+            severity="warning",
+        )
+        fail_result = fail_rule.validate({})
+        assert fail_result.rule_name == "fail_rule"
+        assert fail_result.passed is False
+        assert fail_result.message == "boom"
+        assert fail_result.severity == "warning"
+
     def test_has_required_fields(self) -> None:
         check = has_required_fields(["id", "title"])
         assert check({"id": "1", "title": "T"}) is True
