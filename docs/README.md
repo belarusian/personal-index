@@ -30,6 +30,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   Timeline, TimelineEvent, TimelineEventType.
 - [validation.md](validation.md) (spec) — `personal_index.content_validator`:
   ValidationRule, RuleResult, the built-in rules.
+- [analytics.md](analytics.md) (spec) — `personal_index.analytics`:
+  AnalyticsTracker (record/compute/get stats/save/load) + SearchEvent, CrawlEvent, AnalyticsData.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
