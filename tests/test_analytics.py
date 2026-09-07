@@ -437,6 +437,45 @@ class TestComputeCrawlAnalytics:
         assert data.hourly_searches == {}
         assert data.daily_searches == {}
 
+    def test_compute_crawl_analytics_pinned(self):
+        """Pin the exact returned-object fields for the normal case AND the
+        guard (empty-events) case, matching the reworded docstring."""
+        # Normal case: a mix of durations (one zero, excluded from the
+        # mean), domains, and status codes; one event is both a success
+        # (200) and an error (truthy error).
+        self.tracker.record_crawl("http://example.com/page1", status_code=200, duration_ms=50)
+        self.tracker.record_crawl("http://example.com/page2", status_code=200, duration_ms=150)
+        self.tracker.record_crawl("http://other.com/page", status_code=404, duration_ms=100)
+        self.tracker.record_crawl("http://example.com/page3", status_code=200, duration_ms=0)
+        self.tracker.record_crawl("http://bad.com/page", status_code=200, duration_ms=100, error="boom")
+        data = self.tracker._compute_crawl_analytics(top_n=10)
+
+        # total_crawls counts ALL events.
+        assert data.total_crawls == 5
+        # avg_crawl_duration_ms is the mean of durations > 0 only (50, 150, 100, 100).
+        assert data.avg_crawl_duration_ms == 100.0
+        # top_domains is a list of (domain, count) tuples in most_common order.
+        assert data.top_domains == [("example.com", 3), ("other.com", 1), ("bad.com", 1)]
+        # success_count: 200 <= status_code < 400 (four 200s; the 404 excluded).
+        assert data.success_count == 4
+        # error_count: status_code >= 400 OR truthy error (the 404 and the
+        # error-bearing 200; the two predicates are independent).
+        assert data.error_count == 2
+        # Search fields are untouched (stay at AnalyticsData defaults).
+        assert data.total_searches == 0
+        assert data.avg_search_duration_ms == 0.0
+        assert data.top_queries == []
+        assert data.hourly_searches == {}
+        assert data.daily_searches == {}
+
+        # Guard case: empty events -> the if-block is skipped entirely.
+        empty = AnalyticsTracker()._compute_crawl_analytics(top_n=10)
+        assert empty.total_crawls == 0
+        assert empty.avg_crawl_duration_ms == 0.0
+        assert empty.top_domains == []
+        assert empty.success_count == 0
+        assert empty.error_count == 0
+
 
 class TestAnalyticsTrackerNonDictGuard:
     """load() must degrade to 0 on valid-JSON-but-wrong-type (non-dict) files."""
