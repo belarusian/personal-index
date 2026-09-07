@@ -32,6 +32,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ValidationRule, RuleResult, the built-in rules.
 - [analytics.md](analytics.md) (spec) — `personal_index.analytics`:
   AnalyticsTracker (record/compute/get stats/save/load) + SearchEvent, CrawlEvent, AnalyticsData.
+- [content-categorizer.md](content-categorizer.md) (spec) — `personal_index.content_categorizer`:
+  ContentCategorizer (add/remove/get topics, categorize, categorize_batch) + TopicCategory, TopicScore, CategorizationResult.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
