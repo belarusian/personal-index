@@ -43,11 +43,30 @@ class ValidationRule:
     def validate(self, item: dict[str, Any]) -> RuleResult:
         """Validate an item against this rule.
 
+        Behavior:
+            ``passed = self.check(item)``; returns a single
+            ``RuleResult`` built from ``self`` and ``passed``.
+
+        Guard path (pass):
+            When ``self.check(item)`` is True the returned ``message``
+            is exactly ``""`` -- the rule's configured ``self.message``
+            is surfaced ONLY on failure. ``severity`` is always
+            ``self.severity`` (the rule's configured severity, default
+            ``"warning"``) regardless of pass or fail.
+
+        Return fields:
+            ``rule_name`` = ``self.name``; ``passed`` = the check's bool;
+            ``message`` = ``self.message`` on fail, ``""`` on pass;
+            ``severity`` = ``self.severity``.
+
+        Side effects:
+            None (pure).
+
         Args:
             item: Content item to validate.
 
         Returns:
-            RuleResult with validation outcome.
+            A ``RuleResult`` with the fields above.
         """
         passed = self.check(item)
         return RuleResult(
