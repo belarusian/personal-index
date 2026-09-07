@@ -1,9 +1,27 @@
-# TICKET-517: content_api._match_route docstring is a placeholder
+# TICKET-517
+## Status: OPEN
+## Module: personal_index/content_health.py
+## Class/Method: HealthReport.summary
+## Type: class-(b) doc-drift
 
-**File:** `personal_index/content_api.py`
-**Method:** `_match_route` (line ~46)
-**Symptom:** Docstring `"""Match path parts to a route handler."""` does not state the exact dispatch contract (which path tuples map to which handler, the method-gated branches, and the None fallback).
-**Evidence:** Line 47: `"""Match path parts to a route handler."""` — no enumeration of branches.
-**Fix:** Reword docstring to enumerate all dispatch branches + None fallback. Add one pinning test.
-**Issue:** #895
-**Status:** RESOLVED
+### Symptom
+Docstring is blanket-adjective "Generate a human-readable summary." while body builds a named set of fields in fixed order.
+
+### Evidence
+File: personal_index/content_health.py
+Line ~ 70-85
+Docstring: """Generate a human-readable summary."""
+Body builds lines:
+- "Content Health Report"
+- "=" * 40
+- f"Total items: {self.total_items}"
+- f"Healthy: {self.healthy_count}"
+- f"Warnings: {self.warning_count}"
+- f"Unhealthy: {self.unhealthy_count}"
+- f"Overall score: {self.overall_score:.1f}/100"
+- f"Health percentage: {self.health_percentage:.1f}%"
+
+### Fix
+Update docstring to enumerate the named fields in order and add pinning test.
+
+### Issue: #
