@@ -222,6 +222,44 @@ class TestSummarizePage:
         result = summarize_page("Title", "", max_sentences=3)
         assert result.summary == ""
 
+    def test_summarize_page_pins_returned_fields_and_guard_path(self):
+        """Pin the exact-contract returned object for normal + guard input.
+
+        Normal path: summarize_page builds combined = f"{title}. {content}"
+        and returns summarize(combined, ...) unchanged, so original_text is
+        the combined string and the rest of the fields match summarize's
+        output for that combined text. Guard path: empty content returns the
+        directly-built SummaryResult with summary="", sentences=[], ratio=0.0,
+        word_count_original=len(_tokenize(title)), word_count_summary=0.
+        """
+        from personal_index.content_summarizer import (
+            _tokenize,
+            summarize,
+            summarize_page,
+        )
+
+        # Normal path: short combined text -> summarize keeps all sentences.
+        title = "Python"
+        content = "Python is a language. Python is popular."
+        combined = f"{title}. {content}"
+        result = summarize_page(title, content, max_sentences=3)
+        expected = summarize(combined, max_sentences=3)
+        assert result.original_text == combined
+        assert result.summary == expected.summary
+        assert result.sentences == expected.sentences
+        assert result.ratio == expected.ratio
+        assert result.word_count_original == expected.word_count_original
+        assert result.word_count_summary == expected.word_count_summary
+
+        # Guard path: empty content -> directly-built SummaryResult.
+        guard = summarize_page("My Title", "", max_sentences=3)
+        assert guard.original_text == "My Title"
+        assert guard.summary == ""
+        assert guard.sentences == []
+        assert guard.ratio == 0.0
+        assert guard.word_count_original == len(_tokenize("My Title"))
+        assert guard.word_count_summary == 0
+
 
 class TestModuleDocstringContract:
     def test_docstring_does_not_promise_tfidf(self):

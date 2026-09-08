@@ -206,17 +206,27 @@ def summarize_page(
     content: str,
     max_sentences: int = 3,
 ) -> SummaryResult:
-    """Summarize a page using title and content.
+    """Summarize a page from its *title* and *content*, returning a SummaryResult.
 
-    The title is prepended to the content before summarizing.
+    Behavior, in order:
+      1. Guard path: if *content* is falsy (empty string), return a
+         SummaryResult built directly (no summarization occurs) with
+         ``original_text`` = *title*, ``summary`` = ``""``, ``sentences`` =
+         ``[]``, ``ratio`` = ``0.0``, ``word_count_original`` =
+         ``len(_tokenize(title))``, and ``word_count_summary`` = ``0``.
+      2. Normal path: build ``combined = f"{title}. {content}"`` (the title is
+         prepended to the content with a ``". "`` separator) and return
+         ``summarize(combined, max_sentences=max_sentences)`` unchanged -- so
+         the returned object is exactly the SummaryResult that ``summarize``
+         produces for the combined text (its ``original_text`` is *combined*).
+
+    Side effects: none (no I/O, no mutation, no persistence).
 
     Args:
         title: Page title.
         content: Page content text.
-        max_sentences: Maximum sentences in summary.
-
-    Returns:
-        SummaryResult with the page summary.
+        max_sentences: Maximum sentences in the summary (passed to
+            ``summarize``).
     """
     # If content is empty, return empty summary
     if not content:
