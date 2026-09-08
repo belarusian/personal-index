@@ -114,6 +114,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   get_duplicates/get_stats can never report the duplicates actually detected because only non-duplicates are stored (ARCH-36) contract hole.
 - [rate-limiter.md](rate-limiter.md) (spec) — `personal_index.rate_limiter`:
   RateLimitConfig + RateLimitStatus + RateLimiter/TokenBucket (per-domain token bucket: can_request/wait_for_request/get_status/get_wait_time/reset_domain/reset_all/get_all_statuses); can_request consumes a token (not a side-effect-free probe); unvalidated config — window_seconds==0 and max_requests<=0 raise ZeroDivisionError (ARCH-37) contract hole.
+- [queue.md](queue.md) (spec) — `personal_index.queue`:
+  TaskPriority (int Enum, lower value = higher priority) + TaskStatus (str Enum) + Task (@dataclass(order=True), priority+sequence sort keys) + TaskQueue (heapq min-heap + id dict, enqueue/dequeue/get_task/cancel_task/complete_task/fail_task, size/pending_count/completed_count/get_stats/clear_completed); _evict_lowest pops the heap minimum = the highest-priority task, so overflow drops the most important task while logging "dropping lowest priority" (ARCH-38) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
