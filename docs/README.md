@@ -43,6 +43,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   Facet/FacetValue/FacetType models, FacetBuilder (build/aggregate), FacetedSearch (search/filters/facets) + SearchResults.
 - [content-summarizer.md](content-summarizer.md) (spec) — `personal_index.content_summarizer`:
   SummaryResult, summarize (guard/short-text/scoring paths), summarize_page (title-prepended, empty-content guard).
+- [content-recommender.md](content-recommender.md) (spec) — `personal_index.content_recommender`:
+  Recommendation, ContentItem, Recommender (add_item/add_items/recommend/recommend_for_keywords/clear/item_count), _extract_keywords, Jaccard sub-scores, negative-top_n + case-sensitivity contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
