@@ -644,6 +644,35 @@ def _print_index_stats(data_dir: str) -> None:
     click.echo(f"  Tagged pages:        {tag_store.get_tagged_page_count()}")
 
 
+_PIPELINE_STAGES = ("crawl", "extract", "filter", "score", "tag", "index")
+
+
+def _resolve_pipeline_stages(steps, no_crawl, no_filter, no_score, no_tag,
+                             no_index):
+    """Resolve the set of pipeline stages to run from the CLI flags.
+
+    ``steps`` (a comma-separated list) selects which stages run; when it is
+    omitted every stage runs. Each ``no_*`` flag then removes its stage from
+    that set. Returns a set of stage names (possibly empty).
+    """
+    if steps:
+        active = {name.strip() for name in steps.split(",") if name.strip()}
+        active &= set(_PIPELINE_STAGES)
+    else:
+        active = set(_PIPELINE_STAGES)
+    if no_crawl:
+        active.discard("crawl")
+    if no_filter:
+        active.discard("filter")
+    if no_score:
+        active.discard("score")
+    if no_tag:
+        active.discard("tag")
+    if no_index:
+        active.discard("index")
+    return active
+
+
 def _create_pipeline_runner(data_dir: str, depth: int, max_pages: int,
                             min_score: float, min_content_length: int):
     """Create configured PipelineRunner instance."""
@@ -683,15 +712,18 @@ def pipeline(ctx, urls, import_files, depth, max_pages, min_score,
     """Run the full content pipeline."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     runner = _create_pipeline_runner(dd, depth, max_pages, min_score, min_content_length)
+    stages = _resolve_pipeline_stages(
+        steps, no_crawl, no_filter, no_score, no_tag, no_index
+    )
 
     try:
         if import_files:
             expanded = _expand_import_files(import_files, recursive)
             click.echo(f"Imported: {len(expanded)} file(s)")
-            stats = runner.run_from_files(expanded)
+            stats = runner.run_from_files(expanded, stages=stages)
         elif urls:
             click.echo(f"Running pipeline on {len(urls)} URL(s)...")
-            stats = runner.run(list(urls))
+            stats = runner.run(list(urls), stages=stages)
         else:
             click.echo("No URLs or files specified.")
             sys.exit(1)
