@@ -61,6 +61,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   SitemapEntry, Sitemap (url_count / sitemap_count / get_urls), SitemapParser (parse / parse_text_sitemap /
   filter_by_priority / filter_by_changefreq / get_recent_entries), SitemapBuilder (add_entry / build /
   build_sitemap_index / split_into_chunks), dead MAX_SITEMAP_SIZE_BYTES + dual-SitemapEntry contract holes.
+- [content-robots.md](content-robots.md) (spec) — `personal_index.crawler.robots`:
+  RobotsRule, RobotsPolicy (can_fetch / _matches, longest-pattern-wins, default-allow),
+  parse_robots_txt / is_allowed / RobotsParser; dead duplicate robots_parser module +
+  RobotsParser.parse-never-populates-_policies + empty-Disallow contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
