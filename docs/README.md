@@ -41,6 +41,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   shared store getters, data-dir/config bootstrap, guard paths.
 - [search-facets.md](search-facets.md) (spec) — `personal_index.search_facets`:
   Facet/FacetValue/FacetType models, FacetBuilder (build/aggregate), FacetedSearch (search/filters/facets) + SearchResults.
+- [content-summarizer.md](content-summarizer.md) (spec) — `personal_index.content_summarizer`:
+  SummaryResult, summarize (guard/short-text/scoring paths), summarize_page (title-prepended, empty-content guard).
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;

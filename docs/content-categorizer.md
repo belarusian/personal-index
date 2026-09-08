@@ -14,9 +14,6 @@ matching across multiple signals (no ML).
 - `ContentCategorizer.URL_TOPIC_HINTS: ClassVar[dict[str, list[str]]]` — topic
   name -> URL path/domain hint words (e.g. `"technology": ["tech", "dev",
   "api", ...]`).
-- `ContentCategorizer.MIN_TOPIC_SCORE: float = 0.1` — **dead constant**:
-  defined but never read anywhere in the module or repo (see contract holes).
-  The actual threshold is the instance attr `self.min_score`.
 - `ContentCategorizer.TITLE_BOOST: float = 2.0`, `URL_HINT_BOOST: float = 0.3`,
   `META_DESC_BOOST: float = 1.5` — signal multipliers used by `_score_topic`.
 
@@ -122,8 +119,7 @@ Maps `categorize` over each item, reading keys `text`, `title`, `url`,
   `src` only when `matches` is non-empty; returns the mutated `kw`.
 
 ## Contract holes
-- `ContentCategorizer.MIN_TOPIC_SCORE` is a **dead class constant**: it is
-  defined (line 269) but never read anywhere in the module or the repo. The
-  real threshold is the instance attribute `self.min_score` (set from the
-  `min_score` constructor arg, default `0.1`). A reader would reasonably
-  assume `MIN_TOPIC_SCORE` is the threshold. -> **ARCH-7**.
+- **Resolved (ARCH-7, cycle 177):** the dead `MIN_TOPIC_SCORE` class constant
+  was removed from the code (the live inclusion gate is the instance attribute
+  `self.min_score`, set from the `min_score` constructor arg, default `0.1`).
+  The module-constants entry above no longer lists it.
