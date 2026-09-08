@@ -391,3 +391,53 @@ class TestSchemaValidatorDocstring548:
         assert set(results.keys()) == {"1", "unknown"}
         # last item with id 1 wins: its title is "B"
         assert results["1"] == validator.validate({"id": 1, "title": "B"})
+
+
+class TestCheckBatchContract:
+    """Pinning tests for check_batch returned object (normal + guard)."""
+
+    def test_check_batch_returns_one_tuple_per_item_in_order(self) -> None:
+        checker = QualityChecker()
+        items = [
+            {"id": "a", "title": "Alpha", "content": "hello world"},
+            {"id": "b", "title": "Beta", "content": "another entry"},
+        ]
+        result = checker.check_batch(items)
+        assert len(result) == 2
+        assert result[0][0] is items[0]
+        assert result[1][0] is items[1]
+        assert result[0][1] == checker.check(items[0])
+        assert result[1][1] == checker.check(items[1])
+
+    def test_check_batch_empty_returns_empty_list(self) -> None:
+        checker = QualityChecker()
+        assert checker.check_batch([]) == []
+
+
+class TestFilterByQualityContract:
+    """Pinning tests for filter_by_quality returned object (normal + guard)."""
+
+    def test_filter_by_quality_keeps_only_items_at_or_above_threshold(self) -> None:
+        checker = QualityChecker()
+        # Full item (all required + rich fields) scores high; bare item scores low.
+        high = {
+            "id": "h",
+            "title": "High",
+            "content": "a sufficiently long content string",
+            "tags": ["x"],
+            "author": "a",
+            "summary": "s",
+            "score": 1,
+        }
+        low = {"id": "l", "title": "L", "content": "short"}
+        high_score = checker.check(high).overall
+        low_score = checker.check(low).overall
+        assert high_score > low_score
+        threshold = (high_score + low_score) / 2
+        result = checker.filter_by_quality([low, high], min_score=threshold)
+        assert result == [high]
+        assert result[0] is high
+
+    def test_filter_by_quality_empty_returns_empty_list(self) -> None:
+        checker = QualityChecker()
+        assert checker.filter_by_quality([], min_score=0.5) == []

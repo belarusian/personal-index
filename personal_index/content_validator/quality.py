@@ -101,13 +101,15 @@ class QualityChecker:
         self,
         items: list[dict[str, Any]],
     ) -> list[tuple[dict[str, Any], QualityScore]]:
-        """Check quality of multiple items.
+        """Check a batch of items, returning one (item, score) tuple per input item.
 
-        Args:
-            items: List of content items.
+        Guard path: if items is empty, returns [] (no elements).
 
-        Returns:
-            List of (item, QualityScore) tuples.
+        Return: a list of (item, QualityScore) tuples, one per input item in the
+        same order, where each QualityScore is exactly self.check(item) for that
+        item.
+
+        Side effects: none (pure; delegates to self.check per item).
         """
         return [(item, self.check(item)) for item in items]
 
@@ -116,14 +118,15 @@ class QualityChecker:
         items: list[dict[str, Any]],
         min_score: float = 0.5,
     ) -> list[dict[str, Any]]:
-        """Filter items by minimum quality score.
+        """Filter items, keeping only those whose overall score meets the threshold.
 
-        Args:
-            items: List of content items.
-            min_score: Minimum quality score threshold.
+        Guard path: if items is empty, returns [].
 
-        Returns:
-            List of items meeting quality threshold.
+        Return: a list of the input items (the same dict objects, in the same
+        order) whose self.check(item).overall >= min_score; items below the
+        threshold are dropped.
+
+        Side effects: none (pure; calls self.check per item).
         """
         return [
             item for item in items
