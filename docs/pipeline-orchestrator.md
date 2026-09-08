@@ -86,9 +86,11 @@ progress_callback: Any = None)`.
 - **`_run_score_stage(pages, result)`** — `_run_stage` with `_apply_score`;
   sets `stats.pages_scored = len(out)`.
 - **`_run_tag_stage(pages, result)`** — `_run_stage` with `_apply_tag`; sets
-  `stats.pages_tagged = len(out)`.
+  `stats.pages_tagged = len(out)` — the single authoritative write site
+  for `pages_tagged`.
 - **`_run_index_stage(pages, result)`** — `_run_stage` with `_apply_index`;
-  sets `stats.pages_indexed = len(out)` and `result.pages.extend(out)`.
+  sets `stats.pages_indexed = len(out)` (the single authoritative write
+  site for `pages_indexed`) and `result.pages.extend(out)`.
 
 ### Per-page callbacks (the LIVE path)
 - **`_apply_filter(page, result) -> bool`** — returns
@@ -96,10 +98,12 @@ progress_callback: Any = None)`.
 - **`_apply_score(page) -> bool`** — sets `page.relevance_score =
   self._score_page(page)`; always returns `True` (score never drops a page).
 - **`_apply_tag(page, result) -> bool`** — `tags = self._tag_page(page)`;
-  increments `stats.pages_tagged += 1` and `stats.tags_applied += len(tags)`;
-  always returns `True`.
+  increments `stats.tags_applied += len(tags)` (the only per-page stat it
+  writes; `pages_tagged` is written solely by `_run_tag_stage`); always
+  returns `True`.
 - **`_apply_index(page, result) -> bool`** — `self.search_index.add_page(page)`;
-  increments `stats.pages_indexed += 1`; always returns `True`.
+  writes no per-page stat (`pages_indexed` is written solely by
+  `_run_index_stage`); always returns `True`.
 
 ### Private helpers (contract-relevant)
 - **`_score_page(page) -> float`** — counts keyword matches of every interest
@@ -126,11 +130,10 @@ progress_callback: Any = None)`.
   This is the ONLY live `_stage_*` method (used by `run_from_files`).
 
 ## Contract holes
-- **Double-written stats counters.** `stats.pages_tagged` and
-  `stats.pages_indexed` are written twice per run: incremented per-page inside
-  `_apply_tag`/`_apply_index`, then **overwritten** by `len(out)` in
-  `_run_tag_stage`/`_run_index_stage`. The final value equals the per-page
-  count only because every `_apply_*` callback returns `True` (so `len(out)`
-  equals the number of increments). This is a latent invariant: if a callback
-  ever returned `False`, the two write sites would silently disagree. ->
-  **ARCH-9**.
+- **Double-written stats counters — RESOLVED (ARCH-9).** `stats.pages_tagged`
+  and `stats.pages_indexed` are each written by exactly one site: the
+  `len(out)` overwrite in `_run_tag_stage`/`_run_index_stage` (last write
+  wins and is authoritative). The redundant per-page `+= 1` increments in
+  `_apply_tag`/`_apply_index` were removed, so the counters no longer depend
+  on the undocumented "all callbacks return `True`" invariant. `stats.tags_applied`
+  remains the per-page sum written only by `_apply_tag`.

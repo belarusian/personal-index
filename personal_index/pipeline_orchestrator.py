@@ -251,14 +251,12 @@ class PipelineOrchestrator:
     def _apply_tag(self, page: CrawledPage, result: PipelineResult) -> bool:
         """Tag callback for _run_stage. Tags page, updates stats, returns True."""
         tags = self._tag_page(page)
-        result.stats.pages_tagged += 1
         result.stats.tags_applied += len(tags)
         return True
 
     def _apply_index(self, page: CrawledPage, result: PipelineResult) -> bool:
         """Index callback for _run_stage. Indexes page, updates stats, returns True."""
         self.search_index.add_page(page)
-        result.stats.pages_indexed += 1
         return True
 
     def run_from_files(self, filepaths: list[str]) -> PipelineResult:
