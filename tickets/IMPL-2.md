@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-08
+Status: IMPLEMENTED #1009@547342f
 Kind: IMPL
 Author: implementer (cycle 172)
 References: ARCH-1 (issue #982) — umbrella parent
