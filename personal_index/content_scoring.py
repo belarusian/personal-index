@@ -99,7 +99,16 @@ class ContentScore:
     factors: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert score to dictionary representation."""
+        """Return a dict representation of the score.
+
+        Returns a NEW dict with exactly eight keys: ``total``, ``recency``,
+        ``relevance``, ``engagement``, ``quality``, ``authority``,
+        ``freshness`` (each the corresponding field rounded to 4 decimal
+        places via ``round(x, 4)``) and ``factors`` (the ``self.factors``
+        dict passed through by reference -- NOT copied and NOT rounded).
+
+        No guard path; no side effects (the ContentScore is not mutated).
+        """
         return {
             "total": round(self.total, 4),
             "recency": round(self.recency, 4),
@@ -240,9 +249,17 @@ class ContentScorer:
         published_at: datetime | None,
         updated_at: datetime | None,
     ) -> float:
-        """Score based on how recent the content is.
+        """Score how recent the content is (0.0-1.0, rounded to 4 places).
 
-        Uses exponential decay: newer content scores higher.
+        The reference date is ``updated_at or published_at or now`` (now =
+        ``datetime.now(timezone.utc)``). A naive reference date (``tzinfo is
+        None``) is made UTC-aware via ``replace(tzinfo=timezone.utc)``.
+        ``age_days = max(0, (now - date).days)`` (whole days, floored at 0).
+
+        Returns ``round(math.exp(-math.log(2) * age_days / 30), 4)``: an
+        exponential decay with a 30-day half-life, so age 0 -> 1.0 and age
+        30 -> 0.5. No guard path (a missing date simply becomes now -> 1.0);
+        no side effects.
         """
         now = datetime.now(timezone.utc)
         date = updated_at or published_at or now
@@ -277,10 +294,14 @@ class ContentScorer:
         bookmark_count: int,
         share_count: int,
     ) -> float:
-        """Score based on engagement signals.
+        """Score engagement signals (0.0-1.0, rounded to 4 places).
 
-        Uses logarithmic scaling to prevent high-volume items from
-        dominating.
+        ``engagement = log1p(view_count)*0.4 + log1p(bookmark_count)*0.4 +
+        log1p(share_count)*0.2`` (logarithmic scaling so high-volume items do
+        not dominate). Returns ``round(min(1.0, engagement / log1p(1000)),
+        4)``: the weighted sum normalized against the cap ``log1p(1000)``
+        (~6.9), clamped at 1.0. All-zero counts -> 0.0. No guard path; no
+        side effects.
         """
         engagement = (
             math.log1p(view_count) * 0.4
@@ -297,7 +318,15 @@ class ContentScorer:
         has_images: bool,
         has_code: bool,
     ) -> float:
-        """Score based on content quality signals."""
+        """Score content quality signals (0.0-1.0, rounded to 4 places).
+
+        ``length_score = min(1.0, log1p(word_count) / log1p(3000))``
+        (diminishing returns on length). ``media_bonus = 0.1`` when
+        ``has_images`` else 0.0; ``code_bonus = 0.05`` when ``has_code`` else
+        0.0. Returns ``round(min(1.0, length_score + media_bonus +
+        code_bonus), 4)``: the sum clamped at 1.0. word_count 0 with no
+        bonuses -> 0.0. No guard path; no side effects.
+        """
         # Longer content tends to be higher quality (diminishing returns)
         length_score = min(1.0, math.log1p(word_count) / math.log1p(3000))
         # Bonus for rich media
@@ -441,14 +470,17 @@ class ContentScorer:
         *,
         limit: int = 10,
     ) -> list[tuple[dict[str, Any], ContentScore]]:
-        """Rank a list of content items by score.
+        """Rank a list of content item dicts by composite score.
 
-        Args:
-            items: List of content item dicts with scoring fields.
-            limit: Maximum number of items to return.
+        For each ``item`` dict, calls ``self.score(**item)`` (the dict's keys
+        must be valid ``score`` keyword arguments) and pairs the item with the
+        resulting ``ContentScore``. The pairs are sorted by
+        ``score.total`` descending (stable sort; ties keep input order).
 
-        Returns:
-            List of (item, score) tuples sorted by score descending.
+        Returns a NEW list of ``(item, score)`` tuples truncated to the first
+        ``limit`` entries (default 10). Guard path: an empty ``items`` list
+        returns an empty list. No side effects (the input dicts are not
+        mutated and are paired by reference, not copied).
         """
         scored = []
         for item in items:
