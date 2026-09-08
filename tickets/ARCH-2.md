@@ -55,6 +55,7 @@ ARCH-5 ValidationRule.validate drift).
 - `docs/cli.md` (spec) — `personal_index.cli` (cycle 174).
 - `docs/search-facets.md` (spec) — `personal_index.search_facets` (cycle 176).
 - `docs/content-summarizer.md` (spec) — `personal_index.content_summarizer` (cycle 177).
+- `docs/content-recommender.md` (spec) — `personal_index.content_recommender` (cycle 178).
 
 ## Contract holes found (each -> its own ARCH ticket)
 - `PipelineStats` field drift (API_REFERENCE.md vs models.py) -> ARCH-3.
@@ -69,3 +70,5 @@ ARCH-5 ValidationRule.validate drift).
 - `cli.load_config` (module-level) dead helper (cli.py line 50) -> ARCH-12 (cycle 174).
 - `cli.pipeline` `--steps`/`--no-*` flags parsed but ignored (cli.py lines 670-715) -> ARCH-13 (cycle 174).
 - `content_summarizer.summarize_page` exported but has no internal caller (content_summarizer.py line 204) -> ARCH-14 (cycle 177).
+- `Recommender.recommend`/`recommend_for_keywords` negative `top_n` leaks Python negative-slice semantics (content_recommender.py) -> ARCH-15 (cycle 178).
+- `Recommender.recommend_for_keywords` docstring over-promises "matching is case-insensitive" (explicit item keywords matched case-sensitively) (content_recommender.py) -> ARCH-16 (cycle 178).
