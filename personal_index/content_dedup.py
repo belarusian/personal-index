@@ -22,9 +22,27 @@ class DuplicateGroup:
 
     @property
     def total_count(self) -> int:
+        """Total number of items in the group.
+
+        No guard path: always computes.
+
+        Returns ``1 + len(self.duplicates)`` (the representative plus every
+        duplicate). No side effects.
+        """
         return 1 + len(self.duplicates)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the group to a plain dict.
+
+        No guard path: always computes.
+
+        Returns a dict with exactly these keys: ``"representative"``
+        (``self.representative``), ``"duplicates"`` (``self.duplicates``, the
+        same list object), ``"similarity_score"`` (``self.similarity_score``),
+        ``"dedup_method"`` (``self.dedup_method``) and ``"total_count"``
+        (``self.total_count`` = ``1 + len(self.duplicates)``). No side
+        effects.
+        """
         return {
             "representative": self.representative,
             "duplicates": self.duplicates,
@@ -37,8 +55,18 @@ class DuplicateGroup:
 def normalize_url(url: str) -> str:
     """Normalize a URL for comparison.
 
-    Removes trailing slashes and fragments, and lowercases the
-    scheme and host.
+    Guard path: a falsy ``url`` (the empty string) is returned unchanged;
+    no normalization is applied.
+
+    For a non-empty ``url`` the returned string is the input with, in order:
+    (1) the fragment removed (everything from the first ``#`` onward,
+    inclusive); (2) trailing ``/`` characters stripped when the
+    fragment-removed string is longer than one character, so a lone root
+    ``/`` is preserved; (3) the scheme and host lowercased while the path is
+    left byte-for-byte unchanged. A URL with no ``://`` separator gets only
+    steps (1) and (2).
+
+    No side effects.
     """
     if not url:
         return url
@@ -61,7 +89,18 @@ def normalize_url(url: str) -> str:
 
 
 def content_hash(text: str) -> str:
-    """Generate a hash of content text."""
+    """Generate a hash of content text.
+
+    Guard path: a falsy ``text`` (the empty string) returns the empty string
+    ``""`` (no hash is computed).
+
+    For non-empty ``text`` the returned string is the 64-character sha256
+    hexdigest of the normalized text, where normalization is: lowercase,
+    strip leading/trailing whitespace, then collapse every run of whitespace
+    to a single space.
+
+    No side effects.
+    """
     if not text:
         return ""
     # Normalize whitespace
@@ -74,19 +113,45 @@ class DocumentHash:
 
     @staticmethod
     def compute_fingerprint(content: str) -> str:
-        """Compute a 16-char fingerprint for content."""
+        """Compute a 16-char fingerprint for content.
+
+        No guard path of its own: it delegates to ``content_hash`` and takes
+        the first 16 characters of its result. For non-empty ``content`` the
+        returned string is a 16-character fingerprint; for empty ``content``
+        ``content_hash`` returns ``""`` so the fingerprint is ``""`` (not
+        16 characters).
+
+        No side effects.
+        """
         return content_hash(content)[:16]
 
 
 def url_hash(url: str) -> str:
-    """Generate a hash of a normalized URL."""
+    """Generate a hash of a normalized URL.
+
+    No guard path: always computes (an empty ``url`` normalizes to ``""``
+    and is still hashed).
+
+    The returned string is the 64-character sha256 hexdigest of
+    ``normalize_url(url)``.
+
+    No side effects.
+    """
     return hashlib.sha256(normalize_url(url).encode()).hexdigest()
 
 
 def text_similarity(text_a: str, text_b: str) -> float:
     """Calculate similarity between two texts using word overlap.
 
-    Uses Jaccard similarity on word sets.
+    Guard paths: if either ``text_a`` or ``text_b`` is falsy, return ``0.0``;
+    if either lowercased word set is empty (no ``[a-z0-9]+`` tokens), return
+    ``0.0``.
+
+    Otherwise the returned float is the Jaccard similarity of the two word
+    sets, ``len(intersection) / len(union)``, where each word set is the set
+    of maximal ``[a-z0-9]+`` runs in the lowercased text.
+
+    No side effects.
     """
     if not text_a or not text_b:
         return 0.0
@@ -114,7 +179,14 @@ class DedupResult:
 
     @property
     def dedup_ratio(self) -> float:
-        """Ratio of duplicates to total items."""
+        """Ratio of duplicates to total items.
+
+        Guard path: when ``self.total_items == 0`` return ``0.0`` (avoids a
+        zero-division).
+
+        Otherwise the returned float is ``self.removed_count /
+        self.total_items``. No side effects.
+        """
         if self.total_items == 0:
             return 0.0
         return self.removed_count / self.total_items

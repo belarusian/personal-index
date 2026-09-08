@@ -56,6 +56,16 @@ class TestNormalizeUrl:
             == "https://example.com/MyPage/Section"
         )
 
+    def test_normalize_url_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: fragment removed, trailing slash stripped, scheme+host
+        # lowercased, path case preserved.
+        assert (
+            normalize_url("HTTPS://EXAMPLE.COM/MyPage/Section/#frag/")
+            == "https://example.com/MyPage/Section"
+        )
+        # Guard path: falsy input returned unchanged.
+        assert normalize_url("") == ""
+
 # ── content_hash ───────────────────────────────────────────────────
 
 class TestContentHash:
@@ -85,6 +95,14 @@ class TestContentHash:
         assert h1 == h2
 
 
+    def test_content_hash_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: exact sha256 hexdigest of normalized "hello world".
+        assert content_hash("Hello world") == (
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        )
+        # Guard path: falsy input returns the empty string.
+        assert content_hash("") == ""
+
 # ── url_hash ───────────────────────────────────────────────────────
 
 class TestUrlHash:
@@ -105,6 +123,16 @@ class TestUrlHash:
         assert isinstance(h, str)
         assert len(h) == 64  # SHA-256 hex length
 
+
+    def test_url_hash_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: exact sha256 hexdigest of normalize_url(url).
+        assert url_hash("https://example.com/page") == (
+            "3641c5f2274c5471278ab5bf1df6d1858d8aa392d85c51301abed2122a3c634f"
+        )
+        # Guard path: no guard (always computes); empty url hashes to sha256("").
+        assert url_hash("") == (
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
 
 # ── text_similarity ────────────────────────────────────────────────
 
@@ -130,6 +158,12 @@ class TestTextSimilarity:
     def test_both_empty(self) -> None:
         assert text_similarity("", "") == 0.0
 
+
+    def test_text_similarity_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: Jaccard of {hello,world,foo} vs {hello,world,bar} = 2/4.
+        assert text_similarity("hello world foo", "hello world bar") == 0.5
+        # Guard path: a falsy input returns 0.0.
+        assert text_similarity("", "hello") == 0.0
 
 # ── DuplicateGroup ─────────────────────────────────────────────────
 
@@ -161,6 +195,32 @@ class TestDuplicateGroup:
         assert d["dedup_method"] == "hash"
         assert d["total_count"] == 2
 
+
+    def test_total_count_pins_returned_object(self) -> None:
+        # Normal case: representative + two duplicates.
+        group = DuplicateGroup(
+            representative="https://a.com",
+            duplicates=["https://b.com", "https://c.com"],
+        )
+        assert group.total_count == 3
+        # Guard path (no duplicates): representative only.
+        assert DuplicateGroup(representative="https://a.com").total_count == 1
+
+    def test_to_dict_pins_returned_object(self) -> None:
+        group = DuplicateGroup(
+            representative="https://a.com",
+            duplicates=["https://b.com"],
+            similarity_score=0.95,
+            dedup_method="hash",
+        )
+        d = group.to_dict()
+        assert d == {
+            "representative": "https://a.com",
+            "duplicates": ["https://b.com"],
+            "similarity_score": 0.95,
+            "dedup_method": "hash",
+            "total_count": 2,
+        }
 
 # ── DedupResult ────────────────────────────────────────────────────
 
@@ -204,6 +264,13 @@ class TestDedupResult:
         assert "Dedup ratio: 0.0%" in summary
 
 
+    def test_dedup_ratio_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: removed_count / total_items = 3 / 10.
+        result = DedupResult(total_items=10, unique_items=7, removed_count=3)
+        assert result.dedup_ratio == 0.3
+        # Guard path: total_items == 0 returns 0.0.
+        assert DedupResult().dedup_ratio == 0.0
+
 # ── DocumentHash ───────────────────────────────────────────────────
 
 class TestDocumentHash:
@@ -224,6 +291,12 @@ class TestDocumentHash:
         fp2 = DocumentHash.compute_fingerprint("World")
         assert fp1 != fp2
 
+
+    def test_compute_fingerprint_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: first 16 chars of content_hash("Hello world").
+        assert DocumentHash.compute_fingerprint("Hello world") == "b94d27b9934d3e08"
+        # Guard path: empty content -> content_hash("") == "" -> fingerprint "".
+        assert DocumentHash.compute_fingerprint("") == ""
 
 # ── ContentDeduplicator ────────────────────────────────────────────
 
