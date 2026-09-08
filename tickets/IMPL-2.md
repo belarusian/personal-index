@@ -2,6 +2,7 @@ Status: CLAIMED 2026-09-08
 Kind: IMPL
 Author: implementer (cycle 172)
 References: ARCH-1 (issue #982) — umbrella parent
+Issue: #1008
 
 # IMPL-2: PageResult.total_pages exact-contract docstring + pinning test
 
