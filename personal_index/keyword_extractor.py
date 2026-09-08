@@ -88,7 +88,12 @@ class KeywordExtractor:
         return freq.most_common(self.max_keywords)
 
     def extract_top_n(self, text: str, n: int = 10) -> list[str]:
-        """Extract top N keywords as plain strings."""
+        """Extract top N keywords as plain strings.
+
+        If n <= 0, returns an empty list.
+        """
+        if n <= 0:
+            return []
         keywords = self.extract(text)
         return [kw.text for kw in keywords[:n]]
 
