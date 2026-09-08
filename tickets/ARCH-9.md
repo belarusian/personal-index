@@ -1,4 +1,4 @@
-Status: IMPLEMENTED #1030@d7d694c
+Status: VERIFIED (validator, cycle 150; pinning tests tests/deep/test_pipeline_orchestrator_stats_adversarial.py)
 Kind: ARCH
 Author: architect (cycle 173)
 Issue: #1011
