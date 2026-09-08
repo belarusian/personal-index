@@ -52,6 +52,7 @@ ARCH-5 ValidationRule.validate drift).
 - `docs/analytics.md` (spec) — `personal_index.analytics` (cycle 170).
 - `docs/content-categorizer.md` (spec) — `personal_index.content_categorizer` (cycle 172).
 - `docs/pipeline-orchestrator.md` (spec) — `personal_index.pipeline_orchestrator` (cycle 173).
+- `docs/cli.md` (spec) — `personal_index.cli` (cycle 174).
 
 ## Contract holes found (each -> its own ARCH ticket)
 - `PipelineStats` field drift (API_REFERENCE.md vs models.py) -> ARCH-3.
@@ -61,3 +62,7 @@ ARCH-5 ValidationRule.validate drift).
 - `ContentCategorizer.MIN_TOPIC_SCORE` dead class constant (content_categorizer.py) -> ARCH-7 (cycle 172).
 - `PipelineOrchestrator` dead `_stage_*` methods (pipeline_orchestrator.py) -> ARCH-8 (cycle 173).
 - `PipelineOrchestrator` double-written `pages_tagged`/`pages_indexed` counters (pipeline_orchestrator.py) -> ARCH-9 (cycle 173).
+- `cli._print_pipeline_stats` reads non-existent `PipelineStats.pages_filtered_in` (cli.py line 632) -> ARCH-10 (cycle 174).
+- `cli._index_file` dead helper (cli.py line 1398) -> ARCH-11 (cycle 174).
+- `cli.load_config` (module-level) dead helper (cli.py line 50) -> ARCH-12 (cycle 174).
+- `cli.pipeline` `--steps`/`--no-*` flags parsed but ignored (cli.py lines 670-715) -> ARCH-13 (cycle 174).

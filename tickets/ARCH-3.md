@@ -1,4 +1,4 @@
-Status: OPEN-PUSHBACK (code portion done #1004@e46ff0c; docs/** -> IMPL-1)
+Status: CLOSED (code portion #1004@e46ff0c; docs/** corrected cycle 174 via IMPL-1 resolution)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #984
