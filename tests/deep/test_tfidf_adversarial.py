@@ -192,27 +192,9 @@ class TestProperties:
 
 # ── DEFECT: negative-slice leak (filed as QA-2) ────────────────────────
 class TestNegativeSliceLeak:
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-2: TfidfScorer.rank_documents(query, limit=-1) returns "
-            "scores[:-1] (all-but-last) instead of [] - Python negative-slice "
-            "semantics leak into the 'limit' contract. Out-of-range (negative) "
-            "limit must yield an empty list, matching the limit=0 guard."
-        ),
-    )
     def test_rank_documents_negative_limit(self, scorer: TfidfScorer):
         assert scorer.rank_documents("beta", -1) == []
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-2: TfidfScorer.get_top_terms(doc_id, n=-1) returns "
-            "scores[:-1] (all-but-last) instead of [] - Python negative-slice "
-            "semantics leak into the 'top N' contract. Out-of-range (negative) "
-            "n must yield an empty list, matching the n=0 guard."
-        ),
-    )
     def test_get_top_terms_negative_n(self, scorer: TfidfScorer):
         assert scorer.get_top_terms(0, -1) == []
 
@@ -246,16 +228,6 @@ class TestCliSearchEndToEnd:
         assert result.exit_code == 0, result.output
         assert "No results found" in result.output
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-2: `personal-index search --limit -1` (index.py "
-            "SearchIndex.search) returns results[:-1] (1 of 2) instead of no "
-            "results - the same negative-slice leak as the tfidf scorer, "
-            "reachable through the installed CLI. Out-of-range (negative) "
-            "limit must yield no results, matching --limit 0."
-        ),
-    )
     def test_cli_search_negative_limit(self, tmp_path):
         dd = str(tmp_path / "data")
         self._seed(dd)
