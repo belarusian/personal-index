@@ -53,6 +53,7 @@ ARCH-5 ValidationRule.validate drift).
 - `docs/content-categorizer.md` (spec) — `personal_index.content_categorizer` (cycle 172).
 - `docs/pipeline-orchestrator.md` (spec) — `personal_index.pipeline_orchestrator` (cycle 173).
 - `docs/cli.md` (spec) — `personal_index.cli` (cycle 174).
+- `docs/search-facets.md` (spec) — `personal_index.search_facets` (cycle 176).
 
 ## Contract holes found (each -> its own ARCH ticket)
 - `PipelineStats` field drift (API_REFERENCE.md vs models.py) -> ARCH-3.
