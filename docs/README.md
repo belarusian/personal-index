@@ -54,6 +54,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [content-scraper.md](content-scraper.md) (spec) — `personal_index.scraper`:
   ScraperConfig, ScrapedContent, HTMLScraper (scrape + 8 private extractors),
   charset override order, dead remove_scripts flag + word_count/truncation contract holes.
+- [content-rss.md](content-rss.md) (spec) — `personal_index.rss`:
+  FeedEntry, Feed (entry_count / get_recent_entries), RSSParser (parse + is_feed, RSS 2.0 + Atom),
+  silent empty-feed for non-feed root tags + RSS-never-updates contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
