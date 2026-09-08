@@ -26,9 +26,7 @@ from __future__ import annotations
 import inspect
 import subprocess
 import sys
-from pathlib import Path
 
-import pytest
 
 from click.testing import CliRunner
 
@@ -38,14 +36,13 @@ from personal_index.cli import get_search_index, main
 VALID_CONTENT = "This is a valid article with enough content to be indexed."
 
 
-def _run_watch_once(paths: list[str], dd: str) -> "CliRunner":
+def _run_watch_once(paths: list[str], dd: str) -> None:
     runner = CliRunner()
     result = runner.invoke(
         main,
         ["watch", *paths, "--once", "--data-dir", dd],
     )
     assert result.exit_code == 0, result.output
-    return result
 
 
 class TestWatchOnceUsesIndexFileOnce:
