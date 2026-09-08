@@ -1,4 +1,4 @@
-Status: IN PROGRESS (cycle 183: index.search in progress; remaining modules OPEN)
+Status: IN PROGRESS (cycle 183: index.search done, PR #1070@74daf5c; remaining modules OPEN)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #982
