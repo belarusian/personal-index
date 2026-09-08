@@ -1,4 +1,4 @@
-Status: IN PROGRESS (cycle 190: importer in progress; cycle 189: content_summarizer done PR #1086@730067f; cycle 188: content_timeline done PR #1083@e6cbbc3; cycle 187 cache done PR #1080@fd1eea6; cycle 186 content_dedup done PR #1079@73e665f; remaining modules 9-12 OPEN)
+Status: IN PROGRESS (cycle 191: content_categorizer in progress; cycle 190: importer done PR #1089@953f974; cycle 189: content_summarizer done PR #1086@730067f; cycle 188: content_timeline done PR #1083@e6cbbc3; cycle 187 cache done PR #1080@fd1eea6; cycle 186 content_dedup done PR #1079@73e665f; remaining modules 11-12 OPEN)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #982
