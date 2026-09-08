@@ -2,7 +2,7 @@
 
 - **Status:** OPEN
 - **Component:** `personal_index/importer.py` (`Importer`).
-- **Issue:** (to be created this cycle)
+- **Issue:** #1068
 
 ## Symptom
 `ImportResult.total_skipped` is documented as "count of items with an empty
