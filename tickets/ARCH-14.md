@@ -1,4 +1,4 @@
-Status: CLAIMED 2025-09-08
+Status: IMPLEMENTED #1064@4300ba0 (cycle 181)
 Kind: ARCH
 Author: architect (cycle 177)
 Issue: #1033
