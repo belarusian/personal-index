@@ -629,3 +629,371 @@ class TestGetEventsForWeekDocstring539:
         tl.add_event(_event("c", "c1", _ts(14, 18)))
         res = tl.get_events_for_week(date(2024, 1, 10))
         assert [e.event_id for e in res] == ["a", "b", "c"]
+
+
+# ---------------------------------------------------------------------------
+# ARCH-1 cycle 188: exact-contract pinning tests for the residual
+# content_timeline functions (normal case + guard-path input, asserting the
+# returned object).
+# ---------------------------------------------------------------------------
+
+
+class TestTimelineContractPinning:
+    def test_init_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: returns None and initializes empty lists.
+        tl = Timeline()
+        assert tl.events == []
+        assert tl.entries == []
+        # Guard path (no guard: always constructs): a fresh timeline is empty.
+        assert Timeline().events == []
+
+    def test_add_event_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: returns None, appends and sorts ascending by timestamp.
+        tl = Timeline()
+        tl.add_event(_event("b", "c1", _ts(10)))
+        tl.add_event(_event("a", "c1", _ts(8)))
+        assert [e.event_id for e in tl.events] == ["a", "b"]
+        # Guard path (no guard: always appends): adding to an empty timeline.
+        tl2 = Timeline()
+        tl2.add_event(_event("x", "c1", _ts(1)))
+        assert [e.event_id for e in tl2.events] == ["x"]
+
+    def test_content_ids_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: the set of unique content IDs across events.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c2", _ts(2)))
+        tl.add_event(_event("c", "c1", _ts(3)))
+        assert tl.content_ids == {"c1", "c2"}
+        # Guard path (no guard: always computes): empty timeline -> empty set.
+        assert Timeline().content_ids == set()
+
+    def test_get_event_count_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: total number of stored events.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c1", _ts(2)))
+        assert tl.get_event_count() == 2
+        # Guard path (no guard: always computes): empty timeline -> 0.
+        assert Timeline().get_event_count() == 0
+
+    def test_get_events_for_content_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: events whose content_id matches, in ascending order.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c2", _ts(2)))
+        tl.add_event(_event("c", "c1", _ts(3)))
+        assert [e.event_id for e in tl.get_events_for_content("c1")] == ["a", "c"]
+        # Guard path (no guard: always computes): no match -> empty list.
+        assert tl.get_events_for_content("nope") == []
+
+    def test_get_events_by_type_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: events whose event_type matches, in ascending order.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1), TimelineEventType.CREATED))
+        tl.add_event(_event("b", "c1", _ts(2), TimelineEventType.SAVED))
+        tl.add_event(_event("c", "c1", _ts(3), TimelineEventType.CREATED))
+        assert [e.event_id for e in tl.get_events_by_type(TimelineEventType.CREATED)] == ["a", "c"]
+        # Guard path (no guard: always computes): no match -> empty list.
+        assert tl.get_events_by_type(TimelineEventType.DELETED) == []
+
+    def test_get_events_in_range_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: events within the inclusive [start, end] range.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c1", _ts(5)))
+        tl.add_event(_event("c", "c1", _ts(10)))
+        res = tl.get_events_in_range(_ts(2), _ts(6))
+        assert [e.event_id for e in res] == ["b"]
+        # Guard path (no guard: always computes): no event in range -> empty list.
+        assert tl.get_events_in_range(_ts(20), _ts(21)) == []
+
+    def test_get_latest_event_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case (content_id=None): the latest event overall.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c1", _ts(9)))
+        latest = tl.get_latest_event()
+        assert latest is not None
+        assert latest.event_id == "b"
+        # Normal case (content_id given): the latest event for that content.
+        tl.add_event(_event("c", "c2", _ts(20)))
+        latest_c1 = tl.get_latest_event("c1")
+        assert latest_c1 is not None
+        assert latest_c1.event_id == "b"
+        # Guard path: content_id given but no match -> None.
+        assert tl.get_latest_event("nope") is None
+        # Guard path: content_id None and empty timeline -> None.
+        assert Timeline().get_latest_event() is None
+
+    def test_get_content_event_count_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: number of events for the given content_id.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c1", _ts(2)))
+        tl.add_event(_event("c", "c2", _ts(3)))
+        assert tl.get_content_event_count("c1") == 2
+        # Guard path (no guard: always computes): no match -> 0.
+        assert tl.get_content_event_count("nope") == 0
+
+    def test_get_events_for_day_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: events falling on the given calendar day.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(5, 1)))
+        tl.add_event(_event("b", "c1", _ts(5, 23)))
+        tl.add_event(_event("c", "c1", _ts(6, 0)))
+        assert [e.event_id for e in tl.get_events_for_day(date(2024, 1, 5))] == ["a", "b"]
+        # Guard path (no guard: always computes): no event on the day -> empty list.
+        assert tl.get_events_for_day(date(2024, 1, 20)) == []
+
+    def test_get_events_for_month_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: events falling in the given month.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c1", _ts(28)))
+        tl.add_event(_event("c", "c1", datetime(2024, 2, 1, tzinfo=timezone.utc)))
+        assert [e.event_id for e in tl.get_events_for_month(2024, 1)] == ["a", "b"]
+        # Guard path (no guard: always computes): no event in the month -> empty list.
+        assert tl.get_events_for_month(2024, 3) == []
+
+    def test_to_dict_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: exact dict of events / entries / event_count.
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_entry("i1", "Title", timestamp=_ts(2))
+        d = tl.to_dict()
+        assert set(d.keys()) == {"events", "entries", "event_count"}
+        assert d["event_count"] == 1
+        assert d["events"] == [tl.events[0].to_dict()]
+        assert d["entries"] == [tl.entries[0].to_dict()]
+        # Guard path (no guard: always computes): empty timeline.
+        assert Timeline().to_dict() == {"events": [], "entries": [], "event_count": 0}
+
+    def test_from_dict_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: reconstructs events (ascending) and entries (descending).
+        tl = Timeline()
+        tl.add_event(_event("a", "c1", _ts(1)))
+        tl.add_event(_event("b", "c1", _ts(9)))
+        tl.add_entry("i1", "T1", timestamp=_ts(1))
+        tl.add_entry("i2", "T2", timestamp=_ts(9))
+        restored = Timeline.from_dict(tl.to_dict())
+        assert [e.event_id for e in restored.events] == ["a", "b"]
+        assert [e.item_id for e in restored.entries] == ["i2", "i1"]
+        # Guard path (no guard: always constructs): missing keys -> empty timeline.
+        empty = Timeline.from_dict({})
+        assert empty.events == []
+        assert empty.entries == []
+
+
+class TestTimelineEntryContractPinning:
+    def test_to_dict_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: exact dict of all seven fields.
+        entry = TimelineEntry(
+            item_id="i1",
+            timestamp=_ts(3),
+            title="T",
+            event_type=EntryEventType.SAVED,
+            url="u",
+            description="d",
+            metadata={"k": "v"},
+        )
+        assert entry.to_dict() == {
+            "item_id": "i1",
+            "title": "T",
+            "event_type": "saved",
+            "timestamp": _ts(3).isoformat(),
+            "url": "u",
+            "description": "d",
+            "metadata": {"k": "v"},
+        }
+        # Guard path (no guard: always computes): defaults serialize too.
+        assert TimelineEntry(item_id="i2", timestamp=_ts(4)).to_dict() == {
+            "item_id": "i2",
+            "title": "",
+            "event_type": "saved",
+            "timestamp": _ts(4).isoformat(),
+            "url": "",
+            "description": "",
+            "metadata": {},
+        }
+
+    def test_from_dict_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: parses a full record.
+        entry = TimelineEntry.from_dict({
+            "item_id": "i1",
+            "timestamp": _ts(3).isoformat(),
+            "title": "T",
+            "event_type": "tagged",
+            "url": "u",
+            "description": "d",
+            "metadata": {"k": "v"},
+        })
+        assert entry.item_id == "i1"
+        assert entry.timestamp == _ts(3)
+        assert entry.title == "T"
+        assert entry.event_type is EntryEventType.TAGGED
+        assert entry.url == "u"
+        assert entry.description == "d"
+        assert entry.metadata == {"k": "v"}
+        # Guard path (no guard: always constructs): missing optional keys default.
+        minimal = TimelineEntry.from_dict({"item_id": "i2"})
+        assert minimal.item_id == "i2"
+        assert minimal.title == ""
+        assert minimal.event_type is EntryEventType.SAVED
+        assert minimal.url == ""
+        assert minimal.description == ""
+        assert minimal.metadata == {}
+
+    def test_eq_pins_returned_object_normal_and_guard(self) -> None:
+        a = TimelineEntry(item_id="i1", timestamp=_ts(1))
+        b = TimelineEntry(item_id="i1", timestamp=_ts(1))
+        c = TimelineEntry(item_id="i1", timestamp=_ts(2))
+        # Normal case: equal iff item_id AND timestamp match.
+        assert (a == b) is True
+        assert (a == c) is False
+        # Guard path: non-TimelineEntry -> NotImplemented.
+        assert a.__eq__("not-an-entry") is NotImplemented
+
+
+class TestTimelineEventContractPinning:
+    def test_to_dict_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: exact dict of all ten fields.
+        ev = TimelineEvent(
+            event_id="e1",
+            event_type=TimelineEventType.CREATED,
+            timestamp=_ts(3),
+            content_id="c1",
+            metadata={"k": "v"},
+            source="src",
+            item_id="i1",
+            title="T",
+            url="u",
+            description="d",
+        )
+        assert ev.to_dict() == {
+            "event_id": "e1",
+            "event_type": "created",
+            "timestamp": _ts(3).isoformat(),
+            "content_id": "c1",
+            "metadata": {"k": "v"},
+            "source": "src",
+            "item_id": "i1",
+            "title": "T",
+            "url": "u",
+            "description": "d",
+        }
+        # Guard path (no guard: always computes): defaults serialize too.
+        assert TimelineEvent(
+            event_id="e2",
+            event_type=TimelineEventType.SAVED,
+            timestamp=_ts(4),
+            content_id="c2",
+        ).to_dict() == {
+            "event_id": "e2",
+            "event_type": "saved",
+            "timestamp": _ts(4).isoformat(),
+            "content_id": "c2",
+            "metadata": {},
+            "source": "system",
+            "item_id": "",
+            "title": "",
+            "url": "",
+            "description": "",
+        }
+
+    def test_from_dict_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: parses a full record.
+        ev = TimelineEvent.from_dict({
+            "event_id": "e1",
+            "event_type": "tagged",
+            "timestamp": _ts(3).isoformat(),
+            "content_id": "c1",
+            "metadata": {"k": "v"},
+            "source": "src",
+            "item_id": "i1",
+            "title": "T",
+            "url": "u",
+            "description": "d",
+        })
+        assert ev.event_id == "e1"
+        assert ev.event_type is TimelineEventType.TAGGED
+        assert ev.timestamp == _ts(3)
+        assert ev.content_id == "c1"
+        assert ev.metadata == {"k": "v"}
+        assert ev.source == "src"
+        assert ev.item_id == "i1"
+        assert ev.title == "T"
+        assert ev.url == "u"
+        assert ev.description == "d"
+        # Guard path (no guard: always constructs): missing keys default.
+        minimal = TimelineEvent.from_dict({})
+        assert minimal.event_id == ""
+        assert minimal.event_type is TimelineEventType.CREATED
+        assert minimal.content_id == ""
+        assert minimal.metadata == {}
+        assert minimal.source == "system"
+        assert minimal.item_id == ""
+        assert minimal.title == ""
+        assert minimal.url == ""
+        assert minimal.description == ""
+
+    def test_eq_pins_returned_object_normal_and_guard(self) -> None:
+        a = TimelineEvent("e1", TimelineEventType.CREATED, _ts(1), "c1")
+        b = TimelineEvent("e1", TimelineEventType.SAVED, _ts(2), "c2")
+        c = TimelineEvent("e2", TimelineEventType.CREATED, _ts(1), "c1")
+        # Normal case: equal iff event_id matches (other fields ignored).
+        assert (a == b) is True
+        assert (a == c) is False
+        # Guard path: non-TimelineEvent -> NotImplemented.
+        assert a.__eq__("not-an-event") is NotImplemented
+
+
+class TestViewResultContractPinning:
+    def test_contains_pins_returned_object_normal_and_guard(self) -> None:
+        vr = ViewResult(events=[{"item_id": "i1"}], date="2024-01-01",
+                        mode="day", total=1, summary={"total_events": 1})
+        # Normal case: a serialized field is present.
+        assert ("events" in vr) is True
+        assert ("summary" in vr) is True
+        # Guard path: a non-serialized key is absent.
+        assert ("nope" in vr) is False
+        # Guard path: a non-str key is absent.
+        assert (123 in vr) is False
+
+    def test_to_dict_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: exact dict of all five fields.
+        vr = ViewResult(events=[{"item_id": "i1"}], date="2024-01-01",
+                        mode="week", total=1, summary={"total_events": 1})
+        assert vr.to_dict() == {
+            "events": [{"item_id": "i1"}],
+            "date": "2024-01-01",
+            "mode": "week",
+            "total": 1,
+            "summary": {"total_events": 1},
+        }
+        # Guard path (no guard: always computes): defaults serialize too.
+        assert ViewResult().to_dict() == {
+            "events": [],
+            "date": "",
+            "mode": "day",
+            "total": 0,
+            "summary": {},
+        }
+
+
+class TestTimelineViewContractPinning:
+    def test_init_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: returns None and defaults to DAY mode.
+        view = TimelineView()
+        assert view.mode is ViewMode.DAY
+        # Guard path (no guard: always constructs): a fresh view is DAY.
+        assert TimelineView().mode is ViewMode.DAY
+
+    def test_set_mode_pins_returned_object_normal_and_guard(self) -> None:
+        # Normal case: returns None and sets the mode.
+        view = TimelineView()
+        view.set_mode(ViewMode.WEEK)
+        assert view.mode is ViewMode.WEEK
+        # Guard path (no guard: always sets): setting again overwrites.
+        view.set_mode(ViewMode.MONTH)
+        assert view.mode is ViewMode.MONTH
