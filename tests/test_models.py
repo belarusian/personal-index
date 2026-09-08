@@ -699,3 +699,53 @@ def test_interest_matches_non_string_url_pattern_no_match():
     interest = Interest(name="test", url_patterns=[1, None])
     # Should not raise TypeError; no valid pattern -> no match
     assert interest.matches("hello", url="http://foo.example.com/") is False
+
+
+# ---------------------------------------------------------------------------
+# ARCH-1 module 3 (models) - exact-contract pinning tests
+# Each test asserts the RETURNED OBJECT for the normal case AND the
+# guard-path input the contract docstring states.
+# ---------------------------------------------------------------------------
+
+
+def test_interest_matches_contract_pinned():
+    """Pin Interest.matches() returned bool: normal True + guard False."""
+    # Normal case: keyword hit -> True.
+    interest = Interest(name="python", keywords=["python"])
+    assert interest.matches("I love python", "") is True
+    # Guard path: disabled -> False without inspecting text.
+    disabled = Interest(name="python", keywords=["python"], enabled=False)
+    assert disabled.matches("I love python", "") is False
+
+
+def test_interest_score_contract_pinned():
+    """Pin Interest.score() returned float: normal value + guard 0.0."""
+    # Normal case: 3 occurrences of 'python' * priority 5 = 15.0 (under cap 50).
+    interest = Interest(name="python", keywords=["python"], priority=5)
+    assert interest.score("python python python") == 15.0
+    # Guard path: disabled -> 0.0 without inspecting text.
+    disabled = Interest(name="python", keywords=["python"], enabled=False)
+    assert disabled.score("python python") == 0.0
+
+
+def test_crawled_page_from_dict_contract_pinned():
+    """Pin CrawledPage.from_dict() returned object: normal parse + guard fallback."""
+    from datetime import datetime, timezone
+
+    # Normal case: valid ISO string parsed to that exact datetime.
+    data = {
+        "url": "https://example.com",
+        "title": "Test",
+        "crawled_at": "2024-01-02T03:04:05+00:00",
+    }
+    page = CrawledPage.from_dict(data)
+    assert page.url == "https://example.com"
+    assert page.title == "Test"
+    assert page.crawled_at == datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+
+    # Guard path: unparseable string -> falls back to datetime.now(timezone.utc).
+    before = datetime.now(timezone.utc)
+    bad = CrawledPage.from_dict({"url": "https://example.com", "crawled_at": "not-a-date"})
+    assert isinstance(bad.crawled_at, datetime)
+    assert bad.crawled_at.tzinfo is not None
+    assert bad.crawled_at >= before
