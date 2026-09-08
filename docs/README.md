@@ -93,6 +93,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   Suggestion (to_dict 4dp) + TrendingEntry (age_seconds/record) + SearchSuggestions
   (add_search_history/add_tags/add_keywords/record_search/get_trending/suggest/get_related_queries/clear/to_dict/from_dict);
   trending-exact-match-score-exceeds-1.0 contract hole.
+- [url-classifier.md](url-classifier.md) (spec) — `personal_index.url_classifier`:
+  URLCategory (9 members, ERROR/UNKNOWN dead), ClassificationResult (metadata never populated),
+  URLClassifier (classify/classify_batch/get_category_counts, 6-rule fixed-order first-match),
+  /static/+/assets/ overlap (MEDIA dead) + duplicate /redirect pattern contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
