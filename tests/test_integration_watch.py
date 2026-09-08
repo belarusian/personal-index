@@ -96,3 +96,40 @@ class TestWatchOnceBehavior:
         # a.txt raised and was skipped; b.txt still indexed (loop continued)
         assert idx.get_page_count() == 1
         assert idx.get_page(f"file://{f2}") is not None
+
+
+class TestWatchOnceUsesIndexFileOnce:
+    """Pin that watch --once indexes via the live _index_file_once helper (ARCH-11).
+
+    The dead _index_file helper was removed; the only file-indexing helper is
+    _index_file_once, whose guard path skips files shorter than 10 chars. This
+    test pins both the main path (valid file indexed) and the guard path (short
+    file skipped) in one test, so a regression that re-introduces a dead or
+    alternate indexing helper is caught.
+    """
+
+    def test_watch_once_uses_index_file_once(self, tmp_path):
+        """watch --once indexes the valid file and skips the short file."""
+        from click.testing import CliRunner
+
+        from personal_index.cli import get_search_index, main
+
+        dd = str(tmp_path / "data")
+        valid = tmp_path / "valid.txt"
+        valid.write_text("This is a valid article with enough content.")
+        short = tmp_path / "short.txt"
+        short.write_text("short")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["watch", str(valid), str(short), "--once", "--data-dir", dd],
+        )
+        assert result.exit_code == 0
+
+        idx = get_search_index(dd)
+        # main path: the valid file (>= 10 chars) is indexed
+        assert idx.get_page(f"file://{valid}") is not None
+        # guard path: the short file (< 10 chars) is NOT indexed
+        assert idx.get_page(f"file://{short}") is None
+        assert idx.get_page_count() == 1

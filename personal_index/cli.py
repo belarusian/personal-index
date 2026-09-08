@@ -1395,27 +1395,6 @@ def verify(ctx, quick, data_dir):
 
 # ── watch ─────────────────────────────────────────────────────────────
 
-def _index_file(fp: str, data_dir: str) -> None:
-    """Read a single file and add it to the search index.
-
-    Args:
-        fp: File path to index.
-        data_dir: Data directory for the search index.
-    """
-    with open(fp, "r", errors="replace") as f:
-        content = f.read()
-    if len(content.strip()) >= 10:
-        from personal_index.models import CrawledPage
-        page = CrawledPage(
-            url=f"file://{os.path.abspath(fp)}",
-            title=os.path.basename(fp),
-            content=content,
-        )
-        idx = get_search_index(data_dir)
-        idx.add_page(page)
-        click.echo(f"  \u2713 Indexed: {fp}")
-
-
 def _index_file_once(fp: str, data_dir: str) -> None:
     """Read and index a single file into the search index."""
     idx = get_search_index(data_dir)
