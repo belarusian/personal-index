@@ -2,7 +2,7 @@
 
 import pytest
 
-from personal_index.index import IndexedPage, SearchIndex
+from personal_index.index import IndexedPage, SearchIndex, SearchResult
 
 
 @pytest.fixture
@@ -256,3 +256,42 @@ class TestSearchIndexNonDictJSON:
         idx = SearchIndex(db_path=db_path)
         assert idx._pages == {}
         assert idx._word_index == {}
+
+    def test_search_returns_searchresults_ordered_by_score_desc(self, search_index):
+        search_index.add_page(_make_page(
+            "https://example.com/a", "Python Guide", "Learn Python programming", score=1.0,
+        ))
+        search_index.add_page(_make_page(
+            "https://example.com/b", "Java Guide", "Python is nice", score=2.0,
+        ))
+        results = search_index.search("python")
+        assert len(results) == 2
+        assert all(isinstance(r, SearchResult) for r in results)
+        # ordered by relevance_score DESCENDING
+        assert results[0].url == "https://example.com/a"
+        assert results[1].url == "https://example.com/b"
+        # exact returned-object fields for the top result
+        top = results[0]
+        assert top.title == "Python Guide"
+        assert top.relevance_score == 4.5  # 1*3.0 + 1*1.0 + 1.0*0.5
+        assert "Python" in top.snippet
+        # second result fields
+        second = results[1]
+        assert second.title == "Java Guide"
+        assert second.relevance_score == 2.0  # 0*3.0 + 1*1.0 + 2.0*0.5
+        # non-increasing across the list
+        scores = [r.relevance_score for r in results]
+        assert scores == sorted(scores, reverse=True)
+
+    def test_search_empty_query_returns_empty_list(self, search_index):
+        search_index.add_page(_make_page(
+            "https://example.com/a", "Python Guide", "Learn Python programming",
+        ))
+        assert search_index.search("") == []
+
+    def test_search_stopword_only_query_returns_empty_list(self, search_index):
+        search_index.add_page(_make_page(
+            "https://example.com/a", "Python Guide", "Learn Python programming",
+        ))
+        # 'the' is a stop-word, so _tokenize('the') == [] -> guard path
+        assert search_index.search("the") == []
