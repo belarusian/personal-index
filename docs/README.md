@@ -48,6 +48,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
   SummaryResult, summarize (guard/short-text/scoring paths), summarize_page (title-prepended, empty-content guard).
 - [content-recommender.md](content-recommender.md) (spec) — `personal_index.content_recommender`:
   Recommendation, ContentItem, Recommender (add_item/add_items/recommend/recommend_for_keywords/clear/item_count), _extract_keywords, Jaccard sub-scores, negative-top_n + case-sensitivity contract holes.
+- [content-tagger.md](content-tagger.md) (spec) — `personal_index.content_tagger`:
+  Tag, TopicDetector (detect/add_topic/remove_topic/get_all_topics, 20 built-in topics, substring keyword matching),
+  TagResult, ContentTagger (tag/batch_tag/get_tag_statistics/add_topic/clear_statistics), dead-weight + substring-match contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
