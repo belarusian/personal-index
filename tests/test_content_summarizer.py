@@ -312,3 +312,25 @@ def test_tokenize_splits_on_non_alphanumeric_and_keeps_digit_runs():
     assert _tokenize("ABC") == ["abc"]
     # Return type is a list of strings.
     assert isinstance(_tokenize("hello"), list)
+
+
+def test_summarize_page_is_standalone_public_utility():
+    """Pin the documented standalone-utility contract (ARCH-14).
+
+    summarize_page is a standalone public utility with no pipeline or CLI
+    caller. Its contract is witnessed by direct import: the returned
+    original_text is the combined string f"{title}. {content}", and the
+    empty-content guard path returns an empty summary with ratio=0.0.
+    """
+    from personal_index.content_summarizer import summarize_page
+
+    title = "My Title"
+    content = "Some content here."
+    result = summarize_page(title, content)
+    # Combined original_text: title prepended with a ". " separator.
+    assert result.original_text == f"{title}. {content}"
+
+    # Guard path: empty content -> empty summary, ratio=0.0.
+    guard = summarize_page("Title", "")
+    assert guard.summary == ""
+    assert guard.ratio == 0.0
