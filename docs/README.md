@@ -73,6 +73,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ImportResult + Importer (import_from_file / import_from_content / import_opml,
   formats json|csv|html|xml|necko|netscape); inconsistent total_skipped across formats +
   OPML-unreachable-via-dispatch + dead path param + stray trailing docstring contract holes.
+- [content-extractor.md](content-extractor.md) (spec) — `personal_index.content_extractor`:
+  ExtractedContent + ContentExtractor (extract / extract_readability_score, og:title-preferred title,
+  meta/canonical/language/author, headings/links/images, whitespace-normalized truncated text);
+  word_count-vs-text readability divergence + pre-truncation word_count + title.string contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
