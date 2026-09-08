@@ -69,6 +69,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentImporter (import_content / batch_import, 5 formats json|html|markdown|rss|csv),
   per-format item shapes; inconsistent cross-format shape + untyped batch_import +
   stdlib-ET rss + JSON-scalar-TypeError contract holes.
+- [importer.md](importer.md) (spec) — `personal_index.importer`:
+  ImportResult + Importer (import_from_file / import_from_content / import_opml,
+  formats json|csv|html|xml|necko|netscape); inconsistent total_skipped across formats +
+  OPML-unreachable-via-dispatch + dead path param + stray trailing docstring contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
