@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Component:** `personal_index/content_reader.py` (`ContentReader`)
 - **Docs:** `docs/content-reader.md` (contract hole 1)
-- **Issue:** #<n> (created at triage)
+- **Issue:** #1073
 - **Carry-forward:** part of ARCH-2 (#983) — the docs-coverage umbrella.
 
 ## Symptom
