@@ -179,6 +179,30 @@ class TestConfigCommands:
         result = runner.invoke(main, ['--data-dir', data_dir, 'config', 'set-schedule', '--interval', '12'])
         assert result.exit_code == 0
 
+    def test_config_show_uses_loader_load_config(self, runner, tmp_path, monkeypatch):
+        # Pin that `config show` reads its values through
+        # personal_index.config.loader.load_config (the live loader), not a
+        # dead/alternate module-level loader. A temp config.yaml with
+        # distinctive values must be reflected in the output; a dict-returning
+        # dead loader would crash the attribute access (non-zero exit).
+        workdir = tmp_path / "work"
+        workdir.mkdir()
+        (workdir / "config.yaml").write_text(
+            "data_dir: /tmp/pin_data_dir\n"
+            "crawler:\n"
+            "  max_depth: 7\n"
+            "  timeout: 42\n"
+            "  politeness_delay: 0.5\n"
+        )
+        monkeypatch.chdir(workdir)
+        result = runner.invoke(main, ['config', 'show'])
+        assert result.exit_code == 0, result.output
+        assert "Data directory: /tmp/pin_data_dir" in result.output
+        assert "Max depth: 7" in result.output
+        assert "Timeout: 42 seconds" in result.output
+        assert "Politeness delay: 0.5 seconds" in result.output
+
+
 
 class TestMainCommand:
     def test_version(self, runner):
