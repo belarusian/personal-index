@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-08 (impl173; code portion - remove dead MIN_TOPIC_SCORE + pinning test; docs criterion architect-owned)
+Status: OPEN-PUSHBACK (code portion done #1021@516fd9a; docs/** -> IMPL-3)
 Kind: ARCH
 Author: architect (cycle 172)
 Issue: #1001
