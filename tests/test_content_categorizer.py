@@ -702,3 +702,166 @@ def test_min_score_threshold_pinned():
     res_high = cat_high.categorize(text="quantum")
     high_topics = [t.topic for t in res_high.topics]
     assert "zeta" not in high_topics
+
+
+# ---------------------------------------------------------------------------
+# ARCH-1 cycle 191: exact-contract pinning tests for residual functions
+# ---------------------------------------------------------------------------
+
+
+class TestPostInitContract:
+    """Pinning tests for TopicCategory.__post_init__."""
+
+    def test_post_init_normal(self):
+        """Normal case: keywords are lowercased in place."""
+        tc = TopicCategory(name="test", keywords=["Hello", "WORLD", "Foo"])
+        assert tc.keywords == ["hello", "world", "foo"]
+        assert tc.name == "test"
+
+    def test_post_init_empty_keywords(self):
+        """Guard path: empty keywords list stays empty."""
+        tc = TopicCategory(name="test", keywords=[])
+        assert tc.keywords == []
+
+
+class TestTopicScoreComparisonContract:
+    """Pinning tests for TopicScore.__lt__ and __gt__."""
+
+    def test_lt_normal(self):
+        """Normal case: lower score is less than higher score."""
+        a = TopicScore(topic="a", score=0.5)
+        b = TopicScore(topic="b", score=0.9)
+        assert (a < b) is True
+        assert (b < a) is False
+
+    def test_lt_equal_scores(self):
+        """Guard path: equal scores are not less than each other."""
+        a = TopicScore(topic="a", score=0.5)
+        b = TopicScore(topic="b", score=0.5)
+        assert (a < b) is False
+        assert (b < a) is False
+
+    def test_gt_normal(self):
+        """Normal case: higher score is greater than lower score."""
+        a = TopicScore(topic="a", score=0.9)
+        b = TopicScore(topic="b", score=0.5)
+        assert (a > b) is True
+        assert (b > a) is False
+
+    def test_gt_equal_scores(self):
+        """Guard path: equal scores are not greater than each other."""
+        a = TopicScore(topic="a", score=0.5)
+        b = TopicScore(topic="b", score=0.5)
+        assert (a > b) is False
+        assert (b > a) is False
+
+
+class TestSecondaryTopicsContract:
+    """Pinning tests for CategorizationResult.secondary_topics."""
+
+    def test_secondary_topics_normal(self):
+        """Normal case: returns topics[1:] as a new list."""
+        t1 = TopicScore(topic="a", score=0.9)
+        t2 = TopicScore(topic="b", score=0.7)
+        t3 = TopicScore(topic="c", score=0.5)
+        result = CategorizationResult(
+            primary_topic="a", topics=[t1, t2, t3], confidence=0.9
+        )
+        secondary = result.secondary_topics
+        assert secondary == [t2, t3]
+        assert secondary is not result.topics  # new list, not internal
+
+    def test_secondary_topics_single_topic(self):
+        """Guard path: single topic returns empty list."""
+        t1 = TopicScore(topic="a", score=0.9)
+        result = CategorizationResult(
+            primary_topic="a", topics=[t1], confidence=0.9
+        )
+        assert result.secondary_topics == []
+
+    def test_secondary_topics_empty(self):
+        """Guard path: empty topics returns empty list."""
+        result = CategorizationResult(primary_topic="unknown", topics=[])
+        assert result.secondary_topics == []
+
+
+class TestInitContract:
+    """Pinning tests for ContentCategorizer.__init__."""
+
+    def test_init_default(self):
+        """Normal case: 12 built-in topics loaded, defaults stored."""
+        cat = ContentCategorizer()
+        assert len(cat._topics) == 12
+        assert cat._max_topics == 5
+        assert cat.min_score == 0.1
+        assert "technology" in cat._topics
+        assert "science" in cat._topics
+
+    def test_init_with_custom_topics(self):
+        """Normal case: custom topics added on top of built-ins."""
+        cat = ContentCategorizer(
+            custom_topics={"mytopic": ["kw1", "kw2"]},
+            min_score=0.5,
+            max_topics=3,
+        )
+        assert len(cat._topics) == 13  # 12 built-in + 1 custom
+        assert cat._max_topics == 3
+        assert cat.min_score == 0.5
+        assert "mytopic" in cat._topics
+        assert cat._topics["mytopic"].keywords == ["kw1", "kw2"]
+
+    def test_init_empty_custom_topics(self):
+        """Guard path: empty custom_topics dict skips the loop."""
+        cat = ContentCategorizer(custom_topics={})
+        assert len(cat._topics) == 12  # only built-ins
+
+
+class TestRemoveTopicContract:
+    """Pinning tests for ContentCategorizer.remove_topic."""
+
+    def test_remove_topic_normal(self):
+        """Normal case: existing topic removed, returns True."""
+        cat = ContentCategorizer()
+        assert "technology" in cat._topics
+        result = cat.remove_topic("technology")
+        assert result is True
+        assert "technology" not in cat._topics
+
+    def test_remove_topic_case_insensitive(self):
+        """Normal case: case-insensitive removal."""
+        cat = ContentCategorizer()
+        result = cat.remove_topic("TECHNOLOGY")
+        assert result is True
+        assert "technology" not in cat._topics
+
+    def test_remove_topic_nonexistent(self):
+        """Guard path: nonexistent topic returns False, no mutation."""
+        cat = ContentCategorizer()
+        count_before = len(cat._topics)
+        result = cat.remove_topic("nonexistent_topic")
+        assert result is False
+        assert len(cat._topics) == count_before
+
+
+class TestCategorizeBatchContract:
+    """Pinning tests for ContentCategorizer.categorize_batch."""
+
+    def test_categorize_batch_normal(self):
+        """Normal case: one result per item, in order."""
+        cat = ContentCategorizer()
+        items = [
+            {"text": "software programming developer", "title": "Dev Blog"},
+            {"text": "medical doctor hospital", "title": "Health News"},
+        ]
+        results = cat.categorize_batch(items)
+        assert len(results) == 2
+        assert isinstance(results[0], CategorizationResult)
+        assert isinstance(results[1], CategorizationResult)
+        assert results[0].primary_topic == "technology"
+        assert results[1].primary_topic == "health"
+
+    def test_categorize_batch_empty(self):
+        """Guard path: empty list returns empty list."""
+        cat = ContentCategorizer()
+        results = cat.categorize_batch([])
+        assert results == []

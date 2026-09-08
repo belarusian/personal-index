@@ -188,7 +188,12 @@ class TopicCategory:
     weight: float = 1.0
 
     def __post_init__(self):
-        # Normalize keywords to lowercase
+        """Normalize self.keywords in place to lowercase.
+
+        No guard path: always computes.
+        Returns None.
+        Side effects: mutates self.keywords to [kw.lower() for kw in self.keywords].
+        """
         self.keywords = [kw.lower() for kw in self.keywords]
 
 @dataclass
@@ -201,9 +206,21 @@ class TopicScore:
     signal_sources: list[str] = field(default_factory=list)
 
     def __lt__(self, other: TopicScore) -> bool:
+        """Compare by score only.
+
+        No guard path: always computes.
+        Returns self.score < other.score (a bool).
+        No side effects.
+        """
         return self.score < other.score
 
     def __gt__(self, other: TopicScore) -> bool:
+        """Compare by score only.
+
+        No guard path: always computes.
+        Returns self.score > other.score (a bool).
+        No side effects.
+        """
         return self.score > other.score
 
 @dataclass
@@ -219,7 +236,13 @@ class CategorizationResult:
 
     @property
     def secondary_topics(self) -> list[TopicScore]:
-        """Return topics after the primary one."""
+        """Return all topics after the first (primary) one as a new list.
+
+        Guard path: if len(self.topics) <= 1, return [].
+        Normal path: return self.topics[1:] (a fresh list slice, not
+        the internal list).
+        No side effects.
+        """
         return self.topics[1:] if len(self.topics) > 1 else []
 
     def top_n(self, n: int = 3) -> list[TopicScore]:
@@ -276,12 +299,17 @@ class ContentCategorizer:
         min_score: float = 0.1,
         max_topics: int = 5,
     ):
-        """Initialize the categorizer.
+        """Initialize the categorizer with built-in and optional custom topics.
 
-        Args:
-            custom_topics: Dict mapping topic names to keyword lists.
-            min_score: Minimum score threshold to include a topic.
-            max_topics: Maximum number of topics to return.
+        Guard path: if custom_topics is None or an empty dict, skip
+        the custom-topic loading loop (only built-in topics are loaded).
+        No guard path for min_score or max_topics: always stored.
+        Returns None (constructor).
+        Side effects: populates self._topics with one TopicCategory
+        per entry in BUILTIN_TOPICS (12 built-in topics), sets
+        self._max_topics = max_topics, sets self.min_score = min_score,
+        and calls self.add_topic(name, keywords) for each entry in
+        custom_topics (which mutates self._topics).
         """
         self._topics: dict[str, TopicCategory] = {}
         self._max_topics = max_topics
@@ -318,13 +346,13 @@ class ContentCategorizer:
         return topic
 
     def remove_topic(self, name: str) -> bool:
-        """Remove a topic category.
+        """Remove a topic by name (case-insensitive).
 
-        Args:
-            name: Topic name to remove.
-
-        Returns:
-            True if topic was removed, False if it didn't exist.
+        Guard path: if name.lower() is not a key in self._topics,
+        return False (no mutation).
+        Normal path: delete self._topics[name.lower()] and return True.
+        Side effects: when the topic exists, deletes the entry from
+        self._topics (mutates the internal dict).
         """
         name_lower = name.lower()
         if name_lower in self._topics:
@@ -460,13 +488,16 @@ class ContentCategorizer:
         self,
         items: list[dict[str, str]],
     ) -> list[CategorizationResult]:
-        """Categorize multiple content items.
+        """Categorize a list of content items, one result per item.
 
-        Args:
-            items: List of dicts with keys 'text', 'title', 'url', 'meta_description'.
-
-        Returns:
-            List of CategorizationResult objects.
+        Guard path: if items is an empty list, return [].
+        Normal path: for each dict in items, call
+        self.categorize(text=item.get("text", ""),
+        title=item.get("title", ""), url=item.get("url", ""),
+        meta_description=item.get("meta_description", "")) and collect
+        the results in order. Returns a list of CategorizationResult
+        objects, one per input item, in the same order.
+        No side effects (delegates to self.categorize which has none).
         """
         return [
             self.categorize(
