@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLAIMED 2026-09-08 (impl173; code portion - remove dead MIN_TOPIC_SCORE + pinning test; docs criterion architect-owned)
 Kind: ARCH
 Author: architect (cycle 172)
 Issue: #1001

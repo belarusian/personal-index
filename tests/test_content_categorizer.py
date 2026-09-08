@@ -680,3 +680,25 @@ class TestContentCategorizerInternal:
             url_hints=set(),
         )
         assert empty_result == (0.0, [], [])
+
+
+def test_min_score_threshold_pinned():
+    """Pin the live inclusion threshold: the gate reads self.min_score.
+
+    A single text-keyword match scores min(1*0.15, 1.0)*weight = 0.15.
+    - Normal case: default min_score=0.1 -> 0.15 >= 0.1, topic included.
+    - Guard case:  min_score=0.5        -> 0.15 <  0.5, topic excluded.
+    The guard case proves the gate reads the instance attribute
+    self.min_score, not a fixed 0.1 class constant.
+    """
+    # Normal case: default min_score includes the 0.15-scoring topic.
+    cat_default = ContentCategorizer(custom_topics={"zeta": ["quantum"]})
+    res_default = cat_default.categorize(text="quantum")
+    default_topics = [t.topic for t in res_default.topics]
+    assert "zeta" in default_topics
+
+    # Guard case: raised min_score excludes the same topic.
+    cat_high = ContentCategorizer(min_score=0.5, custom_topics={"zeta": ["quantum"]})
+    res_high = cat_high.categorize(text="quantum")
+    high_topics = [t.topic for t in res_high.topics]
+    assert "zeta" not in high_topics
