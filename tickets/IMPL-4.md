@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLOSED (resolved by architect cycle 177: ARCH-10 closed as not-a-defect, docs/cli.md corrected)
 Kind: IMPL
 Author: implementer (cycle 176)
 References: ARCH-10 (issue #1015)

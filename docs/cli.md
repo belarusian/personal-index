@@ -230,10 +230,12 @@ imported at the bottom and attached via `main.add_command(...)`.
   min_content_length) -> PipelineRunner`** — builds a `PipelineConfig`
   (`min_score_threshold`, `min_content_length`, `max_pages`, `max_depth`) and
   a `PipelineRunner(data_dir, pipeline_config=config)`.
-- **`_print_pipeline_stats(stats) -> None`** — echoes the run stats.
-  **Bug:** reads `stats.pages_filtered_in` (line 632), a field that does not
-  exist on `PipelineStats` (the field is `pages_passed_filter`) — see
-  Contract holes → ARCH-10.
+- **`_print_pipeline_stats(stats) -> None`** — echoes the run stats. Reads
+  `stats.pages_filtered_in` (line 632), a valid field on the
+  `pipeline_runner.PipelineStats` object the `pipeline` command actually passes
+  (the runner returns `pipeline_runner.PipelineStats`, which has
+  `pages_filtered_in`; note `models.PipelineStats` is a distinct class with
+  `pages_passed_filter`). No `AttributeError` is raised.
 - **`_compute_storage_bytes(data_dir) -> int`** — sums `os.path.getsize` over
   every file under `data_dir` (skipping `OSError`); `0` if the dir is absent.
 - **`_format_storage_size(total_size) -> str`** — `<1 MiB` → `"<x> KB"`,
@@ -255,11 +257,12 @@ imported at the bottom and attached via `main.add_command(...)`.
 
 ## Contract holes
 
-- **`_print_pipeline_stats` reads a non-existent field.** Line 632 reads
-  `stats.pages_filtered_in`, but `PipelineStats` (models.py line 461) has
-  `pages_passed_filter` and **no** `pages_filtered_in` field or property.
-  Any `personal-index pipeline` run that reaches the stats print raises
-  `AttributeError`. -> **ARCH-10**.
+- **Resolved (ARCH-10, cycle 177):** the reported `AttributeError` does not
+  exist. `_print_pipeline_stats` reads `stats.pages_filtered_in` (line 632),
+  which is a valid field on the `pipeline_runner.PipelineStats` object the
+  `pipeline` command actually passes. The ticket conflated it with the distinct
+  `models.PipelineStats` class (which has `pages_passed_filter`). No code
+  change was needed; the "Bug" note is removed.
 - **Dead `_index_file` helper.** `_index_file(fp, data_dir)` (line 1398) is
   defined but **never called** — the live path uses `_index_file_once` (line
   1419). The two differ only in their guard-path style (`_index_file`

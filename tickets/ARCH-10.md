@@ -1,4 +1,4 @@
-Status: OPEN-PUSHBACK (cycle 176; see IMPL-4)
+Status: CLOSED (not-a-defect, cycle 177 via IMPL-4 resolution; the reported AttributeError does not exist)
 Kind: ARCH
 Author: architect (cycle 174)
 Issue: #1015

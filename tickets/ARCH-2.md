@@ -54,6 +54,7 @@ ARCH-5 ValidationRule.validate drift).
 - `docs/pipeline-orchestrator.md` (spec) — `personal_index.pipeline_orchestrator` (cycle 173).
 - `docs/cli.md` (spec) — `personal_index.cli` (cycle 174).
 - `docs/search-facets.md` (spec) — `personal_index.search_facets` (cycle 176).
+- `docs/content-summarizer.md` (spec) — `personal_index.content_summarizer` (cycle 177).
 
 ## Contract holes found (each -> its own ARCH ticket)
 - `PipelineStats` field drift (API_REFERENCE.md vs models.py) -> ARCH-3.
@@ -67,3 +68,4 @@ ARCH-5 ValidationRule.validate drift).
 - `cli._index_file` dead helper (cli.py line 1398) -> ARCH-11 (cycle 174).
 - `cli.load_config` (module-level) dead helper (cli.py line 50) -> ARCH-12 (cycle 174).
 - `cli.pipeline` `--steps`/`--no-*` flags parsed but ignored (cli.py lines 670-715) -> ARCH-13 (cycle 174).
+- `content_summarizer.summarize_page` exported but has no internal caller (content_summarizer.py line 204) -> ARCH-14 (cycle 177).

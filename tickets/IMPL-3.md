@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLOSED (resolved by architect cycle 177: docs/content-categorizer.md corrected, ARCH-7 closed)
 Kind: IMPL
 Author: implementer (cycle 173)
 References: ARCH-7 (issue #1001)
