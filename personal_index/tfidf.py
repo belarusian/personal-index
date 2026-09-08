@@ -80,7 +80,12 @@ class TfidfScorer:
         return score
 
     def rank_documents(self, query: str, limit: int = 10) -> list[tuple[int, float]]:
-        """Rank documents with positive TF-IDF score by relevance to query."""
+        """Rank documents with positive TF-IDF score by relevance to query.
+
+        If ``limit`` <= 0, returns an empty list.
+        """
+        if limit <= 0:
+            return []
         scores: list[tuple[int, float]] = []
         for doc_id in self._doc_terms:
             score = self.score_query(query, doc_id)
@@ -100,7 +105,12 @@ class TfidfScorer:
         return len(self._doc_freq)
 
     def get_top_terms(self, doc_id: int, n: int = 10) -> list[tuple[str, float]]:
-        """Get top N terms by TF-IDF score for a document."""
+        """Get top N terms by TF-IDF score for a document.
+
+        If ``n`` <= 0, returns an empty list.
+        """
+        if n <= 0:
+            return []
         scores = self.compute_tfidf(doc_id)
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:n]
 

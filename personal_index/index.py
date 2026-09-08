@@ -167,6 +167,7 @@ class SearchIndex:
         Guard path: if ``query`` is falsy (empty string), returns [].
         If ``_tokenize(query)`` yields no tokens (all stop-words or
         length<=1), returns [].
+        If ``limit`` <= 0 (out-of-range, including negative), returns [].
 
         Return: a list of SearchResult objects, at most ``limit``
         (default 10), ordered by relevance_score DESCENDING. Each
@@ -186,6 +187,8 @@ class SearchIndex:
             return []
         tokens = self._tokenize(query)
         if not tokens:
+            return []
+        if limit <= 0:
             return []
 
         scores: dict[str, float] = {}
