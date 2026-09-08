@@ -34,6 +34,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
   AnalyticsTracker (record/compute/get stats/save/load) + SearchEvent, CrawlEvent, AnalyticsData.
 - [content-categorizer.md](content-categorizer.md) (spec) — `personal_index.content_categorizer`:
   ContentCategorizer (add/remove/get topics, categorize, categorize_batch) + TopicCategory, TopicScore, CategorizationResult.
+- [content-filter.md](content-filter.md) (spec) — `personal_index.content_filter`:
+  FilterConfig, ContentFilter (should_include / get_filter_reasons / filter_pages),
+  eight ordered checks, silent pattern-compile guard, interest-match side effects.
 - [pipeline-orchestrator.md](pipeline-orchestrator.md) (spec) — `personal_index.pipeline_orchestrator`:
   PipelineOrchestrator (run / run_from_files / search / close) + PipelineResult; crawl→filter→score→tag→index.
 - [cli.md](cli.md) (spec) — `personal_index.cli`:
