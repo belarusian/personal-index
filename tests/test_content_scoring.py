@@ -549,3 +549,118 @@ class TestBuildScoreContract:
         assert result.factors["quality"] == quality
         assert result.factors["authority"] == authority
         assert result.factors["freshness"] == freshness
+
+
+# ── Cycle 185: exact-contract pinning (normal + guard path) ────────
+
+class TestContentScoringContractPinned:
+    """Pin the returned object for each swept function (normal + guard)."""
+
+    def test_to_dict_contract_pinned(self) -> None:
+        # Normal case: exact 8 keys, each numeric field rounded to 4 dp,
+        # factors passed through by reference (not copied / not rounded).
+        factors = {"recency": 0.123456789}
+        s = ContentScore(
+            total=0.123456789, recency=0.987654321, relevance=0.555555555,
+            engagement=0.111111111, quality=0.333333333,
+            authority=0.777777777, freshness=0.222222222,
+            factors=factors,
+        )
+        d = s.to_dict()
+        assert isinstance(d, dict)
+        assert set(d) == {
+            "total", "recency", "relevance", "engagement",
+            "quality", "authority", "freshness", "factors",
+        }
+        assert d["total"] == round(0.123456789, 4)
+        assert d["recency"] == round(0.987654321, 4)
+        assert d["relevance"] == round(0.555555555, 4)
+        assert d["engagement"] == round(0.111111111, 4)
+        assert d["quality"] == round(0.333333333, 4)
+        assert d["authority"] == round(0.777777777, 4)
+        assert d["freshness"] == round(0.222222222, 4)
+        # factors is the SAME object (by reference), values NOT rounded.
+        assert d["factors"] is factors
+        assert d["factors"]["recency"] == 0.123456789
+        # no side effects: the source score is not mutated.
+        assert s.total == 0.123456789
+        assert s.factors is factors
+        # Guard path: default ContentScore() -> all-zero rounded fields.
+        g = ContentScore().to_dict()
+        assert g["total"] == 0.0
+        assert g["recency"] == 0.0
+        assert g["factors"] == {}
+
+    def test_score_recency_contract_pinned(self) -> None:
+        scorer = ContentScorer()
+        # Normal case: just-published content -> age 0 days -> 1.0.
+        assert scorer._score_recency(
+            datetime.now(timezone.utc), None
+        ) == 1.0
+        # Decay: 30 days old -> half-life -> 0.5.
+        old = datetime.now(timezone.utc) - timedelta(days=30)
+        assert scorer._score_recency(old, None) == 0.5
+        # updated_at takes precedence over published_at.
+        recent = datetime.now(timezone.utc)
+        ancient = datetime.now(timezone.utc) - timedelta(days=365)
+        assert scorer._score_recency(ancient, recent) == 1.0
+        # Guard path: both dates None -> reference is now -> 1.0.
+        assert scorer._score_recency(None, None) == 1.0
+
+    def test_score_engagement_contract_pinned(self) -> None:
+        scorer = ContentScorer()
+        # Guard path: all-zero counts -> 0.0.
+        assert scorer._score_engagement(0, 0, 0) == 0.0
+        # Normal case: monotonic in each signal.
+        assert (
+            scorer._score_engagement(10, 0, 0)
+            < scorer._score_engagement(100, 0, 0)
+            < scorer._score_engagement(1000, 0, 0)
+        )
+        # Capped at 1.0 when the weighted sum reaches log1p(1000).
+        assert scorer._score_engagement(1000, 1000, 1000) == 1.0
+
+    def test_score_quality_contract_pinned(self) -> None:
+        scorer = ContentScorer()
+        # Guard path: word_count 0, no bonuses -> 0.0.
+        assert scorer._score_quality(0, False, False) == 0.0
+        # Normal case: length scaling is monotonic.
+        assert (
+            scorer._score_quality(100, False, False)
+            < scorer._score_quality(1000, False, False)
+            < scorer._score_quality(3000, False, False)
+        )
+        # Bonuses add 0.1 (images) and 0.05 (code); word_count=500 keeps the
+        # sum under the 1.0 cap so the bonuses are additive, not clamped.
+        base = scorer._score_quality(500, False, False)
+        assert scorer._score_quality(500, True, False) == pytest.approx(
+            base + 0.1, abs=1e-4
+        )
+        assert scorer._score_quality(500, True, True) == pytest.approx(
+            base + 0.15, abs=1e-4
+        )
+        # Capped at 1.0.
+        assert scorer._score_quality(3000, True, True) == 1.0
+
+    def test_rank_contract_pinned(self) -> None:
+        scorer = ContentScorer()
+        # Guard path: empty items -> empty list.
+        assert scorer.rank([]) == []
+        # Normal case: sorted by score.total descending, (item, score) tuples.
+        items = [
+            {"keyword_matches": 0, "total_keywords": 10},
+            {"keyword_matches": 10, "total_keywords": 10},
+            {"keyword_matches": 5, "total_keywords": 10},
+        ]
+        ranked = scorer.rank(items)
+        assert len(ranked) == 3
+        assert all(isinstance(t, tuple) and len(t) == 2 for t in ranked)
+        assert all(isinstance(t[1], ContentScore) for t in ranked)
+        assert ranked[0][1].total >= ranked[1][1].total >= ranked[2][1].total
+        # Highest relevance (10/10) ranks first; item paired by reference.
+        assert ranked[0][0] is items[1]
+        assert ranked[0][1].relevance == 1.0
+        # limit truncates to the first N entries.
+        assert len(scorer.rank(items, limit=2)) == 2
+        # No side effects: input dicts are not mutated.
+        assert items[0] == {"keyword_matches": 0, "total_keywords": 10}
