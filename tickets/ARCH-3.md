@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-08
+Status: OPEN-PUSHBACK (code portion done #1004@e46ff0c; docs/** -> IMPL-1)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #984
