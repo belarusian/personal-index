@@ -85,6 +85,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   TaskStatus + ScheduledTask (cron parse / next_run / is_due / run / to_dict) + TaskScheduler
   (add_task/get_task/list_tasks/remove_task/enable_task/disable_task/run_due_tasks/get_stats);
   passive-scheduler-no-loop + stale-next_run + no-add_task-validation contract holes.
+- [content-webhooks.md](content-webhooks.md) (spec) — `personal_index.content_webhooks`:
+  WebhookEventType + WebhookEndpoint (should_retry) + WebhookPayload + WebhookManager
+  (register_endpoint/remove_endpoint/dispatch_event/mark_delivered/mark_failed/get_stats/get_payload_json);
+  signature-not-verifiable + exhausted-lands-in-delivered + no-http-delivery contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
