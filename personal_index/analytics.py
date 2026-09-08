@@ -59,19 +59,44 @@ class AnalyticsTracker:
     """Track and analyze personal index usage."""
 
     def __init__(self):
+        """Initialize an empty AnalyticsTracker.
+
+        Sets ``self._search_events`` to an empty list and
+        ``self._crawl_events`` to an empty list. No IO, no persistence,
+        no side effects beyond initializing the two internal lists.
+
+        Returns:
+            None (implicit).
+        """
         self._search_events: list[SearchEvent] = []
         self._crawl_events: list[CrawlEvent] = []
 
     def record_search(self, query: str | SearchEvent, result_count: int = 0,
                       clicked_url: str | None = None,
                       duration_ms: float = 0.0) -> SearchEvent:
-        """Record a search event.
+        """Record a search event and return it.
+
+        Guard path: when ``query`` is already a ``SearchEvent`` instance,
+        it is used verbatim (``result_count``, ``clicked_url`` and
+        ``duration_ms`` are ignored) and no new event is constructed.
+
+        Normal path: when ``query`` is a string, a new ``SearchEvent`` is
+        constructed with ``query``, ``result_count``, ``clicked_url`` and
+        ``duration_ms`` (its ``timestamp`` is auto-set by the dataclass
+        ``__post_init__`` when empty).
+
+        Side effect: the event (constructed or passed) is appended to
+        ``self._search_events``.
 
         Args:
             query: Either a search query string or a SearchEvent object.
             result_count: Number of results (ignored if SearchEvent is passed).
             clicked_url: URL that was clicked (ignored if SearchEvent is passed).
             duration_ms: Duration in ms (ignored if SearchEvent is passed).
+
+        Returns:
+            The recorded ``SearchEvent`` (the passed instance when
+            ``query`` is a SearchEvent, otherwise the newly constructed one).
         """
         if isinstance(query, SearchEvent):
             event = query
@@ -356,7 +381,22 @@ class AnalyticsTracker:
         }
 
     def save(self, path: str) -> str:
-        """Save analytics data to JSON file."""
+        """Serialize the recorded events to a JSON file at ``path``.
+
+        Writes a JSON object with two keys: ``search_events`` (a list of
+        dicts, one per recorded search event, each with keys ``query``,
+        ``timestamp``, ``result_count``, ``clicked_url``, ``duration_ms``)
+        and ``crawl_events`` (a list of dicts, one per recorded crawl
+        event, each with keys ``url``, ``timestamp``, ``status_code``,
+        ``content_size``, ``duration_ms``, ``error``). Written with
+        ``indent=2``.
+
+        Side effect: creates/overwrites the file at ``path`` (opens it in
+        ``"w"`` mode). Does not mutate the internal event lists.
+
+        Returns:
+            The ``path`` string that was written to (unchanged).
+        """
         data = {
             "search_events": [
                 {
@@ -385,7 +425,28 @@ class AnalyticsTracker:
         return path
 
     def load(self, path: str) -> int:
-        """Load analytics data from JSON file. Returns total events loaded."""
+        """Load recorded events from a JSON file at ``path``.
+
+        Guard paths (each returns ``0`` and leaves the internal event
+        lists untouched):
+          - the file at ``path`` does not exist;
+          - the file's contents are not valid JSON (``json.JSONDecodeError``);
+          - the parsed JSON is not a ``dict``.
+
+        Normal path: clears both ``self._search_events`` and
+        ``self._crawl_events``, then repopulates them from the
+        ``search_events`` and ``crawl_events`` lists in the JSON (each
+        item unpacked via ``SearchEvent(**item)`` / ``CrawlEvent(**item)``).
+
+        Side effect: mutates ``self._search_events`` and
+        ``self._crawl_events`` (cleared then repopulated on the normal
+        path; untouched on every guard path).
+
+        Returns:
+            The total number of events loaded
+            (``len(self._search_events) + len(self._crawl_events)``), or
+            ``0`` on any guard path.
+        """
         path_obj = Path(path)
         if not path_obj.exists():
             return 0
@@ -411,7 +472,15 @@ class AnalyticsTracker:
         return len(self._search_events) + len(self._crawl_events)
 
     def clear(self) -> None:
-        """Clear all tracked events."""
+        """Clear all tracked events.
+
+        Side effect: empties both ``self._search_events`` and
+        ``self._crawl_events`` in place (via ``list.clear``). No IO, no
+        persistence.
+
+        Returns:
+            None (implicit).
+        """
         self._search_events.clear()
         self._crawl_events.clear()
 
