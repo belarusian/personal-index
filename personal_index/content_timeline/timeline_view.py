@@ -44,10 +44,29 @@ class ViewResult:
         return getattr(self, key)
 
     def __contains__(self, key: object) -> bool:
-        """Allow 'in' operator over the serialized fields only."""
+        """Report whether ``key`` is one of the serialized fields.
+
+        Guard path: if ``key`` is not a ``str``, returns ``False``.
+
+        For a ``str`` ``key``, returns ``True`` iff ``key`` is one of the
+        five serialized fields (``events``, ``date``, ``mode``, ``total``,
+        ``summary``), i.e. ``key in self._FIELDS``. No side effects.
+        """
         return isinstance(key, str) and key in self._FIELDS
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the view result to a dict.
+
+        No guard path: always computes.
+
+        Returns a dict with exactly the keys:
+          * ``events``  -> ``self.events``
+          * ``date``    -> ``self.date``
+          * ``mode``    -> ``self.mode``
+          * ``total``   -> ``self.total``
+          * ``summary`` -> ``self.summary``
+        No side effects.
+        """
         return {
             "events": self.events,
             "date": self.date,
@@ -61,10 +80,21 @@ class TimelineView:
     """Renders timeline views in different modes."""
 
     def __init__(self) -> None:
+        """Initialize a view in DAY mode.
+
+        No guard path: always constructs.
+
+        Returns ``None``. Side effects: sets ``self.mode = ViewMode.DAY``.
+        """
         self.mode: ViewMode = ViewMode.DAY
 
     def set_mode(self, mode: ViewMode) -> None:
-        """Set the view mode."""
+        """Set the view mode.
+
+        No guard path: always sets.
+
+        Returns ``None``. Side effects: sets ``self.mode = mode``.
+        """
         self.mode = mode
 
     def render(
