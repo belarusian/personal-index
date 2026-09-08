@@ -65,6 +65,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   RobotsRule, RobotsPolicy (can_fetch / _matches, longest-pattern-wins, default-allow),
   parse_robots_txt / is_allowed / RobotsParser; dead duplicate robots_parser module +
   RobotsParser.parse-never-populates-_policies + empty-Disallow contract holes.
+- [content-importer.md](content-importer.md) (spec) — `personal_index.content_importer`:
+  ContentImporter (import_content / batch_import, 5 formats json|html|markdown|rss|csv),
+  per-format item shapes; inconsistent cross-format shape + untyped batch_import +
+  stdlib-ET rss + JSON-scalar-TypeError contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
