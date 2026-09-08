@@ -106,6 +106,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [content-merger.md](content-merger.md) (spec) — `personal_index.content_merger`:
   MergeSource (6 fields) + MergedContent (8 fields) + ContentMerger (merge, 4 strategies, priority-sorted, empty-guard);
   strategy-never-validated so unrecognized strings silently run concatenate and merge_strategy hides the typo (ARCH-34) contract hole.
+- [content-aggregator.md](content-aggregator.md) (spec) — `personal_index.content_aggregator`:
+  ContentAggregator (add_source/get_source/merge_all/filter_by_source/get_source_names/clear_source/clear_all/total_items/source_count);
+  merge_all dedup key collapses items with both id and title falsy so the default dedup silently drops them (ARCH-35) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
