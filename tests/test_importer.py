@@ -31,9 +31,18 @@ class TestImporter:
         self.importer = Importer()
 
     def test_manager_property(self):
+        # Normal case: the property returns the BookmarkManager passed to
+        # __init__ unchanged (identity pins the returned object).
         manager = BookmarkManager()
         imp = Importer(manager)
         assert imp.manager is manager
+
+        # Default case: when no manager is passed, __init__ stores a fresh
+        # BookmarkManager() and the property returns that instance (the
+        # property has no guard path - it always returns self._manager).
+        # Pin the returned object's type.
+        imp_default = Importer()
+        assert isinstance(imp_default.manager, BookmarkManager)
 
     def test_supported_formats(self):
         assert "json" in Importer.SUPPORTED_FORMATS
