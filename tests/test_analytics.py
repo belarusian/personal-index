@@ -655,3 +655,133 @@ class TestRecordCrawlDocPinning:
         assert [e.url for e in self.tracker.get_crawl_events()] == [
             "http://example.com"
         ]
+
+
+class TestAnalyticsTrackerResidualDocPinning:
+    """Pin the exact-contract docstrings for the residual public methods
+    (__init__, record_search, save, load, clear) swept in cycle 192.
+
+    Each test asserts the RETURNED OBJECT for both the normal case and the
+    guard-path input, plus the documented side effect where one exists.
+    """
+
+    def setup_method(self):
+        self.tracker = AnalyticsTracker()
+
+    # --- __init__ ---
+
+    def test_init_returns_none_and_empty_lists(self):
+        # Normal case: __init__ returns None and initializes both internal
+        # lists to empty (no guard path exists for __init__).
+        result = AnalyticsTracker()
+        assert result is not None
+        assert result._search_events == []
+        assert result._crawl_events == []
+
+    # --- record_search ---
+
+    def test_record_search_string_query_pinned(self):
+        # Normal case: a string query constructs a new SearchEvent carrying
+        # the given fields, appends it to the internal list, and returns it.
+        event = self.tracker.record_search(
+            "python", result_count=10, clicked_url="http://x.com",
+            duration_ms=25.0,
+        )
+        assert isinstance(event, SearchEvent)
+        assert event.query == "python"
+        assert event.result_count == 10
+        assert event.clicked_url == "http://x.com"
+        assert event.duration_ms == 25.0
+        # Side effect: appended to the internal search event list.
+        assert [e.query for e in self.tracker.get_search_events()] == ["python"]
+
+    def test_record_search_passthrough_pinned(self):
+        # Guard path: a SearchEvent instance is used verbatim (the extra
+        # kwargs are ignored), appended, and returned unchanged.
+        original = SearchEvent(query="q", result_count=7, duration_ms=3.0)
+        returned = self.tracker.record_search(
+            original, result_count=99, clicked_url="http://ignored.com",
+            duration_ms=99.0,
+        )
+        assert returned is original
+        assert returned.query == "q"
+        assert returned.result_count == 7
+        assert returned.duration_ms == 3.0
+        # Side effect: the passed instance is what was appended.
+        assert self.tracker.get_search_events() == [original]
+
+    # --- save ---
+
+    def test_save_returns_path_and_writes_json(self, tmp_path):
+        # Normal case: save writes the two event lists to JSON and returns
+        # the path string unchanged.
+        self.tracker.record_search("python", result_count=5)
+        self.tracker.record_crawl("http://example.com", status_code=200)
+        path = str(tmp_path / "analytics.json")
+        returned = self.tracker.save(path)
+        assert returned == path
+        import json
+        with open(path) as f:
+            data = json.load(f)
+        assert set(data.keys()) == {"search_events", "crawl_events"}
+        assert data["search_events"][0]["query"] == "python"
+        assert data["search_events"][0]["result_count"] == 5
+        assert data["crawl_events"][0]["url"] == "http://example.com"
+        assert data["crawl_events"][0]["status_code"] == 200
+
+    def test_save_empty_tracker_returns_path(self, tmp_path):
+        # Guard-adjacent case: with no events recorded, save still writes a
+        # valid JSON object with two empty lists and returns the path.
+        path = str(tmp_path / "empty.json")
+        returned = self.tracker.save(path)
+        assert returned == path
+        import json
+        with open(path) as f:
+            data = json.load(f)
+        assert data == {"search_events": [], "crawl_events": []}
+
+    # --- load ---
+
+    def test_load_normal_returns_total_count(self, tmp_path):
+        # Normal case: load clears then repopulates both lists from the JSON
+        # and returns the total number of events loaded.
+        path = str(tmp_path / "analytics.json")
+        self.tracker.record_search("python", result_count=5)
+        self.tracker.record_crawl("http://example.com", status_code=200)
+        self.tracker.save(path)
+        fresh = AnalyticsTracker()
+        loaded = fresh.load(path)
+        assert loaded == 2
+        assert fresh.get_analytics().total_searches == 1
+        assert fresh.get_analytics().total_crawls == 1
+
+    def test_load_nonexistent_returns_zero(self):
+        # Guard path: a missing file returns 0 and leaves the lists untouched.
+        self.tracker.record_search("existing")
+        loaded = self.tracker.load("/tmp/nonexistent_analytics_192.json")
+        assert loaded == 0
+        # Internal lists are untouched on the guard path.
+        assert [e.query for e in self.tracker.get_search_events()] == ["existing"]
+
+    def test_load_non_dict_returns_zero(self, tmp_path):
+        # Guard path: valid JSON that is not a dict returns 0 and leaves the
+        # lists untouched.
+        path = str(tmp_path / "list.json")
+        with open(path, "w") as f:
+            f.write("[1, 2, 3]")
+        self.tracker.record_search("existing")
+        loaded = self.tracker.load(path)
+        assert loaded == 0
+        assert [e.query for e in self.tracker.get_search_events()] == ["existing"]
+
+    # --- clear ---
+
+    def test_clear_returns_none_and_empties_lists(self):
+        # Normal case: clear empties both internal lists in place and returns
+        # None (no guard path exists for clear).
+        self.tracker.record_search("q1")
+        self.tracker.record_crawl("http://a.com")
+        result = self.tracker.clear()
+        assert result is None
+        assert self.tracker.get_search_events() == []
+        assert self.tracker.get_crawl_events() == []
