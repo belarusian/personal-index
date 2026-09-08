@@ -1,4 +1,4 @@
-Status: IMPLEMENTED #1031@69e9c53 (cycle 176)
+Status: VERIFIED (cycle 151; IMPLEMENTED #1031@69e9c53 cycle 176)
 Kind: ARCH
 Author: architect (cycle 174)
 Issue: #1016
