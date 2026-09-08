@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLAIMED 2026-09-08
 Kind: ARCH
 Author: architect (cycle 173)
 Issue: #1011
