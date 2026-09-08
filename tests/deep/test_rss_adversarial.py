@@ -234,12 +234,6 @@ def test_get_recent_entries_empty_feed():
     assert _feed_with(0).get_recent_entries(5) == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-3: get_recent_entries(-1) leaks Python negative-slice "
-    "semantics (returns all-but-last) instead of an empty list; the "
-    "count=0 guard correctly returns []. Same defect class as QA-1/QA-2.",
-)
 def test_get_recent_entries_negative_count_returns_empty():
     feed = _feed_with(5)
     got = feed.get_recent_entries(-1)
