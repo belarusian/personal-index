@@ -1,4 +1,4 @@
-Status: IN PROGRESS (cycle 184: models in progress; remaining modules OPEN)
+Status: IN PROGRESS (cycle 184: models done, PR #1075@819a8b1; remaining modules OPEN)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #982
