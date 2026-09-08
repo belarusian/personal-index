@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import fields
 from datetime import datetime, timezone
 
-import pytest
 
 from personal_index.content_scoring import (
     ContentScore,
