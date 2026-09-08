@@ -19,6 +19,17 @@ class PersonalIndexApp:
     """Main application class that wires all modules together."""
 
     def __init__(self, config_path: str = "config.yaml", data_dir: str = ".personal_index"):
+        """Create an uninitialized PersonalIndexApp.
+
+        No guard path: always computes.
+
+        Return object: None (constructor).
+
+        Side effects: sets the instance attributes ``config_path``,
+        ``data_dir``, and the private caches ``_config``, ``_interest_store``,
+        ``_search_index``, ``_content_search``, ``_scheduler``, ``_pipeline``
+        (all to None) and ``_initialized`` (to False). No I/O, no persistence.
+        """
         self.config_path = config_path
         self.data_dir = data_dir
         self._config = None
@@ -31,14 +42,39 @@ class PersonalIndexApp:
 
     @property
     def config(self):
-        """Load and return application configuration."""
+        """Return the application configuration (AppConfig).
+
+        Guard path: when ``self._config`` is None (first access), it is set
+        to ``self._load_config()`` -- which returns the AppConfig parsed from
+        ``config_path``, or the default ``AppConfig()`` (data_dir
+        ".personal_index", empty crawl/scheduler/index sub-configs) when the
+        file is missing or unreadable (load_config handles the missing-file
+        case itself, so the app's except branch is not reached for a plain
+        missing file).
+
+        Return object: the cached ``self._config`` (an AppConfig instance).
+
+        Side effects: on first access only, reads the config file (I/O) or
+        constructs defaults, and caches the result in ``self._config``.
+        Subsequent accesses return the cached object with no I/O.
+        """
         if self._config is None:
             self._config = self._load_config()
         return self._config
 
     @property
     def interest_store(self):
-        """Get the interest store singleton."""
+        """Return the interest store (InterestStore).
+
+        Guard path: when ``self._interest_store`` is None (first access), it
+        is set to ``InterestStore(store_path=<data_dir>/interests.json)``.
+
+        Return object: the cached ``self._interest_store`` (an InterestStore
+        instance).
+
+        Side effects: on first access only, constructs the InterestStore
+        (which opens the store path) and caches it in ``self._interest_store``.
+        """
         if self._interest_store is None:
             store_path = os.path.join(self.data_dir, "interests.json")
             self._interest_store = InterestStore(store_path=store_path)
@@ -46,14 +82,36 @@ class PersonalIndexApp:
 
     @property
     def search_index(self):
-        """Get the search index singleton."""
+        """Return the search index (SearchIndex).
+
+        Guard path: when ``self._search_index`` is None (first access), it is
+        set to ``SearchIndex()`` (an empty in-memory index).
+
+        Return object: the cached ``self._search_index`` (a SearchIndex
+        instance).
+
+        Side effects: on first access only, constructs the SearchIndex and
+        caches it in ``self._search_index``.
+        """
         if self._search_index is None:
             self._search_index = SearchIndex()
         return self._search_index
 
     @property
     def content_search(self):
-        """Get the content search singleton."""
+        """Return the content search (ContentSearch).
+
+        Guard path: when ``self._content_search`` is None (first access), it
+        is set to ``ContentSearch()`` and its ``index`` attribute is wired to
+        ``self.search_index`` (the same SearchIndex the app uses).
+
+        Return object: the cached ``self._content_search`` (a ContentSearch
+        instance whose ``index`` is the app's SearchIndex).
+
+        Side effects: on first access only, constructs the ContentSearch,
+        wires its index to the app's search index, and caches it in
+        ``self._content_search``.
+        """
         if self._content_search is None:
             self._content_search = ContentSearch()
             # Use our existing search index
@@ -62,7 +120,19 @@ class PersonalIndexApp:
 
     @property
     def scheduler(self):
-        """Get the scheduler singleton."""
+        """Return the scheduler (Scheduler).
+
+        Guard path: when ``self._scheduler`` is None (first access), a
+        ``ScheduleStore(path=<data_dir>/schedules.json)`` is created and the
+        scheduler is set to ``Scheduler(interest_store=self.interest_store,
+        search_index=self.search_index, schedule_store=<that store>)``.
+
+        Return object: the cached ``self._scheduler`` (a Scheduler instance).
+
+        Side effects: on first access only, constructs the ScheduleStore and
+        Scheduler (wiring them to the app's interest store and search index)
+        and caches the scheduler in ``self._scheduler``.
+        """
         if self._scheduler is None:
             schedule_store = ScheduleStore(path=os.path.join(self.data_dir, "schedules.json"))
             self._scheduler = Scheduler(
@@ -74,7 +144,18 @@ class PersonalIndexApp:
 
     @property
     def pipeline(self):
-        """Get the content processing pipeline."""
+        """Return the content processing pipeline (ContentPipeline).
+
+        Guard path: when ``self._pipeline`` is None (first access), it is set
+        to ``self._build_pipeline()`` -- a ContentPipeline named "default"
+        with the extract, filter, score, and tag steps (all on_error="continue").
+
+        Return object: the cached ``self._pipeline`` (a ContentPipeline
+        instance).
+
+        Side effects: on first access only, builds the pipeline and caches it
+        in ``self._pipeline``.
+        """
         if self._pipeline is None:
             self._pipeline = self._build_pipeline()
         return self._pipeline
@@ -222,7 +303,18 @@ class PersonalIndexApp:
         return pipeline
 
     def initialize(self):
-        """Initialize all application components."""
+        """Initialize all application components.
+
+        Guard path: when ``self._initialized`` is already True, returns
+        immediately (no-op) without touching the filesystem or components.
+
+        Return object: None.
+
+        Side effects: creates ``data_dir`` (os.makedirs, exist_ok=True),
+        forces first-access construction of config, interest_store,
+        search_index, content_search, and pipeline, and sets
+        ``self._initialized`` to True.
+        """
         if self._initialized:
             return
 
@@ -239,7 +331,16 @@ class PersonalIndexApp:
         logger.info("PersonalIndexApp initialized with data_dir=%s", self.data_dir)
 
     def shutdown(self):
-        """Clean up application resources."""
+        """Clean up application resources.
+
+        Guard path: when ``self._interest_store`` is falsy (never accessed),
+        the (currently empty) cleanup block is skipped.
+
+        Return object: None.
+
+        Side effects: logs a shutdown-complete message. No persistence, no
+        component teardown (InterestStore has no save method).
+        """
         if self._interest_store:
             # InterestStore doesn't have a save method, just pass
             pass
@@ -286,7 +387,20 @@ class PersonalIndexApp:
         return result  # type: ignore[no-any-return]
 
     def search(self, query: str, limit: int = 20) -> list:
-        """Search indexed content."""
+        """Search indexed content and return the matched items.
+
+        No guard path: always computes (calls ``initialize()`` first).
+
+        Return object: a list of matched items. Each entry of
+        ``content_search.search(query, limit=limit)["results"]`` is unwrapped:
+        a dict carrying an "item" key yields that item dict with its "score"
+        set to the entry's score (default 0); a plain dict is appended as-is;
+        an object with ``to_dict`` is appended as ``to_dict()``; anything else
+        is appended unchanged. An empty index yields an empty list.
+
+        Side effects: ``initialize()`` (may create data_dir and construct
+        components on first call). The search itself is read-only.
+        """
         self.initialize()
         result = self.content_search.search(query, limit=limit)
         # ContentSearch.search returns {"results": [...], "total": N, "query": "..."}
@@ -307,7 +421,17 @@ class PersonalIndexApp:
         return out
 
     def add_interest(self, name: str, keywords=None, url_patterns=None, priority: int = 5):
-        """Add a tracked interest."""
+        """Add a tracked interest to the interest store.
+
+        No guard path: always computes (calls ``initialize()`` first).
+
+        Return object: None.
+
+        Side effects: constructs an Interest(name=name,
+        keywords=keywords or [], url_patterns=url_patterns or [],
+        priority=priority) and adds it to ``self.interest_store``
+        (persisted to the store path).
+        """
         from personal_index.models import Interest
 
         self.initialize()
@@ -320,7 +444,21 @@ class PersonalIndexApp:
         self.interest_store.add(interest)
 
     def get_stats(self) -> dict:
-        """Get application statistics."""
+        """Return application statistics.
+
+        No guard path: always computes (calls ``initialize()`` first).
+
+        Return object: a dict with exactly these fields:
+          - "indexed_items": len(search_index._items)
+          - "interests": len(interest_store.list_all())
+          - "scheduled_jobs": len(scheduler.list_jobs())
+          - "pipeline_steps": pipeline.step_count
+          - "enabled_steps": pipeline.enabled_steps (list of step names)
+          - "data_dir": self.data_dir
+
+        Side effects: ``initialize()`` (may create data_dir and construct
+        components on first call). The stats read is otherwise read-only.
+        """
         self.initialize()
         return {
             "indexed_items": len(self.search_index._items),

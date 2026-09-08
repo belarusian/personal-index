@@ -285,3 +285,143 @@ class TestPersonalIndexAppGetStats:
         app.initialize()
         stats = app.get_stats()
         assert stats["pipeline_steps"] >= 4  # extract, filter, score, tag
+
+
+class TestPersonalIndexAppContractPinning:
+    """One pinning test per public member: assert the RETURNED OBJECT for the
+    normal case AND the guard-path input (per docs/CONTRACTS.md)."""
+
+    def test_init_pins_returned_instance_and_no_guard(self):
+        """__init__: no guard path; returned instance carries the set attrs."""
+        app = PersonalIndexApp(config_path="/c.yaml", data_dir="/d")
+        # Returned object is the instance itself.
+        assert app is not None
+        assert app.config_path == "/c.yaml"
+        assert app.data_dir == "/d"
+        # Private caches start unset (the "always computes" initial state).
+        assert app._config is None
+        assert app._interest_store is None
+        assert app._search_index is None
+        assert app._content_search is None
+        assert app._scheduler is None
+        assert app._pipeline is None
+        assert app._initialized is False
+
+    def test_config_pins_returned_appconfig_and_first_access_guard(self, tmp_data_dir):
+        """config: guard = first access constructs; returns cached AppConfig."""
+        from personal_index.config.models import AppConfig
+        # Guard input: missing config file -> default AppConfig (data_dir set).
+        missing = os.path.join(tmp_data_dir, "nope.yaml")
+        app = PersonalIndexApp(config_path=missing, data_dir=tmp_data_dir)
+        cfg = app.config
+        assert isinstance(cfg, AppConfig)
+        # Missing file -> load_config returns the default AppConfig().
+        assert cfg.data_dir == ".personal_index"
+        # Normal case: second access returns the SAME cached object (no I/O).
+        assert app.config is cfg
+
+    def test_interest_store_pins_returned_store_and_first_access_guard(self, app):
+        """interest_store: guard = first access constructs; returns cached store."""
+        from personal_index.interests import InterestStore
+        store = app.interest_store
+        assert isinstance(store, InterestStore)
+        # Normal case: second access returns the same cached instance.
+        assert app.interest_store is store
+
+    def test_search_index_pins_returned_index_and_first_access_guard(self, app):
+        """search_index: guard = first access constructs; returns cached index."""
+        from personal_index.content_search import SearchIndex
+        idx = app.search_index
+        assert isinstance(idx, SearchIndex)
+        # Fresh index is empty.
+        assert idx._items == {}
+        # Normal case: second access returns the same cached instance.
+        assert app.search_index is idx
+
+    def test_content_search_pins_returned_search_and_index_wiring(self, app):
+        """content_search: guard = first access constructs + wires index."""
+        from personal_index.content_search import ContentSearch
+        cs = app.content_search
+        assert isinstance(cs, ContentSearch)
+        # The wiring side effect: index is the app's own search index.
+        assert cs.index is app.search_index
+        # Normal case: second access returns the same cached instance.
+        assert app.content_search is cs
+
+    def test_scheduler_pins_returned_scheduler_and_first_access_guard(self, app):
+        """scheduler: guard = first access constructs; returns cached scheduler."""
+        from personal_index.scheduler import Scheduler
+        sched = app.scheduler
+        assert isinstance(sched, Scheduler)
+        # Normal case: second access returns the same cached instance.
+        assert app.scheduler is sched
+
+    def test_pipeline_pins_returned_pipeline_and_first_access_guard(self, app):
+        """pipeline: guard = first access builds; returns cached ContentPipeline."""
+        from personal_index.pipeline import ContentPipeline
+        pipe = app.pipeline
+        assert isinstance(pipe, ContentPipeline)
+        # The built pipeline carries the four default steps.
+        assert pipe.step_count == 4
+        # Normal case: second access returns the same cached instance.
+        assert app.pipeline is pipe
+
+    def test_initialize_pins_return_none_and_already_initialized_guard(self, app):
+        """initialize: returns None; guard = already-initialized is a no-op."""
+        ret = app.initialize()
+        assert ret is None
+        assert app._initialized is True
+        assert os.path.isdir(app.data_dir)
+        # Guard path: second call is a no-op (still True, no error, no re-I/O).
+        ret2 = app.initialize()
+        assert ret2 is None
+        assert app._initialized is True
+
+    def test_shutdown_pins_return_none_and_uninitialized_guard(self, app):
+        """shutdown: returns None; guard = falsy interest_store skips cleanup."""
+        # Guard path: never initialized -> _interest_store is None (falsy).
+        assert app._interest_store is None
+        ret = app.shutdown()
+        assert ret is None
+        # Normal path: after init, shutdown still returns None.
+        app.initialize()
+        assert app.shutdown() is None
+
+    def test_search_pins_returned_list_and_empty_index_guard(self, app):
+        """search: no guard path; returns list (empty list on empty index)."""
+        # Guard input: empty index -> empty list.
+        assert app.search("nothing-here") == []
+        # Normal case: indexed content -> list of item dicts.
+        app.process_content("https://example.com/a", "python " * 30, "Python")
+        results = app.search("python")
+        assert isinstance(results, list)
+        assert len(results) >= 1
+        assert isinstance(results[0], dict)
+
+    def test_add_interest_pins_return_none_and_none_defaults_guard(self, app):
+        """add_interest: returns None; guard = None keywords/url_patterns -> []."""
+        ret = app.add_interest("Plain")
+        assert ret is None
+        interests = app.interest_store.list_all()
+        plain = [i for i in interests if i.name == "Plain"]
+        assert len(plain) == 1
+        # Guard path: None keywords/url_patterns default to empty lists.
+        assert plain[0].keywords == []
+        assert plain[0].url_patterns == []
+        assert plain[0].priority == 5
+
+    def test_get_stats_pins_returned_dict_fields(self, app):
+        """get_stats: no guard path; returns dict with the exact six fields."""
+        stats = app.get_stats()
+        assert isinstance(stats, dict)
+        assert set(stats.keys()) == {
+            "indexed_items", "interests", "scheduled_jobs",
+            "pipeline_steps", "enabled_steps", "data_dir",
+        }
+        # Exact field computations on a fresh (empty) app.
+        assert stats["indexed_items"] == 0
+        assert stats["interests"] == 0
+        assert stats["scheduled_jobs"] == 0
+        assert stats["pipeline_steps"] == 4
+        assert stats["enabled_steps"] == app.pipeline.enabled_steps
+        assert stats["data_dir"] == app.data_dir
