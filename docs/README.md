@@ -81,6 +81,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ReadResult + PageView + ContentReader (add/add_many/get/list_all/paginate, filter_by_tags/score,
   search_titles/content, format_item/page, clear/count); duplicate-URL get-vs-list divergence +
   empty-reader inverted range + empty-tags-returns-all contract holes.
+- [content-scheduler.md](content-scheduler.md) (spec) — `personal_index.content_scheduler`:
+  TaskStatus + ScheduledTask (cron parse / next_run / is_due / run / to_dict) + TaskScheduler
+  (add_task/get_task/list_tasks/remove_task/enable_task/disable_task/run_due_tasks/get_stats);
+  passive-scheduler-no-loop + stale-next_run + no-add_task-validation contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
