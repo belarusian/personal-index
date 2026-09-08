@@ -31,11 +31,6 @@ config bootstrap path**, and the **guard paths** — not every option verbatim.
   `min_title_length=3`, `blocked_domains=[]`), and `pipeline`
   (`min_score_threshold=0.0`, `min_content_length=100`) via
   `yaml.dump(..., default_flow_style=False)`.
-- **`load_config(data_dir) -> dict`** — **module-level helper, DEAD** (see
-  Contract holes → ARCH-12). Reads `config.yaml` (hardcoded path, ignoring
-  `data_dir`) via `yaml.safe_load(f) or {}`; returns `{}` when the file is
-  absent. Never called — the `config` subcommands import
-  `personal_index.config.loader.load_config` instead.
 
 ## Shared store getters
 
@@ -268,10 +263,7 @@ imported at the bottom and attached via `main.add_command(...)`.
   1419). The two differ only in their guard-path style (`_index_file`
   indexes when `len >= 10`; `_index_file_once` returns when `len < 10`). ->
   **ARCH-11**.
-- **Dead module-level `load_config`.** `load_config(data_dir)` (line 50) is
-  defined but **never called** — the `config` subcommands import
-  `personal_index.config.loader.load_config` instead. It also ignores its
-  `data_dir` argument (hardcodes `config.yaml`). -> **ARCH-12**.
+- **Resolved (ARCH-12, cycle 177):** the dead module-level `load_config` has been REMOVED. The live config loader is `personal_index.config.loader.load_config`, which the `config` subcommands import and use.
 - **`pipeline` `--steps` / `--no-*` flags are parsed but ignored.** The
   `pipeline` command accepts `--steps/-s`, `--no-crawl`, `--no-filter`,
   `--no-score`, `--no-tag`, and `--no-index` (lines 680–686), and the

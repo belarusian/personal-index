@@ -47,15 +47,6 @@ def get_interest_store(data_dir: str):
     return InterestStore(store_path=store_path)
 
 
-def load_config(data_dir: str) -> dict:
-    """Load configuration from config.yaml."""
-    config_path = "config.yaml"
-    if os.path.exists(config_path):
-        with open(config_path, "r") as f:
-            return yaml.safe_load(f) or {}
-    return {}
-
-
 @click.group(cls=click.Group, invoke_without_command=True)
 @click.option("--data-dir", default=None, help="Data directory")
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
