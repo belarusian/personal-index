@@ -103,6 +103,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [content-enricher.md](content-enricher.md) (spec) — `personal_index.content_enricher`:
   EnrichedContent (12 fields, to_dict) + ContentEnricher (enrich/batch_enrich, sentiment/complexity, html-detected flags);
   batch_enrich-cannot-pass-html so has_code/has_links/has_images always-False (ARCH-33) + language-never-computed contract holes.
+- [content-merger.md](content-merger.md) (spec) — `personal_index.content_merger`:
+  MergeSource (6 fields) + MergedContent (8 fields) + ContentMerger (merge, 4 strategies, priority-sorted, empty-guard);
+  strategy-never-validated so unrecognized strings silently run concatenate and merge_strategy hides the typo (ARCH-34) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
