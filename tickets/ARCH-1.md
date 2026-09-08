@@ -1,4 +1,4 @@
-Status: IN PROGRESS (cycle 185: content_scoring done, PR #1078@dc121b4; remaining modules OPEN)
+Status: IN PROGRESS (cycle 186: content_dedup in progress; remaining modules OPEN)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #982
