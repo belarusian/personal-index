@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLOSED (resolved cycle 174: docs/API_REFERENCE.md PipelineStats block corrected to match code; docs/content-model.md drift marked resolved; ARCH-3 closed)
 Kind: IMPL
 Author: implementer (cycle 171)
 References: ARCH-3 (issue #984)

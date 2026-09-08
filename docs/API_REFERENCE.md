@@ -274,13 +274,12 @@ class SearchResult:
 class PipelineStats:
     pages_crawled: int = 0
     pages_extracted: int = 0
-    pages_filtered_in: int = 0
+    pages_passed_filter: int = 0
     pages_filtered_out: int = 0
     pages_scored: int = 0
     pages_tagged: int = 0
     pages_indexed: int = 0
-    errors: list[str] = field(default_factory=list)
-    elapsed_seconds: float = 0.0
     tags_applied: int = 0
-    interests_matched: int = 0
+    errors: list = field(default_factory=list)
+    elapsed_seconds: float = 0.0
 ```

@@ -36,6 +36,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentCategorizer (add/remove/get topics, categorize, categorize_batch) + TopicCategory, TopicScore, CategorizationResult.
 - [pipeline-orchestrator.md](pipeline-orchestrator.md) (spec) — `personal_index.pipeline_orchestrator`:
   PipelineOrchestrator (run / run_from_files / search / close) + PipelineResult; crawl→filter→score→tag→index.
+- [cli.md](cli.md) (spec) — `personal_index.cli`:
+  the click command surface (main group + interests/tags/schedule/config subgroups + top-level commands),
+  shared store getters, data-dir/config bootstrap, guard paths.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
