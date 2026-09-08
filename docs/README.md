@@ -51,6 +51,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [content-tagger.md](content-tagger.md) (spec) — `personal_index.content_tagger`:
   Tag, TopicDetector (detect/add_topic/remove_topic/get_all_topics, 20 built-in topics, substring keyword matching),
   TagResult, ContentTagger (tag/batch_tag/get_tag_statistics/add_topic/clear_statistics), dead-weight + substring-match contract holes.
+- [content-scraper.md](content-scraper.md) (spec) — `personal_index.scraper`:
+  ScraperConfig, ScrapedContent, HTMLScraper (scrape + 8 private extractors),
+  charset override order, dead remove_scripts flag + word_count/truncation contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
