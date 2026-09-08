@@ -41,6 +41,9 @@ Behavior, in order:
   `summarize(combined, max_sentences=max_sentences)`. Note the title is
   prepended with a `". "` separator; the returned `original_text` is the
   combined string, not `title`.
+- **Reachability:** `summarize_page` is a standalone public utility — it is
+  NOT reachable from the CLI or the pipeline; page summaries are only
+  available via direct API use (import and call `summarize_page`).
 
 ## Private helpers (the code is the truth)
 - `_split_sentences(text) -> list[str]` — normalizes all whitespace runs to a
@@ -73,10 +76,12 @@ Behavior, in order:
   `summarize`.
 
 ## Contract holes
-- **`summarize_page` has no internal caller.** `summarize_page` is exported and
-  tested, but no code in `personal_index/` (pipeline, CLI, orchestrator) calls
-  it — it is a public API with no live consumer. A reader would reasonably
-  assume summaries are produced during the pipeline; they are not. -> **ARCH-14**.
+- **`summarize_page` is a standalone public utility (no pipeline or CLI
+  caller).** `summarize_page` is exported and tested, but no code in
+  `personal_index/` (pipeline, CLI, orchestrator) calls it. It is a standalone
+  public utility: page summaries are NOT produced by the product's pipeline or
+  CLI; callers import `summarize_page` directly and use it via the public API.
+  Resolved by documentation (ARCH-14).
 - **`summarize_page` guard path returns `ratio=0.0` while `summarize`'s guard
   path returns `ratio=1.0`.** For empty content the page summary is empty
   (`ratio=0.0`), but for short/empty text `summarize` returns the text as-is
