@@ -87,7 +87,26 @@ class Interest:
         return cls(interest_type=interest_type, match_mode=match_mode, **filtered)
 
     def matches(self, text: str, url: str = "") -> bool:
-        """Check if text/url matches this interest."""
+        """Return True if text or url matches this interest, else False.
+
+        Guard path: if ``enabled`` is False, returns False immediately
+        without inspecting text or url.
+
+        Otherwise returns True on the first hit, in order: (1) the
+        ``value`` field (when non-empty) appears as a case-insensitive
+        substring of ``text``; (2) any string element of ``keywords``
+        appears as a case-insensitive substring of ``text``; (3) any
+        string element of ``topics`` appears as a case-insensitive
+        substring of ``text``; (4) any string element of
+        ``url_patterns`` matches ``url`` -- a pattern containing ``*``
+        is tried as a case-insensitive fnmatch glob, then every pattern
+        is tried as a case-insensitive regex. Non-string pattern
+        elements are skipped; a pattern raising ``re.error`` is skipped
+        (it does not abort the remaining patterns). Returns False when
+        no check hits.
+
+        No side effects.
+        """
         if not self.enabled:
             return False
         text_lower = text.lower()
@@ -118,7 +137,20 @@ class Interest:
         return False
 
     def score(self, text: str) -> float:
-        """Calculate relevance score for text."""
+        """Return the relevance score of ``text`` for this interest.
+
+        Guard path: if ``enabled`` is False, returns 0.0 without
+        inspecting text.
+
+        Otherwise computes ``total`` as the sum of case-insensitive
+        occurrence counts in ``text`` of: the ``value`` field (when
+        non-empty), each string element of ``keywords``, and each
+        string element of ``topics`` (non-string elements are skipped).
+        Returns ``min(total * priority, priority * 10)`` -- the raw
+        weighted count capped at ``priority * 10``.
+
+        No side effects.
+        """
         if not self.enabled:
             return 0.0
         text_lower = text.lower()
@@ -216,13 +248,22 @@ class CrawledPage:
 
     @classmethod
     def from_dict(cls, data: dict) -> CrawledPage:
-        """Create a CrawledPage from a dictionary.
+        """Build a CrawledPage from a dictionary.
 
-        Args:
-            data: Dictionary with page fields.
+        Guard path (``crawled_at``): a non-empty string is parsed with
+        ``datetime.fromisoformat``; if that raises ``ValueError`` the
+        field falls back to ``datetime.now(timezone.utc)``. A value that
+        is neither a non-empty string nor a ``datetime`` (including a
+        missing or empty key) also falls back to
+        ``datetime.now(timezone.utc)``; an existing ``datetime`` value is
+        kept as-is.
 
-        Returns:
-            A new CrawledPage instance.
+        Returns a new ``CrawledPage`` built from the ``data`` keys that
+        are dataclass fields other than ``crawled_at`` (unknown keys are
+        dropped), with ``crawled_at`` set to the resolved value above.
+        Fields absent from ``data`` take their dataclass defaults.
+
+        No side effects.
         """
         crawled_at = data.get("crawled_at", "")
         if isinstance(crawled_at, str) and crawled_at:
@@ -494,7 +535,19 @@ class PipelineStats:
     elapsed_seconds: float = 0.0
 
     def summary(self) -> str:
-        """Return a human-readable summary."""
+        """Return the one-line summary string for this run.
+
+        Returns a comma-joined string of exactly 10 parts, in order:
+        ``crawled=`` (pages_crawled), ``extracted=`` (pages_extracted),
+        ``filtered_in=`` (pages_passed_filter), ``filtered_out=``
+        (pages_filtered_out), ``scored=`` (pages_scored), ``tagged=``
+        (pages_tagged), ``indexed=`` (pages_indexed), ``tags=``
+        (tags_applied), ``errors=`` (len(errors)), and ``time=``
+        (elapsed_seconds formatted to 1 decimal place with a trailing
+        ``s``).
+
+        No guard path: always formats all 10 parts. No side effects.
+        """
         parts = [
             f"crawled={self.pages_crawled}",
             f"extracted={self.pages_extracted}",
