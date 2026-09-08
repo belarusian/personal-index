@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-06
+Status: IMPLEMENTED PR #1106@e0d516a (cycle 195: tfidf+CLI negative-slice guard done)
 Kind: QA
 Issue: #1037
 Deep test: tests/deep/test_tfidf_adversarial.py (test_rank_documents_negative_limit, test_get_top_terms_negative_n, test_cli_search_negative_limit - all xfail-strict)
