@@ -1,4 +1,4 @@
-Status: IN PROGRESS (cycle 187: cache in progress; cycle 186 content_dedup done PR #1079@73e665f; remaining modules OPEN)
+Status: IN PROGRESS (cycle 187: cache done PR #1080@fd1eea6; cycle 186 content_dedup done PR #1079@73e665f; remaining modules 7-12 OPEN)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #982
