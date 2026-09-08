@@ -41,7 +41,14 @@ class PageResult:
 
     @property
     def total_pages(self) -> int:
-        """Total number of pages."""
+        """Smallest page count covering ``total`` items at ``per_page`` per page.
+
+        Behavior: returns ``max(1, ceil(total / per_page))``.
+        Guard path: when ``total == 0`` (or ``total < per_page``), returns
+        ``1`` (never ``0``).
+        Return: ``int``.
+        Side effects: none (pure property).
+        """
         return max(1, math.ceil(self.total / self.per_page))
 
     @property

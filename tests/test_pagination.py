@@ -29,6 +29,14 @@ class TestPageResult:
         r = PageResult(items=[], total=100, page=1, per_page=20)
         assert r.total_pages == 5
 
+    def test_page_result_total_pages_pinned(self):
+        # normal case: non-integer division, total=25, per_page=10 -> 3
+        r = PageResult(items=[], total=25, page=1, per_page=10)
+        assert r.total_pages == 3
+        # guard case: total=0 -> 1 (never 0)
+        g = PageResult(items=[], total=0, page=1, per_page=10)
+        assert g.total_pages == 1
+
     def test_has_next(self):
         r = PageResult(items=[], total=100, page=1, per_page=20)
         assert r.has_next is True
