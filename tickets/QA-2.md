@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLAIMED 2026-09-06
 Kind: QA
 Issue: #1037
 Deep test: tests/deep/test_tfidf_adversarial.py (test_rank_documents_negative_limit, test_get_top_terms_negative_n, test_cli_search_negative_limit - all xfail-strict)
