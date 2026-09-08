@@ -214,14 +214,6 @@ def test_extract_top_n_zero(extractor):
     assert extractor.extract_top_n("python python data", 0) == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-1: extract_top_n(text, n=-1) returns keywords[:-1] (all but the "
-        "last keyword) instead of [] - Python negative-slice semantics leak "
-        "into the 'top N' contract. Out-of-range n must yield an empty list."
-    ),
-)
 def test_extract_top_n_negative(extractor):
     assert extractor.extract_top_n("python python data", -1) == []
 
