@@ -51,6 +51,7 @@ ARCH-5 ValidationRule.validate drift).
 - `docs/validation.md` (spec) — `personal_index.content_validator`.
 - `docs/analytics.md` (spec) — `personal_index.analytics` (cycle 170).
 - `docs/content-categorizer.md` (spec) — `personal_index.content_categorizer` (cycle 172).
+- `docs/pipeline-orchestrator.md` (spec) — `personal_index.pipeline_orchestrator` (cycle 173).
 
 ## Contract holes found (each -> its own ARCH ticket)
 - `PipelineStats` field drift (API_REFERENCE.md vs models.py) -> ARCH-3.
@@ -58,3 +59,5 @@ ARCH-5 ValidationRule.validate drift).
 - `ValidationRule.validate` blanket docstring -> ARCH-5.
 - `_compute_crawl_analytics` blanket docstring (analytics.py) -> ARCH-6 (cycle 170).
 - `ContentCategorizer.MIN_TOPIC_SCORE` dead class constant (content_categorizer.py) -> ARCH-7 (cycle 172).
+- `PipelineOrchestrator` dead `_stage_*` methods (pipeline_orchestrator.py) -> ARCH-8 (cycle 173).
+- `PipelineOrchestrator` double-written `pages_tagged`/`pages_indexed` counters (pipeline_orchestrator.py) -> ARCH-9 (cycle 173).
