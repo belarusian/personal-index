@@ -89,6 +89,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   WebhookEventType + WebhookEndpoint (should_retry) + WebhookPayload + WebhookManager
   (register_endpoint/remove_endpoint/dispatch_event/mark_delivered/mark_failed/get_stats/get_payload_json);
   signature-not-verifiable + exhausted-lands-in-delivered + no-http-delivery contract holes.
+- [search-suggestions.md](search-suggestions.md) (spec) — `personal_index.search_suggestions`:
+  Suggestion (to_dict 4dp) + TrendingEntry (age_seconds/record) + SearchSuggestions
+  (add_search_history/add_tags/add_keywords/record_search/get_trending/suggest/get_related_queries/clear/to_dict/from_dict);
+  trending-exact-match-score-exceeds-1.0 contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
