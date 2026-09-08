@@ -251,6 +251,44 @@ class TestCLIPipelineEndToEnd:
         ])
         assert result.exit_code == 0
 
+    def test_pipeline_no_crawl_flag_is_respected(self, tmp_path: Path,
+                                                 monkeypatch) -> None:
+        """--no-crawl skips the crawl stage; the default run crawls.
+
+        Pins both the flag-respected path (crawl stage did not run, so
+        pages_crawled == 0) and the default path (crawl stage ran, so
+        pages_crawled == 1) so a regression that re-introduces
+        silently-ignored flags is caught.
+        """
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        runner.invoke(main, ["init"])
+
+        article = tmp_path / "article.txt"
+        article.write_text(
+            "Python programming language for web development."
+        )
+
+        def _crawled(output: str) -> int:
+            for line in output.splitlines():
+                if line.strip().startswith("Crawled:"):
+                    return int(line.split("Crawled:", 1)[1].strip())
+            raise AssertionError("no Crawled: line in output")
+
+        # Default run: the crawl (file-reading) stage runs.
+        default = runner.invoke(main, [
+            "pipeline", "--import-file", str(article)
+        ])
+        assert default.exit_code == 0
+        assert _crawled(default.output) == 1
+
+        # --no-crawl: the crawl stage is skipped entirely.
+        no_crawl = runner.invoke(main, [
+            "pipeline", "--import-file", str(article), "--no-crawl"
+        ])
+        assert no_crawl.exit_code == 0
+        assert _crawled(no_crawl.output) == 0
+
     def test_pipeline_min_score_flag(self, tmp_path: Path, monkeypatch) -> None:
         """Test pipeline with --min-score flag."""
         monkeypatch.chdir(tmp_path)

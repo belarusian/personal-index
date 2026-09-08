@@ -283,12 +283,16 @@ class PipelineRunner:
             except (RuntimeError, OSError) as e:
                 stats.errors.append(f"Index error for {page.url}: {e}")
 
-    def run(self, seed_urls: list[str], max_depth: int | None = None) -> PipelineStats:
+    def run(self, seed_urls: list[str], max_depth: int | None = None,
+                stages: set[str] | None = None) -> PipelineStats:
         """Run the full pipeline on the given seed URLs.
 
         Args:
             seed_urls: List of URLs to start crawling from.
             max_depth: Override max crawl depth.
+            stages: Optional set of stage names to run (subset of
+                {"crawl", "extract", "filter", "score", "tag", "index"}).
+                None runs every stage (the default).
 
         Returns:
             PipelineStats with results from each stage.
@@ -297,29 +301,54 @@ class PipelineRunner:
         start_time = time.time()
 
         try:
-            pages = self._stage_crawl(seed_urls, max_depth, stats, self._emit_progress)
-            pages = self._stage_extract(pages, stats, self._emit_progress)
-            pages = self._stage_filter(pages, stats, self._emit_progress)
-            pages = self._stage_score(pages, stats, self._emit_progress)
-            pages = self._stage_tag(pages, stats, self._emit_progress)
-            self._stage_index(pages, stats, self._emit_progress)
+            if stages is None or "crawl" in stages:
+                pages = self._stage_crawl(seed_urls, max_depth, stats, self._emit_progress)
+            else:
+                pages = []
+            if stages is None or "extract" in stages:
+                pages = self._stage_extract(pages, stats, self._emit_progress)
+            if stages is None or "filter" in stages:
+                pages = self._stage_filter(pages, stats, self._emit_progress)
+            if stages is None or "score" in stages:
+                pages = self._stage_score(pages, stats, self._emit_progress)
+            if stages is None or "tag" in stages:
+                pages = self._stage_tag(pages, stats, self._emit_progress)
+            if stages is None or "index" in stages:
+                self._stage_index(pages, stats, self._emit_progress)
         finally:
             stats.elapsed_seconds = time.time() - start_time
 
         logger.info("Pipeline complete: %s", stats.summary())
         return stats
 
-    def run_from_files(self, file_paths: list[str]) -> PipelineStats:
-        """Run the pipeline on local files (skip crawl stage)."""
+    def run_from_files(self, file_paths: list[str],
+                            stages: set[str] | None = None) -> PipelineStats:
+        """Run the pipeline on local files (skip crawl stage).
+
+        Args:
+            file_paths: Local files to read in place of crawling.
+            stages: Optional set of stage names to run (subset of
+                {"crawl", "extract", "filter", "score", "tag", "index"}).
+                None runs every stage (the default). When "crawl" is
+                absent the file-reading step is skipped entirely.
+        """
         stats = PipelineStats()
         start_time = time.time()
         try:
-            crawled_pages = self._read_files(file_paths, stats)
-            pages = self._stage_extract(crawled_pages, stats, self._emit_progress)
-            pages = self._stage_filter(pages, stats, self._emit_progress)
-            pages = self._stage_score(pages, stats, self._emit_progress)
-            pages = self._stage_tag(pages, stats, self._emit_progress)
-            self._stage_index(pages, stats, self._emit_progress)
+            if stages is None or "crawl" in stages:
+                crawled_pages = self._read_files(file_paths, stats)
+            else:
+                crawled_pages = []
+            if stages is None or "extract" in stages:
+                pages = self._stage_extract(crawled_pages, stats, self._emit_progress)
+            if stages is None or "filter" in stages:
+                pages = self._stage_filter(pages, stats, self._emit_progress)
+            if stages is None or "score" in stages:
+                pages = self._stage_score(pages, stats, self._emit_progress)
+            if stages is None or "tag" in stages:
+                pages = self._stage_tag(pages, stats, self._emit_progress)
+            if stages is None or "index" in stages:
+                self._stage_index(pages, stats, self._emit_progress)
         finally:
             stats.elapsed_seconds = time.time() - start_time
         logger.info("Pipeline complete: %s", stats.summary())

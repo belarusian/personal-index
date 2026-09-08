@@ -123,9 +123,11 @@ imported at the bottom and attached via `main.add_command(...)`.
   `runner.run_from_files(expanded)` (when `--import-file` is set, after
   `_expand_import_files`) or `runner.run(list(urls))`, then
   `_print_pipeline_stats(stats)` + `_print_index_stats(dd)`, with
-  `runner.close()` in a `finally`. **Note:** the `--steps` and `--no-*`
-  flags are parsed but **not used** in the body (see Contract holes →
-  ARCH-13).
+  `runner.close()` in a `finally`. The `--steps` / `--no-*` flags select
+  which stages run: `--steps` names the stages to run (comma-separated,
+  from `crawl,extract,filter,score,tag,index`), and each `--no-*` flag
+  removes its stage; the resolved set is passed to the runner, which skips
+  any stage not in it (so `--no-crawl` leaves `pages_crawled == 0`).
 - **`stats`** — same data as `status` but with a `--format {text,json}`
   option; JSON emits `indexed_pages`, `interests`, `total_tags`,
   `tagged_pages`, `storage_bytes`.
@@ -264,10 +266,4 @@ imported at the bottom and attached via `main.add_command(...)`.
   indexes when `len >= 10`; `_index_file_once` returns when `len < 10`). ->
   **ARCH-11**.
 - **Resolved (ARCH-12, cycle 177):** the dead module-level `load_config` has been REMOVED. The live config loader is `personal_index.config.loader.load_config`, which the `config` subcommands import and use.
-- **`pipeline` `--steps` / `--no-*` flags are parsed but ignored.** The
-  `pipeline` command accepts `--steps/-s`, `--no-crawl`, `--no-filter`,
-  `--no-score`, `--no-tag`, and `--no-index` (lines 680–686), and the
-  function signature binds `steps, no_crawl, no_filter, no_score, no_tag,
-  no_index` (lines 690–691), but none of them is referenced in the body —
-  the pipeline always runs every stage. A user passing `--no-crawl` or
-  `--steps filter,score` gets no effect. -> **ARCH-13**.
+- **Resolved (ARCH-13, cycle 179):** the `pipeline` `--steps` / `--no-*` flags are now honored. `_resolve_pipeline_stages` builds the set of stages to run from `--steps` (comma-separated subset of `crawl,extract,filter,score,tag,index`) minus any stage named by a `--no-*` flag, and passes it to `PipelineRunner.run` / `run_from_files`, which skip each stage not in the set. `--no-crawl` leaves `pages_crawled == 0`; a default run crawls. Pinned by `test_pipeline_no_crawl_flag_is_respected`.
