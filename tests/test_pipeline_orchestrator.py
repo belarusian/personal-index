@@ -341,6 +341,66 @@ class TestPipelineStageMethods:
         assert result.stats.pages_filtered_out == 1
         orch.close()
 
+    def test_tag_index_counters_single_source(self, tmp_path):
+        """pages_tagged / pages_indexed are each written by ONE site.
+
+        Pins the single-source contract (ARCH-9): the authoritative value
+        is the len(out) overwrite in _run_tag_stage/_run_index_stage, and
+        the redundant per-page += 1 in _apply_tag/_apply_index is gone.
+        Normal path: every page that passes the filter reaches the tag and
+        index stages, so pages_tagged == pages_indexed ==
+        pages_passed_filter. Guard (drop) path: a page that fails the
+        content filter is excluded from all three counters and counted in
+        pages_filtered_out, keeping the counters mutually consistent.
+        """
+        data_dir = str(tmp_path / "data")
+        docs = tmp_path / "docs"
+        docs.mkdir()
+
+        # Three long files pass the content filter (>= 10 chars default).
+        (docs / "a.txt").write_text(
+            "Python is a versatile programming language used for web "
+            "development, data science, and automation with clean syntax."
+        )
+        (docs / "b.txt").write_text(
+            "JavaScript powers interactive websites and modern web "
+            "applications, and Node.js extends it to server-side code."
+        )
+        (docs / "c.txt").write_text(
+            "DevOps practices include continuous integration, deployment, "
+            "infrastructure as code, and monitoring for delivery."
+        )
+        # One short file fails the content filter (guard / drop path).
+        (docs / "short.txt").write_text("Too short")
+
+        orch = PipelineOrchestrator(data_dir=data_dir)
+        files = [
+            str(docs / "a.txt"),
+            str(docs / "b.txt"),
+            str(docs / "c.txt"),
+            str(docs / "short.txt"),
+        ]
+        result = orch.run_from_files(files)
+
+        assert result.success is True
+        # Normal path: the three long pages reach tag and index stages.
+        assert result.stats.pages_passed_filter == 3
+        assert result.stats.pages_tagged == 3
+        assert result.stats.pages_indexed == 3
+        # Single-source consistency: tag/index counters equal the filter
+        # pass count (no divergent second write inflating them).
+        assert result.stats.pages_tagged == result.stats.pages_passed_filter
+        assert result.stats.pages_indexed == result.stats.pages_passed_filter
+        # Guard (drop) path: the short page is excluded from tag/index and
+        # counted in pages_filtered_out; the counters stay consistent.
+        assert result.stats.pages_filtered_out == 1
+        assert (
+            result.stats.pages_passed_filter
+            + result.stats.pages_filtered_out
+            == len(files)
+        )
+        orch.close()
+
     def test_run_stage_includes_matching(self, tmp_path):
         data_dir = str(tmp_path / "data")
         orch = PipelineOrchestrator(data_dir=data_dir)
