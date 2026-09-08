@@ -265,9 +265,6 @@ class ContentCategorizer:
         "environment": ["environment", "climate", "green", "sustainability", "eco"],
     }
 
-    # Minimum score to include a topic in results
-    MIN_TOPIC_SCORE: float = 0.1
-
     # Score multipliers for different signals
     TITLE_BOOST: float = 2.0
     URL_HINT_BOOST: float = 0.3
