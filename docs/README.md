@@ -57,6 +57,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [content-rss.md](content-rss.md) (spec) — `personal_index.rss`:
   FeedEntry, Feed (entry_count / get_recent_entries), RSSParser (parse + is_feed, RSS 2.0 + Atom),
   silent empty-feed for non-feed root tags + RSS-never-updates contract holes.
+- [content-sitemap.md](content-sitemap.md) (spec) — `personal_index.sitemap` + `personal_index.sitemap_builder`:
+  SitemapEntry, Sitemap (url_count / sitemap_count / get_urls), SitemapParser (parse / parse_text_sitemap /
+  filter_by_priority / filter_by_changefreq / get_recent_entries), SitemapBuilder (add_entry / build /
+  build_sitemap_index / split_into_chunks), dead MAX_SITEMAP_SIZE_BYTES + dual-SitemapEntry contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
