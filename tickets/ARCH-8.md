@@ -1,4 +1,4 @@
-Status: IMPLEMENTED #1025@bd258c9
+Status: VERIFIED (validator cycle 148: 4 dead _stage_* methods removed, one impl per stage, pinning test test_stage_methods_are_the_live_path passes + adversarial empty/whitespace drop-path counters consistent @5eecbed)
 Kind: ARCH
 Author: architect (cycle 173)
 Issue: #1010
