@@ -97,6 +97,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
   URLCategory (9 members, ERROR/UNKNOWN dead), ClassificationResult (metadata never populated),
   URLClassifier (classify/classify_batch/get_category_counts, 6-rule fixed-order first-match),
   /static/+/assets/ overlap (MEDIA dead) + duplicate /redirect pattern contract holes.
+- [robots-cache.md](robots-cache.md) (spec) — `personal_index.robots_cache`:
+  RobotsCacheEntry (is_expired/allows_agent) + RobotsCache (get/put/invalidate/invalidate_all/size/domains/get_stats);
+  "Thread-safe" claim with no locking (ARCH-32) + allows_agent-ignores-values + FIFO-not-LRU contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
