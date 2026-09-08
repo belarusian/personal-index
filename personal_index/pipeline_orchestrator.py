@@ -165,33 +165,6 @@ class PipelineOrchestrator:
                 pages.append(page)
         return pages
 
-    def _stage_filter(self, pages: list[CrawledPage]) -> list[CrawledPage]:
-        """Stage: filter pages through content filter."""
-        filtered: list[CrawledPage] = []
-        for page in pages:
-            if self.content_filter.should_include(page):
-                filtered.append(page)
-        return filtered
-
-    def _stage_score(self, pages: list[CrawledPage]) -> list[CrawledPage]:
-        """Stage: score pages based on content and interests."""
-        for page in pages:
-            score = self._score_page(page)
-            page.relevance_score = score
-        return pages
-
-    def _stage_tag(self, pages: list[CrawledPage]) -> list[CrawledPage]:
-        """Stage: auto-tag pages based on interests and keywords."""
-        for page in pages:
-            self._tag_page(page)
-        return pages
-
-    def _stage_index(self, pages: list[CrawledPage]) -> list[CrawledPage]:
-        """Stage: add pages to the search index."""
-        for page in pages:
-            self.search_index.add_page(page)
-        return pages
-
     def _run_filter_stage(self, pages: list[CrawledPage], result: PipelineResult) -> list[CrawledPage]:
         logger.info("Filtering %d pages", len(pages))
         out = self._run_stage(pages, lambda p: self._apply_filter(p, result), "filter")

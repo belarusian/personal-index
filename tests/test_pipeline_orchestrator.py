@@ -296,77 +296,49 @@ class TestPipelineStageMethods:
         assert pages == []
         orch.close()
 
-    def test_stage_filter_keeps_included(self, tmp_path):
-        data_dir = str(tmp_path / "data")
-        orch = PipelineOrchestrator(data_dir=data_dir)
+    def test_stage_methods_are_the_live_path(self, tmp_path):
+        """The live stage path (filter->score->tag->index) drives the counters.
 
-        from personal_index.models import CrawledPage
-        page = CrawledPage(
-            url="http://example.com",
-            title="Test",
-            content="This is a reasonably long piece of content that should pass the filter",
-            word_count=14,
+        Pins the live-path behavior (the stage counters reflect the
+        _run_*_stage/_apply_* path) AND the guard (drop) path (a file that
+        fails the content filter increments pages_filtered_out). A regression
+        that re-introduces a dead or alternate _stage_* implementation would
+        break these counters.
+        """
+        data_dir = str(tmp_path / "data")
+        docs = tmp_path / "docs"
+        docs.mkdir()
+
+        # Two long files pass the content filter (>= 100 chars).
+        (docs / "long_a.txt").write_text(
+            "Python is a versatile programming language used for web development, "
+            "data science, and automation. It features clean syntax and a large "
+            "standard library that supports many programming paradigms."
         )
-        result = orch._stage_filter([page])
-        assert len(result) == 1
-        orch.close()
-
-    def test_stage_filter_removes_short(self, tmp_path):
-        data_dir = str(tmp_path / "data")
-        config = PipelineConfig(min_content_length=100)
-        orch = PipelineOrchestrator(data_dir=data_dir, config=config)
-
-        from personal_index.models import CrawledPage
-        page = CrawledPage(
-            url="http://example.com",
-            title="Test",
-            content="Short",
-            word_count=1,
+        (docs / "long_b.txt").write_text(
+            "JavaScript is the language of the web. It powers interactive "
+            "websites and modern web applications, and Node.js extends it to "
+            "server-side development for building complex user interfaces."
         )
-        result = orch._stage_filter([page])
-        assert len(result) == 0
-        orch.close()
+        # One short file fails the content filter (guard / drop path).
+        (docs / "short.txt").write_text("Too short")
 
-    def test_stage_score_returns_all_pages(self, tmp_path):
-        data_dir = str(tmp_path / "data")
         orch = PipelineOrchestrator(data_dir=data_dir)
-
-        from personal_index.models import CrawledPage
-        pages = [
-            CrawledPage(url=f"http://example.com/{i}", title=f"Page {i}",
-                        content=f"Content for page {i} with some words", word_count=8)
-            for i in range(3)
+        files = [
+            str(docs / "long_a.txt"),
+            str(docs / "long_b.txt"),
+            str(docs / "short.txt"),
         ]
-        result = orch._stage_score(pages)
-        assert len(result) == 3
-        for p in result:
-            assert hasattr(p, "relevance_score")
-        orch.close()
+        result = orch.run_from_files(files)
 
-    def test_stage_tag_returns_all_pages(self, tmp_path):
-        data_dir = str(tmp_path / "data")
-        orch = PipelineOrchestrator(data_dir=data_dir)
-
-        from personal_index.models import CrawledPage
-        pages = [
-            CrawledPage(url="http://example.com/1", title="Python",
-                        content="Python programming language", word_count=4)
-        ]
-        result = orch._stage_tag(pages)
-        assert len(result) == 1
-        orch.close()
-
-    def test_stage_index_returns_all_pages(self, tmp_path):
-        data_dir = str(tmp_path / "data")
-        orch = PipelineOrchestrator(data_dir=data_dir)
-
-        from personal_index.models import CrawledPage
-        pages = [
-            CrawledPage(url="http://example.com/1", title="Test",
-                        content="Some content here", word_count=4)
-        ]
-        result = orch._stage_index(pages)
-        assert len(result) == 1
+        assert result.success is True
+        # Live path: the two long pages flow through filter->score->tag->index.
+        assert result.stats.pages_passed_filter == 2
+        assert result.stats.pages_scored == 2
+        assert result.stats.pages_tagged == 2
+        assert result.stats.pages_indexed == 2
+        # Guard (drop) path: the short page is filtered out.
+        assert result.stats.pages_filtered_out == 1
         orch.close()
 
     def test_run_stage_includes_matching(self, tmp_path):

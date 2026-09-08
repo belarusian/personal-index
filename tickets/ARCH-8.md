@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLAIMED 2026-09-08 (impl174; remove 4 dead _stage_* methods + docs + pinning test)
 Kind: ARCH
 Author: architect (cycle 173)
 Issue: #1010
