@@ -126,11 +126,6 @@ progress_callback: Any = None)`.
   This is the ONLY live `_stage_*` method (used by `run_from_files`).
 
 ## Contract holes
-- **Dead `_stage_*` methods.** `_stage_filter`, `_stage_score`, `_stage_tag`,
-  and `_stage_index` (lines 168–193) are defined but **never called** anywhere
-  in the module or repo — the live path uses the `_run_*_stage` + `_apply_*`
-  pair instead. Only `_stage_read` is live. A reader would reasonably assume
-  the four `_stage_*` methods are the stage implementations. -> **ARCH-8**.
 - **Double-written stats counters.** `stats.pages_tagged` and
   `stats.pages_indexed` are written twice per run: incremented per-page inside
   `_apply_tag`/`_apply_index`, then **overwritten** by `len(out)` in
