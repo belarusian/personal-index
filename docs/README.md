@@ -39,6 +39,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [cli.md](cli.md) (spec) — `personal_index.cli`:
   the click command surface (main group + interests/tags/schedule/config subgroups + top-level commands),
   shared store getters, data-dir/config bootstrap, guard paths.
+- [search-facets.md](search-facets.md) (spec) — `personal_index.search_facets`:
+  Facet/FacetValue/FacetType models, FacetBuilder (build/aggregate), FacetedSearch (search/filters/facets) + SearchResults.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
