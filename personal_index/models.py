@@ -459,7 +459,29 @@ class AppConfig:
 
 @dataclass
 class PipelineStats:
-    """Statistics from a pipeline run."""
+    """Statistics from a pipeline run.
+
+    Fields, in order:
+    - ``pages_crawled`` (int, default 0)
+    - ``pages_extracted`` (int, default 0)
+    - ``pages_passed_filter`` (int, default 0)
+    - ``pages_filtered_out`` (int, default 0)
+    - ``pages_scored`` (int, default 0)
+    - ``pages_tagged`` (int, default 0)
+    - ``pages_indexed`` (int, default 0)
+    - ``tags_applied`` (int, default 0)
+    - ``errors`` (list, default [])
+    - ``elapsed_seconds`` (float, default 0.0)
+
+    ``summary() -> str`` returns a comma-joined one-line string with
+    exactly 10 parts, in order: ``crawled=`` (pages_crawled),
+    ``extracted=`` (pages_extracted), ``filtered_in=`` (pages_passed_filter),
+    ``filtered_out=`` (pages_filtered_out), ``scored=`` (pages_scored),
+    ``tagged=`` (pages_tagged), ``indexed=`` (pages_indexed),
+    ``tags=`` (tags_applied), ``errors=`` (len(errors)), and ``time=``
+    (elapsed_seconds, 1 decimal, with a trailing ``s``). No guard path:
+    always formats all 10 parts. No side effects.
+    """
     pages_crawled: int = 0
     pages_extracted: int = 0
     pages_passed_filter: int = 0

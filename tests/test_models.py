@@ -646,6 +646,30 @@ class TestPipelineStats:
         assert "errors=0" in summary
         assert "time=0.0s" in summary
 
+    def test_pipeline_stats_summary_pinned(self):
+        """Pin the exact returned summary() string (normal + default)."""
+        populated = PipelineStats(
+            pages_crawled=10,
+            pages_extracted=8,
+            pages_passed_filter=6,
+            pages_filtered_out=2,
+            pages_scored=6,
+            pages_tagged=5,
+            pages_indexed=5,
+            tags_applied=15,
+            errors=["error1"],
+            elapsed_seconds=3.5,
+        )
+        assert populated.summary() == (
+            "crawled=10, extracted=8, filtered_in=6, filtered_out=2, "
+            "scored=6, tagged=5, indexed=5, tags=15, errors=1, time=3.5s"
+        )
+        default = PipelineStats()
+        assert default.summary() == (
+            "crawled=0, extracted=0, filtered_in=0, filtered_out=0, "
+            "scored=0, tagged=0, indexed=0, tags=0, errors=0, time=0.0s"
+        )
+
 
 def test_interest_matches_non_string_topic_does_not_crash():
     """TICKET-259: non-string topics elements must not crash matches()."""
