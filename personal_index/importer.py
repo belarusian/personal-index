@@ -44,7 +44,16 @@ class Importer:
 
     @property
     def manager(self) -> BookmarkManager:
-        """Manager."""
+        """Return the stored BookmarkManager.
+
+        No guard path: always returns the manager.
+
+        Returns the ``BookmarkManager`` instance held in ``self._manager``
+        (set in ``__init__`` to the ``manager`` argument when it is not
+        ``None``, otherwise a fresh ``BookmarkManager()``).
+
+        No side effects.
+        """
         return self._manager
 
     def import_from_file(self, filepath: str) -> ImportResult:
