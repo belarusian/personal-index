@@ -109,6 +109,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [content-aggregator.md](content-aggregator.md) (spec) — `personal_index.content_aggregator`:
   ContentAggregator (add_source/get_source/merge_all/filter_by_source/get_source_names/clear_source/clear_all/total_items/source_count);
   merge_all dedup key collapses items with both id and title falsy so the default dedup silently drops them (ARCH-35) contract hole.
+- [url-dedup.md](url-dedup.md) (spec) — `personal_index.url_dedup`:
+  DedupResult + URLDeduplicator (normalize_url/check_duplicate/add_url/deduplicate_urls/get_duplicates/get_stats/get_canonical_url/get_domain_urls/clear, exact + same-domain fuzzy path match);
+  get_duplicates/get_stats can never report the duplicates actually detected because only non-duplicates are stored (ARCH-36) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
