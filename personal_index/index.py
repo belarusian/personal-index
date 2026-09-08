@@ -162,7 +162,26 @@ class SearchIndex:
         self._save()
 
     def search(self, query: str, limit: int = 10) -> list[SearchResult]:
-        """Search the index."""
+        """Search the index for pages matching the query.
+
+        Guard path: if ``query`` is falsy (empty string), returns [].
+        If ``_tokenize(query)`` yields no tokens (all stop-words or
+        length<=1), returns [].
+
+        Return: a list of SearchResult objects, at most ``limit``
+        (default 10), ordered by relevance_score DESCENDING. Each
+        SearchResult has exactly: url = the page url; title =
+        page.title; snippet = _create_snippet(page.content, query);
+        relevance_score = the accumulated score for that url, computed
+        as the sum over each query token present in _word_index of
+        (title.lower().count(token)*3.0 +
+        content.lower().count(token)*1.0 + page.score*0.5). Pages with
+        no matching token are absent. A url in the top-``limit`` whose
+        page is missing from _pages is skipped (not appended).
+
+        Side effects: none (pure read over _pages/_word_index; no
+        mutation, no persistence).
+        """
         if not query:
             return []
         tokens = self._tokenize(query)
