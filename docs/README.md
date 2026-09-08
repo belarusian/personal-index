@@ -77,6 +77,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ExtractedContent + ContentExtractor (extract / extract_readability_score, og:title-preferred title,
   meta/canonical/language/author, headings/links/images, whitespace-normalized truncated text);
   word_count-vs-text readability divergence + pre-truncation word_count + title.string contract holes.
+- [content-reader.md](content-reader.md) (spec) — `personal_index.content_reader`:
+  ReadResult + PageView + ContentReader (add/add_many/get/list_all/paginate, filter_by_tags/score,
+  search_titles/content, format_item/page, clear/count); duplicate-URL get-vs-list divergence +
+  empty-reader inverted range + empty-tags-returns-all contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
