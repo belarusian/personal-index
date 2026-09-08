@@ -2,7 +2,7 @@
 
 - **Status:** OPEN
 - **Component:** `personal_index/content_extractor.py` (`ContentExtractor.extract_readability_score`).
-- **Issue:** (to be created)
+- **Issue:** #1071
 
 ## Symptom
 `ContentExtractor.extract_readability_score(content)` is documented as
