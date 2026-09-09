@@ -1,6 +1,6 @@
 # ARCH-34: content_merger — `strategy` is never validated, so an unrecognized strategy silently runs `concatenate` and `merge_strategy` hides the typo
 
-Status: CLAIMED 2026-09-07
+Status: IMPLEMENTED PR #1141@204a508 (cycle 204: content_merger strategy validation Option A)
 Component: `personal_index/content_merger.py`
 Issue: #1095
 Refs: ARCH-2 (#983 umbrella)
