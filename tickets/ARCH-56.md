@@ -26,6 +26,40 @@ aggregate is only wrong once a page exceeds the top-20 cap. The existing
 `test_aggregate_stats` never asserts `unique_external_domains` and uses a
 single external domain per page, so the hole is untested.
 
+## Architect Decision (cycle 225)
+
+**Decision: option (b) — `unique_external_domains` is the TRUE cross-page
+DISTINCT count of external domains (a set-union across pages), NOT a per-page
+sum.**
+
+Rationale (recorded verbatim):
+1. It matches QA-10's stated intent — "the true number of distinct external
+   domains across the analyzed pages (consistent with the per-page
+   stats.unique_domains), not the top-20 truncated window."
+2. It keeps the existing live pinned contract `test_aggregate_sums == 2`
+   UNCHANGED (a.com on both pages + b.com on page 2 → distinct union = 2).
+3. It makes the 2 QA-10 xfail-strict tests flip to hard passes with no
+   re-pinning (single page: union == per-page count == 25 / 50).
+4. It REJECTS the cycle-212 mandated sum-of-counts formula, which double-counts
+   a domain appearing on multiple pages and would break test_aggregate_sums.
+   (Option (a) "keep sum-of-counts + re-pin test_aggregate_sums to 3" is
+   rejected: it changes the field's meaning to a per-page sum, contradicting
+   the field name "unique_..." and the ticket intent. Option (c) "correct the
+   ticket intent to sum-of-counts" is rejected for the same reason.)
+
+**IMPL-6 resolution:** the cycle-212 mandated sum-of-counts formula
+(`sum(r.stats.unique_domains for r in results)`) is REJECTED.
+`test_aggregate_sums` stays at 2 (NOT re-pinned to 3). The 2 QA-10
+xfail-strict tests flip to hard passes with no re-pinning.
+
+**Implementation:** the `all_external_domains` union already specified in
+"Public contract (target)" below (no change to that section needed — it
+already says union the full set).
+
+**Downstream status effect (for the implementer, not edited here):** QA-10
+leaves OPEN-PUSHBACK and IMPL-6 is resolved by this decision; the implementer
+proceeds per this section + "Public contract (target)".
+
 ## Public contract (target)
 Add a field to `LinkAnalysisResult` that carries the **full** set of external
 domains for the page (not truncated), and have `get_aggregate_stats` union
