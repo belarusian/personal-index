@@ -116,6 +116,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   RateLimitConfig + RateLimitStatus + RateLimiter/TokenBucket (per-domain token bucket: can_request/wait_for_request/get_status/get_wait_time/reset_domain/reset_all/get_all_statuses); can_request consumes a token (not a side-effect-free probe); unvalidated config — window_seconds==0 and max_requests<=0 raise ZeroDivisionError (ARCH-37) contract hole.
 - [queue.md](queue.md) (spec) — `personal_index.queue`:
   TaskPriority (int Enum, lower value = higher priority) + TaskStatus (str Enum) + Task (@dataclass(order=True), priority+sequence sort keys) + TaskQueue (heapq min-heap + id dict, enqueue/dequeue/get_task/cancel_task/complete_task/fail_task, size/pending_count/completed_count/get_stats/clear_completed); _evict_lowest pops the heap minimum = the highest-priority task, so overflow drops the most important task while logging "dropping lowest priority" (ARCH-38) contract hole.
+- [bookmarks.md](bookmarks.md) (spec) — `personal_index.bookmarks`:
+  Bookmark (8-field @dataclass, to_dict/from_dict) + BookmarkManager (add/get/remove/list_all/list_by_category/list_by_tag/list_favorites/toggle_favorite/search/get_categories/get_all_tags/count/save/load); load silently clears and replaces the in-memory set with no merge mode, so unsaved mutations are lost on any load (ARCH-39) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
