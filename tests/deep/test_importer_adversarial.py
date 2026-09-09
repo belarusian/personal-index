@@ -24,7 +24,6 @@ from __future__ import annotations
 import subprocess
 import sys
 
-import pytest
 
 from personal_index.bookmarks import BookmarkManager
 from personal_index.importer import Importer, ImportResult
@@ -215,12 +214,6 @@ class TestJsonNonDictItemContract:
     AttributeError on item.get(...), which is NOT in the except clause, so the
     whole import aborts instead of skipping the bad item and continuing."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-8: _import_json crashes on non-dict JSON array item "
-        "(uncaught AttributeError) instead of catching per-item error and "
-        "continuing as the docstring promises",
-    )
     def test_int_item_caught_and_loop_continues(self):
         r = _imp().import_from_content(
             '[{"url": "http://a.com"}, 42, {"url": "http://b.com"}]', "json"
@@ -229,12 +222,6 @@ class TestJsonNonDictItemContract:
         assert r.total_imported == 2
         assert any("Error importing item" in e for e in r.errors)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-8: _import_json crashes on null JSON array item "
-        "(uncaught AttributeError) instead of catching per-item error and "
-        "continuing as the docstring promises",
-    )
     def test_null_item_caught_and_loop_continues(self):
         r = _imp().import_from_content(
             '[{"url": "http://a.com"}, null]', "json"

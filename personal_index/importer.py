@@ -159,7 +159,7 @@ class Importer:
                     result.total_imported += 1
                 else:
                     result.total_skipped += 1
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 result.errors.append(f"Error importing item: {e}")
 
         return result
