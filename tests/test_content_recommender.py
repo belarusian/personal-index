@@ -192,6 +192,31 @@ class TestRecommender:
         assert len(recs2) == 1
         assert recs2[0].score == 0.5
 
+    def test_recommend_for_keywords_explicit_keywords_case_sensitive(self):
+        """Regression: an item's EXPLICIT keywords are matched
+        case-sensitively (only content/title-derived keywords are
+        lowercased) (ARCH-16).
+
+        Pins the corrected docstring claim against the returned object:
+        (a) a query keyword that differs in case from an item's explicit
+        keyword does NOT match (returns []), and (b) the empty-query guard
+        returns [].
+        """
+        rec = Recommender(min_score=0.0)
+        rec.add_items([
+            ContentItem(
+                url="https://example.com/py",
+                title="",
+                content="",
+                keywords=["Python"],
+            ),
+        ])
+        # (a) case-sensitive item side: query "python" (lowercased) does NOT
+        # match the explicit mixed-case "Python" -> no recommendation.
+        assert rec.recommend_for_keywords(["python"], top_n=5) == []
+        # (b) guard path: empty query -> [].
+        assert rec.recommend_for_keywords([], top_n=5) == []
+
     def test_clear(self):
         self.recommender.clear()
         assert self.recommender.item_count == 0

@@ -194,11 +194,12 @@ class Recommender:
     ) -> list[Recommendation]:
         """Recommend content items by keyword match fraction.
 
-        Query keywords are lowercased before matching, so matching is
-        case-insensitive. Each item's score is the fraction of the query
-        keywords it matches (len(common) / len(query)); items whose score is
-        below ``min_score`` are dropped, and the survivors are sorted by score
-        (descending) and truncated to ``top_n``.
+        Query keywords are lowercased before matching; an item's explicit
+        ``keywords`` are matched case-sensitively (only content/title-derived
+        keywords are lowercased). Each item's score is the fraction of the
+        query keywords it matches (len(common) / len(query)); items whose
+        score is below ``min_score`` are dropped, and the survivors are
+        sorted by score (descending) and truncated to ``top_n``.
 
         Args:
             keywords: Keywords to match against (lowercased internally).
