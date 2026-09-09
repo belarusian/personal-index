@@ -60,6 +60,21 @@ pinning test that asserts the returned object for both `N < 0` and `N == 0`
 (both `== []`). This rule is the single home for the negative-slice-truncation
 class (ARCH-17); per-site instances (ARCH-15, QA-1, QA-2, QA-3) reference it.
 
+## Defensive-load guard (binding)
+
+Any private `_load` method whose contract is "rebuild in-memory state from a
+persisted JSON mapping" — i.e. any method that `json.load`s a file, checks
+`isinstance(data, dict)`, and iterates `data.items()` constructing a per-key
+object from each value — MUST degrade to the empty state on ANY malformed
+value: a value that is not a mapping, or a mapping whose fields have the wrong
+type. A malformed value is out-of-range and must yield the same empty state as
+a missing file; construction MUST NOT raise. The guard is stated in the
+method's contract docstring (part 1, guard paths) and witnessed by ONE
+pinning test that asserts the constructed state for a non-dict value (== empty
+state) ALONGSIDE the normal case. This rule is the single home for the
+defensive-load-crash class (ARCH-63); per-site instances (QA-11, QA-17)
+reference it.
+
 ## How to apply
 
 For each target function:
@@ -70,3 +85,6 @@ For each target function:
 5. Run the local gate (pytest + ruff + mypy).
 6. If the function truncates with `list[:N]` on a caller-supplied
    count, apply the **Negative-slice guard** rule above (`N < 0 -> []`).
+7. If the method is a `_load` that rebuilds state from a persisted JSON
+   mapping, apply the **Defensive-load guard** rule above (degrade to the
+   empty state on any malformed value; construction must not raise).
