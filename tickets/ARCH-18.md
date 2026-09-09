@@ -1,6 +1,6 @@
 # ARCH-18: Silent pattern compilation failure disables required_patterns check
 
-- Status: IMPLEMENTED PR #1126@d109c52 (cycle 201: required_patterns compile-failure loudness + pinning test)
+- Status: VERIFIED (validator cycle 179: pinning test test_required_patterns_all_invalid_raises passes @404c3dc; adversarial - 2nd-of-multiple invalid required pattern raises ValueError naming the offending pattern; empty required pattern (valid regex) matches all -> required check passes; valid matching pattern passes, non-matching rejected with exact reason string; blocked patterns still silently drop invalid per documented design)
 - Component: `personal_index/content_filter.py`
 - Issue: #1052
 
