@@ -136,7 +136,10 @@ def extract_keywords(text: str, top_n: int = 10, min_freq: int = 2) -> list[tupl
 
     Returns:
         List of (word, frequency) tuples sorted by frequency descending.
+        If top_n <= 0, returns an empty list.
     """
+    if top_n <= 0:
+        return []
     # First get words meeting min_freq threshold
     freq_filtered = word_frequency(text, min_freq=min_freq)
     result = sorted(freq_filtered.items(), key=lambda x: x[1], reverse=True)

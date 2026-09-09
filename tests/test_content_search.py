@@ -249,6 +249,15 @@ class TestSearchIndex:
         suggestions = index.get_suggestions("zzz")
         assert suggestions == []
 
+    def test_get_suggestions_negative_limit(self, index):
+        index.add_items([
+            {"id": str(i), "title": f"Alpha {i}"} for i in range(10)
+        ])
+        suggestions = index.get_suggestions("alpha", limit=-1)
+        assert suggestions == []
+        suggestions = index.get_suggestions("alpha", limit=0)
+        assert suggestions == []
+
     def test_save_and_load_index(self, index, tmp_path):
         items = [
             {"id": "1", "title": "Python Tutorial", "description": "Learn Python"},

@@ -97,7 +97,12 @@ class ContentLinker:
     def find_related(
         self, item_id: str, threshold: float = 0.1, limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """Find items related to the given item."""
+        """Find items related to the given item.
+
+        If limit <= 0, returns an empty list.
+        """
+        if limit <= 0:
+            return []
         if item_id in self._link_cache:
             return self._link_cache[item_id]
         source = self._items.get(item_id)

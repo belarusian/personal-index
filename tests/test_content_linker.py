@@ -211,3 +211,12 @@ class TestContentLinker:
         linker.add_item("id2", "content2")
         items = linker.get_all_items()
         assert len(items) == 2
+
+    def test_find_related_negative_limit(self):
+        linker = ContentLinker()
+        linker.add_item("id1", "python web development")
+        linker.add_item("id2", "python data science")
+        related = linker.find_related("id1", threshold=0.1, limit=-1)
+        assert related == []
+        related = linker.find_related("id1", threshold=0.1, limit=0)
+        assert related == []
