@@ -330,6 +330,14 @@ class TestCollectionManager:
         recent = self.manager.get_recent(2)
         assert len(recent) == 2
 
+    def test_get_recent_negative_limit_returns_empty(self):
+        # QA-4a site 3: a negative limit must return [] (not all-but-last).
+        self.manager.create("First")
+        self.manager.create("Second")
+        self.manager.create("Third")
+        assert self.manager.get_recent(limit=-1) == []
+        assert self.manager.get_recent(limit=0) == []
+
     def test_rename_collection(self):
         cid = self.manager.create("Original")
         self.manager.rename(cid, "Renamed")

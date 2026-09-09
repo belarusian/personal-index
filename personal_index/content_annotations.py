@@ -187,9 +187,13 @@ class AnnotationManager:
 
     def get_recent(self, limit: int = 10) -> list[Annotation]:
         """Return up to `limit` annotations (default 10), sorted by
-        `created_at` in descending order (newest first)."""
+        `created_at` in descending order (newest first).
+
+        If limit <= 0, returns an empty list."""
         all_ann = list(self._annotations.values())
         all_ann.sort(key=lambda a: a.created_at, reverse=True)
+        if limit <= 0:
+            return []
         return all_ann[:limit]
 
     def update_text(self, annotation_id: str, new_text: str) -> bool:

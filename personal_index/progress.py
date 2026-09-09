@@ -224,13 +224,17 @@ class ProgressStore:
         ]
 
     def list_completed(self, limit: int = 20) -> list[ProgressTracker]:
-        """List completed trackers, most recent first."""
+        """List completed trackers, most recent first.
+
+        If limit <= 0, returns an empty list."""
         completed = [
             t for t in self._trackers.values()
             if t.state in (ProgressState.COMPLETED.value,
                           ProgressState.FAILED.value,
                           ProgressState.CANCELLED.value)
         ]
+        if limit <= 0:
+            return []
         completed.sort(key=lambda t: t.completed_at or "", reverse=True)
         return completed[:limit]
 

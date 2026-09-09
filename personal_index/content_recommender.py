@@ -143,6 +143,7 @@ class Recommender:
     ) -> list[Recommendation]:
         """Recommend content items related to ``seed``.
 
+        If top_n <= 0, returns an empty list.
         If the pool is empty (no items added) this returns ``[]``.
         The seed itself is excluded by matching ``item.url == seed.url``.
         For each remaining item two Jaccard sub-scores are computed:
@@ -182,6 +183,8 @@ class Recommender:
             if rec:
                 candidates.append(rec)
         candidates.sort(key=lambda r: r.score, reverse=True)
+        if top_n <= 0:
+            return []
         return candidates[:top_n]
 
     def recommend_for_keywords(

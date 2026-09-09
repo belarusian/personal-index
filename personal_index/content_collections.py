@@ -320,9 +320,13 @@ class CollectionManager:
         return results
 
     def get_recent(self, limit: int = 10) -> list[Collection]:
-        """Get the most recently created collections."""
+        """Get the most recently created collections.
+
+        If limit <= 0, returns an empty list."""
         all_c = list(self._collections.values())
         all_c.sort(key=lambda c: c.created_at, reverse=True)
+        if limit <= 0:
+            return []
         return all_c[:limit]
 
     def count(self) -> int:
