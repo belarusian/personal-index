@@ -71,6 +71,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentImporter (import_content / batch_import, 5 formats json|html|markdown|rss|csv),
   per-format item shapes; inconsistent cross-format shape + untyped batch_import +
   stdlib-ET rss + JSON-scalar-TypeError contract holes.
+- [keyword-extractor.md](keyword-extractor.md) (spec) — `personal_index.keyword_extractor`:
+  Keyword (text/frequency/score/positions, __post_init__ normalizes None->[]) + KeywordExtractor
+  (extract/extract_phrases/extract_top_n/compute_term_frequency/compare_keywords, score=freq*log(1+freq)) +
+  module fn extract_keywords; extract_top_n n-silently-capped-by-constructor-max_keywords (ARCH-57) contract hole.
 - [importer.md](importer.md) (spec) — `personal_index.importer`:
   ImportResult + Importer (import_from_file / import_from_content / import_opml,
   formats json|csv|html|xml|necko|netscape); inconsistent total_skipped across formats +
