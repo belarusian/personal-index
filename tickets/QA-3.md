@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-06
+Status: IMPLEMENTED PR #1109@464788b (cycle 196: rss get_recent_entries negative-count guard done)
 Kind: QA
 Issue: #1040
 Deep test: tests/deep/test_rss_adversarial.py::test_get_recent_entries_negative_count_returns_empty (xfail-strict)
