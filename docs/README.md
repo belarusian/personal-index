@@ -120,6 +120,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [url-dedup.md](url-dedup.md) (spec) — `personal_index.url_dedup`:
   DedupResult + URLDeduplicator (normalize_url/check_duplicate/add_url/deduplicate_urls/get_duplicates/get_stats/get_canonical_url/get_domain_urls/clear, exact + same-domain fuzzy path match);
   get_duplicates/get_stats can never report the duplicates actually detected because only non-duplicates are stored (ARCH-36) contract hole.
+- [url-utils.md](url-utils.md) (spec) — `personal_index.url_utils`:
+  22 public helpers (is_valid_url/normalize_url/is_canonical/extract_domain (+get_domain alias)/get_path/get_query_string/get_fragment/extract_subdomain/get_tld/get_url_depth/is_same_domain/is_internal_link/urls_are_equivalent/is_robotstxt/is_sitemap/is_excluded_url/remove_query_params/strip_tracking_params/url_to_path/join_urls/resolve_relative_url/extract_all_urls); get_tld returns only the LAST dot-label so two-label TLDs (co.uk→uk, com.au→au) and dotless hosts (intranet→intranet) are silently wrong (ARCH-61) contract hole.
 - [rate-limiter.md](rate-limiter.md) (spec) — `personal_index.rate_limiter`:
   RateLimitConfig + RateLimitStatus + RateLimiter/TokenBucket (per-domain token bucket: can_request/wait_for_request/get_status/get_wait_time/reset_domain/reset_all/get_all_statuses); can_request consumes a token (not a side-effect-free probe); unvalidated config — window_seconds==0 and max_requests<=0 raise ZeroDivisionError (ARCH-37) contract hole.
 - [throttle.md](throttle.md) (spec) — `personal_index.throttle`:
