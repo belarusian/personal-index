@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLAIMED 2026-09-06
 Kind: QA
 Issue: #1134
 Deep test: tests/deep/test_negslice_sweep2_adversarial.py (8 xfail-strict + 2 clean armor)
