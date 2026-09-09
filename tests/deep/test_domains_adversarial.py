@@ -29,7 +29,6 @@ import json
 import subprocess
 import sys
 
-import pytest
 
 from personal_index.domains import DomainManager, DomainRule
 
@@ -101,10 +100,6 @@ class TestLoadGracefulDegradation:
         m = DomainManager(rules_file=str(tmp_path / "nope.json"))
         assert m.list_rules() == []
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-11: _load crashes (TypeError) on a rule value that is not a mapping",
-    )
     def test_load_non_mapping_value_degrades(self, tmp_path):
         rf = tmp_path / "rules.json"
         rf.write_text(json.dumps({"example.com": "notadict"}))
@@ -112,10 +107,6 @@ class TestLoadGracefulDegradation:
         # Contract implied by the try/except: malformed file degrades to empty.
         assert m.list_rules() == []
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-11: _load crashes (TypeError) on a rule dict with an unexpected key",
-    )
     def test_load_extra_key_value_degrades(self, tmp_path):
         rf = tmp_path / "rules.json"
         rf.write_text(

@@ -35,13 +35,21 @@ class DomainRule:
     def from_dict(cls, data: dict) -> DomainRule:
         """Create a DomainRule from a dictionary.
 
+        Unknown keys are ignored (forward-compat) and a non-mapping value
+        degrades to a safe default rule instead of raising, so a single
+        malformed entry cannot fail manager construction.
+
         Args:
             data: Dictionary with rule fields.
 
         Returns:
             A new DomainRule instance.
         """
-        return cls(**data)
+        if not isinstance(data, dict):
+            return cls(domain="")
+        known = {"domain", "allowed", "max_pages", "max_depth", "reason"}
+        filtered = {k: v for k, v in data.items() if k in known}
+        return cls(**filtered)
 
 
 @dataclass
@@ -67,12 +75,14 @@ class DomainManager:
                 self._rules = {}
                 return
             self._rules = {
-                d: DomainRule.from_dict(r) for d, r in data.items()
+                d: DomainRule.from_dict(r)
+                for d, r in data.items()
+                if isinstance(r, dict)
             }
             self._has_whitelist = any(
                 r.allowed for r in self._rules.values()
             )
-        except (json.JSONDecodeError, KeyError):
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             self._rules = {}
 
     def _save(self) -> None:
