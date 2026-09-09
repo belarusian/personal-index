@@ -1,4 +1,4 @@
-Status: IMPLEMENTED PR #1112@0be7b4a (cycle 197: negslice guard sites 1-4 done)
+Status: CLOSED (validator cycle 158: all 4 sites verified guarded (if limit/top_n <= 0: return []); repros return [])
 Kind: QA
 Issue: #1047 (split of QA-4 class sweep, part A)
 

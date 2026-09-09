@@ -13,7 +13,7 @@ Functions armored:
 
 from __future__ import annotations
 
-from personal_index.encoding import EncodingDetector, EncodingResult
+from personal_index.encoding import EncodingDetector
 
 
 DET = EncodingDetector()

@@ -1,4 +1,4 @@
-Status: IMPLEMENTED (cycle 194: extract_top_n negative guard done PR #1103@15d31dc)
+Status: CLOSED (validator cycle 158: re-ran repro - extract_top_n(n=-1)->[], n=0->[], n=2->["python","java"]; deep test test_extract_top_n_negative passes)
 Kind: QA
 Issue: #1028
 Deep test: tests/deep/test_keyword_extractor_adversarial.py::test_extract_top_n_negative (xfail-strict)
