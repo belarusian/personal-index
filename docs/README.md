@@ -148,6 +148,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   Snippet (to_dict) + SnippetExtractor (extract/highlight_text, guard/no-match/match paths, max_snippets cap) + SearchIndex (add_item/add_items/remove_item, search with tf/tfidf/bm25 ranking + filters + highlight, item_count/term_count, get_suggestions, save_index/load_index, highlight_matches) + ContentSearch facade; add_item does not remove the old tokens on a re-add, so stale tokens survive an in-place re-index (ARCH-53) contract hole.
 - [content-feed.md](content-feed.md) (spec) — `personal_index.content_feed`:
   FeedFormat (RSS/ATOM) + FeedItem (to_dict/from_dict, id/published/updated defaults) + FeedGenerator (add_item/add_items/clear/get_feed_type/generate, RSS 2.0 + Atom 1.0, to_dict/from_dict); to_dict/from_dict is a lossy round-trip — it drops max_items and feed_id, so the item cap and Atom id silently reset (ARCH-54) contract hole.
+- [content-health.md](content-health.md) (spec) — `personal_index.content_health`:
+  HealthStatus/IssueSeverity/HealthIssue/HealthCheckResult/HealthReport/ContentHealthCheck + ContentHealthChecker (check_item 7-check pipeline, check_all aggregate report); to_dict exists on HealthIssue/HealthCheckResult but there is no from_dict and HealthReport has no to_dict, so a serialized report cannot be reloaded (ARCH-55) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
