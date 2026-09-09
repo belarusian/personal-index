@@ -398,6 +398,16 @@ class TestContentScorer:
         ranked = scorer.rank(items, limit=5)
         assert len(ranked) == 5
 
+    def test_rank_negative_limit(self, scorer: ContentScorer) -> None:
+        items = [
+            {"keyword_matches": i, "total_keywords": 10}
+            for i in range(20)
+        ]
+        ranked = scorer.rank(items, limit=-1)
+        assert ranked == []
+        ranked = scorer.rank(items, limit=0)
+        assert ranked == []
+
     def test_rank_returns_tuples(self, scorer: ContentScorer) -> None:
         items = [{"keyword_matches": 5, "total_keywords": 10}]
         ranked = scorer.rank(items)

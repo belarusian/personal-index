@@ -121,7 +121,12 @@ class SearchIndex:
     def search(
         self, query: str, limit: int = 10
     ) -> list[tuple[str, float]]:
-        """Search and return (url, score) tuples by relevance."""
+        """Search and return (url, score) tuples by relevance.
+
+        If limit <= 0, returns an empty list.
+        """
+        if limit <= 0:
+            return []
         if not query:
             return []
         tokens = self._tokenize(query)

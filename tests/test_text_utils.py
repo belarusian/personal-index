@@ -183,6 +183,13 @@ class TestExtractKeywords:
         keywords = extract_keywords(text, top_n=3, min_freq=2)
         assert len(keywords) == 3
 
+    def test_top_n_negative(self):
+        text = "a a b b c c d d e e"
+        keywords = extract_keywords(text, top_n=-1, min_freq=2)
+        assert keywords == []
+        keywords = extract_keywords(text, top_n=0, min_freq=2)
+        assert keywords == []
+
 
 class TestLevenshteinDistance:
     def test_identical(self):

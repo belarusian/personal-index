@@ -473,7 +473,12 @@ class SearchIndex:
         return len(self._index)
 
     def get_suggestions(self, prefix: str, limit: int = 5) -> list[str]:
-        """Get autocomplete suggestions for a prefix."""
+        """Get autocomplete suggestions for a prefix.
+
+        If limit <= 0, returns an empty list.
+        """
+        if limit <= 0:
+            return []
         prefix = prefix.lower()
         suggestions = []
         for term in self._index:

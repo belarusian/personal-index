@@ -479,9 +479,11 @@ class ContentScorer:
 
         Returns a NEW list of ``(item, score)`` tuples truncated to the first
         ``limit`` entries (default 10). Guard path: an empty ``items`` list
-        returns an empty list. No side effects (the input dicts are not
+        returns an empty list. If limit <= 0, returns an empty list. No side effects (the input dicts are not
         mutated and are paired by reference, not copied).
         """
+        if limit <= 0:
+            return []
         scored = []
         for item in items:
             score = self.score(**item)

@@ -167,3 +167,14 @@ class TestSearchIndexLoadGuard:
             f.write("42")
         idx = SearchIndex(index_path=path)
         assert idx.count() == 0
+
+    def test_search_negative_limit(self, index: SearchIndex):
+        index.add(CrawledPage(
+            url="https://example.com",
+            title="Python page",
+            content="Python content",
+        ))
+        results = index.search("python", limit=-1)
+        assert results == []
+        results = index.search("python", limit=0)
+        assert results == []
