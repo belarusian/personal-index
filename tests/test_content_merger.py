@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from personal_index.content_merger import (
     ContentMerger,
     MergedContent,
@@ -247,3 +249,48 @@ class TestMergeDocstringPinning:
         assert result.sources == ["https://a.com", "https://b.com"]
         # merge_strategy echoes the strategy used
         assert result.merge_strategy == "concatenate"
+
+
+class TestStrategyValidation:
+    """ARCH-34: strategy is validated at construction (Option A).
+
+    An unrecognized strategy raises ValueError; the four documented names
+    still construct; the empty-input guard and default are unchanged.
+    """
+
+    def test_unrecognized_strategy_rejected(self):
+        with pytest.raises(ValueError):
+            ContentMerger(strategy="longst")
+
+    def test_case_variant_strategy_rejected(self):
+        with pytest.raises(ValueError):
+            ContentMerger(strategy="CONCATENATE")
+
+    def test_empty_strategy_rejected(self):
+        with pytest.raises(ValueError):
+            ContentMerger(strategy="")
+
+    def test_valid_strategies_construct(self):
+        for name in (
+            "concatenate",
+            "longest",
+            "highest_priority",
+            "unique_paragraphs",
+        ):
+            ContentMerger(strategy=name)
+
+    def test_guard_empty_input_returns_none(self):
+        assert ContentMerger().merge([]) is None
+
+    def test_default_strategy_concatenate(self):
+        merger = ContentMerger()
+        assert merger.strategy == "concatenate"
+        sources = [
+            make_source(url="https://a.com", content="alpha"),
+            make_source(url="https://b.com", content="beta"),
+        ]
+        result = merger.merge(sources)
+        assert result is not None
+        assert result.merge_strategy == "concatenate"
+        assert "alpha" in result.content
+        assert "beta" in result.content

@@ -67,6 +67,30 @@ class ContentMerger:
     """
 
     def __init__(self, strategy: str = "concatenate"):
+        """Initialize the content merger.
+
+        Args:
+            strategy: Merge strategy to use. Must be exactly one of the
+                four documented names: "concatenate", "longest",
+                "highest_priority", "unique_paragraphs". Any other value
+                (including case-variants such as "CONCATENATE" and the
+                empty string) is rejected.
+
+        Raises:
+            ValueError: If strategy is not one of the four documented
+                strategy names.
+        """
+        if strategy not in (
+            "concatenate",
+            "longest",
+            "highest_priority",
+            "unique_paragraphs",
+        ):
+            raise ValueError(
+                "strategy must be one of 'concatenate', 'longest', "
+                "'highest_priority', 'unique_paragraphs'; got "
+                f"{strategy!r}"
+            )
         self.strategy = strategy
 
     def merge(self, sources: list[MergeSource]) -> MergedContent | None:
