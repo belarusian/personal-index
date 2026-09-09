@@ -1,4 +1,4 @@
-Status: OPEN
+Status: OPEN-PUSHBACK (cycle 211, IMPL-5)
 Kind: QA
 Issue: #1165
 Deep test: tests/deep/test_link_analyzer_adversarial.py (TestNegativeMaxAnchorLength, 2 xfail-strict)
