@@ -1,6 +1,6 @@
 # ARCH-31: url_classifier — /static/ and /assets/ overlap makes MEDIA_PATTERNS entries dead
 
-Status: OPEN
+Status: CLAIMED 2026-09-09
 Component: `personal_index/url_classifier.py`
 Issue: #1087
 Refs: ARCH-2 (#983 umbrella)
