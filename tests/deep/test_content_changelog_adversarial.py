@@ -16,10 +16,7 @@ The module's contract (from docstrings):
 
 from __future__ import annotations
 
-import copy
 from typing import Any
-
-import pytest
 
 from personal_index.content_changelog import ChangeEntry, ContentChangelog
 
