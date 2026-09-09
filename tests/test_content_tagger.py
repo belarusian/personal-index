@@ -1,5 +1,7 @@
 """Tests for content_tagger module."""
 
+import inspect
+
 from personal_index.content_tagger.detector import TopicDetector
 from personal_index.content_tagger.tag import Tag
 from personal_index.content_tagger.tagger import ContentTagger, TagResult
@@ -145,6 +147,26 @@ class TestTopicDetector:
         topics = detector.get_all_topics()
         assert isinstance(topics, list)
         assert len(topics) > 0
+
+    def test_detect_substring_match(self):
+        # ARCH-19 hole 1: keywords match as SUBSTRINGS, not whole words.
+        # The keyword "ai" (in the default "ai" topic) matches inside
+        # "said", so detect("said") must emit an "ai" tag.
+        detector = TopicDetector()
+        tags = detector.detect("said")
+        names = [t.name for t in tags]
+        assert "ai" in names
+
+    def test_detect_guard_empty_and_whitespace(self):
+        # ARCH-19 hole 1 guard path: falsy / whitespace-only -> [].
+        detector = TopicDetector()
+        assert detector.detect("") == []
+        assert detector.detect("   ") == []
+
+    def test_add_topic_has_no_weight_param(self):
+        # ARCH-19 hole 2 (option a): the dead weight parameter is removed.
+        params = inspect.signature(TopicDetector.add_topic).parameters
+        assert "weight" not in params
 
 
 # ── ContentTagger tests ────────────────────────────────────

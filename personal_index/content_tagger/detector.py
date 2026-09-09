@@ -13,7 +13,6 @@ from personal_index.content_tagger.tag import Tag
 class _TopicDefinition:
     name: str
     keywords: list[str]
-    weight: float = 1.0
 
 
 class TopicDetector:
@@ -122,10 +121,13 @@ class TopicDetector:
         """Detect topics in the given text.
 
         Returns an empty list when ``text`` is falsy or whitespace-only.
-        Otherwise, for each registered topic the total number of
-        case-insensitive keyword occurrences (via ``re.findall``) is summed
-        across all of the topic's keywords. A topic is emitted at most once,
-        and only when that total is greater than zero. Each emitted
+        Otherwise, for each registered topic the total number of keyword
+        occurrences is summed across all of the topic's keywords. Keywords
+        are matched case-insensitively as SUBSTRINGS (via
+        ``re.findall(re.escape(keyword.lower()), text.lower())``), NOT as
+        whole words: a keyword may match inside a longer word (e.g. the
+        keyword ``"ai"`` matches inside "said"). A topic is emitted at most
+        once, and only when that total is greater than zero. Each emitted
         ``Tag`` carries confidence ``min(0.5 + match_count * 0.1, 1.0)``
         rounded to two decimals, and the result is sorted by confidence
         descending.
@@ -152,9 +154,9 @@ class TopicDetector:
         results.sort(key=lambda t: t.confidence, reverse=True)
         return results
 
-    def add_topic(self, name: str, keywords: list[str], weight: float = 1.0) -> None:
+    def add_topic(self, name: str, keywords: list[str]) -> None:
         """Add a custom topic definition."""
-        self._topics[name] = _TopicDefinition(name=name, keywords=keywords, weight=weight)
+        self._topics[name] = _TopicDefinition(name=name, keywords=keywords)
 
     def remove_topic(self, name: str) -> None:
         """Remove a topic definition."""
