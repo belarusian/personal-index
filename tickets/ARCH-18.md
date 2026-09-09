@@ -1,6 +1,6 @@
 # ARCH-18: Silent pattern compilation failure disables required_patterns check
 
-- Status: CLAIMED 2026-09-09
+- Status: IMPLEMENTED PR #1126@d109c52 (cycle 201: required_patterns compile-failure loudness + pinning test)
 - Component: `personal_index/content_filter.py`
 - Issue: #1052
 
