@@ -252,8 +252,10 @@ class CategorizationResult:
         internal ``self.topics`` list — preserving the existing order of
         ``self.topics`` (score-descending, as produced by the categorizer).
         ``n=0`` returns an empty list; ``n`` larger than ``len(topics)``
-        returns all topics. Does not mutate ``self.topics``.
+        returns all topics. A negative n is out-of-range and returns an empty list (identical to n=0). Does not mutate ``self.topics``.
         """
+        if n <= 0:
+            return []
         return self.topics[:n]
 
 # ---------------------------------------------------------------------------

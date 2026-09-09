@@ -17,9 +17,14 @@ from personal_index.index import SearchIndex
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def top_pages(ctx, limit, fmt, data_dir):
-    """Show the highest-scored indexed pages."""
+    """Show the highest-scored indexed pages.
+
+    A negative limit is out-of-range and is clamped to 0 (no pages shown,
+    identical to limit=0).
+    """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     index = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
+    limit = max(0, limit)
     pages = index.list_pages()[:limit]
     if not pages:
         click.echo("No indexed pages found. Run 'personal-index pipeline' first.")

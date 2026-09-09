@@ -73,6 +73,7 @@ class SimilarityEngine:
             ``>= threshold`` (inclusive).
           * kept items are sorted by score DESCENDING.
           * the list is truncated to the first ``limit`` entries.
+          * a negative limit is out-of-range and returns an empty list (identical to limit=0).
           * each result is a dict with exactly the keys ``"id"`` (the
             item id) and ``"score"`` (the float similarity).
         """
@@ -83,4 +84,6 @@ class SimilarityEngine:
                 results.append({"id": item_id, "score": score})
 
         results.sort(key=lambda r: r["score"], reverse=True)
+        if limit <= 0:
+            return []
         return results[:limit]

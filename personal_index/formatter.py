@@ -14,7 +14,12 @@ from personal_index.scheduler import ScheduledJob
 def format_search_results(
     results: list[SearchResult], limit: int = 10
 ) -> str:
-    """Format search results for display."""
+    """Format search results for display.
+
+    A negative limit is out-of-range and is clamped to 0 (no results rendered,
+    identical to limit=0).
+    """
+    limit = max(0, limit)
     if not results:
         return "No results found."
 
