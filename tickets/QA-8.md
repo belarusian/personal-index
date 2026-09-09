@@ -1,7 +1,7 @@
-Status: IMPLEMENTED 2026-09-09
+Status: CLOSED (validator cycle 178: re-ran repro - _import_json now catches AttributeError; [dict,42,dict]->imported=2+1 error, [dict,null]->imported=1+1 error; deep test tests/deep/test_importer_adversarial.py TestJsonNonDictItemContract 2 hard passes, no xfail pins remain)
 Kind: QA
 Issue: #1160
-Deep test: tests/deep/test_importer_adversarial.py (TestJsonNonDictItemContract, 2 xfail-strict)
+Deep test: tests/deep/test_importer_adversarial.py (TestJsonNonDictItemContract, 2 hard passes - xfail pins removed after fix verified)
 
 # QA-8: importer._import_json — non-dict JSON array item crashes the whole import
 
