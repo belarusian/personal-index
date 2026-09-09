@@ -207,6 +207,22 @@ class TestContentFilter:
         )
         assert f.should_include(page) is True
 
+    def test_required_patterns_all_invalid_raises(self):
+        """An invalid required pattern fails loudly at construction; a valid one still filters."""
+        # Loud path: an invalid required pattern must raise ValueError naming the pattern,
+        # not be silently dropped (which would disable the required-pattern check).
+        with pytest.raises(ValueError, match="invalid required pattern"):
+            ContentFilter(config=FilterConfig(required_patterns=["[invalid("]))
+        # Regression guard: a valid required pattern still rejects a non-matching page
+        # with the exact reason string (the fix did not break the normal path).
+        f = ContentFilter(config=FilterConfig(required_patterns=["python"]))
+        page = CrawledPage(
+            url="https://example.com",
+            title="Test Page",
+            content="This is about java programming. " + "x" * 80,
+        )
+        assert "content does not match required pattern" in f.get_filter_reasons(page)
+
 
 class TestGetFilterReasonsReturnedObjectPinning:
     """Pin the returned list fields of get_filter_reasons (normal + guard path)."""
