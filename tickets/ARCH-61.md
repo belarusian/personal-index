@@ -3,7 +3,7 @@
 Status: OPEN
 Component: `personal_index/url_utils.py` — `get_tld` (lines 178-185)
 Umbrella: ARCH-2 (#983)
-Issue: #1195
+Issue: #1201
 Related: ARCH-60 (text_utils `read_time_minutes` unguarded division) — same "docstring over-promise / unenforced precondition" class
 Docs: `docs/url-utils.md` (Domain / host extraction → `get_tld`)
 
