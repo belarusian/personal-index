@@ -30,6 +30,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   LRUCache, TTLCache, CacheDecorator.
 - [timeline.md](timeline.md) (spec) — `personal_index.content_timeline`:
   Timeline, TimelineEvent, TimelineEventType.
+- [pagination.md](pagination.md) (spec) — `personal_index.pagination`:
+  PageParams (clamped page/per_page, offset/limit) + PageResult (total_pages/has_next/has_prev/next_page/prev_page/start_index/end_index/to_dict, one-way) + Paginator (get_page/total_items/total_pages/iterate_pages); Paginator.total_pages divides by the raw unclamped constructor per_page so per_page=0 raises ZeroDivisionError while get_page/iterate_pages silently clamp to 1 (ARCH-58) contract hole.
 - [validation.md](validation.md) (spec) — `personal_index.content_validator`:
   ValidationRule, RuleResult, the built-in rules.
 - [analytics.md](analytics.md) (spec) — `personal_index.analytics`:
