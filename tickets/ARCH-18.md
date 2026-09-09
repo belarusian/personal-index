@@ -1,6 +1,6 @@
 # ARCH-18: Silent pattern compilation failure disables required_patterns check
 
-- Status: OPEN
+- Status: CLAIMED 2026-09-09
 - Component: `personal_index/content_filter.py`
 - Issue: #1052
 
