@@ -59,15 +59,18 @@ class LRUCache:
 
         Returns ``None``. Side effects: sets ``self._cache[key] = value``;
         if ``key`` was already present it is first moved to the
-        most-recently-used end; while ``len(self._cache) > self.max_size``
-        the least-recently-used entry (the front of the OrderedDict) is
-        popped, so the cache never exceeds ``self.max_size`` entries.
+        most-recently-used end; while ``len(self._cache) > max_size`` the
+        least-recently-used entry (the front of the OrderedDict) is popped,
+        so the cache never exceeds ``self.max_size`` entries. A negative
+        ``max_size`` is clamped to 0 (matching the zero behaviour: evict to
+        empty, never crash); ``max_size >= 0`` is unchanged.
         """
         with self._lock:
             if key in self._cache:
                 self._cache.move_to_end(key)
             self._cache[key] = value
-            while len(self._cache) > self.max_size:
+            max_size = max(0, self.max_size)
+            while len(self._cache) > max_size:
                 self._cache.popitem(last=False)
 
     def delete(self, key: str) -> bool:

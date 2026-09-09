@@ -44,12 +44,6 @@ class TestLRUConstructor:
         assert c.size == 0
         assert "k" not in c
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-7: LRUCache(max_size=-1).put() raises KeyError: 'dictionary is empty' "
-               "because the while len > max_size loop pops past empty. "
-               "Docstring claims 'cache never exceeds max_size entries' but crashes.",
-    )
     def test_negative_max_size(self):
         """max_size=-1: put should evict to empty, not crash.
 
