@@ -213,3 +213,38 @@ class TestURLClassifierClassifyPinning:
         result = c.classify("HTTP://EXAMPLE.COM/API/USERS")
         assert result.category == URLCategory.API
         assert result.confidence == 0.85
+
+
+class TestURLClassifierStaticMediaOverlapPinning:
+    """Pinning tests for ARCH-31: /static/ and /assets/ are STATIC, not MEDIA.
+
+    STATIC_PATTERNS is checked before MEDIA_PATTERNS in classify(), so any URL
+    containing /static/ or /assets/ is always classified STATIC. The dead
+    MEDIA_PATTERNS entries for those paths were removed; these tests pin the
+    resulting contract (STATIC wins) and the cleaned MEDIA_PATTERNS contents.
+    """
+
+    def test_static_logo_png_is_static(self):
+        c = URLClassifier()
+        result = c.classify("https://example.com/static/logo.png")
+        assert result.category == URLCategory.STATIC
+        assert result.confidence == 0.9
+
+    def test_assets_app_js_is_static(self):
+        c = URLClassifier()
+        result = c.classify("https://example.com/assets/app.js")
+        assert result.category == URLCategory.STATIC
+        assert result.confidence == 0.9
+
+    def test_images_photo_jpg_is_media(self):
+        c = URLClassifier()
+        result = c.classify("https://example.com/images/photo.jpg")
+        assert result.category == URLCategory.MEDIA
+
+    def test_media_patterns_do_not_contain_static_or_assets(self):
+        assert r"/static/" not in URLClassifier.MEDIA_PATTERNS
+        assert r"/assets/" not in URLClassifier.MEDIA_PATTERNS
+
+    def test_static_patterns_still_contain_static_and_assets(self):
+        assert r"/static/" in URLClassifier.STATIC_PATTERNS
+        assert r"/assets/" in URLClassifier.STATIC_PATTERNS

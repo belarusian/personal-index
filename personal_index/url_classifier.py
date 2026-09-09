@@ -55,8 +55,6 @@ class URLClassifier:
         r"\.(mp4|avi|mov|wmv|webm|mkv)$",
         r"/images/",
         r"/media/",
-        r"/static/",
-        r"/assets/",
     ]
 
     DOCUMENT_PATTERNS: ClassVar[list[str]] = [
