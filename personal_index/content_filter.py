@@ -35,7 +35,7 @@ class ContentFilter:
         self.config = config or FilterConfig()
         self.interest_store = interest_store
         self._compiled_blocked = self._compile_patterns(self.config.blocked_patterns)
-        self._compiled_required = self._compile_patterns(self.config.required_patterns)
+        self._compiled_required = self._compile_required_patterns(self.config.required_patterns)
 
     @staticmethod
     def _compile_patterns(patterns: list[str]) -> list[re.Pattern]:
@@ -44,6 +44,27 @@ class ContentFilter:
         for pattern in patterns:
             with suppress(re.error):
                 compiled.append(re.compile(pattern, re.IGNORECASE))
+        return compiled
+
+    @staticmethod
+    def _compile_required_patterns(patterns: list[str]) -> list[re.Pattern]:
+        """Compile required regex patterns, failing loudly on invalid ones.
+
+        Unlike ``_compile_patterns`` (used for blocked patterns, where a
+        silently dropped pattern only under-blocks), a required pattern that
+        fails to compile would silently disable the required-pattern check
+        and let the filter accept pages that should have been rejected. So
+        an invalid required pattern raises ``ValueError`` naming the
+        offending pattern at construction time.
+        """
+        compiled = []
+        for pattern in patterns:
+            try:
+                compiled.append(re.compile(pattern, re.IGNORECASE))
+            except re.error as exc:
+                raise ValueError(
+                    f"invalid required pattern {pattern!r}: {exc}"
+                ) from exc
         return compiled
 
     def should_include(self, page: CrawledPage) -> bool:
