@@ -14,13 +14,10 @@ Probes:
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
-import tempfile
-import time
 from pathlib import Path
-from unittest.mock import patch
+
 
 import pytest
 
@@ -138,7 +135,7 @@ class TestCrawlSessionTransitions:
     def test_double_complete_idempotent(self):
         s = CrawlSession(session_id="s1")
         s.complete()
-        first_at = s.completed_at
+        s.completed_at
         s.complete()
         # completed_at may update but status stays COMPLETED
         assert s.status == SessionStatus.COMPLETED
@@ -271,7 +268,7 @@ class TestSessionManagerCRUD:
     def test_create_duplicate_id_overwrites(self):
         """Creating a session with an existing ID overwrites the old one."""
         m = SessionManager()
-        s1 = m.create_session("s1", name="first")
+        m.create_session("s1", name="first")
         s2 = m.create_session("s1", name="second")
         assert m.get_session("s1") is s2
         assert m.session_count == 1
@@ -289,7 +286,7 @@ class TestSessionManagerCRUD:
 
     def test_list_active(self):
         m = SessionManager()
-        s1 = m.create_session("s1")
+        m.create_session("s1")
         s2 = m.create_session("s2")
         s2.pause()
         active = m.list_active()
