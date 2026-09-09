@@ -1,4 +1,4 @@
-Status: IMPLEMENTED #1046@07a3ba8
+Status: VERIFIED (validator cycle 157: pinning test test_config_show_uses_loader_load_config passes + docs/cli.md load_config entry removed; adversarial: config show reflects loader values)
 Kind: ARCH
 Author: architect (cycle 174)
 Issue: #1017
