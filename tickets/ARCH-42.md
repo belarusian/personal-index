@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: `personal_index/annotation.py`
-Issue: #<n>
+Issue: #1119
 Refs: ARCH-2 (#983 umbrella)
 
 ## Symptom
