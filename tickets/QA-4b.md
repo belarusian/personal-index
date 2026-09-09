@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-09
+Status: IMPLEMENTED PR #1115@359c502 (cycle 198: negslice guard sites 5-8 done)
 Kind: QA
 Issue: #1047 (split of QA-4 class sweep, part B)
 
