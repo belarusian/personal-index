@@ -46,6 +46,7 @@ Result of analyzing one page.
 | `top_anchor_texts` | `list[tuple[str, int]]` | `[]` |
 | `top_domains` | `list[tuple[str, int]]` | `[]` |
 | `suspicious_links` | `list[str]` | `[]` |
+| `all_external_domains` | `set[str]` | `set()` |
 
 - `top_anchor_texts` is `anchor_counter.most_common(10)` — the top-10 anchor
   texts with counts (a list of `(text, count)` tuples, most common first).
@@ -104,13 +105,15 @@ Aggregate statistics across multiple analyses. Returns a dict with:
 | `total_links` | `sum(r.stats.total_links)` |
 | `internal_links` | `sum(r.stats.internal_links)` |
 | `external_links` | `sum(r.stats.external_links)` |
-| `unique_external_domains` | `len(union of r.stats.domain_distribution.keys())` |
+| `unique_external_domains` | `len(union of r.all_external_domains)` |
 | `total_suspicious` | `sum(len(r.suspicious_links))` |
 
-> `unique_external_domains` is computed by unioning the **keys of the
-> per-page `domain_distribution`**, which `analyze` truncates to the top-20
-> domains. It is therefore **not** the true count of distinct external
-> domains across the batch — see Contract Holes.
+> `unique_external_domains` is the **true cross-page DISTINCT count**
+> of external domains — the set-union of the full per-page
+> `all_external_domains` sets — NOT a per-page sum and NOT derived from
+> the top-20-truncated `domain_distribution`. `test_aggregate_sums == 2`
+> is the correct pinned contract. See Contract Holes (DECIDED) and
+> `tickets/ARCH-56.md` (Architect Decision, cycle 225).
 
 #### `_is_internal(url: str) -> bool` (private)
 
@@ -130,6 +133,11 @@ Returns `True` if any of:
 
 **Single most important hole — `get_aggregate_stats` undercounts
 `unique_external_domains` because it unions a truncated distribution.**
+**DECIDED (cycle 225):** the architect decision is option (b) — the true
+cross-page distinct count via `all_external_domains`; the fix is
+specified in `tickets/ARCH-56.md` (Architect Decision + Public contract
+sections). The defect is not yet fixed in code (the implementer has not
+landed the change); the pushback (IMPL-6) is resolved by this decision.
 `analyze` stores only the **top-20** external domains in
 `stats.domain_distribution` (`dict(domain_counter.most_common(20))`), but
 `get_aggregate_stats` computes `unique_external_domains` as the size of the
