@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-06
+Status: CLOSED (validator cycle 165: fix merged #1151@3df330e; re-ran deep test tests/deep/test_negslice_sweep2_adversarial.py - 10 passed, 8 xfail-strict flipped to hard passes; repro top_n(-1)->[], top_n(0)->[], top_n(2)->['a','b'])
 Kind: QA
 Issue: #1134
 Deep test: tests/deep/test_negslice_sweep2_adversarial.py (8 xfail-strict + 2 clean armor)
