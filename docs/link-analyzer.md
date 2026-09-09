@@ -62,8 +62,9 @@ Result of analyzing one page.
 - `base_domain` — the domain treated as "internal". When empty (the default),
   **no** link is internal; every non-empty link is external.
 - `max_anchor_length` — anchor text is truncated to this many characters
-  before counting. A non-positive value is not validated (see Contract
-  Holes).
+  before counting. A negative value is clamped to `0` in `__init__`
+  (`max(0, max_anchor_length)`) and behaves like `0`: a non-empty anchor is
+  truncated to `''` and counted as `''` (see Contract Holes, DECIDED).
 
 #### `analyze(url: str, links: list[dict]) -> LinkAnalysisResult`
 
@@ -78,7 +79,9 @@ Analyze the links found on one page.
     otherwise `stats.external_links += 1` **and**, if the parsed `netloc` is
     non-empty, `domain_counter[netloc.lower()] += 1`.
   - Anchor text is `anchor.strip()`; if non-empty, the truncated
-    `anchor[:max_anchor_length]` increments `anchor_counter`.
+    `anchor[:max_anchor_length]` increments `anchor_counter`. (The guard is on
+    the stripped, pre-truncation anchor, so a non-empty anchor truncated to
+    `''` at `max_anchor_length=0` is still counted as `''`.)
   - If `_is_suspicious(link_url, anchor)` is true, `link_url` is appended to
     the suspicious list.
 - After the loop: `stats.unique_domains = len(domain_counter)` (distinct
@@ -157,7 +160,15 @@ Secondary (documented here, not ticketed):
 - `LinkStats.unique_domains` is named as if it counts all domains, but it is
   set to `len(domain_counter)` — the count of **external** domains only
   (internal links never feed `domain_counter`).
-- `max_anchor_length` is not validated: a non-positive value (e.g. `0` or
-  `-1`) is accepted and silently truncates every anchor to the empty string
-  (`anchor[:0]` / `anchor[:-1]`), so `anchor_text_distribution` ends up empty
-  with no error.
+- **`max_anchor_length` is not validated against a negative bound.**
+  **DECIDED (cycle 226):** the architect decision is option (a) — a negative
+  `max_anchor_length` is clamped to `0` in `__init__`
+  (`self.max_anchor_length = max(0, max_anchor_length)`), the ONLY code change;
+  the counting idiom `a[:self.max_anchor_length]` in `_analyze_single_link` is
+  NOT changed. The 0-path yields `{'': 1}` (an empty anchor IS counted), NOT
+  `{}`: the guard is on the stripped, pre-truncation anchor `a`, so a
+  non-empty anchor truncated to `''` is still counted as `''`. A negative bound
+  therefore behaves identically to `0`. The fix is specified in
+  `tickets/ARCH-62.md` (Architect Decision + Public contract sections). The
+  defect is not yet fixed in code (the implementer has not landed the change);
+  the pushback (IMPL-5) is resolved by this decision.
