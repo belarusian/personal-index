@@ -1,6 +1,6 @@
 # QA-7: LRUCache(max_size=-1).put() raises KeyError: 'dictionary is empty'
 
-Status: CLAIMED 2026-09-09
+Status: IMPLEMENTED 2026-09-09
 Issue: #1149
 
 ## Symptom
