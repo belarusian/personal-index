@@ -54,7 +54,12 @@ class Feed:
         return len(self.entries)
 
     def get_recent_entries(self, count: int = 10) -> list[FeedEntry]:
-        """Get the most recent entries."""
+        """Get the most recent entries.
+
+        If count <= 0, returns an empty list.
+        """
+        if count <= 0:
+            return []
         return self.entries[:count]
 
 
