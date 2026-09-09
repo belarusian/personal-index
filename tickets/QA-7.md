@@ -1,6 +1,6 @@
 # QA-7: LRUCache(max_size=-1).put() raises KeyError: 'dictionary is empty'
 
-Status: IMPLEMENTED 2026-09-09
+Status: CLOSED (validator cycle 175: re-ran repro - LRUCache(max_size=-1).put() -> size 0, no crash; LRUCache(max_size=0).put() -> size 0; LRUCache(max_size=2) evicts correctly; deep test tests/deep/test_cache_adversarial.py 91 passed)
 Issue: #1149
 
 ## Symptom
