@@ -120,6 +120,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   Bookmark (8-field @dataclass, to_dict/from_dict) + BookmarkManager (add/get/remove/list_all/list_by_category/list_by_tag/list_favorites/toggle_favorite/search/get_categories/get_all_tags/count/save/load); load silently clears and replaces the in-memory set with no merge mode, so unsaved mutations are lost on any load (ARCH-39) contract hole.
 - [storage.md](storage.md) (spec) — `personal_index.storage`:
   Storage (data_dir + interests.json/config.json/pages.json; add_interest/get_interests/get_interest/remove_interest/list_interests, save_config/get_config, add_page/get_pages/get_page/remove_page/get_page_count/clear_pages/get_stats); _write_json is non-atomic (direct write, no temp-file-and-rename) and _read_json silently returns the empty default on JSONDecodeError, so an interrupted write destroys the whole store with no signal (ARCH-40) contract hole.
+- [tags.md](tags.md) (spec) — `personal_index.tags`:
+  Tag (4-field @dataclass, name-keyed eq/hash/lt) + TagStore (store_path + _tags/_page_tags; create_tag/get_tag/list_tags/delete_tag, add_tag_to_page/remove_tag_from_page/get_tags_for_page/get_tags_for_url/get_pages_for_tag/search_by_tag, get_tag_count/get_tagged_page_count/save/remove_page/clear); create_tag silently overwrites color/description AND resets created_at on a name collision while preserving page associations (ARCH-41) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
