@@ -16,6 +16,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   (guard paths, return-object fields, side effects) + pinning-test method.
 
 ### Core subsystems
+- [content-validation.md](content-validation.md) (spec) — `personal_index.content_validation`:
+  ValidationError, ValidationResult, ContentValidator.
 - [content-model.md](content-model.md) (spec) — `personal_index.models`:
   Interest, CrawledPage, IndexedPage, SearchResult, Page, PipelineStats.
 - [search-index.md](search-index.md) (spec) — `personal_index.index`:
