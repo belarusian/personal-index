@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-06
+Status: IMPLEMENTED 2026-09-09
 Kind: QA
 Issue: #1160
 Deep test: tests/deep/test_importer_adversarial.py (TestJsonNonDictItemContract, 2 xfail-strict)
