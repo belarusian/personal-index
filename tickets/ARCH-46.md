@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: `personal_index/content_versioning.py`
-Issue: #<n>
+Issue: #1131
 Refs: ARCH-2 (#983 umbrella); same persistence-atomicity class as ARCH-40 (storage) and ARCH-44 (content-pin)
 
 ## Symptom
