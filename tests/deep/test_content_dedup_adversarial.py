@@ -34,6 +34,7 @@ from __future__ import annotations
 import hashlib
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -310,6 +311,7 @@ class TestCliEndToEnd:
         dd.mkdir()
         proc = subprocess.run(
             [sys.executable, "-m", "personal_index", "dedup", "--data-dir", str(dd)],
-            capture_output=True, text=True, cwd="/home/sasha/AI/personal-index-3/proj")
+            capture_output=True, text=True,
+            cwd=str(Path(__file__).resolve().parents[2]))
         assert proc.returncode == 0
         assert "No indexed content found." in proc.stdout
