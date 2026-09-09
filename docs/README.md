@@ -136,6 +136,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   RollbackPoint (5-field @dataclass) + ContentRollback (in-memory, _rollback_points; create_rollback_point/get_rollback_points/rollback/clear); in-memory-only — no save/load, so every rollback point is lost on process exit (ARCH-47) contract hole.
 - [content-exporter.md](content-exporter.md) (spec) — `personal_index.content_exporter`:
   ContentExporter (export/export_to_file/detect_format, SUPPORTED_FORMATS html/json/markdown/rss); per-format escaping is inconsistent — HTML uses html.escape, RSS uses xml_escape, and Markdown escapes nothing, so a Markdown title/link/description with Markdown-significant chars silently produces broken output (ARCH-48) contract hole.
+- [content-digest.md](content-digest.md) (spec) — `personal_index.content_digest`:
+  DigestEntry (to_dict) + DigestSection (count property) + ContentDigest (to_dict/format_markdown/format_text) + DigestGenerator (add_entry/add_entries/generate/clear, score-desc sort, tags|source|none grouping, per-section cap); the summary item count double-counts multi-tag entries and is decoupled from total_entries (ARCH-49) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
