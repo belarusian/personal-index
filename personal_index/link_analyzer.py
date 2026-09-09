@@ -98,7 +98,8 @@ class LinkAnalyzer:
 
         a = anchor.strip()
         if a:
-            anchor_counter[a[:self.max_anchor_length]] += 1
+            n = max(0, self.max_anchor_length)
+            anchor_counter[a[:n]] += 1
 
         if self._is_suspicious(link_url, a):
             suspicious.append(link_url)
