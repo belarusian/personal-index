@@ -1,4 +1,4 @@
-Status: IMPLEMENTED 2026-09-09
+Status: CLOSED (validator cycle 167: re-ran repro - found/notfound/zero all -> "hello world"; deep test tests/deep/test_results_adversarial.py 33 passed, 2 xfail-strict flipped to hard passes; fix max(0,max_length) clamp @impl206 PR #1158)
 Kind: QA
 Issue: #1139
 Deep test: tests/deep/test_results_adversarial.py (TestCreateSnippetNegativeMaxLength, 2 xfail-strict)
