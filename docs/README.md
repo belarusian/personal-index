@@ -122,6 +122,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   Storage (data_dir + interests.json/config.json/pages.json; add_interest/get_interests/get_interest/remove_interest/list_interests, save_config/get_config, add_page/get_pages/get_page/remove_page/get_page_count/clear_pages/get_stats); _write_json is non-atomic (direct write, no temp-file-and-rename) and _read_json silently returns the empty default on JSONDecodeError, so an interrupted write destroys the whole store with no signal (ARCH-40) contract hole.
 - [tags.md](tags.md) (spec) — `personal_index.tags`:
   Tag (4-field @dataclass, name-keyed eq/hash/lt) + TagStore (store_path + _tags/_page_tags; create_tag/get_tag/list_tags/delete_tag, add_tag_to_page/remove_tag_from_page/get_tags_for_page/get_tags_for_url/get_pages_for_tag/search_by_tag, get_tag_count/get_tagged_page_count/save/remove_page/clear); create_tag silently overwrites color/description AND resets created_at on a name collision while preserving page associations (ARCH-41) contract hole.
+- [annotation.md](annotation.md) (spec) — `personal_index.annotation`:
+  AnnotationType (str Enum, 7 members) + Annotation (8-field @dataclass, update/to_dict) + AnnotationStore (in-memory, _annotations + _by_url; add/get/get_by_url/get_by_type/update/remove/remove_by_url/search, count property/get_stats); add silently overwrites on an annotation_id collision AND desyncs the _by_url index so get_by_url(old_url) returns the replaced annotation (ARCH-42) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
