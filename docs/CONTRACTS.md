@@ -75,6 +75,24 @@ state) ALONGSIDE the normal case. This rule is the single home for the
 defensive-load-crash class (ARCH-63); per-site instances (QA-11, QA-17)
 reference it.
 
+## Divisor guard (binding)
+
+Any public helper whose contract is "compute a count/rate/minutes value by
+dividing by a caller-supplied scalar" — i.e. any function that performs
+`count / divisor` (or `count // divisor`) where `divisor` is a caller-supplied
+scalar such as `wpm`, `per_page`, `window_seconds`, `rate`, `n` — MUST guard
+the divisor: **`divisor <= 0` -> return a defined safe result (no division,
+no exception, no silent wrong value)**; `divisor > 0` -> the normal
+computation. A non-positive divisor is out-of-range and must short-circuit to
+the safe result BEFORE the division; it must NOT raise `ZeroDivisionError`
+and must NOT silently return a clamped/wrong value (e.g. a bogus `1`). The
+guard is stated in the function's contract docstring (part 1, guard paths)
+and witnessed by ONE pinning test that asserts the returned value for the
+guard inputs (`divisor == 0` and `divisor < 0`) ALONGSIDE the normal positive
+case. This rule is the single home for the guard-the-raw-divisor class
+(ARCH-64); per-site instances reference it (ARCH-58 pagination `per_page`,
+ARCH-59 throttle `window_seconds`, ARCH-60 `read_time_minutes` `wpm`).
+
 ## How to apply
 
 For each target function:
@@ -88,3 +106,6 @@ For each target function:
 7. If the method is a `_load` that rebuilds state from a persisted JSON
    mapping, apply the **Defensive-load guard** rule above (degrade to the
    empty state on any malformed value; construction must not raise).
+8. If the function divides by a caller-supplied scalar
+   (`count / divisor`), apply the **Divisor guard** rule above (`divisor <= 0`
+   -> defined safe result, no division, no exception, no silent wrong value).
