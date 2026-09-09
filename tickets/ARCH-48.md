@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: `personal_index/content_exporter.py`
-Issue: #1137
+Issue: #1143
 Refs: ARCH-2 (#983 umbrella)
 
 ## Symptom
