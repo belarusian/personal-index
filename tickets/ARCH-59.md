@@ -3,6 +3,7 @@
 Status: OPEN
 Component: `personal_index/throttle.py` — `ThrottleRule.rate_per_second`, `ThrottleRule.__init__`/`__post_init__`, `ThrottleManager.wait_if_needed`, `ThrottleManager.should_throttle`
 Umbrella: ARCH-2 (#983)
+Issue: #1189
 Related: QA-13 (issue #1175) — same `rate_per_second` ZeroDivisionError, plus the `_extract_domain` non-normalized-key hole (out of scope here)
 Docs: `docs/throttle.md` (Contract Holes)
 
