@@ -26,8 +26,6 @@ import os
 import subprocess
 import sys
 
-import pytest
-
 from personal_index.results import (
     ResultsExporter,
     ResultsFormatter,
@@ -103,11 +101,6 @@ class TestCreateSnippetGuards:
 class TestCreateSnippetNegativeMaxLength:
     """QA-6: negative max_length is out-of-range and must not produce garbage."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-6: create_snippet(max_length=-100) returns '...' garbage "
-               "instead of a sane bounded snippet (negative bound unguarded)",
-    )
     def test_negative_max_length_found_is_sane(self):
         # Expected contract: a negative bound is clamped to a non-negative
         # bound (like 0), yielding the query window, never a lone '...'.
@@ -115,11 +108,6 @@ class TestCreateSnippetNegativeMaxLength:
         assert out != "..."
         assert "world" in out
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-6: create_snippet(max_length=-100) with no match returns '' "
-               "instead of the text prefix (negative bound unguarded)",
-    )
     def test_negative_max_length_notfound_is_sane(self):
         # Expected contract: no-match path should return text[:max+50]; with a
         # clamped non-negative bound that is the text prefix, not ''.
