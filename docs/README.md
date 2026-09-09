@@ -132,6 +132,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   PriorityLevel (5-member Enum + from_score) + PriorityConfig (8-field @dataclass, weights+thresholds) + PriorityResult (6-field @dataclass, to_dict) + PriorityCalculator (calculate/batch_calculate/get_summary + private _add_factor/_weighted_total/_recency_score/_interest_score/_engagement_score/_level_for_score); from_score (hardcoded bands, score>0 -> LOW) and _level_for_score (config thresholds, score>=0.2 -> LOW) are two divergent public score->level paths that disagree for score in (0,0.2) and from_score ignores PriorityConfig (ARCH-45) contract hole.
 - [content-versioning.md](content-versioning.md) (spec) — `personal_index.content_versioning`:
   ContentVersion (5-field @dataclass, __post_init__ stamps created_at) + ContentVersioning (JSON-file-backed, _load/_save; create_version/get_versions/get_version/delete_version/rollback_to/clear_versions) + module-level create_version/get_versions on a lazy default instance; _save is non-atomic (direct write, no temp-file-and-rename) and _load silently clears to {} on JSONDecodeError, so an interrupted write destroys every version for every item with no signal (ARCH-46) contract hole.
+- [content-rollback.md](content-rollback.md) (spec) — `personal_index.content_rollback`:
+  RollbackPoint (5-field @dataclass) + ContentRollback (in-memory, _rollback_points; create_rollback_point/get_rollback_points/rollback/clear); in-memory-only — no save/load, so every rollback point is lost on process exit (ARCH-47) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
