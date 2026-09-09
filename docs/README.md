@@ -126,6 +126,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   AnnotationType (str Enum, 7 members) + Annotation (8-field @dataclass, update/to_dict) + AnnotationStore (in-memory, _annotations + _by_url; add/get/get_by_url/get_by_type/update/remove/remove_by_url/search, count property/get_stats); add silently overwrites on an annotation_id collision AND desyncs the _by_url index so get_by_url(old_url) returns the replaced annotation (ARCH-42) contract hole.
 - [content-collections.md](content-collections.md) (spec) — `personal_index.content_collections`:
   Collection (7-field @dataclass, add_item/remove_item/contains/item_count/to_dict/from_dict) + CollectionManager (in-memory, _collections + _item_to_collections; create/get/list_all/list_public/list_private/get_items/get_collections_for_item, add_item/add_items/remove_item/clear_items/move_item, update_name/update_description/rename/toggle_public, delete/merge, search/get_recent/count/get_stats, serialize/deserialize); move_item over-promises relocation — it is a single-source remove + add, so an item in multiple collections is not actually moved out of the others (ARCH-43) contract hole.
+- [content-pin.md](content-pin.md) (spec) — `personal_index.content_pin`:
+  PinnedItem (4-field @dataclass, __post_init__ stamps pinned_at) + ContentPinner (JSON-file-backed, _load/_save; pin/unpin/is_pinned/get_pinned_items/clear) + module-level pin_content/unpin_content/_get_default_pinner; _save is non-atomic (direct write, no temp-file-and-rename) and _load silently clears to {} on JSONDecodeError, so an interrupted write destroys every pin with no signal (ARCH-44) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
