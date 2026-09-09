@@ -146,6 +146,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   BatchResult (success_rate/to_dict) + BatchProcessor (process/process_with_retry/process_item_by_item, batch_size chunking, on_progress, _batch_counter); only ValueError is caught per batch/item so any other processor exception aborts the whole run (ARCH-52) contract hole.
 - [content-search.md](content-search.md) (spec) — `personal_index.content_search`:
   Snippet (to_dict) + SnippetExtractor (extract/highlight_text, guard/no-match/match paths, max_snippets cap) + SearchIndex (add_item/add_items/remove_item, search with tf/tfidf/bm25 ranking + filters + highlight, item_count/term_count, get_suggestions, save_index/load_index, highlight_matches) + ContentSearch facade; add_item does not remove the old tokens on a re-add, so stale tokens survive an in-place re-index (ARCH-53) contract hole.
+- [content-feed.md](content-feed.md) (spec) — `personal_index.content_feed`:
+  FeedFormat (RSS/ATOM) + FeedItem (to_dict/from_dict, id/published/updated defaults) + FeedGenerator (add_item/add_items/clear/get_feed_type/generate, RSS 2.0 + Atom 1.0, to_dict/from_dict); to_dict/from_dict is a lossy round-trip — it drops max_items and feed_id, so the item cap and Atom id silently reset (ARCH-54) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
