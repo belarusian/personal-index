@@ -63,9 +63,12 @@ class ResultsFormatter:
 
         The window is bounded by ``max_length`` when given explicitly,
         otherwise by the formatter's configured ``max_snippet_length``.
+        A negative ``max_length`` is clamped to 0 before any window
+        arithmetic, matching the zero behaviour.
         """
         if max_length is None:
             max_length = self.max_snippet_length
+        max_length = max(0, max_length)
         if not text:
             return ""
         query_lower = query.lower()
