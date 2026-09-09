@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLAIMED 2026-09-07
 Kind: QA
 Issue: #1139
 Deep test: tests/deep/test_results_adversarial.py (TestCreateSnippetNegativeMaxLength, 2 xfail-strict)
