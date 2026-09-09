@@ -1,4 +1,4 @@
-Status: CLAIMED (cycle 215, 2026-09-06)
+Status: IMPLEMENTED (cycle 218, PR #1217 merged, issue #1165 closed)
 Kind: QA
 Issue: #1165
 Deep test: tests/deep/test_link_analyzer_adversarial.py (TestNegativeMaxAnchorLength, 2 xfail-strict)
