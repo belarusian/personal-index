@@ -370,6 +370,21 @@ class TestContentMonitor:
             # Largest should be file9
             assert info.largest_files[0][1] == 900
 
+    def test_get_disk_usage_nonpositive_top_n_empty_largest_files(self) -> None:
+        # QA-4b site 8: a non-positive top_n must yield empty largest_files
+        # (not all-but-last).
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for i in range(10):
+                Path(tmpdir, f"file{i}.txt").write_text("x" * (i * 100))
+
+            monitor = ContentMonitor(index_dir=Path(tmpdir))
+            info_neg = monitor.get_disk_usage(top_n=-1)
+            assert info_neg.largest_files == []
+            info_zero = monitor.get_disk_usage(top_n=0)
+            assert info_zero.largest_files == []
+            # file_count is unaffected by the top_n clamp
+            assert info_neg.file_count == 10
+
     # -- record_crawl --
 
     def test_record_crawl_success(self) -> None:

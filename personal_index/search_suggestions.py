@@ -142,12 +142,17 @@ class SearchSuggestions:
             self._trending[key] = TrendingEntry(query=query)
 
     def get_trending(self, n: int = 10) -> list[str]:
-        """Get the most trending search queries, sorted by decayed score."""
+        """Get the most trending search queries, sorted by decayed score.
+
+        If ``n <= 0``, returns an empty list.
+        """
         scored = []
         for entry in self._trending.values():
             decayed_score = self._apply_decay(entry)
             scored.append((entry.query, decayed_score))
         scored.sort(key=lambda x: x[1], reverse=True)
+        if n <= 0:
+            return []
         return [q for q, _ in scored[:n]]
 
     def _apply_decay(self, entry: TrendingEntry) -> float:
@@ -342,7 +347,10 @@ class SearchSuggestions:
                     )
 
     def get_related_queries(self, query: str, n: int = 5) -> list[Suggestion]:
-        """Get queries related to the given query (from history)."""
+        """Get queries related to the given query (from history).
+
+        If ``n <= 0``, returns an empty list.
+        """
         words = set(re.split(r'\s+', query.lower()))
         related: dict[str, float] = {}
 
@@ -353,6 +361,8 @@ class SearchSuggestions:
                 related[h] = related.get(h, 0) + overlap
 
         sorted_related = sorted(related.items(), key=lambda x: x[1], reverse=True)
+        if n <= 0:
+            return []
         return [
             Suggestion(text=q, score=s, source="related", category="related_query")
             for q, s in sorted_related[:n]
