@@ -160,6 +160,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   HealthStatus/IssueSeverity/HealthIssue/HealthCheckResult/HealthReport/ContentHealthCheck + ContentHealthChecker (check_item 7-check pipeline, check_all aggregate report); to_dict exists on HealthIssue/HealthCheckResult but there is no from_dict and HealthReport has no to_dict, so a serialized report cannot be reloaded (ARCH-55) contract hole.
 - [link-analyzer.md](link-analyzer.md) (spec) — `personal_index.link_analyzer`:
   LinkStats/LinkAnalysisResult + LinkAnalyzer (analyze/analyze_batch/get_aggregate_stats, _is_internal/_is_suspicious); get_aggregate_stats unions the top-20-truncated domain_distribution, so unique_external_domains undercounts once a page has >20 distinct external domains (ARCH-56) contract hole.
+- [text-utils.md](text-utils.md) (spec) — `personal_index.text_utils`:
+  15 pure helpers (normalize_whitespace, remove_html_tags, truncate_text, extract_sentences, extract_paragraphs, word_frequency, extract_keywords, levenshtein_distance, similarity_ratio, slugify, highlight_text, count_words, count_characters, read_time_minutes, tokenize); read_time_minutes divides by raw wpm with no guard, so wpm==0 raises ZeroDivisionError and wpm<0 silently returns 1 (ARCH-60) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
