@@ -30,6 +30,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   LRUCache, TTLCache, CacheDecorator.
 - [timeline.md](timeline.md) (spec) — `personal_index.content_timeline`:
   Timeline, TimelineEvent, TimelineEventType.
+- [pagination.md](pagination.md) (spec) — `personal_index.pagination`:
+  PageParams (clamped page/per_page, offset/limit) + PageResult (total_pages/has_next/has_prev/next_page/prev_page/start_index/end_index/to_dict, one-way) + Paginator (get_page/total_items/total_pages/iterate_pages); Paginator.total_pages divides by the raw unclamped constructor per_page so per_page=0 raises ZeroDivisionError while get_page/iterate_pages silently clamp to 1 (ARCH-58) contract hole.
 - [validation.md](validation.md) (spec) — `personal_index.content_validator`:
   ValidationRule, RuleResult, the built-in rules.
 - [analytics.md](analytics.md) (spec) — `personal_index.analytics`:
@@ -71,6 +73,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentImporter (import_content / batch_import, 5 formats json|html|markdown|rss|csv),
   per-format item shapes; inconsistent cross-format shape + untyped batch_import +
   stdlib-ET rss + JSON-scalar-TypeError contract holes.
+- [keyword-extractor.md](keyword-extractor.md) (spec) — `personal_index.keyword_extractor`:
+  Keyword (text/frequency/score/positions, __post_init__ normalizes None->[]) + KeywordExtractor
+  (extract/extract_phrases/extract_top_n/compute_term_frequency/compare_keywords, score=freq*log(1+freq)) +
+  module fn extract_keywords; extract_top_n n-silently-capped-by-constructor-max_keywords (ARCH-57) contract hole.
 - [importer.md](importer.md) (spec) — `personal_index.importer`:
   ImportResult + Importer (import_from_file / import_from_content / import_opml,
   formats json|csv|html|xml|necko|netscape); inconsistent total_skipped across formats +
