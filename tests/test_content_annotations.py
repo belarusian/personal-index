@@ -264,6 +264,13 @@ class TestAnnotationManager:
             [a.created_at for a in recent], reverse=True
         )
 
+    def test_get_recent_negative_limit_returns_empty(self):
+        # QA-4a site 2: a negative limit must return [] (not all-but-last).
+        for i in range(3):
+            self.manager.add(Annotation(content_id=f"c{i}", text=f"Note {i}"))
+        assert self.manager.get_recent(limit=-1) == []
+        assert self.manager.get_recent(limit=0) == []
+
 
     def test_get_all_annotations(self):
         self.manager.add(Annotation(content_id="c1", text="A"))

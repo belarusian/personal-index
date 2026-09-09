@@ -126,6 +126,16 @@ class TestRecommender:
         seed = ContentItem(url="https://x.com", title="X")
         assert empty.recommend(seed) == []
 
+    def test_recommend_negative_top_n_returns_empty(self):
+        # QA-4a site 4: a negative top_n must return [] (not all-but-last).
+        seed = ContentItem(
+            url="https://example.com/python",
+            title="Python Tutorial",
+            content="Learn Python",
+        )
+        assert self.recommender.recommend(seed, top_n=-1) == []
+        assert self.recommender.recommend(seed, top_n=0) == []
+
     def test_recommend_excludes_seed(self):
         seed = ContentItem(
             url="https://example.com/python",

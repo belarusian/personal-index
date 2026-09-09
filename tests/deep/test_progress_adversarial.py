@@ -17,8 +17,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from personal_index.progress import (
     ProgressState,
     ProgressStore,
@@ -242,11 +240,6 @@ def test_store_list_completed_positive_limit():
     assert len(s.list_completed(2)) == 2
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-4: negative-slice leak in ProgressStore.list_completed "
-           "(progress.py:235) - limit=-1 returns all-but-last instead of []",
-)
 def test_list_completed_negative_limit_returns_empty():
     s = ProgressStore()
     for i in range(3):

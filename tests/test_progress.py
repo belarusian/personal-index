@@ -431,6 +431,16 @@ class TestProgressStore:
         completed = store.list_completed(limit=3)
         assert len(completed) == 3
 
+    def test_store_list_completed_negative_limit_returns_empty(self):
+        # QA-4a site 1: a negative limit must return [] (not all-but-last).
+        store = ProgressStore()
+        for i in range(3):
+            t = store.create(f"op{i}", total_steps=1)
+            t.start()
+            t.complete()
+        assert store.list_completed(limit=-1) == []
+        assert store.list_completed(limit=0) == []
+
     def test_store_list_active_includes_paused(self):
         store = ProgressStore()
         t1 = store.create("run", total_steps=10)
