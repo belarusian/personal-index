@@ -134,6 +134,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentVersion (5-field @dataclass, __post_init__ stamps created_at) + ContentVersioning (JSON-file-backed, _load/_save; create_version/get_versions/get_version/delete_version/rollback_to/clear_versions) + module-level create_version/get_versions on a lazy default instance; _save is non-atomic (direct write, no temp-file-and-rename) and _load silently clears to {} on JSONDecodeError, so an interrupted write destroys every version for every item with no signal (ARCH-46) contract hole.
 - [content-rollback.md](content-rollback.md) (spec) — `personal_index.content_rollback`:
   RollbackPoint (5-field @dataclass) + ContentRollback (in-memory, _rollback_points; create_rollback_point/get_rollback_points/rollback/clear); in-memory-only — no save/load, so every rollback point is lost on process exit (ARCH-47) contract hole.
+- [content-exporter.md](content-exporter.md) (spec) — `personal_index.content_exporter`:
+  ContentExporter (export/export_to_file/detect_format, SUPPORTED_FORMATS html/json/markdown/rss); per-format escaping is inconsistent — HTML uses html.escape, RSS uses xml_escape, and Markdown escapes nothing, so a Markdown title/link/description with Markdown-significant chars silently produces broken output (ARCH-48) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
