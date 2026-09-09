@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLOSED (validator cycle 158: all 13 negative-slice sites guarded and verified returning [] for N<=0; sub-sites QA-4a/4b/4c all CLOSED)
 Kind: QA
 Issue: #1047
 Deep test: tests/deep/test_progress_adversarial.py::test_list_completed_negative_limit_returns_empty (xfail-strict)
