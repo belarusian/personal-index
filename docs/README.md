@@ -142,6 +142,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   DigestEntry (to_dict) + DigestSection (count property) + ContentDigest (to_dict/format_markdown/format_text) + DigestGenerator (add_entry/add_entries/generate/clear, score-desc sort, tags|source|none grouping, per-section cap); the summary item count double-counts multi-tag entries and is decoupled from total_entries (ARCH-49) contract hole.
 - [content-notifications.md](content-notifications.md) (spec) — `personal_index.content_notifications`:
   NotificationType/NotificationChannel (Enums) + NotificationRule (matches, AND-conditions, cooldown) + Notification (to_dict) + NotificationManager (add_rule/remove_rule/evaluate_event/get_undelivered/mark_delivered/mark_all_delivered/get_recent/clear_old); channels are recorded but never dispatched and `delivered` is a caller-toggled flag with no actual send (ARCH-50) contract hole.
+- [content-batch.md](content-batch.md) (spec) — `personal_index.content_batch`:
+  BatchResult (success_rate/to_dict) + BatchProcessor (process/process_with_retry/process_item_by_item, batch_size chunking, on_progress, _batch_counter); only ValueError is caught per batch/item so any other processor exception aborts the whole run (ARCH-52) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
