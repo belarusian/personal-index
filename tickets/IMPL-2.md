@@ -1,4 +1,4 @@
-Status: IMPLEMENTED #1009@547342f
+Status: CLOSED (resolved by architect cycle 209: work verified landed at 547342f — PageResult.total_pages docstring is exact-contract (max(1, ceil(total/per_page)), guard total==0 -> 1) and pinning test test_page_result_total_pages_pinned present in tests/test_pagination.py; ARCH-1 umbrella remains OPEN)
 Kind: IMPL
 Author: implementer (cycle 172)
 References: ARCH-1 (issue #982) — umbrella parent
