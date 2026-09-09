@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import os
 
-import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main
@@ -63,21 +62,18 @@ def _categorization_result() -> CategorizationResult:
 class TestNegativeSliceSweep2:
     """Each test asserts the correct contract; xfail-strict while the leak exists."""
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 1: top_n(-1) leaks all-but-last")
     def test_categorization_result_top_n_negative(self):
         r = _categorization_result()
         assert r.top_n(-1) == []
         assert r.top_n(0) == []
         assert len(r.top_n(2)) == 2
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 2: find_similar(limit=-1) leaks all-but-last")
     def test_similarity_find_similar_negative(self):
         s = SimilarityEngine()
         items = [("a", "hello world"), ("b", "hello there"), ("c", "goodbye")]
         assert s.find_similar("hello", items, threshold=0.0, limit=-1) == []
         assert s.find_similar("hello", items, threshold=0.0, limit=0) == []
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 3: build(max_values=-1) leaks all-but-last")
     def test_facet_builder_build_negative(self):
         b = FacetBuilder()
         items = [{"tag": "a"}, {"tag": "b"}, {"tag": "c"}]
@@ -86,7 +82,6 @@ class TestNegativeSliceSweep2:
         f0 = b.build(items, ["tag"], max_values=0)
         assert f0["tag"].values == []
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 4: generate(max=-1) leaks all-but-last")
     def test_digest_generate_negative(self):
         g = DigestGenerator()
         for i in range(3):
@@ -101,7 +96,6 @@ class TestNegativeSliceSweep2:
         d0 = g.generate(group_by="none", max_entries_per_section=0)
         assert d0.sections[0].entries == []
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 5: format_search_results(limit=-1) leaks all-but-last")
     def test_format_search_results_negative(self):
         from personal_index.index import SearchResult
 
@@ -112,7 +106,6 @@ class TestNegativeSliceSweep2:
         assert format_search_results(rs, -1).count("http://") == 0
         assert format_search_results(rs, 0).count("http://") == 0
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 6: CSVExporter.export(limit=-1) leaks all-but-last")
     def test_csv_exporter_negative(self):
         e = CSVExporter()
         items = [{"a": str(i)} for i in range(3)]
@@ -134,7 +127,6 @@ def _seed_index(dd: str) -> None:
 class TestCliNegativeLimitEndToEnd:
     """End-to-end CLI runs (installed CLI) for the `list` and `top` commands."""
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 7: CLI `list --limit -1` leaks all-but-last")
     def test_cli_list_negative_limit(self, tmp_path):
         dd = str(tmp_path / "data")
         _seed_index(dd)
@@ -143,7 +135,6 @@ class TestCliNegativeLimitEndToEnd:
         # negative limit must behave like limit=0 (no pages)
         assert result.output.count("http://") == 0
 
-    @pytest.mark.xfail(strict=True, reason="QA-5 site 8: CLI `top --limit -1` leaks all-but-last")
     def test_cli_top_negative_limit(self, tmp_path):
         dd = str(tmp_path / "data")
         _seed_index(dd)

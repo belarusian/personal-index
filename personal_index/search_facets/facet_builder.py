@@ -35,12 +35,13 @@ class FacetBuilder:
         each value is stringified (``str(value)``) before being added to the facet.
         A field whose facet ends up with no values is skipped (absent from the
         result). Each facet's values are sorted by count descending and then
-        truncated to the top ``max_values`` (the highest-count values are kept).
+        truncated to the top ``max_values`` (the highest-count values are kept). A negative max_values is out-of-range and is clamped to 0 (empty facet values, identical to max_values=0).
         The facet type is resolved from ``facet_types`` (by full field name, then by
         the base name after the last dot), else from ``DEFAULT_FACET_TYPES`` by base
         name, else STRING. Returns a dict mapping each included field name to its
         ``Facet``.
         """
+        max_values = max(0, max_values)
         if not items:
             return {}
 

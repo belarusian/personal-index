@@ -871,10 +871,15 @@ def _format_pages_csv(pages: list) -> None:
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def list_pages(ctx, output_format, limit, sort, data_dir):
-    """List all indexed pages."""
+    """List all indexed pages.
+
+    A negative limit is out-of-range and is clamped to 0 (no pages shown,
+    identical to limit=0).
+    """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
 
+    limit = max(0, limit)
     pages = _sort_pages(idx.list_pages(), sort)[:limit]
 
     if not pages:
@@ -899,9 +904,14 @@ def list_pages(ctx, output_format, limit, sort, data_dir):
 @click.option("--data-dir", default=None, help="Data directory")
 @click.pass_context
 def top(ctx, output_format, limit, data_dir):
-    """Show the highest-scored indexed pages."""
+    """Show the highest-scored indexed pages.
+
+    A negative limit is out-of-range and is clamped to 0 (no pages shown,
+    identical to limit=0).
+    """
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx = get_search_index(dd)
+    limit = max(0, limit)
     pages = sorted(idx.list_pages(), key=lambda p: p.score, reverse=True)[:limit]
 
     if output_format == "json":

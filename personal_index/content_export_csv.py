@@ -79,11 +79,17 @@ class CSVExporter:
         export_format: ExportFormat = ExportFormat.CSV,
         encoding: str = "utf-8",
     ) -> str:
-        """Export items to the specified format."""
+        """Export items to the specified format.
+
+        A negative limit is out-of-range and is clamped to 0 (no rows emitted,
+        identical to limit=0).
+        """
         if not items:
             return ""
         filtered = self._apply_filter_sort(items, filter_fn, sort_key)[offset:]
         if limit is not None:
+            if limit < 0:
+                limit = 0
             filtered = filtered[:limit]
         if not filtered:
             return ""

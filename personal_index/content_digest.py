@@ -168,13 +168,14 @@ class DigestGenerator:
                 now (UTC).
             period_end: ISO-8601 period end; defaults to now (UTC).
             group_by: Grouping strategy (``"tags"``, ``"source"``, ``"none"``).
-            max_entries_per_section: Per-section entry cap (default 10).
+            max_entries_per_section: Per-section entry cap (default 10). A negative value is out-of-range and is clamped to 0 (empty sections, identical to max_entries_per_section=0).
 
         Returns:
             A ``ContentDigest`` with fields ``title``, ``generated_at`` (now,
             ISO-8601 UTC), ``period_start``, ``period_end``, ``sections``,
             ``total_entries`` (count of accumulated entries), and ``summary``.
         """
+        max_entries_per_section = max(0, max_entries_per_section)
         now = datetime.now(timezone.utc).isoformat()
         entries = sorted(self._entries, key=lambda e: e.score, reverse=True)
         sections = self._resolve_sections(entries, group_by, max_entries_per_section)
