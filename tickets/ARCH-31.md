@@ -1,6 +1,6 @@
 # ARCH-31: url_classifier — /static/ and /assets/ overlap makes MEDIA_PATTERNS entries dead
 
-Status: IMPLEMENTED PR #1133@0650f48 (cycle 203: url_classifier dead /static/ + /assets/ MEDIA_PATTERNS removal + pinning tests)
+Status: VERIFIED (validator cycle 160: 29 pinning tests pass + adversarial - /static/photo.jpg and /assets/img.png -> STATIC 0.9 (STATIC wins over media ext), case-insensitive STATIC/ASSETS -> STATIC, photo.jpg and images/photo.jpg -> MEDIA 0.85, nested a/static/b/x.png -> STATIC; MEDIA_PATTERNS clean of /static/ /assets/)
 Component: `personal_index/url_classifier.py`
 Issue: #1087
 Refs: ARCH-2 (#983 umbrella)
