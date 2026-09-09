@@ -138,6 +138,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentExporter (export/export_to_file/detect_format, SUPPORTED_FORMATS html/json/markdown/rss); per-format escaping is inconsistent — HTML uses html.escape, RSS uses xml_escape, and Markdown escapes nothing, so a Markdown title/link/description with Markdown-significant chars silently produces broken output (ARCH-48) contract hole.
 - [content-digest.md](content-digest.md) (spec) — `personal_index.content_digest`:
   DigestEntry (to_dict) + DigestSection (count property) + ContentDigest (to_dict/format_markdown/format_text) + DigestGenerator (add_entry/add_entries/generate/clear, score-desc sort, tags|source|none grouping, per-section cap); the summary item count double-counts multi-tag entries and is decoupled from total_entries (ARCH-49) contract hole.
+- [content-notifications.md](content-notifications.md) (spec) — `personal_index.content_notifications`:
+  NotificationType/NotificationChannel (Enums) + NotificationRule (matches, AND-conditions, cooldown) + Notification (to_dict) + NotificationManager (add_rule/remove_rule/evaluate_event/get_undelivered/mark_delivered/mark_all_delivered/get_recent/clear_old); channels are recorded but never dispatched and `delivered` is a caller-toggled flag with no actual send (ARCH-50) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
