@@ -144,6 +144,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   NotificationType/NotificationChannel (Enums) + NotificationRule (matches, AND-conditions, cooldown) + Notification (to_dict) + NotificationManager (add_rule/remove_rule/evaluate_event/get_undelivered/mark_delivered/mark_all_delivered/get_recent/clear_old); channels are recorded but never dispatched and `delivered` is a caller-toggled flag with no actual send (ARCH-50) contract hole.
 - [content-batch.md](content-batch.md) (spec) — `personal_index.content_batch`:
   BatchResult (success_rate/to_dict) + BatchProcessor (process/process_with_retry/process_item_by_item, batch_size chunking, on_progress, _batch_counter); only ValueError is caught per batch/item so any other processor exception aborts the whole run (ARCH-52) contract hole.
+- [content-search.md](content-search.md) (spec) — `personal_index.content_search`:
+  Snippet (to_dict) + SnippetExtractor (extract/highlight_text, guard/no-match/match paths, max_snippets cap) + SearchIndex (add_item/add_items/remove_item, search with tf/tfidf/bm25 ranking + filters + highlight, item_count/term_count, get_suggestions, save_index/load_index, highlight_matches) + ContentSearch facade; add_item does not remove the old tokens on a re-add, so stale tokens survive an in-place re-index (ARCH-53) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
