@@ -276,19 +276,18 @@ class TestNegativeMaxAnchorLength:
     """QA-9: a negative max_anchor_length must clamp to a non-negative bound.
 
     The docstring says anchor text is "truncated to ``max_anchor_length``".
-    A negative bound is out-of-range and must behave like 0 (anchor stripped
-    to '' -> not counted). Instead ``a[:self.max_anchor_length]`` with a
-    negative N drops the last N characters, corrupting the anchor text.
+    A negative bound is out-of-range and must behave like 0 (anchor truncated
+    to '' -> counted as '', consistent with max_anchor_length=0). Before the
+    fix, ``a[:self.max_anchor_length]`` with a negative N dropped the last N
+    characters, corrupting the anchor text.
     """
 
-    @pytest.mark.xfail(strict=True, reason="QA-9: negative max_anchor_length corrupts anchor text")
     def test_negative_max_anchor_length_clamped(self, analyzer):
         a = LinkAnalyzer(base_domain="example.com", max_anchor_length=-1)
         r = a.analyze("http://example.com/", [{"url": "http://ext.com/x", "text": "hello"}])
-        # Expected: clamped to 0 -> anchor stripped to '' -> not counted.
-        assert r.stats.anchor_text_distribution == {}
+        # Clamped to 0 -> anchor truncated to '' -> counted as '' (same as max_anchor_length=0).
+        assert r.stats.anchor_text_distribution == {"": 1}
 
-    @pytest.mark.xfail(strict=True, reason="QA-9: negative max_anchor_length corrupts anchor text")
     def test_negative_max_anchor_length_matches_zero(self, analyzer):
         neg = LinkAnalyzer(base_domain="example.com", max_anchor_length=-2)
         zero = LinkAnalyzer(base_domain="example.com", max_anchor_length=0)
