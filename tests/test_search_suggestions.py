@@ -271,6 +271,14 @@ class TestSearchSuggestions:
         s = SearchSuggestions()
         assert s.get_trending() == []
 
+    def test_get_trending_nonpositive_n_returns_empty(self) -> None:
+        # QA-4b site 6: a non-positive n must return [] (not all-but-last).
+        s = SearchSuggestions()
+        for i in range(5):
+            s.record_search(f"query_{i}")
+        assert s.get_trending(n=-1) == []
+        assert s.get_trending(n=0) == []
+
     # ── get_related_queries tests ─────────────────────────────────
 
     def test_get_related_queries_word_overlap(self) -> None:
@@ -307,6 +315,14 @@ class TestSearchSuggestions:
             s.add_search_history([f"shared word {i}"])
         related = s.get_related_queries("shared word", n=3)
         assert len(related) <= 3
+
+    def test_get_related_queries_nonpositive_n_returns_empty(self) -> None:
+        # QA-4b site 7: a non-positive n must return [] (not all-but-last).
+        s = SearchSuggestions()
+        for i in range(20):
+            s.add_search_history([f"shared word {i}"])
+        assert s.get_related_queries("shared word", n=-1) == []
+        assert s.get_related_queries("shared word", n=0) == []
 
     # ── clear / to_dict / from_dict tests ─────────────────────────
 

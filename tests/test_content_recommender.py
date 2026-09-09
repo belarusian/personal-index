@@ -156,6 +156,11 @@ class TestRecommender:
         recs = self.recommender.recommend_for_keywords([], top_n=3)
         assert recs == []
 
+    def test_recommend_for_keywords_nonpositive_top_n_returns_empty(self):
+        # QA-4b site 5: a non-positive top_n must return [] (not all-but-last).
+        assert self.recommender.recommend_for_keywords(["python"], top_n=-1) == []
+        assert self.recommender.recommend_for_keywords(["python"], top_n=0) == []
+
     def test_recommend_for_keywords_case_insensitive_and_fraction_score(self):
         """Regression: recommend_for_keywords lowercases query keywords and
         scores by the matched keyword fraction (TICKET-347).

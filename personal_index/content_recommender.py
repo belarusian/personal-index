@@ -206,7 +206,7 @@ class Recommender:
 
         Returns:
             List of Recommendation objects, each score equal to the matched
-            keyword fraction.
+            keyword fraction. If ``top_n <= 0``, returns an empty list.
         """
         keyword_set = {kw.lower() for kw in keywords if kw}
         if not keyword_set:
@@ -229,6 +229,8 @@ class Recommender:
                     ))
 
         candidates.sort(key=lambda r: r.score, reverse=True)
+        if top_n <= 0:
+            return []
         return candidates[:top_n]
 
     def clear(self) -> None:

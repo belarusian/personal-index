@@ -44,7 +44,8 @@ class ContentMonitor:
         """Calculate disk usage for the index directory.
 
         Args:
-            top_n: Number of largest files to include.
+            top_n: Number of largest files to include. If ``top_n <= 0``,
+                ``largest_files`` is empty.
 
         Returns:
             DiskUsageInfo with usage statistics.
@@ -71,7 +72,7 @@ class ContentMonitor:
 
         # Sort by size descending and take top_n
         all_files.sort(key=lambda x: x[1], reverse=True)
-        largest_files = all_files[:top_n]
+        largest_files = all_files[:top_n] if top_n > 0 else []
 
         return DiskUsageInfo(
             total_bytes=total_bytes,

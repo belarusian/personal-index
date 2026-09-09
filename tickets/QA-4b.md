@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLAIMED 2026-09-09
 Kind: QA
 Issue: #1047 (split of QA-4 class sweep, part B)
 
