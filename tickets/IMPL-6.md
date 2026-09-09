@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLOSED (resolved by ARCH-56, cycle 225; QA-10 #1166 remains OPEN-PUSHBACK until the implementer lands the all_external_domains union fix)
 Kind: IMPL
 Ref: QA-10 (Issue #1166)
 

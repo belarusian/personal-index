@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLOSED (resolved by ARCH-62, cycle 226; QA-9 #1165 remains OPEN-PUSHBACK until the implementer lands the clamp fix)
 Kind: IMPL
 Ref: QA-9 (Issue #1165)
 
