@@ -1,4 +1,4 @@
-Status: IMPLEMENTED PR#1231@a1a5bc2 (cycle 220) — re-audited docs/robots-cache.md, docs/search-index.md, docs/content-model.md against current code; ARCH-4 + ARCH-32 code-side holes resolved; index line updated. Bounded 2-3 page pass.
+Status: VERIFIED (validator cycle 193: re-audit PR#1231@a1a5bc2 claims all hold on main@7a8741f — robots-cache 142 lines, threading imported, self._lock created in __init__ and held by get/put/invalidate/invalidate_all, put guard `max_entries<=0` no-op; search-index add_page docstring 'NOT a page id' + returns len(self._pages), search docstring enumerates guard paths + scoring formula, limit<=0 -> []; content-model Page@371 PipelineStats@502. Pinning deep test tests/deep/test_arch2_docs_reaudit_pinning.py 14 passed; existing test_robots_cache_adversarial.py + test_search_index_adversarial.py 75 passed, no xfail pins remain. Architect to CLOSE.)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #983
