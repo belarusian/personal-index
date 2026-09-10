@@ -6,14 +6,11 @@ PROBE the module with adversarial inputs (None/empty/whitespace/unicode/
 duplicate/out-of-range), round-trips, idempotence, property checks, and one
 end-to-end CLI run.
 
-Two real contract violations found (filed as QA-17, QA-18) are pinned here as
-xfail-strict so the suite stays green while documenting the defect:
+QA-17 (``_load`` uncaught ``AttributeError`` on a non-dict value) is fixed in
+cycle 234 and its probe is a hard pass. One remaining contract violation
+(QA-18) is pinned here as xfail-strict so the suite stays green while
+documenting the defect:
 
-* QA-17: ``_load`` crashes with an uncaught ``AttributeError`` when a valid
-  JSON file maps an id to a non-dict value (e.g. ``{"a": "notadict"}``). The
-  except clause catches ``(json.JSONDecodeError, KeyError, TypeError)`` and
-  resets to empty -- a defensive-load contract -- but ``AttributeError`` is
-  not in the tuple.
 * QA-18: ``pin`` with non-JSON-serializable metadata (e.g. a set) raises
   ``TypeError`` from ``_save`` which is NOT caught by ``except OSError``; the
   item is left pinned in-memory, violating the documented rollback contract
@@ -305,13 +302,6 @@ def test_load_missing_fields_defaults(tmp_path):
     assert item.metadata == {}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-17: _load raises uncaught AttributeError on a valid-JSON file "
-    "with a non-dict value (e.g. {'a': 'notadict'}); the defensive-load "
-    "contract (except json.JSONDecodeError/KeyError/TypeError -> empty) does "
-    "not cover AttributeError. Should load to empty, not crash.",
-)
 def test_load_non_dict_value_yields_empty(tmp_path):
     sp = str(tmp_path / "s.json")
     with open(sp, "w") as f:
