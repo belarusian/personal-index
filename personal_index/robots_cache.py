@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from dataclasses import dataclass, field
 
@@ -53,6 +54,7 @@ class RobotsCache:
         self._cache: dict[str, RobotsCacheEntry] = {}
         self._ttl = ttl
         self._max_entries = max_entries
+        self._lock = threading.Lock()
 
     def get(self, domain: str) -> RobotsCacheEntry | None:
         """Get a cached robots.txt entry for a domain.
@@ -63,14 +65,15 @@ class RobotsCache:
         Returns:
             The cache entry, or None if not found or expired.
         """
-        entry = self._cache.get(domain)
-        if entry is None:
-            return None
-        if entry.is_expired(self._ttl):
-            del self._cache[domain]
-            logger.debug(f"Cache expired for {domain}")
-            return None
-        return entry
+        with self._lock:
+            entry = self._cache.get(domain)
+            if entry is None:
+                return None
+            if entry.is_expired(self._ttl):
+                del self._cache[domain]
+                logger.debug(f"Cache expired for {domain}")
+                return None
+            return entry
 
     def put(self, entry: RobotsCacheEntry) -> None:
         """Store a robots.txt cache entry.
@@ -78,9 +81,15 @@ class RobotsCache:
         Args:
             entry: The cache entry to store.
         """
-        if len(self._cache) >= self._max_entries:
-            self._evict_oldest()
-        self._cache[entry.domain] = entry
+        with self._lock:
+            if self._max_entries <= 0:
+                return
+            if entry.domain in self._cache:
+                self._cache[entry.domain] = entry
+                return
+            if len(self._cache) >= self._max_entries:
+                self._evict_oldest()
+            self._cache[entry.domain] = entry
 
     def invalidate(self, domain: str) -> bool:
         """Remove a domain from the cache.
@@ -91,14 +100,16 @@ class RobotsCache:
         Returns:
             True if the entry was found and removed.
         """
-        if domain in self._cache:
-            del self._cache[domain]
-            return True
-        return False
+        with self._lock:
+            if domain in self._cache:
+                del self._cache[domain]
+                return True
+            return False
 
     def invalidate_all(self) -> None:
         """Clear all cached entries."""
-        self._cache.clear()
+        with self._lock:
+            self._cache.clear()
 
     def _evict_oldest(self) -> None:
         if not self._cache:
