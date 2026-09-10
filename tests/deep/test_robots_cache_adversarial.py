@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import time
 
-import pytest
 
 from personal_index.robots_cache import RobotsCache, RobotsCacheEntry
 
