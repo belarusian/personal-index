@@ -62,7 +62,7 @@ class ContentPinner:
                     reason=item_data.get("reason", ""),
                     metadata=item_data.get("metadata", {}),
                 )
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
             self._pinned = {}
 
     def _save(self) -> None:
