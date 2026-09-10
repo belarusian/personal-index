@@ -107,7 +107,7 @@ Each subsystem page is marked **(spec | stub | stale)**:
   /static/+/assets/ overlap (MEDIA dead) + duplicate /redirect pattern contract holes.
 - [robots-cache.md](robots-cache.md) (spec) — `personal_index.robots_cache`:
   RobotsCacheEntry (is_expired/allows_agent) + RobotsCache (get/put/invalidate/invalidate_all/size/domains/get_stats);
-  "Thread-safe" claim with no locking (ARCH-32) + allows_agent-ignores-values + FIFO-not-LRU contract holes.
+  thread-safe via threading.Lock (ARCH-32 resolved cycle 219) + max_entries<=0 no-op put guard + allows_agent-ignores-values + FIFO-not-LRU contract holes.
 - [content-enricher.md](content-enricher.md) (spec) — `personal_index.content_enricher`:
   EnrichedContent (12 fields, to_dict) + ContentEnricher (enrich/batch_enrich, sentiment/complexity, html-detected flags);
   batch_enrich-cannot-pass-html so has_code/has_links/has_images always-False (ARCH-33) + language-never-computed contract holes.

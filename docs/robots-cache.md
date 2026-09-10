@@ -1,6 +1,6 @@
 # robots_cache — Exact Contract
 
-Module: `personal_index/robots_cache.py` (131 lines)
+Module: `personal_index/robots_cache.py` (142 lines)
 
 Caching layer for robots.txt parsing results. Two public types:
 `RobotsCacheEntry` (a single cached parse result) and `RobotsCache`
@@ -43,10 +43,11 @@ Creates an empty store. `ttl` is the per-entry time-to-live in seconds;
   (lazy eviction) before returning `None`.
 
 - `put(entry: RobotsCacheEntry) -> None`
-  Stores `entry` keyed by `entry.domain`. **Side effect**: if the cache is at
-  capacity (`len >= max_entries`) it first evicts the single oldest entry via
-  `_evict_oldest()`, then inserts. Re-putting an existing domain overwrites it
-  (no capacity bump).
+  **Guard path**: if `max_entries <= 0` (capacity disabled), `put` is a no-op
+  (returns without storing). Otherwise stores `entry` keyed by `entry.domain`.
+  **Side effect**: if the cache is at capacity (`len >= max_entries`) it first
+  evicts the single oldest entry via `_evict_oldest()`, then inserts.
+  Re-putting an existing domain overwrites it in place (no capacity bump).
 
 - `invalidate(domain: str) -> bool`
   Removes `domain` if present. Returns `True` if it was found and removed,
@@ -71,27 +72,19 @@ Creates an empty store. `ttl` is the per-entry time-to-live in seconds;
 
 ## Contract Holes
 
-### 1. "Thread-safe" claim with no locking (ARCH-32)
+### 1. "Thread-safe" claim with no locking (ARCH-32) — RESOLVED (cycle 219)
 
-The class docstring reads **"Thread-safe cache for robots.txt results."** but
-the module imports only `logging`, `time`, and `dataclasses` — there is **no
-`threading` import and no lock anywhere**. Every mutating path is a
-non-atomic read-modify-write:
+The class docstring reads **"Thread-safe cache for robots.txt results."**
+When first audited (cycle 169) this was a false over-promise: the module
+imported only `logging`, `time`, and `dataclasses` with no lock, and every
+mutating path was a non-atomic read-modify-write.
 
-- `get()`: `entry = self._cache.get(domain)` … `del self._cache[domain]`
-  (read-then-delete).
-- `put()`: `if len(self._cache) >= self._max_entries: self._evict_oldest()`
-  then `self._cache[entry.domain] = entry` (len-check → evict → set).
-- `_evict_oldest()`: `min(...)` then `del ...`.
-
-Under concurrent access these can race (two threads both see `len ==
-max_entries` and both evict, or a `get` deletes an entry another thread just
-`put`). The "Thread-safe" claim is a **false over-promise**.
-
-**Decision (for the implementer)**: either (a) add a `threading.Lock` around
-every public method body and keep the claim, or (b) reword the docstring to
-state the cache is **not** thread-safe and the caller must serialize access.
-The contract must match the code.
+**Resolution (cycle 219)**: the module now imports `threading` and
+`RobotsCache.__init__` creates `self._lock = threading.Lock()`. Every public
+method (`get`, `put`, `invalidate`, `invalidate_all`) wraps its body in
+`with self._lock:`, making the cache genuinely thread-safe. The "Thread-safe"
+docstring claim is now accurate; ARCH-32 is resolved on the code side. The
+remaining live holes are 2 (allows_agent ignores values) and 3 (FIFO-not-LRU).
 
 ### 2. `allows_agent` ignores the dict values
 
@@ -109,12 +102,12 @@ value carries meaning. `allows_agent` only checks **key membership**:
 never refreshes `fetched_at`. The name "oldest" is accurate for creation order
 but the cache is not a least-recently-used cache.
 
-## Pinning Tests (for ARCH-32)
+## Pinning Tests
 
-- Thread-safety: either a concurrency test that exercises `put`/`get` from
-  multiple threads and asserts no lost updates / no `KeyError` (if the fix adds
-  a lock), or a docstring-assertion test pinning the corrected "not
-  thread-safe" claim (if the fix rewords the docstring).
+- Thread-safety (ARCH-32, resolved cycle 219): a concurrency test that
+  exercises `put`/`get` from multiple threads and asserts no lost updates /
+  no `KeyError` (the lock makes the cache thread-safe).
+- `put` guard path: with `max_entries <= 0`, `put` is a no-op (size stays 0).
 - `allows_agent` guard path: an agent in neither dict → `True` (default-allow);
   an agent in `disallowed` → `False`; an agent in `allowed` with value `False`
   → still `True` (pins Contract Hole 2).

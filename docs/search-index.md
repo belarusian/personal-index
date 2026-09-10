@@ -21,17 +21,21 @@ non-dict JSON resets both to empty).
 - `get_page_count() -> int`.
 - `list_pages() -> list[IndexedPage]` — sorted by `score` descending.
 - `clear()` — empties both structures, persists.
-- `search(query, limit=10) -> list[SearchResult]` — guard: empty query or no
-  tokens -> `[]`. Scores each candidate url as
+- `search(query, limit=10) -> list[SearchResult]` — guard: empty query, no
+  tokens, or `limit <= 0` -> `[]`. Scores each candidate url as
   `title_count*3.0 + content_count*1.0 + page.score*0.5` summed over query
   tokens; returns the top `limit` as `SearchResult` (snippet via
   `_create_snippet`, `matched_terms` left empty).
 - `close()` — persists. Context-manager supported.
 
 ## Contract holes
-- **`add_page` docstring drift (-> ARCH-4).** The docstring reads "Returns page
-  id." but the body returns `len(self._pages)` — the new page **count**, not an
-  id. The docstring over-promises a "page id" that does not exist.
-- **`search` docstring drift.** The docstring is a single blanket line ("Search
-  the index.") that does not enumerate the guard path (empty query -> `[]`) or
-  the scoring formula.
+- **`add_page` docstring drift (-> ARCH-4) — RESOLVED.** The docstring
+  previously read "Returns page id." but the body returns `len(self._pages)` —
+  the new page **count**, not an id. The docstring has since been reworded to
+  "Returns the new page count, len(self._pages) (an int). NOT a page id." to
+  match the code. ARCH-4 is resolved.
+- **`search` docstring drift — RESOLVED.** The docstring was a single blanket
+  line ("Search the index.") that did not enumerate the guard path or the
+  scoring formula. It has since been reworded to enumerate all guard paths
+  (empty query / no tokens / `limit <= 0` -> `[]`) and the exact scoring
+  formula. The doc now matches the code.

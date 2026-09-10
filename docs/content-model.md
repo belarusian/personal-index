@@ -43,10 +43,10 @@ Fields: `url`, `title`, `content`, `keywords`, `matched_interests`,
 Fields: `url`, `title`, `snippet`, `relevance_score`, `matched_terms`.
 
 ## Page
-A generic page model (see `models.py` line 330).
+A generic page model (see `models.py` line 371).
 
 ## PipelineStats
-Pipeline execution counters (see `models.py` line 461).
+Pipeline execution counters (see `models.py` line 502).
 
 ## Contract holes
 - None found this cycle. The `Interest.__post_init__` int-keywords coercion is
@@ -55,7 +55,7 @@ Pipeline execution counters (see `models.py` line 461).
 ### PipelineStats field drift (contract hole -> ARCH-3) — RESOLVED (cycle 174)
 `docs/API_REFERENCE.md` previously documented `PipelineStats` with fields
 `pages_filtered_in` and `interests_matched`. The current code (`models.py`
-line 461) has `pages_passed_filter` (not `pages_filtered_in`) and **no**
+line 502) has `pages_passed_filter` (not `pages_filtered_in`) and **no**
 `interests_matched` field. The `docs/API_REFERENCE.md` block was corrected to
 match the code exactly (field name, order, `errors: list`), so the doc is no
 longer stale. ARCH-3 is closed; the code-side contract docstring + pinning test
