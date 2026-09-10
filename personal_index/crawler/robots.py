@@ -88,14 +88,14 @@ def parse_robots_txt(text: str, base_url: str = "") -> RobotsPolicy:
 
         if key == "user-agent":
             current_agent = value
-        elif key == "disallow" and current_agent:
+        elif key == "disallow" and current_agent and value:
             policy.rules.append(
                 RobotsRule(
                     user_agent=current_agent,
                     allowed=False, pattern=value
                 )
             )
-        elif key == "allow" and current_agent:
+        elif key == "allow" and current_agent and value:
             policy.rules.append(
                 RobotsRule(
                     user_agent=current_agent,
@@ -127,6 +127,7 @@ class RobotsParser:
         """Parse robots.txt text."""
         policy = parse_robots_txt(text, base_url)
         self._rules = policy.rules
+        self._policies[policy.domain] = policy
 
     def can_fetch(self, url: str, user_agent: str = "*") -> bool:
         """Check if URL can be fetched."""

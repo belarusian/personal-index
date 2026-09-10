@@ -115,20 +115,15 @@ A stateful wrapper that keeps parsed rules across calls.
    `robots_parser.py` (or, if it is intended to be the canonical one, rewire
    the imports and tests to it and delete `crawler/robots.py`).
 
-2. **`RobotsParser.parse` never populates `self._policies`** — `parse()`
-   stores only `self._rules`, so `can_fetch()`'s
-   `if domain in self._policies` branch is unreachable dead code and the
-   per-domain policy cache is never used. `parse()` also silently discards
-   `domain`, `crawl_delay`, and `sitemap_urls`. Fix shape: have `parse()`
-   store `self._policies[domain] = policy` (and keep `self._rules` for
-   backward compat), or drop the `self._policies` dict and the dead branch.
+2. ~~**`RobotsParser.parse` never populates `self._policies`**~~ — **RESOLVED** (ARCH-23, cycle 227).
+   `parse()` now stores `self._policies[policy.domain] = policy` (and keeps
+   `self._rules` for backward compat), so `can_fetch()`'s per-domain branch
+   is live and `domain`, `crawl_delay`, and `sitemap_urls` are preserved.
 
-3. **Empty-value `disallow`/`allow` appends a `pattern=""` rule** — a line
-   like `Disallow:` (no value) still appends `RobotsRule(agent, False, "")`;
-   `""` then matches every path via `path.startswith("")`, so an empty
-   `Disallow:` silently disallows the whole site. Fix shape: guard on
-   `and value` for both `disallow` and `allow` (mirroring the `sitemap`
-   guard) so empty-value lines are dropped.
+3. ~~**Empty-value `disallow`/`allow` appends a `pattern=""` rule**~~ — **RESOLVED** (ARCH-23, cycle 227).
+   `parse_robots_txt` now guards on `and value` for both `disallow` and
+   `allow`, so a bare `Disallow:` (empty value) produces no rule and does
+   not disallow the site.
 
 ## Pinning tests to add (implementer)
 - `test_robots_parser_parse_populates_policies` — after
