@@ -47,6 +47,7 @@ class Feed:
     author: str = ""
     entries: list[FeedEntry] = field(default_factory=list)
     feed_url: str = ""
+    parsed_as_feed: bool = True
 
     @property
     def entry_count(self) -> int:
@@ -69,25 +70,34 @@ class RSSParser:
     ATOM_NS = "http://www.w3.org/2005/Atom"
 
     def parse(self, xml_content: str, feed_url: str = "") -> Feed:
-        """Parse RSS or Atom feed XML content."""
+        """Parse RSS or Atom feed XML content.
+
+        Dispatches on the bare root tag name (any namespace prefix is
+        stripped): rss -> _parse_rss, feed -> _parse_atom. Any other root
+        tag (e.g. html, rdf:RDF, a bare item) is not a feed and returns an
+        empty Feed with parsed_as_feed=False. The empty-input and
+        parse-error guard paths also return an empty Feed with
+        parsed_as_feed=False. A real rss/feed root leaves
+        parsed_as_feed=True.
+        """
         if not xml_content:
-            return Feed(feed_url=feed_url)
+            return Feed(feed_url=feed_url, parsed_as_feed=False)
 
         try:
             root = ET_fromstring(xml_content)
         except ET_ParseError:
-            return Feed(feed_url=feed_url)
+            return Feed(feed_url=feed_url, parsed_as_feed=False)
 
         root_tag = root.tag
         if "}" in root_tag:
             root_tag = root_tag.split("}", 1)[1]
 
-        feed = Feed(feed_url=feed_url)
-
         if root_tag == "rss":
             feed = self._parse_rss(root, feed_url)
         elif root_tag == "feed":
             feed = self._parse_atom(root, feed_url)
+        else:
+            feed = Feed(feed_url=feed_url, parsed_as_feed=False)
 
         feed.feed_url = feed_url
         return feed
