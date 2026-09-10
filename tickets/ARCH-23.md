@@ -1,6 +1,6 @@
 # ARCH-23: crawler/robots — RobotsParser.parse never populates _policies (dead branch) + empty-Disallow disallows all
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2025-07-14
 - **Component:** `personal_index/crawler/robots.py` (the LIVE robots module;
   `personal_index/robots_parser.py` is a dead duplicate — see docs/content-robots.md
   contract hole 1, tracked separately).
