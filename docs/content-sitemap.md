@@ -133,9 +133,11 @@ Module constants: `SM_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"`,
   decimal place).
 
 ### `SitemapBuilder`
-- Class constants: `MAX_URLS_PER_SITEMAP = 50_000`,
-  `MAX_SITEMAP_SIZE_BYTES = 50 * 1024 * 1024` (50 MB). **The byte limit is
-  declared but never enforced** (see contract hole 1).
+- Class constants: `MAX_URLS_PER_SITEMAP = 50_000` (the default
+  `chunk_size` for `split_into_chunks`), `MAX_SITEMAP_SIZE_BYTES = 50 * 1024 * 1024`
+  (50 MB, the default `max_bytes` for `split_by_size`). The URL-count limit
+  is enforced by `split_into_chunks`; the byte-size limit is enforced by
+  `split_by_size`. `build()` enforces neither (see its entry below).
 - `__init__(domain: str = "")` — `self.domain = domain`, `self.entries = []`.
 - `add_entry(url, last_modified=None, change_frequency="monthly",
   priority=0.5) -> None` — appends a new `SitemapEntry` (auto-fills
@@ -145,14 +147,25 @@ Module constants: `SM_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"`,
 - `build() -> bytes` — a `<urlset>` root (with the sitemap namespace), one
   `to_element()` per entry, serialized with `tostring(..., encoding="unicode",
   xml_declaration=False)`, prefixed with `<?xml version="1.0" encoding="UTF-8"?>\n`,
-  returned as UTF-8 bytes.
+  returned as UTF-8 bytes. **Enforces no size limit** (neither the URL-count
+  nor the byte-size limit) — it serializes every entry unconditionally; a
+  caller who needs to respect either limit must split first (`split_into_chunks`
+  for URL count, `split_by_size` for byte size) and build each chunk.
 - `build_sitemap_index(sitemap_urls: list[str]) -> bytes` — a `<sitemapindex>`
   root with one `<sitemap><loc>` per URL, same XML-declaration prefix, UTF-8
   bytes.
 - `split_into_chunks(chunk_size: int = MAX_URLS_PER_SITEMAP) -> list[list[SitemapEntry]]`
   — `[self.entries[i:i+chunk_size] for i in range(0, len(self.entries), chunk_size)]`
-  — splits **by URL count only**. **Guard path:** `chunk_size <= 0` raises
+  — splits **by URL count only** (enforces `MAX_URLS_PER_SITEMAP`, not the
+  byte-size limit). **Guard path:** `chunk_size <= 0` raises
   `ValueError` from `range()` (see contract hole 4).
+- `split_by_size(max_bytes: int = MAX_SITEMAP_SIZE_BYTES) -> list[list[SitemapEntry]]`
+  — measures each entry's serialized length and breaks a chunk when adding the
+  next entry would push the chunk past `max_bytes` (the fixed per-chunk wrapper
+  overhead is measured once via a single `build()` call). **Enforces the
+  `MAX_SITEMAP_SIZE_BYTES` byte budget** — a chunk returned here serializes to at
+  most `max_bytes` bytes when passed to `build()`. A single entry larger than
+  `max_bytes` still gets its own chunk; an empty builder returns `[]`.
 - `clear() -> None` — `self.entries.clear()` (in place).
 - `url_count -> int` (property) — `len(self.entries)`.
 
@@ -178,14 +191,18 @@ Module constants: `SM_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"`,
 
 ## Contract holes
 
-1. **`MAX_SITEMAP_SIZE_BYTES` is declared but never enforced:** the builder
-   ships `MAX_SITEMAP_SIZE_BYTES = 50 * 1024 * 1024` (50 MB) as a class
-   constant, but `build()` and `split_into_chunks()` split **only by URL
-   count** (`MAX_URLS_PER_SITEMAP = 50_000`). Nothing ever measures the
-   serialized byte length, so a sitemap with, e.g., 49,999 URLs each carrying
-   a long `loc`/`lastmod` can silently exceed the 50 MB limit that the
-   constant advertises. The constant is dead weight: it documents a limit the
-   code does not enforce. → **ARCH-22** (ticketed).
+1. **`MAX_SITEMAP_SIZE_BYTES` is declared but never enforced — RESOLVED
+   (ARCH-22):** the builder shipped `MAX_SITEMAP_SIZE_BYTES = 50 * 1024 * 1024`
+   (50 MB) as a class constant, but `build()` and `split_into_chunks()` split
+   **only by URL count** (`MAX_URLS_PER_SITEMAP = 50_000`); nothing measured the
+   serialized byte length, so a sitemap with, e.g., 49,999 URLs each carrying a
+   long `loc`/`lastmod` could silently exceed the 50 MB limit the constant
+   advertised. **Fixed (Option A, enforce):** a new `split_by_size(
+   max_bytes: int = MAX_SITEMAP_SIZE_BYTES)` measures each entry's serialized
+   length (plus the fixed per-chunk wrapper overhead) and breaks a chunk when
+   adding the next entry would exceed `max_bytes`, making the constant
+   load-bearing. `build()` and `split_into_chunks()` docstrings now state
+   exactly which limits are enforced (URL count, byte size) and which are not.
 
 2. **Two `SitemapEntry` classes with the same name but different shapes:**
    `sitemap.SitemapEntry` is a dataclass with fields `loc`/`lastmod`

@@ -172,3 +172,52 @@ class TestSitemapBuilder:
         assert entry.priority == 0.3
         # last_modified was not passed -> auto-filled default, not None
         assert entry.last_modified is not None
+
+    def test_split_by_size_enforces_byte_budget(self):
+        # Option A: entries whose total serialized size exceeds
+        # MAX_SITEMAP_SIZE_BYTES while staying under MAX_URLS_PER_SITEMAP.
+        # split_by_size() must break chunks so no chunk serializes to more
+        # than MAX_SITEMAP_SIZE_BYTES bytes.
+        loc_len = 1200
+        n = 45_000  # under MAX_URLS_PER_SITEMAP (50_000)
+        assert n < SitemapBuilder.MAX_URLS_PER_SITEMAP
+        builder = SitemapBuilder()
+        for i in range(n):
+            builder.add_entry("http://example.com/" + "x" * loc_len + f"/{i}")
+        # Total serialized size exceeds the 50 MB budget.
+        assert len(builder.build()) > SitemapBuilder.MAX_SITEMAP_SIZE_BYTES
+        chunks = builder.split_by_size()
+        assert len(chunks) >= 2  # the byte budget forced a split
+        for chunk in chunks:
+            sub = SitemapBuilder()
+            sub.add_entries(chunk)
+            assert len(sub.build()) <= SitemapBuilder.MAX_SITEMAP_SIZE_BYTES
+        # Every entry is preserved across the split (no loss, no dup).
+        assert sum(len(c) for c in chunks) == n
+
+    def test_split_by_size_empty_builder_returns_empty_list(self):
+        # Guard path: an empty builder has nothing to split.
+        builder = SitemapBuilder()
+        assert builder.split_by_size() == []
+
+    def test_build_empty_builder_returns_declaration_and_empty_urlset(self):
+        # Guard path: build() on an empty builder returns the XML declaration
+        # plus an empty <urlset> (no entries).
+        builder = SitemapBuilder()
+        xml = builder.build().decode("utf-8")
+        assert xml.startswith('<?xml version="1.0" encoding="UTF-8"?>')
+        assert "<urlset" in xml
+        assert "<loc>" not in xml  # no entries
+
+    def test_docstrings_state_enforced_limits(self):
+        # build() and split_into_chunks() docstrings must state which limits
+        # are enforced and which are not (pin stable lowercase fragments).
+        build_doc = SitemapBuilder.build.__doc__.lower()
+        assert "no size limit" in build_doc
+        assert "max_urls_per_sitemap" in build_doc
+        assert "max_sitemap_size_bytes" in build_doc
+        split_doc = SitemapBuilder.split_into_chunks.__doc__.lower()
+        assert "url count only" in split_doc
+        assert "max_sitemap_size_bytes" in split_doc
+        size_doc = SitemapBuilder.split_by_size.__doc__.lower()
+        assert "max_sitemap_size_bytes" in size_doc
