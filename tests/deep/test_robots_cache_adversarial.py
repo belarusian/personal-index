@@ -193,16 +193,6 @@ class TestCacheStats:
 # Thread-safety (docstring claims "Thread-safe")
 # ---------------------------------------------------------------------------
 class TestThreadSafety:
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-12: RobotsCache docstring claims 'Thread-safe cache' but no "
-            "threading.Lock exists. Additionally, put() violates the "
-            "max_entries invariant: with max_entries=0, put() still inserts "
-            "(size becomes 1 > max_entries=0) because _evict_oldest() is a "
-            "no-op on an empty dict and the insert proceeds unconditionally."
-        ),
-    )
     def test_max_entries_zero_respects_invariant(self):
         """size must never exceed max_entries, even when max_entries=0."""
         c = RobotsCache(ttl=3600, max_entries=0)
@@ -211,16 +201,15 @@ class TestThreadSafety:
             f"size={c.size} exceeds max_entries={c._max_entries}"
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-12: put() at capacity evicts the oldest entry even when "
-            "updating an already-cached domain. Updating B at capacity "
-            "evicts A (the other entry), losing data the caller did not "
-            "intend to discard. The check-then-act does not special-case "
-            "overwrites of existing keys."
-        ),
-    )
+    def test_thread_safe_lock_present(self):
+        """QA-12: docstring claims 'Thread-safe cache'; a lock must exist."""
+        c = RobotsCache(ttl=3600, max_entries=4)
+        assert hasattr(c, "_lock"), "RobotsCache must hold a threading.Lock"
+        # threading.Lock is a factory (not a type), so check the type by name.
+        assert type(c._lock).__name__ == "lock", (
+            f"expected a threading.Lock, got {type(c._lock).__name__}"
+        )
+
     def test_update_at_capacity_does_not_evict_other_entry(self):
         """Updating an existing domain at capacity should not evict another."""
         c = RobotsCache(ttl=3600, max_entries=2)
@@ -233,3 +222,5 @@ class TestThreadSafety:
             f"A.com was evicted when updating B at capacity. domains={c.domains}"
         )
         assert c.size == 2
+        # The pre-existing B entry was updated in place (newer fetched_at).
+        assert c.get("B.com").fetched_at == t + 1
