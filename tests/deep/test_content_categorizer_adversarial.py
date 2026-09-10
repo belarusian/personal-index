@@ -59,10 +59,6 @@ class TestCategorizeGuards:
         assert isinstance(r.primary_topic, str)
         assert isinstance(r.topics, list)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-14: categorize(title=None) crashes AttributeError in _lowercase_signals",
-    )
     def test_none_title_crashes(self):
         """DEFECT (QA-14): title=None crashes despite str-typed docstring.
 
@@ -74,10 +70,6 @@ class TestCategorizeGuards:
         r = c.categorize(text="hello world", title=None, meta_description=None)
         assert isinstance(r.primary_topic, str)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-14: categorize(meta_description=None) crashes AttributeError",
-    )
     def test_none_meta_only_crashes(self):
         """DEFECT (QA-14): meta_description=None alone also crashes."""
         c = ContentCategorizer()

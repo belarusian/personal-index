@@ -409,6 +409,14 @@ class ContentCategorizer:
         set to ``len(text.split())``, and ``keyword_count`` set to the
         number of distinct text tokens.
         """
+        # QA-14: degrade out-of-contract None optional signals to ""
+        # (None is falsy, so the guard below still absorbs the all-falsy
+        # case; a None alongside truthy text degrades to the empty-string
+        # behaviour instead of raising AttributeError in _lowercase_signals).
+        if title is None:
+            title = ""
+        if meta_description is None:
+            meta_description = ""
         if not text and not title and not meta_description:
             return CategorizationResult(
                 primary_topic="unknown",
