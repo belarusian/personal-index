@@ -18,7 +18,6 @@ from __future__ import annotations
 import subprocess
 import sys
 
-import pytest
 
 from personal_index.content_summarizer import (
     STOPWORDS,
@@ -338,10 +337,6 @@ def test_summarize_all_stopwords_scoring():
 # ---------------------------------------------------------------------------
 # DEFECT: negative-slice "top N" leak (QA-15)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-15: summarize(max_sentences=-1) leaks sentences[:-1] instead of []",
-)
 def test_summarize_max_sentences_negative_returns_empty():
     # Contract (negative-slice "top N" class, QA-1..QA-5): a negative bound
     # must yield an empty list, matching the 0 guard.
@@ -349,10 +344,6 @@ def test_summarize_max_sentences_negative_returns_empty():
     assert r.sentences == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-15: summarize(max_sentences=-5) leaks sentences[:-5] instead of []",
-)
 def test_summarize_max_sentences_more_negative_returns_empty():
     r = summarize(TEXT, max_sentences=-5)
     assert r.sentences == []

@@ -119,6 +119,8 @@ def _score_sentence(sentence: str, word_freq: dict[str, int]) -> float:
 
 
 def _score_and_select(sentences: list[str], word_freq: dict[str, int], max_sentences: int) -> list[str]:
+    if max_sentences <= 0:
+        return []
     scored: list[tuple[int, float, str]] = []
     for i, sentence in enumerate(sentences):
         score = _score_sentence(sentence, word_freq)
