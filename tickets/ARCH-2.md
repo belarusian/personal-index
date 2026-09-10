@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-06
+Status: IMPLEMENTED PR#1231@a1a5bc2 (cycle 220) — re-audited docs/robots-cache.md, docs/search-index.md, docs/content-model.md against current code; ARCH-4 + ARCH-32 code-side holes resolved; index line updated. Bounded 2-3 page pass.
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #983
