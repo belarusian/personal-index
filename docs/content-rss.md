@@ -25,7 +25,7 @@ A single entry from an RSS/Atom feed. Fields, in order:
   `None` when absent (not `""`).
 - `updated: str | None = None` — **Atom only** (`<updated>`). RSS items never
   populate this field, so it stays `None` for every RSS entry (see contract
-  hole 2).
+  hole 1).
 - `categories: list[str] = []` — RSS `<category>` text; Atom `<category term>`.
 - `guid: str = ""` — RSS `<guid>`; Atom `<id>`. Falls back to `entry.link`
   when the guid/id element is absent or empty (so `guid` can be `""` when the
@@ -64,15 +64,17 @@ Stateless parser (no instance state beyond the `ATOM_NS` class constant
     - `"rss"` → `_parse_rss`
     - `"feed"` → `_parse_atom`
     - **any other root tag** (e.g. `<html>`, `<rdf:RDF>`, `<atom>`) → returns
-      the empty `Feed(feed_url=feed_url)` with **no signal** that the input
-      was not a feed (see contract hole 1).
+      an empty `Feed` with `parsed_as_feed=False`.
+  - The empty-input and parse-error guard paths also return an empty `Feed`
+    with `parsed_as_feed=False`. A real `rss`/`feed` root leaves
+    `parsed_as_feed=True`.
   - `feed.feed_url` is set to `feed_url` on the returned object in all paths.
 
 - `is_feed(xml_content: str) -> bool` (static)
   - **Guard path:** empty `xml_content` → `False`.
   - Otherwise: `True` if any of the regexes `<rss`, `<feed`, `<channel`,
     `xmlns.*atom`, `xmlns.*rss` matches the **first 500 characters**
-    (case-insensitive). See contract hole 3 for the 500-char window.
+    (case-insensitive). See contract hole 2 for the 500-char window.
 
 ### Private methods (documented for contract completeness)
 - `_parse_rss(root, feed_url) -> Feed` — reads `<channel>` (if absent, returns
@@ -98,8 +100,9 @@ Stateless parser (no instance state beyond the `ATOM_NS` class constant
 
 ## Invariants
 - `parse` never raises on malformed or non-feed input — every failure path
-  returns an (empty) `Feed`. The only way to know the input was not a feed is
-  to call `is_feed` first (see contract hole 1).
+  returns an (empty) `Feed`. The `parsed_as_feed` flag is `False` on the
+  non-feed-root, empty-input, and parse-error paths; `True` on a real
+  `rss`/`feed` root.
 - `FeedEntry.to_dict()` keys are exactly the nine dataclass field names.
 - `entry_count == len(entries)` always.
 - `published`/`updated` are `None` (not `""`) when the source element is
@@ -111,28 +114,20 @@ None. The parser is pure: it reads the input string and returns new
 
 ## Contract holes
 
-1. **Silent empty feed for non-feed root tags:** `parse` returns an empty
-   `Feed` (no entries, no title) when the root tag is neither `rss` nor
-   `feed` (e.g. `<html>`, `<rdf:RDF>`, `<atom>`), with no exception, flag, or
-   other signal. A caller cannot distinguish "a valid feed with zero entries"
-   from "this was not a feed at all". `is_feed` exists precisely to pre-check,
-   but `parse` neither calls it nor records that the dispatch fell through.
-   → **ARCH-21** (ticketed).
-
-2. **RSS entries never populate `updated`:** `_parse_rss_item` sets
+1. **RSS entries never populate `updated`:** `_parse_rss_item` sets
    `published` (from `<pubDate>`) but never `updated`, so every RSS entry has
    `updated=None` while Atom entries may carry a value. RSS 2.0 has no standard
    "updated" element, so this is arguably by-design, but the `FeedEntry`
    docstring does not state the asymmetry, so a reader who expects `updated`
    to be populated for RSS is surprised.
 
-3. **`is_feed` only inspects the first 500 characters:** the regexes run over
+2. **`is_feed` only inspects the first 500 characters:** the regexes run over
    `xml_content[:500]`, so a feed whose `<rss`/`<feed`/`<channel` tag or
    `xmlns` declaration appears after character 500 (e.g. a long XML prolog or
    leading comment) is misclassified as "not a feed". The window is a
    reasonable heuristic but is undocumented.
 
-4. **`guid` can be an empty string:** when the guid/id element is absent or
+3. **`guid` can be an empty string:** when the guid/id element is absent or
    empty, `guid` falls back to `entry.link`, which is itself `""` when the
    entry has no link. So `guid` is not guaranteed to be a non-empty unique
    identifier — a downstream dedup key built on `guid` sees `""` for such

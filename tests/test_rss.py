@@ -236,3 +236,34 @@ def test_rss_no_ambiguous_variable_names():
     for node in ast.walk(tree):
         if isinstance(node, ast.For) and isinstance(node.target, ast.Name) and node.target.id == "l":
             raise AssertionError("Ambiguous variable name 'l' found in for-loop")
+
+
+class TestParseNonFeedRoot:
+    """Pinning tests for ARCH-21: non-feed root tag handling (Option A flag)."""
+
+    def setup_method(self):
+        self.parser = RSSParser()
+
+    def test_non_feed_root_sets_flag_false(self):
+        """Non-feed root (html) returns empty Feed with parsed_as_feed=False."""
+        feed = self.parser.parse("<html><body>x</body></html>", feed_url="")
+        assert feed.parsed_as_feed is False
+        assert feed.entry_count == 0
+
+    def test_valid_zero_entry_rss_sets_flag_true(self):
+        """Valid zero-entry rss feed returns Feed with parsed_as_feed=True."""
+        feed = self.parser.parse("<rss><channel/></rss>", feed_url="")
+        assert feed.parsed_as_feed is True
+        assert feed.entry_count == 0
+
+    def test_empty_input_returns_empty_feed_no_exception(self):
+        """Empty input returns empty Feed with parsed_as_feed=False, no exception."""
+        feed = self.parser.parse("", feed_url="")
+        assert feed.parsed_as_feed is False
+        assert feed.entry_count == 0
+
+    def test_malformed_xml_returns_empty_feed_no_exception(self):
+        """Malformed XML returns empty Feed with parsed_as_feed=False, no exception."""
+        feed = self.parser.parse("<rss><channel>", feed_url="")
+        assert feed.parsed_as_feed is False
+        assert feed.entry_count == 0
