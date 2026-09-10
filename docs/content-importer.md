@@ -31,8 +31,9 @@ The single public entry point.
   `SUPPORTED_FORMATS`, raises `ValueError("Unsupported format: {fmt}.
   Supported: {SUPPORTED_FORMATS}")`.
 - **Dispatch:** otherwise dispatches to the private `_import_{fmt}` handler and
-  returns that handler's list of item dicts **unchanged** (no further
-  normalization at this level — see contract hole 1).
+  routes that handler's list of item dicts through `_normalize_items` before
+  returning, so every item carries the uniform key set (contract hole 1,
+  RESOLVED).
 
 #### `batch_import(data_sources) -> list[dict[str, Any]]`
 Imports from multiple sources and concatenates the results in order.
@@ -45,38 +46,45 @@ Imports from multiple sources and concatenates the results in order.
 
 ### Private handlers (documented because they define the per-format item shape)
 
-Each `_import_{fmt}` returns `list[dict[str, Any]]`. **The item key sets are
-NOT uniform across formats** (contract hole 1):
+Each `_import_{fmt}` returns `list[dict[str, Any]]`. **Every handler's
+output is routed through `_normalize_items` in `import_content`, so the item
+key sets ARE uniform across all five formats** (contract hole 1, RESOLVED):
 
 - `_import_json(data)` — `json.loads`; a top-level JSON **object** is wrapped
   into a one-element list; a JSON **array** is used as-is. The result is
-  routed through `_normalize_items`, so **only JSON items** carry the full
-  normalized key set (see below). Malformed JSON raises
+  routed through `_normalize_items` (see below); `import_content` also
+  re-normalizes the handler result, so JSON items carry the full normalized
+  key set. Malformed JSON raises
   `ValueError("Malformed JSON: ...")`.
 - `_import_html(data)` — first tries `<article>...</article>` blocks
   (`_parse_html_article`); if **no** article is found, falls back to pairing
   `<h2>` headings with `<p>` paragraphs by index.
   - Article item keys: `title`, `description`, `link`, `id` (title defaults to
     `"Untitled"` when no `<h2>`; `link` is `""` when no `<a href>`).
-  - Fallback item keys: `title`, `description`, `id` — **no `link` key at all**
-    (contract hole 1).
+  - Fallback item keys (pre-normalization): `title`, `description`, `id`
+    (no `link`); after `_normalize_items` the item carries the uniform key
+    set with `link` defaulting to `""`.
 - `_import_markdown(data)` — splits on lines; a heading line
   (`#{1,6} <title>` or `#{1,6} [text](url)`) starts a new item; subsequent
   non-heading, non-empty lines accumulate into that item's `description`.
-  Item keys: `title`, `link`, `id` (plus `description` set at flush time).
-  `link` is `""` for a plain (non-linked) heading.
+  Pre-normalization item keys: `title`, `link`, `id` (plus `description`
+  set at flush time); after `_normalize_items` the item carries the uniform
+  key set. `link` is `""` for a plain (non-linked) heading.
 - `_import_rss(data)` — parses with **stdlib** `xml.etree.ElementTree`
   (`ET.fromstring`), **not** `defusedxml` (contract hole 3). Walks
-  `.//channel/item`; item keys: `title`, `description`, `link`, `id` where
-  `id` is the `<guid>` text, falling back to a minted `_next_id()` when guid is
-  absent/empty. `title` defaults to `"Untitled"`.
+  `.//channel/item`; pre-normalization item keys: `title`, `description`,
+  `link`, `id` where `id` is the `<guid>` text, falling back to a minted
+  `_next_id()` when guid is absent/empty. `title` defaults to `"Untitled"`.
+  After `_normalize_items` the item carries the uniform key set.
 - `_import_csv(data)` — `csv.DictReader` over the string; each row becomes an
   item with **only the non-empty header columns** preserved, plus a minted
-  `id` via `setdefault` when the row has no `id` column. Item keys therefore
-  depend entirely on the CSV header (contract hole 1).
+  `id` via `setdefault` when the row has no `id` column. Pre-normalization
+  keys therefore depend on the CSV header; after `_normalize_items` the item
+  carries the uniform key set (ad-hoc header columns are dropped).
 
 ### `_normalize_items(items) -> list[dict[str, Any]]`
-The **only** path that produces a uniform item shape. For each `dict` item it
+The path that produces the uniform item shape (applied to **every** format's
+handler output by `import_content`). For each `dict` item it
 emits exactly these keys:
 - `title` (default `"Untitled"`), `description` (default `""`), `link`
   (default `""`), `id` (default minted `_next_id()`), `tags` (default `[]`),
@@ -93,13 +101,12 @@ Increments and returns the instance `_id_counter` (1, 2, 3, ...).
 
 ## Contract holes
 
-1. **Inconsistent item shape across formats.** Only `_import_json` routes
-   through `_normalize_items`, so only JSON items are guaranteed the
-   `title/description/link/id/tags/date` key set. RSS/CSV/HTML/Markdown each
-   emit their own ad-hoc key sets: the HTML fallback path omits `link`
-   entirely, and **no** non-JSON format ever includes `tags` or `date`. A
-   downstream consumer that assumes the normalized shape will `KeyError` on
-   non-JSON imports. (Most important hole — ticketed as **ARCH-24**.)
+1. **Inconsistent item shape across formats.** RESOLVED (ARCH-24, cycle 228):
+   `import_content` now routes **every** `_import_{fmt}` handler's output
+   through `_normalize_items`, so all five formats return items with exactly
+   the `title/description/link/id/tags/date` key set. The HTML fallback path's
+   `link` now defaults to `""`, and every non-JSON item carries `tags=[]` and
+   `date=None`. (Previously only JSON was normalized; ticketed as **ARCH-24**.)
 2. **`batch_import` is untyped and aborts on first error.** No parameter
    annotation; a single bad source raises and discards all items collected
    from earlier sources (no partial result, no per-source isolation).
