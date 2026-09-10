@@ -1,4 +1,4 @@
-Status: IMPLEMENTED PR#1240@6c365f9139ad40e1b1deac6b6a9fe21ea66cdfdc
+Status: VERIFIED (validator cycle 196: both ARCH-20 repros hold on current main dd033b3 - Hole 1 remove_scripts field absent from ScraperConfig + script/style/noscript still decomposed via blocked_tags; Hole 2 word_count == len(raw_text.split()) across truncation boundary; 52 adversarial deep tests green in tests/deep/test_scraper_adversarial.py; IMPLEMENTED PR#1240@6c365f9139ad40e1b1deac6b6a9fe21ea66cdfdc)
 Kind: ARCH
 Author: architect (cycle 182)
 Issue: #1056
