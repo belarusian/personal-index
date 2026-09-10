@@ -223,3 +223,82 @@ class TestThreadSafety:
         assert c.size == 2
         # The pre-existing B entry was updated in place (newer fetched_at).
         assert c.get("B.com").fetched_at == t + 1
+
+
+# ---------------------------------------------------------------------------
+# QA-12 VERIFY (cycle 189): RobotsCache.put() max_entries invariant +
+# overwrite-evicts-unrelated + missing threading.Lock.
+# Fix PR #1223 @ a175b2f (cycle 219). These are HARD passes (no xfail) —
+# they pin the corrected contract so a regression reopens QA-12.
+# ---------------------------------------------------------------------------
+class TestQA12PutInvariant:
+    def test_max_entries_zero_put_is_noop(self):
+        """max_entries=0: put() must not insert; size stays 0, get is None."""
+        c = RobotsCache(ttl=3600, max_entries=0)
+        c.put(RobotsCacheEntry(domain="a.com", fetched_at=time.time()))
+        assert c.size == 0
+        assert c.get("a.com") is None
+        assert c.domains == []
+
+    def test_max_entries_negative_put_is_noop(self):
+        """max_entries<0: put() must not insert (guard is <= 0)."""
+        c = RobotsCache(ttl=3600, max_entries=-5)
+        c.put(RobotsCacheEntry(domain="a.com", fetched_at=time.time()))
+        assert c.size == 0
+        assert c.get("a.com") is None
+
+    def test_max_entries_zero_stats_report_zero(self):
+        """get_stats reflects the empty cache even after a put attempt."""
+        c = RobotsCache(ttl=3600, max_entries=0)
+        c.put(RobotsCacheEntry(domain="a.com", fetched_at=time.time()))
+        stats = c.get_stats()
+        assert stats["size"] == 0
+        assert stats["max_entries"] == 0
+        assert stats["domains"] == []
+
+    def test_overwrite_at_capacity_keeps_all_other_domains(self):
+        """At capacity, updating an existing domain must not evict ANY other."""
+        c = RobotsCache(ttl=3600, max_entries=3)
+        t = time.time()
+        c.put(RobotsCacheEntry(domain="A.com", fetched_at=t - 300))
+        c.put(RobotsCacheEntry(domain="B.com", fetched_at=t - 200))
+        c.put(RobotsCacheEntry(domain="C.com", fetched_at=t - 100))
+        # Update the OLDEST (A) in place — must not evict B or C.
+        c.put(RobotsCacheEntry(domain="A.com", fetched_at=t))
+        assert set(c.domains) == {"A.com", "B.com", "C.com"}
+        assert c.size == 3
+        assert c.get("A.com").fetched_at == t
+
+    def test_new_domain_at_capacity_evicts_oldest(self):
+        """A genuinely NEW domain at capacity still evicts the oldest (correct)."""
+        c = RobotsCache(ttl=3600, max_entries=2)
+        t = time.time()
+        c.put(RobotsCacheEntry(domain="A.com", fetched_at=t - 100))
+        c.put(RobotsCacheEntry(domain="B.com", fetched_at=t))
+        c.put(RobotsCacheEntry(domain="C.com", fetched_at=t + 1))
+        # A (oldest) evicted; B and C remain.
+        assert "A.com" not in c.domains
+        assert set(c.domains) == {"B.com", "C.com"}
+        assert c.size == 2
+
+    def test_lock_serializes_concurrent_puts(self):
+        """Concurrent puts must never let size exceed max_entries (lock guards)."""
+        import threading
+
+        c = RobotsCache(ttl=3600, max_entries=50)
+        errors: list[BaseException] = []
+
+        def worker(n: int) -> None:
+            try:
+                for i in range(200):
+                    c.put(RobotsCacheEntry(domain=f"d{n}-{i}.com", fetched_at=time.time()))
+            except BaseException as exc:  # pragma: no cover - defensive
+                errors.append(exc)
+
+        threads = [threading.Thread(target=worker, args=(k,)) for k in range(8)]
+        for th in threads:
+            th.start()
+        for th in threads:
+            th.join()
+        assert not errors, f"concurrent put raised: {errors}"
+        assert c.size <= 50, f"size={c.size} exceeded max_entries=50 under concurrency"
