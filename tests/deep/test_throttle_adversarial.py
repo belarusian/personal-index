@@ -49,15 +49,6 @@ class TestThrottleRule:
         r = ThrottleRule(max_requests=5, window_seconds=10.0)
         assert r.rate_per_second == pytest.approx(0.5)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-13: ThrottleRule.rate_per_second raises ZeroDivisionError "
-            "when window_seconds=0. The property computes "
-            "max_requests / window_seconds with no guard for the "
-            "degenerate zero-window case."
-        ),
-    )
     def test_rate_per_second_zero_window(self):
         """window_seconds=0 should not crash; should return 0.0 or inf."""
         r = ThrottleRule(max_requests=10, window_seconds=0.0)
@@ -81,16 +72,6 @@ class TestExtractDomain:
         m = ThrottleManager()
         assert m._extract_domain("") == ""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-13: _extract_domain is case-sensitive. "
-            "EXAMPLE.com and example.com are the same DNS domain but "
-            "are treated as different throttle buckets, allowing a "
-            "crawler to bypass the per-domain rate limit by varying "
-            "the case of the hostname."
-        ),
-    )
     def test_case_insensitive(self):
         """DNS domains are case-insensitive; throttle buckets must match."""
         m = ThrottleManager()
@@ -100,15 +81,6 @@ class TestExtractDomain:
             f"Domains should be case-insensitive: {lower!r} != {upper!r}"
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-13: _extract_domain includes the port in the domain key. "
-            "example.com:8080 and example.com are the same domain (the "
-            "port is not part of the domain) but are treated as "
-            "different throttle buckets."
-        ),
-    )
     def test_port_not_part_of_domain(self):
         """The port is not part of the domain; throttle buckets must match."""
         m = ThrottleManager()
@@ -118,14 +90,6 @@ class TestExtractDomain:
             f"Port should not affect domain: {no_port!r} != {with_port!r}"
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-13: _extract_domain does not strip userinfo. "
-            "user:pass@example.com should extract example.com but "
-            "returns 'user:pass@example.com' (the full netloc)."
-        ),
-    )
     def test_userinfo_stripped(self):
         """Userinfo (user:pass@) is not part of the domain."""
         m = ThrottleManager()
