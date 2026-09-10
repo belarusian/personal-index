@@ -1,6 +1,6 @@
 """Tests for robots.txt parser."""
 
-from personal_index.crawler.robots import RobotsParser
+from personal_index.crawler.robots import RobotsParser, parse_robots_txt
 
 
 class TestRobotsParser:
@@ -69,3 +69,23 @@ class TestRobotsParser:
         parser = RobotsParser()
         parser.parse("# Just a comment\n# Another comment")
         assert parser.can_fetch("https://example.com/page") is True
+
+    def test_robots_parser_parse_populates_policies(self):
+        """ARCH-23: parse() must store policy in _policies keyed by domain."""
+        parser = RobotsParser()
+        parser.parse("User-agent: *\nDisallow: /private\n", "https://example.com")
+        # Per-domain branch is exercised: domain present in policy store
+        assert "example.com" in parser._policies
+        # can_fetch returns False for disallowed path via per-domain branch
+        assert parser.can_fetch("https://example.com/private/x") is False
+        # And True for allowed path
+        assert parser.can_fetch("https://example.com/public/x") is True
+
+    def test_empty_disallow_does_not_disallow_all(self):
+        """ARCH-23: bare Disallow: (empty value) must not disallow the site."""
+        policy = parse_robots_txt("User-agent: *\nDisallow:\n", "https://example.com")
+        assert policy.can_fetch("https://example.com/anything") is True
+        # Normal Disallow still works
+        policy2 = parse_robots_txt("User-agent: *\nDisallow: /private\n", "https://example.com")
+        assert policy2.can_fetch("https://example.com/private/x") is False
+        assert policy2.can_fetch("https://example.com/public/x") is True
