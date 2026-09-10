@@ -51,14 +51,17 @@ function object / name via AST, so added docstring lines are SAFE for those.
 
 Any public function whose contract is "return the top N / first N / most
 recent N items" — i.e. any function that truncates a list with `list[:N]`
-where `N` is a caller-supplied count / limit / top_n / n / count — MUST guard
-`N < 0 -> []` (return an empty list). A negative `N` is out-of-range and must
-yield the same empty result as `N == 0`; it must NOT leak Python
-negative-slice semantics (`list[:-1]` = all-but-last). The guard is stated in
-the function's contract docstring (part 1, guard paths) and witnessed by ONE
-pinning test that asserts the returned object for both `N < 0` and `N == 0`
-(both `== []`). This rule is the single home for the negative-slice-truncation
-class (ARCH-17); per-site instances (ARCH-15, QA-1, QA-2, QA-3) reference it.
+(plain form) or `list[offset:offset+N]` (offset form) where `N` is a
+caller-supplied count / limit / top_n / n / count — MUST guard `N <= 0 -> []`
+(return an empty list). A non-positive `N` is out-of-range and must yield the
+same empty result as the zero bound; a negative `N` must NOT leak Python
+negative-slice semantics (`list[:-1]` = all-but-last, and in the offset form
+`list[offset:offset-1]` = a shifted window). The guard short-circuits BEFORE
+the slice. The guard is stated in the function's contract docstring (part 1,
+guard paths) and witnessed by ONE pinning test that asserts the returned
+object for both `N < 0` and `N == 0` (both `== []`). This rule is the single
+home for the negative-slice-truncation class (ARCH-17); per-site instances
+(ARCH-15, QA-1, QA-2, QA-3, QA-15 #1186, QA-16 #1191) reference it.
 
 ## Defensive-load guard (binding)
 
@@ -101,8 +104,9 @@ For each target function:
 3. Add ONE pinning test asserting the returned object for normal + guard input.
 4. Run the line-shift grep over `tests/`.
 5. Run the local gate (pytest + ruff + mypy).
-6. If the function truncates with `list[:N]` on a caller-supplied
-   count, apply the **Negative-slice guard** rule above (`N < 0 -> []`).
+6. If the function truncates with `list[:N]` or `list[offset:offset+N]` on a
+   caller-supplied count, apply the **Negative-slice guard** rule above
+   (`N <= 0 -> []`, short-circuit before the slice).
 7. If the method is a `_load` that rebuilds state from a persisted JSON
    mapping, apply the **Defensive-load guard** rule above (degrade to the
    empty state on any malformed value; construction must not raise).
