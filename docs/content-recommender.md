@@ -68,9 +68,9 @@ Behavior, in order:
    - Returns `Recommendation(url, title, score=combined, reason,
      matching_keywords=kw_common, matching_tags=tag_common)`.
 5. Survivors are sorted by `score` (descending) and truncated to `top_n`.
-   **Contract hole:** the truncation is `candidates[:top_n]` with no guard for
-   `top_n < 0` — a negative `top_n` leaks Python negative-slice semantics
-   (returns all-but-last instead of `[]`). See ARCH-15.
+   **Guard:** when `top_n < 0` the method returns `[]` before truncation, so
+   the `candidates[:top_n]` slice is never reached; `top_n == 0` also returns
+   `[]`. Resolved (ARCH-15, cycle 221).
 
 #### `recommend_for_keywords(self, keywords: list[str], top_n: int = 5) -> list[Recommendation]`
 Behavior, in order:
@@ -83,9 +83,9 @@ Behavior, in order:
    Otherwise append `Recommendation(url, title, score, reason=f"matched
    keywords: <sorted common>", matching_keywords=sorted(common))`.
 4. Survivors are sorted by `score` (descending) and truncated to `top_n`.
-   **Contract hole:** the truncation is `candidates[:top_n]` with no guard for
-   `top_n < 0` — a negative `top_n` leaks Python negative-slice semantics
-   (returns all-but-last instead of `[]`). See ARCH-15.
+   **Guard:** when `top_n < 0` the method returns `[]` before truncation, so
+   the `candidates[:top_n]` slice is never reached; `top_n == 0` also returns
+   `[]`. Resolved (ARCH-15, cycle 221).
    **Contract hole:** the docstring claims "matching is case-insensitive", but
    only the *query* keywords are lowercased; an item's explicit `keywords` are
    matched case-sensitively (only content/title-derived keywords are
@@ -110,11 +110,9 @@ Returns `len(self._items)`.
   kw_w, tag_w, sc_w) -> Recommendation | None` — see `recommend` step 4.
 
 ## Contract holes
-- **ARCH-15** — `recommend` and `recommend_for_keywords` both truncate with
-  `candidates[:top_n]` and have no guard for `top_n < 0`; a negative `top_n`
-  leaks Python negative-slice semantics (returns all-but-last instead of `[]`).
-  This is the same class as QA-1 (`KeywordExtractor.extract_top_n` negative
-  `n`) — the negative-slice-truncation class recurs across modules.
+- **ARCH-15 (Resolved, cycle 221)** — `recommend` and `recommend_for_keywords`
+  now guard `top_n < 0` and return `[]` before the `candidates[:top_n]`
+  truncation (same class as QA-1, now closed across modules).
 - **ARCH-16** — `recommend_for_keywords` docstring over-promises "matching is
   case-insensitive"; only the query keywords are lowercased, so an item's
   explicit `keywords` are matched case-sensitively.
