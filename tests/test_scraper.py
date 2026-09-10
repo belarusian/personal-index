@@ -143,31 +143,6 @@ class TestHTMLScraper:
         assert len(result.paragraphs) == 3
 
 
-class TestWordCountConsistency:
-    def test_word_count_matches_truncated_raw_text(self):
-        big_text = "word " * 10000
-        html = self._make_html(f"<p>{big_text}</p>")
-        config = ScraperConfig(max_content_length=100)
-        scraper = HTMLScraper(config)
-        result = scraper.scrape(html)
-        assert len(result.raw_text) <= 100
-        assert result.word_count == len(result.raw_text.split())
-
-    def test_word_count_matches_raw_text_no_truncation(self):
-        html = self._make_html("<p>One two three four five</p>")
-        scraper = HTMLScraper()
-        result = scraper.scrape(html)
-        assert result.word_count == len(result.raw_text.split())
-        assert result.word_count == 5
-
-
-class TestScriptRemovalDrivenByBlockedTags:
-    def test_script_text_excluded_under_default_blocked_tags(self):
-        html = self._make_html("<script>alert('xss')</script><p>Safe</p>")
-        scraper = HTMLScraper()
-        result = scraper.scrape(html)
-        assert "xss" not in result.raw_text
-        assert "Safe" in result.raw_text
 
 
 class TestWordCountConsistency:
