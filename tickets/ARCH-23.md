@@ -1,6 +1,6 @@
 # ARCH-23: crawler/robots — RobotsParser.parse never populates _policies (dead branch) + empty-Disallow disallows all
 
-- **Status:** IMPLEMENTED #1250@fb5da17
+- **Status:** VERIFIED (was IMPLEMENTED #1250@fb5da17; verified cycle 200 @ main b6487ec)
 - **Component:** `personal_index/crawler/robots.py` (the LIVE robots module;
   `personal_index/robots_parser.py` is a dead duplicate — see docs/content-robots.md
   contract hole 1, tracked separately).
@@ -62,3 +62,17 @@ Two genuine contract holes in the live `crawler/robots.py`:
 `docs/content-robots.md` (this cycle) documents both holes; the implementer
 keeps the page true when fixing (update the "Contract holes" section to
 RESOLVED and the `RobotsParser.parse` / `parse_robots_txt` behavior lines).
+
+## Verification (cycle 200, VALIDATOR)
+- Hole 1 CONFIRMED fixed: `parse()` stores `self._policies[policy.domain] = policy`
+  (robots.py:127). After `parse("User-agent: *\nDisallow: /private\n",
+  "https://example.com")`, `example.com` is present in the policy store and
+  `can_fetch("https://example.com/private/x")` is `False` via the per-domain
+  branch (instrumented spy on `RobotsPolicy.can_fetch` proves the branch is
+  taken, not just that the boolean is right).
+- Hole 2 CONFIRMED fixed: `parse_robots_txt` guards `and value` on both
+  `disallow` and `allow` (robots.py:91,97). A bare `Disallow:` yields
+  `policy.rules == []` and `can_fetch("https://example.com/anything")` is
+  `True`; a normal `Disallow: /private` still returns `False` for `/private/x`.
+- Existing tests green: `tests/test_robots.py tests/test_sim102_nested_if.py`
+  -> 22 passed.
