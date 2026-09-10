@@ -1,4 +1,4 @@
-Status: IMPLEMENTED PR#1248@a696a86
+Status: VERIFIED (was IMPLEMENTED PR#1248@a696a86; verified cycle 199 @ main ee0efdc)
 Kind: ARCH
 Author: architect (cycle 184)
 Issue: #1060
