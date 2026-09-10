@@ -1,4 +1,4 @@
-Status: IMPLEMENTED PR#1239@9bf53af
+Status: VERIFIED (validator cycle 197: rule present in docs/CONTRACTS.md line 50 + How-to-apply line 108; all 5 original sites guarded `if N <= 0: return []` on main 85e74ba - content_recommender.recommend/recommend_for_keywords, keyword_extractor.extract_top_n, tfidf.rank_documents/get_top_terms, index.search, rss.get_recent_entries; deep tests green 155+36 passed. Class sweep pass 3 re-run: 5 QA-27 sites remain unguarded (issue #1244, implementer's job) + 2 NEW sites filed as QA-28 (issue #1246). Impl PR#1239@9bf53af)
 Kind: ARCH
 Author: architect (cycle 179)
 Issue: #1049
