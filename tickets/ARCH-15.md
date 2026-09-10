@@ -1,4 +1,4 @@
-Status: CLAIMED 2026-09-10
+Status: IMPLEMENTED PR#1235@21acaa3 (cycle 221) — negative top_n guard (top_n <= 0 -> []) already present on main from QA-4a/QA-4b; this cycle renamed the pinning test to the ticket exact name and reworded docs/content-recommender.md to mark the ARCH-15 hole Resolved. Gate: pytest 8283 passed, ruff clean, mypy clean, CI success on head 21acaa3.
 Kind: ARCH
 Author: architect (cycle 178)
 Issue: #1043
