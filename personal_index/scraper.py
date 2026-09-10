@@ -21,7 +21,6 @@ class ScraperConfig:
     extract_images: bool = True
     extract_headings: bool = True
     extract_tables: bool = False
-    remove_scripts: bool = True
     max_content_length: int = 1_000_000
     blocked_tags: list[str] = field(default_factory=lambda: ["script", "style", "noscript"])
 
@@ -51,7 +50,11 @@ class HTMLScraper:
         self.config = config or ScraperConfig()
 
     def scrape(self, html: str, base_url: str = "") -> ScrapedContent:
-        """Scrape HTML content and return structured data."""
+        """Scrape HTML content and return structured data.
+
+        `word_count` is `len(raw_text.split())` of the (possibly
+        truncated) `raw_text`.
+        """
         soup = BeautifulSoup(html, "html.parser")
         result = ScrapedContent(url=base_url)
 
@@ -76,10 +79,11 @@ class HTMLScraper:
             self._extract_tables(soup, result)
 
         result.raw_text = self._get_clean_text(soup)
-        result.word_count = len(result.raw_text.split())
 
         if len(result.raw_text) > self.config.max_content_length:
             result.raw_text = result.raw_text[: self.config.max_content_length]
+
+        result.word_count = len(result.raw_text.split())
 
         return result
 

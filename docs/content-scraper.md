@@ -23,10 +23,9 @@ Configuration for HTML scraping. Fields, in order:
 - `extract_tables: bool = False` — when `True`, extract `<table>` rows.
   **Off by default** (tables are the only extraction gated behind a flag that
   defaults to `False`).
-- `remove_scripts: bool = True` — **dead flag** (see contract hole 1): stored
-  but never read; script/style/noscript removal is driven by `blocked_tags`.
 - `max_content_length: int = 1_000_000` — `raw_text` is truncated to this
-  length when longer (see contract hole 2 for the `word_count` interaction).
+  length when longer; `word_count` is computed from the (possibly
+  truncated) `raw_text`.
 - `blocked_tags: list[str] = ["script", "style", "noscript"]` — tag names
   decomposed (removed from the tree) before any extraction runs.
 
@@ -47,8 +46,9 @@ The return object of `HTMLScraper.scrape`. Fields, in order:
 - `tables: list[dict] = []` — one `{"rows": [[cell, ...], ...]}` per table
   with at least one non-empty row.
 - `raw_text: str = ""` — the joined clean text (see `_get_clean_text`).
-- `word_count: int = 0` — `len(raw_text.split())` **before** the
-  `max_content_length` truncation (see contract hole 2).
+- `word_count: int = 0` — `len(raw_text.split())` of the (possibly
+  truncated) `raw_text` (computed after the `max_content_length`
+  truncation).
 - `charset: str = "utf-8"` — detected charset (see `_extract_charset`).
 
 ### `HTMLScraper`
@@ -74,12 +74,12 @@ Otherwise, in order:
 7. If `config.extract_links`: `_extract_links(soup, result, base_url)`.
 8. If `config.extract_images`: `_extract_images(soup, result, base_url)`.
 9. If `config.extract_tables`: `_extract_tables(soup, result)`.
-10. `result.raw_text = _get_clean_text(soup)`; `result.word_count =
-    len(result.raw_text.split())`.
+10. `result.raw_text = _get_clean_text(soup)`.
 11. If `len(result.raw_text) > config.max_content_length`:
-    `result.raw_text = result.raw_text[: config.max_content_length]`
-    (**`word_count` is NOT recomputed** — see contract hole 2).
-12. Returns `result`.
+    `result.raw_text = result.raw_text[: config.max_content_length]`.
+12. `result.word_count = len(result.raw_text.split())` — computed from the
+    (possibly truncated) `raw_text`.
+13. Returns `result`.
 
 **Side effects:** none (pure query; the input `html` string is not mutated).
 
@@ -95,7 +95,7 @@ neither is present, `result.charset` stays `"utf-8"`.
 #### `_clean_page(self, soup) -> None`
 For each name in `config.blocked_tags`, `soup.find_all(name)` and
 `tag.decompose()` each match. Mutates the soup in place. Driven by
-`blocked_tags` only — `remove_scripts` is not consulted (contract hole 1).
+`blocked_tags` only.
 
 #### `_extract_meta_tags(self, soup, result) -> None`
 - `title`: `<title>`'s `.string`, stripped, if present and non-empty.
@@ -137,27 +137,12 @@ Joins the stripped text of every `p`, `h1`–`h6`, `li`, `td`, `th` element
 
 ## Contract holes
 
-1. **Dead `remove_scripts` flag:** `ScraperConfig.remove_scripts` (default
-   `True`) is stored but never read anywhere in the module. Script/style/
-   noscript removal is driven entirely by `blocked_tags`. A caller who sets
-   `remove_scripts=False` expecting scripts to be kept gets no effect — the
-   `blocked_tags` default still decomposes them. The flag is a silent no-op.
-   → **ARCH-20** (ticketed).
-
-2. **`word_count` inconsistent after truncation:** `word_count` is computed
-   from `raw_text` at step 10, *before* the `max_content_length` truncation at
-   step 11. When `raw_text` is truncated, `word_count` still reflects the
-   pre-truncation text, so `word_count != len(result.raw_text.split())`. A
-   caller who relies on `word_count` to describe the returned `raw_text` is
-   wrong for long pages. The docstring does not state this ordering.
-   → **ARCH-20** (ticketed, same contract).
-
-3. **Charset override order is undocumented:** when both `meta[charset]` and
+1. **Charset override order is undocumented:** when both `meta[charset]` and
    `meta[http-equiv=Content-Type]` are present, the `http-equiv` value
    silently wins. This is a reasonable precedence but is not stated, so a
    reader who expects the explicit `charset` attribute to win is surprised.
 
-4. **`HTMLScraper` is a dead component in the shipped pipeline:**
+2. **`HTMLScraper` is a dead component in the shipped pipeline:**
    `pipeline.py` instantiates `self.scraper = HTMLScraper()` (line 170) but
    never calls `.scrape()`; the crawl step (`_fetch_page`) fetches HTML via
    `urllib` and the extract step uses `ContentExtractor`, not the scraper. The
@@ -165,7 +150,7 @@ Joins the stripped text of every `p`, `h1`–`h6`, `li`, `td`, `th` element
    This is a wiring gap, not a scraper defect, but it means the "crawl" stage
    the pipeline advertises does not actually route through this module.
 
-5. **Headings are not in strict document order:** `_extract_headings` loops
+3. **Headings are not in strict document order:** `_extract_headings` loops
    `level 1..6` and appends per level, so the `headings` list groups by level
    (all `h1`s, then all `h2`s, …) rather than preserving document order across
    levels. A page with `<h2>` before `<h1>` reports the `h1` first.
