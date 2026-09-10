@@ -331,6 +331,8 @@ class SearchIndex:
             cands = self._apply_filters(cands, filters)
 
         ranked = sorted(cands.items(), key=lambda x: x[1], reverse=True)
+        if limit <= 0:
+            return {"results": [], "total": len(ranked), "query": query}
         page = ranked[offset:offset + limit]
         results = []
         for item_id, score in page:

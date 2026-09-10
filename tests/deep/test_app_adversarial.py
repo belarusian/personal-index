@@ -24,8 +24,6 @@ import subprocess
 import sys
 import tempfile
 
-import pytest
-
 from personal_index.app import PersonalIndexApp
 from personal_index.content_search import ContentSearch, SearchIndex
 from personal_index.config.models import AppConfig
@@ -298,10 +296,6 @@ def test_contentsearch_search_empty_index():
 # ---------------------------------------------------------------------------
 # DEFECT: negative-slice "top N" leak (QA-16)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-16: SearchIndex.search(limit=-1) leaks ranked[:-1] instead of []",
-)
 def test_searchindex_search_limit_negative_returns_empty():
     # Contract (negative-slice "top N" class, QA-1..QA-5/QA-15): a negative
     # bound must yield an empty list, matching the 0 guard.
@@ -313,10 +307,6 @@ def test_searchindex_search_limit_negative_returns_empty():
     assert r["results"] == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-16: app.search(limit=-1) leaks all-but-last instead of []",
-)
 def test_app_search_limit_negative_returns_empty():
     # Reachable through the public entry point PersonalIndexApp.search.
     with tempfile.TemporaryDirectory() as tmp:
