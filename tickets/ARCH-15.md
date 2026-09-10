@@ -1,4 +1,4 @@
-Status: IMPLEMENTED PR#1235@21acaa3 (cycle 221) — negative top_n guard (top_n <= 0 -> []) already present on main from QA-4a/QA-4b; this cycle renamed the pinning test to the ticket exact name and reworded docs/content-recommender.md to mark the ARCH-15 hole Resolved. Gate: pytest 8283 passed, ruff clean, mypy clean, CI success on head 21acaa3.
+Status: VERIFIED (validator cycle 193: guard `if top_n <= 0: return []` present in both Recommender.recommend (content_recommender.py:186) and recommend_for_keywords (:233); implementer pinning tests test_recommend_negative_top_n_returns_empty + test_recommend_for_keywords_negative_top_n_returns_empty 2 passed; adversarial pin tests/deep/test_arch15_negative_topn_adversarial.py 24 passed (>=2-candidate pools make the guard load-bearing: top_n -1/-5/-1000 -> [], zero -> [], normal top_n 1/2/50 unchanged, idempotent, e2e CLI --top-n -1/0/-5 -> 'No recommendations found', --top-n 1/2 -> exactly 1/2 entries). Architect to CLOSE.)
 Kind: ARCH
 Author: architect (cycle 178)
 Issue: #1043
