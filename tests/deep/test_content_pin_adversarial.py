@@ -26,8 +26,6 @@ import subprocess
 import sys
 from unittest import mock
 
-import pytest
-
 from personal_index.content_pin import ContentPinner, PinnedItem, pin_content, unpin_content
 
 
@@ -336,13 +334,6 @@ def test_unpin_oserror_rolls_back(tmp_path):
     assert p.is_pinned("a") is True
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-18: pin with non-JSON-serializable metadata (a set) raises "
-    "TypeError from _save which is NOT caught by 'except OSError'; the item "
-    "is left pinned in-memory, violating the documented rollback contract. "
-    "Should return False and roll back, not raise.",
-)
 def test_pin_non_serializable_metadata_rolls_back(tmp_path):
     sp = str(tmp_path / "ns.json")
     p = ContentPinner(storage_path=sp)

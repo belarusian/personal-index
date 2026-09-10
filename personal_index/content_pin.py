@@ -100,7 +100,7 @@ class ContentPinner:
         )
         try:
             self._save()
-        except OSError:
+        except (OSError, TypeError):
             self._pinned = snapshot
             return False
         return True
@@ -122,7 +122,7 @@ class ContentPinner:
             del self._pinned[item_id]
             try:
                 self._save()
-            except OSError:
+            except (OSError, TypeError):
                 self._pinned = snapshot
                 return False
         return True
