@@ -63,9 +63,13 @@ class TestCsvImport:
         assert items == []
 
     def test_import_csv_custom_headers(self, importer):
+        # Custom (non-standard) CSV headers are NOT preserved as keys: the item
+        # is normalized to the uniform key set, so ad-hoc header columns drop.
         data = "name,url\nMy Post,http://x.com"
         items = importer.import_content(data, "csv")
-        assert items[0]["name"] == "My Post"
+        assert set(items[0].keys()) == {"title", "description", "link", "id", "tags", "date"}
+        assert "name" not in items[0]
+        assert "url" not in items[0]
 
 
 # --- HTML Import Tests ---
@@ -267,3 +271,39 @@ class TestImportContentPinning:
     def test_returns_handler_result_unchanged(self, importer):
         items = importer.import_content('[{"title": "A"}, {"title": "B"}]', "json")
         assert [i["title"] for i in items] == ["A", "B"]
+
+
+class TestUniformItemShapePinning:
+    """Pinning tests for ARCH-24: every format returns the uniform key set."""
+
+    _KEYS = {"title", "description", "link", "id", "tags", "date"}
+
+    def test_all_formats_uniform_key_set(self, importer):
+        samples = {
+            "json": '[{"title": "J"}]',
+            "html": '<article><h2>H</h2><p>P</p><a href="http://l">x</a></article>',
+            "markdown": "# T\n\nbody",
+            "rss": '<rss><channel><item><title>R</title><link>http://r</link>'
+                   '<description>D</description><guid>g1</guid></item></channel></rss>',
+            "csv": "title,description\nC1,CD",
+        }
+        for fmt, data in samples.items():
+            items = importer.import_content(data, fmt)
+            assert len(items) >= 1, f"{fmt} produced no items"
+            for item in items:
+                assert set(item.keys()) == self._KEYS, f"{fmt} item keys: {set(item.keys())}"
+
+    def test_html_fallback_has_link_and_tags(self, importer):
+        # Fallback branch: no <article>, so h2+p extraction runs.
+        fallback = importer.import_content("<h2>T</h2><p>D</p>", "html")
+        assert len(fallback) == 1
+        assert fallback[0]["link"] == ""
+        assert fallback[0]["tags"] == []
+        assert fallback[0]["date"] is None
+        # Article branch: carries a real link.
+        article = importer.import_content(
+            '<article><h2>A</h2><p>P</p><a href="http://real">x</a></article>', "html"
+        )
+        assert article[0]["link"] == "http://real"
+        assert article[0]["tags"] == []
+        assert article[0]["date"] is None

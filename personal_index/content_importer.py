@@ -29,14 +29,16 @@ class ContentImporter:
         (``json``, ``html``, ``markdown``, ``rss``, ``csv``), a ``ValueError``
         is raised. Otherwise the call is dispatched to the private
         ``_import_{fmt}`` handler, and that handler's list of item dicts is
-        returned unchanged.
+        routed through ``_normalize_items`` so every returned item carries the
+        uniform key set ``title``, ``description``, ``link``, ``id``, ``tags``,
+        ``date``.
         """
         fmt = fmt.lower().strip()
         if fmt not in self.SUPPORTED_FORMATS:
             raise ValueError(f"Unsupported format: {fmt}. Supported: {self.SUPPORTED_FORMATS}")
         handler = getattr(self, f"_import_{fmt}")
         result: list[dict[str, Any]] = handler(data)
-        return result
+        return self._normalize_items(result)
 
     def _import_json(self, data: str) -> list[dict[str, Any]]:
         try:
