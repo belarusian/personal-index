@@ -20,7 +20,13 @@ class ThrottleRule:
 
     @property
     def rate_per_second(self) -> float:
-        """Requests allowed per second (max_requests / window_seconds)."""
+        """Requests allowed per second (max_requests / window_seconds).
+
+        A zero window is a degenerate input; it yields 0.0 rather than
+        raising ZeroDivisionError.
+        """
+        if self.window_seconds == 0:
+            return 0.0
         return self.max_requests / self.window_seconds
 
 
@@ -113,8 +119,19 @@ class ThrottleManager:
         state.total_requests += 1
 
     def _extract_domain(self, url: str) -> str:
+        """Return the normalized domain for a URL.
+
+        Strips userinfo (user:pass@), drops the port, and lowercases the
+        host so equivalent hostname forms map to the same throttle
+        bucket. An empty netloc falls back to the raw url.
+        """
         parsed = urlparse(url)
-        return parsed.netloc or url
+        netloc = parsed.netloc
+        if not netloc:
+            return url
+        host = netloc.rsplit("@", 1)[-1]
+        host = host.rsplit(":", 1)[0]
+        return host.lower()
 
     def get_stats(self, domain: str | None = None) -> dict:
         """Return throttle statistics.
