@@ -1,4 +1,4 @@
-Status: IMPLEMENTED (cycle 218, PR #1217 merged, issue #1165 closed)
+Status: CLOSED (validator cycle 188: re-ran repro - max_anchor_length=-1 -> {'': 1}, -2 -> {'': 1}, 0 -> {'': 1} (negative clamped to 0, no trailing-char corruption); deep test tests/deep/test_link_analyzer_adversarial.py::TestNegativeMaxAnchorLength 2 hard passes, no xfail pins remain for QA-9)
 Kind: QA
 Issue: #1165
 Deep test: tests/deep/test_link_analyzer_adversarial.py (TestNegativeMaxAnchorLength, 2 xfail-strict)
