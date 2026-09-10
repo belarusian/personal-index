@@ -1,6 +1,6 @@
 # ARCH-24: content_importer — item shape is inconsistent across formats (only JSON is normalized)
 
-- **Status:** CLAIMED 2026-09-06 (cycle 228)
+- **Status:** IMPLEMENTED #1254@16e9dcd (cycle 228)
 - **Component:** `personal_index/content_importer.py` (`ContentImporter`).
 - **Issue:** #1065
 
