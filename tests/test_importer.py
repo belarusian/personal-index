@@ -52,6 +52,42 @@ class TestImporter:
 
 
 class TestImporterJson:
+
+    def test_all_formats_account_seen_items(self):
+        """Pin: json/csv/html/xml/opml each account for one valid + one empty-url item."""
+        # JSON
+        from personal_index.importer import Importer
+        imp = Importer()
+        json_content = '[{"url":"http://a.com","title":"A"},{"url":"","title":"B"}]'
+        r = imp.import_from_content(json_content, "json")
+        assert r.total_imported == 1 and r.total_skipped == 1
+
+        # CSV
+        imp = Importer()
+        csv_content = "url,title\nhttp://a.com,A\n,B\n"
+        r = imp.import_from_content(csv_content, "csv")
+        assert r.total_imported == 1 and r.total_skipped == 1
+
+        # HTML
+        imp = Importer()
+        html_content = '<ROOT><a href="http://a.com">A</a><a>NoHref</a></ROOT>'
+        r = imp.import_from_content(html_content, "html")
+        assert r.total_imported == 1 and r.total_skipped == 1
+
+        # XML
+        imp = Importer()
+        xml_content = '<bookmarks><bookmark url="http://a.com"><title>A</title></bookmark><bookmark url=""><title>B</title></bookmark></bookmarks>'
+        r = imp.import_from_content(xml_content, "xml")
+        assert r.total_imported == 1 and r.total_skipped == 1
+
+        # OPML
+        imp = Importer()
+        opml_content = '<opml><body><outline text="F" xmlUrl="http://a.com/rss"/><outline text="NoURL"/></body></opml>'
+        r = imp.import_opml(opml_content)
+        assert r.total_imported == 1 and r.total_skipped == 1
+
+
+
     def setup_method(self):
         self.importer = Importer()
 
@@ -237,7 +273,7 @@ class TestImporterHtml:
         ret = self.importer._parse_html_element(root, result, [])
         assert ret is None
         assert result.total_imported == 2
-        assert result.total_skipped == 0
+        assert result.total_skipped == 1
         assert result.errors == []
         bm_a = self.importer.manager.get("http://a.com")
         assert bm_a is not None
@@ -249,6 +285,16 @@ class TestImporterHtml:
         assert bm_b.category == "imported"
         # the href-absent <a> must not have created any bookmark
         assert self.importer.manager.get("no-href") is None
+
+    def test_import_html_empty_href_increments_skipped(self, tmp_path):
+        """Pin: BeautifulSoup branch counts <a> without href as skipped."""
+        content = '<ROOT><a href="http://a.com">A</a><a>NoHref</a></ROOT>'
+        path = tmp_path / "bookmarks.html"
+        path.write_text(content)
+        result = self.importer.import_from_file(str(path))
+        assert result.total_imported == 1
+        assert result.total_skipped == 1
+        assert result.format == "html"
 
 
 class TestImporterXml:
@@ -327,6 +373,16 @@ class TestImporterOpml:
         assert bm is not None
         assert bm.title == "My Title"
         assert bm.category == "imported"
+
+    def test_import_opml_falsy_url_increments_skipped(self):
+        """Pin: OPML outline with no xmlUrl/htmlUrl increments skipped."""
+        content = ('<opml><body>'
+                   '<outline text="Feed" xmlUrl="http://a.com/rss"/>'
+                   '<outline text="NoURL"/></body></opml>')
+        result = self.importer.import_opml(content)
+        assert result.total_imported == 1
+        assert result.total_skipped == 1
+        assert result.format == "opml"
 
 
 class TestImporterFileErrors:
