@@ -152,10 +152,10 @@ class TestOpmlValid:
         assert r.total_imported == 2
         assert r.format == "opml"
 
-    def test_outline_without_url_skipped_silently(self):
+    def test_outline_without_url_counts_skipped(self):
         r = _imp().import_opml("<opml><outline text='no url'/></opml>")
         assert r.total_imported == 0
-        assert r.total_skipped == 0
+        assert r.total_skipped == 1
         assert r.errors == []
 
 
