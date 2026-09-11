@@ -1,6 +1,6 @@
 # ARCH-25: importer — total_skipped accounting is inconsistent across formats (HTML/OPML silently drop empty-url items)
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-10
 - **Component:** `personal_index/importer.py` (`Importer`).
 - **Issue:** #1068
 

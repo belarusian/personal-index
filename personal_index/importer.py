@@ -211,8 +211,10 @@ class Importer:
         falls back to ``ET_fromstring`` + ``_parse_html_element`` (appending
         ``"Invalid HTML/XML: ..."`` to ``result.errors`` on ``ET_ParseError``
         and returning early). With BeautifulSoup, iterates
-        ``soup.find_all("a", href=True)`` and, per anchor, builds a
-        ``Bookmark`` from ``href`` (url), the ``title`` attribute or
+        ``soup.find_all("a")`` and, per anchor, reads the ``href`` attribute
+        (default ``""``); when ``href`` is falsy, increments
+        ``result.total_skipped`` and moves on (no manager write). Otherwise
+        builds a ``Bookmark`` from ``href`` (url), the ``title`` attribute or
         ``get_text(strip=True)`` (title) and ``category="imported"``; adds it
         to ``self._manager`` and increments ``result.total_imported``. Returns
         the accumulated ``ImportResult`` (``format="html"``).
@@ -237,8 +239,11 @@ class Importer:
             self._parse_html_element(tree, result, [])
             return result
 
-        for a_tag in soup.find_all("a", href=True):
-            href = a_tag["href"]
+        for a_tag in soup.find_all("a"):
+            href = a_tag.get("href", "")
+            if not href:
+                result.total_skipped += 1
+                continue
             title = a_tag.get("title", a_tag.get_text(strip=True) or "")
             bookmark = Bookmark(
                 url=str(href),
@@ -260,8 +265,9 @@ class Importer:
         a ``Bookmark`` (``url=href``, ``title=title``,
         ``category="imported"``) is added to ``self._manager`` and
         ``result.total_imported`` incremented ONLY when ``href`` is
-        truthy - an ``<a>`` with no ``href`` is silently skipped (no
-        ``total_skipped`` increment, no error). Every child element is
+        truthy; an ``<a>`` with no ``href`` (or an empty ``href``) increments
+        ``result.total_skipped`` instead (no manager write, no error). Every
+        child element is
         then recursed into via ``self._parse_html_element(child, result,
         path)``. The ``path`` parameter is accepted but never used. The
         method returns ``None``; it mutates ``result`` and
@@ -280,6 +286,8 @@ class Importer:
                 )
                 self._manager.add(bookmark)
                 result.total_imported += 1
+            else:
+                result.total_skipped += 1
 
         for child in element:
             self._parse_html_element(child, result, path)
@@ -342,7 +350,7 @@ class Importer:
         attribute, then empty string). When url is truthy, a Bookmark(url,
         title, category="imported") is added to self._manager and
         result.total_imported is incremented. When url is falsy, no bookmark
-        is created and no counter is incremented. Returns
+        is created and result.total_skipped is incremented instead. Returns
         ImportResult(source=source, format="opml").
         """
         result = ImportResult(source=source, format="opml")
@@ -359,6 +367,8 @@ class Importer:
                 bookmark = Bookmark(url=url, title=title, category="imported")
                 self._manager.add(bookmark)
                 result.total_imported += 1
+            else:
+                result.total_skipped += 1
 
         return result
 
