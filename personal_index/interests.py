@@ -94,6 +94,8 @@ class InterestStore:
         keywords = set()
         for interest in self._interests.values():
             for kw in interest.keywords:
+                if not isinstance(kw, str):
+                    continue
                 keywords.add(kw.lower())
         return keywords
 
@@ -113,6 +115,8 @@ class InterestStore:
         topics = set()
         for interest in self._interests.values():
             for topic in interest.topics:
+                if not isinstance(topic, str):
+                    continue
                 topics.add(topic.lower())
         return topics
 

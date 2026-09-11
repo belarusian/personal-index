@@ -222,16 +222,6 @@ class TestAggregation:
     def test_get_all_keywords_empty(self, mem):
         assert mem.get_all_keywords() == set()
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-19: get_all_keywords calls kw.lower() with no isinstance "
-            "guard, so a non-string keyword (int/None) raises AttributeError. "
-            "Sibling matches() and get_all_url_patterns() in the same module "
-            "both skip non-string elements; the documented module contract is "
-            "that non-string elements are skipped."
-        ),
-    )
     def test_get_all_keywords_skips_non_str(self, mem):
         mem.add(_mk("a", keywords=["ok", 42, None]))
         assert mem.get_all_keywords() == {"ok"}
@@ -243,16 +233,6 @@ class TestAggregation:
     def test_get_all_topics_empty(self, mem):
         assert mem.get_all_topics() == set()
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-19: get_all_topics calls topic.lower() with no isinstance "
-            "guard, so a non-string topic (int/None) raises AttributeError. "
-            "Sibling matches() and get_all_url_patterns() in the same module "
-            "both skip non-string elements; the documented module contract is "
-            "that non-string elements are skipped."
-        ),
-    )
     def test_get_all_topics_skips_non_str(self, mem):
         mem.add(_mk("a", topics=["ok", 42, None]))
         assert mem.get_all_topics() == {"ok"}
