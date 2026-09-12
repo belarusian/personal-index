@@ -1,6 +1,6 @@
 # TICKET-529: content_health.HealthReport class docstring "indexed content" over-promise
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Issue: #934
 Module: personal_index/content_health.py
 Class: HealthReport
