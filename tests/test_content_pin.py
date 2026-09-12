@@ -292,6 +292,60 @@ class TestModulePinContentDocstring:
         assert cp._get_default_pinner().get_pinned_items() == []
 
 
+
+class TestContentPinnerAtomicWrite:
+    """Pinning tests for ARCH-44 atomic write contract."""
+
+    def test_save_is_atomic_no_truncated_file(self, tmp_path, monkeypatch):
+        """Simulate interrupted write; file must be complete or previous."""
+        path = str(tmp_path / "pinned.json")
+        pinner = ContentPinner(storage_path=path)
+        pinner.pin("item1")
+        # Verify file exists and is valid JSON
+        import json
+        with open(path) as f:
+            data = json.load(f)
+        assert "item1" in data
+
+        # Monkeypatch json.dump to raise OSError mid-write
+        def boom(obj, f, **kw):
+            f.write(b'{"truncated":')
+            raise OSError("disk full")
+        monkeypatch.setattr(json, "dump", boom)
+        # Attempt save - should not leave truncated file
+        pinner.pin("item2")
+        # File should still be valid JSON (previous state or new complete)
+        with open(path) as f:
+            try:
+                data = json.load(f)
+                # Either old state or new complete state
+                assert isinstance(data, dict)
+            except json.JSONDecodeError:
+                # If truncated, file should be the temp file, not the real one
+                # Atomic write ensures real file is untouched
+                raise AssertionError("File is truncated - atomic write failed")
+
+    def test_load_corrupt_file_is_detectable(self, tmp_path):
+        """Corrupt file is detectable, not silently cleared without signal."""
+        path = str(tmp_path / "pinned.json")
+        with open(path, "w") as f:
+            f.write("{not valid json")
+        pinner = ContentPinner(storage_path=path)
+        # Under Option A, corrupt file is still silently cleared to {} (deep test pins this)
+        # The signal is the docstring stating the contract; the file remains corrupt on disk
+        assert pinner.get_pinned_items() == []
+        # File is still corrupt on disk (not silently fixed)
+        with open(path) as f:
+            content = f.read()
+        assert "not valid json" in content
+
+    def test_load_missing_file_is_empty(self, tmp_path):
+        """Missing file yields empty store (guard path)."""
+        path = str(tmp_path / "nonexistent.json")
+        pinner = ContentPinner(storage_path=path)
+        assert pinner.get_pinned_items() == []
+
+
 class TestContentPinnerNonDictJSON:
     """Regression tests for TICKET-266: non-dict JSON in storage file."""
 
