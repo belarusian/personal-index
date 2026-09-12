@@ -99,6 +99,17 @@ Note `delivered_at` is **not** serialized by `to_dict` — only the boolean
 
 Plain class (not a dataclass).
 
+**Delivered-vs-dispatch relationship (Option B, record-and-track only):** this
+manager is a record-and-track store, not a dispatch system. There is **no
+channel dispatch backend**: the `channels` field on a rule or notification is
+descriptive metadata only and is never used to send anything. The `delivered`
+flag is **caller-managed** -- `mark_delivered` / `mark_all_delivered` set
+`delivered = True` and stamp `delivered_at` without performing any send, so
+`delivered = True` means "marked by the caller with no send performed", NOT
+"actually sent to the channels". Any real delivery is the responsibility of an
+external consumer that reads `get_undelivered()` and then calls
+`mark_delivered`.
+
 `__init__(self) -> None`: sets `self.rules: list[NotificationRule] = []`,
 `self.notifications: list[Notification] = []`,
 `self._last_sent: dict[str, datetime] = {}` (keyed by `rule_id`), and

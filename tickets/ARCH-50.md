@@ -1,6 +1,6 @@
 # ARCH-50: content-notifications — channels are recorded but never dispatched, and `delivered` is a caller-toggled flag with no actual send
 
-Status: OPEN
+Status: CLAIMED (cycle 254, impl254/content-notifications-delivered-contract)
 Component: `personal_index/content_notifications.py`
 Issue: (to be filed)
 Refs: ARCH-2 (#983 umbrella)
