@@ -278,3 +278,41 @@ class TestURLDeduplicatorSeenCount:
         dedup.add_url("http://a.com/c")
         dedup.clear()
         assert dedup.seen_count == 0
+
+
+class TestURLDeduplicatorGetDuplicates:
+    def setup_method(self):
+        self.dedup = URLDeduplicator()
+
+    def test_get_duplicates_reports_exact_duplicate(self):
+        self.dedup.add_url("https://a.com/x")
+        self.dedup.add_url("https://a.com/x/")
+        dups = self.dedup.get_duplicates()
+        assert dups == {"https://a.com/x": ["https://a.com/x/"]}
+
+    def test_get_duplicates_reports_fuzzy_duplicate(self):
+        self.dedup.add_url("https://a.com/article-1")
+        self.dedup.add_url("https://a.com/article-11")
+        dups = self.dedup.get_duplicates()
+        assert dups == {"https://a.com/article-1": ["https://a.com/article-11"]}
+
+    def test_get_duplicates_empty_when_no_duplicates(self):
+        self.dedup.add_url("https://a.com/alpha")
+        self.dedup.add_url("https://a.com/omega")
+        assert self.dedup.get_duplicates() == {}
+
+    def test_get_stats_duplicate_groups_matches(self):
+        self.dedup.add_url("https://a.com/x")
+        self.dedup.add_url("https://a.com/x/")
+        dups = self.dedup.get_duplicates()
+        stats = self.dedup.get_stats()
+        assert stats["total_duplicate_groups"] == len(dups)
+        assert stats["total_duplicate_groups"] > 0
+
+    def test_clear_resets_duplicates(self):
+        self.dedup.add_url("https://a.com/x")
+        self.dedup.add_url("https://a.com/x/")
+        assert self.dedup.get_duplicates() != {}
+        self.dedup.clear()
+        assert self.dedup.get_duplicates() == {}
+        assert self.dedup.get_stats()["total_duplicate_groups"] == 0
