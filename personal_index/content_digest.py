@@ -160,7 +160,11 @@ class DigestGenerator:
           (``"tags"`` by default, ``"source"``, or ``"none"``); each section
           is capped at ``max_entries_per_section`` (default 10) entries.
         - Summary: a one-line summary is generated from the sections
-          (``"No new content found."`` when there are no entries).
+          (``"No new content found."`` when there are no entries). The
+          summary's "N new items" figure always equals ``total_entries``
+          (the distinct-entry count); it is NOT the sum of the per-section
+          (capped) counts, so multi-tag entries are not double-counted and
+          the per-section cap does not deflate the headline number.
 
         Args:
             title: Digest title (default ``"Content Digest"``).
@@ -173,13 +177,14 @@ class DigestGenerator:
         Returns:
             A ``ContentDigest`` with fields ``title``, ``generated_at`` (now,
             ISO-8601 UTC), ``period_start``, ``period_end``, ``sections``,
-            ``total_entries`` (count of accumulated entries), and ``summary``.
+            ``total_entries`` (count of accumulated entries), and ``summary``
+            (whose "N new items" figure equals ``total_entries``).
         """
         max_entries_per_section = max(0, max_entries_per_section)
         now = datetime.now(timezone.utc).isoformat()
         entries = sorted(self._entries, key=lambda e: e.score, reverse=True)
         sections = self._resolve_sections(entries, group_by, max_entries_per_section)
-        summary = self._generate_summary(sections)
+        summary = self._generate_summary(sections, total_entries=len(entries))
 
         return ContentDigest(
             title=title,
@@ -254,9 +259,16 @@ class DigestGenerator:
 
         return sections
 
-    def _generate_summary(self, sections: list[DigestSection]) -> str:
-        """Generate a summary of the digest."""
-        total = sum(s.count for s in sections)
+    def _generate_summary(
+        self, sections: list[DigestSection], total_entries: int
+    ) -> str:
+        """Generate a summary of the digest.
+
+        ``total_entries`` is the distinct-entry count (``len(entries)``);
+        the summary's "N new items" figure always equals it (Option A),
+        so it is NOT derived from the per-section (capped) counts.
+        """
+        total = total_entries
         if total == 0:
             return "No new content found."
 
