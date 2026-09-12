@@ -1,6 +1,6 @@
 # TICKET-552: exact-contract docstring for FacetedSearch.search + pinning test
 
-Status: CLAIMED 2026-09-12
+Status: IMPLEMENTED #1325@d697859 (cycle 275)
 Issue: #987
 
 ## File
