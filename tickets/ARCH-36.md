@@ -1,6 +1,6 @@
 # ARCH-36: url_dedup — `get_duplicates` / `get_stats` can never report the duplicates actually detected (the dedup record is silently discarded)
 
-Status: OPEN
+Status: CLAIMED 2026-09-12
 Component: `personal_index/url_dedup.py`
 Issue: #1101
 Refs: ARCH-2 (#983 umbrella)
