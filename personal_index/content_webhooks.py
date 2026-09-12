@@ -83,6 +83,9 @@ class WebhookPayload:
         delivered_at: When delivery succeeded.
         last_error: Last error message.
         signature: HMAC signature of the payload.
+        body: The exact JSON string that was signed (None when the payload
+            was constructed manually without a body; get_payload_json then
+            falls back to a fresh-timestamp serialization).
         next_retry_at: When the next retry attempt is scheduled (None when
             delivered or when no retry is scheduled).
     """
@@ -97,6 +100,7 @@ class WebhookPayload:
     delivered_at: datetime | None = None
     last_error: str | None = None
     signature: str | None = None
+    body: str | None = None
     next_retry_at: datetime | None = None
 
 
@@ -248,9 +252,9 @@ class WebhookManager:
             "data": data,
         }
 
+        body = json.dumps(payload_data, sort_keys=True)
         signature = None
         if endpoint.secret:
-            body = json.dumps(payload_data, sort_keys=True)
             signature = self._sign(body, endpoint.secret)
 
         return WebhookPayload(
@@ -260,6 +264,7 @@ class WebhookManager:
             endpoint_id=endpoint.endpoint_id,
             url=endpoint.url,
             signature=signature,
+            body=body,
         )
 
     def _sign(self, body: str, secret: str) -> str:
@@ -271,7 +276,16 @@ class WebhookManager:
         ).hexdigest()
 
     def get_payload_json(self, payload: WebhookPayload) -> str:
-        """Get the JSON body for a payload."""
+        """Get the JSON body for a payload.
+
+        Returns the exact signed body stored on the payload when present,
+        so a receiver recomputing the HMAC over the returned string gets the
+        same digest as ``payload.signature``. Falls back to a fresh
+        timestamp serialization for payloads constructed manually without a
+        body.
+        """
+        if payload.body is not None:
+            return payload.body
         return json.dumps({
             "event": payload.event_type.value,
             "timestamp": datetime.now(timezone.utc).isoformat(),
