@@ -361,10 +361,6 @@ class TestBuilderEscaping:
 # nsmap="{'': ...}" attribute and no xmlns declaration, so the package's own
 # SitemapParser (which reads ns:url / ns:loc) parses it to ZERO entries.
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-23: build()/build_sitemap_index() emit no sitemap namespace (Element nsmap= is a literal attr); SitemapParser round-trip yields 0 entries",
-)
 class TestQA23Namespace:
     def test_build_root_carries_sitemap_namespace(self):
         b = SitemapBuilder()

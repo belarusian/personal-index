@@ -221,3 +221,65 @@ class TestSitemapBuilder:
         assert "max_sitemap_size_bytes" in split_doc
         size_doc = SitemapBuilder.split_by_size.__doc__.lower()
         assert "max_sitemap_size_bytes" in size_doc
+
+
+class TestSitemapNamespace:
+    """QA-23: build()/build_sitemap_index() emit the sitemap namespace."""
+
+    def test_build_root_carries_sitemap_namespace(self):
+        from xml.etree.ElementTree import fromstring
+
+        from personal_index.sitemap_builder import SM_NS
+
+        b = SitemapBuilder()
+        b.add_entry("https://x.com/1")
+        root = fromstring(b.build())
+        assert root.tag == f"{{{SM_NS}}}urlset"
+
+    def test_build_no_literal_nsmap_attribute(self):
+        b = SitemapBuilder()
+        b.add_entry("https://x.com/1")
+        raw = b.build().decode("utf-8")
+        assert "nsmap=" not in raw
+        assert "xmlns" in raw
+
+    def test_build_url_children_namespaced(self):
+        from xml.etree.ElementTree import fromstring
+
+        from personal_index.sitemap_builder import SM_NS
+
+        b = SitemapBuilder()
+        for i in range(3):
+            b.add_entry(f"https://x.com/{i}")
+        root = fromstring(b.build())
+        assert len(root.findall(f"{{{SM_NS}}}url")) == 3
+
+    def test_index_root_carries_sitemap_namespace(self):
+        from xml.etree.ElementTree import fromstring
+
+        from personal_index.sitemap_builder import SM_NS
+
+        b = SitemapBuilder()
+        root = fromstring(b.build_sitemap_index(["https://x.com/s1.xml"]))
+        assert root.tag == f"{{{SM_NS}}}sitemapindex"
+
+    def test_roundtrip_through_parser_recovers_urls(self):
+        from personal_index.sitemap import SitemapParser
+
+        b = SitemapBuilder()
+        urls = [f"https://x.com/page/{i}" for i in range(4)]
+        for u in urls:
+            b.add_entry(u, change_frequency="weekly", priority=0.9)
+        parsed = SitemapParser().parse(b.build().decode("utf-8"))
+        assert parsed.get_urls() == urls
+
+    def test_roundtrip_preserves_fields(self):
+        from personal_index.sitemap import SitemapParser
+
+        b = SitemapBuilder()
+        b.add_entry("https://x.com/a", change_frequency="hourly", priority=0.3)
+        parsed = SitemapParser().parse(b.build().decode("utf-8"))
+        assert parsed.entries[0].changefreq == "hourly"
+        assert parsed.entries[0].priority == 0.3
+        assert parsed.entries[0].lastmod is not None
+        assert parsed.entries[0].lastmod.endswith("Z")
