@@ -227,12 +227,6 @@ class TestCliRecommendWeightsDefect:
                        "--tag-weight", "0.2", "--score-weight", "0.3"], dd)
         assert res.exit_code == 0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-24: CLI recommend --keyword-weight/--tag-weight/--score-weight "
-               "are accepted but never passed to recommend_for_keywords; output is "
-               "byte-identical for weights 0.0 vs 1.0 (advertised option does nothing)",
-    )
     def test_cli_recommend_weights_affect_output(self, tmp_path):
         """Contract implied by the advertised options: different weights must
         change the recommendation output. They do not - the options are dead."""

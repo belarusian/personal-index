@@ -191,6 +191,9 @@ class Recommender:
         self,
         keywords: list[str],
         top_n: int = 5,
+        keyword_weight: float | None = None,
+        tag_weight: float | None = None,
+        score_weight: float | None = None,
     ) -> list[Recommendation]:
         """Recommend content items by keyword match fraction.
 
@@ -201,33 +204,76 @@ class Recommender:
         score is below ``min_score`` are dropped, and the survivors are
         sorted by score (descending) and truncated to ``top_n``.
 
+        When any weight parameter is provided, the per-item score becomes
+        a weighted combination: ``kw_score * keyword_weight + norm *
+        score_weight`` where ``kw_score = len(common) / len(query)`` and
+        ``norm = min(item.score / 10.0, 1.0)`` when ``item.score > 0``
+        else ``0.0``. The ``tag_weight`` parameter is accepted for
+        interface consistency but has no effect on the keyword-based path
+        (there is no seed item to compare tags against).
+
         Args:
             keywords: Keywords to match against (lowercased internally).
             top_n: Maximum number of recommendations to return.
+            keyword_weight: Weight for the keyword-overlap sub-score.
+            tag_weight: Weight for tag similarity (no effect on this path).
+            score_weight: Weight for the normalized existing score.
 
         Returns:
             List of Recommendation objects, each score equal to the matched
-            keyword fraction. If ``top_n <= 0``, returns an empty list.
+            keyword fraction (or weighted combination when weights are
+            provided). If ``top_n <= 0``, returns an empty list.
         """
         keyword_set = {kw.lower() for kw in keywords if kw}
         if not keyword_set:
             return []
+
+        use_weights = any(
+            w is not None for w in (keyword_weight, tag_weight, score_weight)
+        )
+        if use_weights:
+            kw_w = keyword_weight if keyword_weight is not None else 0.6
+            tag_w = tag_weight if tag_weight is not None else 0.3
+            sc_w = score_weight if score_weight is not None else 0.1
 
         candidates: list[Recommendation] = []
         for item in self._items:
             item_keywords = item.all_keywords
             common = keyword_set & item_keywords
             if common:
-                # Score based on fraction of query keywords matched
-                score = len(common) / len(keyword_set)
-                if score >= self.min_score:
-                    candidates.append(Recommendation(
-                        url=item.url,
-                        title=item.title,
-                        score=score,
-                        reason=f"matched keywords: {', '.join(sorted(common))}",
-                        matching_keywords=sorted(common),
-                    ))
+                if use_weights:
+                    kw_score = len(common) / len(keyword_set)
+                    norm = (
+                        min(item.score / 10.0, 1.0) if item.score > 0 else 0.0
+                    )
+                    score = kw_score * kw_w + 0.0 * tag_w + norm * sc_w
+                    if score >= self.min_score:
+                        reasons: list[str] = []
+                        if kw_score > 0:
+                            reasons.append(
+                                f"matched keywords: {', '.join(sorted(common))}"
+                            )
+                        if norm > 0:
+                            reasons.append("score-based")
+                        if not reasons:
+                            reasons.append("score-based")
+                        candidates.append(Recommendation(
+                            url=item.url,
+                            title=item.title,
+                            score=score,
+                            reason="; ".join(reasons),
+                            matching_keywords=sorted(common),
+                        ))
+                else:
+                    score = len(common) / len(keyword_set)
+                    if score >= self.min_score:
+                        candidates.append(Recommendation(
+                            url=item.url,
+                            title=item.title,
+                            score=score,
+                            reason=f"matched keywords: {', '.join(sorted(common))}",
+                            matching_keywords=sorted(common),
+                        ))
 
         candidates.sort(key=lambda r: r.score, reverse=True)
         if top_n <= 0:
