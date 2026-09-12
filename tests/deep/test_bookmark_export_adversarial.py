@@ -29,7 +29,6 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
-import pytest
 
 from personal_index.bookmark_export import (
     BookmarkExporter,
@@ -268,29 +267,12 @@ def test_result_idempotent_post_init():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-32: export_opml inserts b.url RAW into htmlUrl=\"{b.url}\" "
-        "(only the title is escaped). A URL with '&' (a normal query string) "
-        "produces XML that is not well-formed, contradicting the docstring "
-        "claim 'Produces a valid OPML 2.0 document'."
-    ),
-)
 def test_export_opml_url_with_ampersand_is_well_formed():
     b = _bm("https://example.com/search?q=hello&lang=en", "T")
     out = BookmarkExporter([b]).export_opml()
     ET.fromstring(out)  # must parse as valid XML
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-32: export_html inserts b.url RAW into HREF=\"{b.url}\". A URL "
-        "containing a double-quote breaks the attribute, contradicting the "
-        "'standard Netscape bookmark file' claim."
-    ),
-)
 def test_export_html_url_with_double_quote_keeps_attribute_intact():
     b = _bm('https://example.com/?x="y"', "T")
     out = BookmarkExporter([b]).export_html()
