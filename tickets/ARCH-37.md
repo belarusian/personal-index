@@ -1,6 +1,6 @@
 # ARCH-37: rate_limiter — `RateLimitConfig` numeric fields are unvalidated; `window_seconds == 0` and `max_requests <= 0` raise `ZeroDivisionError`
 
-Status: CLAIMED 2026-09-10
+Status: IMPLEMENTED #1294@bbc0af9
 Component: `personal_index/rate_limiter.py`
 Issue: #1104
 Refs: ARCH-2 (#983 umbrella)
