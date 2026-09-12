@@ -1,5 +1,5 @@
 # TICKET-517
-## Status: OPEN
+## Status: CLAIMED 2026-09-12
 ## Module: personal_index/content_health.py
 ## Class/Method: HealthReport.summary
 ## Type: class-(b) doc-drift
