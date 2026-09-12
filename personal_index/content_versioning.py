@@ -44,7 +44,18 @@ class ContentVersioning:
         self._load()
 
     def _load(self) -> None:
-        """Load versions from storage."""
+        """Load versions from storage.
+
+        Guard path: if the file does not exist, sets self._versions = {}
+        and returns (the missing-file case, distinct from corruption).
+
+        On a corrupt-but-present file (json.JSONDecodeError or a
+        non-dict top-level value), silently resets self._versions = {}.
+        Under the Option A persistence contract (atomic temp-file-and-
+        rename in _save), an interrupted _save never leaves a truncated
+        intermediate on disk, so a corrupt file can only arise from
+        pre-existing corruption or an external writer.
+        """
         if not os.path.exists(self.storage_path):
             self._versions = {}
             return
@@ -70,7 +81,12 @@ class ContentVersioning:
             self._versions = {}
 
     def _save(self) -> None:
-        """Save versions to storage."""
+        """Save versions to storage atomically.
+
+        Writes to a temp file in the same directory, then os.replace onto
+        self.storage_path, so a crash leaves either the old complete file
+        or the new complete file - never a truncated intermediate.
+        """
         parent = Path(self.storage_path).parent
         parent.mkdir(parents=True, exist_ok=True)
         data = {}
@@ -85,8 +101,12 @@ class ContentVersioning:
                 }
                 for v in version_list
             ]
-        with open(self.storage_path, "w") as f:
+        tmp_path = self.storage_path + ".tmp"
+        with open(tmp_path, "w") as f:
             json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, self.storage_path)
 
     def create_version(
         self, item_id: str, content: str, author: str = "", message: str = ""
