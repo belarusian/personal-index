@@ -77,9 +77,25 @@ class AnnotationStore:
     def add(self, annotation: Annotation) -> None:
         """Add an annotation to the store.
 
+        For a new ``annotation_id`` the annotation is registered in the
+        registry and its id is appended to the URL index for
+        ``annotation.url``.
+
+        For a colliding ``annotation_id`` this performs an upsert with
+        reconciliation: the registry entry is overwritten with the new object
+        (the new object's ``created_at`` is preserved), and the id is removed
+        from the old URL's index list (if the old URL differs) before being
+        appended to the new URL's list. The postcondition holds: each id maps
+        to exactly one URL.
+
         Args:
             annotation: The annotation to add.
         """
+        existing = self._annotations.get(annotation.annotation_id)
+        if existing is not None and existing.url != annotation.url:
+            old_ids = self._by_url.get(existing.url)
+            if old_ids is not None and annotation.annotation_id in old_ids:
+                old_ids.remove(annotation.annotation_id)
         self._annotations[annotation.annotation_id] = annotation
         if annotation.url not in self._by_url:
             self._by_url[annotation.url] = []

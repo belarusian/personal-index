@@ -105,3 +105,42 @@ class TestAnnotationStore:
         assert stats["by_type"]["note"] == 1
         assert stats["by_type"]["tag"] == 1
         assert stats["urls_annotated"] == 2
+
+
+class TestAnnotationAddCollision:
+    def test_add_new_annotation_indexes_under_url(self):
+        store = AnnotationStore()
+        a = Annotation(annotation_id="a1", url="http://example.com", annotation_type=AnnotationType.NOTE)
+        store.add(a)
+        assert store.get("a1") is a
+        assert a in store.get_by_url("http://example.com")
+
+    def test_add_id_collision_reconciles_url_index(self):
+        store = AnnotationStore()
+        old = Annotation(annotation_id="a1", url="http://old.example.com", annotation_type=AnnotationType.NOTE, created_at=100.0)
+        store.add(old)
+        new = Annotation(annotation_id="a1", url="http://new.example.com", annotation_type=AnnotationType.NOTE, created_at=200.0)
+        store.add(new)
+        # id reachable from exactly one URL (the new one)
+        assert new in store.get_by_url("http://new.example.com")
+        assert old not in store.get_by_url("http://old.example.com")
+        assert new not in store.get_by_url("http://old.example.com")
+        # registry holds the new object, created_at preserved
+        assert store.get("a1") is new
+        assert store.get("a1").url == "http://new.example.com"
+        assert store.get("a1").created_at == 200.0
+        # id appears in exactly one URL's index list
+        urls_with_id = [u for u, ids in store._by_url.items() if "a1" in ids]
+        assert urls_with_id == ["http://new.example.com"]
+
+    def test_add_id_collision_same_url_no_duplicate(self):
+        store = AnnotationStore()
+        a = Annotation(annotation_id="a1", url="http://example.com", annotation_type=AnnotationType.NOTE, created_at=100.0)
+        store.add(a)
+        b = Annotation(annotation_id="a1", url="http://example.com", annotation_type=AnnotationType.NOTE, created_at=300.0)
+        store.add(b)
+        # no duplicate entry in the index list
+        assert store._by_url["http://example.com"].count("a1") == 1
+        # registry holds the new object
+        assert store.get("a1") is b
+        assert store.get("a1").created_at == 300.0

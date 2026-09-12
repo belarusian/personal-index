@@ -1,6 +1,6 @@
 # ARCH-42: annotation — add silently overwrites on an annotation_id collision AND desyncs the _by_url index
 
-Status: OPEN
+Status: CLAIMED 2026-09-12
 Component: `personal_index/annotation.py`
 Issue: #1119
 Refs: ARCH-2 (#983 umbrella)
