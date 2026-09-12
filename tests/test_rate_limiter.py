@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import time
 
+import pytest
+
 from personal_index.rate_limiter import (
     RateLimitConfig,
     RateLimiter,
@@ -24,6 +26,31 @@ class TestRateLimitConfig:
         assert config.max_requests == 5
         assert config.window_seconds == 30.0
         assert config.burst_size == 10
+
+    def test_config_zero_window_raises(self):
+        with pytest.raises(ValueError):
+            RateLimitConfig(window_seconds=0)
+
+    def test_config_zero_max_requests_raises(self):
+        with pytest.raises(ValueError):
+            RateLimitConfig(max_requests=0)
+
+    def test_config_zero_burst_raises(self):
+        with pytest.raises(ValueError):
+            RateLimitConfig(burst_size=0)
+
+    def test_config_negative_window_raises(self):
+        with pytest.raises(ValueError):
+            RateLimitConfig(window_seconds=-5)
+
+    def test_config_negative_max_requests_raises(self):
+        with pytest.raises(ValueError):
+            RateLimitConfig(max_requests=-1)
+
+    def test_config_valid_constructs(self):
+        assert RateLimitConfig().burst_size == 10
+        config = RateLimitConfig(max_requests=5, window_seconds=10)
+        assert config.burst_size == 5
 
 
 class TestRateLimitStatus:

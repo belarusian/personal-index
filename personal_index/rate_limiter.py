@@ -17,6 +17,12 @@ class RateLimitConfig:
     def __post_init__(self):
         if self.burst_size is None:
             self.burst_size = self.max_requests
+        if self.max_requests < 1:
+            raise ValueError("max_requests must be >= 1")
+        if self.window_seconds <= 0:
+            raise ValueError("window_seconds must be > 0")
+        if self.burst_size < 1:
+            raise ValueError("burst_size must be >= 1")
 
 
 @dataclass
