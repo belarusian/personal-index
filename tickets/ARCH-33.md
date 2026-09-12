@@ -1,6 +1,6 @@
 # ARCH-33: content_enricher — `batch_enrich` cannot pass HTML, so content-type flags are silently always-False
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: `personal_index/content_enricher.py`
 Issue: #1093
 Refs: ARCH-2 (#983 umbrella)

@@ -188,13 +188,26 @@ class ContentEnricher:
         # Combine scores
         return round((length_score * 0.4 + unique_ratio * 0.6), 4)
 
-    def batch_enrich(self, items: list[tuple[str, str]]) -> list[EnrichedContent]:
+    def batch_enrich(
+        self,
+        items: list[tuple[str, str] | tuple[str, str, str | None]],
+    ) -> list[EnrichedContent]:
         """Enrich multiple content items.
 
+        Each item is a ``(title, text)`` 2-tuple or a ``(title, text, html)``
+        3-tuple. When a third ``html`` element is present it is passed through
+        to :meth:`enrich` so the ``has_code`` / ``has_links`` / ``has_images``
+        content-type flags are detected exactly as on the single ``enrich``
+        path. A 2-tuple item is treated as ``html=None`` (backward compatible),
+        leaving those flags at the dataclass default ``False``.
+
         Args:
-            items: List of (title, text) tuples.
+            items: List of ``(title, text)`` or ``(title, text, html)`` tuples.
 
         Returns:
             List of EnrichedContent objects.
         """
-        return [self.enrich(title, text) for title, text in items]
+        return [
+            self.enrich(title, text, rest[0] if rest else None)
+            for title, text, *rest in items
+        ]
