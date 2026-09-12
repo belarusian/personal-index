@@ -44,7 +44,18 @@ class ContentPinner:
         self._load()
 
     def _load(self) -> None:
-        """Load pinned items from storage."""
+        """Load pinned items from storage.
+
+        Guard path: if the file does not exist, sets self._pinned = {}
+        and returns (the missing-file case, distinct from corruption).
+
+        On a corrupt-but-present file (json.JSONDecodeError or a
+        non-dict top-level value), silently resets self._pinned = {}.
+        Under the Option A persistence contract (atomic temp-file-and-rename
+        in _save), a corrupt file can only arise from pre-existing
+        corruption or an external writer; an interrupted _save never
+        leaves a truncated intermediate on disk.
+        """
         if not os.path.exists(self.storage_path):
             self._pinned = {}
             return
@@ -66,7 +77,12 @@ class ContentPinner:
             self._pinned = {}
 
     def _save(self) -> None:
-        """Save pinned items to storage."""
+        """Save pinned items to storage atomically.
+
+        Writes to a temp file in the same directory, then os.replace onto
+        self.storage_path, so a crash leaves either the old complete file or
+        the new complete file - never a truncated intermediate.
+        """
         parent = Path(self.storage_path).parent
         parent.mkdir(parents=True, exist_ok=True)
         data = {}
@@ -76,8 +92,12 @@ class ContentPinner:
                 "reason": item.reason,
                 "metadata": item.metadata,
             }
-        with open(self.storage_path, "w") as f:
+        tmp_path = self.storage_path + ".tmp"
+        with open(tmp_path, "w") as f:
             json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, self.storage_path)
 
     def pin(self, item_id: str, reason: str = "", metadata: dict | None = None) -> bool:
         """Pin a content item.
