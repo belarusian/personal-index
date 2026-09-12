@@ -90,8 +90,9 @@ class BookmarkExporter:
 
         for b in self.bookmarks:
             display_title = self._escape_html(b.title if b.title else b.url)
+            href = self._escape_html(b.url)
             lines.append(
-                f'<DT><A HREF="{b.url}" ADD_DATE="{now}">{display_title}</A>'
+                f'<DT><A HREF="{href}" ADD_DATE="{now}">{display_title}</A>'
             )
 
         lines.extend(["</DL><p>", "</DL>"])
@@ -133,9 +134,10 @@ class BookmarkExporter:
 
         for b in self.bookmarks:
             display_title = self._escape_xml(b.title if b.title else b.url)
+            url = self._escape_xml(b.url)
             lines.append(
                 f'  <outline text="{display_title}" '
-                f'htmlUrl="{b.url}" type="bookmark"/>'
+                f'htmlUrl="{url}" type="bookmark"/>'
             )
 
         lines.extend(["</body>", "</opml>"])
