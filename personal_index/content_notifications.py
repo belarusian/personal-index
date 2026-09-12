@@ -114,10 +114,20 @@ class Notification:
 
 
 class NotificationManager:
-    """Manages notification rules and delivery state.
+    """Manage notification rules and track delivery state (record-and-track only).
 
-    Stores rules, evaluates events against rules to generate
-    notifications, and tracks their delivery state.
+    This is a record-and-track store, not a dispatch system. It stores rules,
+    evaluates events against rules to generate notifications, and tracks their
+    delivery state via the ``delivered`` flag.
+
+    There is no channel dispatch backend: the ``channels`` field on a rule or
+    notification is descriptive metadata only and is never used to send
+    anything. The ``delivered`` flag is caller-managed -- ``mark_delivered`` /
+    ``mark_all_delivered`` set ``delivered = True`` and stamp ``delivered_at``
+    without performing any send, so ``delivered = True`` means "marked by the
+    caller with no send performed", NOT "actually sent to the channels". Any
+    real delivery is the responsibility of an external consumer that reads
+    ``get_undelivered()`` and then calls ``mark_delivered``.
     """
 
     def __init__(self) -> None:
