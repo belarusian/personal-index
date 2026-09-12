@@ -1,6 +1,17 @@
 """
 Content Scheduler Module
-Schedule crawls, exports, and cleanup tasks with cron-like expressions.
+
+A PASSIVE task scheduler. It holds cron-like tasks and computes due-ness; it
+performs NO scheduling of its own. There is no execution loop, timer, or
+start/stop/tick: a task runs only when the caller explicitly invokes
+TaskScheduler.run_due_tasks(). Nothing inside personal_index/ drives it, so
+out of the box no task ever runs until a caller calls run_due_tasks().
+
+Stale next_run / no catch-up (the intended contract): next_run is computed
+once at construction (and re-computed only after a successful run()). A task
+whose next_run has passed without a run is immediately due on the first
+run_due_tasks() call -- there is no catch-up or skip-missed policy. A disabled
+task's next_run is never advanced.
 """
 
 from __future__ import annotations
@@ -12,6 +23,13 @@ from typing import Any
 
 
 class TaskStatus(str, Enum):
+    """Task lifecycle states.
+
+    CANCELLED is reserved: the scheduler is passive and exposes no cancel
+    path, so no code path assigns CANCELLED. It is kept for API stability and
+    is documented here as reserved rather than removed.
+    """
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -137,7 +155,13 @@ class ScheduledTask:
         self.next_run = None
 
     def is_due(self) -> bool:
-        """Check if the task is due to run."""
+        """Check if the task is due to run.
+
+        False when disabled or next_run is None. Otherwise True when now >=
+        next_run. Because next_run is only refreshed after a successful run(),
+        a task whose next_run has passed without a run is immediately due
+        (no catch-up / skip-missed policy).
+        """
         if not self.enabled or self.next_run is None:
             return False
         return datetime.now(timezone.utc) >= self.next_run
@@ -176,7 +200,14 @@ class ScheduledTask:
 
 
 class TaskScheduler:
-    """Manages scheduled tasks."""
+    """Manages scheduled tasks (PASSIVE -- see module docstring).
+
+    Holds tasks and computes due-ness; performs no scheduling of its own.
+    Who drives execution: the caller. A task runs only when the caller
+    explicitly invokes run_due_tasks(); there is no loop, timer, or
+    start/stop/tick. What happens to a task whose next_run has passed without
+    a run: it is immediately due on the next run_due_tasks() call -- no catch-up / skip-missed policy -- and a disabled task's next_run is never advanced.
+    """
 
     def __init__(self):
         self._tasks: dict[str, ScheduledTask] = {}
@@ -233,7 +264,13 @@ class TaskScheduler:
         return False
 
     def run_due_tasks(self) -> list[dict[str, Any]]:
-        """Run all tasks that are due."""
+        """Run all tasks that are due.
+
+        This is the sole execution entry point and the only way a task runs:
+        the scheduler is passive and has no loop/timer, so the caller must
+        invoke this (e.g. on a timer). Each due task's result is
+        {"task_id", "name", "success", "status"}.
+        """
         results = []
         for task in self._tasks.values():
             if task.is_due():
