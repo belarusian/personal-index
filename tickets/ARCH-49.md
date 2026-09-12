@@ -1,6 +1,6 @@
 # ARCH-49: content-digest — the summary's item count double-counts multi-tag entries and is decoupled from total_entries
 
-Status: OPEN
+Status: IMPLEMENTED #1314@0396481 (cycle 253)
 Component: `personal_index/content_digest.py`
 Issue: #1146
 Refs: ARCH-2 (#983 umbrella)

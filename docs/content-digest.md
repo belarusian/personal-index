@@ -118,7 +118,12 @@ max_entries_per_section: int = 10) -> ContentDigest`:
   so equal-score entries keep their insertion order.
 - `sections = self._resolve_sections(entries, group_by,
   max_entries_per_section)` (see below).
-- `summary = self._generate_summary(sections)` (see below).
+- `summary = self._generate_summary(sections, total_entries=len(entries))`
+  (see below). Under the ARCH-49 Option A contract the summary's
+  "N new items" figure **always equals `total_entries`** (the
+  distinct-entry count); it is NOT the sum of the per-section (capped)
+  counts, so multi-tag entries are not double-counted and the per-section
+  cap does not deflate the headline number.
 - Returns `ContentDigest(title=title, generated_at=now,
   period_start=period_start or (now - 7 days).isoformat(),
   period_end=period_end or now, sections=sections,
@@ -155,13 +160,14 @@ max_entries_per_section: int = 10) -> ContentDigest`:
   keys())` order, each capped at `max_per_section`. Each entry lands in
   exactly one bucket, so the section-count sum equals the distinct-entry count
   here (before capping).
-- `_generate_summary(self, sections) -> str`: `total = sum(s.count for s in
-  sections)`. If `total == 0` returns `"No new content found."`. Otherwise it
-  lists up to the first 5 section topics (appending `"...and {n} more"` when
-  there are more than 5) and returns
+- `_generate_summary(self, sections, total_entries) -> str`: `total =
+  total_entries` (the distinct-entry count passed in from `generate`). If
+  `total == 0` returns `"No new content found."`. Otherwise it lists up to
+  the first 5 section topics (appending `"...and {n} more"` when there are
+  more than 5) and returns
   `f"{total} new items across {len(sections)} topics: {', '.join(names)}"`.
-  **`total` is the sum of the (capped) section counts, not `total_entries`** —
-  see Contract Holes.
+  **`total` is `total_entries` (the distinct-entry count), NOT the sum of the
+  (capped) section counts** — see Contract Holes.
 
 ## Contract Holes
 
