@@ -240,3 +240,49 @@ class TestGenerateDocstringDefaults:
         assert digest.period_start == "2026-01-01T00:00:00+00:00"
         assert digest.period_end == "2026-01-07T00:00:00+00:00"
         assert digest.total_entries == 1
+
+
+class TestSummaryEqualsTotalEntries:
+    """Pin the ARCH-49 Option A contract: the summary's "N new items"
+    figure always equals total_entries (the distinct-entry count), not the
+    sum of the per-section (capped) counts."""
+
+    def test_generate_single_untagged_entry(self):
+        """Happy path: one untagged entry, group_by="tags" -> one
+        "Uncategorized" section, total_entries == 1, summary count 1."""
+        gen = DigestGenerator()
+        gen.add_entry(make_entry(title="Solo", tags=[], score=1.0))
+        digest = gen.generate(group_by="tags")
+        assert digest.total_entries == 1
+        assert [s.topic for s in digest.sections] == ["Uncategorized"]
+        assert digest.sections[0].count == 1
+        assert digest.summary.startswith("1 new items")
+
+    def test_generate_multi_tag_entry_summary_count(self):
+        """Contract hole (inflation): one entry tagged ["a", "b"] -> two
+        sections of count 1 each, total_entries == 1, and the summary's
+        "N new items" figure equals total_entries (1, not 2) under Option A."""
+        gen = DigestGenerator()
+        gen.add_entry(make_entry(title="Multi", tags=["a", "b"], score=1.0))
+        digest = gen.generate(group_by="tags")
+        assert digest.total_entries == 1
+        assert [s.topic for s in digest.sections] == ["a", "b"]
+        assert all(s.count == 1 for s in digest.sections)
+        # Option A: headline number is the distinct-entry count, not 2.
+        assert digest.summary.startswith("1 new items")
+        assert "2 new items" not in digest.summary
+
+    def test_generate_over_cap_summary_count(self):
+        """Guard path (deflation): 15 entries all tagged "a" with
+        max_entries_per_section=10 -> one section of 10, total_entries == 15,
+        and the summary's item count is 15 (not the capped 10) under Option A."""
+        gen = DigestGenerator()
+        for i in range(15):
+            gen.add_entry(make_entry(title=f"E{i}", tags=["a"], score=float(i)))
+        digest = gen.generate(group_by="tags", max_entries_per_section=10)
+        assert digest.total_entries == 15
+        assert [s.topic for s in digest.sections] == ["a"]
+        assert digest.sections[0].count == 10
+        # Option A: headline number is the distinct-entry count, not the cap.
+        assert digest.summary.startswith("15 new items")
+        assert "10 new items" not in digest.summary
