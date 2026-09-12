@@ -1,6 +1,6 @@
 # TICKET-531: Pin DedupResult.summary() contract + empty-state guard test
 
-**Status:** OPEN
+**Status:** CLAIMED 2026-09-12
 **File:** personal_index/content_dedup.py
 **Issue:** #917
 
