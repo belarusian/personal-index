@@ -21,7 +21,26 @@ class PriorityLevel(Enum):
 
     @classmethod
     def from_score(cls, score: float) -> PriorityLevel:
-        """Determine priority level from a normalized score (0-1)."""
+        """Determine priority level from a normalized score (0-1).
+
+        This is a standalone convenience with FIXED hardcoded bands that
+        do NOT read ``PriorityConfig``:
+
+        - ``score >= 0.8`` -> ``CRITICAL``
+        - ``score >= 0.6`` -> ``HIGH``
+        - ``score >= 0.4`` -> ``MEDIUM``
+        - ``score > 0`` (strictly greater than zero) -> ``LOW``
+        - otherwise (``score <= 0``) -> ``ARCHIVE``
+
+        It is intentionally a DIFFERENT mapping from
+        ``PriorityCalculator._level_for_score``, which is the config-driven
+        path used by ``calculate``/``batch_calculate`` (``LOW`` only for
+        ``score >= low_threshold``, default ``0.2``). The two paths
+        therefore DISAGREE for any ``score`` in ``(0, 0.2)``:
+        ``from_score`` returns ``LOW`` while ``_level_for_score`` (default
+        config) returns ``ARCHIVE``. Tuning a ``PriorityConfig`` threshold
+        has NO effect on ``from_score``. See docs/content-priority.md.
+        """
         if score >= 0.8:
             return cls.CRITICAL
         elif score >= 0.6:

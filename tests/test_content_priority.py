@@ -275,3 +275,50 @@ class TestGetSummaryPinning:
         calc = PriorityCalculator()
         # Guard path: empty results -> {} (no zero-valued keys for any level).
         assert calc.get_summary([]) == {}
+
+
+class TestFromScoreVsLevelForScore:
+    """ARCH-45 (Option B): from_score and _level_for_score are two documented,
+    intentionally divergent score->level paths. These tests pin the exact
+    boundary values of each and the documented relationship between them."""
+
+    def test_from_score_bands(self):
+        # Pin from_score's FIXED hardcoded bands (independent of PriorityConfig).
+        assert PriorityLevel.from_score(0.0) is PriorityLevel.ARCHIVE
+        assert PriorityLevel.from_score(0.1) is PriorityLevel.LOW
+        assert PriorityLevel.from_score(0.2) is PriorityLevel.LOW
+        assert PriorityLevel.from_score(0.4) is PriorityLevel.MEDIUM
+        assert PriorityLevel.from_score(0.6) is PriorityLevel.HIGH
+        assert PriorityLevel.from_score(0.8) is PriorityLevel.CRITICAL
+        # Guard: negative score -> ARCHIVE (score <= 0 boundary).
+        assert PriorityLevel.from_score(-0.5) is PriorityLevel.ARCHIVE
+
+    def test_level_for_score_bands_default_config(self):
+        # Pin _level_for_score under the DEFAULT config (>= low_threshold=0.2).
+        calc = PriorityCalculator()
+        assert calc._level_for_score(0.1) is PriorityLevel.ARCHIVE
+        assert calc._level_for_score(0.2) is PriorityLevel.LOW
+        assert calc._level_for_score(0.4) is PriorityLevel.MEDIUM
+        assert calc._level_for_score(0.6) is PriorityLevel.HIGH
+        assert calc._level_for_score(0.8) is PriorityLevel.CRITICAL
+
+    def test_from_score_vs_level_for_score_divergence(self):
+        # The documented divergence: for a score in (0, 0.2) the two paths
+        # DISAGREE. from_score(0.1) -> LOW, _level_for_score(0.1) -> ARCHIVE.
+        calc = PriorityCalculator()
+        assert PriorityLevel.from_score(0.1) is PriorityLevel.LOW
+        assert calc._level_for_score(0.1) is PriorityLevel.ARCHIVE
+        # And they agree at the shared band boundaries (0.2, 0.4, 0.6, 0.8).
+        for s in (0.2, 0.4, 0.6, 0.8):
+            assert PriorityLevel.from_score(s) is calc._level_for_score(s)
+
+    def test_from_score_ignores_config(self):
+        # Option B: tuning a PriorityConfig threshold changes _level_for_score
+        # but has NO effect on from_score.
+        config = PriorityConfig(low_threshold=0.5)
+        calc = PriorityCalculator(config=config)
+        # from_score(0.3) is unchanged by the config: 0.3 > 0 -> LOW.
+        assert PriorityLevel.from_score(0.3) is PriorityLevel.LOW
+        # _level_for_score(0.3) reflects the tuned low_threshold=0.5:
+        # 0.3 < 0.5 -> ARCHIVE (would be LOW under the default 0.2 threshold).
+        assert calc._level_for_score(0.3) is PriorityLevel.ARCHIVE
