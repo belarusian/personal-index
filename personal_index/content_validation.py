@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 
 @dataclass
@@ -225,9 +226,11 @@ class ContentValidator:
 
     def _is_valid_url(self, url: str) -> bool:
         """Check if a URL is valid."""
-        if not url:
+        if not url or not isinstance(url, str):
             return False
-        return url.startswith(("http://", "https://"))
+        if not url.startswith(("http://", "https://")):
+            return False
+        return bool(urlparse(url).netloc.strip())
 
     def _is_valid_date(self, value: Any) -> bool:
         """Check if a value is a valid date."""
