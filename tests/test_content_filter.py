@@ -280,3 +280,36 @@ class TestGetFilterReasonsRelevanceTitleContentPinning:
         reasons = f.get_filter_reasons(page)
         assert not any("relevance score" in r for r in reasons)
         assert f.should_include(page) is True
+
+
+class TestShouldIncludeReturnedObjectPinning:
+    """Pin the returned bool of should_include (True path + False path).
+
+    should_include returns True iff get_filter_reasons(page) is empty.
+    """
+
+    def test_passing_page_returns_true(self, filter_no_store):
+        # Passes all eight checks -> get_filter_reasons is empty -> True.
+        page = CrawledPage(
+            url="https://example.com",
+            title="A valid title",
+            content="x" * 200,
+        )
+        assert filter_no_store.get_filter_reasons(page) == []
+        assert filter_no_store.should_include(page) is True
+
+    def test_failing_page_returns_false(self, filter_no_store):
+        # Fails check 1 (content too short) -> non-empty reasons -> False.
+        page = CrawledPage(
+            url="https://example.com",
+            title="A valid title",
+            content="short",
+        )
+        assert filter_no_store.get_filter_reasons(page) != []
+        assert filter_no_store.should_include(page) is False
+
+    def test_docstring_states_delegation_contract(self):
+        # Pin a stable fragment of the exact-contract docstring (no backtick
+        # boundary crossed, case-insensitive via lower()).
+        doc = ContentFilter.should_include.__doc__ or ""
+        assert "delegates entirely to" in doc.lower()
