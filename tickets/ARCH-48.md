@@ -1,6 +1,6 @@
 # ARCH-48: content-exporter — per-format escaping is inconsistent; Markdown escapes nothing
 
-Status: OPEN
+Status: CLAIMED 2026-09-12 (impl251/content-exporter-markdown-escaping, cycle 251)
 Component: `personal_index/content_exporter.py`
 Issue: #1143
 Refs: ARCH-2 (#983 umbrella)
