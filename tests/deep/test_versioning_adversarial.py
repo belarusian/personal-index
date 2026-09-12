@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
-
 from datetime import datetime
 
 from personal_index.versioning import ContentVersion, VersionTracker
@@ -183,17 +181,6 @@ def test_record_version_max_versions_enforced():
     assert [v.content_length for v in versions] == [len("c7"), len("c8"), len("c9")]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-25: max_versions=0 is silently ignored. record_version enforces the "
-        "cap with self._versions[url][-self._max_versions:], and Python's "
-        "list[-0:] == list[0:] == the FULL list, so a zero cap keeps every "
-        "version instead of none. Same slicing-gotcha class as the negative-"
-        "slice 'top N' leaks (QA-15/QA-16). Expected: get_versions == [] "
-        "(a zero cap should keep zero versions). NOT fixed by validator."
-    ),
-)
 def test_record_version_max_versions_zero_keeps_none():
     t = VersionTracker(max_versions=0)
     t.record_version("http://x.com", "c1")

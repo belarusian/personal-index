@@ -81,7 +81,9 @@ class PerformanceMonitor:
         sample = MetricSample(name=name, value=value, tags=tags or {})
         samples = self._samples[name]
         samples.append(sample)
-        if len(samples) > self._window_size:
+        if self._window_size <= 0:
+            self._samples[name] = []
+        elif len(samples) > self._window_size:
             self._samples[name] = samples[-self._window_size :]
 
         if name not in self._stats:
