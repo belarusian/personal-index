@@ -1,6 +1,6 @@
 # ARCH-27: content_reader — duplicate URLs make `get` and the collection views disagree
 
-- **Status:** OPEN
+- **Status:** OPEN-PUSHBACK (IMPL-7: criterion 3 requires docs/content-reader.md edit, architect-owned; see tickets/IMPL-7.md)
 - **Component:** `personal_index/content_reader.py` (`ContentReader`)
 - **Docs:** `docs/content-reader.md` (contract hole 1)
 - **Issue:** #1073
