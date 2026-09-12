@@ -68,7 +68,23 @@ class ContentFilter:
         return compiled
 
     def should_include(self, page: CrawledPage) -> bool:
-        """Determine if a page should be included in the index."""
+        """Return whether the page passes every filter check.
+
+        Computes ``reasons = self.get_filter_reasons(page)`` and returns
+        ``len(reasons) == 0``: True iff ``get_filter_reasons`` returns an
+        empty list (the page passes all eight checks), False otherwise.
+        Performs no checks of its own; it delegates entirely to
+        ``get_filter_reasons``. No side effects of its own, but the
+        delegated call runs the eight checks, and the interest-match
+        check may set ``page.matched_interests`` and
+        ``page.relevance_score`` on a match.
+
+        Args:
+            page: Crawled page to evaluate.
+
+        Returns:
+            True if the page is included, False if it is filtered out.
+        """
         reasons = self.get_filter_reasons(page)
         return len(reasons) == 0
 
