@@ -31,8 +31,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from personal_index.index import SearchIndex as IndexSearchIndex
 from personal_index.interests import InterestStore
 from personal_index.migrations.base import MigrationStore
@@ -50,11 +48,6 @@ def _write(path, obj) -> str:
 # Site 1: personal_index/index.py SearchIndex._load
 # ---------------------------------------------------------------------------
 class TestIndexSearchIndex:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-20: index.py SearchIndex._load crashes (AttributeError) on "
-        "non-dict page value; contract (ARCH-63) requires empty state",
-    )
     def test_non_dict_page_value_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "idx.json", {"pages": {"u": "notadict"}, "word_index": {}})
         idx = IndexSearchIndex(db_path=p)
@@ -90,11 +83,6 @@ class TestIndexSearchIndex:
 # Site 2: personal_index/search_index.py SearchIndex._load
 # ---------------------------------------------------------------------------
 class TestSearchIndexStore:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-20: search_index.py SearchIndex._load crashes (AttributeError) "
-        "on non-dict page value; contract (ARCH-63) requires empty state",
-    )
     def test_non_dict_page_value_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "idx.json", {"pages": {"u": "notadict"}, "word_index": {}})
         idx = SearchIndexStore(index_path=p)
@@ -124,11 +112,6 @@ class TestSearchIndexStore:
 # Site 3: personal_index/tags.py TagStore._load
 # ---------------------------------------------------------------------------
 class TestTagStore:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-20: tags.py TagStore._load crashes (AttributeError) on "
-        "non-dict tag value; contract (ARCH-63) requires empty state",
-    )
     def test_non_dict_tag_value_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "tags.json", {"tags": {"t": "notadict"}, "page_tags": {}})
         store = TagStore(store_path=p)
@@ -157,11 +140,6 @@ class TestTagStore:
 # Site 4: personal_index/interests.py InterestStore._load
 # ---------------------------------------------------------------------------
 class TestInterestStore:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-20: interests.py InterestStore._load crashes (AttributeError) "
-        "on non-dict interest value; contract (ARCH-63) requires empty state",
-    )
     def test_non_dict_interest_value_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "interests.json", {"i": "notadict"})
         store = InterestStore(store_path=p)
@@ -190,11 +168,6 @@ class TestInterestStore:
 # Site 5: personal_index/migrations/base.py MigrationStore._load
 # ---------------------------------------------------------------------------
 class TestMigrationStore:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-20: migrations/base.py MigrationStore._load crashes (TypeError) "
-        "on non-dict migration record; contract (ARCH-63) requires empty state",
-    )
     def test_non_dict_record_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "mig.json", {"migrations": ["notadict"]})
         store = MigrationStore(store_path=p)
@@ -288,12 +261,6 @@ class TestSafeSitesArmor:
 # End-to-end CLI: `health` must not crash on a malformed search_index.json
 # ---------------------------------------------------------------------------
 class TestCliHealthEndToEnd:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-20: `personal-index health` crashes (AttributeError) when "
-        "search_index.json maps a page to a non-dict value; contract (ARCH-63) "
-        "requires degrading to empty and reporting no indexed content",
-    )
     def test_health_malformed_index_does_not_crash(self, tmp_path):
         from click.testing import CliRunner
 

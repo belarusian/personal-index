@@ -38,7 +38,7 @@ class InterestStore:
                 name: Interest.from_dict(d)
                 for name, d in data.items()
             }
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
             self._interests = {}
 
     def _save(self) -> None:

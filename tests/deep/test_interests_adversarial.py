@@ -92,14 +92,14 @@ class TestConstructionAndLoads:
         s = InterestStore(store_path=str(p))
         assert s.list_all() == []
 
-    def test_non_dict_value_raises_keyerror_is_caught(self, tmp_path):
+    def test_non_dict_value_gracefully_degrades_to_empty(self, tmp_path):
         # value is a list -> Interest.from_dict(list) -> .get raises
-        # AttributeError which is NOT in the except tuple -> propagates.
-        # Document actual behavior: this is a real edge; pin what happens.
+        # AttributeError which IS now in the except tuple -> caught.
+        # QA-20: defensive-load-crash sweep broadens except tuples.
         p = tmp_path / "i.json"
         p.write_text(json.dumps({"a": ["not", "a", "dict"]}))
-        with pytest.raises(Exception):
-            InterestStore(store_path=str(p))
+        s = InterestStore(store_path=str(p))
+        assert s.list_all() == []
 
 
 # ---------------------------------------------------------------------------
