@@ -46,6 +46,20 @@ Plain class (not a dataclass). Class attribute:
   document for each format (HTML shell with no `<article>`, JSON `"[]"`,
   Markdown with only the H1, RSS channel with no `<item>`). No error is raised
   for an empty list.
+- **Per-format escaping contract** (stated so a caller knows, without reading
+  the source, which characters each format sanitizes and which it does not):
+  - **HTML**: every user-supplied field (title, description, tags, link, and
+    the document title) is escaped with `html.escape` (escapes `& < > " '`).
+  - **RSS**: title, description, link, and guid are escaped with
+    `xml.sax.saxutils.escape` (escapes only `& < >` — **not** the quotes
+    `"`/`'`).
+  - **Markdown**: title, link, description, tags, and the document H1 title are
+    escaped for well-formed Markdown — backslash, `[`, `]`, `(`, `)` are
+    escaped, newlines are collapsed to spaces, and link-target spaces are
+    percent-encoded (`%20`) — so the output is well-formed for arbitrary input
+    (no broken link syntax, no stray heading or list).
+  - **JSON**: fields are serialized verbatim by `json.dumps` (no escaping
+    beyond JSON's own string rules).
 
 `export_to_file(self, items, fmt, filepath) -> str`:
 
@@ -83,10 +97,18 @@ Plain class (not a dataclass). Class attribute:
 - `_export_markdown(items) -> str` → `_render_markdown`: `lines = [f"# {self.title}", ""]`
   then one `_md_item` block per item; joined with `"\n"`.
 - `_md_item(item) -> str`: heading is `f"## [{title}]({link})"` when `link` is
-  truthy else `f"## {title}"`; `description` is appended verbatim when truthy;
-  a `📅 <date>` / `🏷️ <tags>` meta line is appended only for the present parts.
-  **No escaping is applied to any field** (title, link, description, tags, or
-  the H1 `self.title`) — see Contract Holes.
+  truthy else `f"## {title}"`; `description` is appended when truthy; a
+  `📅 <date>` / `🏷️ <tags>` meta line is appended only for the present parts.
+  **All fields are escaped for well-formed Markdown** (title, link,
+  description, tags, and the H1 `self.title`): backslash, `[`, `]`, `(`, `)`
+  are escaped, newlines are collapsed to spaces, and link-target spaces are
+  percent-encoded (`%20`). See the per-format escaping contract on `export`
+  above.
+- `_md_escape(text) -> str`: escapes backslash, `[`, `]`, `(`, `)` and
+  collapses newlines to spaces (inline-field escaping).
+- `_md_link_target(link) -> str`: collapses newlines, escapes backslash and
+  parentheses, and percent-encodes spaces (`%20`) so the `(...)` target syntax
+  is never broken.
 - `_export_rss(items) -> str` → `_render_rss`: emits the XML declaration,
   `<rss version="2.0">`, a `<channel>` with `xml_escape`-d `<title>`/`<link>`
   (base_url)/`<description>` and a `<lastBuildDate>` stamped from

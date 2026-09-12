@@ -29,6 +29,25 @@ class ContentExporter:
         accepted. If the normalized format is not one of
         ``SUPPORTED_FORMATS`` (``"html"``, ``"json"``, ``"markdown"``,
         ``"rss"``), a ``ValueError`` is raised before any handler runs.
+
+        Per-format escaping contract:
+        - **HTML**: every user-supplied field (title, description, tags, link,
+          and the document title) is escaped with ``html.escape`` (escapes
+          ``& < > " '``).
+        - **RSS**: title, description, link, and guid are escaped with
+          ``xml.sax.saxutils.escape`` (escapes only ``& < >`` — **not** the
+          quotes ``"``/``'``).
+        - **Markdown**: title, link, description, tags, and the document H1
+          title are escaped for well-formed Markdown — backslash, ``[``,
+          ``]``, ``(``, ``)`` are escaped, newlines are collapsed to spaces,
+          and link-target spaces are percent-encoded (``%20``) — so the output
+          is well-formed for arbitrary input (no broken link syntax, no stray
+          heading or list).
+        - **JSON**: fields are serialized verbatim by ``json.dumps`` (no
+          escaping beyond JSON's own string rules).
+
+        A caller reading this docstring knows, without reading the source,
+        which characters each format sanitizes and which it does not.
         """
         fmt = fmt.lower().strip()
         if fmt not in self.SUPPORTED_FORMATS:
@@ -89,20 +108,49 @@ class ContentExporter:
     # --- Markdown rendering ---
 
     def _render_markdown(self, items: list[dict[str, Any]]) -> str:
-        lines = [f"# {self.title}", ""]
+        lines = [f"# {self._md_escape(self.title)}", ""]
         for item in items:
             lines.append(self._md_item(item))
         return "\n".join(lines)
 
+    def _md_escape(self, text: str) -> str:
+        """Escape Markdown-significant characters for inline use.
+
+        Backslash is escaped first, then ``[``, ``]``, ``(``, ``)`` (which
+        would otherwise break link/heading syntax), and newlines are collapsed
+        to spaces so no stray heading or list is introduced.
+        """
+        out = text.replace("\\", "\\\\")
+        for ch in "[]()":
+            out = out.replace(ch, "\\" + ch)
+        out = out.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+        return out
+
+    def _md_link_target(self, link: str) -> str:
+        """Render a link target that stays well-formed for arbitrary input.
+
+        Newlines are collapsed, parentheses and backslashes are escaped, and
+        spaces are percent-encoded (``%20``) so the ``(...)`` target syntax is
+        never broken.
+        """
+        target = link.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+        target = target.replace("\\", "\\\\")
+        for ch in "()":
+            target = target.replace(ch, "\\" + ch)
+        target = target.replace(" ", "%20")
+        return target
+
     def _md_item(self, item: dict[str, Any]) -> str:
-        title = item.get("title", "Untitled")
-        link = item.get("link", "")
-        desc = item.get("description", "")
+        title = self._md_escape(item.get("title", "Untitled"))
+        raw_link = item.get("link", "")
+        desc = self._md_escape(item.get("description", ""))
+        if desc.startswith("#"):
+            desc = "\\" + desc
         date_str = self._format_date(item.get("date"))
         tags = item.get("tags", [])
-        tag_str = ", ".join(tags) if tags else ""
-        if link:
-            heading = f"## [{title}]({link})"
+        tag_str = ", ".join(self._md_escape(t) for t in tags) if tags else ""
+        if raw_link:
+            heading = f"## [{title}]({self._md_link_target(raw_link)})"
         else:
             heading = f"## {title}"
         parts = [heading, ""]
@@ -113,7 +161,7 @@ class ContentExporter:
         if date_str:
             meta.append(f"📅 {date_str}")
         if tag_str:
-            meta.append(f"🏷️ {tag_str}")
+            meta.append(f"🏷\ufe0f {tag_str}")
         if meta:
             parts.append(" | ".join(meta))
         parts.append("")
