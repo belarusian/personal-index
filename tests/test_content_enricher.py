@@ -261,3 +261,82 @@ class TestEnrichReturnedObjectPinning:
         assert enriched.has_images is False
         # language is never computed; stays at the dataclass default 'en'
         assert enriched.language == "en"
+
+
+class TestBatchEnrichHtmlPassthrough:
+    """ARCH-33: batch_enrich must pass html through to enrich so the
+    content-type flags agree with the single enrich path."""
+
+    def _rich_html(self):
+        return (
+            '<html><body>'
+            '<pre>def f(): pass</pre>'
+            '<a href="http://example.com">link</a>'
+            '<img src="p.jpg" alt="p"/>'
+            '</body></html>'
+        )
+
+    def test_batch_vs_single_consistency(self):
+        """(a) Both paths yield the same has_* flags for the same input."""
+        enricher = ContentEnricher()
+        title, text = "Consistency", "This is great and amazing and wonderful"
+        html = self._rich_html()
+        single = enricher.enrich(title, text, html=html)
+        batch = enricher.batch_enrich([(title, text, html)])
+        assert len(batch) == 1
+        assert single.has_code is True
+        assert single.has_links is True
+        assert single.has_images is True
+        assert batch[0].has_code == single.has_code
+        assert batch[0].has_links == single.has_links
+        assert batch[0].has_images == single.has_images
+
+    def test_enrich_guard_path_no_html(self):
+        """(b) html=None leaves flags False but still populates metrics."""
+        enricher = ContentEnricher()
+        text = "The cat sat on the mat near the window"
+        enriched = enricher.enrich("Guard", text)
+        assert enriched.has_code is False
+        assert enriched.has_links is False
+        assert enriched.has_images is False
+        assert enriched.word_count > 0
+        assert enriched.reading_time >= 0
+        assert isinstance(enriched.keywords, list)
+        assert isinstance(enriched.sentiment_score, float)
+        assert isinstance(enriched.complexity_score, float)
+
+    def test_enrich_pre_only_html(self):
+        """(c) A <pre>-only html sets has_code True, others False."""
+        enricher = ContentEnricher()
+        html = '<html><body><pre>print("hi")</pre></body></html>'
+        enriched = enricher.enrich("PreOnly", "some text", html=html)
+        assert enriched.has_code is True
+        assert enriched.has_links is False
+        assert enriched.has_images is False
+
+    def test_to_dict_keys_and_enriched_at(self):
+        """(d) to_dict has all twelve keys and enriched_at is an ISO str."""
+        enricher = ContentEnricher()
+        enriched = enricher.enrich("Dict", "hello world", html=None)
+        d = enriched.to_dict()
+        expected = {
+            "title", "text", "word_count", "reading_time", "keywords",
+            "language", "has_code", "has_links", "has_images",
+            "sentiment_score", "complexity_score", "enriched_at",
+        }
+        assert set(d.keys()) == expected
+        assert isinstance(d["enriched_at"], str)
+        # ISO-8601: parseable and contains the 'T' separator
+        from datetime import datetime
+        datetime.fromisoformat(d["enriched_at"])
+        assert "T" in d["enriched_at"]
+
+    def test_batch_backward_compat_2tuple(self):
+        """(e) A 2-tuple item still works and yields all-False flags."""
+        enricher = ContentEnricher()
+        results = enricher.batch_enrich([("Title", "hello world")])
+        assert len(results) == 1
+        assert results[0].title == "Title"
+        assert results[0].has_code is False
+        assert results[0].has_links is False
+        assert results[0].has_images is False
