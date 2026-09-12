@@ -159,9 +159,9 @@ class ContentExtractor:
 
     def extract_readability_score(self, content: ExtractedContent) -> float:
         """Compute a content richness score (0.0-1.0) from three components:
-        min(word_count/500, 0.4) + min(len(headings)*0.1, 0.3) + 0.3 if
+        min(len(text.split())/500, 0.4) + min(len(headings)*0.1, 0.3) + 0.3 if
         meta_description present. Returns 0.0 if text is empty or
-        word_count < 50."""
+        len(text.split()) < 50."""
         if not content.text:
             return 0.0
 

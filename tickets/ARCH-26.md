@@ -1,6 +1,6 @@
 # ARCH-26: content_extractor — extract_readability_score ignores the word_count field (docstring says "word_count < 50" but the body re-splits content.text)
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-12
 - **Component:** `personal_index/content_extractor.py` (`ContentExtractor.extract_readability_score`).
 - **Issue:** #1071
 
