@@ -71,6 +71,8 @@ class MigrationRunner:
         Returns:
             List of MigrationRecord for rolled back migrations.
         """
+        if steps <= 0:
+            return []
         applied = self.registry.get_applied(self.store.get_applied_versions())
         to_rollback = list(reversed(applied))[:steps]
         results = []
