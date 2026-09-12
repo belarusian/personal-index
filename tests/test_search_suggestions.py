@@ -226,6 +226,65 @@ class TestSearchSuggestions:
     def test_suggest_no_matches(self, suggestions: SearchSuggestions) -> None:
         results = suggestions.suggest("zzzzz")
         assert len(results) == 0
+    # ── ARCH-30 trending score clamp tests ───────────────────
+
+    def test_trending_dominant_entry_score_clamped_to_1_0(self) -> None:
+        """A single dominant trending entry must clamp to 1.0, not 1.1 (ARCH-30)."""
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.record_search("python")
+        results = s.suggest("py", sources=["trending"])
+        trending = [r for r in results if r.source == "trending"]
+        assert len(trending) == 1
+        score = trending[0].score
+        assert score == 1.0
+        assert 0.0 <= score <= 1.0
+
+    def test_trending_multiple_entries_no_score_exceeds_1_0(self) -> None:
+        """With several trending entries, no returned score exceeds 1.0 (ARCH-30)."""
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.record_search("python")
+        s.record_search("python")
+        s.record_search("python")
+        s.record_search("pytorch")
+        s.record_search("pyramid")
+        results = s.suggest("py", sources=["trending"])
+        assert len(results) > 0
+        for r in results:
+            assert r.source == "trending"
+            assert 0.0 <= r.score <= 1.0
+
+    def test_trending_fuzzy_score_within_range(self) -> None:
+        """fuzzy=True trending suggestions also stay within [0.0, 1.0] (ARCH-30)."""
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.record_search("python")
+        s.record_search("python")
+        s.record_search("pytorch")
+        results = s.suggest("py", sources=["trending"], fuzzy=True)
+        assert len(results) > 0
+        for r in results:
+            assert 0.0 <= r.score <= 1.0
+
+    def test_non_trending_scores_unchanged(self) -> None:
+        """history/tags/keywords keep their current scores (regression guard, ARCH-30)."""
+        s = SearchSuggestions(max_suggestions=10, min_prefix_length=2)
+        s.add_search_history(["python tutorial", "python web"])
+        s.add_tags(["python", "javascript"])
+        s.add_keywords(["python", "async"])
+        for src in ("history", "tags", "keywords"):
+            results = s.suggest("py", sources=[src])
+            assert len(results) > 0
+            for r in results:
+                assert 0.0 <= r.score <= 1.0
+        # history: count/len*10 clamped, no multiplier -> top is 1.0
+        hist = s.suggest("py", sources=["history"])
+        assert max(r.score for r in hist) == 1.0
+        # tags: *0.9 multiplier -> top is 0.9
+        tags = s.suggest("py", sources=["tags"])
+        assert max(r.score for r in tags) == pytest.approx(0.9)
+        # keywords: *0.8 multiplier -> top is 0.8
+        kws = s.suggest("py", sources=["keywords"])
+        assert max(r.score for r in kws) == pytest.approx(0.8)
+
 
     # ── record_search / get_trending tests ────────────────────────
 
