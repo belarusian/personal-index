@@ -255,3 +255,88 @@ class TestContentVersioning:
         assert result is False
         # No new version created
         assert len(versioning.get_versions("item-1")) == 1
+
+    # -- ARCH-46 pinning tests (Option A: atomic temp-file-and-rename) --
+    def test_create_version_numbering(self, versioning):
+        """Pin per-item f"{item_id}_v{n}" numbering and the digit-tail rule."""
+        v1 = versioning.create_version("item-1", "first")
+        assert v1.version_id == "item-1_v1"
+        # A version id whose tail is not all digits is ignored in the max
+        # computation: the next real version is still _v2, not _v1b+1.
+        versioning._versions["item-1"].append(
+            ContentVersion(version_id="item-1_v1b", content="weird")
+        )
+        v2 = versioning.create_version("item-1", "second")
+        assert v2.version_id == "item-1_v2"
+
+    def test_load_missing_file_is_empty(self, tmp_path):
+        """Guard path: a storage_path that does not exist loads as empty."""
+        missing = str(tmp_path / "does_not_exist" / "versions.json")
+        v = ContentVersioning(storage_path=missing)
+        assert v.get_versions("item-1") == []
+
+    def test_save_load_roundtrip(self, versioning, tmp_storage):
+        """Happy-path persistence: versions survive a fresh construction."""
+        v1 = versioning.create_version(
+            "item-1", "content one", author="alice", message="first"
+        )
+        v2 = versioning.create_version(
+            "item-1", "content two", author="bob", message="second"
+        )
+        fresh = ContentVersioning(storage_path=tmp_storage)
+        versions = fresh.get_versions("item-1")
+        assert len(versions) == 2
+        assert versions[0].version_id == "item-1_v1"
+        assert versions[0].content == "content one"
+        assert versions[0].author == "alice"
+        assert versions[0].message == "first"
+        assert versions[0].created_at == v1.created_at
+        assert versions[1].version_id == "item-1_v2"
+        assert versions[1].content == "content two"
+        assert versions[1].author == "bob"
+        assert versions[1].message == "second"
+        assert versions[1].created_at == v2.created_at
+
+    def test_interrupted_write_does_not_silently_destroy(self, tmp_storage):
+        """Option A: a corrupt versions.json is not silently cleared to {}
+        and persisted over the previous contents on the next construction.
+
+        Under the atomic temp-file-and-rename contract, an interrupted _save
+        never leaves a truncated intermediate on disk; a corrupt file can
+        only arise from pre-existing corruption or an external writer.
+        Construction must not silently clear the store to {} and then
+        overwrite the file with the empty dict.
+        """
+        # A valid store with known versions (the previous complete file).
+        data = {
+            "item-1": [
+                {
+                    "version_id": "item-1_v1",
+                    "content": "known one",
+                    "created_at": "2024-01-01T00:00:00",
+                    "author": "alice",
+                    "message": "first",
+                },
+                {
+                    "version_id": "item-1_v2",
+                    "content": "known two",
+                    "created_at": "2024-01-02T00:00:00",
+                    "author": "bob",
+                    "message": "second",
+                },
+            ]
+        }
+        with open(tmp_storage, "w") as f:
+            json.dump(data, f)
+        # Simulate an interrupted/corrupt write: truncate to invalid JSON.
+        corrupt = '{"item-1": [ {"version_id": "item-1_v1", "cont'
+        with open(tmp_storage, "w") as f:
+            f.write(corrupt)
+        # Next construction must not silently clear the store to {} and then
+        # overwrite the file with the empty dict.
+        ContentVersioning(storage_path=tmp_storage)
+        with open(tmp_storage) as f:
+            on_disk = f.read()
+        # The corrupt file is not overwritten with {} by construction.
+        assert on_disk != "{}"
+        assert on_disk == corrupt
