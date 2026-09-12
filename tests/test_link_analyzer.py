@@ -119,6 +119,35 @@ class TestLinkAnalyzer:
         assert agg["total_links"] == 2
         assert agg["external_links"] == 2
 
+    def test_aggregate_unique_external_domains_exceeds_top20_cap(self):
+        analyzer = LinkAnalyzer(base_domain="example.com")
+        page1 = {"url": "http://example.com/1",
+                 "links": [{"url": f"http://d{i}.com/x", "text": "t"} for i in range(25)]}
+        page2 = {"url": "http://example.com/2",
+                 "links": [{"url": f"http://d{i}.com/x", "text": "t"} for i in (0, 1, 25)]}
+        results = analyzer.analyze_batch([page1, page2])
+        agg = analyzer.get_aggregate_stats(results)
+        # 25 distinct on page1 + d25.com new on page2 (d0,d1 overlap) = 26 true union.
+        assert agg["unique_external_domains"] == 26
+
+    def test_aggregate_unique_external_domains_under_cap_unchanged(self):
+        analyzer = LinkAnalyzer(base_domain="example.com")
+        page1 = {"url": "http://example.com/1",
+                 "links": [{"url": f"http://e{i}.com/x", "text": "t"} for i in range(3)]}
+        page2 = {"url": "http://example.com/2",
+                 "links": [{"url": f"http://e{i}.com/x", "text": "t"} for i in range(2)]}
+        results = analyzer.analyze_batch([page1, page2])
+        agg = analyzer.get_aggregate_stats(results)
+        # e0,e1,e2 (3) + e0,e1 overlap -> true union = 3.
+        assert agg["unique_external_domains"] == 3
+
+    def test_aggregate_empty_results(self):
+        analyzer = LinkAnalyzer(base_domain="example.com")
+        agg = analyzer.get_aggregate_stats([])
+        assert agg["unique_external_domains"] == 0
+        assert agg["pages_analyzed"] == 0
+
+
     def test_no_base_domain_all_external(self):
         analyzer = LinkAnalyzer()
         links = self._make_links("http://example.com", "Home")
