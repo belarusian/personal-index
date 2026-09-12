@@ -1,9 +1,13 @@
 """Tests for the content webhooks module."""
 
+import hashlib
+import hmac
+
 from personal_index.content_webhooks import (
     WebhookEndpoint,
     WebhookEventType,
     WebhookManager,
+    WebhookPayload,
 )
 
 
@@ -192,6 +196,44 @@ class TestWebhookManager:
         json_str = self.manager.get_payload_json(payloads[0])
         assert "content.added" in json_str
         assert "New Content" in json_str
+
+    def test_get_payload_json_returns_signed_body(self) -> None:
+        self.manager.register_endpoint(
+            "https://example.com/webhook",
+            events=[WebhookEventType.CONTENT_ADDED],
+            secret="my-secret",
+        )
+        payloads = self.manager.dispatch_event(
+            WebhookEventType.CONTENT_ADDED,
+            {"title": "New Content"},
+        )
+        payload = payloads[0]
+        assert payload.body is not None
+        # get_payload_json returns exactly the signed body.
+        assert self.manager.get_payload_json(payload) == payload.body
+        # A receiver recomputing the HMAC over the returned body gets the
+        # same digest as the stored signature.
+        recomputed = hmac.new(
+            b"my-secret",
+            self.manager.get_payload_json(payload).encode(),
+            hashlib.sha256,
+        ).hexdigest()
+        assert recomputed == payload.signature
+
+    def test_get_payload_json_fallback_without_body(self) -> None:
+        # Manually-constructed payload with no body: back-compat fallback to
+        # a fresh-timestamp serialization.
+        payload = WebhookPayload(
+            payload_id="pl-manual",
+            event_type=WebhookEventType.CONTENT_ADDED,
+            data={"title": "Manual"},
+            endpoint_id="ep-1",
+            url="https://example.com/webhook",
+        )
+        assert payload.body is None
+        json_str = self.manager.get_payload_json(payload)
+        assert "content.added" in json_str
+        assert "Manual" in json_str
 
     def test_multiple_endpoints(self) -> None:
         self.manager.register_endpoint(
