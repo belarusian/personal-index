@@ -1,6 +1,6 @@
 # ARCH-41: tags — create_tag silently overwrites metadata and resets created_at on a name collision
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: `personal_index/tags.py`
 Issue: #1116
 Refs: ARCH-2 (#983 umbrella)
