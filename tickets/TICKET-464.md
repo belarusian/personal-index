@@ -12,4 +12,4 @@
 5. Returns tags sorted by confidence descending
 **Fix:** Reword docstring to enumerate the guard, counting, confidence formula, and sort order. NO behavior change. Add pinning test.
 **Issue:** #769
-**Status:** OPEN
+**Status:** CLAIMED 2026-09-12
