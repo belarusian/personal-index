@@ -292,3 +292,65 @@ class TestBookmarkManager:
         assert manager.count() == 2
         assert manager.get("http://a.com").title == "A"
         assert manager.get("http://b.com").title == "B"
+
+    def test_load_default_replaces_unsaved(self, tmp_path):
+        # Normal path: default (merge=False) replaces the in-memory set with
+        # the file contents and returns the file count, dropping any unsaved
+        # in-memory bookmark.
+        manager = BookmarkManager()
+        manager.add(Bookmark(url="http://unsaved.com", title="Unsaved"))
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            json.dump(
+                [
+                    {"url": "http://a.com", "title": "A"},
+                    {"url": "http://b.com", "title": "B"},
+                ],
+                f,
+            )
+        loaded = manager.load(path)
+        assert loaded == 2
+        assert manager.get("http://unsaved.com") is None
+        assert manager.get("http://a.com").title == "A"
+        assert manager.get("http://b.com").title == "B"
+        assert manager.count() == 2
+
+    def test_load_merge_preserves_and_upserts(self, tmp_path):
+        # merge=True upserts file bookmarks over the current set: a URL
+        # collision preserves the existing created_at and refreshes
+        # updated_at, file-only and memory-only bookmarks are both kept, and
+        # the return value is the number of bookmarks read from the file.
+        manager = BookmarkManager()
+        known_created = "2020-01-01T00:00:00+00:00"
+        manager.add(
+            Bookmark(url="http://a.com", title="A-old", created_at=known_created)
+        )
+        manager.add(Bookmark(url="http://mem_only.com", title="MemOnly"))
+        path = str(tmp_path / "bookmarks.json")
+        with open(path, "w") as f:
+            json.dump(
+                [
+                    {"url": "http://a.com", "title": "A-new"},
+                    {"url": "http://file_only.com", "title": "FileOnly"},
+                ],
+                f,
+            )
+        loaded = manager.load(path, merge=True)
+        assert loaded == 2
+        a = manager.get("http://a.com")
+        assert a is not None
+        assert a.created_at == known_created
+        assert a.title == "A-new"
+        assert manager.get("http://mem_only.com") is not None
+        assert manager.get("http://file_only.com") is not None
+        assert manager.count() == 3
+
+    def test_load_merge_missing_file_noop(self, tmp_path):
+        # Guard path: merge=True with a missing file returns 0 and leaves the
+        # in-memory set untouched (no clear, no upsert).
+        manager = BookmarkManager()
+        manager.add(Bookmark(url="http://keep.com", title="Keep"))
+        loaded = manager.load(str(tmp_path / "nope.json"), merge=True)
+        assert loaded == 0
+        assert manager.count() == 1
+        assert manager.get("http://keep.com").title == "Keep"
