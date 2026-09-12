@@ -1,6 +1,6 @@
 # ARCH-35: content_aggregator — `merge_all` dedup key collapses items with both `id` and `title` falsy, silently dropping them on the default path
 
-Status: OPEN
+Status: CLAIMED 2026-09-12
 Component: `personal_index/content_aggregator.py`
 Issue: #1098
 Refs: ARCH-2 (#983 umbrella)
