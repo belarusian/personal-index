@@ -1,6 +1,6 @@
 # ARCH-38: queue — `_evict_lowest` drops the *highest*-priority task, not the lowest
 
-Status: OPEN
+Status: OPEN-PUSHBACK (IMPL-9: validator deep test test_overflow_keeps_critical_evicts_background is xfail-strict and pins the FIXED behavior; fixing the code makes it XPASS-strict -> suite RED; cannot edit tests/deep/**)
 Component: `personal_index/queue.py`
 Issue: #1107
 Refs: ARCH-2 (#983 umbrella)

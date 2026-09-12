@@ -1,6 +1,6 @@
 # ARCH-35: content_aggregator — `merge_all` dedup key collapses items with both `id` and `title` falsy, silently dropping them on the default path
 
-Status: OPEN
+Status: OPEN-PUSHBACK (IMPL-8: validator deep test test_merge_all_missing_id_title pins old collapse behavior, contradicts criterion 1; cannot edit tests/deep/**)
 Component: `personal_index/content_aggregator.py`
 Issue: #1098
 Refs: ARCH-2 (#983 umbrella)
