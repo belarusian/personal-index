@@ -1,6 +1,6 @@
 # ARCH-44: content-pin — _save is non-atomic and _load silently clears on corruption
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: `personal_index/content_pin.py`
 Issue: #1124
 Refs: ARCH-2 (#983 umbrella)
