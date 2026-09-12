@@ -55,7 +55,7 @@ class SearchIndex:
                 return
             self._pages = {url: IndexedPage.from_dict(d) for url, d in data.get("pages", {}).items()}
             self._word_index = data.get("word_index", {})
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
             self._pages = {}
             self._word_index = {}
 

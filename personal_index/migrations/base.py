@@ -216,5 +216,5 @@ class MigrationStore:
             for record_data in data.get("migrations", []):
                 record = MigrationRecord(**record_data)
                 self._records[record.version] = record
-        except (json.JSONDecodeError, FileNotFoundError) as e:
+        except (json.JSONDecodeError, FileNotFoundError, TypeError) as e:
             logger.warning("Failed to load migration store: %s", e)

@@ -67,7 +67,7 @@ class TagStore:
             # Convert lists back to sets
             for url, tags in self._page_tags.items():
                 self._page_tags[url] = set(tags)
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
             self._tags = {}
             self._page_tags = {}
 
