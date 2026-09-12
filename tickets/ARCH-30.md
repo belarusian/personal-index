@@ -1,6 +1,6 @@
 # ARCH-30: Trending exact-match suggestion score must stay within [0.0, 1.0]
 
-Status: OPEN
+Status: CLAIMED 2026-09-12
 Component: `personal_index.search_suggestions`
 Issue: #1084
 Carry-forward: ARCH-2 (#983)
