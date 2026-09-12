@@ -1,6 +1,6 @@
 # ARCH-29: Webhook signature must be verifiable against the delivered body
 
-Status: CLAIMED 2026-09-10
+Status: CLAIMED 2026-09-12
 Component: `personal_index.content_webhooks`
 Issue: #1081
 Carry-forward: ARCH-2 (#983)
