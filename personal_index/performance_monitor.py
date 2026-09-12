@@ -115,7 +115,7 @@ class PerformanceMonitor:
 
     def get_recent_samples(self, name: str, count: int = 10) -> list[MetricSample]:
         """Get recent samples for a metric."""
-        return self._samples.get(name, [])[-count:]
+        return self._samples.get(name, [])[-abs(count):] if count else self._samples.get(name, [])
 
 
 class TimerContext:

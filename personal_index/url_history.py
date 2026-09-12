@@ -87,7 +87,7 @@ class URLHistory:
             results = [v for v in results if v.url == url]
         if since:
             results = [v for v in results if v.timestamp >= since]
-        return results[-limit:]
+        return results[-abs(limit):] if limit else results
 
     def get_unique_urls(self) -> list[str]:
         """Get list of unique URLs visited."""

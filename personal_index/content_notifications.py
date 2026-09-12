@@ -211,7 +211,7 @@ class NotificationManager:
                 n for n in filtered
                 if n.notification_type == notification_type
             ]
-        return filtered[-limit:]
+        return filtered[-abs(limit):] if limit else filtered
 
     def clear_old(self, older_than: datetime) -> int:
         """Clear notifications older than the given time."""

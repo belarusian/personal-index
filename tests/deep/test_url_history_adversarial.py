@@ -253,19 +253,16 @@ class TestIdempotence:
 # the signal to re-verify and close QA-27.
 
 class TestNegativeSliceClassSweep:
-    @pytest.mark.xfail(strict=True, reason="QA-27: negative-slice top-N leak, unguarded [-N:]")
     def test_url_history_get_visits_negative_limit(self):
         h = _history(5)
         # limit=-1 should return the single most recent visit (1), not 4
         assert len(h.get_visits(limit=-1)) == 1
 
-    @pytest.mark.xfail(strict=True, reason="QA-27: negative-slice top-N leak, unguarded [-N:]")
     def test_url_history_get_visits_negative_limit_two(self):
         h = _history(5)
         # limit=-2 should return the 2 most recent visits, not 3 (results[2:])
         assert len(h.get_visits(limit=-2)) == 2
 
-    @pytest.mark.xfail(strict=True, reason="QA-27: negative-slice top-N leak, unguarded [-N:]")
     def test_performance_monitor_get_recent_samples_negative(self):
         from personal_index.performance_monitor import PerformanceMonitor
         pm = PerformanceMonitor()
@@ -273,7 +270,6 @@ class TestNegativeSliceClassSweep:
             pm.record("m", 1.0)
         assert len(pm.get_recent_samples("m", count=-1)) == 1
 
-    @pytest.mark.xfail(strict=True, reason="QA-27: negative-slice top-N leak, unguarded [-N:]")
     def test_content_notifications_get_recent_negative(self):
         from personal_index.content_notifications import NotificationManager
         nm = NotificationManager()
@@ -282,7 +278,6 @@ class TestNegativeSliceClassSweep:
                 type("N", (), {"notification_type": "n", "delivered": False})())
         assert len(nm.get_recent(limit=-1)) == 1
 
-    @pytest.mark.xfail(strict=True, reason="QA-27: negative-slice top-N leak, unguarded [-N:]")
     def test_analytics_get_search_events_negative(self):
         from personal_index.analytics import AnalyticsTracker
         a = AnalyticsTracker()
@@ -290,7 +285,6 @@ class TestNegativeSliceClassSweep:
             a._search_events.append(type("E", (), {})())
         assert len(a.get_search_events(limit=-1)) == 1
 
-    @pytest.mark.xfail(strict=True, reason="QA-27: negative-slice top-N leak, unguarded [-N:]")
     def test_analytics_get_crawl_events_negative(self):
         from personal_index.analytics import AnalyticsTracker
         a = AnalyticsTracker()

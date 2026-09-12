@@ -296,7 +296,7 @@ class AnalyticsTracker:
         """
         events = self._search_events
         if limit:
-            events = events[-limit:]
+            events = events[-abs(limit):]
         return events
 
     def get_crawl_events(self, limit: int | None = None) -> list[CrawlEvent]:
@@ -308,7 +308,7 @@ class AnalyticsTracker:
         """
         events = self._crawl_events
         if limit:
-            events = events[-limit:]
+            events = events[-abs(limit):]
         return events
 
     def get_search_stats(self) -> dict[str, Any]:
