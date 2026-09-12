@@ -33,8 +33,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from personal_index.backup import BackupManager
 from personal_index.migrations.base import BaseMigration, MigrationRegistry, MigrationStore
 from personal_index.migrations.runner import MigrationRunner
@@ -84,22 +82,12 @@ def _make_backups(bm: BackupManager, n: int, src: Path) -> None:
 # ---------------------------------------------------------------------------
 
 class TestMigrationRollbackNegativeSteps:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-28: negative-slice top-N leak, MigrationRunner.rollback(steps=-1) "
-               "rolls back all-but-last instead of 0",
-    )
     def test_rollback_negative_steps_returns_empty(self):
         runner, store = _applied_runner(3)
         # steps=-1 is out-of-range; contract says roll back 0 (== [])
         result = runner.rollback(steps=-1)
         assert result == []
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-28: negative-slice top-N leak, MigrationRunner.rollback(steps=-1) "
-               "rolls back all-but-last instead of 0",
-    )
     def test_rollback_negative_steps_keeps_all_applied(self):
         runner, store = _applied_runner(3)
         runner.rollback(steps=-1)
@@ -112,11 +100,6 @@ class TestMigrationRollbackNegativeSteps:
 # ---------------------------------------------------------------------------
 
 class TestBackupCleanupNegativeKeep:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-28: negative-slice top-N leak, BackupManager.cleanup_old_backups(keep=-1) "
-               "deletes 1 backup instead of 0",
-    )
     def test_cleanup_negative_keep_deletes_nothing(self):
         tmp = Path(tempfile.mkdtemp())
         src = tmp / "src"
@@ -127,11 +110,6 @@ class TestBackupCleanupNegativeKeep:
         deleted = bm.cleanup_old_backups(keep=-1)
         assert deleted == []
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-28: negative-slice top-N leak, BackupManager.cleanup_old_backups(keep=-1) "
-               "deletes 1 backup instead of 0",
-    )
     def test_cleanup_negative_keep_keeps_all(self):
         tmp = Path(tempfile.mkdtemp())
         src = tmp / "src"

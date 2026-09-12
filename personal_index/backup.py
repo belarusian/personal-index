@@ -278,6 +278,8 @@ class BackupManager:
 
     def cleanup_old_backups(self, keep: int = 5) -> list[str]:
         """Keep only the N most recent backups. Returns deleted backup IDs."""
+        if keep <= 0:
+            return []
         backups = self.list_backups()
         deleted = []
 
