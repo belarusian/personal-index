@@ -1,7 +1,7 @@
 # ARCH-28: content_scheduler is a passive scheduler with no execution loop and a stale next_run
 
 - **Component:** `personal_index/content_scheduler.py`
-- **Status:** CLAIMED 2026-09-10
+- **Status:** IMPLEMENTED #1277@3ac6a03
 - **Issue:** #1076
 - **Carry-forward:** ARCH-2 (#983) — advance the docs umbrella one page
   (docs/content-scheduler.md is the page this cycle).
