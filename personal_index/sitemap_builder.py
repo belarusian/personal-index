@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.etree.ElementTree import Element, SubElement, register_namespace, tostring
 
 logger = logging.getLogger(__name__)
 
 # Sitemap namespace
 SM_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 NSMAP = {"": SM_NS}
-
+register_namespace("", SM_NS)
 
 class SitemapEntry:
     """Represents a single URL entry in a sitemap."""
@@ -79,6 +79,27 @@ class SitemapBuilder:
         """
         self.entries.extend(entries)
 
+    @staticmethod
+    def _qualify(elem: Element) -> Element:
+        """Return a copy of elem with every tag qualified by SM_NS.
+
+        Recursively rewrites the tag of elem and all of its descendants to
+        ``{SM_NS}<localname>`` (preserving text, tail and attributes) so the
+        serialized document carries the sitemap namespace on every element.
+        Because SM_NS is registered as the default namespace, the serialized
+        bytes still use bare local names (no prefix) while a parser that
+        looks up the namespace recovers the qualified tags.
+        """
+        local = elem.tag.split("}")[-1]
+        new = Element(f"{{{SM_NS}}}{local}")
+        new.text = elem.text
+        new.tail = elem.tail
+        for attr, value in elem.attrib.items():
+            new.set(attr, value)
+        for child in elem:
+            new.append(SitemapBuilder._qualify(child))
+        return new
+
     def build(self) -> bytes:
         """Build the complete sitemap XML as bytes.
 
@@ -90,18 +111,18 @@ class SitemapBuilder:
         split_by_size() for the byte-size limit - and build() each chunk
         separately.
         """
-        root = Element("urlset", nsmap=NSMAP if NSMAP else {})  # type: ignore[arg-type]
+        root = Element(f"{{{SM_NS}}}urlset")
         for entry in self.entries:
-            root.append(entry.to_element())
+            root.append(self._qualify(entry.to_element()))
         xml_bytes = tostring(root, encoding="unicode", xml_declaration=False)
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_bytes}'.encode()
 
     def build_sitemap_index(self, sitemap_urls: list[str]) -> bytes:
         """Build a sitemap index file referencing multiple sitemaps."""
-        root = Element("sitemapindex", nsmap=NSMAP if NSMAP else {})  # type: ignore[arg-type]
+        root = Element(f"{{{SM_NS}}}sitemapindex")
         for url in sitemap_urls:
-            sitemap_elem = SubElement(root, "sitemap")
-            SubElement(sitemap_elem, "loc").text = url
+            sitemap_elem = SubElement(root, f"{{{SM_NS}}}sitemap")
+            SubElement(sitemap_elem, f"{{{SM_NS}}}loc").text = url
         xml_str = tostring(root, encoding="unicode", xml_declaration=False)
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
