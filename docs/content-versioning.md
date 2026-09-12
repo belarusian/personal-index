@@ -59,13 +59,22 @@ contract depends on their exact behavior):
     `KeyError`), while the other three use `.get(..., "")`.
   - **any** of `json.JSONDecodeError`, `KeyError`, `TypeError` during the read
     → `self._versions = {}` (the whole store is silently cleared, no exception
-    propagates, no log, no backup).
-- `_save(self) -> None`:
+    propagates, no log, no backup). Under the Option A contract (atomic
+    temp-file-and-rename in `_save`), an interrupted `_save` never leaves a
+    truncated intermediate on disk, so a corrupt file can only arise from
+    pre-existing corruption or an external writer — not from a crashed write.
+- `_save(self) -> None` — **atomic write (Option A durability contract)**:
   - `Path(self.storage_path).parent.mkdir(parents=True, exist_ok=True)` (the
     parent directory is created if absent).
-  - serializes `self._versions` to a nested dict and writes it with
-    `json.dump(data, f, indent=2)` via a **direct** `open(self.storage_path,
-    "w")` — no temp-file-and-rename, no fsync, no backup of the previous file.
+  - serializes `self._versions` to a nested dict and writes it to a temp
+    file in the same directory (`self.storage_path + ".tmp"`) with
+    `json.dump(data, f, indent=2)`, then `f.flush()` + `os.fsync(f.fileno())`,
+    then `os.replace(tmp_path, self.storage_path)`. The rename is atomic on
+    POSIX, so an interrupted `_save` leaves either the old complete file or
+    the new complete file — never a truncated intermediate. Postcondition:
+    an interrupted `_save` must NOT leave the store in a state where the
+    next construction + mutation silently and permanently loses all prior
+    versions.
 
 Public methods:
 
@@ -156,17 +165,15 @@ This is the same persistence-atomicity class already ticketed for
 `personal_index/content_pin.py` (ARCH-44: `_save`/`_load`), and it is the
 single most important hole here because versioning's entire purpose is
 durability — a version store that silently loses all history on a crash defeats
-the subsystem. The fix must make the persistence contract explicit (pick one
-and document it in the `_save`/`_load` docstrings + this page):
+the subsystem. **Option A (atomic write) is implemented:** `_save` now writes
+to a temp file in the same directory and `os.replace` it over `versions.json`
+(atomic on POSIX), so an interrupted write leaves the previous complete file
+intact; `_load`'s missing-file → empty behavior is preserved. The durability
+contract is stated in the `_save`/`_load` docstrings and in this page.
 
-- **Option A (atomic write):** make `_save` write to a temp file in the same
-  directory and `os.replace` it over `versions.json` (atomic on POSIX), so an
-  interrupted write leaves the previous complete file intact; keep `_load`'s
-  missing-file → empty behavior.
-- **Option B (corruption-detectable load):** keep the direct write but make
-  `_load` distinguish "file absent" (clean empty) from "file present but
-  unparseable" (corruption) — e.g. raise a typed error or log + preserve a
-  backup — so a corrupt file is surfaced instead of silently cleared to `{}`.
+Alternative Option B (corruption-detectable load) was considered but not
+chosen; the atomic-write pattern matches ARCH-44 and provides the stronger
+durability guarantee without changing the load semantics for normal operation.
 
 ## Secondary notes (not ticketed)
 
