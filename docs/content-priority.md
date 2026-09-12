@@ -38,6 +38,14 @@ Note the asymmetric boundary: the top three bands are inclusive (`>=`) but the
 LOW band is `score > 0`, so `score == 0` is `ARCHIVE`, not `LOW`, and any
 score in `(0, 0.4)` is `LOW`.
 
+**Relationship to `_level_for_score` (Option B — documented divergence):**
+`from_score` is a **standalone convenience** with these fixed bands and is
+intentionally a DIFFERENT mapping from `PriorityCalculator._level_for_score`
+(the config-driven path used by `calculate`/`batch_calculate`). The two paths
+DISAGREE for any `score` in `(0, 0.2)`: `from_score` returns `LOW` while
+`_level_for_score` (default config) returns `ARCHIVE`. Tuning a
+`PriorityConfig` threshold has **NO** effect on `from_score`.
+
 ### PriorityConfig
 
 `@dataclass` with 8 fields (all `float`):
@@ -142,6 +150,14 @@ depends on their exact math):
   medium_threshold` → `MEDIUM`, `>= low_threshold` → `LOW`, else `ARCHIVE`.
   All four boundaries are inclusive (`>=`), so `score == 0.2` is `LOW` and
   `score < 0.2` is `ARCHIVE`.
+
+**Relationship to `from_score` (Option B — documented divergence):** this is
+the **config-driven** path used by `calculate`/`batch_calculate`. It is
+intentionally a DIFFERENT mapping from the standalone
+`PriorityLevel.from_score` convenience: for any `score` in `(0, 0.2)`
+`_level_for_score` (default config) returns `ARCHIVE` while `from_score`
+returns `LOW`. Tuning a `PriorityConfig` threshold changes this path but has
+**NO** effect on `from_score`.
 
 ## Contract Holes
 
