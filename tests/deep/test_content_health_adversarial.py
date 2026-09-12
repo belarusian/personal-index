@@ -312,40 +312,18 @@ class TestCliHealthEndToEnd:
 # in search_index.json with "title": null; the CLI coerces content but NOT
 # title) and via the public check_item/check_all API.
 class TestNoneFieldDefect:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-26: check_item crashes (TypeError) on title=None; "
-               "_check_title_length calls len(title) unguarded",
-    )
     def test_check_item_none_title(self):
         r = _checker().check_item(url=GOOD_URL, title=None, content=GOOD_CONTENT)
         assert r.status in (HealthStatus.HEALTHY, HealthStatus.WARNING, HealthStatus.UNHEALTHY)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-26: check_item crashes (TypeError) on content=None; "
-               "_check_content_length calls len(content) unguarded",
-    )
     def test_check_item_none_content(self):
         r = _checker().check_item(url=GOOD_URL, title=GOOD_TITLE, content=None)
         assert r.status in (HealthStatus.HEALTHY, HealthStatus.WARNING, HealthStatus.UNHEALTHY)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-26: check_all crashes (TypeError) on a present-but-None "
-               "title key; _check_title_length calls len(title) unguarded",
-    )
     def test_check_all_none_title_key(self):
         rep = _checker().check_all([{"url": GOOD_URL, "title": None, "content": GOOD_CONTENT}])
         assert rep.total_items == 1
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-26: `personal-index health` crashes (TypeError) when a page "
-               "in search_index.json has \"title\": null; the CLI coerces "
-               "content (page.content or \"\") but NOT title, violating the "
-               "defensive-load contract (ARCH-63)",
-    )
     def test_cli_health_null_title_page(self, tmp_path):
         from click.testing import CliRunner
         from personal_index.cli import main
