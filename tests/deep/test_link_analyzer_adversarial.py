@@ -308,7 +308,6 @@ class TestAggregateUniqueDomainsTruncation:
     20 distinct external domains is undercounted.
     """
 
-    @pytest.mark.xfail(strict=True, reason="QA-10: aggregate undercounts unique_external_domains beyond top-20")
     def test_aggregate_unique_domains_not_truncated(self, analyzer):
         links = [{"url": f"http://d{i}.com/x", "text": "t"} for i in range(25)]
         r = analyzer.analyze("http://example.com/", links)
@@ -317,7 +316,6 @@ class TestAggregateUniqueDomainsTruncation:
         assert agg["unique_external_domains"] == 25
         assert agg["unique_external_domains"] == r.stats.unique_domains
 
-    @pytest.mark.xfail(strict=True, reason="QA-10: aggregate undercounts unique_external_domains beyond top-20")
     def test_aggregate_matches_per_page_unique_domains(self, analyzer):
         links = [{"url": f"http://d{i}.com/x", "text": "t"} for i in range(50)]
         r = analyzer.analyze("http://example.com/", links)

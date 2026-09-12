@@ -32,6 +32,7 @@ class LinkAnalysisResult:
     top_anchor_texts: list[tuple[str, int]] = field(default_factory=list)
     top_domains: list[tuple[str, int]] = field(default_factory=list)
     suspicious_links: list[str] = field(default_factory=list)
+    all_external_domains: set[str] = field(default_factory=set)
 
 
 class LinkAnalyzer:
@@ -78,6 +79,7 @@ class LinkAnalyzer:
             top_anchor_texts=anchor_counter.most_common(10),
             top_domains=domain_counter.most_common(10),
             suspicious_links=suspicious,
+            all_external_domains=set(domain_counter.keys()),
         )
 
     def _analyze_single_link(
@@ -138,7 +140,7 @@ class LinkAnalyzer:
         total_external = sum(r.stats.external_links for r in results)
         all_domains: set[str] = set()
         for r in results:
-            all_domains.update(r.stats.domain_distribution.keys())
+            all_domains.update(r.all_external_domains)
 
         return {
             "pages_analyzed": len(results),
