@@ -1,5 +1,7 @@
 """Tests for topic detection."""
 
+import re
+
 from personal_index.content_tagger.detector import TopicDetector
 
 
@@ -62,3 +64,19 @@ class TestTopicDetector:
         expected = ["programming", "python", "web_development", "machine_learning", "ai"]
         for t in expected:
             assert t in topics
+
+    def test_detect_docstring_pins_named_behaviors(self):
+        # Docstring regression guard: the detect docstring must enumerate the
+        # named behaviors (guard, counting, confidence formula, sort order),
+        # not just the blanket "Detect topics in the given text." form.
+        doc = re.sub(r"\s+", " ", (TopicDetector.detect.__doc__ or "").lower())
+        # Falsy/whitespace guard.
+        assert "falsy or whitespace-only" in doc
+        # Case-insensitive substring keyword counting.
+        assert "case-insensitively" in doc
+        # Each topic emitted at most once, only when its total > 0.
+        assert "at most once" in doc
+        # Confidence formula.
+        assert "min(0.5 + match_count * 0.1, 1.0)" in doc
+        # Sort order.
+        assert "sorted by confidence descending" in doc
