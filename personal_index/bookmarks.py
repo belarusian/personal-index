@@ -145,15 +145,22 @@ class BookmarkManager:
             json.dump(data, f, indent=2)
         return save_path
 
-    def load(self, path: str | None = None) -> int:
+    def load(self, path: str | None = None, merge: bool = False) -> int:
         """Load bookmarks from a JSON file and return the count loaded.
+
+        With ``merge=False`` (the default) the current set is cleared and
+        replaced by the loaded bookmarks, returning the number of bookmarks
+        now in the set. With ``merge=True`` the loaded bookmarks are upserted
+        over the current set using the same collision rule as ``add`` (an
+        existing ``created_at`` is preserved on a URL collision and
+        ``updated_at`` is refreshed to now); bookmarks present only in memory
+        are kept, and the number of bookmarks read from the file is returned.
 
         Raises ValueError when neither ``path`` nor the configured
         storage path is set. Returns 0 without touching the current
         set when the file is missing, the JSON is malformed
         (``JSONDecodeError``), or the top-level JSON value is not a
-        list. Otherwise replaces the current set with the loaded
-        bookmarks and returns the number loaded.
+        list.
         """
         load_path = path or self._storage_path
         if not load_path:
@@ -168,6 +175,15 @@ class BookmarkManager:
                 return 0
         if not isinstance(data, list):
             return 0
+        if merge:
+            now = datetime.now(timezone.utc).isoformat()
+            for item in data:
+                bookmark = Bookmark.from_dict(item)
+                if bookmark.url in self._bookmarks:
+                    bookmark.created_at = self._bookmarks[bookmark.url].created_at
+                bookmark.updated_at = now
+                self._bookmarks[bookmark.url] = bookmark
+            return len(data)
         self._bookmarks.clear()
         for item in data:
             bookmark = Bookmark.from_dict(item)
