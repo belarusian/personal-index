@@ -236,3 +236,62 @@ class TestStorageCorruptJson:
         storage = Storage(data_dir=str(tmp_path))
         storage.config_file.write_text("   \n  ")
         assert isinstance(storage.get_config(), CrawlConfig)
+
+
+class TestStorageAtomicWrite:
+    """ARCH-40: atomic write + corruption recovery (issue #1113)."""
+
+    def test_write_atomic_roundtrip(self, tmp_path):
+        """add_page then get_page round-trips exactly; no *.tmp left behind."""
+        storage = Storage(data_dir=str(tmp_path))
+        page = IndexedPage(
+            url="https://example.com/roundtrip",
+            title="Roundtrip Page",
+            content="hello world",
+            content_length=11,
+        )
+        storage.add_page(page)
+        got = storage.get_page("https://example.com/roundtrip")
+        assert got is not None
+        assert got.url == page.url
+        assert got.title == page.title
+        assert got.content == page.content
+        assert got.content_length == page.content_length
+        # No temp file left behind after a successful write.
+        tmp_files = list(tmp_path.glob("*.tmp"))
+        assert tmp_files == []
+
+    def test_corrupt_target_recovers_from_backup(self, tmp_path, caplog):
+        """Truncated target + valid .bak -> reads back the BACKUP contents
+        and surfaces the corruption (warning), not the empty default."""
+        storage = Storage(data_dir=str(tmp_path))
+        page = IndexedPage(
+            url="https://example.com/backup",
+            title="Backup Page",
+            content="backup content",
+            content_length=14,
+        )
+        storage.add_page(page)
+        # A successful write already produced a valid .bak of the prior
+        # (empty) state; overwrite it with the current valid contents so the
+        # backup holds the page we expect to recover.
+        storage.pages_file.with_suffix(".json.bak").write_text(
+            storage.pages_file.read_text()
+        )
+        # Simulate an interrupted write: truncate the target to invalid JSON.
+        storage.pages_file.write_text('[{"url": "https://example.com/backup", "tit')
+        with caplog.at_level("WARNING"):
+            pages = storage.get_pages()
+        assert len(pages) == 1
+        assert pages[0].url == "https://example.com/backup"
+        assert pages[0].title == "Backup Page"
+        # Corruption surfaced, not silent.
+        assert any("corrupt" in r.message.lower() for r in caplog.records)
+
+    def test_corrupt_target_no_backup_returns_default(self, tmp_path):
+        """Truncated target + NO valid backup (fresh store) -> empty default."""
+        storage = Storage(data_dir=str(tmp_path))
+        # Fresh store: no .bak present. Truncate the target to invalid JSON.
+        storage.pages_file.write_text('[{"url": "https://example.com/x", "ti')
+        assert not storage.pages_file.with_suffix(".json.bak").exists()
+        assert storage.get_pages() == []

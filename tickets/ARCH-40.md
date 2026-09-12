@@ -1,6 +1,6 @@
 # ARCH-40: storage — non-atomic write + silent corruption recovery destroys the store
 
-Status: OPEN
+Status: CLAIMED 2026-09-12
 Component: `personal_index/storage.py`
 Issue: #1113
 Refs: ARCH-2 (#983 umbrella)

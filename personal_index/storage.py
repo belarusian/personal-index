@@ -1,9 +1,14 @@
 """Storage layer for personal-index using JSON files."""
 
 import json
+import logging
+import os
+import shutil
 from pathlib import Path
 
 from personal_index.models import CrawlConfig, IndexedPage, Interest
+
+logger = logging.getLogger(__name__)
 
 
 class Storage:
@@ -36,10 +41,43 @@ class Storage:
         try:
             return json.loads(content)  # type: ignore[no-any-return]
         except json.JSONDecodeError:
+            # Target is corrupt: attempt recovery from the .bak backup before
+            # falling back to the empty default, and surface the corruption.
+            backup = filepath.with_suffix(filepath.suffix + ".bak")
+            if backup.exists():
+                try:
+                    backup_content = backup.read_text()
+                    if backup_content.strip():
+                        recovered = json.loads(backup_content)
+                        logger.warning(
+                            "Storage target %s is corrupt; recovered from "
+                            "backup %s",
+                            filepath,
+                            backup,
+                        )
+                        return recovered  # type: ignore[no-any-return]
+                except (json.JSONDecodeError, OSError):
+                    pass
+            logger.warning(
+                "Storage target %s is corrupt and no valid backup is "
+                "available; returning empty default",
+                filepath,
+            )
             return default
 
     def _write_json(self, filepath: Path, data):
-        filepath.write_text(json.dumps(data, indent=2, default=str))
+        payload = json.dumps(data, indent=2, default=str)
+        # Atomic write: write to a temp file in the same directory, fsync it,
+        # back up the existing target, then os.replace (atomic on POSIX).
+        tmp = filepath.with_suffix(filepath.suffix + ".tmp")
+        backup = filepath.with_suffix(filepath.suffix + ".bak")
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(payload)
+            fh.flush()
+            os.fsync(fh.fileno())
+        if filepath.exists():
+            shutil.copy2(filepath, backup)
+        os.replace(tmp, filepath)
 
     # --- Interests ---
 
