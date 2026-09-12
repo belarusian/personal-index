@@ -142,3 +142,39 @@ class TestTagDistribution:
             {"id": "2", "link": "http://b.com"},
         ])
         assert a.get_link_ratio() == 1.0
+
+
+class TestNoneTitleCoercion:
+    """QA-22: a present None title/description must count as no text (0)."""
+
+    def test_none_title_is_zero_length(self):
+        a = ContentAnalytics()
+        a.add_items([{"title": None}])
+        assert a.get_title_lengths() == [0]
+
+    def test_none_title_does_not_inflate_average(self):
+        a = ContentAnalytics()
+        a.add_items([{"title": None}, {"title": "ab"}])
+        assert a.get_title_lengths() == [0, 2]
+        assert a.get_avg_title_length() == 1.0
+
+    def test_none_description_is_zero_length(self):
+        a = ContentAnalytics()
+        a.add_items([{"description": None}])
+        assert a.get_description_lengths() == [0]
+
+    def test_none_description_does_not_inflate_average(self):
+        a = ContentAnalytics()
+        a.add_items([{"description": None}, {"description": "ab"}])
+        assert a.get_description_lengths() == [0, 2]
+        assert a.get_avg_description_length() == 1.0
+
+    def test_missing_title_still_zero(self):
+        a = ContentAnalytics()
+        a.add_items([{"id": "1"}, {"title": "ab"}])
+        assert a.get_title_lengths() == [0, 2]
+
+    def test_non_string_title_still_stringified(self):
+        a = ContentAnalytics()
+        a.add_items([{"title": 123}])
+        assert a.get_title_lengths() == [3]
