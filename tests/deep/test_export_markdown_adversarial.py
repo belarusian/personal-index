@@ -247,18 +247,7 @@ def test_html_empty_list_returns_empty_string():
     assert MarkdownExporter().export([], ExportFormat.HTML) == ""
 
 
-# DEFECT (QA-33): content is escaped twice in _export_html
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-33: _export_html escapes content twice (line 186 "
-        "content=html.escape(...) then line 205 html.escape(display)). "
-        "A content string with '&' renders as '&amp;amp;' (a browser shows "
-        "'&amp;' instead of '&'), breaking the single-escape round-trip the "
-        "well-formed HTML contract implies. Title/URL are escaped once "
-        "(control), so the double-escape is specific to the content path."
-    ),
-)
+# QA-33 (fixed): content is escaped exactly once in _export_html
 def test_html_content_single_escaped_round_trips():
     content = "Tom & Jerry <a> \"q\""
     out = MarkdownExporter().export(
