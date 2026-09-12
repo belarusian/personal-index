@@ -1,6 +1,6 @@
 # ARCH-32: robots_cache — "Thread-safe" docstring claim with no locking
 
-Status: OPEN
+Status: CLAIMED 2026-09-12
 Component: `personal_index/robots_cache.py`
 Issue: #1090
 Refs: ARCH-2 (#983 umbrella)
