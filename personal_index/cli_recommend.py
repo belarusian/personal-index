@@ -65,7 +65,12 @@ def recommend(
         return
 
     keywords = query.split() if query else []
-    recs = recommender.recommend_for_keywords(keywords, top_n=top_n)
+    recs = recommender.recommend_for_keywords(
+        keywords, top_n=top_n,
+        keyword_weight=keyword_weight,
+        tag_weight=tag_weight,
+        score_weight=score_weight,
+    )
 
     if not recs:
         click.echo("No recommendations found.")

@@ -87,3 +87,49 @@ class TestRecommendCLI:
             ["--data-dir", dd, "recommend", "python", "--top-n", "3"],
         )
         assert result.exit_code == 0
+
+    def test_recommend_weights_affect_output(self, tmp_path):
+        """Pinning test: different weight values must change CLI output.
+        QA-24: advertised weight options must influence scoring.
+        """
+        import os
+        from personal_index.index import SearchIndex
+        from personal_index.models import IndexedPage
+
+        dd = str(tmp_path)
+        os.makedirs(dd, exist_ok=True)
+        idx = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
+        idx.add_page(IndexedPage(url="https://a.com/1", title="Python guide", content="python basics", score=5.0))
+        idx.add_page(IndexedPage(url="https://a.com/2", title="Python advanced", content="python advanced", score=8.0))
+        idx._save()
+
+        runner = CliRunner()
+        r0 = runner.invoke(main, ["--data-dir", dd, "recommend", "python",
+                                   "--keyword-weight", "0.0", "--tag-weight", "0.0", "--score-weight", "0.0"])
+        r1 = runner.invoke(main, ["--data-dir", dd, "recommend", "python",
+                                   "--keyword-weight", "1.0", "--tag-weight", "1.0", "--score-weight", "1.0"])
+        assert r0.exit_code == 0 and r1.exit_code == 0
+        # Different weights must produce different output (scores or ordering)
+        assert r0.output != r1.output
+
+    def test_recommend_weights_guard_zero_weights_no_recommendations(self, tmp_path):
+        """Guard test: zero weights with min_score=0.0 should still return items
+        (score-based reason may appear) but scores differ from default.
+        """
+        import os
+        from personal_index.index import SearchIndex
+        from personal_index.models import IndexedPage
+
+        dd = str(tmp_path)
+        os.makedirs(dd, exist_ok=True)
+        idx = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
+        idx.add_page(IndexedPage(url="https://a.com/1", title="Python guide", content="python basics", score=5.0))
+        idx._save()
+
+        runner = CliRunner()
+        res = runner.invoke(main, ["--data-dir", dd, "recommend", "python",
+                                   "--keyword-weight", "0.0", "--tag-weight", "0.0", "--score-weight", "0.0"])
+        assert res.exit_code == 0
+        # With zero weights, score is 0.0 for all items (kw_score*0 + norm*0)
+        # min_score is 0.0 in CLI, so items are still returned with score 0.000
+        assert "Score: 0.000" in res.output
