@@ -313,13 +313,14 @@ class SearchSuggestions:
             query = entry.query
             if query.lower().startswith(prefix):
                 decayed = self._apply_decay(entry)
-                score = min(decayed / max(sum(
+                base = decayed / max(sum(
                     self._apply_decay(e) for e in self._trending.values()
-                ), 1) * 10, 1.0)
+                ), 1) * 10
+                score = min(base * 1.1, 1.0)
                 if query not in candidates or score > candidates[query].score:
                     candidates[query] = Suggestion(
                         text=query,
-                        score=score * 1.1,
+                        score=score,
                         source="trending",
                         category="trending",
                     )
