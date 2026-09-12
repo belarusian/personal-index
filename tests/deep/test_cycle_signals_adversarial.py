@@ -23,8 +23,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from personal_index.cycle_signals import (
     build_tree,
     format_for_auditor,
@@ -66,21 +64,6 @@ def _flagged_modules(n_pkgs: int = 30, per_pkg: int = 2) -> list[dict]:
     return mods
 
 
-# ---------------------------------------------------------------------------
-# DEFECT (QA-34): max_lines is documented as a hard cap but is not enforced
-# ---------------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-34: format_tree documents max_lines as a 'hard cap on output "
-        "lines' and the CLI exposes it as --lines ('Max output lines for "
-        "tree'), but the output is never truncated to max_lines. With 30 "
-        "flagged packages the output is 90 lines for max_lines=10, 5, and "
-        "1 alike. The only use of max_lines is the gate "
-        "'if clean and len(lines) < max_lines - 3' (whether to render the "
-        "clean packages), not a cap."
-    ),
-)
 def test_format_tree_max_lines_is_a_hard_cap():
     tree = build_tree(_flagged_modules(30, 2))
     out = format_tree(tree, max_depth=2, max_lines=10)

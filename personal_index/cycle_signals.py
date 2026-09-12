@@ -302,7 +302,7 @@ def format_tree(tree: dict, max_depth: int = 2, max_lines: int = 50) -> str:
         else:
             lines.append(f"  [{len(clean)} clean packages: {', '.join(clean_names[:5])}... — {total_mods}m {total_lines_count:,}L {total_funcs}f]")
 
-    return "\n".join(lines)
+    return "\n".join(lines[:max_lines])
 
 
 def _render_summary_node(name: str, node: dict, lines: list[str], prefix: str, depth: int = 1, max_depth: int = 2) -> None:
