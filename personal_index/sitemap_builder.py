@@ -145,9 +145,10 @@ class SitemapBuilder:
     def split_by_size(self, max_bytes: int = MAX_SITEMAP_SIZE_BYTES) -> list[list[SitemapEntry]]:
         """Split entries into chunks that each serialize to at most max_bytes.
 
-        Measures each entry's serialized length (len(tostring(entry.to_element(),
-        encoding="unicode"))) and breaks a chunk when adding the next entry
-        would push the chunk's serialized size past max_bytes. The fixed
+        Measures each entry's serialized UTF-8 byte length
+        (len(tostring(entry.to_element(), encoding="unicode").encode("utf-8")))
+        and breaks a chunk when adding the next entry would push the chunk's
+        serialized size past max_bytes. The fixed
         per-chunk wrapper overhead (the XML declaration + <urlset> root that
         build() emits) is measured once via a single build() call and added to
         each chunk's running total, so a chunk returned here serializes to at
@@ -164,12 +165,12 @@ class SitemapBuilder:
         # the running total matches exactly what build() would emit.
         probe = SitemapBuilder(self.domain)
         probe.add_entries([self.entries[0]])
-        overhead = len(probe.build()) - len(tostring(self.entries[0].to_element(), encoding="unicode"))
+        overhead = len(probe.build()) - len(tostring(self.entries[0].to_element(), encoding="unicode").encode("utf-8"))
         chunks: list[list[SitemapEntry]] = []
         current: list[SitemapEntry] = []
         current_bytes = overhead
         for entry in self.entries:
-            entry_bytes = len(tostring(entry.to_element(), encoding="unicode"))
+            entry_bytes = len(tostring(entry.to_element(), encoding="unicode").encode("utf-8"))
             if current and current_bytes + entry_bytes > max_bytes:
                 chunks.append(current)
                 current = []
