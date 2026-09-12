@@ -27,7 +27,6 @@ from __future__ import annotations
 import subprocess
 import sys
 
-import pytest
 
 from personal_index.content_annotations import (
     Annotation,
@@ -289,15 +288,6 @@ def test_manager_remove_tag_missing_id_noop():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-30a: AnnotationManager.add_tag appends to _by_tag unconditionally "
-        "while Annotation.add_tag dedupes; a duplicate add_tag leaves the "
-        "annotation with one tag but the _by_tag index with two entries, so "
-        "get_by_tag returns the same id twice."
-    ),
-)
 def test_manager_add_tag_duplicate_does_not_desync_index():
     m = AnnotationManager()
     m.add(_ann("a1", "c1"))
@@ -350,16 +340,6 @@ def test_delete_by_content_id_missing_returns_zero():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-30b: get_stats()['by_content'] is documented as the number of "
-        "content ids with AT LEAST ONE annotation, but delete() leaves the "
-        "now-empty _by_content key in place, so a fully-deleted content id "
-        "still counts. delete_by_content_id (which pops the key) does not "
-        "have this bug, so the two documented delete paths disagree."
-    ),
-)
 def test_delete_last_annotation_zeroes_by_content_stat():
     m = AnnotationManager()
     m.add(_ann("a1", "c1"))
