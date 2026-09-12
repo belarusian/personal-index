@@ -1,6 +1,6 @@
 # ARCH-51: `_is_valid_url` accepts scheme-prefixed strings with no host
 
-**Status:** OPEN
+**Status:** CLAIMED 2026-09-10
 **Component:** `personal_index/content_validation.py`
 **Umbrella:** ARCH-2 (#983)
 **Docs:** `docs/content-validation.md`
