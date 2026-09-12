@@ -29,5 +29,5 @@
   set, the guard path, the duration filter, the timestamp-skip guard, and the
   crawl-fields-not-touched note; add ONE pinning test asserting the returned
   object's fields for the normal case AND the guard (empty-events) case.
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-14
 - **Issue:** #978
