@@ -139,7 +139,7 @@ class ContentAPI:
             per_page = int(params.get("per_page", ["20"])[0])
         except ValueError:
             return 400, {"error": "Query parameters 'page' and 'per_page' must be integers"}
-        per_page = min(per_page, 100)
+        per_page = max(0, min(per_page, 100))
         start = (page - 1) * per_page
         end = start + per_page
         paginated = items[start:end]
