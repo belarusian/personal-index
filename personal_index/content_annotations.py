@@ -208,10 +208,12 @@ class AnnotationManager:
         """Add a tag to an annotation."""
         ann = self._annotations.get(annotation_id)
         if ann:
+            newly_added = tag not in ann.tags
             ann.add_tag(tag)
-            if tag not in self._by_tag:
-                self._by_tag[tag] = []
-            self._by_tag[tag].append(annotation_id)
+            if newly_added:
+                if tag not in self._by_tag:
+                    self._by_tag[tag] = []
+                self._by_tag[tag].append(annotation_id)
 
     def remove_tag(self, annotation_id: str, tag: str) -> None:
         """Remove a tag from an annotation."""
@@ -233,6 +235,8 @@ class AnnotationManager:
                 self._by_content[cid] = [
                     i for i in self._by_content[cid] if i != annotation_id
                 ]
+                if not self._by_content[cid]:
+                    del self._by_content[cid]
             # Remove from author index
             if ann.author in self._by_author:
                 self._by_author[ann.author] = [
