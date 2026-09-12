@@ -347,3 +347,65 @@ class TestSchedulerEdgeCases:
     def test_list_tasks_empty(self, scheduler):
         assert scheduler.list_tasks() == []
         assert scheduler.list_tasks("crawl") == []
+
+
+# --- Passive-contract pinning (ARCH-28) ---
+
+class TestPassiveContract:
+    """Pin the documented passive-scheduler contract (ARCH-28, shape 2)."""
+
+    def test_module_docstring_states_passive_contract(self):
+        import personal_index.content_scheduler as mod
+        doc = mod.__doc__ or ""
+        low = doc.lower()
+        # The module must state it performs no scheduling of its own.
+        assert "no scheduling of its own" in low
+        # And that the caller drives execution via run_due_tasks.
+        assert "run_due_tasks" in doc
+        # And that there is no catch-up / skip-missed policy.
+        assert "no catch-up" in low
+
+    def test_scheduler_docstring_states_who_drives_execution(self):
+        doc = TaskScheduler.__doc__ or ""
+        low = doc.lower()
+        # Who drives execution: the caller.
+        assert "caller" in low
+        # No loop / timer of its own.
+        assert "no loop" in low
+        # Stale next_run / no catch-up documented.
+        assert "no catch-up" in low
+
+    def test_cancelled_documented_as_reserved(self):
+        doc = TaskStatus.__doc__ or ""
+        low = doc.lower()
+        # CANCELLED is documented as reserved (no cancel path assigns it).
+        assert "reserved" in low
+        assert "cancelled" in low
+
+    def test_past_next_run_is_immediately_due(self, scheduler):
+        """Stale next_run / no catch-up: a past next_run is immediately due."""
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        task.next_run = datetime.now(timezone.utc) - timedelta(minutes=5)
+        assert task.is_due() is True
+
+    def test_past_next_run_runs_on_run_due_tasks(self, scheduler):
+        """Driver contract: run_due_tasks runs a task whose next_run is past."""
+        ran = []
+        def cb(task):
+            ran.append(task.name)
+        task = scheduler.add_task("T", "crawl", "* * * * *", callback=cb)
+        task.next_run = datetime.now(timezone.utc) - timedelta(minutes=5)
+        results = scheduler.run_due_tasks()
+        assert len(results) == 1
+        assert results[0]["task_id"] == task.task_id
+        assert results[0]["success"] is True
+        assert results[0]["status"] == TaskStatus.COMPLETED.value
+        assert ran == ["T"]
+
+    def test_disabled_past_next_run_not_due(self, scheduler):
+        """Guard: a disabled task with a past next_run is never due."""
+        task = scheduler.add_task("T", "crawl", "* * * * *")
+        task.next_run = datetime.now(timezone.utc) - timedelta(minutes=5)
+        scheduler.disable_task(task.task_id)
+        assert task.is_due() is False
+        assert scheduler.run_due_tasks() == []
