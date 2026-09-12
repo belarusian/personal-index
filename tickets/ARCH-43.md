@@ -1,6 +1,6 @@
 # ARCH-43: content-collections — move_item over-promises relocation (single-source remove + add)
 
-Status: OPEN
+Status: OPEN-PUSHBACK (IMPL-10)
 Component: `personal_index/content_collections.py`
 Issue: #1121
 Refs: ARCH-2 (#983 umbrella)
