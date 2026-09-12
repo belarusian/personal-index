@@ -345,3 +345,99 @@ class TestEvaluateEventPinning:
         assert result == []
         # No side effect: nothing appended to self.notifications
         assert len(mgr.notifications) == 0
+
+
+class TestDeliveredFlagContract:
+    """Pin the delivered-vs-dispatch contract hole (ARCH-50, Option B).
+
+    The module is a record-and-track store: no channel dispatch backend
+    exists, ``channels`` is descriptive metadata only, and ``delivered`` is a
+    caller-managed flag (not evidence of a real send).
+    """
+
+    def test_evaluate_event_fires_all_matching_rules(self) -> None:
+        """Happy path: two enabled rules whose conditions both match one event
+        yield two notifications in insertion order (pins current fan-out)."""
+        mgr = NotificationManager()
+        rule_a = NotificationRule(
+            rule_id="ra",
+            name="Rule A",
+            notification_type=NotificationType.NEW_BOOKMARK,
+            channels=[NotificationChannel.WEBHOOK],
+            conditions={"type": "bookmark"},
+            enabled=True,
+            cooldown_seconds=0,
+        )
+        rule_b = NotificationRule(
+            rule_id="rb",
+            name="Rule B",
+            notification_type=NotificationType.NEW_BOOKMARK,
+            channels=[NotificationChannel.EMAIL],
+            conditions={"type": "bookmark"},
+            enabled=True,
+            cooldown_seconds=0,
+        )
+        mgr.add_rule(rule_a)
+        mgr.add_rule(rule_b)
+        result = mgr.evaluate_event({"type": "bookmark"})
+        assert len(result) == 2
+        assert result[0].title == "Rule A"
+        assert result[1].title == "Rule B"
+        assert result[0].channels == [NotificationChannel.WEBHOOK]
+        assert result[1].channels == [NotificationChannel.EMAIL]
+        assert result[0].delivered is False
+        assert result[1].delivered is False
+
+    def test_delivered_flag_semantics(self) -> None:
+        """Contract hole: after mark_delivered, delivered is True and
+        delivered_at is set; under Option B the docstring states no send
+        occurred and channels is metadata only."""
+        mgr = NotificationManager()
+        rule = NotificationRule(
+            rule_id="r1",
+            name="Alert",
+            notification_type=NotificationType.NEW_BOOKMARK,
+            channels=[NotificationChannel.WEBHOOK],
+            conditions={"type": "bookmark"},
+            enabled=True,
+            cooldown_seconds=0,
+        )
+        mgr.add_rule(rule)
+        generated = mgr.evaluate_event({"type": "bookmark"})
+        assert len(generated) == 1
+        notif = generated[0]
+        assert notif.delivered is False
+        assert notif.delivered_at is None
+        assert mgr.mark_delivered(notif.notification_id) is True
+        assert notif.delivered is True
+        assert notif.delivered_at is not None
+        # Option B: the docstring must state no send occurred and that
+        # channels is descriptive metadata only (record-and-track store).
+        doc = (NotificationManager.__doc__ or "").lower()
+        assert "no send" in doc
+        assert "descriptive metadata" in doc
+        assert "record-and-track" in doc
+
+    def test_get_undelivered_is_pending_queue(self) -> None:
+        """Guard path: with a mix of delivered/undelivered, get_undelivered
+        returns exactly the undelivered ones in insertion order and excludes
+        already-marked ones."""
+        mgr = NotificationManager()
+        rule = NotificationRule(
+            rule_id="r1",
+            name="Alert",
+            notification_type=NotificationType.NEW_BOOKMARK,
+            conditions={"type": "bookmark"},
+            enabled=True,
+            cooldown_seconds=0,
+        )
+        mgr.add_rule(rule)
+        first = mgr.evaluate_event({"type": "bookmark"})[0]
+        second = mgr.evaluate_event({"type": "bookmark"})[0]
+        third = mgr.evaluate_event({"type": "bookmark"})[0]
+        # Mark the middle one delivered; first and third stay undelivered.
+        assert mgr.mark_delivered(second.notification_id) is True
+        undelivered = mgr.get_undelivered()
+        assert undelivered == [first, third]
+        assert second not in undelivered
+        assert all(n.delivered is False for n in undelivered)
