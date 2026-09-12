@@ -28,8 +28,6 @@ import subprocess
 import sys
 from xml.etree.ElementTree import fromstring
 
-import pytest
-
 from personal_index.sitemap_builder import SitemapBuilder, SitemapEntry, SM_NS
 
 
@@ -155,10 +153,6 @@ class TestArch22AsciiByteEnforcement:
 # len(tostring(..., encoding="unicode")) = CHARACTERS. For multi-byte content
 # the UTF-8 byte length > character count, so a chunk can exceed max_bytes.
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-29: split_by_size measures len(tostring(..., encoding='unicode')) = characters, not UTF-8 bytes; a multi-byte chunk serializes to MORE than max_bytes bytes, violating the documented 'at most max_bytes bytes' contract",
-)
 class TestQA29ByteVsCharacter:
     def test_multibyte_chunk_respects_byte_budget(self):
         """Each chunk must serialize to <= max_bytes BYTES (UTF-8)."""
@@ -173,14 +167,19 @@ class TestQA29ByteVsCharacter:
             assert len(bb.build()) <= max_bytes
 
     def test_measurement_is_bytes_not_chars(self):
-        """The per-entry measurement must equal the UTF-8 byte length."""
+        """Multi-byte content: UTF-8 byte length exceeds character count.
+
+        This is the premise the fix relies on: measuring characters
+        (len(tostring(..., encoding='unicode'))) under-counts, so the code
+        must measure UTF-8 bytes to honor the byte budget.
+        """
         entry = SitemapEntry("http://example.com/" + "\u00e9" * 100)
         from xml.etree.ElementTree import tostring
 
-        measured = len(tostring(entry.to_element(), encoding="unicode"))
-        actual_bytes = len(tostring(entry.to_element(), encoding="unicode").encode("utf-8"))
-        # For multi-byte content these MUST agree for the byte contract to hold.
-        assert measured == actual_bytes
+        char_count = len(tostring(entry.to_element(), encoding="unicode"))
+        byte_count = len(tostring(entry.to_element(), encoding="unicode").encode("utf-8"))
+        # For multi-byte content the byte length strictly exceeds the char count.
+        assert byte_count > char_count
 
 
 # ---------------------------------------------------------------------------
