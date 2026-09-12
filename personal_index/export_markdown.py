@@ -189,7 +189,7 @@ class MarkdownExporter:
             for item in group_items:
                 title = html.escape(item.get("title", "Untitled"))
                 url = html.escape(item.get("url", ""))
-                content = html.escape(item.get("content", ""))
+                content = item.get("content", "")
                 tags = item.get("tags", [])
                 date = item.get("published_date", "")
 
