@@ -1,6 +1,6 @@
 # ARCH-45: content-priority — from_score and _level_for_score are two divergent score→level paths
 
-Status: OPEN
+Status: CLAIMED 2026-09-12
 Component: `personal_index/content_priority.py`
 Issue: #1129
 Refs: ARCH-2 (#983 umbrella)
