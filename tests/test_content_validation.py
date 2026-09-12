@@ -245,3 +245,34 @@ class TestValidationResultToDictPinning:
         assert d["items_invalid"] == 0
         assert d["errors"] == []
         assert "warnings" not in d
+
+
+class TestIsValidUrlHostPinning:
+    """ARCH-51: _is_valid_url must require a non-empty host."""
+
+    def setup_method(self) -> None:
+        self.validator = ContentValidator()
+
+    def test_no_host_http_invalid(self) -> None:
+        assert self.validator._is_valid_url("http://") is False
+
+    def test_no_host_https_invalid(self) -> None:
+        assert self.validator._is_valid_url("https://") is False
+
+    def test_no_host_trailing_space_invalid(self) -> None:
+        assert self.validator._is_valid_url("http:// ") is False
+
+    def test_valid_https_host(self) -> None:
+        assert self.validator._is_valid_url("https://example.com") is True
+
+    def test_valid_http_host_path(self) -> None:
+        assert self.validator._is_valid_url("http://a.b/c") is True
+
+    def test_empty_invalid(self) -> None:
+        assert self.validator._is_valid_url("") is False
+
+    def test_none_invalid(self) -> None:
+        assert self.validator._is_valid_url(None) is False  # type: ignore[arg-type]
+
+    def test_non_http_scheme_invalid(self) -> None:
+        assert self.validator._is_valid_url("ftp://example.com") is False
