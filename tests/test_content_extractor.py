@@ -257,6 +257,38 @@ class TestContentExtractor:
         # total: 0.8
         assert score == 0.8
 
+    def test_readability_score_uses_documented_word_source(self, extractor):
+        """Divergence pin (ARCH-26, resolution b): the score derives from
+        len(text.split()), NOT the word_count field. Build an object where
+        word_count and len(text.split()) disagree and assert the returned
+        float matches the docstring-named source (the text)."""
+        # text has 200 words; word_count is set independently to 10.
+        content = ExtractedContent(
+            text=" ".join(["w"] * 200),
+            word_count=10,
+            headings=["h"],
+            meta_description="d",
+        )
+        score = extractor.extract_readability_score(content)
+        # len(text.split()) = 200 -> min(200/500, 0.4) = 0.4
+        # 1 heading -> min(1*0.1, 0.3) = 0.1
+        # meta_description -> 0.3
+        # total = 0.8 (pins the text source, not word_count=10 which would be 0.0)
+        assert score == 0.8
+
+    def test_readability_score_short_guard(self, extractor):
+        """Guard path (ARCH-26): < 50 words in the documented source
+        (len(text.split())) -> 0.0, even when word_count is high."""
+        content = ExtractedContent(
+            text=" ".join(["w"] * 10),
+            word_count=500,
+            headings=["h"],
+            meta_description="d",
+        )
+        score = extractor.extract_readability_score(content)
+        # len(text.split()) = 10 < 50 -> 0.0 (word_count=500 is ignored)
+        assert score == 0.0
+
 
 class TestExtractDocstringPinning:
     """Pin the reworded extract docstring against the returned object."""
