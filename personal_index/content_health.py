@@ -116,7 +116,6 @@ class HealthReport:
             f"Health percentage: {self.health_percentage:.1f}%",
         ]
         return "\n".join(lines)
-        return "\n".join(lines)
 
 
 @dataclass
