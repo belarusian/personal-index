@@ -8,7 +8,10 @@ In-memory content rollback management. Two public types: `RollbackPoint` (a
 `create_rollback_point`, `get_rollback_points`, `rollback`, `clear`). State
 lives entirely in a single in-process `dict[str, list[RollbackPoint]]` keyed
 by URL; there is **no** persistence layer — no `save`/`load`, no file, no
-serialization. Every rollback point is lost when the process exits.
+serialization. **Persistence contract (Option B):** rollback points are
+in-memory only and are lost on process exit; this is a per-process scratch
+store, not a durable history. A rollback point created in one process is
+NOT available in the next process.
 
 ## Public API
 
@@ -35,6 +38,12 @@ Plain class (not a dataclass). `__init__(self) -> None`:
 - `self._rollback_points: dict[str, list[RollbackPoint]] = {}` — keyed by URL,
   each value the ordered list of that URL's rollback points (index 0 = the
   oldest point created for that URL).
+
+- **Persistence contract (Option B):** the store is in-memory only. There
+  is no `save`/`load`, no file, and no serialization; every rollback point
+  is lost on process exit. This is a per-process scratch store, not a
+  durable history — a rollback point created in one process is NOT
+  available in the next process. No caller-facing API implies durability.
 
 - `create_rollback_point(self, point: RollbackPoint) -> None`:
   - if `point.url` is not yet a key, initializes `self._rollback_points[point.url] = []`.
@@ -75,30 +84,16 @@ Plain class (not a dataclass). `__init__(self) -> None`:
 
 ## Contract Holes
 
-**Primary hole — in-memory-only persistence: every rollback point is lost on
-process exit (ARCH-47).** The entire store is a single in-process
-`dict[str, list[RollbackPoint]]` with no `save`/`load`, no file, and no
-serialization. A `ContentRollback` instance is the only holder of the state,
-and the moment the process exits (or the instance is garbage-collected) every
-rollback point for every URL is gone. This defeats the subsystem's core
-purpose: a "rollback point" is only useful if it survives long enough to be
-rolled back to, and an in-memory-only snapshot cannot outlive the process that
-created it. Compare the sibling subsystems that DO persist —
-`personal_index/content_versioning.py` (JSON-file-backed, ARCH-46),
-`personal_index/content_pin.py` (JSON-file-backed, ARCH-44), and
-`personal_index/storage.py` (JSON-file-backed, ARCH-40) — all of which at
-least attempt durability. The fix must make the persistence contract explicit
-(pick one and document it in the `ContentRollback` docstring + this page):
+**Resolved — persistence (ARCH-47).** The store was previously in-memory
+only, so every rollback point was lost on process exit. This is now
+documented as an intentional design constraint with **Option B (document
+the in-memory-only contract)**: rollback points are in-memory only and are
+lost on process exit; this is a per-process scratch store, not a durable
+history. The contract is stated in the `ContentRollback` docstring and the
+Public API entry above, and pinned by `test_persistence_contract` in
+`tests/test_content_rollback.py` (no `save`/`load` surface exists and the
+docstring states points are lost on exit).
 
-- **Option A (add persistence):** add `save(path)` / `load(path)` (or a
-  `__init__(storage_path=...)` that loads on construction) so rollback points
-  survive process exit, mirroring the JSON-file-backed pattern of the sibling
-  subsystems.
-- **Option B (document the in-memory-only contract):** if persistence is
-  intentionally out of scope, state it explicitly in the `ContentRollback`
-  docstring and this page — "rollback points are in-memory only and are lost
-  on process exit; this is a per-process scratch store, not a durable
-  history" — so a caller is not misled into treating it as durable.
 
 ## Secondary notes (not ticketed)
 

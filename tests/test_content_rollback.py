@@ -94,3 +94,38 @@ class TestClearDocstring533(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPersistenceContract(unittest.TestCase):
+    """Pin the ARCH-47 Option B in-memory-only persistence contract."""
+
+    def test_rollback_point_roundtrip(self):
+        rb = ContentRollback()
+        p1 = RollbackPoint(url="http://example.com", content="v1")
+        p2 = RollbackPoint(url="http://example.com", content="v2")
+        rb.create_rollback_point(p1)
+        rb.create_rollback_point(p2)
+        points = rb.get_rollback_points("http://example.com")
+        self.assertEqual([pt.content for pt in points], ["v1", "v2"])
+        # rollback(url) -> oldest (index 0); rollback(url, -1) -> newest.
+        self.assertEqual(rb.rollback("http://example.com").content, "v1")
+        self.assertEqual(rb.rollback("http://example.com", -1).content, "v2")
+
+    def test_rollback_absent_url_is_none(self):
+        rb = ContentRollback()
+        self.assertIsNone(rb.rollback("no-such-url"))
+        self.assertEqual(rb.get_rollback_points("no-such-url"), [])
+
+    def test_persistence_contract(self):
+        # Option B: no save/load surface exists on the engine, and the
+        # docstring states points are lost on process exit.
+        self.assertFalse(hasattr(ContentRollback, "save"))
+        self.assertFalse(hasattr(ContentRollback, "load"))
+        c = ContentRollback()
+        self.assertFalse(hasattr(c, "save"))
+        self.assertFalse(hasattr(c, "load"))
+        doc = ContentRollback.__doc__
+        assert doc is not None
+        low = doc.lower()
+        assert "in-memory" in low
+        assert "lost on process exit" in low

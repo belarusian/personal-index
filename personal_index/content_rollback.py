@@ -18,7 +18,16 @@ class RollbackPoint:
 
 
 class ContentRollback:
-    """Manage content rollback points."""
+    """Manage content rollback points.
+
+    Persistence contract (Option B): rollback points are in-memory only
+    and are lost on process exit. This is a per-process scratch store, not
+    a durable history: there is no save/load, no file, and no
+    serialization, so a rollback point created in one process is NOT
+    available in the next process. A caller reading this docstring knows,
+    without reading the source, that the store does not survive process
+    exit.
+    """
 
     def __init__(self) -> None:
         self._rollback_points: dict[str, list[RollbackPoint]] = {}
