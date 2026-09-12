@@ -164,7 +164,9 @@ class InMemoryHandler(NotificationHandler):
             True if handled successfully.
         """
         self._notifications.append(notification)
-        if len(self._notifications) > self.max_size:
+        if self.max_size <= 0:
+            self._notifications = []
+        elif len(self._notifications) > self.max_size:
             self._notifications = self._notifications[-self.max_size:]
         return True
 

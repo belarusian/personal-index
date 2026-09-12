@@ -80,7 +80,9 @@ class AlertManager:
         self.alerts.append(alert)
 
         # Enforce max alerts
-        if len(self.alerts) > self.max_alerts:
+        if self.max_alerts <= 0:
+            self.alerts = []
+        elif len(self.alerts) > self.max_alerts:
             self.alerts = self.alerts[-self.max_alerts:]
 
         return alert

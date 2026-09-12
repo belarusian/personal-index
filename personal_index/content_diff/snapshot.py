@@ -79,7 +79,9 @@ class SnapshotManager:
         self.snapshots.setdefault(item_id, []).append(snapshot)
 
         # Enforce max snapshots
-        if len(self.snapshots[item_id]) > self.max_snapshots:
+        if self.max_snapshots <= 0:
+            self.snapshots[item_id] = []
+        elif len(self.snapshots[item_id]) > self.max_snapshots:
             self.snapshots[item_id] = self.snapshots[item_id][-self.max_snapshots:]
 
         return snapshot

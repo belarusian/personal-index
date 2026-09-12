@@ -89,7 +89,9 @@ class VersionTracker:
         self._versions[url].append(version)
 
         # Enforce max versions
-        if len(self._versions[url]) > self._max_versions:
+        if self._max_versions <= 0:
+            self._versions[url] = []
+        elif len(self._versions[url]) > self._max_versions:
             self._versions[url] = self._versions[url][-self._max_versions:]
 
         return version
