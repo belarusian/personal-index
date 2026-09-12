@@ -465,3 +465,30 @@ def test_health_report_summary_pins_order_and_guard():
     e_lines = empty_summary.split("\n")
     assert e_lines[2] == "Total items: 0"
     assert e_lines[7] == "Health percentage: 100.0%"
+
+
+def test_health_report_summary_docstring_pins_named_fields():
+    # Docstring regression guard: the summary docstring must enumerate the
+    # named fields in the order the body emits them, not just the
+    # blanket-adjective "Generate a human-readable summary." form.
+    doc = HealthReport.summary.__doc__ or ""
+    # Header + separator are named in the docstring.
+    assert "Content Health Report" in doc
+    # Each named field label appears in the docstring.
+    assert "Total items" in doc
+    assert "Healthy" in doc
+    assert "Warnings" in doc
+    assert "Unhealthy" in doc
+    assert "Overall score" in doc
+    assert "Health percentage" in doc
+    # The named fields must appear in the same order the body emits them.
+    positions = [
+        doc.index("Content Health Report"),
+        doc.index("Total items"),
+        doc.index("Healthy"),
+        doc.index("Warnings"),
+        doc.index("Unhealthy"),
+        doc.index("Overall score"),
+        doc.index("Health percentage"),
+    ]
+    assert positions == sorted(positions)
