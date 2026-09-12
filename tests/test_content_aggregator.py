@@ -100,3 +100,50 @@ class TestMergeDedupKeepFirst:
         assert len(merged) == 1
         # The survivor is the FIRST occurrence (from source "a"), not the later one.
         assert merged[0]["title"] == "First"
+
+
+class TestMergeDedupFalsyId:
+    def test_present_falsy_empty_string_id_is_used_as_key(self, aggregator):
+        """Pin the corrected claim: a PRESENT falsy id (empty string) is used
+        as the dedup key, so two items sharing it are deduplicated even with
+        different titles (asserted on the returned list)."""
+        aggregator.add_source("a", [{"id": "", "title": "First"}])
+        aggregator.add_source("b", [{"id": "", "title": "Second"}])
+        merged = aggregator.merge_all()
+        assert len(merged) == 1
+        assert merged[0]["title"] == "First"
+
+    def test_present_falsy_zero_id_is_used_as_key(self, aggregator):
+        """Pin the corrected claim: a PRESENT falsy id (0) is used as the
+        dedup key, so two items sharing it are deduplicated even with
+        different titles (asserted on the returned list)."""
+        aggregator.add_source("a", [{"id": 0, "title": "First"}])
+        aggregator.add_source("b", [{"id": 0, "title": "Second"}])
+        merged = aggregator.merge_all()
+        assert len(merged) == 1
+        assert merged[0]["title"] == "First"
+
+    def test_missing_id_falls_back_to_title(self, aggregator):
+        """Pin the corrected claim: a MISSING id falls back to title as the
+        key, so two items sharing a title are deduplicated (asserted on the
+        returned list)."""
+        aggregator.add_source("a", [{"title": "Same"}])
+        aggregator.add_source("b", [{"title": "Same"}])
+        merged = aggregator.merge_all()
+        assert len(merged) == 1
+
+    def test_none_id_falls_back_to_title(self, aggregator):
+        """Pin the corrected claim: an explicit None id falls back to title
+        as the key (asserted on the returned list)."""
+        aggregator.add_source("a", [{"id": None, "title": "Same"}])
+        aggregator.add_source("b", [{"id": None, "title": "Same"}])
+        merged = aggregator.merge_all()
+        assert len(merged) == 1
+
+    def test_distinct_falsy_ids_not_deduplicated(self, aggregator):
+        """Guard: distinct falsy ids ("" vs 0) are different keys, so both
+        items survive (asserted on the returned list)."""
+        aggregator.add_source("a", [{"id": "", "title": "A"}])
+        aggregator.add_source("b", [{"id": 0, "title": "B"}])
+        merged = aggregator.merge_all()
+        assert len(merged) == 2

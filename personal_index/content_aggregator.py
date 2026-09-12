@@ -35,7 +35,10 @@ class ContentAggregator:
             seen = set()
             unique = []
             for item in merged:
-                key = str(item.get("id") or item.get("title"))
+                item_id = item.get("id")
+                if item_id is None:
+                    item_id = item.get("title")
+                key = str(item_id)
                 if key not in seen:
                     seen.add(key)
                     unique.append(item)

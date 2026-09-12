@@ -84,7 +84,6 @@ def test_merge_all_id_none_fallback_title():
     merged = agg.merge_all()
     assert len(merged) == 1
 
-@pytest.mark.xfail(strict=True, reason="QA-21: empty string id is falsy and falls back to title")
 def test_merge_all_id_empty_string():
     agg = make_agg()
     agg.add_source("a", [{"id": "", "title": "A"}])
@@ -92,7 +91,6 @@ def test_merge_all_id_empty_string():
     merged = agg.merge_all()
     assert len(merged) == 1
 
-@pytest.mark.xfail(strict=True, reason="QA-21: zero id is falsy and falls back to title")
 def test_merge_all_id_zero():
     agg = make_agg()
     agg.add_source("a", [{"id": 0, "title": "A"}])
