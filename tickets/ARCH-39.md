@@ -1,6 +1,6 @@
 # ARCH-39: bookmarks — `load` silently clears and replaces the in-memory set (no merge mode)
 
-Status: CLAIMED 2026-09-12
+Status: IMPLEMENTED 2026-09-12
 Component: `personal_index/bookmarks.py`
 Issue: #1110
 Refs: ARCH-2 (#983 umbrella)
