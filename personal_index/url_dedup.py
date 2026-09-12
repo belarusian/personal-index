@@ -24,6 +24,7 @@ class URLDeduplicator:
         self._seen_urls: dict[str, str] = {}  # normalized -> original
         self._fuzzy_threshold = fuzzy_threshold
         self._url_groups: dict[str, list[str]] = {}  # domain -> [urls]
+        self._duplicates: dict[str, list[str]] = {}  # canonical original -> [duplicate originals]
 
     @property
     def seen_count(self) -> int:
@@ -157,6 +158,12 @@ class URLDeduplicator:
                 self._url_groups[domain] = []
             self._url_groups[domain].append(url)
 
+        else:
+            # Record the detected duplicate (keyed by the matched canonical
+            # first-seen original) so get_duplicates/get_stats can report it.
+            if result.matched_url is not None:
+                self._duplicates.setdefault(result.matched_url, []).append(result.original_url)
+
         return result
 
     def deduplicate_urls(self, urls: list[str]) -> tuple[list[str], list[DedupResult]]:
@@ -190,23 +197,14 @@ class URLDeduplicator:
         return None
 
     def get_duplicates(self) -> dict[str, list[str]]:
-        """Get all detected duplicates grouped by canonical URL."""
-        duplicates: dict[str, list[str]] = {}
-        for original in self._seen_urls.values():
-            parsed = urlparse(original)
-            domain = parsed.netloc.lower()
-            domain = domain.removeprefix("www.")
-            if domain in self._url_groups:
-                orig_path = self._get_path(original)
-                for url in self._url_groups[domain]:
-                    if url != original:
-                        candidate_path = self._get_path(url)
-                        score = difflib.SequenceMatcher(None, orig_path, candidate_path).ratio()
-                        if score >= self._fuzzy_threshold:
-                            if original not in duplicates:
-                                duplicates[original] = []
-                            duplicates[original].append(url)
-        return duplicates
+        """Get all detected duplicates grouped by canonical URL.
+
+        Returns the recorded duplicate map: ``{canonical_original:
+        [duplicate_original, ...]}`` for every duplicate actually detected
+        by ``add_url``, in detection order. Returns ``{}`` when no
+        duplicates were detected.
+        """
+        return {canonical: list(dups) for canonical, dups in self._duplicates.items()}
 
     def get_stats(self) -> dict:
         """Get deduplication statistics."""
@@ -220,6 +218,7 @@ class URLDeduplicator:
         """Clear all seen URLs."""
         self._seen_urls.clear()
         self._url_groups.clear()
+        self._duplicates.clear()
 
     def get_canonical_url(self, url: str) -> str | None:
         """Get the canonical (first seen) URL for a given URL."""
