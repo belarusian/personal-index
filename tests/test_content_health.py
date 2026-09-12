@@ -206,6 +206,41 @@ class TestContentHealthChecker:
         assert result.score < 100.0
 
 
+class TestNoneFieldGuard:
+    """QA-26: a None title/content must degrade, never crash (ARCH-63)."""
+
+    def test_none_title_does_not_crash(self):
+        checker = ContentHealthChecker()
+        result = checker.check_item(
+            url="https://example.com/page",
+            title=None,
+            content="This is a comprehensive article about Python programming that covers many topics.",
+            status_code=200,
+        )
+        # None title is treated as empty: passes max-length check, flags missing_title
+        assert any(i.issue_type == "missing_title" for i in result.issues)
+        assert not any(i.issue_type == "title_too_long" for i in result.issues)
+
+    def test_none_content_does_not_crash(self):
+        checker = ContentHealthChecker()
+        result = checker.check_item(
+            url="https://example.com/page",
+            title="A Great Article About Python",
+            content=None,
+            status_code=200,
+        )
+        # None content is treated as empty: flags low_content
+        assert any(i.issue_type == "low_content" for i in result.issues)
+
+    def test_check_all_none_title_key(self):
+        checker = ContentHealthChecker()
+        rep = checker.check_all([
+            {"url": "https://example.com/page", "title": None,
+             "content": "This is a comprehensive article about Python programming that covers many topics."},
+        ])
+        assert rep.total_items == 1
+
+
 class TestModuleDocstringContract:
     def test_docstring_does_not_promise_stale_detection(self):
         """Regression: module docstring must not over-promise capabilities.

@@ -237,7 +237,7 @@ class ContentHealthChecker:
         self, title: str, url: str, ct: int, cp: int, issues: list[HealthIssue]
     ) -> tuple[int, int]:
         ct += 1
-        if len(title) <= self.config.max_title_length:
+        if (title is None or len(title) <= self.config.max_title_length):
             cp += 1
         else:
             issues.append(HealthIssue(
@@ -252,13 +252,13 @@ class ContentHealthChecker:
         self, content: str, url: str, title: str, ct: int, cp: int, issues: list[HealthIssue]
     ) -> tuple[int, int]:
         ct += 1
-        if len(content) >= self.config.min_content_length:
+        if content is not None and len(content) >= self.config.min_content_length:
             cp += 1
         else:
             issues.append(HealthIssue(
                 url=url, title=title, issue_type="low_content",
                 severity=IssueSeverity.MEDIUM,
-                message=f"Content is too short ({len(content)} chars, min {self.config.min_content_length})",
+                message=f"Content is too short ({0 if content is None else len(content)} chars, min {self.config.min_content_length}",
                 suggestion="Ensure content has sufficient text",
             ))
         return ct, cp

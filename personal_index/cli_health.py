@@ -49,7 +49,7 @@ def _build_health_items(pages, tag_store):
         page_tags = list(tag_store.get_tags_for_url(page.url))
         items.append({
             "url": page.url,
-            "title": page.title,
+            "title": page.title or "",
             "content": page.content or "",
             "tags": page_tags,
             "score": page.score,
