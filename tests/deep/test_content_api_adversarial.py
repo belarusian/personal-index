@@ -26,7 +26,6 @@ import json
 import subprocess
 import sys
 
-import pytest
 
 from personal_index.content_api import ContentAPI, RequestLogger
 
@@ -183,17 +182,6 @@ def test_list_per_page_zero_returns_empty():
     assert payload["total"] == 3
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA-31: _list_content caps per_page at 100 but never clamps it at 0; "
-        "a negative per_page makes end=start+per_page negative, so "
-        "items[start:end] is a negative slice that leaks a PARTIAL page "
-        "(per_page=-1 -> all-but-last, per_page=-5 -> all-but-5) instead of "
-        "the clamped empty page (identical to per_page=0). Negative-slice "
-        "'top N' leak class reached via the public handle_request entry point."
-    ),
-)
 def test_list_negative_per_page_is_clamped_to_empty():
     api = ContentAPI()
     _seed(api, 10)
