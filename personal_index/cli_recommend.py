@@ -65,7 +65,26 @@ def recommend(
         return
 
     keywords = query.split() if query else []
-    recs = recommender.recommend_for_keywords(keywords, top_n=top_n)
+    # Only use weighted scoring when the user explicitly provides weight
+    # options; otherwise fall back to the documented fraction-based scoring
+    # (preserves the default CLI output contract).
+    from click.core import ParameterSource
+    kw_src = ctx.get_parameter_source("keyword_weight")
+    tag_src = ctx.get_parameter_source("tag_weight")
+    sc_src = ctx.get_parameter_source("score_weight")
+    explicit_weights = any(
+        s == ParameterSource.COMMANDLINE
+        for s in (kw_src, tag_src, sc_src)
+    )
+    if explicit_weights:
+        recs = recommender.recommend_for_keywords(
+            keywords, top_n=top_n,
+            keyword_weight=keyword_weight,
+            tag_weight=tag_weight,
+            score_weight=score_weight,
+        )
+    else:
+        recs = recommender.recommend_for_keywords(keywords, top_n=top_n)
 
     if not recs:
         click.echo("No recommendations found.")
