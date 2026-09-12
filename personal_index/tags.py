@@ -95,8 +95,22 @@ class TagStore:
             json.dump(data, f, indent=2)
 
     def create_tag(self, name: str, color: str = "#3498db", description: str = "") -> Tag:
-        """Create a tag, or replace an existing tag with the same name."""
-        tag = Tag(name=name, color=color, description=description)
+        """Create a tag, or replace an existing tag with the same name.
+
+        On a name collision the existing tag's ``created_at`` is preserved
+        (only ``color``/``description`` are replaced); on a fresh create a
+        new ``created_at`` is set.
+        """
+        existing = self._tags.get(name)
+        if existing is not None:
+            tag = Tag(
+                name=name,
+                color=color,
+                description=description,
+                created_at=existing.created_at,
+            )
+        else:
+            tag = Tag(name=name, color=color, description=description)
         self._tags[name] = tag
         self._save()
         return tag

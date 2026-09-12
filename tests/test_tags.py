@@ -244,3 +244,45 @@ class TestTagStoreNonDictJSON:
         store = TagStore(store_path=path)
         assert store._tags == {}
         assert store._page_tags == {}
+
+
+class TestCreateTagCollisionCreatedAt:
+    """Pinning tests for ARCH-41: create_tag collision preserves created_at."""
+
+    def test_create_tag_fresh_sets_created_at(self):
+        store = TagStore()
+        tag = store.create_tag("fresh", color="#ff0000")
+        assert tag.created_at != ""
+        stored = store.get_tag("fresh")
+        assert stored is not None
+        assert stored.created_at == tag.created_at
+
+    def test_create_tag_collision_preserves_created_at(self):
+        store = TagStore()
+        first = store.create_tag("dup", color="#ff0000", description="old")
+        original_created_at = first.created_at
+        assert original_created_at != ""
+        second = store.create_tag("dup", color="#00ff00", description="new")
+        # color/description updated (documented replace behavior)
+        assert second.color == "#00ff00"
+        assert second.description == "new"
+        # created_at preserved, NOT reset
+        assert second.created_at == original_created_at
+        stored = store.get_tag("dup")
+        assert stored is not None
+        assert stored.created_at == original_created_at
+        assert stored.color == "#00ff00"
+        assert stored.description == "new"
+
+    def test_create_tag_roundtrip_persists_created_at(self, tmp_path):
+        path = str(tmp_path / "tags.json")
+        store = TagStore(store_path=path)
+        first = store.create_tag("persist", color="#ff0000", description="old")
+        original_created_at = first.created_at
+        store.create_tag("persist", color="#00ff00", description="new")
+        reloaded = TagStore(store_path=path)
+        tag = reloaded.get_tag("persist")
+        assert tag is not None
+        assert tag.created_at == original_created_at
+        assert tag.color == "#00ff00"
+        assert tag.description == "new"
