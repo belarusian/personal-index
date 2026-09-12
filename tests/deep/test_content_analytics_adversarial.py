@@ -159,38 +159,22 @@ class TestNoneTitleCoercion:
     """QA-22: a present None title/description must behave like a missing
     one (length 0), not be stringified to the 4-char literal "None"."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-22: str(item.get('title', '')) coerces a present None to 'None' (len 4) instead of 0",
-    )
     def test_none_title_is_zero_length(self):
         a = make()
         a.add_items([{"title": None}])
         assert a.get_title_lengths() == [0]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-22: a None title must not inflate the average title length",
-    )
     def test_none_title_does_not_inflate_average(self):
         a = make()
         a.add_items([{"title": None}, {"title": "ab"}])
         # None -> 0, "ab" -> 2 => avg 1.0. The bug yields (4 + 2) / 2 == 3.0.
         assert a.get_avg_title_length() == 1.0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-22: str(item.get('description', '')) coerces a present None to 'None' (len 4) instead of 0",
-    )
     def test_none_description_is_zero_length(self):
         a = make()
         a.add_items([{"description": None}])
         assert a.get_description_lengths() == [0]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-22: a None description must not inflate the average description length",
-    )
     def test_none_description_does_not_inflate_average(self):
         a = make()
         a.add_items([{"description": None}, {"description": "ab"}])

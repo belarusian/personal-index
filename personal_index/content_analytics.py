@@ -32,9 +32,16 @@ class ContentAnalytics:
                 counter.update(tags)
         return dict(counter)
 
+    @staticmethod
+    def _text_length(value: Any) -> int:
+        """Length of a text field; a present None counts as no text (0)."""
+        if value is None:
+            return 0
+        return len(str(value))
+
     def get_title_lengths(self) -> list[int]:
         """Get lengths of all titles."""
-        return [len(str(item.get("title", ""))) for item in self._items]
+        return [self._text_length(item.get("title")) for item in self._items]
 
     def get_avg_title_length(self) -> float:
         """Average title length."""
@@ -45,7 +52,7 @@ class ContentAnalytics:
 
     def get_description_lengths(self) -> list[int]:
         """Get lengths of all descriptions."""
-        return [len(str(item.get("description", ""))) for item in self._items]
+        return [self._text_length(item.get("description")) for item in self._items]
 
     def get_avg_description_length(self) -> float:
         """Average description length."""
