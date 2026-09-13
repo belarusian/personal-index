@@ -403,6 +403,28 @@ class TestBookmarkManager:
         tags = self.manager.get_all_tags()
         assert tags == ["python", "rust", "web"]
 
+    def test_get_all_tags_contract_pinned(self):
+        """Pin the exact contract of BookmarkManager.get_all_tags."""
+        manager = BookmarkManager()
+        # Guard: empty store returns an empty list
+        result = manager.get_all_tags()
+        assert result == []
+        assert isinstance(result, list)
+
+        # Normal case: dedup + ascending lexicographic order
+        manager.add(Bookmark(url="http://a.com", tags=["python", "web"]))
+        manager.add(Bookmark(url="http://b.com", tags=["rust", "python"]))
+        manager.add(Bookmark(url="http://c.com", tags=["art"]))
+        result = manager.get_all_tags()
+        assert result == ["art", "python", "rust", "web"]
+        # element type is str
+        assert all(isinstance(t, str) for t in result)
+        # FRESH list: mutating the result does not touch internal state
+        result.append("injected")
+        assert manager.get_all_tags() == ["art", "python", "rust", "web"]
+        # Read-only: the call itself does not mutate the store
+        assert manager.count() == 3
+
     def test_count(self):
         assert self.manager.count() == 0
         self.manager.add(Bookmark(url="http://a.com"))
