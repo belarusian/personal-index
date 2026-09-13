@@ -1,6 +1,6 @@
 # ARCH-60 — text_utils: `read_time_minutes` divides by the raw, unguarded `wpm` (ZeroDivisionError on `wpm==0`, silent bogus `1` on `wpm<0`)
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: `personal_index/text_utils.py` — `read_time_minutes` (lines 283-294)
 Umbrella: ARCH-2 (#983)
 Issue: #1193
