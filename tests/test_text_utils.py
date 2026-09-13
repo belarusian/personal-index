@@ -20,7 +20,6 @@ from personal_index.text_utils import (
     word_frequency,
 )
 
-import pytest
 
 
 class TestNormalizeWhitespace:
@@ -322,7 +321,8 @@ class TestReadTimeMinutes:
         assert read_time_minutes("hello") == 1
 
     def test_empty(self):
-        assert read_time_minutes("") == 1
+        # ARCH-64: no minimum-1 clamp; ceil(0 / wpm) == 0.
+        assert read_time_minutes("") == 0
 
     def test_returns_int_type(self):
         # Regression: annotation is -> int; pin the runtime type.
@@ -330,23 +330,26 @@ class TestReadTimeMinutes:
         assert type(read_time_minutes("hello")) is int
         assert type(read_time_minutes("")) is int
 
-    def test_wpm_zero_raises_valueerror(self):
-        # Guard: wpm == 0 must raise ValueError, not ZeroDivisionError.
-        with pytest.raises(ValueError):
-            read_time_minutes("word " * 300, wpm=0)
+    def test_read_time_minutes_zero_wpm_returns_zero(self):
+        # ARCH-64 guard: wpm == 0 -> 0, no ZeroDivisionError.
+        assert read_time_minutes("word " * 300, wpm=0) == 0
 
-    def test_wpm_negative_raises_valueerror(self):
-        # Guard: wpm < 0 must raise ValueError, not silently return 1.
-        with pytest.raises(ValueError):
-            read_time_minutes("word " * 300, wpm=-5)
+    def test_read_time_minutes_negative_wpm_returns_zero(self):
+        # ARCH-64 guard: wpm < 0 -> 0, no bogus 1.
+        assert read_time_minutes("word " * 300, wpm=-5) == 0
 
-    def test_normal_path_unchanged(self):
-        # Normal path (wpm > 0) is unchanged.
-        assert read_time_minutes("word " * 300, wpm=200) == 2
+    def test_read_time_minutes_positive_wpm_ceil(self):
+        # ARCH-64 normal path: ceil(1000 / 200) == 5.
+        assert read_time_minutes("word " * 1000, wpm=200) == 5
 
-    def test_empty_text_returns_one(self):
-        # Empty-text regression guard: minimum 1.
-        assert read_time_minutes("", wpm=200) == 1
+    def test_normal_path_ceil_rounds_up(self):
+        # ARCH-64 normal path: ceil(300 / 200) == 2 (round would give 2 too,
+        # but ceil(250 / 200) == 2 while round would give 1).
+        assert read_time_minutes("word " * 250, wpm=200) == 2
+
+    def test_empty_text_returns_zero(self):
+        # ARCH-64: empty text, positive wpm -> ceil(0 / wpm) == 0.
+        assert read_time_minutes("", wpm=200) == 0
 
 
 class TestTokenize:
