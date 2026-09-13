@@ -282,6 +282,35 @@ class TestBackupManager:
         deleted = manager.cleanup_old_backups(keep=5)
         assert deleted == []
 
+    def test_cleanup_old_backups_contract_pinned(self, tmp_path):
+        """Pin the exact cleanup_old_backups contract (normal + guard)."""
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+
+        for _ in range(5):
+            manager.create_backup(source)
+        before = [b.backup_id for b in manager.list_backups()]
+        assert len(before) == 5
+
+        # Normal case: keep=2 deletes the OLDEST 3, keeps the newest 2.
+        deleted = manager.cleanup_old_backups(keep=2)
+        assert len(deleted) == 3
+        remaining = [b.backup_id for b in manager.list_backups()]
+        assert len(remaining) == 2
+        # Deleted are exactly the oldest 3; remaining are the newest 2.
+        assert set(deleted) == set(before[:3])
+        assert set(remaining) == set(before[3:])
+        # Every returned ID was actually removed from the store.
+        assert all(manager.get_backup_info(d) is None for d in deleted)
+
+        # Guard input: keep <= 0 is a no-op -- returns [] and deletes nothing.
+        before_guard = [b.backup_id for b in manager.list_backups()]
+        assert manager.cleanup_old_backups(keep=0) == []
+        assert manager.cleanup_old_backups(keep=-1) == []
+        after_guard = [b.backup_id for b in manager.list_backups()]
+        assert after_guard == before_guard
+
     def test_create_backup_with_exclude(self, tmp_path):
         source = self._create_test_dir(tmp_path)
         backup_dir = str(tmp_path / "backups")

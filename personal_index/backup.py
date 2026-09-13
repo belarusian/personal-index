@@ -277,7 +277,17 @@ class BackupManager:
         return total
 
     def cleanup_old_backups(self, keep: int = 5) -> list[str]:
-        """Keep only the N most recent backups. Returns deleted backup IDs."""
+        """Keep only the ``keep`` most recent backups; return deleted IDs.
+
+        No-op guard: if ``keep <= 0`` return ``[]`` immediately and delete
+        nothing (never deletes when ``keep`` is non-positive).
+
+        Otherwise, only when ``len(backups) > keep``, delete the OLDEST
+        ``len(backups) - keep`` backups (``backups[:-keep]``), keeping the
+        ``keep`` newest. Returns only the backup IDs that ``delete_backup``
+        succeeded on, so the result may be a strict subset of the IDs
+        attempted. Returns ``[]`` when there is nothing to delete.
+        """
         if keep <= 0:
             return []
         backups = self.list_backups()
