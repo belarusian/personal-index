@@ -1,8 +1,9 @@
 # ARCH-53 — content_search: `add_item` must remove the old tokens on a re-add
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: `personal_index/content_search.py` — `SearchIndex.add_item`
 Umbrella: ARCH-2 (#983)
+Issue: #1327
 Docs: `docs/content-search.md` (Contract holes)
 
 ## Problem

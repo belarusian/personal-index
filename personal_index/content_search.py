@@ -226,8 +226,19 @@ class SearchIndex:
         self._snippet_extractor = SnippetExtractor()
 
     def add_item(self, item: dict[str, Any]) -> None:
-        """Add an item to the search index."""
+        """Add an item to the search index.
+
+        When the resolved id is already present in ``_items``, the old
+        postings are removed first (exactly what ``remove_item`` does:
+        discard the id from every ``_index`` / ``_term_freq`` entry, deleting
+        the entry when it becomes empty, and pop ``_doc_lengths``) BEFORE the
+        new text is indexed, so a re-add under an existing id is equivalent to
+        ``remove_item(id)`` + ``add_item(new_item)`` and no stale tokens
+        survive an in-place re-index. For a NEW id the behavior is unchanged.
+        """
         item_id = str(item.get("id", id(item)))
+        if item_id in self._items:
+            self.remove_item(item_id)
         self._items[item_id] = item
         text = self._extract_text(item)
         tokens = self._tokenize(text)
