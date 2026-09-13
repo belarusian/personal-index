@@ -88,7 +88,13 @@ class BookmarkManager:
         return False
 
     def list_all(self) -> list[Bookmark]:
-        """List all bookmarks."""
+        """Return a new list of all stored bookmarks.
+
+        The returned list is a fresh list object (not a view or reference
+        into the internal storage). It contains the SAME Bookmark objects
+        that are stored (not copies). When no bookmarks are stored, returns
+        an empty list. Does not mutate the internal state.
+        """
         return list(self._bookmarks.values())
 
     def list_by_category(self, category: str) -> list[Bookmark]:
