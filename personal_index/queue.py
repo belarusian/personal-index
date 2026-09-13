@@ -121,10 +121,18 @@ class TaskQueue:
             return task
 
     def dequeue(self) -> Task | None:
-        """Remove and return the highest-priority pending task.
+        """Pop and return the highest-priority PENDING task, starting it.
 
-        Returns:
-            The next Task, or None if the queue is empty.
+        Behavior: pops from the priority heap in order, discarding any
+        non-PENDING tasks (CANCELLED / COMPLETED / FAILED) it encounters,
+        until it reaches a PENDING task; calls ``task.start()`` on that
+        task (PENDING -> RUNNING, records ``started_at``) and returns it.
+        Guard path: returns ``None`` when no PENDING task remains (an empty
+        heap, or a heap holding only non-PENDING tasks).
+        Return: the PENDING ``Task`` (now ``RUNNING``), or ``None``.
+        Side effects: mutates the returned task's status to ``RUNNING`` and
+        sets ``started_at``; removes the returned task and any discarded
+        non-PENDING tasks from the heap.
         """
         with self._lock:
             while self._heap:
