@@ -59,6 +59,17 @@ class TestPageResult:
         assert r.start_index == 21
         assert r.end_index == 40
 
+    def test_end_index_contract_pinned(self):
+        # normal case: full page, end_index == page * per_page
+        r = PageResult(items=[], total=100, page=2, per_page=20)
+        assert r.end_index == 40
+        # guard case: final partial page clamps to total
+        g = PageResult(items=[], total=25, page=3, per_page=10)
+        assert g.end_index == 25
+        # guard case: single page with fewer items than per_page
+        s = PageResult(items=[], total=3, page=1, per_page=20)
+        assert s.end_index == 3
+
     def test_to_dict(self):
         r = PageResult(items=["a"], total=10, page=1, per_page=5)
         d = r.to_dict()
