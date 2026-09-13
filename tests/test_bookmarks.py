@@ -374,6 +374,29 @@ class TestBookmarkManager:
         categories = self.manager.get_categories()
         assert categories == ["news", "tech"]
 
+    def test_get_categories_contract_pinned(self):
+        """Pin the exact contract of BookmarkManager.get_categories."""
+        manager = BookmarkManager()
+        # Guard: empty store returns an empty list
+        result = manager.get_categories()
+        assert result == []
+        assert isinstance(result, list)
+
+        # Normal case: dedup + ascending lexicographic order
+        manager.add(Bookmark(url="http://a.com", category="tech"))
+        manager.add(Bookmark(url="http://b.com", category="news"))
+        manager.add(Bookmark(url="http://c.com", category="tech"))
+        manager.add(Bookmark(url="http://d.com", category="art"))
+        result = manager.get_categories()
+        assert result == ["art", "news", "tech"]
+        # element type is str
+        assert all(isinstance(c, str) for c in result)
+        # FRESH list: mutating the result does not touch internal state
+        result.append("injected")
+        assert manager.get_categories() == ["art", "news", "tech"]
+        # Read-only: the call itself does not mutate the store
+        assert manager.count() == 4
+
     def test_get_all_tags(self):
         self.manager.add(Bookmark(url="http://a.com", tags=["python", "web"]))
         self.manager.add(Bookmark(url="http://b.com", tags=["rust"]))
