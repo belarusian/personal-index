@@ -1,6 +1,6 @@
 # ARCH-55 — content_health: `HealthIssue`/`HealthCheckResult` need `from_dict` (and `HealthReport` needs `to_dict`) so a serialized report can be reloaded
 
-Status: OPEN
+Status: CLAIMED 2026-09-13
 Component: `personal_index/content_health.py` — `HealthIssue`, `HealthCheckResult`, `HealthReport`
 Umbrella: ARCH-2 (#983)
 Issue: #1170
