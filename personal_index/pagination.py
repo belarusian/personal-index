@@ -58,7 +58,18 @@ class PageResult:
 
     @property
     def has_next(self) -> bool:
-        """Whether there is a next page."""
+        """Whether a next page exists after this one.
+
+        Behavior: returns ``page < total_pages`` (True when the current
+        page is not the last page).
+        Guard path: on the final page (``page == total_pages``) it returns
+        ``False``; on page 1 of a multi-page result it returns ``True``.
+        Precondition: ``page >= 1`` and ``per_page >= 1`` (both are
+        clamped by ``PageParams`` for results produced by ``Paginator``;
+        a hand-built ``PageResult`` is not clamped).
+        Return: ``bool``.
+        Side effects: none (pure property).
+        """
         return self.page < self.total_pages
 
     @property
