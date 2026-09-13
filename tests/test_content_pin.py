@@ -369,3 +369,13 @@ class TestContentPinnerNonDictJSON:
             f.write("42")
         pinner = ContentPinner(storage_path=path)
         assert pinner._pinned == {}
+
+    def test_load_non_dict_value_degrades_to_empty(self, tmp_path):
+        # ARCH-63: a non-dict VALUE inside a valid dict must degrade to the
+        # empty state and never raise out of construction.
+        path = str(tmp_path / "pinned.json")
+        with open(path, "w") as f:
+            f.write(json.dumps({"a": "notadict"}))
+        pinner = ContentPinner(storage_path=path)
+        assert pinner.get_pinned_items() == []
+        assert pinner._pinned == {}
