@@ -327,7 +327,10 @@ class SearchIndex:
             with "item" (the stored item with its "content" key removed) and
             "score" (rounded to 4 decimals); when highlight=True each entry
             also carries "snippets" (list of Snippet.to_dict() dicts), and the
-            key is absent when highlight=False.
+            key is absent when highlight=False. Bound guard: if ``limit <= 0``
+            (zero or negative), "results" is ``[]`` (short-circuits before the
+            ``ranked[offset:offset+limit]`` slice; no all-but-last
+            negative-slice leak) while "total" is still the full match count.
           - "total": len(ranked) = the count of ALL ranked candidates BEFORE
             the offset/limit page slice, so it can exceed len(results).
           - "query": the original query string, echoed back unchanged.

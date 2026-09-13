@@ -204,6 +204,33 @@ class TestSummarize:
         assert guard.word_count_original == 0
         assert guard.word_count_summary == 0
 
+    def test_summarize_max_sentences_negative_returns_empty(self):
+        # Guard path (ARCH-65): max_sentences <= 0 -> empty summary, no
+        # all-but-last negative-slice leak. Text is long enough to reach the
+        # scoring path (len >= min_length and > max_sentences sentences).
+        text = (
+            "Python is a programming language. "
+            "Python supports multiple paradigms. "
+            "Python is widely used in web development. "
+            "Python has a large standard library. "
+            "Python is easy to learn. "
+            "Python is popular among beginners. "
+            "Python runs on many platforms. "
+            "Python is open source software."
+        )
+        neg = summarize(text, max_sentences=-1)
+        assert neg.sentences == []
+        assert neg.summary == ""
+        assert neg.word_count_summary == 0
+        # Zero bound unchanged.
+        zero = summarize(text, max_sentences=0)
+        assert zero.sentences == []
+        assert zero.summary == ""
+        assert zero.word_count_summary == 0
+        # Normal path: first max_sentences scored sentences.
+        normal = summarize(text, max_sentences=3)
+        assert len(normal.sentences) == 3
+
 
 class TestSummarizePage:
     def test_page_summarization(self):

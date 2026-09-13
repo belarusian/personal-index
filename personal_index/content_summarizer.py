@@ -176,11 +176,16 @@ def summarize(
          ``summary`` equals *text*, ``ratio`` is 1.0, ``sentences`` is
          ``[text]`` (or ``[]`` when *text* is empty), and both word counts are
          ``len(_tokenize(text))``. No sentence splitting or scoring occurs.
-      2. Short-text path: split *text* via ``_split_sentences``; if the
+      2. Bound guard: if ``max_sentences <= 0`` (zero or negative), the
+         selected sentence list is ``[]`` (enforced in ``_score_and_select``
+         before the ``scored[:max_sentences]`` slice), so the returned
+         SummaryResult has ``sentences == []``, ``summary == ""`` and
+         ``word_count_summary == 0`` -- no all-but-last negative-slice leak.
+      3. Short-text path: split *text* via ``_split_sentences``; if the
          sentence count is ``<= max_sentences`` (default 3), return
          ``_build_summary_result(text, sentences)`` keeping ALL sentences
          (no scoring, no selection).
-      3. Scoring path: otherwise compute ``_word_frequency(text)`` and select
+      4. Scoring path: otherwise compute ``_word_frequency(text)`` and select
          the top ``max_sentences`` via ``_score_and_select`` (the first
          sentence is boosted x2.5 and the last x1.1 before ranking), then
          return ``_build_summary_result(text, selected)``.
