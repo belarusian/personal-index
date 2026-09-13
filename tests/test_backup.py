@@ -348,6 +348,43 @@ class TestBackupManager:
         assert len(manifest.backup_id) > 10
 
 
+
+    def test_get_backup_info_contract_pinned(self, tmp_path):
+        """Exact contract: returns the manifest, or None (never raises) on any unreadable case."""
+        import json as _json
+
+        # Normal case: a real backup round-trips to its manifest.
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+        manifest = manager.create_backup(source)
+        info = manager.get_backup_info(manifest.backup_id)
+        assert isinstance(info, BackupManifest)
+        assert info.backup_id == manifest.backup_id
+        assert info.source_dir == manifest.source_dir
+        assert info.file_count == manifest.file_count
+
+        # Guard: missing manifest -> None.
+        assert manager.get_backup_info("does-not-exist") is None
+
+        # Guard: unparseable JSON -> None (no exception).
+        bad = tmp_path / "backups"
+        bad.mkdir(parents=True, exist_ok=True)
+        with open(bad / "backup_corrupt.json", "w") as f:
+            f.write("{")
+        assert manager.get_backup_info("corrupt") is None
+
+        # Guard: decoded value is not a dict -> None.
+        with open(bad / "backup_nondict.json", "w") as f:
+            _json.dump([1, 2, 3], f)
+        assert manager.get_backup_info("nondict") is None
+
+        # Guard: from_dict fails (unexpected key) -> None (no exception).
+        with open(bad / "backup_badkey.json", "w") as f:
+            _json.dump({"backup_id": "badkey", "unexpected": 1}, f)
+        assert manager.get_backup_info("badkey") is None
+
+
 class TestBackupTarFilter:
     """Tests for tar.extractall() filter argument (TICKET-47)."""
 
