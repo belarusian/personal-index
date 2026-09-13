@@ -261,6 +261,29 @@ class TestBackupManager:
         manager.create_backup(source)
         assert manager.get_total_backup_size() > 0
 
+    def test_get_total_backup_size_contract_pinned(self, tmp_path):
+        """Exact contract: sum of archive st_size; 0 when no archives (missing dir or json-only)."""
+        # Normal case: a real backup's archive size is counted.
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+        manager.create_backup(source)
+        archives = list(Path(backup_dir).glob("backup_*.tar*"))
+        assert len(archives) == 1
+        expected = sum(a.stat().st_size for a in archives)
+        assert manager.get_total_backup_size() == expected
+        assert manager.get_total_backup_size() > 0
+
+        # Guard: backup dir missing -> 0.
+        missing = BackupManager(backup_dir=str(tmp_path / "no_such_dir"))
+        assert missing.get_total_backup_size() == 0
+
+        # Guard: dir exists but holds only a manifest .json (no archive) -> 0.
+        json_only = str(tmp_path / "json_only")
+        Path(json_only).mkdir()
+        (Path(json_only) / "backup_x.json").write_text("{}")
+        assert BackupManager(backup_dir=json_only).get_total_backup_size() == 0
+
     def test_cleanup_old_backups(self, tmp_path):
         source = self._create_test_dir(tmp_path)
         backup_dir = str(tmp_path / "backups")
