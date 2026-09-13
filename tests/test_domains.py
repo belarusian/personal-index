@@ -174,3 +174,11 @@ class TestDomainManagerNonDictGuard:
         good.add_block("spam.com", reason="spam")
         reloaded = DomainManager(rules_file=path)
         assert reloaded.is_blocked("spam.com") is True
+
+    def test_load_non_dict_value_degrades_to_empty(self, tmp_path):
+        # ARCH-63: a non-dict VALUE inside a valid dict must degrade to the
+        # empty state and never raise out of construction.
+        path = self._write(tmp_path, json.dumps({"example.com": "notadict"}))
+        mgr = DomainManager(rules_file=path)
+        assert mgr.list_rules() == []
+        assert mgr._rules == {}
