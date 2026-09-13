@@ -283,21 +283,25 @@ def count_characters(text: str, include_spaces: bool = True) -> int:
 def read_time_minutes(text: str, wpm: int = 200) -> int:
     """Estimate reading time in minutes.
 
+    Contract (guard-the-raw-divisor, ARCH-64):
+        - Guard path: ``wpm <= 0`` -> returns exactly ``0`` (short-circuits
+          before any division; no ``ZeroDivisionError``, no ``ValueError``,
+          no bogus ``1``).
+        - Normal path: ``wpm > 0`` -> returns ``ceil(count_words(text) / wpm)``.
+        - Side effects: none.
+
     Args:
         text: Input text.
-        wpm: Words per minute reading speed. Must be a positive integer
-            (``wpm > 0``); a non-positive value raises ``ValueError``.
+        wpm: Words per minute reading speed.
 
     Returns:
-        Integer number of minutes (minimum 1).
-
-    Raises:
-        ValueError: If ``wpm`` is not a positive integer (``wpm <= 0``).
+        Integer number of minutes: ``0`` when ``wpm <= 0``, otherwise
+        ``ceil(count_words(text) / wpm)``.
     """
     if wpm <= 0:
-        raise ValueError("wpm must be a positive integer")
+        return 0
     words = count_words(text)
-    return max(1, round(words / wpm))
+    return (words + wpm - 1) // wpm
 
 
 # Common English stopwords for text processing
