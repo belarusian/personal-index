@@ -159,6 +159,29 @@ class TestBookmarkManager:
         self.manager.add(Bookmark(url="http://b.com", is_favorite=False))
         assert len(self.manager.list_favorites()) == 1
 
+    def test_list_all_contract_pinned(self):
+        """Pin the exact contract of BookmarkManager.list_all."""
+        manager = BookmarkManager()
+        # Guard: empty store returns empty list
+        result = manager.list_all()
+        assert result == []
+        assert isinstance(result, list)
+
+        # Normal case: add two bookmarks
+        b1 = Bookmark(url="http://a.com", title="A")
+        b2 = Bookmark(url="http://b.com", title="B")
+        manager.add(b1)
+        manager.add(b2)
+
+        result = manager.list_all()
+        assert len(result) == 2
+        # Returns the SAME objects (not copies)
+        assert b1 in result
+        assert b2 in result
+        # The returned list is a fresh list, not a reference to internal state
+        result.append(Bookmark(url="http://c.com"))
+        assert manager.count() == 2  # internal state unaffected
+
     def test_toggle_favorite(self):
         self.manager.add(Bookmark(url="http://a.com"))
         result = self.manager.toggle_favorite("http://a.com")
