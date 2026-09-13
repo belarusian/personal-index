@@ -139,8 +139,10 @@ Returns `True` if any of:
 **DECIDED (cycle 225):** the architect decision is option (b) — the true
 cross-page distinct count via `all_external_domains`; the fix is
 specified in `tickets/ARCH-56.md` (Architect Decision + Public contract
-sections). The defect is not yet fixed in code (the implementer has not
-landed the change); the pushback (IMPL-6) is resolved by this decision.
+sections). RESOLVED (cycle 260): the fix is on main — `analyze` populates
+`all_external_domains` and `get_aggregate_stats` unions the full
+per-page external-domain sets (commit 0b64c8e, QA-10); this
+Contract-holes bullet is closed. The pushback (IMPL-6) is resolved by this decision.
 `analyze` stores only the **top-20** external domains in
 `stats.domain_distribution` (`dict(domain_counter.most_common(20))`), but
 `get_aggregate_stats` computes `unique_external_domains` as the size of the
