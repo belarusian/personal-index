@@ -136,6 +136,38 @@ class TestTaskQueue:
         q = TaskQueue()
         assert q.dequeue() is None
 
+    def test_dequeue_contract_pinned(self):
+        # Normal case: a PENDING task is popped, started (PENDING -> RUNNING),
+        # and returned; the returned object is the same Task instance.
+        q = TaskQueue()
+        task = q.enqueue("t1", priority=TaskPriority.NORMAL)
+        assert task.status == TaskStatus.PENDING
+        result = q.dequeue()
+        assert result is task
+        assert result.status == TaskStatus.RUNNING
+        assert result.started_at is not None
+        # The dequeued task is removed from the heap.
+        assert q.size == 0
+
+        # Guard case: a heap holding only non-PENDING tasks yields None
+        # (the non-PENDING task is discarded, not returned).
+        q2 = TaskQueue()
+        cancelled = q2.enqueue("c1", priority=TaskPriority.HIGH)
+        q2.cancel_task("c1")
+        assert cancelled.status == TaskStatus.CANCELLED
+        assert q2.dequeue() is None
+
+        # Guard case: a non-PENDING task ahead of a PENDING one is skipped;
+        # the PENDING task is the one returned and started.
+        q3 = TaskQueue()
+        hi = q3.enqueue("hi", priority=TaskPriority.HIGH)
+        lo = q3.enqueue("lo", priority=TaskPriority.NORMAL)
+        q3.cancel_task("hi")
+        got = q3.dequeue()
+        assert got is lo
+        assert got.status == TaskStatus.RUNNING
+        assert hi.status == TaskStatus.CANCELLED
+
     def test_data_passthrough(self):
         q = TaskQueue()
         q.enqueue("t1", data={"url": "http://example.com"})
