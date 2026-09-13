@@ -246,7 +246,12 @@ class BackupManager:
         return True
 
     def get_backup_info(self, backup_id: str) -> BackupManifest | None:
-        """Get info about a specific backup."""
+        """Return the BackupManifest for backup_id, or None when it cannot be read.
+
+        Returns the manifest parsed from backup_<backup_id>.json. Returns None (never
+        raises) when the manifest file is missing, its JSON is unparseable, the decoded
+        value is not a dict, or BackupManifest.from_dict fails (KeyError/TypeError).
+        """
         backup_path = Path(self._backup_dir)
         manifest_file = backup_path / f"backup_{backup_id}.json"
 
