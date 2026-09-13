@@ -66,9 +66,9 @@ Derived properties (all pure, no side effects):
 ### `Paginator`
 
 `__init__(self, items: list[Any], per_page: int = 20, max_per_page: int = 100)`
-— stores `self._items`, `self._per_page`, `self._max_per_page` **raw, with no
-clamping** (unlike `PageParams.__post_init__`). See the Contract Holes
-section.
+— stores `self._items`, `self._per_page`, `self._max_per_page`, clamping
+`self._per_page` to `max(1, min(per_page, max_per_page))` (mirroring
+`PageParams.__post_init__`). See the Contract Holes section.
 
 - `get_page(page: int = 1, per_page: int | None = None) -> PageResult` —
   builds a `PageParams` (so `page` and `per_page` **are** clamped here),
@@ -78,10 +78,10 @@ section.
   on `per_page=0`/negative — it silently clamps to `1`.
 - `total_items` (property) — `len(items)`.
 - `total_pages` (property) — `max(1, ceil(len(items) / self._per_page))`
-  using the **raw, unclamped** `self._per_page`. **Guard path:** empty
-  collection returns `1`. **Division path:** `per_page=0` (constructor) raises
-  `ZeroDivisionError` here — the asymmetry with `get_page` is the ticketed
-  hole.
+  using the **clamped** `self._per_page`. **Guard path:** empty collection
+  returns `1`. **Division path:** `per_page=0`/negative is clamped to `1`
+  (1-item pages) and **never** raises — consistent with `get_page`/
+  `iterate_pages` (RESOLVED, ARCH-58, cycle 262).
 - `iterate_pages(per_page: int | None = None) -> list[PageResult]` — calls
   `get_page` in a loop (page 1, 2, ... until `has_next` is false), so it
   inherits `get_page`'s clamping and **never** raises on `per_page=0`/negative
@@ -90,28 +90,16 @@ section.
 
 ## Contract Holes
 
-**Single most important hole — `Paginator.total_pages` divides by the raw,
-unclamped constructor `per_page`, so `per_page=0` raises `ZeroDivisionError`
-while `get_page`/`iterate_pages` silently clamp to 1.** `PageParams.__post_init__`
-clamps `per_page` to `max(1, min(per_page, max_per_page))`, and `get_page` /
-`iterate_pages` both route through `PageParams`, so they **silently clamp** a
-`per_page=0` (or negative) request to `1` and return a page of 1 item. But
-`Paginator.__init__` stores `self._per_page` **raw** (no clamping), and the
-`total_pages` property does `math.ceil(len(self._items) / self._per_page)`
-directly on that raw value. Empirically:
-
-    Paginator([1, 2, 3], per_page=0).total_pages   # ZeroDivisionError: division by zero
-    Paginator([], per_page=0).total_pages          # ZeroDivisionError: division by zero
-    Paginator([1, 2, 3], per_page=0).get_page(1)   # PageResult(items=[1], per_page=1)  -- silently clamped
-    Paginator([1, 2, 3], per_page=0).iterate_pages()  # 3 single-item pages -- silently clamped
-
-So the same `per_page=0` input **raises** through `total_pages` but **silently
-returns 1-item pages** through `get_page`/`iterate_pages`. The guard is
-inconsistent: one path raises, the other two clamp, and the clamp is invisible
-(no warning, no error). This is a guard-path inconsistency hole (the ARCH-2
-umbrella class): a caller who checks `total_pages` before iterating crashes,
-while a caller who only iterates gets a surprising 1-item-per-page result with
-no signal. See `tickets/ARCH-58.md`.
+**RESOLVED (ARCH-58, cycle 262) — the `per_page` guard is now consistent:
+every entry point clamps, no path raises.** `Paginator.__init__` now clamps its
+constructor `per_page` to `max(1, min(per_page, max_per_page))` (mirroring
+`PageParams.__post_init__`), so `total_pages`, `get_page` and `iterate_pages`
+all operate on the same effective page size. A `per_page=0` (or negative)
+request is clamped to `1` (1-item pages) everywhere and **no path raises**:
+`Paginator([1, 2, 3], per_page=0).total_pages` is `3`,
+`Paginator([], per_page=0).total_pages` is `1`, and
+`Paginator([1, 2, 3], per_page=0).get_page(1)` is
+`PageResult(items=[1], per_page=1)`. See `tickets/ARCH-58.md`.
 
 Secondary (documented here, not ticketed): `PageResult.total_pages` has the
 same raw division, so a **hand-built** `PageResult(items, total, page,
