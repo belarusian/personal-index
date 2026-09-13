@@ -81,6 +81,48 @@ class TestBookmark:
         assert b.category == "uncategorized"
         assert b.tags == []
 
+    def test_to_dict_contract_pinned(self):
+        """Pin the exact contract of Bookmark.to_dict."""
+        b = Bookmark(
+            url="http://example.com",
+            title="T",
+            description="D",
+            category="tech",
+            tags=["a", "b"],
+            created_at="2024-01-01T00:00:00",
+            updated_at="2024-01-02T00:00:00",
+            is_favorite=True,
+        )
+        d = b.to_dict()
+        # Returns a dict with exactly the eight serialized keys
+        assert isinstance(d, dict)
+        assert set(d) == {
+            "url", "title", "description", "category",
+            "tags", "created_at", "updated_at", "is_favorite",
+        }
+        assert d["url"] == "http://example.com"
+        assert d["title"] == "T"
+        assert d["description"] == "D"
+        assert d["category"] == "tech"
+        assert d["tags"] == ["a", "b"]
+        assert d["created_at"] == "2024-01-01T00:00:00"
+        assert d["updated_at"] == "2024-01-02T00:00:00"
+        assert d["is_favorite"] is True
+        # Guard: a bookmark with no tags serializes tags to an empty list
+        g = Bookmark(url="http://g.com").to_dict()
+        assert g["tags"] == []
+        assert g["is_favorite"] is False
+        # Read-only: the call does not mutate the bookmark or its tags
+        before_tags = list(b.tags)
+        d2 = b.to_dict()
+        assert b.tags == before_tags
+        # Fresh dict each call (not the same object)
+        assert d is not d2
+        # Docstring pins the exact contract (stable fragments, lowercased)
+        doc = b.to_dict.__doc__.lower()
+        assert "read-only" in doc
+        assert "not mutate the bookmark" in doc
+
 
 class TestBookmarkManager:
     """Tests for BookmarkManager class."""

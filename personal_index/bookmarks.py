@@ -27,7 +27,16 @@ class Bookmark:
             self.updated_at = self.created_at
 
     def to_dict(self) -> dict:
-        """Convert to dictionary."""
+        """Return a new dict with the eight serialized fields of this Bookmark.
+
+        The returned dict maps exactly these keys to the corresponding
+        attribute values: "url", "title", "description", "category",
+        "tags", "created_at", "updated_at", and "is_favorite". The "tags"
+        value is the list of tag strings carried by the bookmark (an empty
+        list when the bookmark has no tags). The call is read-only: it does
+        not mutate the bookmark or its tags list, and it returns a fresh
+        dict each time it is called.
+        """
         return {
             "url": self.url,
             "title": self.title,
