@@ -228,6 +228,40 @@ class TestSearchIndex:
     def test_remove_nonexistent_item(self, index):
         index.remove_item("nonexistent")  # Should not raise
 
+    def test_add_item_readd_drops_stale_tokens(self, index):
+        index.add_item({"id": "1", "title": "alpha beta"})
+        index.add_item({"id": "1", "title": "gamma"})
+        assert index.search("alpha")["total"] == 0
+        res = index.search("gamma")
+        assert res["total"] == 1
+        assert res["results"][0]["item"]["id"] == "1"
+
+    def test_add_item_readd_matches_remove_then_add(self, index):
+        a_old = {"id": "1", "title": "alpha beta"}
+        a_new = {"id": "1", "title": "gamma delta"}
+        via_readd = SearchIndex()
+        via_readd.add_item(a_old)
+        via_readd.add_item(a_new)
+
+        via_remove_add = SearchIndex()
+        via_remove_add.add_item(a_old)
+        via_remove_add.remove_item("1")
+        via_remove_add.add_item(a_new)
+
+        assert via_readd._index == via_remove_add._index
+        assert via_readd._term_freq == via_remove_add._term_freq
+        assert via_readd._doc_lengths == via_remove_add._doc_lengths
+
+    def test_add_item_new_id_unchanged(self, index):
+        index.add_item({"id": "1", "title": "alpha beta"})
+        assert "1" in index._index["alpha"]
+        assert "1" in index._index["beta"]
+        assert index._term_freq["alpha"]["1"] == 1
+        assert index._term_freq["beta"]["1"] == 1
+        assert index._doc_lengths["1"] == 2
+        assert index.item_count == 1
+        assert index.term_count == 2
+
     def test_get_suggestions_prefix(self, index):
         index.add_items([
             {"id": "1", "title": "Python Tutorial"},

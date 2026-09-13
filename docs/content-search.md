@@ -73,8 +73,13 @@ ellipsis: str = "...", marker_open: str = "<mark>", marker_close: str =
   `str(item.get("id", id(item)))` (a missing/`None` id falls back to the
   object's `id()`), extracts text via `_extract_text`, tokenizes via
   `_tokenize`, records the doc length, and updates `_index` / `_term_freq`.
-  Re-adding the same id overwrites the stored item but does NOT remove the
-  old tokens first (see Contract holes).
+  When the resolved id is ALREADY present in `_items`, the old postings are
+  removed first (exactly what `remove_item` does: discard the id from every
+  `_index` / `_term_freq` entry, deleting the entry when it becomes empty, and
+  pop `_doc_lengths`) BEFORE the new text is indexed, so a re-add under an
+  existing id is equivalent to `remove_item(id)` + `add_item(new_item)` and no
+  stale tokens survive an in-place re-index. For a NEW id the behavior is
+  unchanged.
 - `add_items(items: list[dict[str, Any]]) -> None` — calls `add_item` per item.
 - `remove_item(item_id: str) -> None` — **Guard path:** `str(item_id)`; if the
   id is not in `_items`, returns immediately (no-op). Otherwise pops the item,
@@ -155,15 +160,3 @@ ellipsis: str = "...", marker_open: str = "<mark>", marker_close: str =
 - `get_suggestions(prefix, limit=5) -> list[str]` — delegates to
   `self.index.get_suggestions`.
 
-## Contract holes
-- **`add_item` does not remove the old tokens on a re-add.** `add_item`
-  overwrites `self._items[item_id]` but never discards the id from the
-  `_index` / `_term_freq` entries that the PREVIOUS value of that id
-  contributed. If an item is re-indexed under the same id with different text,
-  the stale tokens from the old text remain in `_index` and `_term_freq`
-  (and `_doc_lengths` is overwritten to the NEW length), so a search for a
-  term that only appeared in the old text still returns the item, and
-  `tf`/`tfidf`/`bm25` scores are computed against a doc length that no longer
-  matches the stored text. The only clean path is `remove_item` followed by
-  `add_item`; there is no in-place update. This is the single most important
-  hole (ticketed as ARCH-53).
