@@ -59,8 +59,11 @@ One issue found in a content item.
 - `to_dict() -> dict[str, Any]` — serializes all six fields; `severity` is
   emitted as its `.value` string (e.g. `"high"`), not the enum member.
 
-> **No `from_dict`.** There is no reverse constructor — a serialized issue
-> cannot be reloaded into a `HealthIssue`. See Contract Holes.
+- `from_dict(cls, data: dict[str, Any]) -> HealthIssue` (classmethod) —
+  rebuilds a `HealthIssue` from a dict produced by `to_dict`. Reads `url`,
+  `title`, `issue_type`, `severity`, `message`, and `suggestion` (default
+  `""`); maps the `severity` string back to its `IssueSeverity` member via
+  `IssueSeverity(data["severity"])`.
 
 ### `HealthCheckResult` (dataclass)
 
@@ -80,8 +83,13 @@ Result of a health check on one content item.
   emitted as its `.value` string and each `issues` entry via
   `HealthIssue.to_dict`.
 
-> **No `from_dict`.** A serialized result cannot be reloaded into a
-> `HealthCheckResult`. See Contract Holes.
+- `from_dict(cls, data: dict[str, Any]) -> HealthCheckResult` (classmethod) —
+  rebuilds a `HealthCheckResult` from a dict produced by `to_dict`. Reads
+  `url`, `title`, `status`, `issues` (default `[]`), `score` (default
+  `100.0`), `checks_passed` (default `0`), and `checks_total` (default `0`);
+  maps the `status` string back to its `HealthStatus` member via
+  `HealthStatus(data["status"])` and rebuilds each `issues` entry via
+  `HealthIssue.from_dict`.
 
 ### `HealthReport` (dataclass)
 
@@ -106,8 +114,13 @@ Aggregates results from checked content items.
   `Unhealthy: {unhealthy_count}`, `Overall score: {overall_score:.1f}/100`,
   `Health percentage: {health_percentage:.1f}%`.
 
-> `HealthReport` has **no `to_dict` / `from_dict`** at all — the aggregate
-> report is not directly serializable; only its per-item `results` are.
+- `to_dict() -> dict[str, Any]` — serializes all eight fields
+  (`total_items`, `healthy_count`, `warning_count`, `unhealthy_count`,
+  `unknown_count`, `total_issues`, `results`, `overall_score`); each `results`
+  entry via `HealthCheckResult.to_dict`.
+- `from_dict(cls, data: dict[str, Any]) -> HealthReport` (classmethod) —
+  rebuilds a `HealthReport` from a dict produced by `to_dict`. Reads all eight
+  fields; each `results` entry is rebuilt via `HealthCheckResult.from_dict`.
 
 ### `ContentHealthCheck` (dataclass)
 
@@ -167,16 +180,7 @@ Maps each item dict through `check_item` via `_check_from_dict`, which reads
 
 ## Contract Holes
 
-**Single most important hole — the persistence round-trip is one-way.**
-`HealthIssue.to_dict` and `HealthCheckResult.to_dict` exist, but **neither
-class has a `from_dict`**, and `HealthReport` has no `to_dict` at all. A
-health report can be serialized to dicts but can never be reloaded: the
-`status` / `severity` strings are not mapped back to their enums, and the
-aggregate report has no serialization path. Any consumer that wants to persist
-a report and later re-score or re-render it must hand-roll the reverse
-mapping. This is the same class of hole as ARCH-54 (lossy round-trip) but in
-the *missing reverse direction*: the forward path exists, the return path does
-not. See `tickets/ARCH-55.md`.
+(none outstanding)
 
 Secondary (documented here, not ticketed): `HealthStatus.UNKNOWN` and
 `IssueSeverity.CRITICAL` are unreachable from `check_item`, so

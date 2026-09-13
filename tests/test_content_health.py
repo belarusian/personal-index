@@ -492,3 +492,146 @@ def test_health_report_summary_docstring_pins_named_fields():
         doc.index("Health percentage"),
     ]
     assert positions == sorted(positions)
+
+
+class TestHealthIssueFromDict:
+    def test_roundtrip_preserves_severity_enum(self):
+        issue = HealthIssue(
+            url="https://x.com",
+            title="Test",
+            issue_type="missing_title",
+            severity=IssueSeverity.HIGH,
+            message="Title too short",
+            suggestion="Add title",
+        )
+        reloaded = HealthIssue.from_dict(issue.to_dict())
+        assert reloaded.severity == IssueSeverity.HIGH
+        assert reloaded.url == issue.url
+        assert reloaded.title == issue.title
+        assert reloaded.issue_type == issue.issue_type
+        assert reloaded.message == issue.message
+        assert reloaded.suggestion == issue.suggestion
+
+    def test_from_dict_missing_suggestion_defaults_empty(self):
+        d = {
+            "url": "https://x.com",
+            "title": "Test",
+            "issue_type": "missing_title",
+            "severity": "medium",
+            "message": "Title too short",
+        }
+        reloaded = HealthIssue.from_dict(d)
+        assert reloaded.suggestion == ""
+        assert reloaded.severity == IssueSeverity.MEDIUM
+
+
+class TestHealthCheckResultFromDict:
+    def test_roundtrip_nonempty_issues_preserves_enums_and_counts(self):
+        checker = ContentHealthChecker()
+        result = checker.check_item(
+            url="https://example.com/page",
+            title="",
+            content="Short",
+            status_code=404,
+        )
+        assert result.issues, "precondition: result must have at least one issue"
+        reloaded = HealthCheckResult.from_dict(result.to_dict())
+        assert reloaded.status == result.status
+        assert len(reloaded.issues) == len(result.issues)
+        for orig, reld in zip(result.issues, reloaded.issues):
+            assert reld.severity == orig.severity
+            assert isinstance(reld.severity, IssueSeverity)
+        assert reloaded.score == result.score
+        assert reloaded.checks_passed == result.checks_passed
+        assert reloaded.checks_total == result.checks_total
+
+    def test_roundtrip_healthy_empty_issues_unchanged(self):
+        checker = ContentHealthChecker()
+        result = checker.check_item(
+            url="https://example.com/page",
+            title="Good Title",
+            content="This is good content that passes all checks easily.",
+            status_code=200,
+        )
+        assert result.status == HealthStatus.HEALTHY
+        assert result.issues == []
+        reloaded = HealthCheckResult.from_dict(result.to_dict())
+        assert reloaded.status == HealthStatus.HEALTHY
+        assert reloaded.issues == []
+        assert reloaded.score == result.score
+
+    def test_roundtrip_unhealthy_enum_member_not_string(self):
+        checker = ContentHealthChecker()
+        result = checker.check_item(
+            url="https://example.com/page",
+            title="Title",
+            content="Content here that is long enough to pass.",
+            status_code=404,
+        )
+        assert result.status == HealthStatus.UNHEALTHY
+        reloaded = HealthCheckResult.from_dict(result.to_dict())
+        assert reloaded.status == HealthStatus.UNHEALTHY
+        assert isinstance(reloaded.status, HealthStatus)
+
+    def test_from_dict_minimal_dict_applies_defaults(self):
+        d = {
+            "url": "https://x.com",
+            "title": "Test",
+            "status": "healthy",
+        }
+        reloaded = HealthCheckResult.from_dict(d)
+        assert reloaded.issues == []
+        assert reloaded.score == 100.0
+        assert reloaded.checks_passed == 0
+        assert reloaded.checks_total == 0
+        assert reloaded.status == HealthStatus.HEALTHY
+
+
+class TestHealthReportRoundTrip:
+    def test_report_roundtrip_preserves_aggregates_and_results(self):
+        checker = ContentHealthChecker()
+        report = checker.check_all([
+            {
+                "url": "https://a.com",
+                "title": "Good Page",
+                "content": "This is good content that passes all checks easily.",
+                "tags": ["tech"],
+                "score": 8.0,
+                "status_code": 200,
+            },
+            {
+                "url": "https://b.com",
+                "title": "",
+                "content": "Short",
+                "status_code": 404,
+            },
+        ])
+        reloaded = HealthReport.from_dict(report.to_dict())
+        assert reloaded.total_items == report.total_items
+        assert reloaded.healthy_count == report.healthy_count
+        assert reloaded.warning_count == report.warning_count
+        assert reloaded.unhealthy_count == report.unhealthy_count
+        assert reloaded.unknown_count == report.unknown_count
+        assert reloaded.total_issues == report.total_issues
+        assert reloaded.overall_score == report.overall_score
+        assert len(reloaded.results) == len(report.results)
+        for orig, reld in zip(report.results, reloaded.results):
+            assert reld.status == orig.status
+            assert reld.score == orig.score
+            assert len(reld.issues) == len(orig.issues)
+
+    def test_report_from_dict_empty_results(self):
+        d = {
+            "total_items": 0,
+            "healthy_count": 0,
+            "warning_count": 0,
+            "unhealthy_count": 0,
+            "unknown_count": 0,
+            "total_issues": 0,
+            "results": [],
+            "overall_score": 100.0,
+        }
+        reloaded = HealthReport.from_dict(d)
+        assert reloaded.total_items == 0
+        assert reloaded.results == []
+        assert reloaded.overall_score == 100.0
