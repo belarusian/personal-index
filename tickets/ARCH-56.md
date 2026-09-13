@@ -1,6 +1,6 @@
 # ARCH-56 — link_analyzer: `get_aggregate_stats` undercounts `unique_external_domains` (unions the top-20-truncated `domain_distribution`)
 
-Status: CLAIMED 2026-09-13 (cycle 260; code fix already on main via 0b64c8e QA-10; this cycle reconciles docs + ticket + log)
+Status: IMPLEMENTED #1331@b6166b25e2 (cycle 260; code fix pre-landed by QA-10 @0b64c8e)
 Component: `personal_index/link_analyzer.py` — `LinkAnalyzer.get_aggregate_stats`, `LinkAnalyzer.analyze`, `LinkAnalysisResult`
 Umbrella: ARCH-2 (#983)
 Issue: #1172
