@@ -211,3 +211,73 @@ class TestModuleDocstringContract:
 
         doc = (cb.__doc__ or "").lower()
         assert "parallel" not in doc
+
+
+class TestNonValueErrorIsolation:
+    """ARCH-52: any Exception is isolated into result.errors (Option A)."""
+
+    def setup_method(self) -> None:
+        self.items = [{"id": str(i), "value": i} for i in range(25)]
+
+    def test_process_happy_path(self) -> None:
+        """Succeeding processor: processed==total, failed==0, ordered, per-batch progress."""
+        progress_calls = []
+
+        def on_progress(current, total):
+            progress_calls.append((current, total))
+
+        processor = BatchProcessor(batch_size=10, on_progress=on_progress)
+        result = processor.process(self.items)
+        assert result.total_items == 25
+        assert result.processed == 25
+        assert result.failed == 0
+        assert result.errors == []
+        # ordered output, ids preserved in input order
+        assert [o["id"] for o in result.output] == [str(i) for i in range(25)]
+        # on_progress called once per batch (25 / 10 -> 3 batches)
+        assert len(progress_calls) == 3
+        assert progress_calls == [(10, 25), (20, 25), (25, 25)]
+        assert result.completed_at is not None
+        assert result.duration_seconds is not None
+
+    def test_non_valueerror_isolation(self) -> None:
+        """KeyError on one batch: run continues, same error-dict shape, invariant holds."""
+        def keyerror_on_middle(batch):
+            if batch and batch[0]["id"] == "10":
+                raise KeyError("missing-field")
+            return batch
+
+        processor = BatchProcessor(batch_size=10, processor=keyerror_on_middle)
+        result = processor.process(self.items)
+        # 3 batches: [0-9] ok, [10-19] KeyError, [20-24] ok
+        assert result.processed == 15
+        assert result.failed == 10
+        assert result.processed + result.failed == result.total_items
+        assert len(result.errors) == 1
+        err = result.errors[0]
+        # same shape as a ValueError entry: batch_start / batch_size / error
+        assert set(err.keys()) == {"batch_start", "batch_size", "error"}
+        assert err["batch_start"] == 10
+        assert err["batch_size"] == 10
+        assert "missing-field" in err["error"]
+        # a BatchResult was returned (run did not abort)
+        assert isinstance(result, BatchResult)
+
+    def test_process_item_by_item_non_valueerror(self) -> None:
+        """KeyError on one item via process_item_by_item: isolated, keyed item_index/item_id/error."""
+        def keyerror_on_item(item):
+            if item["id"] == "5":
+                raise KeyError("bad-item")
+            return item
+
+        processor = BatchProcessor(batch_size=10)
+        result = processor.process_item_by_item(self.items, keyerror_on_item)
+        assert result.processed == 24
+        assert result.failed == 1
+        assert result.processed + result.failed == result.total_items
+        assert len(result.errors) == 1
+        err = result.errors[0]
+        assert set(err.keys()) == {"item_index", "item_id", "error"}
+        assert err["item_index"] == 5
+        assert err["item_id"] == "5"
+        assert "bad-item" in err["error"]

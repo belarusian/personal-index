@@ -67,6 +67,11 @@ class BatchProcessor:
 
     Supports custom processing functions, error handling,
     and progress callbacks.
+
+    Error-handling contract: any ``Exception`` raised by the processor
+    (or item processor) is isolated into ``result.errors`` and the run
+    continues; ``KeyboardInterrupt`` / ``SystemExit`` (``BaseException``,
+    not ``Exception``) still propagate and abort the run.
     """
 
     def __init__(
@@ -121,16 +126,15 @@ class BatchProcessor:
         """Run one batch through the processor, recording success or failure.
 
         On success, extends ``result.output`` with the processor output
-        and increments ``result.processed`` by the batch length. On
-        ``ValueError``, increments ``result.failed`` by the batch length
-        and appends an error entry keyed by ``batch_start``,
+        and increments ``result.processed`` by the batch length. On any ``Exception``, increments ``result.failed`` by the batch
+        length and appends an error entry keyed by ``batch_start``,
         ``batch_size`` and ``error``.
         """
         try:
             output = self.processor(batch)
             result.output.extend(output)
             result.processed += len(batch)
-        except ValueError as e:
+        except Exception as e:
             result.failed += len(batch)
             result.errors.append({
                 "batch_start": batch_start,
@@ -182,10 +186,9 @@ class BatchProcessor:
 
         Runs ``for attempt in range(max_retries)``: on success it extends
         ``result.output`` with the processor output and increments
-        ``result.processed`` by ``len(batch)`` (then breaks); on a
-        ``ValueError`` on the final attempt it increments ``result.failed``
-        by ``len(batch)`` and appends an error dict (``batch_start``,
-        ``attempts``, ``error``) to ``result.errors``.
+        ``result.processed`` by ``len(batch)`` (then breaks); on any ``Exception`` on the final attempt it increments
+        ``result.failed`` by ``len(batch)`` and appends an error dict
+        (``batch_start``, ``attempts``, ``error``) to ``result.errors``.
         """
         for attempt in range(max_retries):
             try:
@@ -193,7 +196,7 @@ class BatchProcessor:
                 result.output.extend(output)
                 result.processed += len(batch)
                 break
-            except ValueError as e:
+            except Exception as e:
                 if attempt == max_retries - 1:
                     result.failed += len(batch)
                     result.errors.append({
@@ -250,15 +253,15 @@ class BatchProcessor:
         """Run one item through the processor, recording success or failure.
 
         On success, appends the processor output to ``result.output``
-        and increments ``result.processed`` by 1. On ``ValueError``,
-        increments ``result.failed`` by 1 and appends an error entry
-        keyed by ``item_index``, ``item_id`` and ``error``.
+        and increments ``result.processed`` by 1. On any ``Exception``, increments ``result.failed`` by 1 and appends
+        an error entry keyed by ``item_index``, ``item_id`` and
+        ``error``.
         """
         try:
             output = processor(item)
             result.output.append(output)
             result.processed += 1
-        except ValueError as e:
+        except Exception as e:
             result.failed += 1
             result.errors.append({
                 "item_index": idx,
