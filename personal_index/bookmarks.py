@@ -152,7 +152,19 @@ class BookmarkManager:
         return bookmark
 
     def search(self, query: str) -> list[Bookmark]:
-        """Search bookmarks by title, description, or URL."""
+        """Search bookmarks by title, description, or URL.
+
+        Performs a case-insensitive substring match: ``query.lower()``
+        must be a substring of ``title.lower()``, ``description.lower()``,
+        or ``url.lower()`` (matching any single field is enough).
+
+        Returns a fresh ``list[Bookmark]`` (a new list object, not a
+        view or reference into internal storage) containing the SAME
+        ``Bookmark`` objects (not copies) that match, in the internal
+        ``_bookmarks`` dict insertion order (no sorting, no relevance
+        ranking). Returns an empty list ``[]`` when nothing matches or
+        the store is empty. Read-only: no mutation of internal state.
+        """
         query_lower = query.lower()
         results = []
         for b in self._bookmarks.values():
