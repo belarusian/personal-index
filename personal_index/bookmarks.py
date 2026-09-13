@@ -123,7 +123,17 @@ class BookmarkManager:
         return [b for b in self._bookmarks.values() if tag in b.tags]
 
     def list_favorites(self) -> list[Bookmark]:
-        """List favorite bookmarks."""
+        """Return a new list of the stored bookmarks that are favorites.
+
+        Matches on truthiness of ``b.is_favorite`` (a bookmark is
+        included exactly when its ``is_favorite`` attribute is truthy).
+        The returned list is a fresh list object (not a view or
+        reference into the internal storage). It contains the SAME
+        Bookmark objects that are stored (not copies). Order follows
+        the internal ``_bookmarks`` dict insertion order (no sorting).
+        When no bookmark is a favorite (or the store is empty), returns
+        an empty list. Does not mutate the internal state.
+        """
         return [b for b in self._bookmarks.values() if b.is_favorite]
 
     def toggle_favorite(self, url: str) -> Bookmark | None:
