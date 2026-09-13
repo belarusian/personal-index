@@ -136,6 +136,33 @@ class TestPaginator:
         assert result.per_page == 5
         assert len(result.items) == 5
 
+    def test_paginator_total_pages_zero_per_page_no_raise(self):
+        # Guard path: per_page=0 must not raise; clamps to 1 item/page.
+        p = Paginator([1, 2, 3], per_page=0)
+        assert p.total_pages == 3
+
+    def test_paginator_total_pages_zero_per_page_empty(self):
+        # Guard path: empty collection + per_page=0 -> 1 page, no raise.
+        p = Paginator([], per_page=0)
+        assert p.total_pages == 1
+
+    def test_paginator_total_pages_matches_iterate_pages_zero_per_page(self):
+        # Consistency: total_pages agrees with iterate_pages for per_page=0.
+        p = Paginator([1, 2, 3], per_page=0)
+        assert p.total_pages == len(p.iterate_pages())
+
+    def test_paginator_get_page_zero_per_page_clamps(self):
+        # Guard path: get_page clamps per_page=0 to 1 (unchanged).
+        p = Paginator([1, 2, 3], per_page=0)
+        result = p.get_page(1)
+        assert result.per_page == 1
+        assert result.items == [1]
+
+    def test_paginator_total_pages_normal_unchanged(self):
+        # Normal case: a valid per_page is respected (unchanged).
+        p = Paginator([1, 2, 3, 4, 5], per_page=2)
+        assert p.total_pages == 3
+
 
 class TestIteratePagesContract:
     """Pin the exact contract of Paginator.iterate_pages (TICKET-501)."""

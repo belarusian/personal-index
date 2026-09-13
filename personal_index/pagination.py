@@ -46,6 +46,11 @@ class PageResult:
         Behavior: returns ``max(1, ceil(total / per_page))``.
         Guard path: when ``total == 0`` (or ``total < per_page``), returns
         ``1`` (never ``0``).
+        Precondition: ``per_page != 0``. This is a pure property over a
+        hand-buildable dataclass and does not clamp, so a ``PageResult``
+        constructed directly with ``per_page=0`` raises ``ZeroDivisionError``
+        here (the ``Paginator`` never produces such a result, as it clamps
+        via ``PageParams``).
         Return: ``int``.
         Side effects: none (pure property).
         """
@@ -106,8 +111,17 @@ class Paginator:
     """Paginates a collection of items."""
 
     def __init__(self, items: list[Any], per_page: int = 20, max_per_page: int = 100):
+        """Create a paginator over ``items``.
+
+        The constructor ``per_page`` is clamped to
+        ``max(1, min(per_page, max_per_page))`` (mirroring
+        ``PageParams.__post_init__``), so ``total_pages``, ``get_page`` and
+        ``iterate_pages`` all operate on the same effective page size. A
+        ``per_page`` of ``0`` or negative is clamped to ``1`` (1-item pages)
+        and no entry point raises on it.
+        """
         self._items = items
-        self._per_page = per_page
+        self._per_page = max(1, min(per_page, max_per_page))
         self._max_per_page = max_per_page
 
     def get_page(self, page: int = 1, per_page: int | None = None) -> PageResult:
@@ -142,7 +156,15 @@ class Paginator:
 
     @property
     def total_pages(self) -> int:
-        """Total number of pages at the default per_page setting."""
+        """Total number of pages at the clamped per_page setting.
+
+        Behavior: returns ``max(1, ceil(len(items) / per_page))`` where
+        ``per_page`` is the constructor value clamped to
+        ``max(1, min(per_page, max_per_page))``.
+        Guard path: an empty collection returns ``1`` (never ``0``); a
+        ``per_page`` of ``0``/negative is clamped to ``1`` so this never
+        raises (consistent with ``get_page``/``iterate_pages``).
+        """
         return max(1, math.ceil(len(self._items) / self._per_page))
 
     def iterate_pages(self, per_page: int | None = None) -> list[PageResult]:
