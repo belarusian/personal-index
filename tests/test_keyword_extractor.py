@@ -88,6 +88,35 @@ class TestKeywordExtractor:
         assert len(top) <= 2
         assert isinstance(top, list)
 
+    def _text_with_40_keywords(self):
+        # 40 unique words, each repeated 3x so all pass min_frequency (default 1)
+        words = [f"word{i:02d}" for i in range(40)]
+        return " ".join(w + " " + w + " " + w for w in words)
+
+    def test_extract_top_n_respects_n_over_max_keywords(self):
+        extractor = KeywordExtractor(max_keywords=20)
+        text = self._text_with_40_keywords()
+        top = extractor.extract_top_n(text, n=50)
+        assert len(top) == 40
+
+    def test_extract_top_n_small_n(self):
+        extractor = KeywordExtractor(max_keywords=20)
+        text = self._text_with_40_keywords()
+        top = extractor.extract_top_n(text, n=5)
+        assert len(top) == 5
+
+    def test_extract_still_capped_by_max_keywords(self):
+        extractor = KeywordExtractor(max_keywords=20)
+        text = self._text_with_40_keywords()
+        keywords = extractor.extract(text)
+        assert len(keywords) <= 20
+
+    def test_extract_top_n_zero_negative_guard(self):
+        extractor = KeywordExtractor(max_keywords=20)
+        text = self._text_with_40_keywords()
+        assert extractor.extract_top_n(text, n=0) == []
+        assert extractor.extract_top_n(text, n=-1) == []
+
     def test_compute_term_frequency(self):
         text = "hello hello world"
         tf = self.extractor.compute_term_frequency(text)

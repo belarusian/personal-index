@@ -35,8 +35,14 @@ class KeywordExtractor:
         self.max_keywords = max_keywords
         self.min_frequency = min_frequency
 
-    def extract(self, text: str) -> list[Keyword]:
-        """Extract keywords from text."""
+    def extract(self, text: str, limit: int | None = None) -> list[Keyword]:
+        """Extract keywords from text.
+
+        Args:
+            text: Input text to extract keywords from.
+            limit: Optional per-call cap on the number of keywords returned.
+                When None, defaults to self.max_keywords.
+        """
         if not text:
             return []
         tokens = tokenize(text, remove_stopwords=True)
@@ -68,7 +74,8 @@ class KeywordExtractor:
 
         # Sort by score descending
         keywords.sort(key=lambda k: k.score, reverse=True)
-        return keywords[: self.max_keywords]
+        cap = self.max_keywords if limit is None else limit
+        return keywords[: cap]
 
     def extract_phrases(self, text: str, n: int = 2) -> list[tuple[str, int]]:
         """Extract n-gram phrases from text."""
@@ -94,7 +101,7 @@ class KeywordExtractor:
         """
         if n <= 0:
             return []
-        keywords = self.extract(text)
+        keywords = self.extract(text, limit=n)
         return [kw.text for kw in keywords[:n]]
 
     def compute_term_frequency(self, text: str) -> dict[str, float]:
@@ -109,8 +116,10 @@ class KeywordExtractor:
 
     def compare_keywords(self, text1: str, text2: str) -> dict[str, float]:
         """Compare keywords between two texts, returning shared keywords with scores."""
-        kw1 = {kw.text: kw.score for kw in self.extract(text1)}
-        kw2 = {kw.text: kw.score for kw in self.extract(text2)}
+        # Use a sufficiently large per-call limit so the intersection is not
+        # silently truncated by the default max_keywords cap.
+        kw1 = {kw.text: kw.score for kw in self.extract(text1, limit=10**9)}
+        kw2 = {kw.text: kw.score for kw in self.extract(text2, limit=10**9)}
         shared = {}
         for word in set(kw1.keys()) & set(kw2.keys()):
             shared[word] = (kw1[word] + kw2[word]) / 2
