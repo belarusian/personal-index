@@ -98,7 +98,15 @@ class BookmarkManager:
         return list(self._bookmarks.values())
 
     def list_by_category(self, category: str) -> list[Bookmark]:
-        """List bookmarks in a category."""
+        """Return a new list of the bookmarks stored under ``category``.
+
+        Matches on EXACT equality of ``b.category == category`` (no
+        substring or case-insensitive matching). The returned list is a
+        fresh list object (not a view or reference into the internal
+        storage). It contains the SAME Bookmark objects that are stored
+        (not copies). When no bookmark has that category, returns an empty
+        list. Does not mutate the internal state.
+        """
         return [b for b in self._bookmarks.values() if b.category == category]
 
     def list_by_tag(self, tag: str) -> list[Bookmark]:
