@@ -83,7 +83,20 @@ class PageResult:
 
     @property
     def end_index(self) -> int:
-        """1-based index of the last item on this page."""
+        """1-based index of the last item on this page.
+
+        Behavior: returns ``min(page * per_page, total)``.
+        Guard path: on the final partial page (where
+        ``page * per_page > total``), the value is clamped to
+        ``total`` so it never exceeds the number of items that
+        actually exist; on a full page it equals
+        ``page * per_page``.
+        Precondition: ``page >= 1`` and ``per_page >= 1`` (both are
+        clamped by ``PageParams`` for results produced by
+        ``Paginator``; a hand-built ``PageResult`` is not clamped).
+        Return: ``int``.
+        Side effects: none (pure property).
+        """
         return min(self.page * self.per_page, self.total)
 
     def to_dict(self) -> dict:
