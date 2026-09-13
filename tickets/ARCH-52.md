@@ -1,6 +1,6 @@
 # ARCH-52: content-batch — only `ValueError` is caught, so any other processor exception aborts the whole run
 
-Status: CLAIMED 2026-09-12
+Status: IMPLEMENTED #1326@e7bb3eb (cycle 256)
 Component: `personal_index/content_batch.py`
 Issue: #1156
 Refs: ARCH-2 (#983 umbrella)
