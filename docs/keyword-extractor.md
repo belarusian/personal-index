@@ -105,17 +105,13 @@ returns up to `max_keywords` keywords.
 
 ## Contract Holes
 
-**Single most important hole — `extract_top_n`'s `n` is silently capped by the
-constructor's `max_keywords`.** `extract_top_n(text, n)` is documented as
-"Extract top N keywords," but it delegates to `extract(text)`, which already
-truncates its result to `self.max_keywords` (default **20**) *before*
-`extract_top_n` slices to `n`. So whenever `n > max_keywords`, the caller
-silently receives `max_keywords` items instead of `n`. Empirically: on text
-with 40 distinct keywords, `KeywordExtractor().extract_top_n(text, n=50)`
-returns **20**, not 50. The `n` parameter over-promises; the true cap is an
-invisible constructor argument the caller did not ask about. This is a
-silent-wrong-result hole (the ARCH-2 umbrella class): no exception, no
-warning, just fewer keywords than requested. See `tickets/ARCH-57.md`.
+**RESOLVED (ARCH-57, cycle 261) — `extract_top_n`'s `n` is now authoritative.**
+`extract` now accepts an optional per-call `limit` (defaulting to
+`self.max_keywords` for backward compatibility), and `extract_top_n(text, n)`
+passes `limit=n`, so `n` is authoritative: `extract_top_n` returns
+`min(n, distinct_keywords)` even when `n > max_keywords`. `compare_keywords`
+extracts with a sufficiently large per-call limit so the intersection is not
+silently truncated by the default cap. See `tickets/ARCH-57.md`.
 
 Secondary (documented here, not ticketed): `compare_keywords` shares the same
 root cause — it intersects the two `extract` results, each already truncated
