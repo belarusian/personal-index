@@ -136,7 +136,10 @@ class BackupManager:
         return archive_path
 
     def list_backups(self) -> list[BackupManifest]:
-        """List all available backups."""
+        """Return a list of BackupManifest objects for every parseable backup_*.json in the backup dir, sorted oldest-first (sorted() over the glob filenames; backup_id = {timestamp}_{uuid} is chronological).
+
+        Returns [] when the backup dir is missing. Silently skips any manifest file whose JSON is unparseable or whose decoded value is not a dict (no raise).
+        """
         backup_path = Path(self._backup_dir)
         if not backup_path.exists():
             return []

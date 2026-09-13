@@ -112,6 +112,41 @@ class TestBackupManager:
         backups = manager.list_backups()
         assert len(backups) == 2
 
+
+    def test_list_backups_contract_pinned(self, tmp_path):
+        """Pinning: list_backups returns BackupManifest objects sorted oldest-first,
+        and silently skips a non-dict manifest (guard input). No literal line-number
+        anchor; ordering is pinned by returned-object backup_id sequence."""
+        import json as _json
+
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write manifests in NON-chronological creation order to prove the
+        # returned list is sorted oldest-first by the glob filename (backup_id).
+        new_first = {"backup_id": "20240102_000000_b", "source_dir": "/tmp/b"}
+        old_first = {"backup_id": "20240101_000000_a", "source_dir": "/tmp/a"}
+        with open(backup_dir / "backup_20240102_000000_b.json", "w") as f:
+            _json.dump(new_first, f)
+        with open(backup_dir / "backup_20240101_000000_a.json", "w") as f:
+            _json.dump(old_first, f)
+        # Guard input: a non-dict JSON manifest must be silently skipped.
+        with open(backup_dir / "backup_20240103_000000_bad.json", "w") as f:
+            _json.dump([1, 2, 3], f)
+
+        bm = BackupManager(backup_dir=str(backup_dir))
+        results = bm.list_backups()
+
+        # Normal case: exactly the two dict manifests, sorted oldest-first.
+        ids = [m.backup_id for m in results]
+        assert ids == ["20240101_000000_a", "20240102_000000_b"]
+        # Guard input: the non-dict manifest is skipped, not fatal.
+        assert "20240103_000000_bad" not in ids
+        # Returned objects are BackupManifest instances with the pinned fields.
+        assert all(isinstance(m, BackupManifest) for m in results)
+        assert results[0].source_dir == "/tmp/a"
+        assert results[1].source_dir == "/tmp/b"
+
     def test_restore_backup(self, tmp_path):
         source = self._create_test_dir(tmp_path)
         backup_dir = str(tmp_path / "backups")
