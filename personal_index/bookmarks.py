@@ -72,7 +72,12 @@ class BookmarkManager:
         return bookmark
 
     def get(self, url: str) -> Bookmark | None:
-        """Get a bookmark by URL."""
+        """Look up the bookmark stored under url.
+
+        If url is present, returns the SAME Bookmark object (not a
+        copy). If url is not present, returns None (no raise, no
+        mutation).
+        """
         return self._bookmarks.get(url)
 
     def remove(self, url: str) -> bool:

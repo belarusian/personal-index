@@ -112,6 +112,20 @@ class TestBookmarkManager:
     def test_get_missing(self):
         assert self.manager.get("http://missing.com") is None
 
+    def test_get_contract_pinned(self):
+        # Pin the exact contract of BookmarkManager.get.
+        # Normal case: returns the SAME Bookmark object (identity, not copy).
+        b = Bookmark(url="http://a.com", title="Test")
+        self.manager.add(b)
+        result = self.manager.get("http://a.com")
+        assert result is b
+        # Guard input: missing url returns None, no raise, no mutation.
+        count_before = self.manager.count()
+        assert self.manager.get("http://missing.com") is None
+        assert self.manager.count() == count_before
+        assert self.manager.get("http://a.com") is b
+        assert b.title == "Test"
+
     def test_remove_bookmark(self):
         self.manager.add(Bookmark(url="http://example.com"))
         assert self.manager.remove("http://example.com") is True
