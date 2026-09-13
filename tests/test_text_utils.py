@@ -20,6 +20,8 @@ from personal_index.text_utils import (
     word_frequency,
 )
 
+import pytest
+
 
 class TestNormalizeWhitespace:
     def test_collapse_spaces(self):
@@ -327,6 +329,24 @@ class TestReadTimeMinutes:
         assert isinstance(read_time_minutes("word " * 400), int)
         assert type(read_time_minutes("hello")) is int
         assert type(read_time_minutes("")) is int
+
+    def test_wpm_zero_raises_valueerror(self):
+        # Guard: wpm == 0 must raise ValueError, not ZeroDivisionError.
+        with pytest.raises(ValueError):
+            read_time_minutes("word " * 300, wpm=0)
+
+    def test_wpm_negative_raises_valueerror(self):
+        # Guard: wpm < 0 must raise ValueError, not silently return 1.
+        with pytest.raises(ValueError):
+            read_time_minutes("word " * 300, wpm=-5)
+
+    def test_normal_path_unchanged(self):
+        # Normal path (wpm > 0) is unchanged.
+        assert read_time_minutes("word " * 300, wpm=200) == 2
+
+    def test_empty_text_returns_one(self):
+        # Empty-text regression guard: minimum 1.
+        assert read_time_minutes("", wpm=200) == 1
 
 
 class TestTokenize:

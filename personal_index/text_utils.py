@@ -285,11 +285,17 @@ def read_time_minutes(text: str, wpm: int = 200) -> int:
 
     Args:
         text: Input text.
-        wpm: Words per minute reading speed.
+        wpm: Words per minute reading speed. Must be a positive integer
+            (``wpm > 0``); a non-positive value raises ``ValueError``.
 
     Returns:
         Integer number of minutes (minimum 1).
+
+    Raises:
+        ValueError: If ``wpm`` is not a positive integer (``wpm <= 0``).
     """
+    if wpm <= 0:
+        raise ValueError("wpm must be a positive integer")
     words = count_words(text)
     return max(1, round(words / wpm))
 
