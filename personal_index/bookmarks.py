@@ -189,7 +189,14 @@ class BookmarkManager:
         return sorted(categories)
 
     def get_all_tags(self) -> list[str]:
-        """Get all unique tags."""
+        """Return all unique tags across every stored Bookmark.
+
+        Returns a FRESH ``list[str]`` (not a view or reference to internal
+        state) of the distinct tag strings, deduplicated (set-based) and
+        sorted in ascending lexicographic order. An empty store returns an
+        empty list. Read-only: does not mutate the manager or any stored
+        Bookmark.
+        """
         tags = set()
         for b in self._bookmarks.values():
             tags.update(b.tags)
