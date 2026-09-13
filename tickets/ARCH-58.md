@@ -1,6 +1,6 @@
 # ARCH-58 — pagination: `Paginator.total_pages` divides by the raw, unclamped constructor `per_page` (ZeroDivisionError on `per_page=0`), while `get_page`/`iterate_pages` silently clamp to 1
 
-Status: CLAIMED 2026-09-13
+Status: IMPLEMENTED #1333@a597787 (cycle 262)
 Component: `personal_index/pagination.py` — `Paginator.__init__`, `Paginator.total_pages`, `Paginator.get_page`, `Paginator.iterate_pages`, `PageParams.__post_init__`, `PageResult.total_pages`
 Umbrella: ARCH-2 (#983)
 Issue: #1184
