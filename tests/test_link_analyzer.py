@@ -181,3 +181,40 @@ class TestLinkAnalyzer:
         assert result.top_domains == [("other.com", 2)]
         # suspicious: empty anchor on an external link is flagged
         assert "http://other.com/y" in result.suspicious_links
+
+    def test_linkanalyzer_negative_max_anchor_length_clamps_to_zero(self):
+        # ARCH-62: __init__ clamps the stored bound to a non-negative floor.
+        assert LinkAnalyzer(max_anchor_length=-1).max_anchor_length == 0
+        assert LinkAnalyzer(max_anchor_length=-2).max_anchor_length == 0
+        assert LinkAnalyzer(max_anchor_length=-100).max_anchor_length == 0
+        # non-negative bounds are stored unchanged
+        assert LinkAnalyzer(max_anchor_length=0).max_anchor_length == 0
+        assert LinkAnalyzer(max_anchor_length=100).max_anchor_length == 100
+
+    def test_linkanalyzer_negative_max_anchor_length_behavior_matches_zero(self):
+        # ARCH-62 acceptance 1: -1 clamped to 0 -> empty anchor counted as ''.
+        r_neg1 = LinkAnalyzer(base_domain="example.com", max_anchor_length=-1).analyze(
+            "http://example.com/", [{"url": "http://ext.com/x", "text": "hello"}]
+        )
+        assert r_neg1.stats.anchor_text_distribution == {"": 1}
+        # acceptance 2: -2 clamped to 0.
+        r_neg2 = LinkAnalyzer(base_domain="example.com", max_anchor_length=-2).analyze(
+            "http://example.com/", [{"url": "http://ext.com/x", "text": "hello world"}]
+        )
+        assert r_neg2.stats.anchor_text_distribution == {"": 1}
+        # acceptance 3: -2 result equals the 0 result for the same links.
+        r_zero = LinkAnalyzer(base_domain="example.com", max_anchor_length=0).analyze(
+            "http://example.com/", [{"url": "http://ext.com/x", "text": "hello world"}]
+        )
+        assert r_neg2.stats.anchor_text_distribution == r_zero.stats.anchor_text_distribution
+        # acceptance 4: default 100 unchanged.
+        r_def = LinkAnalyzer(base_domain="example.com").analyze(
+            "http://example.com/", [{"url": "http://ext.com/x", "text": "hello"}]
+        )
+        assert r_def.stats.anchor_text_distribution == {"hello": 1}
+        # acceptance 5: empty/whitespace-only anchor not counted for any bound.
+        for bound in (-1, 0, 100):
+            r = LinkAnalyzer(base_domain="example.com", max_anchor_length=bound).analyze(
+                "http://example.com/", [{"url": "http://ext.com/x", "text": "   "}]
+            )
+            assert r.stats.anchor_text_distribution == {}
