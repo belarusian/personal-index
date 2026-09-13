@@ -39,8 +39,17 @@ class LinkAnalyzer:
     """Analyzes links on crawled pages."""
 
     def __init__(self, base_domain: str = "", max_anchor_length: int = 100):
+        """Initialize the analyzer.
+
+        ``max_anchor_length`` is clamped to a non-negative floor: a negative
+        bound is stored as ``0`` and behaves identically to ``0`` (a
+        non-empty anchor is truncated to ``''`` and counted as ``''``, so
+        ``anchor_text_distribution == {'': 1}``). The counting idiom in
+        ``_analyze_single_link`` is unchanged: the guard stays on the
+        stripped, pre-truncation anchor.
+        """
         self.base_domain = base_domain
-        self.max_anchor_length = max_anchor_length
+        self.max_anchor_length = max(0, max_anchor_length)
 
     def analyze(self, url: str, links: list[dict]) -> LinkAnalysisResult:
         """Analyze links found on a page.

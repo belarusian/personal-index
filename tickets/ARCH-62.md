@@ -1,6 +1,6 @@
 # ARCH-62 — link_analyzer: negative `max_anchor_length` clamp contract (0-path yields `{'': 1}`)
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: `personal_index/link_analyzer.py` — `LinkAnalyzer.__init__`, `LinkAnalyzer._analyze_single_link`
 Umbrella: ARCH-2 (#983)
 Issue: #1206
