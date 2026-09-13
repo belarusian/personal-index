@@ -271,7 +271,13 @@ class BackupManager:
             return None
 
     def get_total_backup_size(self) -> int:
-        """Get total size of all backups."""
+        """Return the total on-disk size of all backup archives.
+
+        Sums ``st_size`` (bytes) over every ``backup_*.tar*`` archive in
+        the backup directory. Returns ``0`` when the backup directory does
+        not exist OR exists but holds no ``backup_*.tar*`` archives. Only
+        archive files are counted; manifest ``.json`` files are ignored.
+        """
         backup_path = Path(self._backup_dir)
         if not backup_path.exists():
             return 0
