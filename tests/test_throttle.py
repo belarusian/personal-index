@@ -133,3 +133,55 @@ class TestShouldThrottleBoundary:
             request_times=[now - 1, now - 0.5, now - 0.1],  # 3 == max_requests
         )
         assert mgr.should_throttle("http://example.com/page") is True
+
+
+class TestZeroWindowGuard:
+    """Pin ARCH-59: rate_per_second returns a finite fallback (0.0) for
+    window_seconds <= 0, so the probe (should_throttle) and the wait path
+    (wait_if_needed) cannot diverge on a degenerate window."""
+
+    def test_throttle_rule_rate_per_second_zero_window_no_raise(self):
+        rule = ThrottleRule(max_requests=10, window_seconds=0)
+        assert rule.rate_per_second == 0.0
+
+    def test_throttle_rule_rate_per_second_negative_window_no_raise(self):
+        rule = ThrottleRule(max_requests=10, window_seconds=-5)
+        assert rule.rate_per_second == 0.0
+
+    def test_throttle_rule_rate_per_second_normal_unchanged(self):
+        rule = ThrottleRule(max_requests=10, window_seconds=60)
+        assert rule.rate_per_second == 10 / 60
+
+    def test_wait_if_needed_two_calls_zero_window_no_raise(self):
+        mgr = ThrottleManager()
+        mgr.set_rule("example.com", ThrottleRule(max_requests=10, window_seconds=0))
+        with patch("personal_index.throttle.time.sleep"):
+            first = mgr.wait_if_needed("http://example.com/page")
+            second = mgr.wait_if_needed("http://example.com/page")
+        assert first == 0.0
+        assert second >= 0.0
+
+    def test_should_throttle_and_wait_agree(self):
+        # At/over budget: both the probe and the wait path report throttle.
+        mgr = ThrottleManager()
+        mgr.set_rule("example.com", ThrottleRule(max_requests=2, window_seconds=60.0))
+        now = time.time()
+        mgr._states["example.com"] = ThrottleState(
+            request_times=[now - 1, now - 0.5],  # 2 == max_requests
+        )
+        assert mgr.should_throttle("http://example.com/page") is True
+        with patch("personal_index.throttle.time.sleep"):
+            wait = mgr.wait_if_needed("http://example.com/page")
+        assert wait > 0.0
+
+        # Under budget: neither the probe nor the wait path reports throttle.
+        mgr2 = ThrottleManager()
+        mgr2.set_rule("example.com", ThrottleRule(max_requests=2, window_seconds=60.0))
+        now2 = time.time()
+        mgr2._states["example.com"] = ThrottleState(
+            request_times=[now2 - 1],  # 1 < max_requests
+        )
+        assert mgr2.should_throttle("http://example.com/page") is False
+        with patch("personal_index.throttle.time.sleep"):
+            wait2 = mgr2.wait_if_needed("http://example.com/page")
+        assert wait2 == 0.0
