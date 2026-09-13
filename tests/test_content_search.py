@@ -403,6 +403,27 @@ class TestSearchIndex:
         guard = index.search("the and of")
         assert guard == {"results": [], "total": 0, "query": "the and of"}
 
+    def test_searchindex_search_limit_negative_returns_empty(self, index):
+        # Guard path (ARCH-65): limit <= 0 -> results == [] with total still
+        # the full match count (no all-but-last negative-slice leak).
+        index.add_items([
+            {"id": str(i), "title": "Python Tutorial",
+             "description": "Learn Python", "content": "python body"}
+            for i in range(5)
+        ])
+        neg = index.search("python", limit=-1)
+        assert neg["results"] == []
+        assert neg["total"] == 5
+        assert neg["query"] == "python"
+        # Zero bound unchanged.
+        zero = index.search("python", limit=0)
+        assert zero["results"] == []
+        assert zero["total"] == 5
+        # Normal path: first limit ranked results.
+        normal = index.search("python", limit=3, offset=0)
+        assert len(normal["results"]) == 3
+        assert normal["total"] == 5
+
 
 class TestSearchIndexLoadNonDictGuard:
     """Regression: non-dict JSON in index file must not crash SearchIndex.load_index."""
