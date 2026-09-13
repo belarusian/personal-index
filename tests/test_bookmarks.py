@@ -430,6 +430,29 @@ class TestBookmarkManager:
         self.manager.add(Bookmark(url="http://a.com"))
         assert self.manager.count() == 1
 
+    def test_count_contract_pinned(self):
+        """Pin the exact contract of BookmarkManager.count."""
+        manager = BookmarkManager()
+        # Guard: empty store returns 0
+        result = manager.count()
+        assert result == 0
+        assert isinstance(result, int)
+        # Normal case: counts the TOTAL number of stored bookmarks
+        manager.add(Bookmark(url="http://a.com"))
+        manager.add(Bookmark(url="http://b.com"))
+        manager.add(Bookmark(url="http://c.com"))
+        assert manager.count() == 3
+        # Read-only: the call itself does not mutate the store
+        before = manager.list_all()
+        manager.count()
+        assert manager.list_all() == before
+        assert manager.count() == 3
+        # Docstring pins the exact contract (stable fragment, lowercased)
+        doc = manager.count.__doc__.lower()
+        assert "not mutate the internal state" in doc
+        assert "returns 0" in doc
+
+
     def test_save_and_load(self, tmp_path):
         path = str(tmp_path / "bookmarks.json")
         self.manager.add(Bookmark(url="http://a.com", title="A", category="tech"))
