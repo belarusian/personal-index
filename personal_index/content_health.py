@@ -50,6 +50,23 @@ class HealthIssue:
             "suggestion": self.suggestion,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> HealthIssue:
+        """Rebuild a HealthIssue from a dict produced by to_dict.
+
+        Reads url, title, issue_type, severity, message, and suggestion
+        (default ""). The severity string is mapped back to its
+        IssueSeverity member via IssueSeverity(data["severity"]).
+        """
+        return cls(
+            url=data["url"],
+            title=data["title"],
+            issue_type=data["issue_type"],
+            severity=IssueSeverity(data["severity"]),
+            message=data["message"],
+            suggestion=data.get("suggestion", ""),
+        )
+
 
 @dataclass
 class HealthCheckResult:
@@ -73,6 +90,26 @@ class HealthCheckResult:
             "checks_total": self.checks_total,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> HealthCheckResult:
+        """Rebuild a HealthCheckResult from a dict produced by to_dict.
+
+        Reads url, title, status, issues (default []), score (default 100.0),
+        checks_passed (default 0), and checks_total (default 0). The status
+        string is mapped back to its HealthStatus member via
+        HealthStatus(data["status"]); each issues entry is rebuilt via
+        HealthIssue.from_dict.
+        """
+        return cls(
+            url=data["url"],
+            title=data["title"],
+            status=HealthStatus(data["status"]),
+            issues=[HealthIssue.from_dict(i) for i in data.get("issues", [])],
+            score=data.get("score", 100.0),
+            checks_passed=data.get("checks_passed", 0),
+            checks_total=data.get("checks_total", 0),
+        )
+
 
 @dataclass
 class HealthReport:
@@ -92,6 +129,42 @@ class HealthReport:
         if self.total_items == 0:
             return 100.0
         return (self.healthy_count / self.total_items) * 100
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the report to a dict.
+
+        Emits all eight fields (total_items, healthy_count, warning_count,
+        unhealthy_count, unknown_count, total_issues, results, overall_score);
+        each results entry is serialized via HealthCheckResult.to_dict.
+        """
+        return {
+            "total_items": self.total_items,
+            "healthy_count": self.healthy_count,
+            "warning_count": self.warning_count,
+            "unhealthy_count": self.unhealthy_count,
+            "unknown_count": self.unknown_count,
+            "total_issues": self.total_issues,
+            "results": [r.to_dict() for r in self.results],
+            "overall_score": self.overall_score,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> HealthReport:
+        """Rebuild a HealthReport from a dict produced by to_dict.
+
+        Reads all eight fields; each results entry is rebuilt via
+        HealthCheckResult.from_dict.
+        """
+        return cls(
+            total_items=data.get("total_items", 0),
+            healthy_count=data.get("healthy_count", 0),
+            warning_count=data.get("warning_count", 0),
+            unhealthy_count=data.get("unhealthy_count", 0),
+            unknown_count=data.get("unknown_count", 0),
+            total_issues=data.get("total_issues", 0),
+            results=[HealthCheckResult.from_dict(r) for r in data.get("results", [])],
+            overall_score=data.get("overall_score", 100.0),
+        )
 
     def summary(self) -> str:
         """Generate a human-readable summary with the following lines in order:
