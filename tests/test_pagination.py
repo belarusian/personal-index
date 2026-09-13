@@ -71,6 +71,17 @@ class TestPageResult:
         s = PageResult(items=[], total=100, page=3, per_page=10)
         assert s.has_prev is True
 
+    def test_next_page_contract_pinned(self):
+        # normal case: page 2 of a multi-page result -> 3 (page + 1)
+        r = PageResult(items=[], total=100, page=2, per_page=20)
+        assert r.next_page == 3
+        # guard case: final page (page == total_pages) -> None (never past last)
+        g = PageResult(items=[], total=100, page=5, per_page=20)
+        assert g.next_page is None
+        # guard case: single-page result (page 1 == total_pages) -> None
+        s = PageResult(items=[], total=3, page=1, per_page=20)
+        assert s.next_page is None
+
     def test_next_prev_page(self):
         r = PageResult(items=[], total=100, page=2, per_page=20)
         assert r.next_page == 3
