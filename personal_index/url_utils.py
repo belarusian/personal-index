@@ -176,11 +176,28 @@ def extract_subdomain(url: str) -> str:
 
 
 def get_tld(url: str) -> str:
-    """Extract top-level domain from URL."""
+    """Return the last dot-label of the URL's domain (single-label TLD only).
+
+    Returns only the LAST dot-label of the domain, which is correct ONLY
+    for single-label TLDs (``com``, ``org``, ``net``). This is NOT a full
+    TLD resolver:
+
+    - For two-label TLDs (``co.uk``, ``com.au``, ``gov.uk``, ...) it
+      returns the second-level label (``uk``, ``au``, ``uk``), not the
+      full TLD. A full TLD requires a public-suffix lookup (e.g. the
+      ``tldextract`` library); this module does not ship a suffix table.
+    - For dotless hosts (``localhost``, ``intranet``) there is NO TLD, so
+      the function returns ``""`` -- it never returns the whole host as
+      if it were a TLD.
+
+    Empty input or a URL with no netloc returns ``""``.
+    """
     domain = extract_domain(url)
     if not domain:
         return ""
     parts = domain.split(".")
+    if len(parts) == 1:
+        return ""
     return parts[-1] if parts else ""
 
 
