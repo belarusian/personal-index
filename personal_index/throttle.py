@@ -22,10 +22,15 @@ class ThrottleRule:
     def rate_per_second(self) -> float:
         """Requests allowed per second (max_requests / window_seconds).
 
-        A zero window is a degenerate input; it yields 0.0 rather than
-        raising ZeroDivisionError.
+        A non-positive window (window_seconds <= 0) is a degenerate input;
+        it yields the finite fallback 0.0 rather than raising
+        ZeroDivisionError (or a negative rate). This keeps the probe
+        (should_throttle) and the wait path (wait_if_needed) consistent:
+        both treat a degenerate window as "no rate budget", so
+        wait_if_needed falls through to min_delay as the inter-request
+        floor.
         """
-        if self.window_seconds == 0:
+        if self.window_seconds <= 0:
             return 0.0
         return self.max_requests / self.window_seconds
 
