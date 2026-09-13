@@ -74,7 +74,18 @@ class PageResult:
 
     @property
     def has_prev(self) -> bool:
-        """Whether there is a previous page."""
+        """Whether a previous page exists before this one.
+
+        Behavior: returns ``page > 1`` (True when the current page is not
+        the first page).
+        Guard path: on the first page (``page == 1``) it returns ``False``;
+        on page 2 or later it returns ``True``.
+        Precondition: ``page >= 1`` and ``per_page >= 1`` (both are
+        clamped by ``PageParams`` for results produced by ``Paginator``;
+        a hand-built ``PageResult`` is not clamped).
+        Return: ``bool``.
+        Side effects: none (pure property).
+        """
         return self.page > 1
 
     @property
