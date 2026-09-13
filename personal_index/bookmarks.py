@@ -110,7 +110,16 @@ class BookmarkManager:
         return [b for b in self._bookmarks.values() if b.category == category]
 
     def list_by_tag(self, tag: str) -> list[Bookmark]:
-        """List bookmarks with a specific tag."""
+        """Return a new list of the bookmarks that carry ``tag``.
+
+        Matches on EXACT list-membership equality (``tag in b.tags``,
+        i.e. the tag string is one of the bookmark's tags; no substring
+        or case-insensitive matching). The returned list is a fresh list
+        object (not a view or reference into the internal storage). It
+        contains the SAME Bookmark objects that are stored (not copies).
+        When no bookmark has that tag, returns an empty list. Does not
+        mutate the internal state.
+        """
         return [b for b in self._bookmarks.values() if tag in b.tags]
 
     def list_favorites(self) -> list[Bookmark]:

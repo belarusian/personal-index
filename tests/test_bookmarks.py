@@ -183,6 +183,35 @@ class TestBookmarkManager:
         assert len(self.manager.list_by_tag("web")) == 2
         assert len(self.manager.list_by_tag("rust")) == 0
 
+    def test_list_by_tag_contract_pinned(self):
+        """Pin the exact contract of BookmarkManager.list_by_tag."""
+        manager = BookmarkManager()
+        # Guard: empty store returns empty list
+        result = manager.list_by_tag("python")
+        assert result == []
+        assert isinstance(result, list)
+
+        # Normal case: two bookmarks carry "python", one carries only "web"
+        b1 = Bookmark(url="http://a.com", title="A", tags=["python"])
+        b2 = Bookmark(url="http://b.com", title="B", tags=["python", "web"])
+        b3 = Bookmark(url="http://c.com", title="C", tags=["web"])
+        manager.add(b1)
+        manager.add(b2)
+        manager.add(b3)
+
+        result = manager.list_by_tag("python")
+        assert len(result) == 2
+        # Returns the SAME objects (not copies)
+        assert b1 in result
+        assert b2 in result
+        assert b3 not in result
+        # EXACT list-membership match only: no substring / case-insensitive leakage
+        assert manager.list_by_tag("py") == []
+        assert manager.list_by_tag("PYTHON") == []
+        # The returned list is a fresh list, not a reference to internal state
+        result.append(Bookmark(url="http://d.com", tags=["python"]))
+        assert manager.count() == 3  # internal state unaffected
+
     def test_list_favorites(self):
         self.manager.add(Bookmark(url="http://a.com", is_favorite=True))
         self.manager.add(Bookmark(url="http://b.com", is_favorite=False))
