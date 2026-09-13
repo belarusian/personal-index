@@ -203,7 +203,12 @@ class BookmarkManager:
         return sorted(tags)
 
     def count(self) -> int:
-        """Count total bookmarks."""
+        """Return the number of bookmarks currently stored, as an int.
+
+        Counts the TOTAL number of stored bookmarks (all of them, not a
+        filtered subset). When no bookmarks are stored, returns 0. Does
+        not mutate the internal state.
+        """
         return len(self._bookmarks)
 
     def save(self, path: str | None = None) -> str:
