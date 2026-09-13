@@ -90,7 +90,19 @@ class PageResult:
 
     @property
     def next_page(self) -> int | None:
-        """Page number of the next page, or None."""
+        """Page number of the next page, or ``None`` on the last page.
+
+        Behavior: returns ``page + 1`` when ``has_next`` is True (the
+        current page is not the last page), else ``None``.
+        Guard path: on the final page (``page == total_pages``) it returns
+        ``None`` (never a page number past the last page); on page 1 of a
+        multi-page result it returns ``2``.
+        Precondition: ``page >= 1`` and ``per_page >= 1`` (both are
+        clamped by ``PageParams`` for results produced by ``Paginator``;
+        a hand-built ``PageResult`` is not clamped).
+        Return: ``int`` or ``None``.
+        Side effects: none (pure property).
+        """
         return self.page + 1 if self.has_next else None
 
     @property
