@@ -272,6 +272,55 @@ class TestBookmarkManager:
         result.append(Bookmark(url="http://c.com"))
         assert manager.count() == 2  # internal state unaffected
 
+    def test_search_contract_pinned(self):
+        """Pin the exact contract of BookmarkManager.search."""
+        manager = BookmarkManager()
+        # Guard: empty store returns empty list
+        result = manager.search("anything")
+        assert result == []
+        assert isinstance(result, list)
+
+        # Normal case: seed bookmarks with distinct title/description/url
+        b1 = Bookmark(url="http://alpha.com/x", title="Alpha Title", description="first desc")
+        b2 = Bookmark(url="http://beta.com/y", title="Beta Title", description="second desc")
+        b3 = Bookmark(url="http://gamma.com/z", title="Gamma Title", description="third desc")
+        manager.add(b1)
+        manager.add(b2)
+        manager.add(b3)
+
+        # Match by title
+        r = manager.search("alpha")
+        assert r == [b1]
+        assert r[0] is b1  # same object, not a copy
+        # Match by description
+        r = manager.search("second")
+        assert r == [b2]
+        assert r[0] is b2
+        # Match by url
+        r = manager.search("gamma.com")
+        assert r == [b3]
+        assert r[0] is b3
+
+        # Case-insensitivity: uppercase query matches lowercase field
+        r = manager.search("ALPHA")
+        assert r == [b1]
+        assert r[0] is b1
+
+        # Multiple matches preserve insertion order
+        b4 = Bookmark(url="http://delta.com/w", title="Delta Title", description="fourth desc")
+        manager.add(b4)
+        r = manager.search("title")
+        assert r == [b1, b2, b3, b4]
+        assert r[0] is b1 and r[1] is b2 and r[2] is b3 and r[3] is b4
+
+        # Fresh-list guard: result is a new list, not internal state
+        r = manager.search("title")
+        r.append(Bookmark(url="http://epsilon.com"))
+        assert manager.count() == 4  # internal state unaffected
+
+        # Guard: no-match query returns empty list
+        assert manager.search("zzz-no-match-zzz") == []
+
     def test_toggle_favorite(self):
         self.manager.add(Bookmark(url="http://a.com"))
         result = self.manager.toggle_favorite("http://a.com")
