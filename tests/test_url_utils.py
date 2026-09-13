@@ -252,6 +252,26 @@ class TestGetTld:
     def test_empty(self) -> None:
         assert get_tld("") == ""
 
+    def test_get_tld_single_label_regression(self) -> None:
+        assert get_tld("https://example.com") == "com"
+
+    def test_get_tld_two_label_documented(self) -> None:
+        # Option 1: two-label TLDs return the last (second-level) label;
+        # a documented limitation, not a full TLD resolver.
+        assert get_tld("https://www.example.co.uk/x") == "uk"
+        assert get_tld("https://example.com.au") == "au"
+
+    def test_get_tld_dotless_host_no_tld(self) -> None:
+        # A bare hostname has NO TLD; the whole host is not returned.
+        assert get_tld("https://intranet") == ""
+
+    def test_get_tld_dotless_host_with_port_no_tld(self) -> None:
+        assert get_tld("https://localhost:8080/x") == ""
+
+    def test_get_tld_empty_and_no_netloc(self) -> None:
+        assert get_tld("") == ""
+        assert get_tld("not-a-url") == ""
+
 
 # ── get_url_depth ──────────────────────────────────────────────────
 
