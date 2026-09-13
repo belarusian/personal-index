@@ -226,6 +226,8 @@ class FeedGenerator:
             "language": self.language,
             "ttl": self.ttl,
             "generator": self.generator,
+            "max_items": self.max_items,
+            "feed_id": self.feed_id,
             "items": [item.to_dict() for item in self.items],
         }
 
@@ -240,6 +242,8 @@ class FeedGenerator:
             language=data.get("language", "en-us"),
             ttl=data.get("ttl", 60),
             generator=data.get("generator", "personal-index"),
+            max_items=data.get("max_items", 100),
+            feed_id=data.get("feed_id", ""),
         )
         gen.items = items
         return gen

@@ -413,3 +413,35 @@ class TestFeedGenerator:
         )
         atom = self.generator.generate(FeedFormat.ATOM)
         assert "<id>http://example.com/feed</id>" in atom
+
+    def test_feed_generator_roundtrip_preserves_max_items_and_feed_id(self):
+        g = FeedGenerator(
+            title="t", link="http://x", max_items=10, feed_id="custom"
+        )
+        g2 = FeedGenerator.from_dict(g.to_dict())
+        assert g2.max_items == 10
+        assert g2.feed_id == "custom"
+
+    def test_feed_generator_roundtrip_atom_id_stable(self):
+        g = FeedGenerator(
+            title="t", link="http://x", max_items=10, feed_id="custom"
+        )
+        before = g.generate(FeedFormat.ATOM)
+        g2 = FeedGenerator.from_dict(g.to_dict())
+        after = g2.generate(FeedFormat.ATOM)
+        assert "<id>custom</id>" in before
+        assert "<id>custom</id>" in after
+
+    def test_feed_generator_from_dict_missing_keys_defaults(self):
+        data = {
+            "title": "t",
+            "link": "http://x",
+            "description": "",
+            "language": "en-us",
+            "ttl": 60,
+            "generator": "personal-index",
+            "items": [],
+        }
+        gen = FeedGenerator.from_dict(data)
+        assert gen.max_items == 100
+        assert gen.feed_id == "http://x"

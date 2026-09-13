@@ -52,16 +52,16 @@ Because it subclasses `str`, a member compares equal to its string value
 - `generate(fmt: FeedFormat = FeedFormat.RSS) -> str` — dispatches to
   `_generate_rss()` or `_generate_atom()`; returns the full XML document as a
   single string (lines joined by `\n`).
-- `to_dict() -> dict` — returns a NEW dict with exactly SEVEN keys: `title`,
-  `link`, `description`, `language`, `ttl`, `generator`, `items` (each item
-  via `FeedItem.to_dict`). **It does NOT include `max_items` or `feed_id`.**
+- `to_dict() -> dict` — returns a NEW dict with exactly NINE keys: `title`,
+  `link`, `description`, `language`, `ttl`, `generator`, `max_items`,
+  `feed_id`, `items` (each item via `FeedItem.to_dict`).
 - `from_dict(cls, data: dict) -> FeedGenerator` (classmethod) — reads
   `title`/`link`/`description`/`language`/`ttl`/`generator` (defaults
-  `""`/`""`/`""`/`"en-us"`/`60`/`"personal-index"`) and `items` (each via
-  `FeedItem.from_dict`), then assigns `gen.items = items` directly (bypassing
-  `add_item`, so no re-sort/cap on load). **It does NOT read `max_items` or
-  `feed_id`** — both fall back to their dataclass defaults (`100` and, via
-  `__post_init__`, `link`).
+  `""`/`""`/`""`/`"en-us"`/`60`/`"personal-index"`), `max_items` (default
+  `100`), `feed_id` (default `""`, so `__post_init__` falls back to `link`
+  when absent), and `items` (each via `FeedItem.from_dict`), then assigns
+  `gen.items = items` directly (bypassing `add_item`, so no re-sort/cap on
+  load). The round-trip is lossless for all nine fields.
 
 ### Private helpers (documented for completeness; not part of the public API)
 - `_escape(text: str) -> str` — `html.escape(text, quote=True)`.
@@ -81,8 +81,4 @@ Because it subclasses `str`, a member compares equal to its string value
   `category` only when present).
 
 ## Contract holes
-- **`to_dict`/`from_dict` is a lossy round-trip for `FeedGenerator`:**
-  `to_dict()` omits `max_items` and `feed_id`, and `from_dict()` does not
-  restore them, so a `FeedGenerator(max_items=10, feed_id="custom")`
-  round-trips to `max_items=100, feed_id=link`. The item cap silently resets to
-  the default and the Atom `<id>` identity silently changes (ARCH-54).
+(none outstanding)
