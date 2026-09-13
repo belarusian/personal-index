@@ -107,7 +107,19 @@ class PageResult:
 
     @property
     def prev_page(self) -> int | None:
-        """Page number of the previous page, or None."""
+        """Page number of the previous page, or ``None`` on the first page.
+
+        Behavior: returns ``page - 1`` when ``has_prev`` is True (the
+        current page is not the first page), else ``None``.
+        Guard path: on the first page (``page == 1``) it returns
+        ``None`` (never ``0`` or a negative page number); on page 2 or
+        later it returns ``page - 1``.
+        Precondition: ``page >= 1`` and ``per_page >= 1`` (both are
+        clamped by ``PageParams`` for results produced by ``Paginator``;
+        a hand-built ``PageResult`` is not clamped).
+        Return: ``int`` or ``None``.
+        Side effects: none (pure property).
+        """
         return self.page - 1 if self.has_prev else None
 
     @property
