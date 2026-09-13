@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -155,6 +156,23 @@ class TestBookmarkManager:
     def test_toggle_favorite_missing(self):
         result = self.manager.toggle_favorite("http://missing.com")
         assert result is None
+
+    def test_toggle_favorite_contract_pinned(self):
+        # Normal case: toggle returns the mutated Bookmark, flips is_favorite,
+        # and sets updated_at to a UTC ISO-8601 timestamp.
+        b = Bookmark(url="http://a.com")
+        self.manager.add(b)
+        result = self.manager.toggle_favorite("http://a.com")
+        assert result is b
+        assert result.is_favorite is True
+        parsed = datetime.fromisoformat(result.updated_at)
+        assert parsed.tzinfo is not None
+        assert parsed.utcoffset() == timedelta(0)
+        # Guard input: missing url returns None and mutates nothing.
+        count_before = self.manager.count()
+        missing = self.manager.toggle_favorite("http://missing.com")
+        assert missing is None
+        assert self.manager.count() == count_before
 
     def test_search_by_title(self):
         self.manager.add(Bookmark(url="http://a.com", title="Python Tips"))

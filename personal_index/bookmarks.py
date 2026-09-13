@@ -99,7 +99,14 @@ class BookmarkManager:
         return [b for b in self._bookmarks.values() if b.is_favorite]
 
     def toggle_favorite(self, url: str) -> Bookmark | None:
-        """Toggle favorite status of a bookmark."""
+        """Toggle the favorite status of the bookmark stored under ``url``.
+
+        Looks up the bookmark by ``url``. If present, flips ``is_favorite``
+        (``not is_favorite``), sets ``updated_at`` to the current UTC
+        ISO-8601 timestamp (``datetime.now(timezone.utc).isoformat()``), and
+        returns the mutated ``Bookmark``. If ``url`` is not present, returns
+        ``None`` (no raise, no mutation).
+        """
         bookmark = self._bookmarks.get(url)
         if bookmark:
             bookmark.is_favorite = not bookmark.is_favorite
