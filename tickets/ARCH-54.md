@@ -1,6 +1,6 @@
 # ARCH-54 — content_feed: `to_dict`/`from_dict` must round-trip `max_items` and `feed_id`
 
-Status: OPEN
+Status: CLAIMED 2026-09-13
 Component: `personal_index/content_feed.py` — `FeedGenerator.to_dict` / `FeedGenerator.from_dict`
 Umbrella: ARCH-2 (#983)
 Issue: #1163
