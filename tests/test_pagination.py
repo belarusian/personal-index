@@ -70,6 +70,17 @@ class TestPageResult:
         s = PageResult(items=[], total=3, page=1, per_page=20)
         assert s.end_index == 3
 
+    def test_start_index_contract_pinned(self):
+        # normal case: page 2, per_page 20 -> (2-1)*20+1 == 21
+        r = PageResult(items=[], total=100, page=2, per_page=20)
+        assert r.start_index == 21
+        # guard case: page 1 -> 1 (first item overall, never 0)
+        g = PageResult(items=[], total=100, page=1, per_page=20)
+        assert g.start_index == 1
+        # guard case: later page, per_page 10 -> (3-1)*10+1 == 21
+        s = PageResult(items=[], total=100, page=3, per_page=10)
+        assert s.start_index == 21
+
     def test_to_dict(self):
         r = PageResult(items=["a"], total=10, page=1, per_page=5)
         d = r.to_dict()

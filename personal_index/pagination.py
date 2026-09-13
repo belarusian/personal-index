@@ -78,7 +78,19 @@ class PageResult:
 
     @property
     def start_index(self) -> int:
-        """1-based index of the first item on this page."""
+        """1-based index of the first item on this page.
+
+        Behavior: returns ``(page - 1) * per_page + 1``, the 1-based
+        index of the first item on this page.
+        Guard path: on page 1 it returns ``1`` (the first item
+        overall); for ``page >= 1`` it never returns ``0`` or a
+        negative value.
+        Precondition: ``page >= 1`` and ``per_page >= 1`` (both are
+        clamped by ``PageParams`` for results produced by
+        ``Paginator``; a hand-built ``PageResult`` is not clamped).
+        Return: ``int``.
+        Side effects: none (pure property).
+        """
         return (self.page - 1) * self.per_page + 1
 
     @property
