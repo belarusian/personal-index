@@ -1,6 +1,6 @@
 # ARCH-64 — text_utils: `read_time_minutes` must guard the raw `wpm` divisor (`wpm <= 0 -> 0`; positive -> `ceil(count/wpm)`)
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: `personal_index/text_utils.py` — `read_time_minutes` (lines 283-294)
 Umbrella: ARCH-2 (#983)
 Issue: #1193
