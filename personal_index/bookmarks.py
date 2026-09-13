@@ -175,7 +175,14 @@ class BookmarkManager:
         return results
 
     def get_categories(self) -> list[str]:
-        """Get all unique categories."""
+        """Return the unique categories across all stored bookmarks.
+
+        Returns a FRESH list (not a view or reference to internal
+        state) of the distinct category strings, deduplicated and
+        sorted in ascending lexicographic order. An empty store
+        returns an empty list. Read-only: does not mutate the
+        manager or any stored Bookmark.
+        """
         categories = set()
         for b in self._bookmarks.values():
             categories.add(b.category)
