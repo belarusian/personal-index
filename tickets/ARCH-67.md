@@ -1,6 +1,6 @@
 # ARCH-67 — content_annotations: `AnnotationManager.add()` is not idempotent — re-adding an `annotation_id` diverges the secondary indexes from the primary store
 
-Status: CLAIMED (impl293, cycle 293)
+Status: IMPLEMENTED #1420@3188065
 Component: `personal_index/content_annotations.py` — `AnnotationManager.add` (lines 118-157), the five index appends at lines 141, 147, 152, 157
 Umbrella: ARCH-2 (#983)
 Issue: #1384
