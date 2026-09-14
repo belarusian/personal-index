@@ -184,6 +184,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   SerializationError/DeserializationError + SerializationConfig (indent/ensure_ascii/default_handler/include_none) + Serializer (to_json/from_json/to_csv/from_csv/to_dict + _dataclass_to_dict/_prepare/_prepare_row/_default_handler); to_csv(include_header=False) emits a headerless CSV but from_csv always treats the first line as the header, so the round-trip silently corrupts the data (ARCH-74) contract hole.
 - [tfidf.md](tfidf.md) (spec) — `personal_index.tfidf`:
   TfidfScorer (add_document/remove_document/compute_tfidf/score_query/rank_documents/document_count/vocabulary_size/get_top_terms/clear, in-memory, no persistence); add_document increments the corpus count even for a zero-term (empty/all-stopword) document, which inflates the IDF denominator and shifts every existing document's TF-IDF score (ARCH-75) contract hole.
+- [url_history.md](url_history.md) (spec) — `personal_index.url_history`:
+  URLVisit (dataclass: url/timestamp/status_code/content_length/title/user_agent/response_time_ms/error; __post_init__ auto-fills timestamp; to_dict 8 keys; from_dict via cls(**data)) + URLHistory (record/get_visits/get_unique_urls/get_stats/get_domain_stats/clear/save/load/_trim, in-memory + JSON persistence); load() degrades gracefully for missing/invalid-JSON/non-list but a valid-JSON list with a malformed record (unexpected key or missing url) raises TypeError because the from_dict comprehension is outside the try/except (ARCH-76) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
