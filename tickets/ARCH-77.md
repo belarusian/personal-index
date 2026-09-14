@@ -1,6 +1,6 @@
 # ARCH-77 — encoding: `EncodingDetector.decode` silently degrades to lossy UTF-8 (`errors="replace"`) on a bad/unknown explicit encoding instead of raising, and the docstring does not document it
 
-Status: OPEN
+Status: OPEN-PUSHBACK (IMPL-12, cycle 304)
 Component: `personal_index/encoding.py` — `EncodingDetector.decode` (lines 66-74); the fallback `return data.decode("utf-8", errors="replace")` (line 74); the `decode` docstring (line 67). `convert` (lines 83-85) inherits the hole via its `decode` call.
 Umbrella: ARCH-2 (#983)
 Issue: #1417
