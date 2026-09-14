@@ -26,6 +26,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   SearchIndex (add/remove/get/count/urls/clear/search) + word index + JSON persistence; distinct from `personal_index.index` (search-index.md) — `index_path`/`CrawledPage`/`(url,float)` tuples, no close/context-manager; `_save` non-atomic + unflushed so a crash mid-write truncates the file and the next `_load` silently degrades to empty (ARCH-71) contract hole.
 - [dedup.md](dedup.md) (spec) — `personal_index.content_dedup`:
   ContentDeduplicator (hash / url / similarity / all) + DedupResult.
+- [encoding.md](encoding.md) (spec) — `personal_index.encoding`:
+  EncodingDetector (detect cascade / decode / encode / convert) + EncodingResult + whitespace/control-char helpers; `decode` silently degrades to lossy UTF-8 (`errors="replace"`) on a bad/unknown explicit encoding instead of raising (ARCH-77) contract hole.
 - [scoring.md](scoring.md) (spec) — `personal_index.content_scoring`:
   ContentScorer, ScoreWeights, ContentScore, the six factors.
 - [cache.md](cache.md) (spec) — `personal_index.cache`:
