@@ -157,8 +157,17 @@ class BackupManager:
 
         return manifests
 
-    def restore_backup(self, backup_id: str, target_dir: str) -> dict[str, object]:
-        """Restore a backup to the target directory."""
+    def restore_backup(
+        self, backup_id: str, target_dir: str, overwrite: bool = False
+    ) -> dict[str, object]:
+        """Restore a backup to the target directory.
+
+        By default (``overwrite=False``) this refuses to overwrite any file
+        in ``target_dir`` whose path collides with an archive member: it
+        raises a ``ValueError`` naming the colliding path(s) before writing
+        anything. Pass ``overwrite=True`` to replace colliding files with
+        the archive content.
+        """
         backup_path = Path(self._backup_dir)
         manifest_file = backup_path / f"backup_{backup_id}.json"
         if not manifest_file.exists():
@@ -187,6 +196,8 @@ class BackupManager:
         mode = "r:gz" if str(archive_path).endswith(".tar.gz") else "r"
         target = Path(target_dir)
         target.mkdir(parents=True, exist_ok=True)
+        if not overwrite:
+            self._check_no_collision(archive_path, mode, target)
         restored = self._extract_archive(archive_path, mode, target)
         return {
             "backup_id": backup_id,
@@ -209,8 +220,39 @@ class BackupManager:
         return archive_path
 
     @staticmethod
+    def _check_no_collision(archive_path: Path, mode: str, target: Path) -> None:
+        """Refuse to overwrite pre-existing files in ``target``.
+
+        Checks the archive member paths (``tar.getnames()``) against
+        ``target`` before any byte is written, mirroring the
+        corrupt-archive pre-write guard. If any member destination already
+        exists in ``target``, raises ``ValueError`` naming the colliding
+        path(s). A corrupt or unreadable archive raises the same clean
+        ``ValueError`` as ``_extract_archive``.
+        """
+        try:
+            with tarfile.open(str(archive_path), mode) as tar:  # type: ignore[call-overload]
+                colliding = [
+                    name for name in tar.getnames()
+                    if (target / name).exists()
+                ]
+        except (tarfile.TarError, EOFError) as exc:
+            raise ValueError(
+                f"Corrupt or unreadable archive {archive_path}: {exc}"
+            ) from exc
+        if colliding:
+            raise ValueError(
+                f"Restore would overwrite existing file(s) in {target}: "
+                f"{colliding}; pass overwrite=True to replace"
+            )
+
+    @staticmethod
     def _extract_archive(archive_path: Path, mode: str, target: Path) -> int:
         """Extract archive and return number of files restored.
+
+        ``extractall`` overwrites any colliding file in ``target``; the
+        decision to allow that overwrite is made by the caller of
+        ``restore_backup`` (via its ``overwrite`` parameter), not here.
 
         Raises:
             ValueError: If the archive is corrupt or unreadable. A corrupt
