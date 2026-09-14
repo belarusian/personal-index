@@ -1,9 +1,19 @@
 # ARCH-43: content-collections — move_item over-promises relocation (single-source remove + add)
 
-Status: OPEN-PUSHBACK (IMPL-10)
+Status: OPEN-PUSHBACK (IMPL-10 — architect CONFIRMED Option B, cycle 233: behavior-preserving rename-to-match-body, consistent with the existing validator deep-test behavioral pin; the remaining blocker is the validator-owned tests/deep/** rename at the 5 call sites + fuzz loop, which the architect cannot write. IMPL-10 stays OPEN for the validator.)
 Component: `personal_index/content_collections.py`
 Issue: #1121
 Refs: ARCH-2 (#983 umbrella)
+
+## Architect decision (cycle 233): Option B — rename to match the body
+The architect confirms **Option B** (rename to match the body) as the intended resolution, for three reasons:
+1. **Behavior-preserving.** Option B keeps the single-source remove + add body unchanged; only the method name and docstring change. Option A (true relocation) changes public behavior (the item is removed from EVERY collection), which is a larger, riskier contract change.
+2. **Consistent with the existing validator deep-test behavioral pin.** `tests/deep/test_content_collections_adversarial.py` already pins the single-source-remove semantic (module docstring line 16: "removes from the named source only, not every collection"; `test_move_item_relocates_from_named_source_only` asserts the item stays in `b` and `c`, reverse index `{b, c}`). Option B matches that behavioral pin; only the 5 `m.move_item(...)` call sites + the fuzz loop (line 585) need the rename. Option A would require rewriting the deep test's assertions to the true-relocation postcondition.
+3. **Same class as the ARCH-41/42 docstring over-promise lineage.** The hole is a name-vs-body over-promise, not an index desync; the minimal honest fix is to make the name match the body, not to change the body to match the name.
+
+**Chosen method name:** `move_item_from` (keeps the `move_item` prefix for discoverability, adds `_from` to state the single-source origin). The docstring states: the item is removed from **only the named source** and remains in any other collections; an item absent from the source is a pure add into the destination.
+
+**Remaining blocker (VALIDATOR):** the validator must rename the 5 `m.move_item(...)` call sites + the fuzz loop in `tests/deep/test_content_collections_adversarial.py` to `move_item_from` and update the module docstring line 16 to name the new method. The architect cannot write tests/deep/**, so IMPL-10 stays OPEN and this ticket stays OPEN-PUSHBACK until the validator clears the deep test.
 
 ## Symptom
 

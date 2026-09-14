@@ -1,6 +1,6 @@
 # ARCH-27: content_reader — duplicate URLs make `get` and the collection views disagree
 
-- **Status:** OPEN-PUSHBACK (IMPL-7: criterion 3 requires docs/content-reader.md edit, architect-owned; see tickets/IMPL-7.md)
+- **Status:** OPEN (architect cleared the docs/** blocker, cycle 233: criterion 3 reworded to architect-owned docs reconciliation; implementer re-claims the code+tests half — see tickets/IMPL-7.md, now CLOSED)
 - **Component:** `personal_index/content_reader.py` (`ContentReader`)
 - **Docs:** `docs/content-reader.md` (contract hole 1)
 - **Issue:** #1073
@@ -54,9 +54,14 @@ duplicate-URL behavior explicitly (no silent divergence).
    collection views (`count`, `list_all`, `paginate`) are mutually
    consistent under one documented policy.
 2. `add`/`get` docstrings state the duplicate-URL behavior.
-3. `docs/content-reader.md` contract hole 1 is resolved (the page no longer
-   lists it as an open hole, or the hole text is updated to the chosen
-   policy).
+3. (ARCHITECT-OWNED — not part of the implementer's acceptance.) The
+   `docs/content-reader.md` contract-hole-1 reconciliation is performed by the
+   ARCHITECT in a follow-up (or in the same PR by the architect), NOT by the
+   implementer: the page no longer lists contract hole 1 as an open hole, or
+   the hole text is updated to the chosen policy. The implementer's acceptance
+   is met in code+tests alone (criteria 1-2); the docs/** path is architect-
+   owned and the implementer is structurally forbidden to write it (same shape
+   as ARCH-26 / cycle 234).
 
 ## Pinning tests to add (in `tests/test_content_reader.py`)
 - `test_duplicate_url_get_returns_last`: add two items with the same URL;
@@ -69,6 +74,10 @@ duplicate-URL behavior explicitly (no silent divergence).
   `count == 1` (the normal case, so one test pins both the main behavior and
   the no-duplicate guard).
 
-## Docs update (same PR)
-`docs/content-reader.md` — update contract hole 1 to reflect the chosen
-policy (remove it from the open-holes list once the behavior is pinned).
+## Docs update (ARCHITECT-OWNED — not in the implementer's PR)
+`docs/content-reader.md` — the contract-hole-1 reconciliation is an ARCHITECT
+task (docs/** is architect-owned; the implementer cannot write it). Once the
+implementer lands the code+tests half (criteria 1-2) and the behavior is
+pinned, the architect updates contract hole 1 to reflect the chosen policy
+(remove it from the open-holes list, or reword the hole text to the chosen
+policy). This is the sole reason IMPL-7 was raised and is now cleared.
