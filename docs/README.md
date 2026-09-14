@@ -178,6 +178,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentAnalytics (add_items/total_items, get_tag_counts/get_tag_distribution/get_unique_tags_count, get_title/description_lengths + avg, get_items_with_links/get_link_ratio, get_items_by_tag, clear, in-memory, no persistence/serialization); get_items_by_tag substring-matches a string `tags` value while get_tag_counts ignores it, so the two tag methods disagree on the same item (ARCH-70) contract hole.
 - [backup.md](backup.md) (spec) — `personal_index.backup`:
   BackupManifest (@dataclass, to_dict/from_dict) + BackupManager (create_backup/list_backups/restore_backup/delete_backup/get_backup_info/get_total_backup_size/cleanup_old_backups, tar/tar.gz + JSON manifest); distinct from `personal_index.content_backup.backup_manager` (a different BackupManager); restore_backup silently overwrites pre-existing files in target_dir with no guard (ARCH-72) contract hole.
+- [fuzzy_search.md](fuzzy_search.md) (spec) — `personal_index.fuzzy_search`:
+  FuzzyMatch (dataclass) + levenshtein_distance/levenshtein_similarity (module fns) + FuzzySearcher (search/search_in_dict/_compute_score/_char_match_score/_find_match_indices/highlight/highlight_html/search_with_highlight); highlight_html inserts the searched text raw with no HTML entity escaping, so `<`/`>`/`&` in a title pass through into the returned markup (ARCH-73) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
