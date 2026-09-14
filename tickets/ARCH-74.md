@@ -1,6 +1,6 @@
 # ARCH-74 — serializer: `to_csv(include_header=False)` → `from_csv` round-trip silently corrupts the data (first data row consumed as header)
 
-Status: CLAIMED 2026-09-14
+Status: IMPLEMENTED #1427@c783cbf
 Component: `personal_index/serializer.py` — `Serializer.from_csv` (lines 78-84); the `include_header` parameter of `Serializer.to_csv` (line 67); the `from_csv` docstring (line 79)
 Umbrella: ARCH-2 (#983)
 Issue: #1411
