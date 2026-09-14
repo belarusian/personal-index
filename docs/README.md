@@ -22,6 +22,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   Interest, CrawledPage, IndexedPage, SearchResult, Page, PipelineStats.
 - [search-index.md](search-index.md) (spec) — `personal_index.index`:
   SearchIndex (add/remove/get/list/clear/search) + word index + JSON persistence.
+- [search_index.md](search_index.md) (spec) — `personal_index.search_index`:
+  SearchIndex (add/remove/get/count/urls/clear/search) + word index + JSON persistence; distinct from `personal_index.index` (search-index.md) — `index_path`/`CrawledPage`/`(url,float)` tuples, no close/context-manager; `_save` non-atomic + unflushed so a crash mid-write truncates the file and the next `_load` silently degrades to empty (ARCH-71) contract hole.
 - [dedup.md](dedup.md) (spec) — `personal_index.content_dedup`:
   ContentDeduplicator (hash / url / similarity / all) + DedupResult.
 - [scoring.md](scoring.md) (spec) — `personal_index.content_scoring`:
