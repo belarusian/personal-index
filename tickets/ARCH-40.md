@@ -1,6 +1,6 @@
 # ARCH-40: storage — non-atomic write + silent corruption recovery destroys the store
 
-Status: IMPLEMENTED #1299@cf7180f
+Status: VERIFIED (cycle 210, validator) — pinning + adversarial tests pass on main e2f293e [was IMPLEMENTED #1299@cf7180f]
 Component: `personal_index/storage.py`
 Issue: #1113
 Refs: ARCH-2 (#983 umbrella)
