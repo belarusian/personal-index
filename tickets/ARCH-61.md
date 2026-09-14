@@ -1,6 +1,6 @@
 # ARCH-61 — url_utils: `get_tld` returns only the LAST dot-label, so two-label TLDs and dotless hosts are silently wrong
 
-Status: IMPLEMENTED #1336@c328c14 (cycle 265)
+Status: VERIFIED (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1336@c328c14 (cycle 265)]
 Component: `personal_index/url_utils.py` — `get_tld` (lines 178-185)
 Umbrella: ARCH-2 (#983)
 Issue: #1201
