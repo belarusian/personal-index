@@ -233,6 +233,18 @@ def test_extract_top_n_empty_text(extractor):
     assert extractor.extract_top_n("", 5) == []
 
 
+# --- extract(limit=) negative-slice guard (QA-37) -------------------------
+# extract(limit=0) -> [] and extract_top_n(n=-1) -> [] are both guarded, but
+# extract(limit=-1) leaks Python negative-slice semantics: it returns
+# keywords[:-1] (ALL keywords except the last) instead of []. Filed as QA-37
+# (cycle 220, negative-slice "top N" class sweep). xfail-strict documents the
+# defect: XPASS -> red once the implementer adds the `if limit <= 0: return []`
+# guard, which is the re-verify signal to close QA-37.
+@pytest.mark.xfail(strict=True, reason="QA-37: extract(limit=-1) leaks keywords[:-1] instead of []")
+def test_extract_limit_negative_returns_empty(extractor):
+    assert extractor.extract("python python java java java rust go go go go c c c c c c c c c c", limit=-1) == []
+
+
 # --- extract_phrases -----------------------------------------------------------
 
 def test_extract_phrases_basic(extractor):
