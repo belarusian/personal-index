@@ -169,7 +169,9 @@ class ContentAPI:
         body is missing or empty. Returns ``(400, {"error": "Invalid JSON in
         request body"})`` when the body is not valid JSON. Returns
         ``(400, {"error": "Request body must be a JSON object"})`` when the
-        parsed body is not a JSON object (dict). Otherwise builds an item
+        parsed body is not a JSON object (dict). Returns
+        ``(400, {"error": <first error>})`` when ``_validate_content``
+        reports a field error. Otherwise builds an item
         (id from ``self._next_id``, title/description/link/tags with
         defaults, created_at/updated_at), stores it in ``self._store``, and
         returns ``(201, {"item": <item>})``.
@@ -182,6 +184,9 @@ class ContentAPI:
             return 400, {"error": "Invalid JSON in request body"}
         if not isinstance(data, dict):
             return 400, {"error": "Request body must be a JSON object"}
+        errors = self._validate_content(data)
+        if errors:
+            return 400, {"error": errors[0]}
         item_id = str(self._next_id)
         self._next_id += 1
         item = {
@@ -205,7 +210,9 @@ class ContentAPI:
         missing or empty. Returns ``(400, {"error": "Invalid JSON in request
         body"})`` when the body is not valid JSON. Returns
         ``(400, {"error": "Request body must be a JSON object"})`` when the
-        parsed body is not a JSON object (dict). Otherwise partial-updates the
+        parsed body is not a JSON object (dict). Returns
+        ``(400, {"error": <first error>})`` when ``_validate_content``
+        reports a field error. Otherwise partial-updates the
         stored item: for each of title/description/link/tags present in the
         parsed data it sets ``item[key]``, always refreshes
         ``item["updated_at"]`` to ``now(UTC).isoformat()``, and returns
@@ -221,6 +228,9 @@ class ContentAPI:
             return 400, {"error": "Invalid JSON in request body"}
         if not isinstance(data, dict):
             return 400, {"error": "Request body must be a JSON object"}
+        errors = self._validate_content(data)
+        if errors:
+            return 400, {"error": errors[0]}
         item = self._store[item_id]
         for key in ("title", "description", "link", "tags"):
             if key in data:

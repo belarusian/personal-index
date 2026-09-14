@@ -289,6 +289,52 @@ class TestContentValidation:
         assert any("200" in e for e in errors)
 
 
+# --- Request-path field validation (ARCH-68) ---
+
+class TestContentRequestValidation:
+    def test_create_overlong_title_rejected(self, api):
+        body = json.dumps({"title": "x" * 201})
+        status, resp = api.handle_request("POST", "/api/v1/content", body=body)
+        assert status == 400
+        assert resp["error"] == "Title must be under 200 characters"
+        assert len(api._store) == 0
+        assert api._next_id == 1
+
+    def test_create_nonlist_tags_rejected(self, api):
+        body = json.dumps({"tags": "not-a-list"})
+        status, resp = api.handle_request("POST", "/api/v1/content", body=body)
+        assert status == 400
+        assert resp["error"] == "Tags must be a list"
+        assert len(api._store) == 0
+        assert api._next_id == 1
+
+    def test_update_overlong_title_rejected(self, api):
+        seed = json.dumps({"title": "Seed", "tags": ["a"]})
+        api.handle_request("POST", "/api/v1/content", body=seed)
+        before_title = api._store["1"]["title"]
+        before_updated = api._store["1"]["updated_at"]
+        body = json.dumps({"title": "x" * 201})
+        status, resp = api.handle_request("PUT", "/api/v1/content/1", body=body)
+        assert status == 400
+        assert resp["error"] == "Title must be under 200 characters"
+        assert api._store["1"]["title"] == before_title
+        assert api._store["1"]["updated_at"] == before_updated
+
+    def test_create_valid_body_still_accepted(self, api):
+        body = json.dumps({"title": "ok", "tags": ["a"]})
+        status, resp = api.handle_request("POST", "/api/v1/content", body=body)
+        assert status == 201
+        assert resp["item"]["title"] == "ok"
+        assert resp["item"]["tags"] == ["a"]
+        assert len(api._store) == 1
+
+    def test_create_non_dict_still_rejected_first(self, api):
+        status, resp = api.handle_request("POST", "/api/v1/content", body="[1, 2]")
+        assert status == 400
+        assert resp["error"] == "Request body must be a JSON object"
+        assert len(api._store) == 0
+
+
 # --- RequestLogger Tests ---
 
 class TestRequestLogger:
