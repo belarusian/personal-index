@@ -396,3 +396,90 @@ class TestGetStatsPinning:
         # empty-manager guard path: all three keys present, zeroed
         empty = AnnotationManager().get_stats()
         assert empty == {"total": 0, "by_content": 0, "by_type": {}}
+
+
+class TestAnnotationAddIdempotentPinning:
+    """Pin ARCH-67: AnnotationManager.add() is idempotent per annotation_id.
+
+    Re-adding an id that is already stored must leave the primary store at
+    exactly one entry for that id and every secondary index at exactly one
+    entry for that id (latest annotation object wins).
+    """
+
+    def test_add_idempotent_no_duplicate_index_entries(self):
+        mgr = AnnotationManager()
+        a = Annotation(
+            content_id="c1",
+            text="note",
+            annotation_type=AnnotationType.NOTE,
+            author="bob",
+            tags=["t1"],
+        )
+        mgr.add(a)
+        mgr.add(a)  # re-add the same annotation_id
+        assert mgr.count() == 1
+        assert len(mgr.get_by_content_id("c1")) == 1
+        assert len(mgr.get_by_type(AnnotationType.NOTE)) == 1
+
+    def test_add_idempotent_author_tag_indexes(self):
+        mgr = AnnotationManager()
+        a = Annotation(
+            content_id="c1",
+            text="note",
+            annotation_type=AnnotationType.NOTE,
+            author="bob",
+            tags=["t1"],
+        )
+        mgr.add(a)
+        mgr.add(a)  # re-add the same annotation_id
+        assert len(mgr.get_by_author("bob")) == 1
+        assert len(mgr.get_by_tag("t1")) == 1
+
+    def test_add_distinct_ids_still_index(self):
+        mgr = AnnotationManager()
+        a = Annotation(content_id="c1", text="A")
+        a2 = Annotation(content_id="c1", text="B")
+        mgr.add(a)
+        mgr.add(a2)  # distinct ids, same content_id
+        assert len(mgr.get_by_content_id("c1")) == 2
+        assert mgr.count() == 2
+
+    def test_add_readd_latest_wins(self):
+        mgr = AnnotationManager()
+        a = Annotation(
+            content_id="c1",
+            text="original",
+            annotation_type=AnnotationType.NOTE,
+            author="bob",
+            tags=["t1"],
+        )
+        a_replaced = Annotation(
+            content_id="c1",
+            text="replaced",
+            annotation_type=AnnotationType.NOTE,
+            author="bob",
+            tags=["t1"],
+            annotation_id=a.annotation_id,
+        )
+        mgr.add(a)
+        mgr.add(a_replaced)  # same id, different object
+        assert mgr.get(a.annotation_id) is a_replaced
+        assert len(mgr.get_by_content_id("c1")) == 1
+        assert len(mgr.get_by_author("bob")) == 1
+        assert len(mgr.get_by_type(AnnotationType.NOTE)) == 1
+        assert len(mgr.get_by_tag("t1")) == 1
+
+    def test_add_falsy_author_never_indexed(self):
+        mgr = AnnotationManager()
+        a = Annotation(
+            content_id="c1",
+            text="note",
+            annotation_type=AnnotationType.NOTE,
+            author="",
+            tags=["t1"],
+        )
+        mgr.add(a)
+        mgr.add(a)  # re-add the same annotation_id
+        assert mgr.get_by_author("") == []
+        assert len(mgr.get_by_content_id("c1")) == 1
+        assert len(mgr.get_by_tag("t1")) == 1
