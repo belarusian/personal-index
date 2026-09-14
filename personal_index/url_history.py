@@ -155,7 +155,15 @@ class URLHistory:
             json.dump(data, f, indent=2)
 
     def load(self, filepath: str) -> int:
-        """Load history from file. Returns count loaded."""
+        """Load history from file. Returns count loaded.
+
+        Returns 0 (leaving _history untouched) for a missing file, invalid
+        JSON (json.JSONDecodeError), a parsed value that is not a list, or a
+        list containing a record that URLVisit.from_dict cannot construct
+        (unexpected key, missing url, or a value of the wrong type). When
+        every record is constructible, _history is replaced, _trim() is
+        called, and the loaded count is returned.
+        """
         path = Path(filepath)
         if not path.exists():
             return 0
@@ -166,7 +174,10 @@ class URLHistory:
             return 0
         if not isinstance(data, list):
             return 0
-        self._history = [URLVisit.from_dict(d) for d in data]
+        try:
+            self._history = [URLVisit.from_dict(d) for d in data]
+        except TypeError:
+            return 0
         self._trim()
         return len(self._history)
 
