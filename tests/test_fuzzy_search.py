@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import html
+
 from personal_index.fuzzy_search import (
     FuzzyMatch,
     FuzzySearcher,
@@ -225,3 +227,90 @@ class TestFuzzyMatchTypeFix:
         match, highlighted = results[0]
         assert isinstance(match.matched_indices, list)
         assert "<mark>" in highlighted
+
+
+class TestHighlightHtmlEscaping:
+    """ARCH-73: highlight_html must HTML-entity-escape the searched text (XSS class)."""
+
+    def setup_method(self):
+        self.searcher = FuzzySearcher()
+
+    def _strip_marks(self, out):
+        """Remove the <mark>...</mark> wrappers, leaving the escaped text."""
+        return out.replace("<mark>", "").replace("</mark>", "")
+
+    def test_xss_pin_no_raw_angle_brackets(self):
+        """<script> input must be entity-escaped; no raw <script> in output."""
+        text = "<script>alert(1)</script>"
+        out = self.searcher.highlight_html(text, [0])
+        # No raw <script> / </script> tag survives.
+        assert "<script>" not in out
+        assert "</script>" not in out
+        # The escaped angle-bracket forms are present.
+        assert "&lt;" in out
+        assert "&gt;" in out
+        # The matched index 0 ('<') is wrapped in <mark> around the escaped char.
+        assert "<mark>&lt;</mark>" in out
+        # Stripping the mark wrappers must yield exactly the escaped text:
+        # no raw <, >, &, ", ' from the input survives unescaped.
+        assert self._strip_marks(out) == html.escape(text)
+
+    def test_ampersand_quote_pin(self):
+        """&, ", ' must be escaped to &amp; / &quot; / &#x27;."""
+        text = 'a & b "c" d'
+        out = self.searcher.highlight_html(text, [0, 2, 4])
+        assert "&amp;" in out
+        assert "&quot;" in out
+        # Stripping the mark wrappers must yield exactly the escaped text.
+        assert self._strip_marks(out) == html.escape(text)
+
+    def test_single_quote_pin(self):
+        """A single quote must be escaped to &#x27;."""
+        text = "it's"
+        out = self.searcher.highlight_html(text, [2])
+        assert "&#x27;" in out
+        assert self._strip_marks(out) == html.escape(text)
+
+    def test_guard_pin_empty_indices_escaped(self):
+        """not indices -> escaped text (safe), not raw, and no <mark>."""
+        text = "<b>x</b>"
+        out = self.searcher.highlight_html(text, [])
+        assert out == html.escape(text)
+        assert out == "&lt;b&gt;x&lt;/b&gt;"
+        assert "<b>" not in out
+        assert "<mark>" not in out
+
+    def test_highlighting_preserved_pin(self):
+        """Non-empty indices still wrap the escaped chars in <mark>...</mark>."""
+        out = self.searcher.highlight_html("hello world", [0, 1, 2, 3, 4])
+        assert "<mark>" in out
+        assert "</mark>" in out
+        assert "<mark>h</mark>" in out
+
+    def test_plain_path_unchanged_pin(self):
+        """Plain highlight() still emits ANSI codes and no HTML entities."""
+        out = self.searcher.highlight("hello world", [0, 1, 2, 3, 4])
+        assert "\033[1m" in out
+        assert "\033[0m" in out
+        assert "&amp;" not in out
+        assert "&lt;" not in out
+        assert "<mark>" not in out
+
+    def test_search_with_highlight_html_true_pin(self):
+        """search_with_highlight(html=True) returns escaped + marked output."""
+        results = self.searcher.search_with_highlight("script", ["<script>"], html=True)
+        assert len(results) == 1
+        _match, highlighted = results[0]
+        assert "<mark>" in highlighted
+        assert "&lt;" in highlighted
+        assert "&gt;" in highlighted
+        assert "<script>" not in highlighted
+
+    def test_search_with_highlight_html_false_pin(self):
+        """search_with_highlight(html=False) is unchanged (ANSI, raw text)."""
+        results = self.searcher.search_with_highlight("script", ["<script>"], html=False)
+        assert len(results) == 1
+        _match, highlighted = results[0]
+        assert "\033[1m" in highlighted
+        assert "<mark>" not in highlighted
+        assert "&lt;" not in highlighted

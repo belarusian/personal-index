@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
+import html
 
 
 @dataclass
@@ -224,17 +225,27 @@ class FuzzySearcher:
         return "".join(result)
 
     def highlight_html(self, text: str, indices: list[int]) -> str:
-        """Create HTML-highlighted version of text."""
+        """Create HTML-highlighted version of text.
+
+        Every character of ``text`` is HTML-entity escaped (``&`` -> ``&amp;``,
+        ``<`` -> ``&lt;``, ``>`` -> ``&gt;``, ``"`` -> ``&quot;``,
+        ``'`` -> ``&#x27;`` -- i.e. ``html.escape`` semantics) so the returned
+        string is safe to embed in HTML. The characters at the positions in
+        ``indices`` are additionally wrapped in ``<mark>...</mark>`` around the
+        escaped characters. When ``indices`` is empty the escaped text (not the
+        raw text) is returned.
+        """
         if not indices:
-            return text
+            return html.escape(text)
 
         result = []
         idx_set = set(indices)
         for i, char in enumerate(text):
+            escaped = html.escape(char)
             if i in idx_set:
-                result.append(f"<mark>{char}</mark>")
+                result.append(f"<mark>{escaped}</mark>")
             else:
-                result.append(char)
+                result.append(escaped)
         return "".join(result)
 
     def search_with_highlight(self, query: str, texts: list[str],
