@@ -261,3 +261,35 @@ class TestURLHistoryCorruptJSONGuard:
         history = URLHistory()
         count = history.load(str(filepath))
         assert count == 0
+
+
+class TestURLHistoryMalformedRecordGuard:
+    """Regression: a valid-JSON list with a malformed record must not raise (ARCH-76)."""
+
+    def test_load_malformed_record_unexpected_key_returns_zero(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text('[{"url": "http://a.com", "bogus_key": 1}]')
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
+        assert history.get_visits() == []
+
+    def test_load_malformed_record_missing_url_returns_zero(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text('[{"status_code": 200}]')
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 0
+        assert history.get_visits() == []
+
+    def test_load_well_formed_list_still_populates(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text(
+            '[{"url": "http://example.com", "timestamp": "2024-01-01T00:00:00Z",'
+            ' "status_code": 200, "content_length": 0, "title": "",'
+            ' "user_agent": "", "response_time_ms": 0.0, "error": ""}]'
+        )
+        history = URLHistory()
+        count = history.load(str(filepath))
+        assert count == 1
+        assert history.get_visits()[0].url == "http://example.com"
