@@ -1,6 +1,6 @@
 # ARCH-68 — content_api: `_validate_content` is dead in the production request path — POST/PUT with a >200-char title or non-list tags returns 201/200 instead of 400
 
-Status: CLAIMED (cycle 295)
+Status: IMPLEMENTED #1421@948f412
 Component: `personal_index/content_api.py` — `ContentAPI._create_content` (lines 168-201) and `ContentAPI._update_content` (lines 203-233); the dead validator `ContentAPI._validate_content` (lines 308-321)
 Umbrella: ARCH-2 (#983)
 Issue: #1390
