@@ -1,6 +1,6 @@
 # ARCH-75 — tfidf: `add_document` counts a zero-term (empty/all-stopword) document toward the corpus, inflating the IDF denominator and shifting every existing document's TF-IDF score
 
-Status: CLAIMED 2026-09-14
+Status: IMPLEMENTED #1428@c4dfe98
 Component: `personal_index/tfidf.py` — `TfidfScorer.add_document` (lines 20-30); the IDF expression in `TfidfScorer.compute_tfidf` (line 59); the `add_document` docstring (line 21)
 Umbrella: ARCH-2 (#983)
 Issue: #1413
