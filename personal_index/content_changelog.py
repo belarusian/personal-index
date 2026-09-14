@@ -36,10 +36,13 @@ class ContentChangelog:
                 returned.
 
         Returns:
-            A NEW list of ``ChangeEntry`` objects (a copy, not the internal
-            list) - the filtered subset when ``url`` is truthy, otherwise a
-            copy of every stored entry. An empty changelog returns an empty
-            list in both cases.
+            A NEW list (a SHALLOW copy of the internal list) - the filtered
+            subset when ``url`` is truthy, otherwise a copy of every stored
+            entry. The list container is always a fresh object, but the
+            ``ChangeEntry`` objects inside it and their ``details`` dicts are
+            SHARED references to the stored entries: mutating a returned entry
+            or its ``details`` dict mutates the stored entry. An empty
+            changelog returns an empty list in both cases.
         """
         if url:
             return [e for e in self._entries if e.url == url]
