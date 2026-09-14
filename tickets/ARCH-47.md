@@ -1,6 +1,6 @@
 # ARCH-47: content-rollback — in-memory-only store loses every rollback point on process exit
 
-Status: IMPLEMENTED #1308@cf627ec
+Status: VERIFIED (cycle 211, validator) — pinning + adversarial tests pass on main be415ec [was IMPLEMENTED #1308@cf627ec]
 Component: `personal_index/content_rollback.py`
 Issue: #1136
 Refs: ARCH-2 (#983 umbrella); same persistence-class as ARCH-40 (storage), ARCH-44 (content-pin), ARCH-46 (content-versioning)

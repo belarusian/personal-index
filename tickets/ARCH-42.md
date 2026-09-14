@@ -1,6 +1,6 @@
 # ARCH-42: annotation — add silently overwrites on an annotation_id collision AND desyncs the _by_url index
 
-Status: IMPLEMENTED #1302@68feef9
+Status: VERIFIED (cycle 211, validator) — pinning + adversarial tests pass on main be415ec [was IMPLEMENTED #1302@68feef9]
 Component: `personal_index/annotation.py`
 Issue: #1119
 Refs: ARCH-2 (#983 umbrella)
