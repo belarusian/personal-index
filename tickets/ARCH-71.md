@@ -1,6 +1,6 @@
 # ARCH-71 — search_index: `_save` is non-atomic and unflushed, so a crash mid-write truncates the index and the next `_load` silently loses all data
 
-Status: CLAIMED 2026-09-10
+Status: IMPLEMENTED #1424@6834ed3
 Component: `personal_index/search_index.py` — `SearchIndex._save` (lines 52-74); the degrade half `SearchIndex._load` (lines 32-51); the divergent durable counterpart `personal_index/index.py::SearchIndex._save` (lines 62-76)
 Umbrella: ARCH-2 (#983)
 Issue: #1403
