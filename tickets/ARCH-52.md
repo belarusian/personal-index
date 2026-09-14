@@ -1,6 +1,6 @@
 # ARCH-52: content-batch — only `ValueError` is caught, so any other processor exception aborts the whole run
 
-Status: IMPLEMENTED #1326@e7bb3eb (cycle 256)
+Status: VERIFIED (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1326@e7bb3eb (cycle 256)]
 Component: `personal_index/content_batch.py`
 Issue: #1156
 Refs: ARCH-2 (#983 umbrella)

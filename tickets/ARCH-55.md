@@ -1,6 +1,6 @@
 # ARCH-55 — content_health: `HealthIssue`/`HealthCheckResult` need `from_dict` (and `HealthReport` needs `to_dict`) so a serialized report can be reloaded
 
-Status: IMPLEMENTED #1330@2b48399 (cycle 259)
+Status: VERIFIED (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1330@2b48399 (cycle 259)]
 Component: `personal_index/content_health.py` — `HealthIssue`, `HealthCheckResult`, `HealthReport`
 Umbrella: ARCH-2 (#983)
 Issue: #1170
