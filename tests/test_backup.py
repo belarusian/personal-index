@@ -443,6 +443,55 @@ class TestBackupManager:
         assert manager.get_backup_info("badkey") is None
 
 
+    def test_restore_backup_refuses_to_overwrite_existing_file(self, tmp_path):
+        """Default restore refuses to clobber a pre-existing colliding file
+        and leaves it byte-identical (ARCH-72)."""
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+        manifest = manager.create_backup(source)
+
+        target = tmp_path / "restored"
+        target.mkdir()
+        (target / "file1.txt").write_text("PRE-EXISTING")
+
+        with pytest.raises(ValueError, match="Restore would overwrite"):
+            manager.restore_backup(manifest.backup_id, str(target))
+
+        # The pre-existing file must be byte-identical (not truncated/replaced).
+        assert (target / "file1.txt").read_text() == "PRE-EXISTING"
+
+    def test_restore_backup_overwrites_when_flag_set(self, tmp_path):
+        """overwrite=True replaces the colliding file with archive content
+        (ARCH-72)."""
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+        manifest = manager.create_backup(source)
+
+        target = tmp_path / "restored"
+        target.mkdir()
+        (target / "file1.txt").write_text("PRE-EXISTING")
+
+        result = manager.restore_backup(
+            manifest.backup_id, str(target), overwrite=True
+        )
+        assert result["files_restored"] == 3
+        assert (target / "file1.txt").read_text() == "content 1"
+
+    def test_restore_backup_into_empty_target_unchanged(self, tmp_path):
+        """Restoring into a fresh/empty target still succeeds (ARCH-72)."""
+        source = self._create_test_dir(tmp_path)
+        backup_dir = str(tmp_path / "backups")
+        manager = BackupManager(backup_dir=backup_dir)
+        manifest = manager.create_backup(source)
+
+        target = str(tmp_path / "restored")
+        result = manager.restore_backup(manifest.backup_id, target)
+        assert result["files_restored"] == 3
+        assert (Path(target) / "file1.txt").read_text() == "content 1"
+
+
 class TestBackupTarFilter:
     """Tests for tar.extractall() filter argument (TICKET-47)."""
 
