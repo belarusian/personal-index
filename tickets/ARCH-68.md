@@ -4,7 +4,7 @@ Status: OPEN
 Component: `personal_index/content_api.py` — `ContentAPI._create_content` (lines 168-201) and `ContentAPI._update_content` (lines 203-233); the dead validator `ContentAPI._validate_content` (lines 308-321)
 Umbrella: ARCH-2 (#983)
 Issue: #1390
-Docs: `docs/content_api.md` (Contract Holes #1)
+Docs: `docs/content-api.md` (Contract Holes #1)
 
 ## Problem
 `ContentAPI._validate_content(data)` (line 308) exists with a docstring
@@ -52,7 +52,7 @@ Alternative option (delete the dead validator):
 4. If field validation is intentionally out of scope for the request path,
    delete `_validate_content` and its five tests in
    `tests/test_content_api.py` (lines 272-288), and state in
-   `docs/content_api.md` that the request path performs no field validation.
+   `docs/content-api.md` that the request path performs no field validation.
    The two must agree.
 
 Option 1 is preferred: it makes the observed behavior match the documented
@@ -113,7 +113,7 @@ contract without removing a tested, documented method.
   `_validate_content`).
 
 ## Docs update (same PR)
-`docs/content_api.md` — Contract Holes #1 already documents the dead
+`docs/content-api.md` — Contract Holes #1 already documents the dead
 validator. After the fix, update the `_create_content` / `_update_content`
 sections to state the enforced field-validation contract ("a non-empty
 `_validate_content` error list maps to `400` before the item is
