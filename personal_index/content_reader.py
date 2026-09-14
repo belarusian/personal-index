@@ -63,7 +63,16 @@ class ContentReader:
         self._url_index: dict[str, ReadResult] = {}
 
     def add(self, item: ReadResult) -> None:
-        """Add a content item."""
+        """Add a content item to the reader.
+
+        Appends ``item`` to the ordered item list (insertion order is
+        preserved) and records it in the URL index. If an item with the
+        same ``item.url`` was already added, the URL index is overwritten
+        so the most-recently-added item wins (last-write-wins); the
+        earlier item remains in the ordered list, so ``count`` and
+        ``list_all`` reflect every added item while ``get`` returns only
+        the latest one for a repeated URL.
+        """
         self._items.append(item)
         self._url_index[item.url] = item
 
@@ -73,7 +82,12 @@ class ContentReader:
             self.add(item)
 
     def get(self, url: str) -> ReadResult | None:
-        """Get a content item by URL."""
+        """Return the content item for ``url``, or ``None`` if absent.
+
+        Reads the URL index, so for a URL that was added more than once
+        it returns the most-recently-added item (last-write-wins) even
+        though ``count`` and ``list_all`` still report every added item.
+        """
         return self._url_index.get(url)
 
     def list_all(self) -> list[ReadResult]:

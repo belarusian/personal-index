@@ -225,3 +225,43 @@ class TestFormatItemTruncation:
         item = make_item("https://x.com", "Test", "hidden content")
         formatted = self.reader.format_item(item, show_content=False)
         assert "hidden content" not in formatted
+
+
+class TestDuplicateUrlLastWriteWins:
+    """Pin the ARCH-27 Option B contract: duplicate URLs are last-write-wins.
+
+    ``add`` keeps every item in the ordered list (so ``count`` and
+    ``list_all`` report all of them) while ``get`` reads the URL index and
+    returns only the most-recently-added item for a repeated URL.
+    """
+
+    def test_duplicate_url_get_returns_last(self):
+        reader = ContentReader()
+        first = make_item("https://dup.com", "First", "first body")
+        second = make_item("https://dup.com", "Second", "second body")
+        reader.add(first)
+        reader.add(second)
+        result = reader.get("https://dup.com")
+        assert result is not None
+        assert result is second
+        assert result.title == "Second"
+
+    def test_duplicate_url_count_and_list_all(self):
+        reader = ContentReader()
+        first = make_item("https://dup.com", "First")
+        second = make_item("https://dup.com", "Second")
+        reader.add(first)
+        reader.add(second)
+        # last-write-wins: both items stay in the ordered list
+        assert reader.count == 2
+        assert len(reader.list_all()) == 2
+        # get is consistent with the policy: returns the latest added item
+        assert reader.get("https://dup.com") is second
+
+    def test_single_url_guard(self):
+        reader = ContentReader()
+        item = make_item("https://only.com", "Only", "only body")
+        reader.add(item)
+        assert reader.get("https://only.com") is item
+        assert reader.count == 1
+        assert len(reader.list_all()) == 1
