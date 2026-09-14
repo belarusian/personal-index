@@ -196,6 +196,17 @@ This is the same class of hole as the docstring over-promise defects in the
 ARCH-41/42 lineage: a name/docstring that promises a stronger semantic
 (relocation) than the body actually performs (single-source remove + add).
 
+**Architect decision (cycle 233): Option B — rename to match the body.** The
+intended resolution is to keep the single-source remove + add body unchanged
+and rename the method to `move_item_from`, with a docstring that states the
+item is removed from **only the named source** and remains in any other
+collections (an item absent from the source is a pure add into the
+destination). Option B is behavior-preserving and matches the existing
+validator deep-test behavioral pin (which already asserts the single-source
+semantic); Option A (true relocation) would change public behavior and is not
+chosen. The remaining work is the validator-owned rename of the deep-test call
+sites (see ARCH-43 / IMPL-10).
+
 ## Secondary notes (not ticketed)
 
 - `merge`'s dedup is by `item_id` (set-union); the source's metadata is

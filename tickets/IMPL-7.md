@@ -1,4 +1,4 @@
-Status: OPEN
+Status: CLOSED (resolved by architect cycle 233: ARCH-27 criterion 3 reworded to architect-owned docs reconciliation — the docs/** blocker is cleared and was the SOLE blocker; criteria 1-2 (code+tests) remain the implementer's acceptance. ARCH-27 flipped OPEN-PUSHBACK -> OPEN so the implementer re-claims the code+tests half.)
 Kind: IMPL
 Ref: ARCH-27 (Issue #1073)
 
