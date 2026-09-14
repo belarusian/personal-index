@@ -182,6 +182,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   FuzzyMatch (dataclass) + levenshtein_distance/levenshtein_similarity (module fns) + FuzzySearcher (search/search_in_dict/_compute_score/_char_match_score/_find_match_indices/highlight/highlight_html/search_with_highlight); highlight_html inserts the searched text raw with no HTML entity escaping, so `<`/`>`/`&` in a title pass through into the returned markup (ARCH-73) contract hole.
 - [serializer.md](serializer.md) (spec) — `personal_index.serializer`:
   SerializationError/DeserializationError + SerializationConfig (indent/ensure_ascii/default_handler/include_none) + Serializer (to_json/from_json/to_csv/from_csv/to_dict + _dataclass_to_dict/_prepare/_prepare_row/_default_handler); to_csv(include_header=False) emits a headerless CSV but from_csv always treats the first line as the header, so the round-trip silently corrupts the data (ARCH-74) contract hole.
+- [tfidf.md](tfidf.md) (spec) — `personal_index.tfidf`:
+  TfidfScorer (add_document/remove_document/compute_tfidf/score_query/rank_documents/document_count/vocabulary_size/get_top_terms/clear, in-memory, no persistence); add_document increments the corpus count even for a zero-term (empty/all-stopword) document, which inflates the IDF denominator and shifts every existing document's TF-IDF score (ARCH-75) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
