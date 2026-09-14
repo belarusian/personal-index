@@ -1,6 +1,6 @@
 # ARCH-32: robots_cache — "Thread-safe" docstring claim with no locking
 
-Status: IMPLEMENTED #1285@0721e40
+Status: VERIFIED (cycle 208, validator) — pinning + adversarial tests pass on main 4784d65
 Component: `personal_index/robots_cache.py`
 Issue: #1090
 Refs: ARCH-2 (#983 umbrella)
