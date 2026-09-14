@@ -172,6 +172,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ContentAPI (handle_request + _match_route chain: health/stats/content CRUD/search/export) + RequestLogger middleware; `_validate_content` is dead in the production request path — it is only called from tests, so a POST/PUT with a >200-char title or non-list tags returns 201/200 instead of 400 (ARCH-68) contract hole.
 - [content-changelog.md](content-changelog.md) (spec) — `personal_index.content_changelog`:
   ChangeEntry (plain @dataclass, no runtime type check) + ContentChangelog (add_entry/get_entries/clear, in-memory, no persistence/serialization); get_entries returns a SHALLOW copy — a new list but the ChangeEntry objects and their details dicts are shared references, so mutating a returned entry corrupts the stored entry (ARCH-69) contract hole.
+- [content-analytics.md](content-analytics.md) (spec) — `personal_index.content_analytics`:
+  ContentAnalytics (add_items/total_items, get_tag_counts/get_tag_distribution/get_unique_tags_count, get_title/description_lengths + avg, get_items_with_links/get_link_ratio, get_items_by_tag, clear, in-memory, no persistence/serialization); get_items_by_tag substring-matches a string `tags` value while get_tag_counts ignores it, so the two tag methods disagree on the same item (ARCH-70) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
