@@ -1,6 +1,6 @@
 # ARCH-69 — content_changelog: `get_entries` returns a shallow copy — entry objects and `details` dicts are shared references, so mutating a returned entry corrupts the stored entry
 
-Status: CLAIMED (cycle 296)
+Status: IMPLEMENTED #1422@16e7861
 Component: `personal_index/content_changelog.py` — `ContentChangelog.get_entries` (lines 29-46); the `ChangeEntry` dataclass (lines 10-17)
 Umbrella: ARCH-2 (#983)
 Issue: #1394
