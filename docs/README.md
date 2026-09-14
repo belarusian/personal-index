@@ -164,6 +164,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   LinkStats/LinkAnalysisResult + LinkAnalyzer (analyze/analyze_batch/get_aggregate_stats, _is_internal/_is_suspicious); get_aggregate_stats unions the top-20-truncated domain_distribution, so unique_external_domains undercounts once a page has >20 distinct external domains (ARCH-56) contract hole.
 - [text-utils.md](text-utils.md) (spec) — `personal_index.text_utils`:
   15 pure helpers (normalize_whitespace, remove_html_tags, truncate_text, extract_sentences, extract_paragraphs, word_frequency, extract_keywords, levenshtein_distance, similarity_ratio, slugify, highlight_text, count_words, count_characters, read_time_minutes, tokenize); read_time_minutes divides by raw wpm with no guard, so wpm==0 raises ZeroDivisionError and wpm<0 silently returns 1 (ARCH-60) contract hole.
+- [content-type.md](content-type.md) (spec) — `personal_index.content_type`:
+  ContentTypeInfo (is_downloadable) + ContentTypeDetector (detect_from_url/filename/extension/bytes, classify, should_index); `.svg` dual-membership (TEXT checked before MEDIA) so `.svg` is always `text`/indexable + `is_media` computed with two divergent category sets (ARCH-66) contract holes.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
