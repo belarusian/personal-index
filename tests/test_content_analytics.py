@@ -178,3 +178,28 @@ class TestNoneTitleCoercion:
         a = ContentAnalytics()
         a.add_items([{"title": 123}])
         assert a.get_title_lengths() == [3]
+
+
+class TestGetItemsByTagNonListTags:
+    """Pinning tests for ARCH-70: get_items_by_tag non-list tags handling."""
+
+    def test_get_items_by_tag_string_tags_ignored(self):
+        a = ContentAnalytics()
+        a.add_items([{"id": 1, "tags": "abc"}])
+        assert a.get_items_by_tag("a") == []
+
+    def test_get_items_by_tag_and_tag_counts_agree_on_string_tags(self):
+        a = ContentAnalytics()
+        a.add_items([{"id": 1, "tags": "abc"}])
+        assert a.get_items_by_tag("a") == []
+        assert a.get_tag_counts() == {}
+
+    def test_get_items_by_tag_empty_store_returns_empty_list(self):
+        a = ContentAnalytics()
+        assert a.get_items_by_tag("a") == []
+
+    def test_get_items_by_tag_list_membership_unchanged(self):
+        a = ContentAnalytics()
+        a.add_items([{"id": 1, "tags": ["a"]}])
+        assert a.get_items_by_tag("a") == [{"id": 1, "tags": ["a"]}]
+        assert a.get_items_by_tag("b") == []

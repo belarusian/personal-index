@@ -79,8 +79,14 @@ class ContentAnalytics:
         return {tag: count / total * 100 for tag, count in self.get_tag_counts().items()}
 
     def get_items_by_tag(self, tag: str) -> list[dict[str, Any]]:
-        """Get items with a specific tag."""
-        return [item for item in self._items if tag in (item.get("tags") or [])]
+        """Get items whose tags list contains the tag.
+
+        A list ``tags`` value is matched by exact membership. A missing
+        ``tags`` key, a ``None`` value, and any non-list ``tags`` value are
+        ignored (no match), matching ``get_tag_counts``.
+        """
+        return [item for item in self._items
+                if isinstance(item.get("tags"), list) and tag in item["tags"]]
 
     def get_unique_tags_count(self) -> int:
         """Count unique tags."""
