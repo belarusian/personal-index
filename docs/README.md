@@ -180,6 +180,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   BackupManifest (@dataclass, to_dict/from_dict) + BackupManager (create_backup/list_backups/restore_backup/delete_backup/get_backup_info/get_total_backup_size/cleanup_old_backups, tar/tar.gz + JSON manifest); distinct from `personal_index.content_backup.backup_manager` (a different BackupManager); restore_backup silently overwrites pre-existing files in target_dir with no guard (ARCH-72) contract hole.
 - [fuzzy_search.md](fuzzy_search.md) (spec) — `personal_index.fuzzy_search`:
   FuzzyMatch (dataclass) + levenshtein_distance/levenshtein_similarity (module fns) + FuzzySearcher (search/search_in_dict/_compute_score/_char_match_score/_find_match_indices/highlight/highlight_html/search_with_highlight); highlight_html inserts the searched text raw with no HTML entity escaping, so `<`/`>`/`&` in a title pass through into the returned markup (ARCH-73) contract hole.
+- [serializer.md](serializer.md) (spec) — `personal_index.serializer`:
+  SerializationError/DeserializationError + SerializationConfig (indent/ensure_ascii/default_handler/include_none) + Serializer (to_json/from_json/to_csv/from_csv/to_dict + _dataclass_to_dict/_prepare/_prepare_row/_default_handler); to_csv(include_header=False) emits a headerless CSV but from_csv always treats the first line as the header, so the round-trip silently corrupts the data (ARCH-74) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
