@@ -96,6 +96,29 @@ class TestSerializer:
         s = Serializer()
         assert s.from_csv("") == []
 
+    def test_from_csv_headerless_round_trip(self):
+        s = Serializer()
+        data = [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+        csv_str = s.to_csv(data, include_header=False)
+        result = s.from_csv(csv_str, include_header=False, fieldnames=["name", "age"])
+        assert result == [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+
+    def test_from_csv_headerless_requires_fieldnames(self):
+        s = Serializer()
+        with pytest.raises(DeserializationError):
+            s.from_csv("Alice,30\r\nBob,25\r\n", include_header=False)
+
+    def test_from_csv_default_header_unchanged(self):
+        s = Serializer()
+        data = [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+        result = s.from_csv(s.to_csv(data))
+        assert result == [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+
+    def test_from_csv_whitespace_guard(self):
+        s = Serializer()
+        assert s.from_csv("") == []
+        assert s.from_csv("   ") == []
+
     def test_to_dict_dataclass(self):
         s = Serializer()
         item = _TestItem(name="test", value=42)

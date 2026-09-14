@@ -75,11 +75,33 @@ class Serializer:
         writer.writerows(self._prepare_row(d) for d in data)
         return output.getvalue()
 
-    def from_csv(self, csv_str: str) -> list[dict]:
-        """Deserialize CSV string to list of dicts."""
+    def from_csv(
+        self,
+        csv_str: str,
+        include_header: bool = True,
+        fieldnames: list[str] | None = None,
+    ) -> list[dict]:
+        """Deserialize CSV string to list of dicts.
+
+        The first line is treated as the header unless ``include_header`` is
+        False. When ``include_header`` is False, ``fieldnames`` is required:
+        if it is None, a :class:`DeserializationError` is raised because the
+        column names cannot be inferred from headerless data. When
+        ``include_header`` is True (the default), ``fieldnames`` is ignored
+        and the first line is used as the header (backward compatible with
+        all existing callers). Empty or whitespace-only input returns an
+        empty list.
+        """
         if not csv_str.strip():
             return []
-        reader = csv.DictReader(io.StringIO(csv_str))
+        if include_header:
+            reader = csv.DictReader(io.StringIO(csv_str))
+        else:
+            if fieldnames is None:
+                raise DeserializationError(
+                    "fieldnames is required when include_header is False"
+                )
+            reader = csv.DictReader(io.StringIO(csv_str), fieldnames=fieldnames)
         return list(reader)
 
     def to_dict(self, obj: Any) -> dict:
