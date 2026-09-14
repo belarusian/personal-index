@@ -52,19 +52,15 @@ It is currently referenced only by its tests — no production module in
   - **Guard inputs:** an empty changelog returns `[]` in both cases. A
     whitespace-only `url` (e.g. `" "`) is truthy, so it filters (and matches
     nothing unless an entry's `url` is literally `" "`).
-  - **Enforced copy contract (shallow):** the returned list is a NEW
-    shallow copy of the internal list — the list container is always a
-    fresh object, but the `ChangeEntry` objects inside it and their
-    `details` dicts are **shared references** to the stored entries.
-    Mutating a returned entry or its `details` dict mutates the stored
-    entry. This is the documented contract (see former Contract Hole 1,
-    now enforced by the docstring and pinning tests).
+  - **The returned list is a shallow copy — see Contract Hole 1.** The list
+    itself is new, but the `ChangeEntry` objects inside it (and their
+    `details` dicts) are the **same objects** as the internal store.
 - `clear()`: `self._entries.clear()`. Empties the internal list in place.
   Returns `None`. Idempotent (clearing an empty changelog is a no-op).
 
 ## Contract Holes
 
-### Hole 1 (RESOLVED) — `get_entries` returns a shallow copy: entry objects and `details` dicts are shared (ARCH-69)
+### Hole 1 — `get_entries` returns a shallow copy: entry objects and `details` dicts are shared (ARCH-69)
 
 `get_entries`'s docstring says it returns "A NEW list of ``ChangeEntry``
 objects (a copy, not the internal list)". That is **true only of the list
@@ -89,13 +85,18 @@ The docstring's "a copy, not the internal list" reads as "mutating the result
 is safe," which is false for the entry objects and their `details` dicts. This
 is the same "advertised safety not actually provided" class as ARCH-66/67/68.
 
-**Resolved (ARCH-69):** the `get_entries` docstring now states the exact
-shallow-copy contract — the list is a new shallow copy, but the
-`ChangeEntry` objects and their `details` dicts are shared references — and
-the pinning tests `test_get_entries_shallow_copy_details_shared`,
-`test_get_entries_empty_changelog_returns_empty_list`, and
-`test_get_entries_falsy_url_returns_all_shallow` pin that behavior. The
-docstring, the code, and the tests now all agree.
+**Fix direction (implementer):** make the two agree. Either (a) reword the
+`get_entries` docstring to state precisely that the **list** is a new shallow
+copy but the **`ChangeEntry` objects and their `details` dicts are shared
+references** (mutating a returned entry or its `details` mutates the stored
+entry), and add ONE pinning test that mutates a returned entry's `details`
+dict and asserts the stored entry is affected (guard path: an empty changelog
+returns `[]` with nothing to mutate); OR (b) make `get_entries` return deep
+copies (new `ChangeEntry` objects with copied `details` dicts) so the "copy"
+wording is true, and update the two existing deep tests that currently pin the
+shared-reference behavior (`test_entry_identity_preserved_in_get`,
+`test_details_dict_is_shared_reference`) to pin the copy behavior instead. The
+docstring, the code, and the tests must all agree.
 
 ## Secondary notes
 
