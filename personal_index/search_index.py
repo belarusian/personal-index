@@ -50,7 +50,13 @@ class SearchIndex:
             self._word_index = {}
 
     def _save(self) -> None:
-        """Save index to file."""
+        """Persist the index atomically and durably.
+
+        The index is serialized to a temp file in the same directory as
+        ``index_path``, flushed and fsynced, then atomically replaced over
+        ``index_path`` via ``os.replace``. A crash mid-write therefore
+        leaves the prior complete file intact (never a truncated file).
+        """
         parent = Path(self.index_path).parent
         parent.mkdir(parents=True, exist_ok=True)
         pages_data = {}
@@ -69,8 +75,12 @@ class SearchIndex:
                 "crawled_at": page.crawled_at.isoformat(),
             }
         data = {"pages": pages_data, "word_index": self._word_index}
-        with open(self.index_path, "w") as f:
+        tmp = self.index_path + ".tmp"
+        with open(tmp, "w") as f:
             json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, self.index_path)
 
     def add(self, page: CrawledPage) -> None:
         """Add a page to the index."""

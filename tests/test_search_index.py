@@ -1,5 +1,8 @@
 """Tests for personal_index.search_index."""
 
+import json
+import os
+
 import pytest
 
 from personal_index.models import CrawledPage
@@ -178,3 +181,44 @@ class TestSearchIndexLoadGuard:
         assert results == []
         results = index.search("python", limit=0)
         assert results == []
+
+    def test_save_produces_complete_reloadable_file(self, tmp_path):
+        path = str(tmp_path / "idx.json")
+        idx1 = SearchIndex(index_path=path)
+        idx1.add(CrawledPage(
+            url="https://example.com",
+            title="Persistent",
+            content="This should persist",
+        ))
+        assert os.path.exists(path)
+        with open(path) as f:
+            doc = json.load(f)
+        assert set(doc.keys()) == {"pages", "word_index"}
+        idx2 = SearchIndex(index_path=path)
+        assert idx2.count() == 1
+        assert idx2.get("https://example.com") is not None
+        assert idx2._word_index == idx1._word_index
+
+    def test_save_empty_index_writes_valid_document(self, tmp_path):
+        path = str(tmp_path / "empty.json")
+        idx = SearchIndex(index_path=path)
+        idx._save()
+        with open(path) as f:
+            doc = json.load(f)
+        assert doc == {"pages": {}, "word_index": {}}
+
+    def test_save_creates_missing_parent_dir(self, tmp_path):
+        path = str(tmp_path / "nested" / "deeper" / "idx.json")
+        idx = SearchIndex(index_path=path)
+        idx.add(CrawledPage(url="https://a.com", title="A"))
+        assert os.path.exists(path)
+        idx2 = SearchIndex(index_path=path)
+        assert idx2.count() == 1
+
+    def test_load_corrupt_file_still_degrades_to_empty(self, tmp_path):
+        path = str(tmp_path / "corrupt.json")
+        with open(path, "w") as f:
+            f.write('{"pages": {"http://x": {"url": "http://x", "tit')
+        idx = SearchIndex(index_path=path)
+        assert idx.count() == 0
+        assert idx.urls() == []
