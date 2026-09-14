@@ -166,6 +166,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   15 pure helpers (normalize_whitespace, remove_html_tags, truncate_text, extract_sentences, extract_paragraphs, word_frequency, extract_keywords, levenshtein_distance, similarity_ratio, slugify, highlight_text, count_words, count_characters, read_time_minutes, tokenize); read_time_minutes divides by raw wpm with no guard, so wpm==0 raises ZeroDivisionError and wpm<0 silently returns 1 (ARCH-60) contract hole.
 - [content-type.md](content-type.md) (spec) — `personal_index.content_type`:
   ContentTypeInfo (is_downloadable) + ContentTypeDetector (detect_from_url/filename/extension/bytes, classify, should_index); `.svg` dual-membership (TEXT checked before MEDIA) so `.svg` is always `text`/indexable + `is_media` computed with two divergent category sets (ARCH-66) contract holes.
+- [content-annotations.md](content-annotations.md) (spec) — `personal_index.content_annotations`:
+  AnnotationType (5-member str Enum) + Annotation (update_text/add_tag/remove_tag/to_dict/from_dict) + AnnotationManager (add/get/get_by_*/get_all/get_recent/update_text/add_tag/remove_tag/delete/delete_by_content_id/search/count/get_stats/clear/serialize/deserialize); `add()` is not idempotent — re-adding an `annotation_id` overwrites the primary store but appends a duplicate to each secondary index, so `get_by_*` return the same annotation twice (ARCH-67) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
