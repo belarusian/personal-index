@@ -131,9 +131,40 @@ class AnnotationManager:
         5. ``annotation.annotation_id`` is appended to ``_by_tag[tag]`` for
            each ``tag`` in ``annotation.tags``.
 
+        Idempotent per ``annotation_id``: re-adding an id that is already
+        stored first removes that id's stale entries from all five secondary
+        indexes (the same filter logic ``delete`` uses), then re-appends once.
+        The primary store keeps exactly one entry for the id (the latest
+        annotation object wins) and every secondary index keeps exactly one
+        entry for the id, so a re-add never diverges the indexes from the
+        primary store.
+
         Returns None.
         """
-        self._annotations[annotation.annotation_id] = annotation
+        aid = annotation.annotation_id
+        if aid in self._annotations:
+            stale = self._annotations[aid]
+            stale_cid = stale.content_id
+            if stale_cid in self._by_content:
+                self._by_content[stale_cid] = [
+                    i for i in self._by_content[stale_cid] if i != aid
+                ]
+            if stale.author in self._by_author:
+                self._by_author[stale.author] = [
+                    i for i in self._by_author[stale.author] if i != aid
+                ]
+            stale_type_key = stale.annotation_type.value
+            if stale_type_key in self._by_type:
+                self._by_type[stale_type_key] = [
+                    i for i in self._by_type[stale_type_key] if i != aid
+                ]
+            for stale_tag in stale.tags:
+                if stale_tag in self._by_tag:
+                    self._by_tag[stale_tag] = [
+                        i for i in self._by_tag[stale_tag] if i != aid
+                    ]
+
+        self._annotations[aid] = annotation
 
         cid = annotation.content_id
         if cid not in self._by_content:
