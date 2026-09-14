@@ -88,5 +88,41 @@ class TestContentChangelogGetEntriesPinning(unittest.TestCase):
         self.assertEqual(cl.get_entries("http://example.com"), [])
 
 
+    def test_get_entries_shallow_copy_details_shared(self):
+        # Divergence pin (option 1): mutating a returned entry's details dict
+        # mutates the STORED entry (shared reference).
+        cl = ContentChangelog()
+        e = ChangeEntry(url="http://example.com", change_type="modified",
+                        timestamp="2024-01-01", details={})
+        cl.add_entry(e)
+        returned = cl.get_entries()[0]
+        returned.details["k"] = "v"
+        # The stored entry is affected: same dict object, now contains the key.
+        self.assertIs(returned.details, e.details)
+        self.assertEqual(cl.get_entries()[0].details, {"k": "v"})
+        # The entry object itself is shared too.
+        self.assertIs(cl.get_entries()[0], e)
+
+    def test_get_entries_empty_changelog_returns_empty_list(self):
+        # Guard path: an empty changelog returns [] for both branches.
+        cl = ContentChangelog()
+        self.assertEqual(cl.get_entries(), [])
+        self.assertEqual(cl.get_entries("http://x.com"), [])
+
+    def test_get_entries_falsy_url_returns_all_shallow(self):
+        # Falsy branch (None and "") is also a shallow copy: shared references.
+        cl = ContentChangelog()
+        e1 = self._entry("http://example.com", "modified", "2024-01-01")
+        e2 = self._entry("http://other.com", "added", "2024-01-02")
+        cl.add_entry(e1)
+        cl.add_entry(e2)
+        for falsy in (None, ""):
+            result = cl.get_entries(falsy)
+            self.assertEqual(len(result), 2)
+            # Shared references on the falsy branch too.
+            self.assertIs(result[0], e1)
+            self.assertIs(result[1], e2)
+
+
 if __name__ == "__main__":
     unittest.main()
