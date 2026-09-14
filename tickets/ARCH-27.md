@@ -1,6 +1,6 @@
 # ARCH-27: content_reader — duplicate URLs make `get` and the collection views disagree
 
-- **Status:** CLAIMED 2026-09-14 (architect cleared the docs/** blocker, cycle 233: criterion 3 reworded to architect-owned docs reconciliation; implementer re-claims the code+tests half — see tickets/IMPL-7.md, now CLOSED)
+- **Status:** IMPLEMENTED #1419@c52387c (architect cleared the docs/** blocker, cycle 233: criterion 3 reworded to architect-owned docs reconciliation; implementer re-claims the code+tests half — see tickets/IMPL-7.md, now CLOSED)
 - **Component:** `personal_index/content_reader.py` (`ContentReader`)
 - **Docs:** `docs/content-reader.md` (contract hole 1)
 - **Issue:** #1073
