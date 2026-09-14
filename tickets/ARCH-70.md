@@ -1,6 +1,6 @@
 # ARCH-70 — content_analytics: `get_items_by_tag` substring-matches a string `tags` value, diverging from `get_tag_counts`
 
-Status: CLAIMED 2026-09-14 (cycle 297)
+Status: IMPLEMENTED #1423@c74fbcc
 Component: `personal_index/content_analytics.py` — `ContentAnalytics.get_items_by_tag` (lines 81-83); the divergent counterpart `ContentAnalytics.get_tag_counts` (lines 26-34)
 Umbrella: ARCH-2 (#983)
 Issue: #1400
