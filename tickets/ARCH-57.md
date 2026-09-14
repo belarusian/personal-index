@@ -1,6 +1,6 @@
 # ARCH-57 — keyword_extractor: `extract_top_n`'s `n` is silently capped by constructor `max_keywords`
 
-Status: IMPLEMENTED #1332@8544fbf
+Status: VERIFIED (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1332@8544fbf]
 Component: `personal_index.keyword_extractor.py` — `KeywordExtractor.extract`, `KeywordExtractor.extract_top_n`, `KeywordExtractor.compare_keywords`, module fn `extract_keywords`
 Umbrella: ARCH-2 (#983)
 Issue: #1182
