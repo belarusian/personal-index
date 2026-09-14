@@ -180,3 +180,55 @@ class TestTfidfScorer:
         )
         assert self.scorer.score_query(query, doc_id) == expected
         assert expected > 0
+
+    def test_add_document_zero_term_does_not_inflate_idf(self):
+        """A zero-term (empty) document is a no-op that does not shift scores.
+
+        Pins the corrected behavior against the returned object: adding an
+        empty document must not raise _doc_count, so the existing document's
+        TF-IDF scores are unchanged (the IDF denominator is not inflated).
+        """
+        d0 = self.scorer.add_document("cat sat")
+        assert self.scorer.compute_tfidf(d0) == {"cat": 0.5, "sat": 0.5}
+        # Zero-term document: no-op, must not shift the existing scores.
+        self.scorer.add_document("")
+        assert self.scorer.compute_tfidf(d0) == {"cat": 0.5, "sat": 0.5}
+        # The zero-term document is not counted toward the corpus.
+        assert self.scorer.document_count == 1
+
+    def test_add_document_all_stopwords_is_noop(self):
+        """An all-stopword document is a no-op: corpus state is untouched."""
+        d0 = self.scorer.add_document("cat sat")
+        before_count = self.scorer.document_count
+        before_vocab = self.scorer.vocabulary_size
+        before_scores = self.scorer.compute_tfidf(d0)
+        # All-stopword input tokenizes to zero terms -> no-op.
+        self.scorer.add_document("the")
+        assert self.scorer.document_count == before_count
+        assert self.scorer.vocabulary_size == before_vocab
+        assert self.scorer.compute_tfidf(d0) == before_scores
+
+    def test_add_document_normal_docs_unchanged(self):
+        """Two real documents behave exactly as before (2-doc IDF denominator)."""
+        import math
+
+        d0 = self.scorer.add_document("cat sat")
+        d1 = self.scorer.add_document("dog runs")
+        assert self.scorer.document_count == 2
+        # 'cat' appears in only one of the two docs: df=1, doc_count=2,
+        # so the IDF uses the two-document denominator.
+        expected_idf = math.log((1 + 2) / (1 + 1)) + 1
+        expected = 0.5 * expected_idf
+        assert self.scorer.compute_tfidf(d0) == {"cat": expected, "sat": expected}
+        assert self.scorer.compute_tfidf(d1) == {"dog": expected, "runs": expected}
+
+    def test_remove_zero_term_document_is_noop(self):
+        """Removing a zero-term document's id returns False and leaves corpus."""
+        d0 = self.scorer.add_document("cat sat")
+        before_scores = self.scorer.compute_tfidf(d0)
+        # Zero-term document: id assigned but never stored in the corpus.
+        empty_id = self.scorer.add_document("")
+        assert self.scorer.remove_document(empty_id) is False
+        # Corpus untouched: the real document is still scored identically.
+        assert self.scorer.compute_tfidf(d0) == before_scores
+        assert self.scorer.document_count == 1

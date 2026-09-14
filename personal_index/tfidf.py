@@ -18,10 +18,21 @@ class TfidfScorer:
         self._next_id: int = 0
 
     def add_document(self, text: str) -> int:
-        """Add a document to the corpus. Returns document ID."""
+        """Add a document to the corpus. Returns document ID.
+
+        A document whose text tokenizes to zero terms (empty, whitespace,
+        or all-stopwords) is a no-op: it does not count toward the corpus,
+        so it does not increment _doc_count, is not stored in _doc_terms,
+        and does not bump _doc_freq. The next document ID is still
+        assigned and returned unconditionally. A document with one or more
+        surviving terms behaves exactly as before (id assigned, _doc_count
+        incremented, _doc_freq bumped per unique token).
+        """
         doc_id = self._next_id
         self._next_id += 1
         tokens = tokenize(text, remove_stopwords=True)
+        if not tokens:
+            return doc_id
         self._doc_terms[doc_id] = Counter(tokens)
         self._doc_count += 1
         unique_tokens = set(tokens)
