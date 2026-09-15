@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: personal_index/pipeline_runner.py
-Issue: (to be created)
+Issue: #1471
 
 ## Symptom
 
