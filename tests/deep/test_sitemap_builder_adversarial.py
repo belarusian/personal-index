@@ -416,6 +416,42 @@ class TestQA23Namespace:
         assert parsed.entries[0].lastmod is not None
         assert parsed.entries[0].lastmod.endswith("Z")
 
+    # ---- Cycle 244 ARMOR pins (QA-23 verify): plain hard assertions ----
+    def test_roundtrip_multi_entry_preserves_all_fields(self):
+        b = SitemapBuilder()
+        urls = [f"https://x.com/page/{i}" for i in range(5)]
+        for i, u in enumerate(urls):
+            b.add_entry(u, change_frequency="daily", priority=0.5 + i * 0.1)
+        raw = b.build().decode("utf-8")
+        parsed = SitemapParser().parse(raw)
+        assert parsed.get_urls() == urls
+        for i, entry in enumerate(parsed.entries):
+            assert entry.changefreq == "daily"
+            assert abs(entry.priority - (0.5 + i * 0.1)) < 1e-9
+
+    def test_build_sitemap_index_roundtrip_through_parser(self):
+        b = SitemapBuilder()
+        raw = b.build_sitemap_index(["https://x.com/sitemap1.xml", "https://x.com/sitemap2.xml"]).decode("utf-8")
+        assert "xmlns" in raw
+        assert "nsmap=" not in raw
+        parsed = SitemapParser().parse(raw)
+        assert len(parsed.sitemaps) == 2
+        assert parsed.sitemaps[0] == "https://x.com/sitemap1.xml"
+        assert parsed.sitemaps[1] == "https://x.com/sitemap2.xml"
+
+    def test_serialized_bytes_no_nsmap_substring(self):
+        b = SitemapBuilder()
+        b.add_entry("https://x.com/a")
+        raw = b.build()
+        assert b"nsmap=" not in raw
+        assert b"xmlns=" in raw
+
+    def test_build_sitemap_index_no_nsmap_substring(self):
+        b = SitemapBuilder()
+        raw = b.build_sitemap_index(["https://x.com/sitemap1.xml"])
+        assert b"nsmap=" not in raw
+        assert b"xmlns=" in raw
+
 
 # ---------------------------------------------------------------------------
 # End-to-end CLI smoke run
