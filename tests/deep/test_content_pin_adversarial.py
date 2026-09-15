@@ -383,6 +383,48 @@ def test_pin_non_serializable_metadata_rolls_back(tmp_path):
     assert p.is_pinned("good") is True
 
 
+def test_pin_bytes_metadata_rolls_back(tmp_path):
+    """Armor (QA-18): bytes metadata is non-JSON-serializable -> rollback."""
+    sp = str(tmp_path / "ns.json")
+    p = ContentPinner(storage_path=sp)
+    p.pin("good")
+    result = p.pin("bad", metadata={"blob": b"\x00\x01\x02"})
+    assert result is False
+    # failed pin rolled back; prior pin intact, bad item not left pinned
+    assert p.is_pinned("bad") is False
+    assert p.is_pinned("good") is True
+
+
+def test_pin_nested_non_serializable_rolls_back(tmp_path):
+    """Armor (QA-18): a set nested inside a list inside a dict -> rollback."""
+    sp = str(tmp_path / "ns.json")
+    p = ContentPinner(storage_path=sp)
+    p.pin("good")
+    result = p.pin("bad", metadata={"outer": {"inner": [{1, 2, 3}]}})
+    assert result is False
+    assert p.is_pinned("bad") is False
+    assert p.is_pinned("good") is True
+
+
+def test_pin_non_serializable_then_good_pin_recovers(tmp_path):
+    """Armor (QA-18): after a failed pin, a subsequent good pin still works."""
+    sp = str(tmp_path / "ns.json")
+    p = ContentPinner(storage_path=sp)
+    p.pin("good")
+    # first: non-serializable -> False, rolled back
+    assert p.pin("bad", metadata={"a": {1, 2, 3}}) is False
+    assert p.is_pinned("bad") is False
+    # second: a valid pin on the same id recovers cleanly and persists
+    assert p.pin("bad", metadata={"a": [1, 2, 3]}) is True
+    assert p.is_pinned("bad") is True
+    assert p.is_pinned("good") is True
+    # reload from disk: both persist, bad carries the serializable metadata
+    p2 = ContentPinner(storage_path=sp)
+    assert p2.is_pinned("bad") is True
+    assert p2.is_pinned("good") is True
+    assert p2.get_pinned_items()[0].metadata in ({}, {"a": [1, 2, 3]})
+
+
 # ---------------------------------------------------------------------------
 # clear
 # ---------------------------------------------------------------------------
