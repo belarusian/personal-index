@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: `personal_index/cli_verify.py`
-Issue: (to be created)
+Issue: #1488
 Docs: `docs/cli_verify.md` (spec page, same PR)
 
 ## Symptom
