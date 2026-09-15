@@ -350,3 +350,144 @@ def test_end_to_end_cli_init_and_export(tmp_path):
     r = runner.invoke(main, ["export", "--format", "json", "--data-dir", dd])
     assert r.exit_code == 0, r.output
     assert "No indexed content to export." in r.output
+
+
+# --- ARCH-74: from_csv(include_header, fieldnames) round-trip --------------
+# Contract: tickets/ARCH-74.md (Issue #1411). to_csv(include_header=False)
+# emits a headerless CSV; from_csv must be able to read it back without
+# consuming the first data row as a header. include_header=False requires
+# fieldnames (else DeserializationError); include_header=True (default) is
+# byte-for-byte the old behavior and ignores fieldnames.
+
+def test_arch74_ac1_headered_roundtrip_unchanged():
+    """AC1: from_csv(to_csv(data, include_header=True)) == data (stringified)."""
+    data = [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+    assert S.from_csv(S.to_csv(data, include_header=True)) == data
+
+
+def test_arch74_ac2_headerless_roundtrip_no_corruption():
+    """AC2: headerless round-trip with fieldnames returns the same rows."""
+    data = [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+    headerless = S.to_csv(data, include_header=False)
+    # The corruption hole: without the fix this mis-mapped to
+    # [{'Alice': 'Bob', '30': '25'}].
+    assert S.from_csv(headerless, include_header=False,
+                      fieldnames=["name", "age"]) == data
+
+
+def test_arch74_ac2b_headerless_matches_headered():
+    """AC2: headerless round-trip equals the headered round-trip."""
+    data = [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+    headered = S.from_csv(S.to_csv(data, include_header=True))
+    headerless = S.from_csv(
+        S.to_csv(data, include_header=False),
+        include_header=False,
+        fieldnames=list(data[0].keys()),
+    )
+    assert headerless == headered
+
+
+def test_arch74_ac3_headerless_no_fieldnames_raises():
+    """AC3: include_header=False with fieldnames=None raises DeserializationError."""
+    import pytest
+
+    with pytest.raises(DeserializationError):
+        S.from_csv("Alice,30\r\nBob,25\r\n", include_header=False)
+
+
+def test_arch74_ac3b_headerless_no_fieldnames_raises_single_row():
+    """AC3: single-row headerless with no fieldnames still raises."""
+    import pytest
+
+    with pytest.raises(DeserializationError):
+        S.from_csv("Alice,30", include_header=False, fieldnames=None)
+
+
+def test_arch74_ac4_empty_and_whitespace_guard():
+    """AC4: empty/whitespace input returns [] regardless of new args."""
+    assert S.from_csv("") == []
+    assert S.from_csv("   ") == []
+    # Guard fires BEFORE the include_header branch, so even the headerless
+    # path with valid fieldnames returns [] on whitespace.
+    assert S.from_csv("   \n  ", include_header=False, fieldnames=["a"]) == []
+
+
+def test_arch74_ac5_headered_no_new_args_is_old_behavior():
+    """AC5: from_csv(headered_csv) with no new args is byte-for-byte old behavior."""
+    rows = [{"a": "1", "b": "2"}, {"a": "3", "b": "4"}]
+    headered = S.to_csv(rows, include_header=True)
+    assert S.from_csv(headered) == rows
+    # fieldnames is IGNORED when include_header is True (default).
+    assert S.from_csv(headered, fieldnames=["zzz", "yyy"]) == rows
+
+
+def test_arch74_adversarial_unicode_fieldnames():
+    """Adversarial: unicode fieldnames round-trip a headerless CSV."""
+    data = [{"名前": "アリス", "年齢": "30"}, {"名前": "ボブ", "年齢": "25"}]
+    headerless = S.to_csv(data, include_header=False)
+    assert S.from_csv(headerless, include_header=False,
+                      fieldnames=["名前", "年齢"]) == data
+
+
+def test_arch74_adversarial_single_row_headerless():
+    """Adversarial: a single headerless row round-trips with fieldnames."""
+    data = [{"name": "Solo", "age": "40"}]
+    headerless = S.to_csv(data, include_header=False)
+    assert S.from_csv(headerless, include_header=False,
+                      fieldnames=["name", "age"]) == data
+
+
+def test_arch74_adversarial_fieldnames_shorter_than_row():
+    """Adversarial: fieldnames shorter than a row -> extra values under None key.
+
+    This is csv.DictReader's documented restval/restkey behavior, not a
+    contract violation; pin the stable shape so a regression is visible.
+    """
+    out = S.from_csv("Alice,30,extra", include_header=False,
+                     fieldnames=["name", "age"])
+    assert out == [{"name": "Alice", "age": "30", None: ["extra"]}]
+
+
+def test_arch74_adversarial_fieldnames_longer_than_row():
+    """Adversarial: fieldnames longer than a row -> missing values are None."""
+    out = S.from_csv("Alice,30", include_header=False,
+                     fieldnames=["name", "age", "city"])
+    assert out == [{"name": "Alice", "age": "30", "city": None}]
+
+
+def test_arch74_adversarial_duplicate_fieldnames():
+    """Adversarial: duplicate fieldnames collapse to the last value (DictReader)."""
+    out = S.from_csv("Alice,30", include_header=False,
+                     fieldnames=["name", "name"])
+    assert out == [{"name": "30"}]
+
+
+def test_arch74_adversarial_special_chars_headerless():
+    """Adversarial: commas/quotes/newlines in values survive headerless round-trip."""
+    data = [{"name": 'A,"lice"', "age": "30"}, {"name": "Bob, Jr.", "age": "25"}]
+    headerless = S.to_csv(data, include_header=False)
+    assert S.from_csv(headerless, include_header=False,
+                      fieldnames=["name", "age"]) == data
+
+
+def test_arch74_adversarial_idempotence_headerless():
+    """Adversarial: re-serializing the parsed rows reproduces the headerless CSV."""
+    data = [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+    headerless = S.to_csv(data, include_header=False)
+    parsed = S.from_csv(headerless, include_header=False,
+                        fieldnames=["name", "age"])
+    assert S.to_csv(parsed, include_header=False) == headerless
+
+
+def test_arch74_cli_smoke_export_json(tmp_path):
+    """End-to-end CLI run: init + export json on an empty index (exit 0)."""
+    from click.testing import CliRunner
+
+    from personal_index.cli import main
+
+    runner = CliRunner()
+    dd = str(tmp_path / "data")
+    r = runner.invoke(main, ["init", "--data-dir", dd])
+    assert r.exit_code == 0, r.output
+    r = runner.invoke(main, ["export", "--format", "json", "--data-dir", dd])
+    assert r.exit_code == 0, r.output
