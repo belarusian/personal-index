@@ -233,6 +233,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [pipeline_e2e.md](pipeline_e2e.md) (spec) — `personal_index.pipeline_e2e`:
   end-to-end orchestrator (PipelineE2E: __init__/add_interest/run_from_files/search/close + PipelineRunResult dataclass with success/summary); distinct from pipeline_orchestrator.py (PipelineOrchestrator) and pipeline.py (Pipeline/PipelineRunner); a page that passes the content filter but scores below min_score_threshold is dropped at line 236-237 with NO counter, so pages_filtered_in can exceed pages_indexed with no field explaining the gap and the existing test pins only pages_indexed >= 1 (ARCH-96) contract hole.
 
+- [cli_export.md](cli_export.md) (spec) — `personal_index.cli_export`:
+  the standalone `export_cmd` click command (markdown/json/csv/html + --tag/--query/--limit filters) and its private _load_pages/_dispatch_format/_export_* helpers; distinct from cli.py which defines its OWN registered `export` (line 431, markdown/json/csv only, no filters); export_cmd is never imported or registered on the main group (cli.py registers only dedup/health/recommend at lines 1509-1511), so the html format and all three filters are unreachable from the CLI and the module's tests import only the private helpers, never export_cmd (ARCH-98) contract hole.
+
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
