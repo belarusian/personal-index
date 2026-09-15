@@ -442,3 +442,147 @@ def test_cli_status_smoke():
     )
     assert proc.returncode == 0, proc.stderr
     assert "Personal Index Status" in proc.stdout
+
+
+# ---------------------------------------------------------------------------
+# ARCH-67: add() must be idempotent per annotation_id — a re-add of the same
+# id leaves the primary store at 1 entry and EVERY secondary index at exactly
+# one entry for that id (the latest annotation object wins).
+# Contract: tickets/ARCH-67.md (acceptance criteria 1-5) + guard inputs.
+# ---------------------------------------------------------------------------
+
+
+def test_add_idempotent_no_duplicate_index_entries():
+    """AC1: m.add(a); m.add(a) -> count()==1, one entry per content/type index."""
+    m = AnnotationManager()
+    a = _ann("a1", "c1")
+    m.add(a)
+    m.add(a)  # re-add same id
+    assert m.count() == 1
+    assert len(m.get_by_content_id("c1")) == 1
+    assert len(m.get_by_type(AnnotationType.NOTE)) == 1
+
+
+def test_add_idempotent_author_tag_indexes():
+    """AC2: re-add with truthy author + one tag -> author/tag indexes stay at 1."""
+    m = AnnotationManager()
+    a = _ann("a1", "c1", author="bob", tags=["t1"])
+    m.add(a)
+    m.add(a)
+    assert len(m.get_by_author("bob")) == 1
+    assert len(m.get_by_tag("t1")) == 1
+
+
+def test_add_distinct_ids_still_index():
+    """AC3: distinct ids on the same content_id still index once each (regression)."""
+    m = AnnotationManager()
+    m.add(_ann("a1", "c1"))
+    m.add(_ann("a2", "c1"))
+    assert len(m.get_by_content_id("c1")) == 2
+    assert m.count() == 2
+
+
+def test_add_readd_latest_wins():
+    """AC4: re-add same id with a different object -> latest wins, one entry each."""
+    m = AnnotationManager()
+    a = _ann("a1", "c1", text="old", author="bob", tags=["t1"])
+    a_replaced = _ann("a1", "c1", text="new", author="bob", tags=["t1"])
+    m.add(a)
+    m.add(a_replaced)
+    assert m.get("a1") is a_replaced
+    assert len(m.get_by_content_id("c1")) == 1
+    assert len(m.get_by_author("bob")) == 1
+    assert len(m.get_by_tag("t1")) == 1
+    assert len(m.get_by_type(AnnotationType.NOTE)) == 1
+
+
+def test_add_falsy_author_never_indexed():
+    """AC5: falsy author is never indexed, on either add (guard path)."""
+    m = AnnotationManager()
+    a = _ann("a1", "c1", author="")
+    m.add(a)
+    m.add(a)
+    assert m.get_by_author("") == []
+    assert m.count() == 1
+
+
+def test_add_triple_readd_still_one_entry():
+    """Idempotence over 3+ re-adds: every index stays at exactly one entry."""
+    m = AnnotationManager()
+    a = _ann("a1", "c1", author="bob", tags=["t1", "t2"])
+    m.add(a)
+    m.add(a)
+    m.add(a)
+    assert m.count() == 1
+    assert len(m.get_by_content_id("c1")) == 1
+    assert len(m.get_by_author("bob")) == 1
+    assert len(m.get_by_tag("t1")) == 1
+    assert len(m.get_by_tag("t2")) == 1
+    assert len(m.get_by_type(AnnotationType.NOTE)) == 1
+
+
+def test_add_readd_changed_content_id_moves_index():
+    """Adversarial: re-add same id under a NEW content_id -> old bucket empty,
+    new bucket holds exactly one entry for the id."""
+    m = AnnotationManager()
+    a1 = _ann("a1", "c1")
+    a2 = _ann("a1", "c2")  # same id, different content
+    m.add(a1)
+    m.add(a2)
+    assert m.count() == 1
+    assert m.get("a1") is a2
+    assert len(m.get_by_content_id("c2")) == 1
+    # the old content bucket must hold zero entries for the id
+    assert m.get_by_content_id("c1") == []
+
+
+def test_add_readd_changed_author_moves_index():
+    """Adversarial: re-add same id under a NEW author -> old author bucket empty,
+    new author bucket holds exactly one entry."""
+    m = AnnotationManager()
+    a1 = _ann("a1", "c1", author="alice")
+    a2 = _ann("a1", "c1", author="bob")
+    m.add(a1)
+    m.add(a2)
+    assert m.get("a1") is a2
+    assert len(m.get_by_author("bob")) == 1
+    assert m.get_by_author("alice") == []
+
+
+def test_add_readd_changed_tags_moves_index():
+    """Adversarial: re-add same id with DIFFERENT tags -> stale tags cleaned,
+    new tags hold exactly one entry each."""
+    m = AnnotationManager()
+    a1 = _ann("a1", "c1", tags=["old1", "old2"])
+    a2 = _ann("a1", "c1", tags=["new1"])
+    m.add(a1)
+    m.add(a2)
+    assert m.get("a1") is a2
+    assert len(m.get_by_tag("new1")) == 1
+    assert m.get_by_tag("old1") == []
+    assert m.get_by_tag("old2") == []
+
+
+def test_add_readd_changed_type_moves_index():
+    """Adversarial: re-add same id with a DIFFERENT type -> stale type bucket
+    empty, new type bucket holds exactly one entry."""
+    m = AnnotationManager()
+    a1 = _ann("a1", "c1", annotation_type=AnnotationType.NOTE)
+    a2 = _ann("a1", "c1", annotation_type=AnnotationType.HIGHLIGHT)
+    m.add(a1)
+    m.add(a2)
+    assert m.get("a1") is a2
+    assert len(m.get_by_type(AnnotationType.HIGHLIGHT)) == 1
+    assert m.get_by_type(AnnotationType.NOTE) == []
+
+
+def test_add_readd_stats_consistent():
+    """After a re-add, get_stats() total/by_type must agree with the primary
+    store (no index divergence)."""
+    m = AnnotationManager()
+    a = _ann("a1", "c1", author="bob", tags=["t1"])
+    m.add(a)
+    m.add(a)
+    stats = m.get_stats()
+    assert stats["total"] == 1
+    assert stats["by_type"] == {"note": 1}
