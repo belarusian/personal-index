@@ -1,6 +1,6 @@
 # ARCH-67 — content_annotations: `AnnotationManager.add()` is not idempotent — re-adding an `annotation_id` diverges the secondary indexes from the primary store
 
-Status: IMPLEMENTED #1420@3188065
+Status: VERIFIED (validator cycle 221: pinning tests test_add_idempotent_no_duplicate_index_entries / _author_tag_indexes / _distinct_ids_still_index / _readd_latest_wins / _falsy_author_never_indexed pass + adversarial re-add under changed content_id/author/tags/type all keep every secondary index at exactly one entry per id; get_stats total/by_type consistent; 56 deep tests green)
 Component: `personal_index/content_annotations.py` — `AnnotationManager.add` (lines 118-157), the five index appends at lines 141, 147, 152, 157
 Umbrella: ARCH-2 (#983)
 Issue: #1384
