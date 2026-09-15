@@ -537,3 +537,266 @@ def test_cli_status_runs_end_to_end():
     )
     assert proc.returncode == 0
     assert "Personal Index Status" in proc.stdout
+
+
+# ---------------------------------------------------------------------------
+# ARCH-68: _validate_content wired into the POST/PUT request path
+#
+# Contract (tickets/ARCH-68.md + module docstrings): after the inline
+# isinstance(data, dict) guard, a non-empty _validate_content(data) error
+# list maps to (400, {"error": <first error>}) BEFORE the item is
+# stored/updated. Field rules: title (if present) must be a str of length
+# <= 200; tags (if present) must be a list. The existing body guards
+# (missing/empty body, invalid JSON, non-dict body) still take precedence.
+# ---------------------------------------------------------------------------
+
+
+def _post(api: ContentAPI, body: str) -> tuple[int, dict]:
+    return api.handle_request("POST", "/api/v1/content", body)
+
+
+def _put(api: ContentAPI, item_id: str, body: str) -> tuple[int, dict]:
+    return api.handle_request("PUT", f"/api/v1/content/{item_id}", body)
+
+
+def _seed_one(api: ContentAPI) -> str:
+    status, payload = _post(api, json.dumps({"title": "Seed", "tags": ["a"]}))
+    assert status == 201
+    return str(payload["item"]["id"])
+
+
+# --- Acceptance criteria (pinning, through the public handle_request) ---
+
+
+def test_arch68_create_overlong_title_400_store_unchanged():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "x" * 201}))
+    assert status == 400
+    assert payload["error"] == "Title must be under 200 characters"
+    assert len(api._store) == 0
+    assert api._next_id == 1
+
+
+def test_arch68_create_nonlist_tags_400_store_unchanged():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"tags": "not-a-list"}))
+    assert status == 400
+    assert payload["error"] == "Tags must be a list"
+    assert len(api._store) == 0
+    assert api._next_id == 1
+
+
+def test_arch68_update_overlong_title_400_item_unchanged():
+    api = ContentAPI()
+    item_id = _seed_one(api)
+    before_title = api._store[item_id]["title"]
+    before_updated = api._store[item_id]["updated_at"]
+    status, payload = _put(api, item_id, json.dumps({"title": "x" * 201}))
+    assert status == 400
+    assert payload["error"] == "Title must be under 200 characters"
+    assert api._store[item_id]["title"] == before_title
+    assert api._store[item_id]["updated_at"] == before_updated
+
+
+def test_arch68_create_valid_body_201_stored():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "ok", "tags": ["a"]}))
+    assert status == 201
+    assert payload["item"]["title"] == "ok"
+    assert payload["item"]["tags"] == ["a"]
+    assert len(api._store) == 1
+
+
+def test_arch68_create_non_dict_400_isinstance_first():
+    api = ContentAPI()
+    status, payload = _post(api, "[1, 2]")
+    assert status == 400
+    assert payload["error"] == "Request body must be a JSON object"
+    assert len(api._store) == 0
+
+
+# --- Adversarial: title length boundary (contract is <= 200) ---
+
+
+def test_arch68_title_exactly_200_accepted():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "x" * 200}))
+    assert status == 201
+    assert payload["item"]["title"] == "x" * 200
+
+
+def test_arch68_title_201_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "x" * 201}))
+    assert status == 400
+    assert payload["error"] == "Title must be under 200 characters"
+
+
+def test_arch68_title_202_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "x" * 202}))
+    assert status == 400
+    assert payload["error"] == "Title must be under 200 characters"
+
+
+def test_arch68_empty_string_title_accepted():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": ""}))
+    assert status == 201
+    assert payload["item"]["title"] == ""
+
+
+# --- Adversarial: title type guard (must be a str) ---
+
+
+def test_arch68_title_int_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": 123}))
+    assert status == 400
+    assert payload["error"] == "Title must be a string"
+    assert len(api._store) == 0
+
+
+def test_arch68_title_none_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": None}))
+    assert status == 400
+    assert payload["error"] == "Title must be a string"
+    assert len(api._store) == 0
+
+
+def test_arch68_title_list_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": ["a", "b"]}))
+    assert status == 400
+    assert payload["error"] == "Title must be a string"
+    assert len(api._store) == 0
+
+
+def test_arch68_title_dict_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": {"k": "v"}}))
+    assert status == 400
+    assert payload["error"] == "Title must be a string"
+    assert len(api._store) == 0
+
+
+# --- Adversarial: tags type guard (must be a list) ---
+
+
+def test_arch68_tags_int_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"tags": 5}))
+    assert status == 400
+    assert payload["error"] == "Tags must be a list"
+    assert len(api._store) == 0
+
+
+def test_arch68_tags_none_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"tags": None}))
+    assert status == 400
+    assert payload["error"] == "Tags must be a list"
+    assert len(api._store) == 0
+
+
+def test_arch68_tags_dict_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"tags": {"a": 1}}))
+    assert status == 400
+    assert payload["error"] == "Tags must be a list"
+    assert len(api._store) == 0
+
+
+def test_arch68_tags_empty_list_accepted():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "T", "tags": []}))
+    assert status == 201
+    assert payload["item"]["tags"] == []
+
+
+def test_arch68_tags_list_accepted():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "T", "tags": ["a", "b"]}))
+    assert status == 201
+    assert payload["item"]["tags"] == ["a", "b"]
+
+
+# --- Adversarial: PUT path field validation ---
+
+
+def test_arch68_update_nonlist_tags_400_item_unchanged():
+    api = ContentAPI()
+    item_id = _seed_one(api)
+    before_tags = api._store[item_id]["tags"]
+    before_updated = api._store[item_id]["updated_at"]
+    status, payload = _put(api, item_id, json.dumps({"tags": "nope"}))
+    assert status == 400
+    assert payload["error"] == "Tags must be a list"
+    assert api._store[item_id]["tags"] == before_tags
+    assert api._store[item_id]["updated_at"] == before_updated
+
+
+def test_arch68_update_non_string_title_400_item_unchanged():
+    api = ContentAPI()
+    item_id = _seed_one(api)
+    before_title = api._store[item_id]["title"]
+    before_updated = api._store[item_id]["updated_at"]
+    status, payload = _put(api, item_id, json.dumps({"title": 999}))
+    assert status == 400
+    assert payload["error"] == "Title must be a string"
+    assert api._store[item_id]["title"] == before_title
+    assert api._store[item_id]["updated_at"] == before_updated
+
+
+def test_arch68_update_valid_body_still_200():
+    api = ContentAPI()
+    item_id = _seed_one(api)
+    status, payload = _put(api, item_id, json.dumps({"title": "New", "tags": ["z"]}))
+    assert status == 200
+    assert payload["item"]["title"] == "New"
+    assert payload["item"]["tags"] == ["z"]
+
+
+# --- Adversarial: first-error-wins + precedence + idempotence ---
+
+
+def test_arch68_first_error_wins_title_before_tags():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "x" * 201, "tags": "bad"}))
+    assert status == 400
+    # title is checked before tags, so the title error is errors[0].
+    assert payload["error"] == "Title must be under 200 characters"
+    assert len(api._store) == 0
+
+
+def test_arch68_repeated_rejections_keep_store_empty():
+    api = ContentAPI()
+    for _ in range(3):
+        status, _ = _post(api, json.dumps({"title": "x" * 201}))
+        assert status == 400
+    assert len(api._store) == 0
+    assert api._next_id == 1
+
+
+def test_arch68_empty_dict_body_accepted():
+    api = ContentAPI()
+    status, payload = _post(api, "{}")
+    assert status == 201
+    assert payload["item"]["title"] == "Untitled"
+    assert payload["item"]["tags"] == []
+
+
+def test_arch68_unicode_title_overlong_rejected():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "\u0441" * 201}))
+    assert status == 400
+    assert payload["error"] == "Title must be under 200 characters"
+    assert len(api._store) == 0
+
+
+def test_arch68_unicode_title_underlong_accepted():
+    api = ContentAPI()
+    status, payload = _post(api, json.dumps({"title": "\u0441" * 200}))
+    assert status == 201
+    assert payload["item"]["title"] == "\u0441" * 200
