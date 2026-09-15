@@ -308,6 +308,45 @@ def test_load_non_dict_value_yields_empty(tmp_path):
     assert p.get_pinned_items() == []
 
 
+def test_load_list_value_yields_empty(tmp_path):
+    # A non-dict value that is a list (not a str) must also degrade to empty
+    # rather than crash: list has no .get, so AttributeError is raised and
+    # caught by the broadened defensive catch.
+    sp = str(tmp_path / "l.json")
+    with open(sp, "w") as f:
+        json.dump({"a": [1, 2]}, f)
+    p = ContentPinner(storage_path=sp)
+    assert p.get_pinned_items() == []
+
+
+def test_load_nested_dict_value_loads_defaults(tmp_path):
+    # A value that IS a dict (nested) must NOT crash and must load with
+    # default fields: the inner dict has .get, so no AttributeError.
+    sp = str(tmp_path / "n.json")
+    with open(sp, "w") as f:
+        json.dump({"a": {"b": "x"}}, f)
+    p = ContentPinner(storage_path=sp)
+    items = p.get_pinned_items()
+    assert len(items) == 1
+    assert items[0].item_id == "a"
+    # __post_init__ fills an empty pinned_at with a UTC timestamp, so it is
+    # non-empty (the load did not crash and the item is present).
+    assert items[0].pinned_at != ""
+    assert items[0].reason == ""
+    assert items[0].metadata == {}
+
+
+def test_load_mixed_one_bad_value_yields_empty(tmp_path):
+    # A mixed dict with one valid item and one non-dict value: the loop hits
+    # the bad value, raises AttributeError, and the whole load resets to {}
+    # (the valid item is NOT partially retained).
+    sp = str(tmp_path / "m.json")
+    with open(sp, "w") as f:
+        json.dump({"good": {"pinned_at": "2020-01-01T00:00:00+00:00"}, "bad": "x"}, f)
+    p = ContentPinner(storage_path=sp)
+    assert p.get_pinned_items() == []
+
+
 # ---------------------------------------------------------------------------
 # OSError rollback contract
 # ---------------------------------------------------------------------------
