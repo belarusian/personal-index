@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: personal_index.export (personal_index/export.py)
-Issue: #TBD
+Issue: #1438
 
 ## Symptom
 
