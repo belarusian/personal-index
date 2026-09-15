@@ -249,6 +249,10 @@ Each subsystem page is marked **(spec | stub | stale)**:
 
 - [__main__.md](__main__.md) (spec) — `personal_index.__main__`:
   the `python -m personal_index` entry point (6 lines of thin glue: imports `main` from `personal_index.cli` and calls it under the `__main__` guard); distinct from the console-script entry point in the two packaging files and from `cli.py:1514`'s own `__main__` block — all three funnel into the SAME `personal_index.cli:main` group, but `setup.py:15` targets `personal_index.cli:cli` (a symbol that does NOT exist in cli.py) while `pyproject.toml:23` correctly targets `personal_index.cli:main`, so a setup.py-based install produces a broken `personal-index` command (ARCH-103) contract hole.
+- [scheduler.md](scheduler.md) (spec) — `personal_index.scheduler`:
+  ScheduleConfig + ScheduleEntry + ScheduleStore (add/get/remove/update/list_all, file-backed JSON) +
+  Scheduler (add_schedule/add_job/remove/toggle/get_due_schedules/update_next_run_times/run_schedule/list_jobs) +
+  ScheduledJob (CLI-facing view); WIRED (cli.py/app.py/formatter.py) — distinct from `content_scheduler.py` (in-memory cron TaskScheduler, no persistence); non-atomic `_save` (truncates on crash + silent-empty `_load` = permanent data loss, ARCH-104) + dead `update_next_run_times` contract holes.
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
