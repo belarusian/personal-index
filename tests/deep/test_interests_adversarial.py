@@ -237,6 +237,34 @@ class TestAggregation:
         mem.add(_mk("a", topics=["ok", 42, None]))
         assert mem.get_all_topics() == {"ok"}
 
+    def test_get_all_keywords_all_non_str_empty(self, mem):
+        # Every element non-string -> empty set, no AttributeError.
+        mem.add(_mk("a", keywords=[42, None, 3.14, True, b"ok", [1, 2], {"k": 1}]))
+        assert mem.get_all_keywords() == set()
+
+    def test_get_all_keywords_mixed_types_skips_non_str(self, mem):
+        # Only the string elements survive, lowercased; float/bool/bytes/list/dict skipped.
+        mem.add(_mk("a", keywords=["Py", 3.14, True, b"ok", [1], {"k": 1}, "Django"]))
+        assert mem.get_all_keywords() == {"py", "django"}
+
+    def test_get_all_keywords_empty_string_and_whitespace_kept(self, mem):
+        # Empty string and whitespace ARE strings -> lowercased and kept (not skipped).
+        mem.add(_mk("a", keywords=["", "  ", "ABC"]))
+        assert mem.get_all_keywords() == {"", "  ", "abc"}
+
+    def test_get_all_keywords_unicode_lowercased(self, mem):
+        # Unicode string element lowercased; non-string sibling skipped.
+        mem.add(_mk("a", keywords=["ÉLÈVE", 42]))
+        assert mem.get_all_keywords() == {"élève"}
+
+    def test_get_all_topics_all_non_str_empty(self, mem):
+        mem.add(_mk("a", topics=[42, None, 3.14, False, b"ok", (1, 2)]))
+        assert mem.get_all_topics() == set()
+
+    def test_get_all_topics_mixed_types_skips_non_str(self, mem):
+        mem.add(_mk("a", topics=["Web", 3.14, False, b"ok", {"k": 1}, "API"]))
+        assert mem.get_all_topics() == {"web", "api"}
+
     def test_get_all_url_patterns_compiles(self, mem):
         mem.add(_mk("a", url_patterns=["^https://", "example\\.com"]))
         pats = mem.get_all_url_patterns()
