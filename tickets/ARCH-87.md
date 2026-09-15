@@ -3,7 +3,7 @@
 Status: OPEN
 Component: `personal_index/url_filter.py` — `UrlFilterRule.is_blacklist` (line 14); the two `is_blacklist=` writes in `add_blacklist` (line 49) and `add_whitelist` (line 53); the decision methods `is_allowed` (lines 55-69) and `get_matching_rule` (lines 104-128) which decide block/allow purely by list membership
 Umbrella: ARCH-2 (#983)
-Issue: #<n>
+Issue: #1463
 Docs: `docs/url_filter.md` (Contract Hole, ARCH-87)
 
 ## Problem
