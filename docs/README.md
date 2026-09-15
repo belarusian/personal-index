@@ -212,6 +212,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   TfidfScorer (add_document/remove_document/compute_tfidf/score_query/rank_documents/document_count/vocabulary_size/get_top_terms/clear, in-memory, no persistence); add_document increments the corpus count even for a zero-term (empty/all-stopword) document, which inflates the IDF denominator and shifts every existing document's TF-IDF score (ARCH-75) contract hole.
 - [url_history.md](url_history.md) (spec) — `personal_index.url_history`:
   URLVisit (dataclass: url/timestamp/status_code/content_length/title/user_agent/response_time_ms/error; __post_init__ auto-fills timestamp; to_dict 8 keys; from_dict via cls(**data)) + URLHistory (record/get_visits/get_unique_urls/get_stats/get_domain_stats/clear/save/load/_trim, in-memory + JSON persistence); load() degrades gracefully for missing/invalid-JSON/non-list but a valid-JSON list with a malformed record (unexpected key or missing url) raises TypeError because the from_dict comprehension is outside the try/except (ARCH-76) contract hole.
+- [cycle-signals.md](cycle-signals.md) (spec) — `personal_index.cycle_signals`:
+  codemap signal extractor (build_tree/format_tree/load_codemap, signal_no_tests/oversized/dead_code/duplicates/errors/coverage S1-S6, extract/format_for_auditor/main CLI); build_tree drops a package's own module when the node also has children — the node's stats.modules still counts it but no modules key is emitted, so a package with both an __init__.py and submodules is counted yet invisible in the tree (ARCH-90) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
