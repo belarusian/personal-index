@@ -38,6 +38,7 @@ Each subsystem page is marked **(spec | stub | stale)**:
   PageParams (clamped page/per_page, offset/limit) + PageResult (total_pages/has_next/has_prev/next_page/prev_page/start_index/end_index/to_dict, one-way) + Paginator (get_page/total_items/total_pages/iterate_pages); Paginator.total_pages divides by the raw unclamped constructor per_page so per_page=0 raises ZeroDivisionError while get_page/iterate_pages silently clamp to 1 (ARCH-58) contract hole.
 - [validation.md](validation.md) (spec) — `personal_index.content_validator`:
   ValidationRule, RuleResult, the built-in rules.
+- [validator.md](validator.md) (spec) — `personal_index.validator` (DEAD module — 0 production importers; distinct from the live `content_validation.py` in content-validation.md and the `content_validator/` package in validation.md): ValidationResult (valid / errors / warnings, plain-str elements) + URLValidator (validate / validate_batch, scheme allow-list / blocked domains / blocked paths) + ContentValidator (validate a single str: length / word-count / link-ratio / whitespace); two incompatible ValidationResult and ContentValidator types vs the live twin + orphaned URLValidator with no live home (ARCH-110) contract hole.
 - [analytics.md](analytics.md) (spec) — `personal_index.analytics`:
   AnalyticsTracker (record/compute/get stats/save/load) + SearchEvent, CrawlEvent, AnalyticsData.
 - [stats.md](stats.md) (spec) — `personal_index.stats`:
