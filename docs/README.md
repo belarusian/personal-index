@@ -217,7 +217,11 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [cycle-signals.md](cycle-signals.md) (spec) — `personal_index.cycle_signals`:
   codemap signal extractor (build_tree/format_tree/load_codemap, signal_no_tests/oversized/dead_code/duplicates/errors/coverage S1-S6, extract/format_for_auditor/main CLI); build_tree drops a package's own module when the node also has children — the node's stats.modules still counts it but no modules key is emitted, so a package with both an __init__.py and submodules is counted yet invisible in the tree (ARCH-90) contract hole.
 
+- [session.md](session.md) (spec) — `personal_index.session`:
+  crawl-session tracker (SessionStatus enum, SessionStats dataclass, CrawlSession lifecycle, SessionManager registry + JSON persistence); SessionStats.to_dict serializes domains_seen and errors as COUNTS (len/set, error_count) and load_session restores only the 5 numeric fields, so a save/load round-trip silently drops the error messages and the domain set — counts survive, contents do not (ARCH-92) contract hole.
+
 ### Legacy pages (pre-split; not yet re-audited)
+
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
   module list predates the package reorg (many `cli_*.py` files listed do not
   exist; see contract holes in the core pages).
