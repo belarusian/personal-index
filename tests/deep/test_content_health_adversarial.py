@@ -338,3 +338,52 @@ class TestNoneFieldDefect:
             json.dump({"tags": {}, "page_tags": {}}, f)
         res = CliRunner().invoke(main, ["health", "--data-dir", dd])
         assert res.exit_code == 0, res.output
+
+
+# ── ARMOR (QA-26, cycle 247): null-field contract at public API + CLI ──
+# The fix (d0f6b39) guards _check_title_length / _check_content_length against
+# None and coerces title in the CLI. These pins prove the CONTRACT, not just
+# "no crash": a null title degrades to a missing_title issue (MEDIUM ->
+# WARNING), a null content degrades to a low_content issue, and the CLI
+# reports a non-crashing health summary for a page with null title/content.
+class TestNoneFieldArmor:
+    def test_none_title_flags_missing_title_not_crash(self):
+        r = _checker().check_item(url=GOOD_URL, title=None, content=GOOD_CONTENT)
+        types = {i.issue_type for i in r.issues}
+        assert "missing_title" in types
+        assert r.status == HealthStatus.WARNING
+
+    def test_none_content_flags_low_content_not_crash(self):
+        r = _checker().check_item(url=GOOD_URL, title=GOOD_TITLE, content=None)
+        types = {i.issue_type for i in r.issues}
+        assert "low_content" in types
+        assert r.status == HealthStatus.WARNING
+
+    def test_none_title_and_none_content_both_flagged(self):
+        r = _checker().check_item(url=GOOD_URL, title=None, content=None)
+        types = {i.issue_type for i in r.issues}
+        assert {"missing_title", "low_content"} <= types
+        assert r.status == HealthStatus.WARNING
+
+    def test_check_all_none_title_and_content(self):
+        rep = _checker().check_all([
+            {"url": GOOD_URL, "title": None, "content": None},
+        ])
+        assert rep.total_items == 1
+        assert rep.unhealthy_count == 0  # MEDIUM issues -> warning, not unhealthy
+
+    def test_cli_health_null_content_page(self, tmp_path):
+        from click.testing import CliRunner
+        from personal_index.cli import main
+        dd = str(tmp_path / "data")
+        os.makedirs(dd, exist_ok=True)
+        with open(os.path.join(dd, "search_index.json"), "w") as f:
+            json.dump({"pages": {"http://example.com": {
+                "url": "http://example.com", "title": "Good Title",
+                "content": None, "score": 1.0, "status_code": 200}},
+                "word_index": {}}, f)
+        with open(os.path.join(dd, "tags.json"), "w") as f:
+            json.dump({"tags": {}, "page_tags": {}}, f)
+        res = CliRunner().invoke(main, ["health", "--data-dir", dd])
+        assert res.exit_code == 0, res.output
+        assert "Content Health Report" in res.output
