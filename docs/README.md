@@ -45,6 +45,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [content-filter.md](content-filter.md) (spec) — `personal_index.content_filter`:
   FilterConfig, ContentFilter (should_include / get_filter_reasons / filter_pages),
   eight ordered checks, silent pattern-compile guard, interest-match side effects.
+- [interests.md](interests.md) (spec) — `personal_index.interests`:
+  InterestStore (add/remove/get/list_all/get_enabled/toggle, get_all_keywords/get_all_url_patterns/get_all_topics, update_priority/matches_any/clear/total_score, JSON persistence); distinct from content_scoring/content_filter/content_tagger/content_priority (which consume it); _load degrades to empty for corrupt/non-dict/null/non-dict-value/missing-name but a valid-JSON-dict record with an out-of-enum interest_type or match_mode raises ValueError (not in the except tuple) so the constructor crashes instead of degrading (ARCH-85) contract hole.
 - [pipeline-orchestrator.md](pipeline-orchestrator.md) (spec) — `personal_index.pipeline_orchestrator`:
   PipelineOrchestrator (run / run_from_files / search / close) + PipelineResult; crawl→filter→score→tag→index.
 - [cli.md](cli.md) (spec) — `personal_index.cli`:
