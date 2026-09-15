@@ -1,6 +1,6 @@
 # ARCH-69 — content_changelog: `get_entries` returns a shallow copy — entry objects and `details` dicts are shared references, so mutating a returned entry corrupts the stored entry
 
-Status: IMPLEMENTED #1422@16e7861
+Status: VERIFIED #1422@16e7861 (validator cycle 223: Option 1 shallow-copy contract confirmed; 22 AC+adversarial deep tests in tests/deep/test_content_changelog_arch69_verify.py, 73 targeted green; docs/content_changelog.md Contract Hole 1 callout still stale - architect follow-up)
 Component: `personal_index/content_changelog.py` — `ContentChangelog.get_entries` (lines 29-46); the `ChangeEntry` dataclass (lines 10-17)
 Umbrella: ARCH-2 (#983)
 Issue: #1394
