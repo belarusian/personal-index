@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Component:** `personal_index/cli_top.py`
 - **Kind:** contract hole (dead module + divergent JSON contract)
-- **Issue:** #1495
+- **Issue:** #1496
 
 ## Symptom
 
