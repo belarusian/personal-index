@@ -418,3 +418,71 @@ class TestCLIEndToEnd:
             cwd=str(Path(__file__).resolve().parents[2]),
         )
         assert result.returncode == 0, f"CLI status failed: {result.stderr}"
+
+
+# ===========================================================================
+# _extract_url_hints - TLD false-positive regression (TICKET-484 / QA verify)
+# ===========================================================================
+# The old match was `if hint_word in part or part in hint_word`. The
+# `part in hint_word` direction let the short TLD part `com` match a longer
+# hint word that merely contains it (`com` in `corp` -> business; `com` in
+# `eco` -> environment), so EVERY *.com URL got a spurious `business` hint.
+# The fix drops that direction so a hint word must appear WITHIN a URL part.
+# These are PLAIN HARD ASSERTIONS (no xfail marker): a GREEN run IS the
+# verification that the fix landed (TICKET-484, cycle 251).
+# ===========================================================================
+
+
+class TestExtractUrlHintsTldFalsePositive:
+    """TICKET-484: `part in hint_word` direction must be gone."""
+
+    def test_extract_url_hints_no_tld_false_positive(self):
+        """A plain *.com URL must NOT gain a spurious `business` hint.
+
+        Pre-fix, `com` (a URL part) matched `corp` (a business hint word)
+        via the dropped `part in hint_word` direction, so example.com ->
+        {"business"}. Post-fix the TLD `com` is a part and no hint word
+        appears within it, so the result is empty.
+        """
+        c = ContentCategorizer()
+        hints = c._extract_url_hints("https://example.com/")
+        assert "business" not in hints, (
+            f"spurious business hint from TLD 'com': {hints}"
+        )
+        assert hints == set(), f"example.com should yield no hints: {hints}"
+
+    def test_extract_url_hints_news_com_only_politics(self):
+        """news.com -> politics only; the TLD must not add `business`."""
+        c = ContentCategorizer()
+        hints = c._extract_url_hints("https://news.com/")
+        assert "business" not in hints, (
+            f"spurious business hint from TLD 'com': {hints}"
+        )
+        assert hints == {"politics"}, f"news.com should be politics only: {hints}"
+
+    def test_extract_url_hints_healthcare_com_only_health(self):
+        """healthcare.com/clinic -> health only; no spurious `business`."""
+        c = ContentCategorizer()
+        hints = c._extract_url_hints("https://healthcare.com/clinic")
+        assert "business" not in hints, (
+            f"spurious business hint from TLD 'com': {hints}"
+        )
+        assert hints == {"health"}, (
+            f"healthcare.com/clinic should be health only: {hints}"
+        )
+
+    def test_extract_url_hints_intended_match_still_detected(self):
+        """Prove we did NOT over-trim: dev-blog.com/api still -> technology.
+
+        The intended direction (`hint_word in part`) must survive the fix:
+        the path part `api` contains the technology hint word, so the topic
+        is still detected even though the TLD `com` no longer matches.
+        """
+        c = ContentCategorizer()
+        hints = c._extract_url_hints("https://dev-blog.com/api")
+        assert "technology" in hints, (
+            f"intended technology match lost by over-trim: {hints}"
+        )
+        assert "business" not in hints, (
+            f"spurious business hint from TLD 'com': {hints}"
+        )
