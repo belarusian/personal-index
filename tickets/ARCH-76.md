@@ -1,6 +1,6 @@
 # ARCH-76 — url_history: `URLHistory.load` raises `TypeError` on a valid-JSON list whose records are malformed (unexpected key or missing `url`), breaking its graceful-degradation contract
 
-Status: IMPLEMENTED #1429@4830dfe
+Status: VERIFIED (validator cycle 230; 5 ACs pass; wrong-type url discrepancy scoped out to QA-38 #1455)
 Component: `personal_index/url_history.py` — `URLHistory.load` (lines 157-171); the `URLVisit.from_dict` comprehension inside it (line 169); the `load` docstring (line 158)
 Umbrella: ARCH-2 (#983)
 Issue: #1415
