@@ -99,6 +99,34 @@ class TestExtractDomain:
             f"Userinfo should not affect domain: {plain!r} != {with_userinfo!r}"
         )
 
+    def test_combined_case_port_userinfo(self):
+        """All three normalizations compose: case + port + userinfo -> one bucket."""
+        m = ThrottleManager()
+        plain = m._extract_domain("http://example.com/")
+        combined = m._extract_domain("http://User:Pass@EXAMPLE.COM:8080/path")
+        assert combined == plain, (
+            f"Combined forms should share a bucket: {combined!r} != {plain!r}"
+        )
+        assert combined == "example.com"
+
+    def test_ipv4_host(self):
+        """An IPv4 literal is a valid host; the port is still dropped."""
+        m = ThrottleManager()
+        assert m._extract_domain("http://192.168.0.1/") == "192.168.0.1"
+        assert m._extract_domain("http://192.168.0.1:9000/") == "192.168.0.1"
+
+    def test_empty_netloc_falls_back_to_raw_url(self):
+        """A URL with no netloc falls back to the raw url (documented behavior)."""
+        m = ThrottleManager()
+        assert m._extract_domain("not a url") == "not a url"
+        assert m._extract_domain("/relative/path") == "/relative/path"
+
+    def test_rate_per_second_negative_window(self):
+        """A negative window is degenerate too; must not raise or go negative."""
+        r = ThrottleRule(max_requests=10, window_seconds=-5.0)
+        rate = r.rate_per_second
+        assert rate >= 0
+
 
 # ---------------------------------------------------------------------------
 # ThrottleManager.should_throttle
