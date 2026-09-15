@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/notifications.py (DEAD module — 0 importers; see docs/notifications.md) + personal_index/content_notifications.py (the live record-and-track twin it was meant to mirror)
-- **Issue:** #<TBD>
+- **Issue:** #1517
 
 ## Symptom
 
