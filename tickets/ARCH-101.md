@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Component:** `personal_index/cli_health.py` (drives `personal_index.content_health.ContentHealthCheck`)
 - **Kind:** contract hole (unexposed config knobs — two of seven checks untunable from the CLI)
-- **Issue:** (to be created)
+- **Issue:** #1499
 
 ## Symptom
 
