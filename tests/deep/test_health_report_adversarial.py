@@ -77,3 +77,18 @@ def test_score_one_decimal_rendering():
     r = _report(total=1, healthy=1, score=99.99)
     # 99.99 -> "100.0" with .1f
     assert "Overall score: 100.0/100" in r.summary()
+
+
+def test_summary_docstring_enumerates_fields():
+    """TICKET-516: docstring must enumerate the 8 named lines, not be a blanket stub."""
+    doc = HealthReport.summary.__doc__
+    assert doc is not None, "summary must have a docstring"
+    assert "Content Health Report" in doc
+    assert "Total items" in doc
+    assert "Healthy" in doc
+    assert "Warnings" in doc
+    assert "Unhealthy" in doc
+    assert "Overall score" in doc
+    assert "Health percentage" in doc
+    # The old blanket phrase must NOT be the entire docstring
+    assert len(doc.strip()) > len("Generate a human-readable summary.")
