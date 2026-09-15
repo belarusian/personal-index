@@ -291,3 +291,187 @@ class TestNegativeSliceClassSweep:
         for i in range(5):
             a._crawl_events.append(type("C", (), {})())
         assert len(a.get_crawl_events(limit=-1)) == 1
+
+
+# ── ARCH-76: load graceful degradation on malformed records ─────────────
+# Contract (tickets/ARCH-76.md, Issue #1415): load returns 0 (leaving
+# _history untouched) for a missing file, invalid JSON, a non-list, AND a
+# valid-JSON list containing a record URLVisit.from_dict cannot construct
+# (unexpected key, missing url). When every record is constructible,
+# _history is replaced, _trim() is called, and the count is returned.
+#
+# The implementer fix (commit 68f9aa0, merged 4830dfe) wraps the
+# reconstruction comprehension in `try/except TypeError: return 0`.
+# Because the comprehension is fully evaluated before assignment, a
+# malformed record degrades ALL-OR-NOTHING: _history is left untouched
+# (no partial load).
+class TestArch76MalformedRecordLoad:
+    # AC1: unexpected-key record -> 0, no raise, empty
+    def test_ac1_unexpected_key_returns_zero(self, tmp_path):
+        p = tmp_path / "h.json"
+        p.write_text(json.dumps([{"url": "http://a.com", "bogus_key": 1}]))
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
+
+    # AC2: missing-url record -> 0, no raise, empty
+    def test_ac2_missing_url_returns_zero(self, tmp_path):
+        p = tmp_path / "h.json"
+        p.write_text(json.dumps([{"status_code": 200}]))
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
+
+    # AC3: well-formed list still returns count + populates
+    def test_ac3_well_formed_list_populates(self, tmp_path):
+        p = tmp_path / "h.json"
+        p.write_text(json.dumps([
+            {"url": "http://a.com", "status_code": 200},
+            {"url": "http://b.com", "status_code": 404},
+            {"url": "http://c.com"},
+        ]))
+        h = URLHistory()
+        assert h.load(str(p)) == 3
+        assert [v.url for v in h.get_visits()] == ["http://a.com", "http://b.com", "http://c.com"]
+
+    # AC4: existing guards stay green (missing file / non-list / null / corrupt)
+    def test_ac4_missing_file_returns_zero(self, tmp_path):
+        h = URLHistory()
+        assert h.load(str(tmp_path / "nope.json")) == 0
+
+    def test_ac4_non_list_returns_zero(self, tmp_path):
+        p = tmp_path / "obj.json"
+        p.write_text(json.dumps({"a": 1}))
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+
+    def test_ac4_null_returns_zero(self, tmp_path):
+        p = tmp_path / "null.json"
+        p.write_text("null")
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+
+    def test_ac4_corrupt_json_returns_zero(self, tmp_path):
+        p = tmp_path / "bad.json"
+        p.write_text("{not json")
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+
+    # AC5: save -> load round-trip unchanged
+    def test_ac5_save_load_round_trip(self, tmp_path):
+        h = _history(3)
+        p = str(tmp_path / "hist.json")
+        h.save(p)
+        h2 = URLHistory()
+        assert h2.load(p) == 3
+        assert h2.get_visits(limit=100) == h.get_visits(limit=100)
+
+    # ── adversarial ────────────────────────────────────────────────────
+    # mixed valid + bad record in one list -> 0, history untouched (all-or-nothing)
+    def test_mixed_valid_and_bad_returns_zero_untouched(self, tmp_path):
+        p = tmp_path / "mix.json"
+        p.write_text(json.dumps([
+            {"url": "http://a.com"},
+            {"url": "http://b.com", "bogus": 1},
+        ]))
+        h = URLHistory()
+        h.record("http://pre.com/9")
+        assert h.load(str(p)) == 0
+        # all-or-nothing: the pre-existing visit is preserved, no partial load
+        assert [v.url for v in h.get_visits()] == ["http://pre.com/9"]
+
+    # single bad record among many -> 0 (not a partial count)
+    def test_single_bad_among_many_returns_zero(self, tmp_path):
+        records = [{"url": f"http://ok.com/{i}"} for i in range(10)]
+        records.append({"status_code": 200})  # the one bad record (missing url)
+        p = tmp_path / "many.json"
+        p.write_text(json.dumps(records))
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
+
+    # empty list [] -> 0
+    def test_empty_list_returns_zero(self, tmp_path):
+        p = tmp_path / "e.json"
+        p.write_text("[]")
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
+
+    # non-mapping record (a list) in the list -> TypeError -> 0
+    def test_non_mapping_record_returns_zero(self, tmp_path):
+        p = tmp_path / "nm.json"
+        p.write_text(json.dumps([[1, 2, 3]]))
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
+
+    # nested-dict url value: constructible (plain dataclass, no type check)
+    # -> counted, NOT a 0-return. Pins the observable contract (bullet 3:
+    # "returns the number of visits actually loaded").
+    def test_nested_dict_url_is_constructible_and_counted(self, tmp_path):
+        p = tmp_path / "nd.json"
+        p.write_text(json.dumps([{"url": {"a": 1}}]))
+        h = URLHistory()
+        assert h.load(str(p)) == 1
+        assert len(h.get_visits()) == 1
+
+    # wrong-type url (int): constructible (plain dataclass) -> counted.
+    # NOTE: the load docstring (required by ARCH-76) says a "value of the
+    # wrong type" returns 0, but the observable contract (bullet 3) + the
+    # plain-dataclass reality mean it IS constructible and counted. This
+    # pins the CURRENT behavior; the docstring/contract discrepancy is
+    # flagged to the architect (cycle 230 log). See also
+    # test_get_domain_stats_non_string_url_no_crash (QA-38): a non-string
+    # url loaded this way crashes get_domain_stats.
+    def test_wrong_type_url_currently_constructed_and_counted(self, tmp_path):
+        p = tmp_path / "wt.json"
+        p.write_text(json.dumps([{"url": 123}]))
+        h = URLHistory()
+        assert h.load(str(p)) == 1
+        assert len(h.get_visits()) == 1
+
+    # idempotent re-load of a valid file
+    def test_idempotent_reload_valid(self, tmp_path):
+        p = tmp_path / "v.json"
+        p.write_text(json.dumps([{"url": "http://a.com"}, {"url": "http://b.com"}]))
+        h = URLHistory()
+        assert h.load(str(p)) == 2
+        assert h.load(str(p)) == 2
+        assert len(h.get_visits()) == 2
+
+    # idempotent re-load of a malformed file (stays empty, no raise)
+    def test_idempotent_reload_malformed(self, tmp_path):
+        p = tmp_path / "m.json"
+        p.write_text(json.dumps([{"bogus": 1}]))
+        h = URLHistory()
+        assert h.load(str(p)) == 0
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
+
+    # property: loaded count == number of constructible records ONLY when ALL
+    # are constructible; else 0 (all-or-nothing, never a partial count).
+    def test_property_count_is_all_or_nothing(self, tmp_path):
+        p = tmp_path / "all_ok.json"
+        p.write_text(json.dumps([{"url": f"http://x.com/{i}"} for i in range(5)]))
+        h = URLHistory()
+        assert h.load(str(p)) == 5
+        p2 = tmp_path / "one_bad.json"
+        p2.write_text(json.dumps([{"url": f"http://x.com/{i}"} for i in range(4)] + [{"bogus": 1}]))
+        h2 = URLHistory()
+        assert h2.load(str(p2)) == 0
+
+    # QA-38: a non-string url loaded via load (wrong-type, constructible) then
+    # crashes get_domain_stats with AttributeError. The graceful-degradation
+    # goal of ARCH-76 implies loaded data should be usable downstream; a
+    # non-string url that crashes get_domain_stats undermines that. This is
+    # PRE-EXISTING (the plain dataclass never enforced url: str), not
+    # introduced by ARCH-76. xfail-strict documents the defect; XPASS->red
+    # signals the implementer's fix for re-verification.
+    @pytest.mark.xfail(strict=True, reason="QA-38: get_domain_stats crashes on non-string url loaded via load")
+    def test_get_domain_stats_non_string_url_no_crash(self, tmp_path):
+        p = tmp_path / "wt.json"
+        p.write_text(json.dumps([{"url": 123}]))
+        h = URLHistory()
+        h.load(str(p))
+        h.get_domain_stats()  # currently raises AttributeError: 'int' object has no attribute 'decode'
