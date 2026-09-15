@@ -344,6 +344,33 @@ def test_summarize_max_sentences_negative_returns_empty():
     assert r.sentences == []
 
 
+def test_summarize_max_sentences_negative_full_result_fields():
+    # Armor: a negative bound must yield the FULL empty result, not just an
+    # empty sentence list -- summary "", word_count_summary 0, ratio 0.0.
+    r = summarize(TEXT, max_sentences=-1)
+    assert r.sentences == []
+    assert r.summary == ""
+    assert r.word_count_summary == 0
+    assert r.ratio == 0.0
+
+
+def test_summarize_max_sentences_negative_parity_with_zero():
+    # Armor: every negative bound must be indistinguishable from the 0 guard
+    # (the QA-1..QA-5 "out-of-range N == empty" contract).
+    neg = summarize(TEXT, max_sentences=-1)
+    zero = summarize(TEXT, max_sentences=0)
+    assert neg.sentences == zero.sentences == []
+    assert neg.summary == zero.summary == ""
+    assert neg.word_count_summary == zero.word_count_summary == 0
+
+
+def test_summarize_max_sentences_large_negative_returns_empty():
+    # Armor: a large negative bound (not just -1/-5) must also yield [].
+    r = summarize(TEXT, max_sentences=-100)
+    assert r.sentences == []
+    assert r.summary == ""
+
+
 def test_summarize_max_sentences_more_negative_returns_empty():
     r = summarize(TEXT, max_sentences=-5)
     assert r.sentences == []
