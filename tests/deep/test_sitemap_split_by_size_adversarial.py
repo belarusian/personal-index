@@ -181,6 +181,60 @@ class TestQA29ByteVsCharacter:
         # For multi-byte content the byte length strictly exceeds the char count.
         assert byte_count > char_count
 
+    def test_tight_budget_multibyte_never_exceeds(self):
+        """max_bytes set to exactly one multi-byte entry's build size: every
+        chunk must still serialize to <= max_bytes (no partial overflow)."""
+        one = SitemapBuilder()
+        one.add_entry("http://example.com/" + "\u00e9" * 1000)
+        one_bytes = len(one.build())
+        b = SitemapBuilder()
+        for _ in range(8):
+            b.add_entry("http://example.com/" + "\u00e9" * 1000)
+        max_bytes = one_bytes
+        chunks = b.split_by_size(max_bytes=max_bytes)
+        assert chunks, "expected at least one chunk"
+        for chunk in chunks:
+            bb = SitemapBuilder()
+            bb.add_entries(chunk)
+            assert len(bb.build()) <= max_bytes
+
+    def test_ascii_control_same_char_length_stays_under(self):
+        """ASCII URLs of the SAME character length as the multi-byte set must
+        also stay under the same byte budget - proves the fix is byte-based,
+        not a coincidental pass on one content shape."""
+        mb = SitemapBuilder()
+        for _ in range(8):
+            mb.add_entry("http://example.com/" + "\u00e9" * 1000)
+        max_bytes = 5000
+        for chunk in mb.split_by_size(max_bytes=max_bytes):
+            bb = SitemapBuilder()
+            bb.add_entries(chunk)
+            assert len(bb.build()) <= max_bytes
+        # ASCII control: identical char length, fewer bytes per char.
+        ac = SitemapBuilder()
+        for _ in range(8):
+            ac.add_entry("http://example.com/" + "a" * 1000)
+        for chunk in ac.split_by_size(max_bytes=max_bytes):
+            bb = SitemapBuilder()
+            bb.add_entries(chunk)
+            assert len(bb.build()) <= max_bytes
+
+    def test_roundtrip_split_rebuild_never_exceeds(self):
+        """Round-trip: split_by_size then re-add_entries + build() per chunk
+        never exceeds the budget, for a mixed multi-byte set."""
+        b = SitemapBuilder()
+        for i in range(12):
+            b.add_entry("http://example.com/%d" % i + "\u00e9" * 700)
+        max_bytes = 4000
+        chunks = b.split_by_size(max_bytes=max_bytes)
+        flat = [e.url for c in chunks for e in c]
+        assert flat == [e.url for e in b.entries], "split must preserve order"
+        for chunk in chunks:
+            bb = SitemapBuilder()
+            bb.add_entries(chunk)
+            assert len(bb.build()) <= max_bytes
+
+
 
 # ---------------------------------------------------------------------------
 # End-to-end CLI smoke run
