@@ -315,6 +315,45 @@ def test_app_search_limit_negative_returns_empty():
         assert app.search("guide", limit=-1) == []
 
 
+
+def test_searchindex_search_limit_negative_with_offset_returns_empty():
+    # Armor: a negative limit combined with a non-zero offset must still yield
+    # an empty results list (the guard short-circuits before the offset slice).
+    idx = SearchIndex()
+    idx.add_item({"id": "a", "url": "a", "title": "python guide", "content": _LONG + " python"})
+    idx.add_item({"id": "b", "url": "b", "title": "java guide", "content": _LONG + " java"})
+    idx.add_item({"id": "c", "url": "c", "title": "go guide", "content": _LONG + " go"})
+    r = idx.search("guide", limit=-1, offset=1)
+    assert r["results"] == []
+    assert r["total"] == 3
+    assert r["query"] == "guide"
+
+
+def test_searchindex_search_limit_negative_matches_zero_parity():
+    # Armor: limit=-1 and limit=0 must be indistinguishable in their results
+    # list (both empty) while reporting the same full match count.
+    idx = SearchIndex()
+    idx.add_item({"id": "a", "url": "a", "title": "python guide", "content": _LONG + " python"})
+    idx.add_item({"id": "b", "url": "b", "title": "java guide", "content": _LONG + " java"})
+    idx.add_item({"id": "c", "url": "c", "title": "go guide", "content": _LONG + " go"})
+    r_neg = idx.search("guide", limit=-1)
+    r_zero = idx.search("guide", limit=0)
+    assert r_neg["results"] == r_zero["results"] == []
+    assert r_neg["total"] == r_zero["total"] == 3
+
+
+def test_searchindex_search_limit_large_negative_returns_empty():
+    # Armor: a large negative bound (-100) must behave like any other negative
+    # bound -- empty results, full total -- not a partial page.
+    idx = SearchIndex()
+    idx.add_item({"id": "a", "url": "a", "title": "python guide", "content": _LONG + " python"})
+    idx.add_item({"id": "b", "url": "b", "title": "java guide", "content": _LONG + " java"})
+    idx.add_item({"id": "c", "url": "c", "title": "go guide", "content": _LONG + " go"})
+    r = idx.search("guide", limit=-100)
+    assert r["results"] == []
+    assert r["total"] == 3
+
+
 # ---------------------------------------------------------------------------
 # End-to-end CLI run
 # ---------------------------------------------------------------------------
