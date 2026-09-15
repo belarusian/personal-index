@@ -54,6 +54,18 @@ class TestIndexSearchIndex:
         assert idx.get_page_count() == 0
         assert idx.list_pages() == []
 
+    def test_list_page_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "idx.json", {"pages": {"u": [1, 2]}, "word_index": {}})
+        idx = IndexSearchIndex(db_path=p)
+        assert idx.get_page_count() == 0
+        assert idx.list_pages() == []
+
+    def test_number_page_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "idx.json", {"pages": {"u": 42}, "word_index": {}})
+        idx = IndexSearchIndex(db_path=p)
+        assert idx.get_page_count() == 0
+        assert idx.list_pages() == []
+
     def test_missing_file_yields_empty(self, tmp_path):
         idx = IndexSearchIndex(db_path=str(tmp_path / "nope.json"))
         assert idx.get_page_count() == 0
@@ -89,6 +101,18 @@ class TestSearchIndexStore:
         assert idx.count() == 0
         assert idx.urls() == []
 
+    def test_list_page_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "idx.json", {"pages": {"u": [1, 2]}, "word_index": {}})
+        idx = SearchIndexStore(index_path=p)
+        assert idx.count() == 0
+        assert idx.urls() == []
+
+    def test_number_page_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "idx.json", {"pages": {"u": 42}, "word_index": {}})
+        idx = SearchIndexStore(index_path=p)
+        assert idx.count() == 0
+        assert idx.urls() == []
+
     def test_missing_file_yields_empty(self, tmp_path):
         idx = SearchIndexStore(index_path=str(tmp_path / "nope.json"))
         assert idx.count() == 0
@@ -114,6 +138,16 @@ class TestSearchIndexStore:
 class TestTagStore:
     def test_non_dict_tag_value_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "tags.json", {"tags": {"t": "notadict"}, "page_tags": {}})
+        store = TagStore(store_path=p)
+        assert store.list_tags() == []
+
+    def test_list_tag_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "tags.json", {"tags": {"t": [1, 2]}, "page_tags": {}})
+        store = TagStore(store_path=p)
+        assert store.list_tags() == []
+
+    def test_number_tag_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "tags.json", {"tags": {"t": 42}, "page_tags": {}})
         store = TagStore(store_path=p)
         assert store.list_tags() == []
 
@@ -145,6 +179,16 @@ class TestInterestStore:
         store = InterestStore(store_path=p)
         assert store.list_all() == []
 
+    def test_list_interest_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "interests.json", {"i": [1, 2]})
+        store = InterestStore(store_path=p)
+        assert store.list_all() == []
+
+    def test_number_interest_value_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "interests.json", {"i": 42})
+        store = InterestStore(store_path=p)
+        assert store.list_all() == []
+
     def test_missing_file_yields_empty(self, tmp_path):
         store = InterestStore(store_path=str(tmp_path / "nope.json"))
         assert store.list_all() == []
@@ -170,6 +214,16 @@ class TestInterestStore:
 class TestMigrationStore:
     def test_non_dict_record_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "mig.json", {"migrations": ["notadict"]})
+        store = MigrationStore(store_path=p)
+        assert store.get_applied_versions() == []
+
+    def test_list_record_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "mig.json", {"migrations": [[1, 2]]})
+        store = MigrationStore(store_path=p)
+        assert store.get_applied_versions() == []
+
+    def test_number_record_degrades_to_empty(self, tmp_path):
+        p = _write(tmp_path / "mig.json", {"migrations": [42]})
         store = MigrationStore(store_path=p)
         assert store.get_applied_versions() == []
 
