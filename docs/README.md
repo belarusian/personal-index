@@ -246,6 +246,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 
 - [cli_health.md](cli_health.md) (spec) — `personal_index.cli_health`:
   the `health` click command (named "health"; --data-dir/--min-content-length/--min-title-length/--require-tags/--min-score) and its private _load_stores/_build_health_items/_build_config/_print_report/_print_issues/_severity_icon helpers; WIRED (imported at cli.py:27, registered on the main group) so it is the LIVE `health` command; it drives content_health.ContentHealthChecker but exposes only 5 of the 7 ContentHealthCheck knobs — _build_config never sets max_title_length (default 200, gates title_too_long) or min_tags (default 1, gates missing_tags), so two of the seven checks are untunable from the CLI (ARCH-101) contract hole.
+
+- [__main__.md](__main__.md) (spec) — `personal_index.__main__`:
+  the `python -m personal_index` entry point (6 lines of thin glue: imports `main` from `personal_index.cli` and calls it under the `__main__` guard); distinct from the console-script entry point in the two packaging files and from `cli.py:1514`'s own `__main__` block — all three funnel into the SAME `personal_index.cli:main` group, but `setup.py:15` targets `personal_index.cli:cli` (a symbol that does NOT exist in cli.py) while `pyproject.toml:23` correctly targets `personal_index.cli:main`, so a setup.py-based install produces a broken `personal-index` command (ARCH-103) contract hole.
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
