@@ -9,10 +9,15 @@ The command advertises three weight options:
     --keyword-weight  "Keyword overlap weight"
     --tag-weight      "Tag similarity weight"
     --score-weight    "Score weight"
-but the function body only consumes `query`, `top_n`, `data_dir` and calls
-`Recommender.recommend_for_keywords(keywords, top_n)` - a method that does NOT
-accept weights. The three options are therefore accepted and silently ignored.
-Pinned xfail-strict below as QA-24 (defect: advertised option does nothing).
+When any of the three options is passed on the command line, the CLI threads
+the values into `Recommender.recommend_for_keywords(keywords, top_n,
+keyword_weight=..., tag_weight=..., score_weight=...)`, which folds them into
+a weighted per-item score (`kw_score * keyword_weight + norm * score_weight`,
+where `norm = min(item.score / 10.0, 1.0)`; `tag_weight` is accepted for
+interface consistency but has no effect on the keyword path). When NO weight
+option is passed, the CLI preserves the documented fraction-based output
+contract. QA-24 (defect: advertised option does nothing) is FIXED - the
+armor pins below prove the advertised contract now holds.
 
 The rest of the file is armor: guard inputs (empty index / no query /
 whitespace / unicode / out-of-range top_n), output formatting, ordering,
@@ -228,8 +233,9 @@ class TestCliRecommendWeightsDefect:
         assert res.exit_code == 0
 
     def test_cli_recommend_weights_affect_output(self, tmp_path):
-        """Contract implied by the advertised options: different weights must
-        change the recommendation output. They do not - the options are dead."""
+        """QA-24 FIXED: the advertised options now influence scoring. Different
+        explicit weight values must change the recommendation output (scores /
+        reasons). Before the fix both invocations were byte-identical."""
         dd = str(tmp_path)
         _make_index(dd, [
             _page("https://a.com/1", "Python guide", "python basics", score=5.0),
@@ -241,6 +247,51 @@ class TestCliRecommendWeightsDefect:
                       "--tag-weight", "1.0", "--score-weight", "1.0"], dd)
         assert r0.exit_code == 0 and r1.exit_code == 0
         assert r0.output != r1.output
+
+    def test_explicit_weights_change_scores(self, tmp_path):
+        """Armor: with explicit weights the per-item score is the weighted
+        combination kw_score*kw_w + norm*sc_w (norm = min(score/10, 1.0)), NOT
+        the plain keyword fraction. With kw=1.0, sc=1.0 the two items score
+        1.8 (kw 1.0 + norm 0.8) and 1.5 (kw 1.0 + norm 0.5)."""
+        dd = str(tmp_path)
+        _make_index(dd, [
+            _page("https://a.com/1", "Python guide", "python basics", score=5.0),
+            _page("https://a.com/2", "Python advanced", "python advanced", score=8.0),
+        ])
+        res = _invoke(["python", "--keyword-weight", "1.0",
+                       "--score-weight", "1.0"], dd)
+        assert res.exit_code == 0
+        assert "Score: 1.800" in res.output
+        assert "Score: 1.500" in res.output
+
+    def test_default_path_preserves_fraction_contract(self, tmp_path):
+        """Armor: with NO weight option passed the CLI keeps the documented
+        fraction-based output (score = matched-keyword fraction, no
+        'score-based' reason). This is the default CLI contract the fix must
+        not regress."""
+        dd = str(tmp_path)
+        _make_index(dd, [
+            _page("https://a.com/1", "Python guide", "python basics", score=5.0),
+            _page("https://a.com/2", "Python advanced", "python advanced", score=8.0),
+        ])
+        res = _invoke(["python"], dd)
+        assert res.exit_code == 0
+        assert "Score: 1.000" in res.output
+        assert "score-based" not in res.output
+
+    def test_tag_weight_has_no_effect_on_keyword_path(self, tmp_path):
+        """Armor: tag_weight is accepted for interface consistency but has no
+        effect on the keyword-based path (no seed item to compare tags
+        against). Varying only --tag-weight must leave output byte-identical."""
+        dd = str(tmp_path)
+        _make_index(dd, [
+            _page("https://a.com/1", "Python guide", "python basics", score=5.0),
+            _page("https://a.com/2", "Python advanced", "python advanced", score=8.0),
+        ])
+        t0 = _invoke(["python", "--tag-weight", "0.0"], dd)
+        t1 = _invoke(["python", "--tag-weight", "1.0"], dd)
+        assert t0.exit_code == 0 and t1.exit_code == 0
+        assert t0.output == t1.output
 
 
 # ---------------------------------------------------------------------------
