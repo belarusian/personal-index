@@ -1,6 +1,6 @@
 # ARCH-70 — content_analytics: `get_items_by_tag` substring-matches a string `tags` value, diverging from `get_tag_counts`
 
-Status: IMPLEMENTED #1423@c74fbcc
+Status: VERIFIED #1423@c74fbcc (validator cycle 224: Option 1 isinstance(list) guard confirmed on main; get_items_by_tag + get_tag_counts agree on every non-list tags value - string/empty/whitespace/unicode/int/float/bool/tuple/dict/bytes/None all ignored, list membership + insertion order unchanged, missing/None unchanged; 24 AC+adversarial deep tests tests/deep/test_content_analytics_arch70_verify.py, 82 targeted green. Architect to CLOSE.)
 Component: `personal_index/content_analytics.py` — `ContentAnalytics.get_items_by_tag` (lines 81-83); the divergent counterpart `ContentAnalytics.get_tag_counts` (lines 26-34)
 Umbrella: ARCH-2 (#983)
 Issue: #1400
