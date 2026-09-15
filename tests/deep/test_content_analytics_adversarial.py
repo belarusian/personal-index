@@ -180,6 +180,39 @@ class TestNoneTitleCoercion:
         a.add_items([{"description": None}, {"description": "ab"}])
         assert a.get_avg_description_length() == 1.0
 
+    # ── armor pins (validator cycle 243): None vs missing vs non-None ────
+
+    def test_none_description_with_non_none_title_same_batch(self):
+        # A present None description must be 0 while a present non-None title
+        # in the SAME item keeps its true length (fields are independent).
+        a = make()
+        a.add_items([{"title": "abcd", "description": None}])
+        assert a.get_title_lengths() == [4]
+        assert a.get_description_lengths() == [0]
+
+    def test_none_and_missing_key_both_zero(self):
+        # A present None and a missing key are the same "no text" case: both
+        # must contribute 0, so the batch reports [0, 0] and avg 0.0.
+        a = make()
+        a.add_items([{"title": None}, {}])
+        assert a.get_title_lengths() == [0, 0]
+        assert a.get_avg_title_length() == 0.0
+
+    def test_none_in_larger_batch_average_over_true_lengths(self):
+        # [None, "a", "abc"] -> [0, 1, 3]; avg = 4/3. The bug would yield
+        # (4 + 1 + 3) / 3 == 8/3, so this pins the average over TRUE lengths.
+        a = make()
+        a.add_items([{"title": None}, {"title": "a"}, {"title": "abc"}])
+        assert a.get_title_lengths() == [0, 1, 3]
+        assert a.get_avg_title_length() == pytest.approx(4 / 3)
+
+    def test_non_string_non_none_description_is_stringified(self):
+        # A present non-None, non-string value (a number) is still stringified
+        # to its repr length, NOT treated as missing (mirrors the title pin).
+        a = make()
+        a.add_items([{"description": 123}])
+        assert a.get_description_lengths() == [3]
+
 
 # ── tag contracts ────────────────────────────────────────────────────────
 
