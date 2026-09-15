@@ -219,6 +219,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
 
 - [session.md](session.md) (spec) — `personal_index.session`:
   crawl-session tracker (SessionStatus enum, SessionStats dataclass, CrawlSession lifecycle, SessionManager registry + JSON persistence); SessionStats.to_dict serializes domains_seen and errors as COUNTS (len/set, error_count) and load_session restores only the 5 numeric fields, so a save/load round-trip silently drops the error messages and the domain set — counts survive, contents do not (ARCH-92) contract hole.
+- [publish_dashboard.md](publish_dashboard.md) (spec) — `personal_index.publish_dashboard`:
+  publisher CLI (run/regenerate/validate_sync/_copy_dashboard_files/_git_commit_push/publish/main) that ships the generated dashboard + codemap to belarusian/search; validate_sync's 'in sync' docstring over-promises bidirectional equality but the comparison loop is one-sided (JSON→HTML only), so an HTML-embedded summary with extra keys still returns sync True (ARCH-93) contract hole.
 
 ### Legacy pages (pre-split; not yet re-audited)
 
