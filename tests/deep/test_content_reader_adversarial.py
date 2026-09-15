@@ -381,3 +381,160 @@ class TestCliSmoke:
         runner = CliRunner()
         res = runner.invoke(main, ["top", "--data-dir", dd])
         assert res.exit_code == 0
+
+
+# ---------------------------------------------------------------------------
+# ARCH-27 (issue #1073) — Option B last-write-wins duplicate-URL policy
+# ---------------------------------------------------------------------------
+# Cycle 232 — VALIDATOR verify of ARCH-27 (IMPLEMENTED #1419@c52387c).
+#
+# The implementer's pinning tests (tests/test_content_reader.py,
+# TestDuplicateUrlLastWriteWins) cover the 2-item happy path. This class
+# pins the SAME contract adversarially: 3+ duplicates, unicode/empty/
+# whitespace URLs, idempotent re-add, the reverse-index invariant
+# (_url_index[url] is the LAST item in _items with that url), clear
+# resetting both views, and the non-duplicate guard.
+class TestArch27DuplicateUrlLastWriteWins:
+    """Pin the ARCH-27 Option B contract: duplicate URLs are last-write-wins.
+
+    ``add`` keeps every item in the ordered list (so ``count`` and
+    ``list_all`` report all of them) while ``get`` reads the URL index and
+    returns only the most-recently-added item for a repeated URL.
+    """
+
+    # AC1: get(url) returns the last-added item for a duplicate URL.
+    def test_get_returns_last_added_for_duplicate(self):
+        reader = ContentReader()
+        first = _item("https://dup.com", "First", "first body")
+        second = _item("https://dup.com", "Second", "second body")
+        reader.add(first)
+        reader.add(second)
+        result = reader.get("https://dup.com")
+        assert result is not None
+        assert result is second
+        assert result.title == "Second"
+
+    # AC2: list_all preserves insertion order, duplicates included.
+    def test_list_all_preserves_insertion_order_with_duplicates(self):
+        reader = ContentReader()
+        a = _item("https://dup.com", "A")
+        b = _item("https/other.com", "B")
+        c = _item("https://dup.com", "C")
+        reader.add(a)
+        reader.add(b)
+        reader.add(c)
+        assert reader.list_all() == [a, b, c]
+        assert reader.count == 3
+
+    # AC4: get for a non-duplicate URL is unchanged.
+    def test_get_non_duplicate_url_unchanged(self):
+        reader = ContentReader()
+        p = _item("https://p.com", "P")
+        q = _item("https://q.com", "Q")
+        reader.add(p)
+        reader.add(q)
+        assert reader.get("https://p.com") is p
+        assert reader.get("https://q.com") is q
+        assert reader.get("https://missing.com") is None
+
+    # AC5: clear resets both _items and _url_index.
+    def test_clear_resets_both_views(self):
+        reader = ContentReader()
+        reader.add(_item("https://dup.com", "A"))
+        reader.add(_item("https://dup.com", "B"))
+        assert reader.count == 2
+        reader.clear()
+        assert reader.count == 0
+        assert reader.list_all() == []
+        assert reader.get("https://dup.com") is None
+
+    # Adversarial: 3+ duplicates -> get returns the 3rd (last) added.
+    def test_three_duplicates_get_returns_third(self):
+        reader = ContentReader()
+        a = _item("https://dup.com", "A")
+        b = _item("https://dup.com", "B")
+        c = _item("https://dup.com", "C")
+        reader.add(a)
+        reader.add(b)
+        reader.add(c)
+        assert reader.get("https://dup.com") is c
+        assert reader.count == 3
+        assert [i.title for i in reader.list_all()] == ["A", "B", "C"]
+
+    # Adversarial: unicode URL, last-write-wins still holds.
+    def test_unicode_url_last_write_wins(self):
+        url = "https://\u4f8b\u3048\u306e.com/\u65e5\u672c\u8a9e"
+        reader = ContentReader()
+        u1 = _item(url, "U1")
+        u2 = _item(url, "U2")
+        reader.add(u1)
+        reader.add(u2)
+        assert reader.get(url) is u2
+        assert reader.count == 2
+
+    # Adversarial: empty-string URL is a valid key, last-write-wins.
+    def test_empty_url_last_write_wins(self):
+        reader = ContentReader()
+        e1 = _item("", "E1")
+        e2 = _item("", "E2")
+        reader.add(e1)
+        reader.add(e2)
+        assert reader.get("") is e2
+        assert reader.count == 2
+
+    # Adversarial: whitespace-only URL is a valid key, last-write-wins.
+    def test_whitespace_url_last_write_wins(self):
+        reader = ContentReader()
+        w1 = _item("   ", "W1")
+        w2 = _item("   ", "W2")
+        reader.add(w1)
+        reader.add(w2)
+        assert reader.get("   ") is w2
+        assert reader.count == 2
+
+    # Adversarial: idempotent re-add of the same object.
+    def test_idempotent_readd_same_object(self):
+        reader = ContentReader()
+        x = _item("https://x.com", "X")
+        reader.add(x)
+        reader.add(x)
+        assert reader.get("https://x.com") is x
+        assert reader.count == 2
+        assert reader.list_all() == [x, x]
+
+    # Property: for each URL, _url_index[url] is the LAST item in _items
+    # with that URL (the reverse index agrees with the registry).
+    def test_url_index_is_last_item_in_items_property(self):
+        reader = ContentReader()
+        items = [
+            _item("https://a.com", "a1"),
+            _item("https://b.com", "b1"),
+            _item("https://a.com", "a2"),
+            _item("https://c.com", "c1"),
+            _item("https://b.com", "b2"),
+            _item("https://a.com", "a3"),
+        ]
+        for it in items:
+            reader.add(it)
+        for url in ("https://a.com", "https://b.com", "https://c.com"):
+            last_in_items = [x for x in reader._items if x.url == url][-1]
+            assert reader._url_index[url] is last_in_items
+            assert reader.get(url) is last_in_items
+
+    # Round-trip: add duplicates, read back via get + list_all, clear,
+    # re-add, read back again.
+    def test_round_trip_add_get_clear_readd(self):
+        reader = ContentReader()
+        a = _item("https://rt.com", "A")
+        b = _item("https://rt.com", "B")
+        reader.add(a)
+        reader.add(b)
+        assert reader.get("https://rt.com") is b
+        assert reader.count == 2
+        reader.clear()
+        assert reader.count == 0
+        assert reader.get("https://rt.com") is None
+        c = _item("https://rt.com", "C")
+        reader.add(c)
+        assert reader.get("https://rt.com") is c
+        assert reader.count == 1
