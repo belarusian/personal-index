@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** `personal_index/scheduler.py` — `ScheduleStore._save` (line 108) + `ScheduleStore._load` (lines 52-87)
-- **Issue:** (to be created)
+- **Issue:** #1507
 
 ## Symptom
 
