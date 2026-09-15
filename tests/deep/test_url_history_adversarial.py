@@ -301,11 +301,11 @@ class TestNegativeLimitArmorCycle248:
         h = _history(5)
         r = h.get_visits(limit=-1)
         assert len(r) == 1
-        assert r[0].url == "http://example.com/4"
+        assert r[0].url == "http://ex.com/4"
         r = h.get_visits(limit=-2)
         assert len(r) == 2
-        assert r[0].url == "http://example.com/3"
-        assert r[1].url == "http://example.com/4"
+        assert r[0].url == "http://ex.com/3"
+        assert r[1].url == "http://ex.com/4"
         r = h.get_visits(limit=3)
         assert len(r) == 3
 
