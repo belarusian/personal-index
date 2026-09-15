@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Component:** `personal_index/cli_export.py`
 - **Kind:** contract hole (dead public command surface)
-- **Issue:** (to be created; record `Issue: #<n>` here)
+- **Issue:** #1490
 
 ## Symptom
 
