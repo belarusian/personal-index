@@ -42,6 +42,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   AnalyticsTracker (record/compute/get stats/save/load) + SearchEvent, CrawlEvent, AnalyticsData.
 - [stats.md](stats.md) (spec) — `personal_index.stats`:
   StatsCollector (get_index_stats) + IndexStats, CrawlStats; read-only index aggregate over a SearchIndex, no persistence; distinct from analytics (event log) and content_analytics (content items); interest stats are derived from CrawledPage.matched_interests, not an InterestStore — the public interest_store field is never read and CrawlStats is never produced (ARCH-86) contract hole.
+- [metrics.md](metrics.md) (spec) — `personal_index.metrics`:
+  SystemMetrics (11-field @dataclass, to_dict) + MetricsCollector (increment_counter/set_gauge/record_histogram/collect_system_metrics/get_histogram_stats/get_report/reset); distinct from stats (index aggregate) and analytics (event log); collect_system_metrics populates uptime/memory_used/disk_* but cpu_percent and memory_total_mb are never collected and stay at their 0.0 defaults — memory_total_mb is serialized by to_dict yet never populated and the docstring is silent about it (ARCH-88) contract hole.
 - [content-categorizer.md](content-categorizer.md) (spec) — `personal_index.content_categorizer`:
   ContentCategorizer (add/remove/get topics, categorize, categorize_batch) + TopicCategory, TopicScore, CategorizationResult.
 - [content-filter.md](content-filter.md) (spec) — `personal_index.content_filter`:
