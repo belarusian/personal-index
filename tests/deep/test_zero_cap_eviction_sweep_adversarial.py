@@ -106,3 +106,91 @@ def test_notification_positive_cap_enforced():
     for i in range(5):
         h.handle(Notification(title=f"t{i}"))
     assert len(h._notifications) == 2
+
+
+# ---------------------------------------------------------------------------
+# ARMOR (cycle 246, QA-25 verify): the guard is ``cap <= 0`` (not ``cap == 0``),
+# so the contract must hold for NEGATIVE caps too (out-of-range adversarial
+# input). A negative cap must evict to empty, exactly like a zero cap. These
+# pins prove the guard is the ``<= 0`` form and not a ``== 0`` special-case
+# that would leak a partial page on a negative cap (the one-sided-guard class
+# from the negative-slice "top N" sweep, QA-15/QA-16/QA-31).
+# ---------------------------------------------------------------------------
+
+def test_versioning_negative_cap_keeps_none():
+    t = VersionTracker(max_versions=-5)
+    for i in range(3):
+        t.record_version("http://x.com", f"c{i}")
+    assert t.get_versions("http://x.com") == []
+
+
+def test_snapshot_negative_cap_keeps_none():
+    sm = SnapshotManager(max_snapshots=-5)
+    for i in range(3):
+        sm.create_snapshot({"id": "x", "v": i})
+    assert sm.get_snapshots("x") == []
+
+
+def test_performance_negative_cap_keeps_none():
+    pm = PerformanceMonitor(window_size=-5)
+    for i in range(3):
+        pm.record("m", float(i))
+    assert pm.get_recent_samples("m", count=100) == []
+
+
+def test_alert_negative_cap_keeps_none():
+    am = AlertManager(max_alerts=-5)
+    for i in range(3):
+        am.add_alert(AlertLevel.INFO, f"m{i}", "s")
+    assert am.alerts == []
+
+
+def test_notification_negative_cap_keeps_none():
+    h = InMemoryHandler(max_size=-5)
+    for i in range(3):
+        h.handle(Notification(title=f"t{i}"))
+    assert h._notifications == []
+
+
+# ---------------------------------------------------------------------------
+# ARMOR (cycle 246, QA-25 verify): the cap=1 boundary. A cap of exactly 1 must
+# keep exactly the most-recent single entry (distinguishes the zero-cap guard
+# from a broken cap in general, and pins the off-by-one at the smallest
+# positive value).
+# ---------------------------------------------------------------------------
+
+def test_versioning_cap_one_keeps_last():
+    t = VersionTracker(max_versions=1)
+    for i in range(3):
+        t.record_version("http://x.com", f"c{i}")
+    assert len(t.get_versions("http://x.com")) == 1
+
+
+def test_snapshot_cap_one_keeps_last():
+    sm = SnapshotManager(max_snapshots=1)
+    for i in range(3):
+        sm.create_snapshot({"id": "x", "v": i})
+    snaps = sm.get_snapshots("x")
+    assert len(snaps) == 1
+
+
+def test_performance_cap_one_keeps_last():
+    pm = PerformanceMonitor(window_size=1)
+    for i in range(3):
+        pm.record("m", float(i))
+    samples = pm.get_recent_samples("m", count=100)
+    assert len(samples) == 1
+
+
+def test_alert_cap_one_keeps_last():
+    am = AlertManager(max_alerts=1)
+    for i in range(3):
+        am.add_alert(AlertLevel.INFO, f"m{i}", "s")
+    assert len(am.alerts) == 1
+
+
+def test_notification_cap_one_keeps_last():
+    h = InMemoryHandler(max_size=1)
+    for i in range(3):
+        h.handle(Notification(title=f"t{i}"))
+    assert len(h._notifications) == 1
