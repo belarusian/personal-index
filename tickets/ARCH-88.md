@@ -3,7 +3,7 @@
 Status: OPEN
 Component: `personal_index/metrics.py` — `SystemMetrics.memory_total_mb` (line 21); the `to_dict()` serialization (line 40); `MetricsCollector.collect_system_metrics` (lines 90-124) and its docstring (lines 91-98)
 Umbrella: ARCH-2 (#983)
-Issue: #<n>
+Issue: #1465
 Docs: `docs/metrics.md` (Contract Hole, ARCH-88)
 
 ## Problem
