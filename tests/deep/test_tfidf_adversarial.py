@@ -237,3 +237,154 @@ class TestCliSearchEndToEnd:
         assert result.exit_code == 0, result.output
         # negative limit must behave like limit=0 (no results)
         assert "No results found" in result.output
+
+
+# ── ARCH-75: zero-term add_document is a no-op (IDF denominator) ───────
+class TestArch75ZeroTermNoOp:
+    """ARCH-75: a document that tokenizes to zero terms (empty / whitespace /
+    all-stopwords) must not count toward the corpus, so it must not inflate
+    the IDF denominator and silently shift every existing document's TF-IDF
+    score. The implementer's tests/test_tfidf.py pins the four ACs; these
+    deep tests pin the same contract against the returned object plus the
+    adversarial inputs the contract implies."""
+
+    # ── acceptance criteria ──────────────────────────────────────────────
+    def test_empty_doc_does_not_inflate_idf(self):
+        """AC1: an empty doc leaves existing scores unchanged (the hole)."""
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        assert s.compute_tfidf(d0) == {"cat": 0.5, "sat": 0.5}
+        s.add_document("")
+        assert s.compute_tfidf(d0) == {"cat": 0.5, "sat": 0.5}
+
+    def test_empty_doc_not_counted(self):
+        """AC2: document_count reflects only term-bearing docs."""
+        s = TfidfScorer()
+        s.add_document("cat sat")
+        s.add_document("")
+        assert s.document_count == 1
+
+    def test_all_stopwords_noop(self):
+        """AC3: an all-stopword doc leaves count/vocab/scores unchanged."""
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        before = (s.document_count, s.vocabulary_size, s.compute_tfidf(d0))
+        s.add_document("the and of but")
+        assert (s.document_count, s.vocabulary_size, s.compute_tfidf(d0)) == before
+
+    def test_normal_docs_unchanged(self):
+        """AC4: two real docs use the 2-doc IDF denominator."""
+        import math
+
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        d1 = s.add_document("dog runs")
+        assert s.document_count == 2
+        idf = math.log((1 + 2) / (1 + 1)) + 1
+        assert s.compute_tfidf(d0) == {"cat": 0.5 * idf, "sat": 0.5 * idf}
+        assert s.compute_tfidf(d1) == {"dog": 0.5 * idf, "runs": 0.5 * idf}
+
+    def test_remove_zero_term_id_is_noop(self):
+        """AC5: removing a zero-term id returns False, corpus untouched."""
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        before = s.compute_tfidf(d0)
+        empty_id = s.add_document("")
+        assert s.remove_document(empty_id) is False
+        assert s.compute_tfidf(d0) == before
+        assert s.document_count == 1
+
+    # ── adversarial inputs the contract implies ──────────────────────────
+    def test_whitespace_only_not_counted(self):
+        s = TfidfScorer()
+        s.add_document("cat sat")
+        s.add_document("   \t\n  ")
+        assert s.document_count == 1
+
+    def test_unicode_only_not_counted(self):
+        # tokenize is ASCII-only; "café résumé" yields no tokens -> no-op.
+        s = TfidfScorer()
+        s.add_document("cat sat")
+        s.add_document("café résumé")
+        assert s.document_count == 1
+        assert s.compute_tfidf(0) == {"cat": 0.5, "sat": 0.5}
+
+    def test_punctuation_only_not_counted(self):
+        s = TfidfScorer()
+        s.add_document("cat sat")
+        s.add_document("!!! ??? ...")
+        assert s.document_count == 1
+
+    def test_numbers_only_is_a_real_doc(self):
+        # "123" is a non-stopword token -> a real, counted document.
+        s = TfidfScorer()
+        d0 = s.add_document("123")
+        assert s.document_count == 1
+        assert s.vocabulary_size == 1
+        assert "123" in s.compute_tfidf(d0)
+
+    def test_mixed_stopword_and_real_is_counted(self):
+        # "the cat" -> ["cat"] -> one real term, counted.
+        s = TfidfScorer()
+        d0 = s.add_document("the cat")
+        assert s.document_count == 1
+        assert s.vocabulary_size == 1
+        assert set(s.compute_tfidf(d0)) == {"cat"}
+
+    def test_multiple_zero_term_docs_distinct_ids_none_counted(self):
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        ids = [s.add_document("") for _ in range(3)]
+        # each no-op still consumes a distinct sequential id
+        assert ids == [1, 2, 3]
+        assert s.document_count == 1
+        assert s.compute_tfidf(d0) == {"cat": 0.5, "sat": 0.5}
+
+    def test_interleaved_zero_term_uses_real_doc_denominator(self):
+        # real, empty, real -> 2-doc denominator, not 3.
+        import math
+
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        s.add_document("")
+        d2 = s.add_document("dog runs")
+        assert s.document_count == 2
+        idf = math.log((1 + 2) / (1 + 1)) + 1
+        assert s.compute_tfidf(d0) == {"cat": 0.5 * idf, "sat": 0.5 * idf}
+        assert s.compute_tfidf(d2) == {"dog": 0.5 * idf, "runs": 0.5 * idf}
+
+    def test_zero_term_doc_never_ranked(self):
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        empty_id = s.add_document("")
+        ranked = s.rank_documents("cat")
+        assert ranked == [(d0, 0.5)]
+        assert empty_id not in [doc for doc, _ in ranked]
+        assert s.score_query("cat", empty_id) == 0.0
+
+    def test_zero_term_add_idempotent(self):
+        s = TfidfScorer()
+        d0 = s.add_document("cat sat")
+        before = s.compute_tfidf(d0)
+        s.add_document("")
+        s.add_document("")
+        assert s.document_count == 1
+        assert s.compute_tfidf(d0) == before
+
+    def test_property_doc_count_equals_term_bearing_docs(self):
+        # N real + M zero-term -> document_count == N.
+        import math
+
+        s = TfidfScorer()
+        real = [s.add_document(f"term{i} shared") for i in range(4)]
+        for _ in range(5):
+            s.add_document("the and of")
+        assert s.document_count == 4
+        # 'shared' is in all 4 real docs: df=4, doc_count=4 -> idf=1.0
+        idf_shared = math.log((1 + 4) / (1 + 4)) + 1
+        assert idf_shared == 1.0
+        # 'term0' is in only doc 0: df=1 -> 4-doc denominator
+        idf_term0 = math.log((1 + 4) / (1 + 1)) + 1
+        scores = s.compute_tfidf(real[0])
+        assert scores["term0"] == 0.5 * idf_term0
+        assert scores["shared"] == 0.5 * idf_shared
