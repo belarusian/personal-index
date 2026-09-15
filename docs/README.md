@@ -62,6 +62,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   shared store getters, data-dir/config bootstrap, guard paths.
 - [cli_verify.md](cli_verify.md) (spec) — `personal_index.cli_verify`:
   the `verify` click command + `_check_*`/`_run_*`/`_verify_*` self-test helpers (data-dir/interest/tag/search-index/filter/scorer checks + full-pipeline self-test); distinct from `personal_index.cli` (cli.md, the main group + subgroups) and the pipeline modules (which run the pipeline; this only checks it); `_run_filter` (line 209, `tuple[bool, str]`) is dead code — the full pipeline calls the `bool`-returning `_verify_filter` (line 291) instead (ARCH-97) contract hole.
+- [cli_dedup.md](cli_dedup.md) (spec) — `personal_index.cli_dedup`:
+  the `dedup` click command + `_load_indexed_content`/`_build_dedup_items`/`_dispatch_dedup`/`_display_result`/`_display_duplicate_groups`/`_remove_duplicates` helpers (hash/url/similarity/all dedup over indexed pages, dry-run guard); distinct from `personal_index.cli` (cli.md, the main group) and the underlying engine `personal_index.content_dedup` (dedup.md); the `Score:` line (line 118) prints `DuplicateGroup.similarity_score`, which for similarity groups is the configured `similarity_threshold` (content_dedup.py:388), not the measured Jaccard overlap (ARCH-102) contract hole.
 - [search-facets.md](search-facets.md) (spec) — `personal_index.search_facets`:
   Facet/FacetValue/FacetType models, FacetBuilder (build/aggregate), FacetedSearch (search/filters/facets) + SearchResults.
 - [content-summarizer.md](content-summarizer.md) (spec) — `personal_index.content_summarizer`:
