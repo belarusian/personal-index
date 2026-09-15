@@ -253,6 +253,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ScheduleConfig + ScheduleEntry + ScheduleStore (add/get/remove/update/list_all, file-backed JSON) +
   Scheduler (add_schedule/add_job/remove/toggle/get_due_schedules/update_next_run_times/run_schedule/list_jobs) +
   ScheduledJob (CLI-facing view); WIRED (cli.py/app.py/formatter.py) — distinct from `content_scheduler.py` (in-memory cron TaskScheduler, no persistence); non-atomic `_save` (truncates on crash + silent-empty `_load` = permanent data loss, ARCH-104) + dead `update_next_run_times` contract holes.
+- [app.md](app.md) (spec) — `personal_index.app`:
+  `PersonalIndexApp` application factory (lazy `config`/`interest_store`/`search_index`/`content_search`/`scheduler`/`pipeline` properties + `initialize`/`shutdown`/`process_content`/`search`/`add_interest`/`get_stats`); NEVER imported or registered (grep for `personal_index.app`/`PersonalIndexApp` across the package returns only a docstring mention at pipeline.py:110, no import), so it is a DEAD module whose public API no live path calls; `content_search.index` is re-wired to the same `search_index` so `process_content` (write) and `search` (read) share one index; `shutdown()` (app.py:333) is a log-only no-op guarded by a dead `if self._interest_store: pass` whose docstring falsely claims "InterestStore has no save method" when interests.py:44 `_save` is called on every mutation (ARCH-105) contract hole.
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
