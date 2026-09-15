@@ -228,6 +228,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [logging_config.md](logging_config.md) (spec) — `personal_index.logging_config`:
   logging configuration helper (setup_logging/get_logger); setup_logging resolves `level` via `getattr(logging, level.upper(), logging.INFO)` (line 18), so an unknown level string (e.g. "VERBOSE", "TRACE", a typo) is silently coerced to INFO instead of raising, and the existing test pins only valid levels (INFO/DEBUG/WARNING) so the fallback is an untested invariant (ARCH-95) contract hole.
 
+- [pipeline_e2e.md](pipeline_e2e.md) (spec) — `personal_index.pipeline_e2e`:
+  end-to-end orchestrator (PipelineE2E: __init__/add_interest/run_from_files/search/close + PipelineRunResult dataclass with success/summary); distinct from pipeline_orchestrator.py (PipelineOrchestrator) and pipeline.py (Pipeline/PipelineRunner); a page that passes the content filter but scores below min_score_threshold is dropped at line 236-237 with NO counter, so pages_filtered_in can exceed pages_indexed with no field explaining the gap and the existing test pins only pages_indexed >= 1 (ARCH-96) contract hole.
+
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
