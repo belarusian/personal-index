@@ -55,6 +55,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   InterestStore (add/remove/get/list_all/get_enabled/toggle, get_all_keywords/get_all_url_patterns/get_all_topics, update_priority/matches_any/clear/total_score, JSON persistence); distinct from content_scoring/content_filter/content_tagger/content_priority (which consume it); _load degrades to empty for corrupt/non-dict/null/non-dict-value/missing-name but a valid-JSON-dict record with an out-of-enum interest_type or match_mode raises ValueError (not in the except tuple) so the constructor crashes instead of degrading (ARCH-85) contract hole.
 - [pipeline-orchestrator.md](pipeline-orchestrator.md) (spec) — `personal_index.pipeline_orchestrator`:
   PipelineOrchestrator (run / run_from_files / search / close) + PipelineResult; crawl→filter→score→tag→index.
+- [pipeline-runner.md](pipeline-runner.md) (spec) — `personal_index.pipeline_runner`:
+  PipelineRunner (run / run_from_files / add_page_directly / close) + PipelineStats; crawl→extract→filter→score→tag→index; distinct from pipeline_orchestrator (PipelineOrchestrator/PipelineResult); `stages` is documented as an arbitrary subset but only a prefix of the fixed stage order produces meaningful results — a non-prefix subset (e.g. {"index"}) silently no-ops (ARCH-91) contract hole.
 - [cli.md](cli.md) (spec) — `personal_index.cli`:
   the click command surface (main group + interests/tags/schedule/config subgroups + top-level commands),
   shared store getters, data-dir/config bootstrap, guard paths.
