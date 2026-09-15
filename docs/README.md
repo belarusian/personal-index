@@ -236,6 +236,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [cli_export.md](cli_export.md) (spec) — `personal_index.cli_export`:
   the standalone `export_cmd` click command (markdown/json/csv/html + --tag/--query/--limit filters) and its private _load_pages/_dispatch_format/_export_* helpers; distinct from cli.py which defines its OWN registered `export` (line 431, markdown/json/csv only, no filters); export_cmd is never imported or registered on the main group (cli.py registers only dedup/health/recommend at lines 1509-1511), so the html format and all three filters are unreachable from the CLI and the module's tests import only the private helpers, never export_cmd (ARCH-98) contract hole.
 
+- [cli_recommend.md](cli_recommend.md) (spec) — `personal_index.cli_recommend`:
+  the `recommend` click command (query argument + --top-n/--data-dir/--keyword-weight/--tag-weight/--score-weight) and its private _load_recommender/_print_recommendations helpers; registered on the main group (cli.py:1511); distinct from content_recommender.py which has TWO scoring methods (seed-based recommend(seed,...) honoring all weights, and recommend_for_keywords where tag_weight is a no-op); the CLI wires up ONLY recommend_for_keywords (lines 80/87), so the docstring's "or seed content" clause (line 59) advertises a seed path the command never exposes (ARCH-99) contract hole.
+
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
