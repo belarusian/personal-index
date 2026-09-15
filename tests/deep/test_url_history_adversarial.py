@@ -293,6 +293,72 @@ class TestNegativeSliceClassSweep:
         assert len(a.get_crawl_events(limit=-1)) == 1
 
 
+class TestNegativeLimitArmorCycle248:
+    """Armor pins (cycle 248): prove negative-limit contract at all five
+    public sites — most-recent-|N|, never head-dropped results[1:] leak."""
+
+    def test_url_history_get_visits_negative_limit(self):
+        h = _history(5)
+        r = h.get_visits(limit=-1)
+        assert len(r) == 1
+        assert r[0].url == "http://example.com/4"
+        r = h.get_visits(limit=-2)
+        assert len(r) == 2
+        assert r[0].url == "http://example.com/3"
+        assert r[1].url == "http://example.com/4"
+        r = h.get_visits(limit=3)
+        assert len(r) == 3
+
+    def test_performance_monitor_get_recent_samples_negative_limit(self):
+        from personal_index.performance_monitor import PerformanceMonitor
+        pm = PerformanceMonitor()
+        for i in range(5):
+            pm.record("m", float(i))
+        r = pm.get_recent_samples("m", count=-1)
+        assert len(r) == 1
+        r = pm.get_recent_samples("m", count=-2)
+        assert len(r) == 2
+        r = pm.get_recent_samples("m", count=3)
+        assert len(r) == 3
+
+    def test_notification_manager_get_recent_negative_limit(self):
+        from personal_index.content_notifications import NotificationManager
+        nm = NotificationManager()
+        for i in range(5):
+            nm.notifications.append(
+                type("N", (), {"notification_type": "n", "delivered": False})())
+        r = nm.get_recent(limit=-1)
+        assert len(r) == 1
+        r = nm.get_recent(limit=-2)
+        assert len(r) == 2
+        r = nm.get_recent(limit=3)
+        assert len(r) == 3
+
+    def test_analytics_get_search_events_negative_limit(self):
+        from personal_index.analytics import AnalyticsTracker
+        a = AnalyticsTracker()
+        for i in range(5):
+            a._search_events.append(type("E", (), {})())
+        r = a.get_search_events(limit=-1)
+        assert len(r) == 1
+        r = a.get_search_events(limit=-2)
+        assert len(r) == 2
+        r = a.get_search_events(limit=3)
+        assert len(r) == 3
+
+    def test_analytics_get_crawl_events_negative_limit(self):
+        from personal_index.analytics import AnalyticsTracker
+        a = AnalyticsTracker()
+        for i in range(5):
+            a._crawl_events.append(type("C", (), {})())
+        r = a.get_crawl_events(limit=-1)
+        assert len(r) == 1
+        r = a.get_crawl_events(limit=-2)
+        assert len(r) == 2
+        r = a.get_crawl_events(limit=3)
+        assert len(r) == 3
+
+
 # ── ARCH-76: load graceful degradation on malformed records ─────────────
 # Contract (tickets/ARCH-76.md, Issue #1415): load returns 0 (leaving
 # _history untouched) for a missing file, invalid JSON, a non-list, AND a
