@@ -188,3 +188,57 @@ class TestBackupCleanupArmor:
         # no backups created -> cleanup is a no-op
         assert bm.cleanup_old_backups(keep=5) == []
         assert bm.list_backups() == []
+
+
+# ---------------------------------------------------------------------------
+# cycle-249 armor — negative-count contract at both public sites
+# ---------------------------------------------------------------------------
+
+class TestMigrationRollbackNegativeArmor:
+    """QA-28 cycle-249: additional negative-steps armor for rollback."""
+
+    def test_rollback_negative_five_returns_empty_and_keeps_all(self):
+        runner, store = _applied_runner(3)
+        result = runner.rollback(steps=-5)
+        assert result == []
+        assert store.get_applied_versions() == [1, 2, 3]
+
+    def test_rollback_positive_round_trip(self):
+        """Roll back 2, re-run pending, all 3 applied again."""
+        runner, store = _applied_runner(3)
+        rolled = runner.rollback(steps=2)
+        assert len(rolled) == 2
+        assert store.get_applied_versions() == [1]
+        re_applied = runner.run_pending()
+        assert len(re_applied) == 2
+        assert store.get_applied_versions() == [1, 2, 3]
+
+
+class TestBackupCleanupNegativeArmor:
+    """QA-28 cycle-249: additional negative-keep armor for cleanup_old_backups."""
+
+    def test_cleanup_negative_three_deletes_nothing_and_keeps_all(self):
+        tmp = Path(tempfile.mkdtemp())
+        src = tmp / "src"
+        src.mkdir()
+        (src / "a.txt").write_text("hello")
+        bm = BackupManager(backup_dir=str(tmp / "backups"))
+        _make_backups(bm, 5, src)
+        deleted = bm.cleanup_old_backups(keep=-3)
+        assert deleted == []
+        assert len(bm.list_backups()) == 5
+
+    def test_cleanup_positive_round_trip(self):
+        """Keep 2 of 5 (deletes 3), then keep 5 (deletes 0)."""
+        tmp = Path(tempfile.mkdtemp())
+        src = tmp / "src"
+        src.mkdir()
+        (src / "a.txt").write_text("hello")
+        bm = BackupManager(backup_dir=str(tmp / "backups"))
+        _make_backups(bm, 5, src)
+        deleted = bm.cleanup_old_backups(keep=2)
+        assert len(deleted) == 3
+        assert len(bm.list_backups()) == 2
+        deleted2 = bm.cleanup_old_backups(keep=5)
+        assert deleted2 == []
+        assert len(bm.list_backups()) == 2
