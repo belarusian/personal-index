@@ -242,6 +242,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [cli_top.md](cli_top.md) (spec) — `personal_index.cli_top`:
   the `top_pages` click command (named "top"; --limit/--format/--data-dir) and its private _to_json/_print_text helpers; NEVER imported or registered on the main group (grep for cli_top across the package returns no import), so it is a DEAD parallel implementation of the LIVE inline `top` at cli.py:906; its _to_json emits a hand-built 6-key entry (rank, url, title, score, crawled_at, tags:[]) + top-level total, where tags is a hardcoded always-empty list even though IndexedPage has no tags field, while the live command emits p.to_dict() only (no rank/total/tags) — two incompatible JSON contracts for the same `top` command name (ARCH-100) contract hole.
 
+- [cli_health.md](cli_health.md) (spec) — `personal_index.cli_health`:
+  the `health` click command (named "health"; --data-dir/--min-content-length/--min-title-length/--require-tags/--min-score) and its private _load_stores/_build_health_items/_build_config/_print_report/_print_issues/_severity_icon helpers; WIRED (imported at cli.py:27, registered on the main group) so it is the LIVE `health` command; it drives content_health.ContentHealthChecker but exposes only 5 of the 7 ContentHealthCheck knobs — _build_config never sets max_title_length (default 200, gates title_too_long) or min_tags (default 1, gates missing_tags), so two of the seven checks are untunable from the CLI (ARCH-101) contract hole.
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
