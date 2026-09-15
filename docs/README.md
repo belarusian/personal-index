@@ -225,6 +225,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [docs_generator.md](docs_generator.md) (spec) — `personal_index.docs_generator`:
   dashboard/codemap generator (scan_modules/_parse_module/run_ruff/run_mypy/run_pytest/detect_dependencies/fetch_recent_commits/_compute_signals/_render_test_bars/generate_dashboard/generate_metadata_json/generate/generate_fast); the full pipeline `generate` never calls `_attribute_test_counts` (only `generate_fast` does), so per-source-module `test_count` stays a binary 0/1 from `run_pytest` and the test bar chart + S1 signal read a flag, not a real count, while the aggregate `total_tests` masks it (ARCH-94) contract hole.
 
+- [logging_config.md](logging_config.md) (spec) — `personal_index.logging_config`:
+  logging configuration helper (setup_logging/get_logger); setup_logging resolves `level` via `getattr(logging, level.upper(), logging.INFO)` (line 18), so an unknown level string (e.g. "VERBOSE", "TRACE", a typo) is silently coerced to INFO instead of raising, and the existing test pins only valid levels (INFO/DEBUG/WARNING) so the fallback is an untested invariant (ARCH-95) contract hole.
+
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
