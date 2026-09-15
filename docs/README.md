@@ -40,6 +40,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   ValidationRule, RuleResult, the built-in rules.
 - [analytics.md](analytics.md) (spec) — `personal_index.analytics`:
   AnalyticsTracker (record/compute/get stats/save/load) + SearchEvent, CrawlEvent, AnalyticsData.
+- [stats.md](stats.md) (spec) — `personal_index.stats`:
+  StatsCollector (get_index_stats) + IndexStats, CrawlStats; read-only index aggregate over a SearchIndex, no persistence; distinct from analytics (event log) and content_analytics (content items); interest stats are derived from CrawledPage.matched_interests, not an InterestStore — the public interest_store field is never read and CrawlStats is never produced (ARCH-86) contract hole.
 - [content-categorizer.md](content-categorizer.md) (spec) — `personal_index.content_categorizer`:
   ContentCategorizer (add/remove/get topics, categorize, categorize_batch) + TopicCategory, TopicScore, CategorizationResult.
 - [content-filter.md](content-filter.md) (spec) — `personal_index.content_filter`:
