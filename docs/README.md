@@ -60,6 +60,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [cli.md](cli.md) (spec) — `personal_index.cli`:
   the click command surface (main group + interests/tags/schedule/config subgroups + top-level commands),
   shared store getters, data-dir/config bootstrap, guard paths.
+- [cli_verify.md](cli_verify.md) (spec) — `personal_index.cli_verify`:
+  the `verify` click command + `_check_*`/`_run_*`/`_verify_*` self-test helpers (data-dir/interest/tag/search-index/filter/scorer checks + full-pipeline self-test); distinct from `personal_index.cli` (cli.md, the main group + subgroups) and the pipeline modules (which run the pipeline; this only checks it); `_run_filter` (line 209, `tuple[bool, str]`) is dead code — the full pipeline calls the `bool`-returning `_verify_filter` (line 291) instead (ARCH-97) contract hole.
 - [search-facets.md](search-facets.md) (spec) — `personal_index.search_facets`:
   Facet/FacetValue/FacetType models, FacetBuilder (build/aggregate), FacetedSearch (search/filters/facets) + SearchResults.
 - [content-summarizer.md](content-summarizer.md) (spec) — `personal_index.content_summarizer`:
