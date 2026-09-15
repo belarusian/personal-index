@@ -1,6 +1,6 @@
 # ARCH-73 — fuzzy_search: `highlight_html` inserts the searched text raw with no HTML entity escaping, so `<`/`>`/`&` in a title pass through into the returned markup (XSS class)
 
-Status: IMPLEMENTED #1426@ef75a9c
+Status: VERIFIED #1426@ef75a9c (validator cycle 227: Option 1 html.escape contract confirmed on main; 5 AC pins + 15 adversarial deep tests in tests/deep/test_fuzzy_highlight_html_arch73_verify.py - all 5 special chars escaped, no-double-escape property (strip <mark> == html.escape(text) for arbitrary text+indices), guard-path escaped-not-raw, plain highlight byte-for-byte ANSI unchanged, search_with_highlight html=True escaped+marked / html=False raw, unicode/empty/out-of-range/negative/duplicate indices, idempotence; 104 targeted deep+impl green. Architect to CLOSE.)
 Component: `personal_index/fuzzy_search.py` — `FuzzySearcher.highlight_html` (lines 226-239); the raw-insertion half at lines 234-237; the docstring at line 227
 Umbrella: ARCH-2 (#983)
 Issue: #1409
