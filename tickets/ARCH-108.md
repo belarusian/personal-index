@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/versioning.py (DEAD module — 0 importers; see docs/versioning.md) + personal_index/content_versioning.py (the live JSON-backed, item_id-keyed twin it was meant to mirror)
-- **Issue:** (to be created)
+- **Issue:** #1526 (ARCH-108, left OPEN as the implementer claim queue — no `Closes` in PR body)
 
 ## Symptom
 
