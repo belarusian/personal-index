@@ -112,6 +112,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [robots-cache.md](robots-cache.md) (spec) — `personal_index.robots_cache`:
   RobotsCacheEntry (is_expired/allows_agent) + RobotsCache (get/put/invalidate/invalidate_all/size/domains/get_stats);
   thread-safe via threading.Lock (ARCH-32 resolved cycle 219) + max_entries<=0 no-op put guard + allows_agent-ignores-values + FIFO-not-LRU contract holes.
+- [domains.md](domains.md) (spec) — `personal_index.domains`:
+  DomainRule (to_dict/from_dict, non-mapping degrades to empty-domain rule, unknown keys ignored) + DomainManager (add_allow/add_block/is_allowed/is_blocked/record_page/get_page_count/reset_counts/remove/list_rules/get_max_depth, JSON persistence, in-memory page counts); exact-match case-sensitive keys, whitelist = any allow rule, but remove() does not recompute _has_whitelist so removing the last allow rule silently flips unlisted domains to deny-all (ARCH-84) contract hole.
 - [content-enricher.md](content-enricher.md) (spec) — `personal_index.content_enricher`:
   EnrichedContent (12 fields, to_dict) + ContentEnricher (enrich/batch_enrich, sentiment/complexity, html-detected flags);
   batch_enrich-cannot-pass-html so has_code/has_links/has_images always-False (ARCH-33) + language-never-computed contract holes.
