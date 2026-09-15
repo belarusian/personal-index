@@ -239,6 +239,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [cli_recommend.md](cli_recommend.md) (spec) — `personal_index.cli_recommend`:
   the `recommend` click command (query argument + --top-n/--data-dir/--keyword-weight/--tag-weight/--score-weight) and its private _load_recommender/_print_recommendations helpers; registered on the main group (cli.py:1511); distinct from content_recommender.py which has TWO scoring methods (seed-based recommend(seed,...) honoring all weights, and recommend_for_keywords where tag_weight is a no-op); the CLI wires up ONLY recommend_for_keywords (lines 80/87), so the docstring's "or seed content" clause (line 59) advertises a seed path the command never exposes (ARCH-99) contract hole.
 
+- [cli_top.md](cli_top.md) (spec) — `personal_index.cli_top`:
+  the `top_pages` click command (named "top"; --limit/--format/--data-dir) and its private _to_json/_print_text helpers; NEVER imported or registered on the main group (grep for cli_top across the package returns no import), so it is a DEAD parallel implementation of the LIVE inline `top` at cli.py:906; its _to_json emits a hand-built 6-key entry (rank, url, title, score, crawled_at, tags:[]) + top-level total, where tags is a hardcoded always-empty list even though IndexedPage has no tags field, while the live command emits p.to_dict() only (no rank/total/tags) — two incompatible JSON contracts for the same `top` command name (ARCH-100) contract hole.
+
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
