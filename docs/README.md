@@ -222,6 +222,9 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [publish_dashboard.md](publish_dashboard.md) (spec) — `personal_index.publish_dashboard`:
   publisher CLI (run/regenerate/validate_sync/_copy_dashboard_files/_git_commit_push/publish/main) that ships the generated dashboard + codemap to belarusian/search; validate_sync's 'in sync' docstring over-promises bidirectional equality but the comparison loop is one-sided (JSON→HTML only), so an HTML-embedded summary with extra keys still returns sync True (ARCH-93) contract hole.
 
+- [docs_generator.md](docs_generator.md) (spec) — `personal_index.docs_generator`:
+  dashboard/codemap generator (scan_modules/_parse_module/run_ruff/run_mypy/run_pytest/detect_dependencies/fetch_recent_commits/_compute_signals/_render_test_bars/generate_dashboard/generate_metadata_json/generate/generate_fast); the full pipeline `generate` never calls `_attribute_test_counts` (only `generate_fast` does), so per-source-module `test_count` stays a binary 0/1 from `run_pytest` and the test bar chart + S1 signal read a flag, not a real count, while the aggregate `total_tests` masks it (ARCH-94) contract hole.
+
 ### Legacy pages (pre-split; not yet re-audited)
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) (stale) — 6-stage pipeline overview;
