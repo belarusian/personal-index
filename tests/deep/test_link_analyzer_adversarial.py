@@ -322,6 +322,48 @@ class TestAggregateUniqueDomainsTruncation:
         agg = analyzer.get_aggregate_stats([r])
         assert agg["unique_external_domains"] == r.stats.unique_domains == 50
 
+    def test_aggregate_multi_page_dedup(self, analyzer):
+        # Two pages, each with 25 distinct external domains, overlapping by 15.
+        # Union = d0..d34 = 35 distinct; per-page unique_domains = 25 each.
+        p1 = [{"url": f"http://d{i}.com/x", "text": "t"} for i in range(25)]
+        p2 = [{"url": f"http://d{i}.com/x", "text": "t"} for i in range(10, 35)]
+        r1 = analyzer.analyze("http://example.com/1", p1)
+        r2 = analyzer.analyze("http://example.com/2", p2)
+        agg = analyzer.get_aggregate_stats([r1, r2])
+        assert agg["unique_external_domains"] == 35
+        assert agg["unique_external_domains"] == len(r1.all_external_domains | r2.all_external_domains)
+
+    def test_aggregate_exactly_20_boundary(self, analyzer):
+        # Exactly 20 distinct external domains: the top-20 window does not
+        # truncate here, so the aggregate must still report the true 20.
+        links = [{"url": f"http://d{i}.com/x", "text": "t"} for i in range(20)]
+        r = analyzer.analyze("http://example.com/", links)
+        agg = analyzer.get_aggregate_stats([r])
+        assert agg["unique_external_domains"] == 20
+        assert agg["unique_external_domains"] == r.stats.unique_domains
+
+    def test_aggregate_multi_page_full_overlap(self, analyzer):
+        # Two pages with the SAME 25 external domains: dedup must collapse to
+        # 25, not 50 (a top-20 key union would also wrongly report 20).
+        links = [{"url": f"http://d{i}.com/x", "text": "t"} for i in range(25)]
+        r1 = analyzer.analyze("http://example.com/1", links)
+        r2 = analyzer.analyze("http://example.com/2", links)
+        agg = analyzer.get_aggregate_stats([r1, r2])
+        assert agg["unique_external_domains"] == 25
+
+    def test_aggregate_internal_not_counted(self, analyzer):
+        # 25 internal (example.com) + 25 external (d0..d24): only the external
+        # domains count toward unique_external_domains.
+        links = (
+            [{"url": f"http://example.com/p{i}", "text": "i"} for i in range(25)]
+            + [{"url": f"http://d{i}.com/x", "text": "e"} for i in range(25)]
+        )
+        r = analyzer.analyze("http://example.com/", links)
+        agg = analyzer.get_aggregate_stats([r])
+        assert agg["unique_external_domains"] == 25
+        assert agg["internal_links"] == 25
+        assert agg["external_links"] == 25
+
 
 # ── end-to-end through the installed CLI (status) ───────────────────────
 
