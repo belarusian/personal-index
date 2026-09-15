@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: personal_index/cycle_signals.py
-Issue: (set at triage)
+Issue: #1469
 
 ## Symptom
 
