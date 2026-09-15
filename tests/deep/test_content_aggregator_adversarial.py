@@ -134,6 +134,37 @@ def test_merge_all_roundtrip_source_order():
     merged = agg.merge_all(deduplicate=False)
     assert [i["id"] for i in merged] == [3, 1, 2]
 
+def test_merge_all_id_false():
+    agg = make_agg()
+    agg.add_source("a", [{"id": False, "title": "A"}])
+    agg.add_source("b", [{"id": False, "title": "B"}])
+    merged = agg.merge_all()
+    assert len(merged) == 1
+    assert merged[0]["title"] == "A"
+
+def test_merge_all_id_list_key():
+    agg = make_agg()
+    agg.add_source("a", [{"id": [1, 2], "title": "A"}])
+    agg.add_source("b", [{"id": [1, 2], "title": "B"}])
+    merged = agg.merge_all()
+    assert len(merged) == 1
+    assert merged[0]["title"] == "A"
+
+def test_merge_all_falsy_id_keep_first():
+    agg = make_agg()
+    agg.add_source("a", [{"id": "", "title": "FIRST"}])
+    agg.add_source("b", [{"id": "", "title": "SECOND"}])
+    merged = agg.merge_all()
+    assert len(merged) == 1
+    assert merged[0]["title"] == "FIRST"
+
+def test_merge_all_falsy_id_no_cross_dedup():
+    agg = make_agg()
+    agg.add_source("a", [{"id": "", "title": "A"}])
+    agg.add_source("b", [{}])
+    merged = agg.merge_all()
+    assert len(merged) == 2
+
 def test_clear_source_exists():
     agg = make_agg()
     agg.add_source("s", [{"id": 1}])
