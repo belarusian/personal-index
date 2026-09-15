@@ -76,6 +76,41 @@ class TestCategorizeGuards:
         r = c.categorize(text="hello world", title="t", meta_description=None)
         assert isinstance(r.primary_topic, str)
 
+    def test_none_all_falsy_degrades_to_unknown(self):
+        """ARMOR (QA-14): title=None + meta_description=None with empty text
+        degrades to "" and hits the all-falsy guard path -> 'unknown', no
+        AttributeError. None must be absorbed as falsy, not crash."""
+        c = ContentCategorizer()
+        r = c.categorize(text="", title=None, meta_description=None)
+        assert r.primary_topic == "unknown"
+        assert r.topics == []
+        assert r.confidence == 0.0
+        assert r.reasons == ["no content provided"]
+
+    def test_none_meta_with_whitespace_text(self):
+        """ARMOR (QA-14): meta_description=None alongside truthy whitespace
+        text degrades to "" and goes through the normal path (no crash)."""
+        c = ContentCategorizer()
+        r = c.categorize(text="   ", title="t", meta_description=None)
+        assert isinstance(r.primary_topic, str)
+        assert r.topics == []
+
+    def test_both_none_with_url_set(self):
+        """ARMOR (QA-14): title=None + meta_description=None with a url set
+        and truthy text degrades gracefully (no AttributeError)."""
+        c = ContentCategorizer()
+        r = c.categorize(text="hello world", title=None, meta_description=None,
+                         url="http://example.com")
+        assert isinstance(r.primary_topic, str)
+        assert isinstance(r.topics, list)
+
+    def test_none_title_only_with_truthy_text(self):
+        """ARMOR (QA-14): title=None alone (meta empty) with truthy text
+        degrades to "" and still categorizes normally (no crash)."""
+        c = ContentCategorizer()
+        r = c.categorize(text="python programming", title=None, meta_description="")
+        assert isinstance(r.primary_topic, str)
+
 
 # ===========================================================================
 # ContentCategorizer - constructor out-of-range params
