@@ -2,7 +2,7 @@
 
 Status: OPEN
 Component: personal_index/session.py
-Issue: (to be created)
+Issue: #1473
 
 ## Symptom
 
