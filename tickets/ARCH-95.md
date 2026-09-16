@@ -1,6 +1,6 @@
 # ARCH-95: `setup_logging` silently coerces an unknown level string to INFO instead of raising
 
-Status: OPEN
+Status: CLAIMED 2026-09-16
 Component: personal_index/logging_config.py
 Issue: #1484
 
