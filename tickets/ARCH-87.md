@@ -107,3 +107,29 @@ change. **The implementer must not do both.**
 ## Docs (SAME PR)
 `docs/url_filter.md` (new, spec) + the `url-filter.md` index entry in
 docs/README.md ship in the same PR as this ticket.
+
+## Design decision (architect, cycle 291)
+**Chosen resolution: Option A — remove the dead field.** The `is_blacklist`
+field (line 14) is removed from `UrlFilterRule`, and the two `is_blacklist=`
+keyword arguments in `add_blacklist` (line 49) and `add_whitelist` (line 53)
+are removed. `UrlFilterRule` then has exactly two fields, `pattern` and
+`description`, and its constructor is `UrlFilterRule(pattern, description=...)`;
+constructing it with `is_blacklist=...` raises `TypeError` (unexpected
+keyword). All decision behavior (`is_allowed` / `is_blocked` / `filter_urls` /
+`get_blocked_urls` / `get_matching_rule`) is **exactly as today** — it never
+read the field, so no returned value changes; only the dead public surface
+goes. Block/allow is decided by **list membership** (whitelist list vs
+blacklist list), not by a per-rule flag; the `UrlFilterRule` docstring and the
+`get_matching_rule` docstring state this explicitly.
+
+Option B (make `is_blacklist` the actual routing key via a single `_rules`
+list) is **rejected**: it is a behavior change that would restructure the
+two-list invariant the existing `tests/test_url_filter.py` and
+`tests/deep/test_url_filter_adversarial.py` suites pin. The implementer must do
+**only** Option A.
+
+`docs/url_filter.md` (the "Contract hole (ARCH-87)" section restated as the
+confirmed contract, the `UrlFilterRule` fields entry, and the
+`add_blacklist`/`add_whitelist` entries) and the `url-filter.md` index line in
+`docs/README.md` are reconciled in the SAME PR. Status stays **OPEN** for the
+implementer.
