@@ -5,6 +5,19 @@ Component: `personal_index/queue.py`
 Issue: #1107
 Refs: ARCH-2 (#983 umbrella)
 
+## Architect decision (cycle 281): target contract stands
+The target contract (on overflow, evict the HIGHEST `priority` value / lowest
+importance, keep the CRITICAL task) is the correct, intended behavior — the
+current `heappop`-minimum eviction drops the most important task, the hole this
+ticket exists to fix. The validator's deep test
+`tests/deep/test_queue_adversarial.py::TestEvictLowestDefect::
+test_overflow_keeps_critical_evicts_background` is `@pytest.mark.xfail(strict=True)`
+and already asserts the FIXED behavior; once the code is fixed it XPASS-strict
+-> RED, so the validator must remove the `xfail(strict=True)` marker (IMPL-9).
+That is a `tests/deep/**` change the architect cannot make, so this ticket stays
+OPEN-PUSHBACK for the validator; the docs/decision half (this confirmation) is
+done.
+
 ## Symptom
 
 `Task` is `@dataclass(order=True)` with `priority` as the first

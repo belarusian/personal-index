@@ -1,6 +1,6 @@
 # ARCH-77 — encoding: `EncodingDetector.decode` silently degrades to lossy UTF-8 (`errors="replace"`) on a bad/unknown explicit encoding instead of raising, and the docstring does not document it
 
-Status: OPEN-PUSHBACK (IMPL-12, cycle 304)
+Status: OPEN (architect re-scoped to documented-fallback contract, cycle 281; IMPL-12 cleared — the deep tests already pin this behavior, so the docstring/docs reword is the sole fix; implementer re-claims)
 Component: `personal_index/encoding.py` — `EncodingDetector.decode` (lines 66-74); the fallback `return data.decode("utf-8", errors="replace")` (line 74); the `decode` docstring (line 67). `convert` (lines 83-85) inherits the hole via its `decode` call.
 Umbrella: ARCH-2 (#983)
 Issue: #1417
@@ -55,36 +55,44 @@ encoding being silently papered over.
 - `convert` inherits the hole **only** when `from_encoding` is wrong; a
   correct `from_encoding` is unaffected.
 
-## Public contract (recommended)
+## Public contract (authoritative — architect re-scoped, cycle 281)
 `decode(self, data: bytes, encoding: str | None = None) -> str`:
 - `encoding is None`: auto-detect via `detect(data)` and decode with the
   detected encoding (unchanged).
 - `encoding` given and decodable: return `data.decode(encoding)` (unchanged).
 - `encoding` given and **not** decodable (`UnicodeDecodeError`) or not a
-  registered codec (`LookupError`): **raise** the original exception rather
-  than silently returning a lossy `errors="replace"` string. The caller who
-  named a specific encoding gets a clear failure, not corrupted text.
-  (Alternative acceptable contract: keep the fallback but make it explicit and
-  documented — log a warning and/or return a sentinel — but the default
-  recommendation is to raise, matching the "a wrong explicit encoding is a
-  caller error" expectation. The implementer picks ONE and the docstring must
-  state it exactly.)
-- The `decode` docstring must state the exact behavior for the
-  bad/unknown-encoding path (raise, or the documented fallback) instead of the
-  current blanket "auto-detecting if needed."
+  registered codec (`LookupError`): return `data.decode("utf-8",
+  errors="replace")` — the **documented lossy fallback** (the current
+  behavior, unchanged). The fix is **doc-only**: the `decode` docstring must
+  state this exact fallback instead of the blanket "auto-detecting if
+  needed," and `docs/encoding.md` must document it as the contract.
 
-`encode` and `convert` are unchanged except that `convert`'s docstring should
-note it inherits `decode`'s bad-`from_encoding` behavior.
+**Why documented-fallback, not raise (cycle 281 decision):** the validator's
+deep tests (`tests/deep/test_encoding_adversarial.py::
+test_decode_invalid_encoding_falls_back_to_utf8_replace` and
+`test_decode_unknown_encoding_name_falls_back`) already pin the lossy-fallback
+behavior and are the witness that the corrected docstring matches reality.
+Re-scoping to the documented-fallback contract keeps the behavior unchanged,
+so those deep tests stay green with NO validator change — the docstring/docs
+reword is the SOLE fix. (The earlier "raise" recommendation would have
+required the validator to rewrite both deep tests; that is no longer the
+target.)
+- The `decode` docstring must state the exact behavior for the
+  bad/unknown-encoding path (the `errors="replace"` UTF-8 fallback) instead of
+  the current blanket "auto-detecting if needed."
+
+`encode` is unchanged. `convert` is unchanged except that `convert`'s
+docstring should note it inherits `decode`'s bad-`from_encoding` fallback
+behavior.
 
 ## Acceptance criteria
 1. `decode` with a wrong explicit encoding for the bytes (e.g.
-   `decode(b"caf\xe9", "utf-8")`) raises `UnicodeDecodeError` (or, if the
-   documented-fallback contract is chosen, returns a value that is NOT
-   silently equal to a lossy `errors="replace"` string without a documented
-   signal) — it does not return `"caf\ufffd"` silently.
+   `decode(b"caf\xe9", "utf-8")`) returns the documented lossy fallback
+   `"caf\ufffd"` (does NOT raise) — and the `decode` docstring states this
+   fallback exactly.
 2. `decode` with an unregistered codec name (e.g. `decode(b"hello", "utf-9")`)
-   raises `LookupError` (or the documented fallback) — it does not silently
-   return `"hello"` with no signal.
+   returns `"hello"` (the `LookupError` is swallowed by the documented
+   fallback; does NOT raise) — and the docstring states this too.
 3. `decode` with `encoding=None` (auto-detect) is unchanged:
    `decode(b"caf\xe9")` -> `"café"`, `decode(b"hello world")` ->
    `"hello world"` (existing `test_decode_auto` stays green).
@@ -95,13 +103,13 @@ note it inherits `decode`'s bad-`from_encoding` behavior.
    correct `from_encoding` is unchanged (existing `test_convert` stays green).
 
 ## Pinning tests to add (tests/test_encoding.py)
-- **Wrong-encoding pin (the hole):** `decode(b"caf\xe9", "utf-8")` — assert it
-  raises `UnicodeDecodeError` (or the documented-fallback contract's observable
-  signal), NOT that it returns `"caf\ufffd"` silently. Pins the corrected
-  behavior against the returned/raised object, not the docstring.
+- **Wrong-encoding pin (the hole):** `decode(b"caf\xe9", "utf-8")` — assert
+  it returns `"caf\ufffd"` (the documented lossy fallback), NOT that it
+  raises. Pins the corrected (documented) behavior against the returned
+  object, not the docstring wording.
 - **Unknown-codec pin (guard path):** `decode(b"hello", "utf-9")` — assert it
-  raises `LookupError` (or the documented fallback), NOT that it silently
-  returns `"hello"`. Pins the `LookupError` branch, not just the
+  returns `"hello"` (the `LookupError` branch, documented fallback), NOT that
+  it raises. Pins the `LookupError` branch, not just the
   `UnicodeDecodeError` branch.
 - **Auto-detect pin (normal case, guard against over-broad change):**
   `decode(b"caf\xe9")` -> `"café"` and `decode(b"hello world")` ->
