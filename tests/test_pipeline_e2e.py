@@ -212,6 +212,64 @@ class TestPipelineE2EWithInterests:
         assert result.pages_indexed >= 1
         pipeline.close()
 
+    def test_pipeline_score_filtered_out_counter(self, tmp_path: Path) -> None:
+        """Score-threshold drop is counted in pages_score_filtered_out."""
+        data_dir = str(tmp_path / "data")
+        from personal_index.config.pipeline_config import PipelineConfig
+
+        config = PipelineConfig(min_score_threshold=0.5)
+        pipeline = PipelineE2E(data_dir=data_dir, config=config)
+        pipeline.add_interest(name="python", keywords=["python"], priority=10)
+
+        good_file = tmp_path / "good.txt"
+        good_file.write_text(
+            "Python Python Python Python Python Python Python Python "
+            "Python Python Python programming language for development."
+        )
+        bad_file = tmp_path / "bad.txt"
+        bad_file.write_text(
+            "This article is about cooking recipes and baking "
+            "techniques for home chefs and professional bakers."
+        )
+
+        result = pipeline.run_from_files([str(good_file), str(bad_file)])
+
+        assert result.pages_score_filtered_out == 1
+        assert result.pages_filtered_in == 2
+        assert result.pages_indexed == 1
+        assert result.pages_filtered_in == (
+            result.pages_indexed + result.pages_score_filtered_out
+        )
+        pipeline.close()
+
+    def test_pipeline_score_filtered_out_guard_zero_threshold(
+        self, tmp_path: Path
+    ) -> None:
+        """Default threshold 0.0 leaves the counter at 0."""
+        data_dir = str(tmp_path / "data")
+        from personal_index.config.pipeline_config import PipelineConfig
+
+        config = PipelineConfig(min_score_threshold=0.0)
+        pipeline = PipelineE2E(data_dir=data_dir, config=config)
+        pipeline.add_interest(name="python", keywords=["python"], priority=10)
+
+        good_file = tmp_path / "good.txt"
+        good_file.write_text(
+            "Python Python Python Python Python Python Python Python "
+            "Python Python Python programming language for development."
+        )
+        bad_file = tmp_path / "bad.txt"
+        bad_file.write_text(
+            "This article is about cooking recipes and baking "
+            "techniques for home chefs and professional bakers."
+        )
+
+        result = pipeline.run_from_files([str(good_file), str(bad_file)])
+
+        assert result.pages_score_filtered_out == 0
+        assert result.pages_indexed == 2
+        pipeline.close()
+
 
 class TestPipelineE2ESearch:
     """Test search functionality after pipeline indexing."""

@@ -37,6 +37,7 @@ class PipelineRunResult:
     pages_filtered_in: int = 0
     pages_filtered_out: int = 0
     pages_scored: int = 0
+    pages_score_filtered_out: int = 0
     pages_tagged: int = 0
     pages_indexed: int = 0
     tags_applied: int = 0
@@ -60,6 +61,7 @@ class PipelineRunResult:
             f"  Filtered in:      {self.pages_filtered_in}",
             f"  Filtered out:     {self.pages_filtered_out}",
             f"  Pages scored:     {self.pages_scored}",
+            f"  Score filtered out:{self.pages_score_filtered_out}",
             f"  Pages tagged:     {self.pages_tagged}",
             f"  Tags applied:     {self.tags_applied}",
             f"  Pages indexed:    {self.pages_indexed}",
@@ -234,6 +236,7 @@ class PipelineE2E:
             score = self._stage_score(page)
             result.pages_scored += 1
             if score < self.config.min_score_threshold:
+                result.pages_score_filtered_out += 1
                 return
             self._apply_tags_and_index(page, result)
         except (RuntimeError, OSError) as e:

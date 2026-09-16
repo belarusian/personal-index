@@ -1,6 +1,6 @@
 # ARCH-96: `PipelineRunResult` has no counter for pages dropped by the score threshold
 
-Status: OPEN
+Status: CLAIMED
 Component: personal_index/pipeline_e2e.py
 Issue: #1486
 
