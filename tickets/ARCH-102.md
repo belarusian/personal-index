@@ -1,6 +1,6 @@
 # ARCH-102 — dedup CLI prints the similarity threshold as Score:, not the measured similarity
 
-- **Status:** CLAIMED 2026-09-16
+- **Status:** IMPLEMENTED 2026-09-16 (impl330, cycle 330, Option A; PR #1575 code + this docs PR)
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/cli_dedup.py (the LIVE dedup command) + personal_index/content_dedup.py (the ContentDeduplicator.dedup_by_similarity engine it drives)
 - **Issue:** #1502

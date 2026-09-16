@@ -35,7 +35,7 @@ Line numbers refer to `personal_index/cli_dedup.py`.
 | `_build_dedup_items` | 66 | `(pages) -> list[dict]` | For each page, emits `{"url": page.url, "title": page.title, "content": page.content or ""}`. |
 | `_dispatch_dedup` | 82 | `(items, method: str, similarity_threshold: float) -> DedupResult` | Builds `ContentDeduplicator(similarity_threshold=similarity_threshold)` and returns `dedup_by_hash(items)` / `dedup_by_url(items)` / `dedup_by_similarity(items)` / `dedup_all(items)` for `method` `hash` / `url` / `similarity` / else. |
 | `_display_result` | 105 | `(result) -> None` | Echoes `result.summary()` then a blank line. |
-| `_display_duplicate_groups` | 111 | `(result) -> None` | Echoes `Duplicate Groups:` + a rule, then per group: `Representative: <url>`, `Method: <dedup_method>`, `Score: <similarity_score:.2f>`, and one `Duplicate: <url>` line per duplicate. **The `Score` line prints `group.similarity_score`** — see the contract hole below. |
+| `_display_duplicate_groups` | 111 | `(result) -> None` | Echoes `Duplicate Groups:` + a rule, then per group: `Representative: <url>`, `Method: <dedup_method>`, `Threshold: <similarity_score:.2f>`, and one `Duplicate: <url>` line per duplicate. **The `Threshold` line prints `group.similarity_score`** — for similarity groups this is the configured `--similarity-threshold` (the grouping cutoff), not a measured per-group similarity (see the resolved note below). |
 | `_remove_duplicates` | 123 | `(idx, result) -> None` | Collects every `group.duplicates` url into a set, calls `idx.remove_page(url)` for each (counting successes), then `idx._save()`; echoes the removed count. |
 
 ## Invariants
@@ -60,19 +60,19 @@ Line numbers refer to `personal_index/cli_dedup.py`.
   `dedup_by_similarity` / `dedup_all` consult it; `hash` and `url` dedup are
   exact and ignore the threshold.
 
-## Known contract hole
+## Resolved contract note (ARCH-102)
 
-- **`Score:` prints the threshold, not the measured similarity** (see
-  `tickets/ARCH-102.md`): for `method == "similarity"`,
-  `ContentDeduplicator.dedup_by_similarity` sets each group's
-  `similarity_score` to `self.similarity_threshold`
-  (`content_dedup.py:388`), not the Jaccard `text_similarity` value that
-  `_find_similarity_group` computes for the grouping decision
-  (`content_dedup.py:417`) and then discards. The CLI's
-  `_display_duplicate_groups` (`cli_dedup.py:118`) prints that field as
-  `Score: <x>`, so a user reading the report sees the configured threshold
-  (e.g. `0.90`) on every similarity group, not the actual word-overlap
-  similarity of the representative and its duplicates. The deep test
-  `test_score_is_threshold`
-  (`tests/deep/test_cli_dedup_adversarial.py:360-367`) pins the current
-  threshold-as-score behavior.
+- **`Threshold:` prints the configured cutoff, not a measured similarity** (resolved by `tickets/ARCH-102.md`, Option A — doc/label-only, no behavior change).
+  For `method == "similarity"`, `ContentDeduplicator.dedup_by_similarity` sets each
+  group's `similarity_score` to `self.similarity_threshold` (`content_dedup.py`), not the
+  Jaccard `text_similarity` value that `_find_similarity_group` computes for the grouping
+  decision and then discards. To keep the user-facing contract honest, the field
+  `DuplicateGroup.similarity_score` now carries a docstring stating its meaning per
+  `dedup_method` (1.0 for exact_hash/normalized_url groups; the configured
+  `similarity_threshold` for similarity groups), and the CLI's
+  `_display_duplicate_groups` (`cli_dedup.py:118`) relabels the line from `Score:` to
+  `Threshold:` so the printed number is not misread as a per-group similarity.
+  The deep test `test_score_is_threshold`
+  (`tests/deep/test_cli_dedup_adversarial.py`) remains the witness: it still pins the
+  threshold-as-score behavior and passes unchanged. A CLI-level test
+  (`tests/test_cli_dedup.py`) pins the new `Threshold:` label.
