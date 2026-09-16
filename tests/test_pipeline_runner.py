@@ -256,6 +256,59 @@ class TestPipelineRunnerRun:
         assert len(stats.errors) > 0
         runner.close()
 
+    def test_run_non_prefix_stage_subset_no_op(self, tmp_path):
+        """A non-prefix subset (index only) no-ops: crawl is skipped so index gets empty input."""
+        data_dir = str(tmp_path / "data")
+        runner = PipelineRunner(data_dir=data_dir)
+
+        mock_crawler = MagicMock()
+        mock_crawler.crawl.return_value = [
+            CrawledPage(
+                url="http://example.com/page1",
+                title="Test Page 1",
+                content="This is a test page with example content.",
+                status_code=200,
+            ),
+        ]
+        runner._crawler = mock_crawler
+
+        stats = runner.run(["http://example.com"], stages={"index"})
+
+        # crawl was skipped, so nothing reached the index stage
+        assert stats.pages_crawled == 0
+        assert stats.pages_indexed == 0
+        # the crawler was never invoked because crawl was not selected
+        mock_crawler.crawl.assert_not_called()
+        runner.close()
+
+    def test_run_prefix_subset_runs_through(self, tmp_path):
+        """The full prefix (all six stages) is the only selection that reaches index."""
+        data_dir = str(tmp_path / "data")
+        runner = PipelineRunner(data_dir=data_dir)
+
+        from personal_index.models import Interest
+        runner._interest_store.add(Interest(name="test", keywords=["test", "example"]))
+
+        mock_crawler = MagicMock()
+        mock_crawler.crawl.return_value = [
+            CrawledPage(
+                url="http://example.com/page1",
+                title="Test Page 1",
+                content="This is a test page with example content.",
+                status_code=200,
+            ),
+        ]
+        runner._crawler = mock_crawler
+
+        stats = runner.run(
+            ["http://example.com"],
+            stages={"crawl", "extract", "filter", "score", "tag", "index"},
+        )
+
+        assert stats.pages_crawled >= 1
+        assert stats.pages_indexed >= 1
+        runner.close()
+
 
 class TestPipelineRunnerClose:
     """Tests for close method."""

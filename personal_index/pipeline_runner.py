@@ -290,9 +290,15 @@ class PipelineRunner:
         Args:
             seed_urls: List of URLs to start crawling from.
             max_depth: Override max crawl depth.
-            stages: Optional set of stage names to run (subset of
-                {"crawl", "extract", "filter", "score", "tag", "index"}).
-                None runs every stage (the default).
+            stages: Optional set of stage names to run. The stages
+                always execute in the fixed order crawl -> extract ->
+                filter -> score -> tag -> index, and each stage
+                consumes the previous stage's output, so a meaningful
+                selection is a prefix of that order. A non-prefix
+                subset (e.g. {"index"}) runs with an empty input and
+                produces no indexed pages. An unknown stage name is
+                ignored without raising. None runs every stage (the
+                default).
 
         Returns:
             PipelineStats with results from each stage.
@@ -327,10 +333,16 @@ class PipelineRunner:
 
         Args:
             file_paths: Local files to read in place of crawling.
-            stages: Optional set of stage names to run (subset of
-                {"crawl", "extract", "filter", "score", "tag", "index"}).
-                None runs every stage (the default). When "crawl" is
-                absent the file-reading step is skipped entirely.
+            stages: Optional set of stage names to run. The stages
+                always execute in the fixed order crawl -> extract ->
+                filter -> score -> tag -> index, and each stage
+                consumes the previous stage's output, so a meaningful
+                selection is a prefix of that order. A non-prefix
+                subset (e.g. {"index"}) runs with an empty input and
+                produces no indexed pages. An unknown stage name is
+                ignored without raising. None runs every stage (the
+                default). When "crawl" is absent the file-reading
+                step is skipped entirely.
         """
         stats = PipelineStats()
         start_time = time.time()
