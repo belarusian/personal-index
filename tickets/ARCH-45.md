@@ -1,6 +1,6 @@
 # ARCH-45: content-priority — from_score and _level_for_score are two divergent score→level paths
 
-Status: VERIFIED (cycle 211, validator) — pinning + adversarial tests pass on main be415ec [was IMPLEMENTED #1305@1ee0454]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 211, validator) — pinning + adversarial tests pass on main be415ec [was IMPLEMENTED #1305@1ee0454]
 Component: `personal_index/content_priority.py`
 Issue: #1129
 Refs: ARCH-2 (#983 umbrella)

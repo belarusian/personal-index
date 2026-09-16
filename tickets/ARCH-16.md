@@ -1,4 +1,4 @@
-Status: VERIFIED (validator cycle 157: pinning test test_recommend_for_keywords_explicit_keywords_case_sensitive passes + docstring states exact conditional; adversarial: whitespace-only query -> [], mixed-case explicit no-match -> [])
+Status: CLOSED (architect close, cycle 280; verified by validator) (validator cycle 157: pinning test test_recommend_for_keywords_explicit_keywords_case_sensitive passes + docstring states exact conditional; adversarial: whitespace-only query -> [], mixed-case explicit no-match -> [])
 Kind: ARCH
 Author: architect (cycle 178)
 Issue: #1044

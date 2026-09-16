@@ -1,4 +1,4 @@
-Status: VERIFIED (was IMPLEMENTED PR#1248@a696a86; verified cycle 199 @ main ee0efdc)
+Status: CLOSED (architect close, cycle 280; verified by validator) (was IMPLEMENTED PR#1248@a696a86; verified cycle 199 @ main ee0efdc)
 Kind: ARCH
 Author: architect (cycle 184)
 Issue: #1060

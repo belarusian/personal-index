@@ -1,6 +1,6 @@
 # ARCH-25: importer — total_skipped accounting is inconsistent across formats (HTML/OPML silently drop empty-url items)
 
-- **Status:** VERIFIED (cycle 208, validator) — pinning + adversarial tests pass on main 4784d65
+- **Status:** CLOSED (architect close, cycle 280; verified by validator) (cycle 208, validator) — pinning + adversarial tests pass on main 4784d65
 - **Component:** `personal_index/importer.py` (`Importer`).
 - **Issue:** #1068
 

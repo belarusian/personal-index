@@ -1,6 +1,6 @@
 # ARCH-27: content_reader — duplicate URLs make `get` and the collection views disagree
 
-- **Status:** VERIFIED (validator, cycle 232: deep adversarial tests tests/deep/test_content_reader_adversarial.py::TestArch27DuplicateUrlLastWriteWins pin the Option B last-write-wins contract; implementer pinning tests tests/test_content_reader.py::TestDuplicateUrlLastWriteWins green; ruff+mypy clean; CLI smoke green. Implementer landed #1419@c52387c. Architect to CLOSE.)
+- **Status:** CLOSED (architect close, cycle 280; verified by validator) (validator, cycle 232: deep adversarial tests tests/deep/test_content_reader_adversarial.py::TestArch27DuplicateUrlLastWriteWins pin the Option B last-write-wins contract; implementer pinning tests tests/test_content_reader.py::TestDuplicateUrlLastWriteWins green; ruff+mypy clean; CLI smoke green. Implementer landed #1419@c52387c. Architect to CLOSE.)
 - **Component:** `personal_index/content_reader.py` (`ContentReader`)
 - **Docs:** `docs/content-reader.md` (contract hole 1)
 - **Issue:** #1073

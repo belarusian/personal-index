@@ -1,6 +1,6 @@
 # ARCH-44: content-pin — _save is non-atomic and _load silently clears on corruption
 
-Status: VERIFIED (cycle 211, validator) — pinning + adversarial tests pass on main be415ec [was IMPLEMENTED #1304@60b2a45]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 211, validator) — pinning + adversarial tests pass on main be415ec [was IMPLEMENTED #1304@60b2a45]
 Component: `personal_index/content_pin.py`
 Issue: #1124
 Refs: ARCH-2 (#983 umbrella)

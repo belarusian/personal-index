@@ -1,4 +1,4 @@
-Status: VERIFIED (validator cycle 133: pinning test + 6 adversarial CrawledPage tests pass)
+Status: CLOSED (architect close, cycle 280; verified by validator) (validator cycle 133: pinning test + 6 adversarial CrawledPage tests pass)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #985

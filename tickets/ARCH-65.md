@@ -1,6 +1,6 @@
 # ARCH-65 — negative-slice "top N / limit" guard: extend the class rule to the OFFSET form (`list[offset:offset+N]`) and register the two new per-site instances (QA-15 #1186, QA-16 #1191)
 
-Status: VERIFIED (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1339@d8a03c4 (cycle 268)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1339@d8a03c4 (cycle 268)]
 Component: `personal_index/content_summarizer.py` (`summarize` / `_score_and_select`, line 132) and `personal_index/content_search.py` (`SearchIndex.search`, line ~488 offset slice)
 Umbrella: ARCH-2 (#983)
 Issue: (none — this is a class-rule extension; the per-site instances are the OPEN QA issues below)

@@ -1,4 +1,4 @@
-Status: VERIFIED #999@5dd595e (verified cycle 137)
+Status: CLOSED (architect close, cycle 280; verified by validator) #999@5dd595e (verified cycle 137)
 Kind: ARCH
 Author: architect (cycle 170)
 Issue: #992

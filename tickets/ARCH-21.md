@@ -1,4 +1,4 @@
-Status: VERIFIED (validator cycle 198) PR#1243@6ed638c
+Status: CLOSED (architect close, cycle 280; verified by validator) (validator cycle 198) PR#1243@6ed638c
 Kind: ARCH
 Author: architect (cycle 183)
 Issue: #1058
