@@ -1,5 +1,7 @@
 """Tests for the interest management module."""
 
+import json
+
 from personal_index.interests import Interest, InterestStore
 
 
@@ -162,3 +164,47 @@ class TestInterestStore:
         path.write_text("42")
         store = InterestStore(store_path=str(path))
         assert len(store.list_all()) == 0
+
+    def test_load_out_of_enum_interest_type_degrades_to_empty(self, tmp_path):
+        """ARCH-85: a valid-JSON dict with an out-of-enum interest_type must
+        degrade to an empty store, not raise."""
+        path = tmp_path / "interests.json"
+        path.write_text(
+            json.dumps(
+                {"foo": {"name": "foo", "interest_type": "bogus", "keywords": ["k"]}}
+            )
+        )
+        store = InterestStore(store_path=str(path))
+        assert store.list_all() == []
+
+    def test_load_out_of_enum_match_mode_degrades_to_empty(self, tmp_path):
+        """ARCH-85: a valid-JSON dict with an out-of-enum match_mode must
+        degrade to an empty store, not raise."""
+        path = tmp_path / "interests.json"
+        path.write_text(
+            json.dumps(
+                {"foo": {"name": "foo", "match_mode": "bogus", "keywords": ["k"]}}
+            )
+        )
+        store = InterestStore(store_path=str(path))
+        assert store.list_all() == []
+
+    def test_load_well_formed_dict_still_populates(self, tmp_path):
+        """ARCH-85: a well-formed dict (all records constructible) still
+        populates the store exactly as today."""
+        path = tmp_path / "interests.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "foo": {
+                        "name": "foo",
+                        "interest_type": "keyword",
+                        "match_mode": "any",
+                        "keywords": ["k"],
+                    }
+                }
+            )
+        )
+        store = InterestStore(store_path=str(path))
+        assert len(store.list_all()) == 1
+        assert store.get("foo") is not None
