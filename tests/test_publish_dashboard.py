@@ -190,6 +190,38 @@ class TestValidateSync:
         assert result["sync"] is False
         assert result["reason"] == "no embedded metadata"
 
+    def test_validate_sync_html_only_key_still_sync(self, tmp_path):
+        """A key present only in the HTML-embedded summary is ignored (one-sided)."""
+        json_summary = {"total_modules": 1, "total_errors": 0, "total_warnings": 0}
+        html_summary = {"total_modules": 1, "total_errors": 0, "total_warnings": 0, "note": "extra"}
+        json_path = tmp_path / "codemap.json"
+        json_path.write_text(json.dumps({"summary": json_summary}))
+        html_path = tmp_path / "dashboard.html"
+        html_path.write_text(
+            '<script type="application/json" id="codemap-metadata">'
+            + json.dumps({"summary": html_summary})
+            + "</script>"
+        )
+        result = publish_dashboard.validate_sync(html_path, json_path)
+        assert result["sync"] is True
+        assert result["summary"] == {"total_modules": 1, "total_errors": 0, "total_warnings": 0}
+
+    def test_validate_sync_json_only_key_detected(self, tmp_path):
+        """A key present in the JSON codemap but absent in HTML is detected (JSON -> HTML)."""
+        json_summary = {"total_modules": 1, "total_errors": 0, "total_warnings": 0, "total_lines": 100}
+        html_summary = {"total_modules": 1, "total_errors": 0, "total_warnings": 0}
+        json_path = tmp_path / "codemap.json"
+        json_path.write_text(json.dumps({"summary": json_summary}))
+        html_path = tmp_path / "dashboard.html"
+        html_path.write_text(
+            '<script type="application/json" id="codemap-metadata">'
+            + json.dumps({"summary": html_summary})
+            + "</script>"
+        )
+        result = publish_dashboard.validate_sync(html_path, json_path)
+        assert result["sync"] is False
+        assert any("total_lines" in m for m in result["mismatches"])
+
 
 class TestGitCommitPushNonDictGuard:
     """Regression tests: _git_commit_push() must not crash on non-dict codemap JSON."""
