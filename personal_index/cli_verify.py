@@ -206,21 +206,6 @@ def _create_test_page(data_dir: str) -> CrawledPage:
     )
 
 
-def _run_filter(filter: ContentFilter, page: CrawledPage) -> tuple[bool, str]:
-    """Run the content filter on a page.
-
-    Args:
-        filter: The ContentFilter instance.
-        page: The CrawledPage to filter.
-
-    Returns:
-        Tuple of (passed, message).
-    """
-    if not filter.should_include(page):
-        return False, "Content was filtered out"
-    return True, ""
-
-
 def _run_score(scorer: ContentScorer, page: CrawledPage, content: str) -> float:
     """Run the content scorer on a page and set its relevance score.
 
