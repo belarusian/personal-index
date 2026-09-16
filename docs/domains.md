@@ -70,8 +70,12 @@ bool = False`.
 - `get_page_count(domain) -> int` — `0` when unrecorded.
 - `reset_counts()` — clears `_page_counts` (rules untouched).
 - `remove(domain) -> bool` — deletes the rule if present and saves, returns
-  `True`; returns `False` when absent. **Does NOT recompute
-  `_has_whitelist`** (see contract holes).
+  `True`; returns `False` when absent. **Decided contract (ARCH-84, Option A):**
+  after deletion it **recomputes `_has_whitelist = any(r.allowed for r in
+  _rules.values())`** (the same expression `_load` uses), so removing the last
+  allow rule restores the allow-all default for unlisted domains. (The current
+  code does not yet recompute — the fix is pending implementation; see
+  "Documented Contract Hole".)
 - `list_rules() -> list[DomainRule]` — `list(self._rules.values())`.
 - `get_max_depth(domain) -> int` — the rule's `max_depth` when present,
   else the default `3`.
@@ -83,6 +87,10 @@ bool = False`.
 - **Whitelist semantics**: the presence of *any* allow rule makes the manager
   a whitelist — unlisted domains are then disallowed. A block-only manager is
   **not** a whitelist (unlisted domains stay allowed).
+- **`_has_whitelist` is always derived from the rule set** (confirmed contract,
+  ARCH-84 Option A): it equals `any(r.allowed for r in _rules.values())`,
+  recomputed on load and after every rule removal, and set on every allow — so
+  removing the last allow rule restores the allow-all default.
 - **Upset is last-write-wins**: `add_allow`/`add_block` overwrite the existing
   rule for a domain; there is no duplicate-domain error.
 - **Page counts are in-memory only** — never persisted to `rules_file`; a
@@ -94,17 +102,43 @@ bool = False`.
 `DomainRule` fields). Load is defensive (non-dict / malformed JSON degrades to
 empty). Save is non-atomic (plain write).
 
-## Contract holes
+## Documented Contract Hole
 
-- **`remove()` leaves `_has_whitelist` stale (ARCH-84).** `_has_whitelist` is
-  set to `True` by `add_allow` and recomputed in `_load`, but `remove()`
-  deletes the rule and saves **without recomputing it**. So removing the last
-  allow rule leaves `_has_whitelist == True` even though no allow rule
-  remains: `is_allowed()` for every *unlisted* domain flips from `True`
-  (allow-all) to `False` (deny-all) — a silent whitelist lockout. The existing
-  tests only assert the *removed domain's own* status after `remove()`, never
-  an unlisted domain, so the stale flag is unpinned. (Adjacent behaviors that
-  are **NOT** holes: `from_dict` non-mapping/unknown-key degradation, the
-  `max_pages=0`/`>=` boundary, exact-match case sensitivity, and
-  block-does-not-set-whitelist are all already pinned by
-  `tests/deep/test_domains_adversarial.py`.)
+**`remove()` and `_has_whitelist` — CONFIRMED contract (ARCH-84, Option A:
+recompute after deletion).** The hole was that `_has_whitelist` is set to
+`True` by `add_allow` and recomputed in `_load`, but `remove()` deleted the
+rule and saved **without recomputing it** — so removing the last allow rule
+left `_has_whitelist == True` even though no allow rule remained, and
+`is_allowed()` for every *unlisted* domain silently flipped from `True`
+(allow-all) to `False` (deny-all). The architect resolved the open choice in
+cycle 288 by confirming **Option A (lossless, symmetric with `_load`)** as the
+contract:
+
+- `remove()` recomputes `_has_whitelist = any(r.allowed for r in
+  _rules.values())` after `del self._rules[domain]` (the same expression
+  `_load` uses), so the flag is always derived from the surviving rule set.
+- Removing the **last** allow rule restores the allow-all default: after
+  `add_allow("a.com")` then `remove("a.com")`, `is_allowed("unlisted.com")`
+  is `True` and `list_rules() == []`.
+- Removing **one of many** allow rules keeps the whitelist active: after
+  `add_allow("a.com")` + `add_allow("b.com")` then `remove("a.com")`,
+  `is_allowed("unlisted.com")` is still `False` and `is_allowed("b.com")` is
+  `True`.
+- Removing a **block** rule is a no-op for the flag: after
+  `add_block("b.com")` then `remove("b.com")`, `is_allowed("unlisted.com")`
+  is `True` (a block-only set was never a whitelist).
+
+The `remove()` and class docstrings must state this invariant. The existing
+tests (`test_remove_rule`, `test_remove_nonexistent`,
+`tests/deep/test_domains_adversarial.py::test_remove_existing`,
+`test_remove_missing`) assert only the *removed domain's own* status and must
+still pass unchanged; the corrected contract is pinned by the new
+`tests/test_domains.py` tests named in ARCH-84
+(`test_remove_last_allow_restores_allow_all`,
+`test_remove_one_of_many_keeps_whitelist`,
+`test_remove_block_keeps_allow_all`), which are the witness that this
+corrected contract matches the implemented behavior. (Adjacent behaviors that
+are **NOT** holes: `from_dict` non-mapping/unknown-key degradation, the
+`max_pages=0`/`>=` boundary, exact-match case sensitivity, and
+block-does-not-set-whitelist are all already pinned by
+`tests/deep/test_domains_adversarial.py`.)
