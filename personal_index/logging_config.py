@@ -15,7 +15,9 @@ def setup_logging(
     if verbose:
         level = "DEBUG"
 
-    numeric_level = getattr(logging, level.upper(), logging.INFO)
+    numeric_level = getattr(logging, level.upper(), None)
+    if numeric_level is None or not isinstance(numeric_level, int):
+        raise ValueError(f"Unknown logging level: {level!r}")
 
     root_logger = logging.getLogger("personal_index")
     root_logger.setLevel(numeric_level)

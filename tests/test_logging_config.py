@@ -3,6 +3,8 @@
 import logging
 from pathlib import Path
 
+import pytest
+
 from personal_index.logging_config import get_logger, setup_logging
 
 
@@ -23,6 +25,22 @@ class TestSetupLogging:
         setup_logging(level="WARNING")
         logger = logging.getLogger("personal_index")
         assert logger.level == logging.WARNING
+
+    def test_unknown_level_raises(self):
+        logger = logging.getLogger("personal_index")
+        logger.setLevel(logging.ERROR)
+        with pytest.raises(ValueError, match="VERBOSE"):
+            setup_logging(level="VERBOSE")
+        # The failed call must not have coerced the level to INFO.
+        assert logger.level == logging.ERROR
+
+    @pytest.mark.parametrize(
+        "lv", ["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"]
+    )
+    def test_valid_levels_still_honored(self, lv):
+        setup_logging(level=lv)
+        logger = logging.getLogger("personal_index")
+        assert logger.level == getattr(logging, lv)
 
     def test_file_handler(self, tmp_path):
         log_file = str(tmp_path / "test.log")
