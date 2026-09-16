@@ -84,30 +84,6 @@ class TestPipelineHelpers:
         assert "Python" in page.content
         assert page.url.endswith("test_article.txt")
 
-    def test_run_filter_passes(self, tmp_path):
-        """_run_filter returns True for valid content."""
-        from personal_index.cli_verify import _run_filter
-        from personal_index.content_filter import ContentFilter, FilterConfig
-        from personal_index.models import CrawledPage
-
-        f = ContentFilter(config=FilterConfig(min_content_length=10, min_title_length=1))
-        page = CrawledPage(url="http://x.com", title="T", content="This is enough content")
-        passed, msg = _run_filter(f, page)
-        assert passed is True
-        assert msg == ""
-
-    def test_run_filter_fails(self, tmp_path):
-        """_run_filter returns False for short content."""
-        from personal_index.cli_verify import _run_filter
-        from personal_index.content_filter import ContentFilter, FilterConfig
-        from personal_index.models import CrawledPage
-
-        f = ContentFilter(config=FilterConfig(min_content_length=100, min_title_length=1))
-        page = CrawledPage(url="http://x.com", title="T", content="short")
-        passed, msg = _run_filter(f, page)
-        assert passed is False
-        assert "filtered out" in msg
-
     def test_run_score_sets_relevance(self, tmp_path):
         """_run_score sets page.relevance_score and returns it."""
         from personal_index.cli_verify import _run_score
@@ -149,3 +125,14 @@ class TestPipelineHelpers:
         passed, error = cli_verify._check_full_pipeline(str(tmp_path))
         assert passed is False
         assert "Filter rejected valid content" in error
+
+    def test_check_full_pipeline_filter_rejection_reason(self, tmp_path, monkeypatch):
+        """Full pipeline reports a non-empty filter-rejection reason."""
+        from personal_index import cli_verify
+        from personal_index.content_filter import ContentFilter
+
+        monkeypatch.setattr(ContentFilter, "should_include", lambda self, page: False)
+        passed, error = cli_verify._check_full_pipeline(str(tmp_path))
+        assert passed is False
+        assert error != ""
+        assert "filter" in error.lower()
