@@ -58,6 +58,24 @@ class TestEncodingDetector:
         text = d.decode(b"\xff\xfe", "utf-8")
         assert len(text) > 0
 
+    def test_decode_wrong_encoding_lossy_fallback(self):
+        """Wrong explicit encoding -> documented lossy UTF-8 replace fallback (not raised)."""
+        d = EncodingDetector()
+        text = d.decode(b"caf\xe9", "utf-8")
+        assert text == "caf\ufffd"
+
+    def test_decode_unknown_codec_lossy_fallback(self):
+        """Unregistered codec name -> LookupError swallowed by documented fallback (not raised)."""
+        d = EncodingDetector()
+        text = d.decode(b"hello", "utf-9")
+        assert text == "hello"
+
+    def test_decode_auto_detect_unchanged(self):
+        """encoding=None auto-detect path is untouched by the docstring fix."""
+        d = EncodingDetector()
+        assert d.decode(b"caf\xe9") == "caf\u00e9"
+        assert d.decode(b"hello world") == "hello world"
+
     def test_encode(self):
         d = EncodingDetector()
         data = d.encode("hello")
