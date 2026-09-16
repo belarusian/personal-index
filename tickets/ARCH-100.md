@@ -1,6 +1,6 @@
 # ARCH-100: cli_top.py is a dead parallel `top` implementation whose JSON contract has diverged from the live command
 
-- **Status:** CLAIMED 2026-09-16
+- **Status:** IMPLEMENTED #1572@25f02dd (impl328, cycle 328)
 - **Component:** `personal_index/cli_top.py`
 - **Kind:** contract hole (dead module + divergent JSON contract)
 - **Issue:** #1496
