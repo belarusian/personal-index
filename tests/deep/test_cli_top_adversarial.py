@@ -180,6 +180,38 @@ class TestTopJsonContract:
         assert data["top_pages"][0]["title"] == "R\u00e9sum\u00e9 \u2603"
 
 
+    def test_json_entries_are_exact_to_dict_no_dead_keys(self, tmp_path):
+        """ARCH-100 AC3 adversarial pin (cycle 267).
+
+        The live `top` JSON must be EXACTLY `{"top_pages": [p.to_dict() ...]}`:
+        each entry is the full 15-field `IndexedPage.to_dict()` and carries
+        NONE of the dead `cli_top.py` contract's keys (`rank`, `tags`, and a
+        per-entry `total`). The dead module (which emitted a hand-built 6-key
+        entry with a hardcoded `tags: []` plus a top-level `total`) was deleted
+        by Option A; this pins that its phantom keys are gone from the live
+        output and that the entry shape is the real `to_dict()` set.
+        """
+        dd = str(tmp_path)
+        _make_index(dd, [_page("https://a.com/1", "P1", 1.5),
+                         _page("https://a.com/2", "P2", 2.5)])
+        res = _invoke(["--limit", "10", "--format", "json"], dd)
+        assert res.exit_code == 0
+        data = json.loads(res.output)
+        # top level: only top_pages (no dead top-level `total`)
+        assert set(data.keys()) == {"top_pages"}
+        expected = {"url", "title", "content", "keywords", "matched_interests",
+                    "crawled_at", "domain", "status_code", "content_length",
+                    "language", "score", "indexed_at", "source_interest",
+                    "word_count"}
+        for entry in data["top_pages"]:
+            # exact to_dict() key set - nothing more, nothing less
+            assert set(entry.keys()) == expected
+            # dead-contract keys must be absent from every entry
+            assert "rank" not in entry
+            assert "tags" not in entry
+            assert "total" not in entry
+
+
 # ---------------------------------------------------------------------------
 # Text contract
 # ---------------------------------------------------------------------------
