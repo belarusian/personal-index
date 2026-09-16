@@ -48,6 +48,12 @@ class SessionStats:
     def to_dict(self) -> dict:
         """Serialize session stats to a dictionary.
 
+        The two collection-valued fields are serialized as counts only:
+        ``domains_seen`` is written as ``len(domains_seen)`` (an int count)
+        and ``errors`` is written as ``error_count`` (an int count). The
+        contents of both collections (the domain set and the per-URL error
+        strings) are NOT written to disk.
+
         Returns:
             Dictionary representation of the stats.
         """
@@ -281,6 +287,13 @@ class SessionManager:
 
     def load_session(self, filepath: str) -> CrawlSession | None:
         """Load a session from disk.
+
+        The save/load round-trip is counts-only: ``to_dict`` writes only the
+        int counts for the two collection-valued fields, so a loaded session
+        always has ``errors == []`` and ``domains_seen == set()``. The numeric
+        counters (``urls_crawled``, ``urls_failed``, ``urls_skipped``,
+        ``bytes_downloaded``, ``pages_indexed``) are restored; the error text
+        and the domain set are not.
 
         Args:
             filepath: Path to the session JSON file.
