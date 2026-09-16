@@ -1,6 +1,6 @@
 # ARCH-78 — link_preview: `LinkPreviewGenerator.generate` drops `base_url` for the canonical `url` field (no `og:url` → `url == ""`)
 
-Status: OPEN
+Status: CLAIMED 2026-09-16
 Component: `personal_index/link_preview.py` — `LinkPreviewGenerator.generate` (lines 48-67); specifically the `for field in ("site_name", "type", "url", "locale")` loop (line 64) that reads `url` only from `og:url`; contrast `_resolve_image_url` (line 120) which DOES honor `base_url` for `image_url`.
 Umbrella: ARCH-2 (#983)
 Issue: #1430
