@@ -26,7 +26,7 @@ class ExportConfig:
 
     include_metadata: bool = True
     include_tags: bool = True
-    include_summary: bool = False
+    truncate_content: bool = False
     sort_by: str = "date"
     group_by: str | None = None
 
@@ -170,7 +170,7 @@ class MarkdownExporter:
             lines.append(f"**Tags:** {', '.join(tags)}")
         if content:
             lines.append("")
-            lines.append(self._truncate(content, 200) if self.config.include_summary else content)
+            lines.append(self._truncate(content, 200) if self.config.truncate_content else content)
         lines.append("")
 
     def _export_html(self, items: list[dict[str, Any]]) -> str:
@@ -204,7 +204,7 @@ class MarkdownExporter:
                     lines.append(f"<p>Tags: {tag_str}</p>")
 
                 if content:
-                    display = self._truncate(content, 200) if self.config.include_summary else content
+                    display = self._truncate(content, 200) if self.config.truncate_content else content
                     lines.append(f"<p>{html.escape(display)}</p>")
 
                 lines.append("</li>")
@@ -240,7 +240,7 @@ class MarkdownExporter:
                     lines.append(f"Tags: {', '.join(tags)}")
 
                 if content:
-                    display = self._truncate(content, 200) if self.config.include_summary else content
+                    display = self._truncate(content, 200) if self.config.truncate_content else content
                     lines.append(display)
 
                 lines.append("-" * 40)

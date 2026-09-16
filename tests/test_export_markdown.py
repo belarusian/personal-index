@@ -1,10 +1,13 @@
 """Tests for export_markdown module - MarkdownExporter class."""
 
 
+import html
+
 import pytest
 
 from personal_index.export_markdown import (
     ExportConfig,
+    ExportFormat,
     MarkdownExporter,
 )
 
@@ -16,7 +19,7 @@ class TestExportConfig:
         config = ExportConfig()
         assert config.include_metadata is True
         assert config.include_tags is True
-        assert config.include_summary is False
+        assert config.truncate_content is False
         assert config.sort_by == "date"
         assert config.group_by is None
 
@@ -168,3 +171,66 @@ class TestMarkdownExporter:
         first_pos = result.index("First")
         second_pos = result.index("Second")
         assert first_pos < second_pos
+
+
+
+
+class TestTruncateContentPolicy:
+    """Pinning tests for ARCH-82: the renamed truncate_content flag.
+
+    Option A (rename to match behavior): the flag name states that True
+    *replaces* the content with a 200-char word-boundary truncation + "...",
+    while False (the default) emits the full content verbatim. All three
+    renderers (markdown, HTML, plain text) apply the identical policy.
+    """
+
+    # 249 chars, > 200, and does NOT end in whitespace (the renderers
+    # .strip() the final output, so a trailing space would be lost).
+    LONG_CONTENT = "word " * 49 + "word"
+
+    @staticmethod
+    def _item():
+        return {
+            "title": "T",
+            "url": "https://x.com",
+            "content": TestTruncateContentPolicy.LONG_CONTENT,
+        }
+
+    # -- markdown --
+    def test_default_config_keeps_full_content(self):
+        exp = MarkdownExporter(ExportConfig())
+        out = exp.export([self._item()], ExportFormat.MARKDOWN)
+        assert self.LONG_CONTENT in out
+        assert "..." not in out
+
+    def test_truncate_flag_replaces_content_with_truncation(self):
+        exp = MarkdownExporter(ExportConfig(truncate_content=True))
+        out = exp.export([self._item()], ExportFormat.MARKDOWN)
+        assert "..." in out
+        assert self.LONG_CONTENT not in out
+
+    # -- HTML --
+    def test_default_config_keeps_full_content_html(self):
+        exp = MarkdownExporter(ExportConfig())
+        out = exp.export([self._item()], ExportFormat.HTML)
+        assert html.escape(self.LONG_CONTENT) in out
+        assert "..." not in out
+
+    def test_truncate_flag_replaces_content_with_truncation_html(self):
+        exp = MarkdownExporter(ExportConfig(truncate_content=True))
+        out = exp.export([self._item()], ExportFormat.HTML)
+        assert "..." in out
+        assert html.escape(self.LONG_CONTENT) not in out
+
+    # -- plain text --
+    def test_default_config_keeps_full_content_plain_text(self):
+        exp = MarkdownExporter(ExportConfig())
+        out = exp.export([self._item()], ExportFormat.PLAIN_TEXT)
+        assert self.LONG_CONTENT in out
+        assert "..." not in out
+
+    def test_truncate_flag_replaces_content_with_truncation_plain_text(self):
+        exp = MarkdownExporter(ExportConfig(truncate_content=True))
+        out = exp.export([self._item()], ExportFormat.PLAIN_TEXT)
+        assert "..." in out
+        assert self.LONG_CONTENT not in out
