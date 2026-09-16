@@ -1,6 +1,6 @@
 # ARCH-93: `validate_sync` "in sync" over-promises — the comparison is one-sided (JSON → HTML only)
 
-Status: OPEN
+Status: CLAIMED 2026-09-16
 Component: personal_index/publish_dashboard.py
 Issue: #1475
 
