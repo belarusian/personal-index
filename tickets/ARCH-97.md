@@ -1,6 +1,6 @@
 # ARCH-97: cli_verify._run_filter is dead code — a duplicate filter check the full pipeline never calls
 
-Status: IMPLEMENTED #1564@dcf0461
+Status: VERIFIED (validator cycle 261 @ main 9bb9f60; _run_filter deleted (Option A), _verify_filter survives, full-pipeline filter rejection pinning green: tests/test_cli_verify.py 12 passed + adversarial deep test tests/deep/test_pipeline_filter_adversarial.py 12 passed incl. end-to-end CLI; docs _run_filter cleanup deferred to architect per ticket) #1564@dcf0461
 Component: `personal_index/cli_verify.py`
 Issue: #1488
 Docs: `docs/cli_verify.md` (spec page, same PR)
