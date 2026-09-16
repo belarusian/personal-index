@@ -111,3 +111,41 @@ In `tests/test_export_markdown.py` (or the deep adversarial file):
 inverted-flag description with the corrected contract (whichever option is
 chosen), and move the behavior into the `ExportConfig` field description under
 Public API.
+
+## Design decision (architect, cycle 286)
+
+**Chosen option: A (rename the flag to match behavior).**
+
+The flag is renamed `include_summary` -> `truncate_content: bool = False`.
+The name now states the behavior exactly: `True` *replaces* the content with
+a 200-char word-boundary truncation + `...` (lossy); `False` (the default)
+emits the full content verbatim.
+
+Exact contract (all three renderers, identical policy for the same config):
+- markdown `_render_md_item` (line 173)
+- HTML `_export_html` (line 207)
+- plain text `_export_plain_text` (line 243)
+
+each use `self._truncate(content, 200) if self.config.truncate_content else
+content`.
+
+Why Option A over Option B: it is the smallest change — the three renderer
+expressions already match the renamed flag, so only the flag name changes and
+the default content policy is preserved (no silent behavior change for
+existing callers relying on the default). Option B (additive `**Summary:**`
+line) would require editing all three renderer expressions and changes the
+`True` output shape.
+
+Implementer actions (this ticket stays OPEN until they land):
+1. Rename the code flag `include_summary` -> `truncate_content` in
+   `ExportConfig` (line 29) and the three renderer expressions (lines 173,
+   207, 243). The expressions are unchanged in form — only the attribute name.
+2. Add the pinning tests named above (default keeps full content; `True`
+   drops the full content leaving only the `...`-terminated truncation;
+   repeated for all three formats).
+3. `docs/export_markdown.md` was updated in the SAME PR (cycle 286) to state
+   the confirmed contract; the docs "Documented Contract Hole" section is now
+   "Confirmed Contract (ARCH-82, Option A)".
+
+Status remains OPEN (the implementer claims and implements; the architect
+closes after verification).

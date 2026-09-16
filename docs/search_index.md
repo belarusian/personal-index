@@ -115,11 +115,7 @@ actually provided" class as the ARCH-66/67/68/69/70 holes: the docstring
 "Save index to file." implies a durable save, but the body provides neither
 durability (flush/fsync) nor atomicity (temp-file + rename).
 
-**Fix direction (implementer):** make `_save` atomic and durable — serialize
-to a temp file in the same directory, `f.flush()` + `os.fsync(f.fileno())`,
-then `os.replace(tmp, self.index_path)` (atomic on POSIX). The `_load`
-degrade-to-empty behavior on genuinely corrupt input must remain unchanged
-(it is pinned). See `tickets/ARCH-71.md`.
+**Confirmed contract (ARCH-71, verified cycle 225):** `_save` IS atomic and durable — it serializes to a temp file in the same directory, calls `f.flush()` + `os.fsync(f.fileno())`, then `os.replace(tmp, self.index_path)` (atomic on POSIX), so a crash mid-write leaves the prior complete file intact. The `_load` degrade-to-empty behavior on genuinely corrupt input is intentional and pinned. This fix is landed and pinned by `tests/deep/test_search_index_atomic_save_adversarial.py`; no code or test change is required.
 
 ## Secondary notes
 
