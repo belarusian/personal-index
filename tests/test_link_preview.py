@@ -215,3 +215,24 @@ class TestLinkPreviewGenerator:
         preview = generator.generate(html, "http://example.com")
         assert preview.title == "Spaced Title"
         assert preview.description == "Spaced Desc"
+
+    def test_url_falls_back_to_base_url_when_no_og_url(self):
+        # The hole: og:url absent + base_url given -> url == base_url (not "").
+        html = '<html><head><title>T</title></head></html>'
+        generator = LinkPreviewGenerator()
+        preview = generator.generate(html, "http://example.com/page")
+        assert preview.url == "http://example.com/page"
+
+    def test_url_empty_when_no_og_url_and_empty_base_url(self):
+        # Guard path: og:url absent + base_url empty -> url stays "".
+        html = '<html><head><title>T</title></head></html>'
+        generator = LinkPreviewGenerator()
+        preview = generator.generate(html, "")
+        assert preview.url == ""
+
+    def test_url_og_url_wins_over_base_url(self):
+        # Normal case: og:url present -> url == og:url regardless of base_url.
+        html = '<html><head><meta property="og:url" content="http://u.com/x"></head></html>'
+        generator = LinkPreviewGenerator()
+        preview = generator.generate(html, "http://example.com/page")
+        assert preview.url == "http://u.com/x"

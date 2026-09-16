@@ -46,7 +46,22 @@ class LinkPreviewGenerator:
     """
 
     def generate(self, html: str, base_url: str = "") -> LinkPreview:
-        """Generate a LinkPreview from HTML content."""
+        """Generate a LinkPreview from HTML content.
+
+        Field priority chains:
+        - title: og:title > twitter:title > <title>
+        - description: og:description > twitter:description > meta[name=description]
+        - image_url: og:image > twitter:image, resolved against base_url via urljoin
+        - url: og:url first; when og:url is absent/empty, falls back to base_url
+          (the URL the caller is previewing); when both are empty, url stays ""
+        - site_name, type, locale: og:* only
+        - twitter_card: twitter:card only
+
+        Args:
+            html: The HTML content to parse; if falsy, returns an empty LinkPreview.
+            base_url: The URL being previewed; resolves relative image URLs and
+                serves as the fallback for the canonical url field when og:url is absent.
+        """
         if not html:
             return LinkPreview()
 
@@ -61,8 +76,9 @@ class LinkPreviewGenerator:
         preview.image_url = self._resolve_image_url(
             self._og_or_twitter(soup, "image"), base_url
         )
-        for field in ("site_name", "type", "url", "locale"):
+        for field in ("site_name", "type", "locale"):
             setattr(preview, field, self._extract_og_tag(soup, f"og:{field}"))
+        preview.url = self._extract_og_tag(soup, "og:url") or base_url
         preview.twitter_card = self._extract_twitter_tag(soup, "twitter:card")
         return preview
 
