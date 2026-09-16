@@ -1,6 +1,6 @@
 # ARCH-92: `SessionStats` save/load round-trip silently drops `errors` and `domains_seen` (only their counts survive)
 
-Status: OPEN
+Status: CLAIMED 2026-09-10
 Component: personal_index/session.py
 Issue: #1473
 
