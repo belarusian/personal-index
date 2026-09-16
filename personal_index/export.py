@@ -133,7 +133,7 @@ class Exporter:
                 f'<DT><A HREF="{b.url}" ADD_DATE="0">{self._escape_html(b.title or b.url)}</A>'
             )
 
-        lines.extend(["</DL><p>", "</DL>"])
+        lines.extend(["</DL><p>"])
         return "\n".join(lines)
 
     def _escape_html(self, text: str) -> str:

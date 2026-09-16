@@ -1,6 +1,6 @@
 # ARCH-81: _export_html emits unbalanced <DL> tags (malformed Netscape HTML)
 
-Status: OPEN
+Status: CLAIMED 2026-09-16
 Component: personal_index.export (personal_index/export.py)
 Issue: #1438
 

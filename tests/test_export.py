@@ -114,6 +114,11 @@ class TestExportHtml:
         result = self.exporter.export_to_file(str(path))
         assert result.total_exported == 1
 
+    def test_export_html_balanced_dl_tags(self):
+        content = self.exporter.export_to_content("html")
+        assert content.count("<DL>") == 1
+        assert content.count("</DL>") == 1
+
 
 class TestExportXml:
     def setup_method(self):
