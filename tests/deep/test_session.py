@@ -544,3 +544,64 @@ class TestCLI:
         )
         # Should not be a traceback (returncode 1 with usage is fine)
         assert "Traceback" not in result.stderr, f"Traceback: {result.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# ARCH-92 adversarial: counts-only round-trip contract (end-to-end)
+# ---------------------------------------------------------------------------
+
+class TestARCH92CountsOnlyContract:
+    """ARCH-92: the save/load round-trip is counts-only.
+
+    The contract (now documented on ``SessionStats.to_dict`` and
+    ``SessionManager.load_session``) is: the numeric counters survive, the two
+    collection-valued fields are serialized as int counts, and their contents
+    (the domain set and the per-URL error strings) are NOT persisted. This
+    adversarial input combines multiple errors AND multiple distinct domains in
+    one session and pins the whole contract end-to-end.
+    """
+
+    def test_counts_survive_contents_dropped_end_to_end(self, tmp_path):
+        m = SessionManager(storage_path=str(tmp_path))
+        s = m.create_session("s1", name="adv", config={"depth": 5})
+        # 3 distinct domains crawled
+        s.record_url_crawled("https://a.example.com/x", size=100)
+        s.record_url_crawled("https://b.example.org/y", size=200)
+        s.record_url_crawled("https://c.example.net/z", size=300)
+        # 3 failed URLs with error text
+        s.record_url_failed("https://bad1.com", error="404")
+        s.record_url_failed("https://bad2.com", error="timeout")
+        s.record_url_failed("https://bad3.com", error="500")
+        s.record_url_skipped("https://skip.com")
+        s.record_page_indexed()
+        s.record_page_indexed()
+
+        # Pre-save: contents present
+        assert len(s.stats.domains_seen) == 3
+        assert len(s.stats.errors) == 3
+
+        # to_dict serializes the collections as int counts, not contents
+        d = s.stats.to_dict()
+        assert isinstance(d["domains_seen"], int) and d["domains_seen"] == 3
+        assert isinstance(d["error_count"], int) and d["error_count"] == 3
+        assert d["domains_seen"] is not s.stats.domains_seen
+        assert d["error_count"] is not s.stats.errors
+
+        path = m.save_session("s1")
+        assert path is not None
+
+        # Reload in a fresh manager
+        m2 = SessionManager(storage_path=str(tmp_path))
+        loaded = m2.load_session(path)
+        assert loaded is not None
+
+        # Numeric counters survive
+        assert loaded.stats.urls_crawled == 3
+        assert loaded.stats.urls_failed == 3
+        assert loaded.stats.urls_skipped == 1
+        assert loaded.stats.bytes_downloaded == 600
+        assert loaded.stats.pages_indexed == 2
+
+        # Contents are dropped (counts-only contract)
+        assert loaded.stats.errors == []
+        assert loaded.stats.domains_seen == set()

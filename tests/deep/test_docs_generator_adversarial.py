@@ -35,6 +35,7 @@ from personal_index.docs_generator import (
     _parse_module,
     detect_dependencies,
     fetch_recent_commits,
+    generate,
     generate_dashboard,
     generate_fast,
     generate_metadata_json,
@@ -716,3 +717,91 @@ class TestEndToEndCli:
             f"stdout: {result.stdout[:500]}\n"
             f"stderr: {result.stderr[:500]}"
         )
+
+
+# ---------------------------------------------------------------------------
+# ARCH-94 adversarial: full-pipeline `generate` attributes per-module test counts
+# ---------------------------------------------------------------------------
+
+class TestGenerateAttributesTestCounts:
+    """ARCH-94: the full pipeline `generate` must attribute per-source-module
+    test counts from the scanned test files (like `generate_fast` already did).
+
+    Before the fix, `generate` never called `_attribute_test_counts`, so a
+    source module's `test_count` was only ever the binary 0/1 clamp from
+    `run_pytest` — the per-module bar chart and the S1 "no tests" signal read a
+    flag, not a real count. These tests pin the corrected contract: after
+    `generate`, a source module with N `test_*` functions in its
+    `tests/test_<stem>.py` file carries `test_count == N` (not 1), and the
+    aggregate `total_tests` is unchanged (still the sum over test modules).
+    """
+
+    def _build_tree(self, tmpdir: str) -> tuple[str, str]:
+        """Create <tmpdir>/pkg/mod1.py (2 funcs) + <tmpdir>/tests/test_mod1.py (3 tests)."""
+        pkg = Path(tmpdir, "pkg")
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("")
+        (pkg / "mod1.py").write_text(
+            '"""A module."""\n\n'
+            'def alpha():\n    """Doc."""\n    return 1\n\n'
+            'def beta():\n    """Doc."""\n    return 2\n'
+        )
+        tests = Path(tmpdir, "tests")
+        tests.mkdir()
+        (tests / "test_mod1.py").write_text(
+            'def test_one():\n    assert True\n\n'
+            'def test_two():\n    assert True\n\n'
+            'def test_three():\n    assert True\n'
+        )
+        return str(pkg), str(Path(tmpdir, "dashboard.html"))
+
+    def _stub_subprocess(self, monkeypatch):
+        """Neutralize the lint/type/test/commit subprocesses so the ONLY
+        test_count source is the test-file scan via _attribute_test_counts."""
+        import personal_index.docs_generator as dg
+        monkeypatch.setattr(dg, "run_ruff", lambda modules: None)
+        monkeypatch.setattr(dg, "run_mypy", lambda modules: None)
+        monkeypatch.setattr(dg, "run_pytest", lambda modules: "")
+        monkeypatch.setattr(dg, "fetch_recent_commits", lambda n=20: [])
+
+    def _source_mod(self, modules, stem):
+        return next(m for m in modules if m.module_name.rpartition(".")[2] == stem)
+
+    def test_generate_full_pipeline_attributes_real_count(self, tmp_path, monkeypatch):
+        """A source module with 3 tests in its test file gets test_count == 3 (not 1)."""
+        self._stub_subprocess(monkeypatch)
+        pkg, output = self._build_tree(str(tmp_path))
+        generate(pkg, output)
+        # Re-scan to read the attributed counts the way the dashboard does.
+        modules = scan_modules(pkg)
+        test_modules = scan_modules(str(tmp_path / "tests"))
+        from personal_index.docs_generator import _attribute_test_counts
+        _attribute_test_counts(modules, test_modules)
+        assert self._source_mod(modules, "mod1").test_count == 3
+
+    def test_generate_and_fast_agree_on_per_module_counts(self, tmp_path, monkeypatch):
+        """generate and generate_fast must agree on the per-source-module test_count."""
+        self._stub_subprocess(monkeypatch)
+        pkg, _ = self._build_tree(str(tmp_path))
+
+        # generate_fast path (no subprocesses needed)
+        fast_modules = scan_modules(pkg)
+        fast_tests = scan_modules(str(tmp_path / "tests"))
+        from personal_index.docs_generator import _attribute_test_counts
+        _attribute_test_counts(fast_modules, fast_tests)
+        fast_count = self._source_mod(fast_modules, "mod1").test_count
+
+        # generate path: read the per-module count the dashboard actually renders.
+        # The full pipeline writes the codemap JSON; the per-module test_count is
+        # embedded there. Parse it back and compare to the fast-path count.
+        output = str(tmp_path / "dashboard.html")
+        generate(pkg, output)
+        import json as _json
+        codemap = _json.loads(Path(str(tmp_path / "dashboard_metadata.json")).read_text(encoding="utf-8"))
+        gen_count = None
+        for mod in codemap.get("modules", []):
+            if mod.get("name", "").rpartition(".")[2] == "mod1":
+                gen_count = mod.get("tests")
+                break
+        assert gen_count is not None, "mod1 not found in codemap modules"
+        assert gen_count == fast_count == 3

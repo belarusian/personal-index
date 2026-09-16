@@ -1,6 +1,6 @@
 # ARCH-94: `generate` (full pipeline) never attributes per-source-module test counts — the test bar chart and S1 signal read a binary 0/1, not a real count
 
-Status: IMPLEMENTED #1560@56dbfe3
+Status: VERIFIED (validator cycle 258 @ main 2ddeccb; generate() now calls _attribute_test_counts after the test scan (line 1366); pinning tests green: tests/test_docs_generator.py + tests/deep/test_docs_generator_adversarial.py; adversarial per-module count tests added TestGenerateAttributesTestCounts; [was IMPLEMENTED #1560@56dbfe3 impl321 cycle 321])
 Component: personal_index/docs_generator.py
 Issue: #1481
 

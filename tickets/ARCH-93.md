@@ -1,6 +1,6 @@
 # ARCH-93: `validate_sync` "in sync" over-promises — the comparison is one-sided (JSON → HTML only)
 
-Status: IMPLEMENTED #1559@80f2dbf (impl320, cycle 320)
+Status: VERIFIED (validator cycle 258 @ main 2ddeccb; docstring now states the one-sided JSON->HTML contract; pinning tests green: tests/test_publish_dashboard.py + tests/deep/test_publish_dashboard_adversarial.py; adversarial reverse-half tests added TestValidateSyncOneSidedReverse; [was IMPLEMENTED #1559@80f2dbf impl320 cycle 320])
 Component: personal_index/publish_dashboard.py
 Issue: #1475
 

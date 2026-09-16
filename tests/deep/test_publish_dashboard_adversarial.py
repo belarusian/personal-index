@@ -147,3 +147,50 @@ class TestValidateSyncIdempotence:
         r2 = validate_sync(hp, jp)
         assert r1 == r2
         assert r1["sync"] is True
+
+
+# ---------------------------------------------------------------------------
+# ARCH-93 adversarial: the one-sided (JSON -> HTML) contract, reverse half
+# ---------------------------------------------------------------------------
+
+class TestValidateSyncOneSidedReverse:
+    """ARCH-93: the comparison is one-sided (JSON -> HTML).
+
+    The corrected docstring states that a key present ONLY in the HTML-embedded
+    summary is NOT compared and does not affect the result. The existing deep
+    tests pin the JSON -> HTML half (a JSON key missing from HTML is a
+    mismatch); this class pins the reverse half the docstring now documents:
+    an HTML-only key is ignored, so the result stays sync True and the returned
+    summary is the JSON summary (the HTML-only key is not surfaced).
+    """
+
+    def test_html_only_key_ignored_still_sync(self, tmp_path):
+        """A key present only in the HTML-embedded summary is ignored."""
+        s_json = {"total_modules": 1, "total_errors": 0, "total_warnings": 0}
+        s_html = {"total_modules": 1, "total_errors": 0, "total_warnings": 0, "note": "extra"}
+        hp, jp = _write(tmp_path, _make_html(s_html), _make_json(s_json))
+        r = validate_sync(hp, jp)
+        assert r["sync"] is True
+        # The returned summary is the JSON summary; the HTML-only key is not surfaced.
+        assert r["summary"] == s_json
+        assert "note" not in r["summary"]
+
+    def test_html_only_key_with_different_value_ignored(self, tmp_path):
+        """Even if the HTML-only key carried a value, it is never visited."""
+        s_json = {"total_modules": 5, "total_lines": 100, "total_errors": 0, "total_warnings": 2}
+        s_html = dict(s_json)
+        s_html["stale_field"] = 999
+        hp, jp = _write(tmp_path, _make_html(s_html), _make_json(s_json))
+        r = validate_sync(hp, jp)
+        assert r["sync"] is True
+        assert r["summary"] == s_json
+
+    def test_html_only_unicode_key_ignored(self, tmp_path):
+        """A unicode HTML-only key is likewise ignored (no crash, no surface)."""
+        s_json = {"total_modules": 2, "total_errors": 0, "total_warnings": 0}
+        s_html = dict(s_json)
+        s_html["спасіба"] = "дзенница"
+        hp, jp = _write(tmp_path, _make_html(s_html), _make_json(s_json))
+        r = validate_sync(hp, jp)
+        assert r["sync"] is True
+        assert r["summary"] == s_json
