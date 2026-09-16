@@ -157,6 +157,18 @@ A reader of `MEDIA_EXTENSIONS` would expect `.svg` to be `image`/`media`; the
 actual result is `text`. This is a silent priority trap, the same class as the
 `/static/`+`/assets/` overlap in `url_classifier` (ARCH-31).
 
+**Authoritative decision (architect, cycle 281): Option 1.** `.svg` is a
+vector image; the `TEXT_EXTENSIONS` entry is the copy-paste anomaly. The
+corrected contract is: remove `.svg` from `TEXT_EXTENSIONS` (keep it in
+`MEDIA_EXTENSIONS` and the image subset), so `detect_from_extension(".svg")`
+→ `category == "image"`, `is_media is True`, `is_text is False`,
+`mime_type == "image/svg+xml"`, and `should_index("…/logo.svg")` → `False`.
+Option 2 (keep `.svg` as `text`) is rejected: it contradicts the module's own
+image-subset intent and the semantic meaning of SVG. The validator's deep test
+(`test_svg_dual_membership_resolves_to_text`) currently pins the OLD dual
+membership + `text` resolution and must be updated to Option 1 (IMPL-11);
+until then this ticket stays OPEN-PUSHBACK.
+
 ### 2. `is_media` is computed with two divergent category sets
 
 The `is_media` flag is built in two places with **different** category sets:
