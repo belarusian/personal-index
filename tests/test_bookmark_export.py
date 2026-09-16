@@ -465,6 +465,30 @@ class TestExportToFile:
         assert result is not None
         assert len(result.errors) > 0
 
+    def test_export_to_file_unsupported_extension_names_txt(self, exporter, tmp_path):
+        # ARCH-79: auto-detect of an unknown extension must name the
+        # inspected extension, not the bare token None.
+        result = exporter.export_to_file(str(tmp_path / "bookmarks.txt"))
+        assert result is not None
+        assert len(result.errors) == 1
+        assert "None" not in result.errors[0]
+        assert "txt" in result.errors[0]
+
+    def test_export_to_file_unsupported_extension_names_pdf(self, exporter, tmp_path):
+        # ARCH-79 guard: a second unknown extension is tracked too, so the
+        # message is not a fixed string.
+        result = exporter.export_to_file(str(tmp_path / "bookmarks.pdf"))
+        assert result is not None
+        assert len(result.errors) == 1
+        assert "pdf" in result.errors[0]
+        assert "None" not in result.errors[0]
+
+    def test_export_to_file_explicit_unsupported_format_unchanged(self, exporter, tmp_path):
+        # ARCH-79: the explicit-fmt unsupported path is unchanged.
+        result = exporter.export_to_file(str(tmp_path / "x.pdf"), "pdf")
+        assert result is not None
+        assert result.errors[0] == "Unsupported format: pdf"
+
     def test_export_to_file_empty_bookmarks(self, tmp_path):
         exporter = BookmarkExporter([])
         filepath = str(tmp_path / "empty.json")
