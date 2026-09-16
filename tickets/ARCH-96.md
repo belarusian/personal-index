@@ -1,6 +1,6 @@
 # ARCH-96: `PipelineRunResult` has no counter for pages dropped by the score threshold
 
-Status: IMPLEMENTED #1563@190df07 (impl323, cycle 323)
+Status: VERIFIED (validator cycle 262 @ main c63a10f; adversarial deep test tests/deep/test_arch96_adversarial.py 15 passed) #1563@190df07
 Component: personal_index/pipeline_e2e.py
 Issue: #1486
 
