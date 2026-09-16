@@ -27,18 +27,26 @@ class ContentAggregator:
         """Merge all sources into a single list in source insertion order.
         When deduplicate is True (the default), removes duplicate items
         keyed on the item's "id" (falling back to "title"), keeping the
-        first occurrence."""
+        first occurrence. Items with both "id" and "title" absent are
+        indistinguishable, so each is kept (never collapsed) to avoid
+        silent data loss on the default path (ARCH-35)."""
         merged = []
         for items in self._sources.values():
             merged.extend(items)
         if deduplicate:
             seen = set()
             unique = []
-            for item in merged:
+            for index, item in enumerate(merged):
                 item_id = item.get("id")
                 if item_id is None:
                     item_id = item.get("title")
-                key = str(item_id)
+                if item_id is None:
+                    # Both id and title absent: use a stable per-item
+                    # (positional) key so distinct items are NOT collapsed
+                    # to a single shared "None" key (ARCH-35 / IMPL-8).
+                    key: str | tuple[str, int] = ("__no_id_title__", index)
+                else:
+                    key = str(item_id)
                 if key not in seen:
                     seen.add(key)
                     unique.append(item)

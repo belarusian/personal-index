@@ -113,11 +113,15 @@ def test_merge_all_unicode_key():
     assert len(merged) == 1
 
 def test_merge_all_missing_id_title():
+    # ARCH-35 / IMPL-8: items with BOTH id and title absent are
+    # indistinguishable, so each is kept (never collapsed to a single
+    # shared "None" key) on the default deduplicate=True path.
+    # (Was `assert len(merged) == 1`, pinning the old data-loss collapse.)
     agg = make_agg()
     agg.add_source("a", [{}])
     agg.add_source("b", [{}])
     merged = agg.merge_all()
-    assert len(merged) == 1
+    assert len(merged) == 2
 
 def test_merge_all_idempotence():
     agg = make_agg()
