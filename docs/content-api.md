@@ -123,35 +123,28 @@ Note the method-agnostic routes: `health` and `stats` match **any** method
 
 ## Contract Holes
 
-### Hole 1 — `_validate_content` is dead in the production request path (ARCH-68)
+### Hole 1 — `_validate_content` field validation is wired into the request path (ARCH-68, resolved)
 
-`ContentAPI._validate_content(data)` (line 308) exists with a docstring
-("Validate content data and return errors") and enforces: `data` must be a
+`ContentAPI._validate_content(data)` (line 318) enforces: `data` must be a
 `dict`; `title` (if present) must be a `str` of length ≤ 200; `tags` (if
-present) must be a `list`. **It is never called by `_create_content` or
-`_update_content`** — the only callers are `tests/test_content_api.py`
-(lines 272-288). The real request path does only an inline
-`isinstance(data, dict)` check and then stores/updates the item.
+present) must be a `list`. **It IS called by `_create_content` (line 187) and
+`_update_content` (line 231)** — a non-empty error list maps to
+``(400, {"error": <first error>})`` before the item is stored/updated.
 
-Consequence: the advertised validation is not enforced on the real path.
-- `POST /api/v1/content` with `{"title": "x"*201}` → **`201`** (not `400`);
-  the over-length title is stored.
-- `POST /api/v1/content` with `{"tags": "not-a-list"}` → **`201`** (not
-  `400`); the non-list tags are stored.
-- `PUT /api/v1/content/{id}` with the same bodies → **`200`** (not `400`).
+Consequence: the advertised validation IS enforced on the real path.
+- `POST /api/v1/content` with `{"title": "x"*201}` → **`400`**; the
+  over-length title is rejected and not stored.
+- `POST /api/v1/content` with `{"tags": "not-a-list"}` → **`400`**; the
+  non-list tags are rejected and not stored.
+- `PUT /api/v1/content/{id}` with the same bodies → **`400`**.
 
-The method's own contract (its docstring + the tests that pin it) says these
-inputs are invalid, but the public `handle_request` contract (what a caller
-actually observes) accepts them. This is a divergence between the documented
-validation and the observed behavior — the same "advertised guard not wired
-into the request path" class as ARCH-66/ARCH-67.
+The method's own contract (its docstring) and the public `handle_request`
+contract (what a caller actually observes) now agree.
 
-**Fix direction (implementer):** wire `_validate_content` into
-`_create_content` and `_update_content` so a non-empty error list maps to
-`(400, {"error": <first error>})` (or a list of errors) before the item is
-stored/updated — OR, if validation is intentionally out of scope for the
-request path, delete `_validate_content` and its tests and state in this page
-that the request path performs no field validation. The two must agree.
+**Fix confirmed (ARCH-68, verified by validator cycle 222):** `_validate_content`
+is wired into the `_create_content` / `_update_content` request path and the
+behavior is pinned by `tests/deep/test_content_api_adversarial.py`; no code or
+test change is required.
 
 ### Hole 2 — `_export_content` `format` param is read and echoed, never applied
 

@@ -118,3 +118,6 @@ validator. After the fix, update the `_create_content` / `_update_content`
 sections to state the enforced field-validation contract ("a non-empty
 `_validate_content` error list maps to `400` before the item is
 stored/updated") and remove/adjust the Contract Holes #1 callout once merged.
+
+## Follow-up
+Cycle 283 (architect): `docs/content-api.md` Hole 1 callout reconciled to the confirmed wired contract (ARCH-68, verified cycle 222) — the stale "never called / fix direction" text is replaced with the confirmed 400-on-invalid contract; no code or test change required.
