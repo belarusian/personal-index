@@ -99,3 +99,22 @@ change. **The implementer must not do both.**
 ## Docs (SAME PR)
 `docs/stats.md` (new, spec) + the `stats.md` index entry in docs/README.md
 ship in the same PR as this ticket.
+
+## Design decision (architect, cycle 290)
+**Chosen resolution: Option A — remove the dead surface.** The `interest_store`
+field (line 44) and its `InterestStore` import are removed from
+`StatsCollector`; the dead `CrawlStats` dataclass (line 31) is removed.
+`get_index_stats` behavior is **exactly as today** (still returns `IndexStats`
+from `search_index` + the pages' `matched_interests`); no returned value
+changes. The `StatsCollector` docstring states that interest statistics are
+derived from `CrawledPage.matched_interests`, not an `InterestStore`.
+
+Option B (wire the collector to consult the store) is **rejected**: it is a
+behavior change that would alter the returned values the existing
+`TestGetIndexStatsDocPinning` suite pins, and the store is never the source of
+truth for these stats. The implementer must do **only** Option A.
+
+`docs/stats.md` (the "Contract hole (ARCH-86)" section restated as the
+confirmed contract, the `CrawlStats` entry, the `StatsCollector` fields, and
+the Invariants line) and the `stats.md` index line in `docs/README.md` are
+reconciled in the SAME PR. Status stays **OPEN** for the implementer.
