@@ -115,7 +115,7 @@ def _display_duplicate_groups(result):
     for group in result.duplicate_groups:
         click.echo(f"\n  Representative: {group.representative}")
         click.echo(f"  Method: {group.dedup_method}")
-        click.echo(f"  Score: {group.similarity_score:.2f}")
+        click.echo(f"  Threshold: {group.similarity_score:.2f}")
         for dup in group.duplicates:
             click.echo(f"    Duplicate: {dup}")
 
