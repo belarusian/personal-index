@@ -1,6 +1,6 @@
 # ARCH-90: build_tree drops a package's own module when it also has children
 
-Status: OPEN
+Status: CLAIMED 2026-09-16
 Component: personal_index/cycle_signals.py
 Issue: #1469
 
