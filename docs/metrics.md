@@ -83,7 +83,7 @@ Methods:
   - `cpu_percent` is **NOT collected** and remains at its dataclass default
     of `0.0`.
   - `memory_total_mb` is **NOT collected** and remains at its dataclass
-    default of `0.0` (ARCH-88 — see Contract hole below).
+    default of `0.0` (ARCH-88 — see Confirmed contract below).
   - Appends the snapshot to `self._snapshots` (exactly once per call) and
     returns it.
 - `get_histogram_stats(name)` (line 126): returns `None` for a missing name
@@ -100,30 +100,37 @@ Methods:
 - `reset()` (line 164): clears all four stores (`_counters`, `_gauges`,
   `_histograms`, `_snapshots`). Idempotent.
 
-## Contract hole (ARCH-88)
-
+## Confirmed contract (ARCH-88, Option a — keep the field, document it as uncollected)
 `SystemMetrics.memory_total_mb` (line 21) is a public field that is
 **serialized** by `to_dict()` (line 40) but **never populated** by
-`collect_system_metrics` (lines 90-124). The method's docstring (lines 91-98)
-states "Populates exactly these fields on the returned SystemMetrics:" and
-lists `uptime_seconds`, `memory_used_mb`, and the three `disk_*` fields, then
-explicitly calls out that `cpu_percent` "is NOT collected and remains at its
-dataclass default of 0.0" — but it is **silent about `memory_total_mb`**.
-The field is therefore a public, serialized field that is always `0.0` in any
-snapshot produced by the documented collection path, and the docstring's
-"exactly these fields" enumeration neither lists it nor flags it as
-uncollected. This is the same "public field never populated / docstring
-omits a field" class as ARCH-86 (`StatsCollector.interest_store` /
-`CrawlStats`) and ARCH-87 (`UrlFilterRule.is_blacklist`).
+`collect_system_metrics` (lines 90-124). It is a public, serialized field
+that is always `0.0` in any snapshot produced by the documented collection
+path. This is the same "public field never populated / docstring omits a
+field" class as ARCH-86 (`StatsCollector.interest_store` / `CrawlStats`) and
+ARCH-87 (`UrlFilterRule.is_blacklist`).
 
-The hole is **masked by the tests**: `tests/deep/test_metrics_adversarial.py`
-pins the `to_dict` key set (line 52) and the 2-decimal rounding of
-`memory_total_mb` (lines 60, 68) by constructing `SystemMetrics` directly
-with `memory_total_mb=2.999` — it never asserts what
-`collect_system_metrics` leaves the field at. `tests/test_metrics.py`
-(`TestCollectSystemMetricsCpuPinning`, lines 133-143) pins the `cpu_percent`
-guard path but not the `memory_total_mb` guard path. So the suite stays green
-whether or not `collect_system_metrics` ever sets `memory_total_mb`.
+**Confirmed contract (ARCH-88, Option a — keep the field, document it as
+uncollected):** the `memory_total_mb` field is **kept** on `SystemMetrics`
+(line 21) and in `to_dict()` (line 40) — it is part of the serialized
+snapshot key set that the validator-owned deep test
+`tests/deep/test_metrics_adversarial.py::test_exact_key_set` (line 52) and
+`test_float_fields_rounded_to_two_decimals` (lines 59, 68) pin, so removing
+it would break those deep tests. The `collect_system_metrics` docstring
+(lines 91-99) now states, alongside the existing `cpu_percent` sentence, that
+**both `cpu_percent` and `memory_total_mb` are NOT collected and remain at
+their dataclass defaults of `0.0`** — the "exactly these fields" enumeration
+is no longer silent about a serialized field. All returned values are
+**exactly as today**: `collect_system_metrics` already left `memory_total_mb`
+at `0.0`, so the fix is docstring-only and no behavior changes.
 
-See `tickets/ARCH-88.md` for the contract, acceptance criteria, and pinning
-tests.
+The pinning witness is `tests/test_metrics.py`:
+`TestCollectSystemMetricsCpuPinning::test_cpu_percent_stays_default_and_fields_populated`
+asserts `metrics.cpu_percent == 0.0` **and** `metrics.memory_total_mb == 0.0`
+on the same returned object, pinning both uncollected-field guard paths
+against the actual returned object (not the docstring wording); the existing
+value assertions (`uptime_seconds >= 0.0`, `disk_total_mb >= 0.0`,
+`disk_free_mb >= 0.0`, `disk_used_mb >= 0.0`, `process_pid > 0`) pin that the
+docstring-only change altered no populated field. The validator-owned deep
+tests (`tests/deep/test_metrics_adversarial.py`) are unchanged and stay green
+because the serialized key set and 2-decimal rounding of `memory_total_mb`
+are untouched. See `tickets/ARCH-88.md`.
