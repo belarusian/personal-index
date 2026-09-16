@@ -90,7 +90,7 @@ and calls `monitor.record(name, elapsed)` (only if `start` was set). The
 
 ## Contract holes
 
-### ARCH-89 — `window_size` bounds `_samples` but NOT `_stats`: `get_stats()` is a lifetime aggregate, not a windowed one
+### ARCH-89 (confirmed contract) — `window_size` bounds `_samples` but NOT `_stats`: `get_stats()` is a lifetime aggregate, not a windowed one
 
 `record` (lines 79-96) applies `window_size` to **only one** of the two
 per-name stores. The sample ring is trimmed (lines 84-87):
@@ -110,7 +110,7 @@ but the aggregate is updated **unconditionally, with no window check**
     stats.sum_sq += value * value
 
 So after recording `N > window_size` values for a name, the two public
-readers disagree about "how many values":
+readers intentionally disagree about "how many values":
 
 - `get_recent_samples(name)` returns the last `window_size` samples
   (bounded), and
@@ -118,28 +118,22 @@ readers disagree about "how many values":
   `mean` / `stddev` / `min_val` / `max_val` / `sum_sq` all computed over all
   `N` values, not the retained window.
 
-This is an **asymmetric, undocumented** behavior: the constructor parameter is
-named `window_size` (implying a bounded window), yet the aggregate silently
-grows without bound for the life of the monitor. `min_val`/`max_val` in
-particular can reflect a value that has already been evicted from
-`_samples` — the "window" no longer contains the value that produced the
-min/max. The existing test `test_window_size`
-(`tests/test_performance_monitor.py:96`) pins **only** the sample length
-(`len(samples) == 5`) and never asserts on `get_stats().count`, so the
-asymmetry is untested. The validator deep test
-`tests/deep/test_zero_cap_eviction_sweep_adversarial.py` (lines 49-53, 90-94)
-likewise pins only `get_recent_samples` length for `window_size=0` and
-`window_size=2`, never the stats count.
+**Confirmed contract (no behavior change):** `window_size` bounds **only**
+the `_samples` ring; the `_stats` aggregate is a **lifetime** aggregate,
+independent of `window_size`. `get_stats()` is therefore NOT a windowed
+reader — it is a lifetime count/mean/min/max over every value recorded for
+the name, for the life of the monitor. `min_val`/`max_val` in particular can
+reflect a value that has already been evicted from `_samples` — the "window"
+no longer contains the value that produced the min/max. This is by design:
+making `_stats` windowed would change `count`/`mean`/`min`/`max` for every
+existing caller, a behavioral change that is out of scope.
 
-**Recommended resolution (docs + pinning test, no behavior change):**
-document in this page that `_stats` is a **lifetime** aggregate independent of
-`window_size` (which bounds only `_samples`), and add ONE pinning test that
-records `N > window_size` values and asserts BOTH `len(get_recent_samples())
-== window_size` AND `get_stats().count == N` (with `min_val`/`max_val` over
-the full N), so the asymmetry is witnessed as a documented contract rather
-than a surprise. Do **not** change the behavior (making `_stats` windowed
-would change `count`/`mean`/`min`/`max` for every existing caller and is a
-behavioral change the implementer must not make silently).
+**Witness:** the validator deep test
+`tests/deep/test_zero_cap_eviction_sweep_adversarial.py` (lines 49-53 for
+`window_size=0`, lines 90-94 for `window_size=2`) pins the bounded
+`get_recent_samples` length (the guard path); the implementer's pinning test
+`tests/test_performance_monitor.py::test_stats_are_lifetime_not_windowed`
+pins the lifetime `get_stats().count` side of the same asymmetry.
 
 ### Secondary — `_timers` (line 77) is a declared, cleared, but never-written field
 
