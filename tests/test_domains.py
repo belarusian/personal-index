@@ -77,6 +77,28 @@ class TestDomainManager:
         dm = DomainManager(rules_file=str(tmp_path / "domains.json"))
         assert dm.remove("nonexistent.com") is False
 
+    def test_remove_last_allow_restores_allow_all(self, tmp_path):
+        dm = DomainManager(rules_file=str(tmp_path / "domains.json"))
+        dm.add_allow("a.com")
+        assert dm.is_allowed("unlisted.com") is False   # whitelist active
+        assert dm.remove("a.com") is True
+        assert dm.list_rules() == []
+        assert dm.is_allowed("unlisted.com") is True    # allow-all restored (the fix)
+
+    def test_remove_one_of_many_keeps_whitelist(self, tmp_path):
+        dm = DomainManager(rules_file=str(tmp_path / "domains.json"))
+        dm.add_allow("a.com")
+        dm.add_allow("b.com")
+        assert dm.remove("a.com") is True
+        assert dm.is_allowed("unlisted.com") is False   # whitelist still active
+        assert dm.is_allowed("b.com") is True
+
+    def test_remove_block_keeps_allow_all(self, tmp_path):
+        dm = DomainManager(rules_file=str(tmp_path / "domains.json"))
+        dm.add_block("b.com")
+        assert dm.remove("b.com") is True
+        assert dm.is_allowed("unlisted.com") is True    # block-only was never a whitelist
+
     def test_persistence(self, tmp_path):
         path = str(tmp_path / "domains.json")
         dm = DomainManager(rules_file=path)

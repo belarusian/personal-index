@@ -54,7 +54,12 @@ class DomainRule:
 
 @dataclass
 class DomainManager:
-    """Manages domain allow/block rules."""
+    """Manages domain allow/block rules.
+
+    Invariant: ``_has_whitelist`` is always
+    ``any(r.allowed for r in _rules.values())`` — it is recomputed on
+    load and on every rule removal, and set on every allow.
+    """
 
     rules_file: str | None = None
     _rules: dict[str, DomainRule] = field(default_factory=dict, repr=False)
@@ -175,6 +180,10 @@ class DomainManager:
     def remove(self, domain: str) -> bool:
         """Remove a domain rule.
 
+        Removes the rule for ``domain`` and re-derives the whitelist flag
+        from the surviving rules; returns True if a rule was removed,
+        False if not found.
+
         Args:
             domain: The domain whose rule to remove.
 
@@ -183,6 +192,9 @@ class DomainManager:
         """
         if domain in self._rules:
             del self._rules[domain]
+            self._has_whitelist = any(
+                r.allowed for r in self._rules.values()
+            )
             self._save()
             return True
         return False
