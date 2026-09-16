@@ -122,6 +122,33 @@ class TestCSVExporter:
         assert "New" in content
         assert "old" not in content
 
+    def test_export_to_file_honors_requested_encoding(self, tmp_path):
+        """Pinning test (ARCH-80): a non-default encoding is honored on the file bytes."""
+        items = [{"id": "1", "title": "caf\u00e9"}]
+        filepath = tmp_path / "out.csv"
+        self.exporter.export_to_file(items, str(filepath), encoding="latin-1")
+        raw = filepath.read_bytes()
+        assert raw == ("id,title\n1,caf\u00e9\n".encode("latin-1"))
+        assert b"\xe9" in raw
+        assert b"\xc3\xa9" not in raw
+
+    def test_export_to_file_default_encoding_is_utf8(self, tmp_path):
+        """Pinning test (ARCH-80): with no encoding kwarg the file stays utf-8."""
+        items = [{"id": "1", "title": "caf\u00e9"}]
+        filepath = tmp_path / "out2.csv"
+        self.exporter.export_to_file(items, str(filepath))
+        raw = filepath.read_bytes()
+        assert raw == ("id,title\n1,caf\u00e9\n".encode("utf-8"))
+        assert b"\xc3\xa9" in raw
+
+    def test_export_to_file_forwards_other_kwargs(self, tmp_path):
+        """Pinning test (ARCH-80): non-encoding kwargs are still forwarded to export()."""
+        items = [{"id": "1", "title": "Test"}]
+        filepath = tmp_path / "out.json"
+        self.exporter.export_to_file(items, str(filepath), export_format=ExportFormat.JSON)
+        content = filepath.read_text()
+        assert content.lstrip().startswith("[")
+
     def test_export_with_quoting(self):
         items = [{"id": "1", "title": "Test"}]
         result = self.exporter.export(items, quoting=csv.QUOTE_ALL)

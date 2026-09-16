@@ -194,9 +194,15 @@ class CSVExporter:
         filepath: str,
         **kwargs,
     ) -> None:
-        """Export items to a file."""
+        """Export items to a file.
+
+        The ``encoding`` kwarg (default ``"utf-8"``) selects the byte encoding
+        the file is written with; the remaining kwargs are forwarded to
+        :meth:`export`.
+        """
+        encoding = kwargs.pop("encoding", "utf-8")
         content = self.export(items, **kwargs)
-        with open(filepath, "w", encoding="utf-8") as f:
+        with open(filepath, "w", encoding=encoding) as f:
             f.write(content)
 
     def get_stats(self, items: list[dict]) -> dict:
