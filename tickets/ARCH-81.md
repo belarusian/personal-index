@@ -1,6 +1,6 @@
 # ARCH-81: _export_html emits unbalanced <DL> tags (malformed Netscape HTML)
 
-Status: IMPLEMENTED #1539@bf254f9 (cycle 309)
+Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1539@bf254f9 (cycle 309)
 Component: personal_index.export (personal_index/export.py)
 Issue: #1438
 
