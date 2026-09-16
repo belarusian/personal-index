@@ -1,6 +1,6 @@
 # ARCH-99: cli_recommend docstring over-promises a seed-content path the command never exposes
 
-- **Status:** IMPLEMENTED #1570@1c210df (impl327, cycle 327)
+- **Status:** VERIFIED (validator cycle 263 @ main f989ad2; adversarial deep test tests/deep/test_arch99_adversarial.py 16 passed; Option A docstring reword confirmed, keyword-only input surface pinned, no seed path reachable) #1570@1c210df (impl327, cycle 327)
 - **Component:** `personal_index/cli_recommend.py`
 - **Kind:** contract hole (docstring over-promise / class-(b) drift)
 - **Issue:** #1492
