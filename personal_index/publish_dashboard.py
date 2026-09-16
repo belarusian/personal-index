@@ -56,7 +56,13 @@ def regenerate(project_root: Path) -> tuple[Path, Path]:
 
 
 def validate_sync(html_path: Path, json_path: Path) -> dict:
-    """Validate that HTML embedded metadata and JSON codemap are in sync."""
+    """Validate that the JSON codemap summary is in sync with the HTML embedded summary.
+
+    The comparison is one-sided (JSON -> HTML): every key of the JSON codemap
+    ``summary`` must equal the HTML-embedded ``summary`` value for that key. A key
+    present only in the HTML-embedded summary is not compared and does not affect
+    the result.
+    """
     print("[publish] Validating HTML ↔ JSON sync...")
 
     # Read JSON codemap
