@@ -33,6 +33,18 @@ class TestSessionStats:
         assert d["urls_crawled"] == 10
         assert d["success_rate"] == pytest.approx(0.909, rel=0.01)
 
+    def test_to_dict_serializes_counts_not_contents(self):
+        # to_dict writes the two collection-valued fields as int counts only;
+        # the list/set contents are never serialized.
+        stats = SessionStats(errors=["a", "b"], domains_seen={"x", "y"})
+        d = stats.to_dict()
+        assert d["error_count"] == 2
+        assert d["domains_seen"] == 2
+        assert isinstance(d["error_count"], int)
+        assert isinstance(d["domains_seen"], int)
+        assert d["error_count"] is not stats.errors
+        assert d["domains_seen"] is not stats.domains_seen
+
 
 class TestCrawlSession:
     def test_creation(self):
@@ -162,6 +174,27 @@ class TestSessionManager:
         assert loaded is not None
         assert loaded.session_id == "s1"
         assert loaded.stats.urls_crawled == 1
+
+    def test_round_trip_counts_survive_contents_lost(self, tmp_path):
+        # Numeric counters survive save/load; the error text and domain set
+        # (the contents behind the counts) are dropped.
+        mgr = SessionManager(storage_path=str(tmp_path))
+        session = mgr.create_session("s1", "Test")
+        session.record_url_failed("http://a.com/x", "boom")
+        session.record_url_failed("http://b.com/y", "kaput")
+        session.record_url_crawled("http://a.com/x")
+        session.record_url_crawled("http://b.com/y")
+        assert len(session.stats.errors) == 2
+        assert len(session.stats.domains_seen) == 2
+        mgr.save_session("s1")
+
+        mgr2 = SessionManager()
+        loaded = mgr2.load_session(str(tmp_path / "s1.json"))
+        assert loaded is not None
+        assert loaded.stats.urls_failed == 2
+        assert loaded.stats.urls_crawled == 2
+        assert loaded.stats.errors == []
+        assert len(loaded.stats.domains_seen) == 0
 
     def test_load_missing_file(self):
         mgr = SessionManager()
