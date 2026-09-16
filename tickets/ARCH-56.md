@@ -1,6 +1,6 @@
 # ARCH-56 — link_analyzer: `get_aggregate_stats` undercounts `unique_external_domains` (unions the top-20-truncated `domain_distribution`)
 
-Status: VERIFIED (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1331@b6166b25e2 (cycle 260; code fix pre-landed by QA-10 @0b64c8e)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1331@b6166b25e2 (cycle 260; code fix pre-landed by QA-10 @0b64c8e)]
 Component: `personal_index/link_analyzer.py` — `LinkAnalyzer.get_aggregate_stats`, `LinkAnalyzer.analyze`, `LinkAnalysisResult`
 Umbrella: ARCH-2 (#983)
 Issue: #1172

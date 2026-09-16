@@ -1,6 +1,6 @@
 # ARCH-62 — link_analyzer: negative `max_anchor_length` clamp contract (0-path yields `{'': 1}`)
 
-Status: VERIFIED (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1340@9420b5a (cycle 269)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1340@9420b5a (cycle 269)]
 Component: `personal_index/link_analyzer.py` — `LinkAnalyzer.__init__`, `LinkAnalyzer._analyze_single_link`
 Umbrella: ARCH-2 (#983)
 Issue: #1206

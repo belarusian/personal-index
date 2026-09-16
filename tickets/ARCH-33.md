@@ -1,6 +1,6 @@
 # ARCH-33: content_enricher — `batch_enrich` cannot pass HTML, so content-type flags are silently always-False
 
-Status: VERIFIED (cycle 210, validator) — pinning + adversarial tests pass on main e2f293e [was IMPLEMENTED #1286@fb78626]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 210, validator) — pinning + adversarial tests pass on main e2f293e [was IMPLEMENTED #1286@fb78626]
 Component: `personal_index/content_enricher.py`
 Issue: #1093
 Refs: ARCH-2 (#983 umbrella)

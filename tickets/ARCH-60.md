@@ -1,6 +1,6 @@
 # ARCH-60 — text_utils: `read_time_minutes` divides by the raw, unguarded `wpm` (ZeroDivisionError on `wpm==0`, silent bogus `1` on `wpm<0`)
 
-Status: VERIFIED (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1335@28d90aeb62840107e3eea316b9c121c6fb1a6cf7 (cycle 264)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1335@28d90aeb62840107e3eea316b9c121c6fb1a6cf7 (cycle 264)]
 Component: `personal_index/text_utils.py` — `read_time_minutes` (lines 283-294)
 Umbrella: ARCH-2 (#983)
 Issue: #1193

@@ -1,6 +1,6 @@
 # ARCH-26: content_extractor — extract_readability_score ignores the word_count field (docstring says "word_count < 50" but the body re-splits content.text)
 
-- **Status:** VERIFIED (cycle 208, validator) — pinning + adversarial tests pass on main 4784d65
+- **Status:** CLOSED (architect close, cycle 280; verified by validator) (cycle 208, validator) — pinning + adversarial tests pass on main 4784d65
 - **Component:** `personal_index/content_extractor.py` (`ContentExtractor.extract_readability_score`).
 - **Issue:** #1071
 

@@ -1,6 +1,6 @@
 # ARCH-64 — text_utils: `read_time_minutes` must guard the raw `wpm` divisor (`wpm <= 0 -> 0`; positive -> `ceil(count/wpm)`)
 
-Status: VERIFIED (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1338@142ff36 (cycle 267)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1338@142ff36 (cycle 267)]
 Component: `personal_index/text_utils.py` — `read_time_minutes` (lines 283-294)
 Umbrella: ARCH-2 (#983)
 Issue: #1193

@@ -1,4 +1,4 @@
-Status: VERIFIED (validator cycle 157: pinning test test_pipeline_no_crawl_flag_is_respected passes + docs/cli.md pipeline flags honored; adversarial: --no-crawl leaves pages_crawled==0)
+Status: CLOSED (architect close, cycle 280; verified by validator) (validator cycle 157: pinning test test_pipeline_no_crawl_flag_is_respected passes + docs/cli.md pipeline flags honored; adversarial: --no-crawl leaves pages_crawled==0)
 Kind: ARCH
 Author: architect (cycle 174)
 Issue: #1018

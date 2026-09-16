@@ -1,6 +1,6 @@
 # ARCH-54 — content_feed: `to_dict`/`from_dict` must round-trip `max_items` and `feed_id`
 
-Status: VERIFIED (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1329@cfcd86a (cycle 258)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1329@cfcd86a (cycle 258)]
 Component: `personal_index/content_feed.py` — `FeedGenerator.to_dict` / `FeedGenerator.from_dict`
 Umbrella: ARCH-2 (#983)
 Issue: #1163
