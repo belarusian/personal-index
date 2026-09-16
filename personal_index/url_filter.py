@@ -9,9 +9,13 @@ from dataclasses import dataclass
 
 @dataclass
 class UrlFilterRule:
-    """A single URL filter rule."""
+    """A single URL filter rule.
+
+    Block/allow is decided by LIST MEMBERSHIP (which list the rule sits in,
+    whitelist vs blacklist), not by a per-rule flag. The rule carries only its
+    ``pattern`` and an optional ``description``.
+    """
     pattern: str
-    is_blacklist: bool = True
     description: str = ""
 
     def matches(self, url: str) -> bool:
@@ -46,11 +50,11 @@ class UrlFilter:
 
     def add_blacklist(self, pattern: str, description: str = "") -> None:
         """Add a URL pattern to the blacklist."""
-        self._blacklist.append(UrlFilterRule(pattern, is_blacklist=True, description=description))
+        self._blacklist.append(UrlFilterRule(pattern, description=description))
 
     def add_whitelist(self, pattern: str, description: str = "") -> None:
         """Add a URL pattern to the whitelist."""
-        self._whitelist.append(UrlFilterRule(pattern, is_blacklist=False, description=description))
+        self._whitelist.append(UrlFilterRule(pattern, description=description))
 
     def is_allowed(self, url: str) -> bool:
         """Check if a URL is allowed (passes all filters).
@@ -108,6 +112,10 @@ class UrlFilter:
         blacklist); only when no whitelist rule matches is the BLACKLIST
         scanned. Within each list, rules are checked in insertion order and
         the FIRST rule whose ``matches(url)`` is True is returned.
+
+        Block/allow is decided by LIST MEMBERSHIP (which list the rule sits
+        in), not by a per-rule flag: a rule in ``_whitelist`` is a whitelist
+        rule and a rule in ``_blacklist`` is a blacklist rule.
 
         Args:
             url: URL to check.
