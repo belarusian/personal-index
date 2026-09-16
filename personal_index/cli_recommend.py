@@ -56,7 +56,7 @@ def recommend(
     tag_weight,
     score_weight,
 ):
-    """Get content recommendations based on a query or seed content."""
+    """Get content recommendations by matching a query's keywords against indexed content."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     recommender, count = _load_recommender(dd)
 
