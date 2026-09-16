@@ -1,6 +1,6 @@
 # ARCH-94: `generate` (full pipeline) never attributes per-source-module test counts — the test bar chart and S1 signal read a binary 0/1, not a real count
 
-Status: CLAIMED 2026-09-16
+Status: IMPLEMENTED #1560@56dbfe3
 Component: personal_index/docs_generator.py
 Issue: #1481
 
