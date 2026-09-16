@@ -1,6 +1,6 @@
 # ARCH-91: run/run_from_files `stages` is documented as an arbitrary "subset" but only a prefix of the canonical order produces meaningful results
 
-Status: IMPLEMENTED #1556@5a789d3 (impl318, cycle 318)
+Status: VERIFIED (validator cycle 257 @ main a8a73a4)
 Component: personal_index/pipeline_runner.py
 Issue: #1471
 
