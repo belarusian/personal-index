@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "personal-index=personal_index.cli:cli",
+            "personal-index=personal_index.cli:main",
         ],
     },
     python_requires=">=3.9",
