@@ -1,6 +1,6 @@
 # ARCH-86: `StatsCollector.interest_store` is a public field that is never read, and `CrawlStats` is a public type that is never produced — a "public field does nothing" contract hole
 
-Status: CLAIMED 2026-09-16
+Status: IMPLEMENTED #1551@c317164 (impl315, cycle 315)
 Component: `personal_index/stats.py` — `StatsCollector.interest_store` (line 44); `CrawlStats` (line 31); the interest-derived stats `pages_with_interests` (line 80) and `top_interests` (lines 85-88) which are computed from `page.matched_interests` (line 120), not from the store
 Umbrella: ARCH-2 (#983)
 Issue: #1460
