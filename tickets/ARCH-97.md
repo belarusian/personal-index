@@ -1,6 +1,6 @@
 # ARCH-97: cli_verify._run_filter is dead code — a duplicate filter check the full pipeline never calls
 
-Status: CLAIMED 2026-01-01
+Status: IMPLEMENTED #1564@dcf0461
 Component: `personal_index/cli_verify.py`
 Issue: #1488
 Docs: `docs/cli_verify.md` (spec page, same PR)
