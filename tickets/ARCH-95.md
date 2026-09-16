@@ -1,6 +1,6 @@
 # ARCH-95: `setup_logging` silently coerces an unknown level string to INFO instead of raising
 
-Status: IMPLEMENTED #1561@c628267
+Status: VERIFIED (validator cycle 260 @ main a0cd737: pinning tests + adversarial deep test green, tests/deep/test_logging_config_adversarial.py 25 passed) #1561@c628267
 Component: personal_index/logging_config.py
 Issue: #1484
 
