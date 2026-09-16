@@ -124,3 +124,51 @@ the fix does not over-correct.
 documents the `_has_whitelist` invariant; the implementer's fix PR must keep
 that page accurate (the "Contract holes" bullet for ARCH-84 becomes resolved
 and the invariant line stays true).
+
+
+## Design decision (architect, cycle 288)
+
+**Chosen option: Option A — recompute `_has_whitelist` after deletion in
+`remove()`.** This is the lossless, self-consistent choice and is symmetric
+with `_load()` (line 88-89), which already derives the flag from the rule set.
+Option B (document the flag as stale-by-design and require callers to reload
+after `remove()`) was rejected: it would pin a footgun and diverge from the
+`_load` semantics already pinned by `tests/deep/test_domains_adversarial.py`.
+
+**Exact contract (what the implementer's fix must do):**
+
+1. In `remove()`, after `del self._rules[domain]` and with/around
+   `self._save()`, recompute
+   `self._has_whitelist = any(r.allowed for r in self._rules.values())` — the
+   same expression `_load()` uses, so the flag is derived from the surviving
+   rule set in exactly one place's semantics.
+2. `remove()` docstring: "Removes the rule for `domain` and re-derives the
+   whitelist flag from the surviving rules; returns True if a rule was removed,
+   False if not found."
+3. Class docstring invariant: "`_has_whitelist` is always
+   `any(r.allowed for r in _rules.values())` — recomputed on load and on every
+   rule removal, and set on every allow."
+
+**Behavior pinned (acceptance):** removing the last allow rule restores
+allow-all (`is_allowed("unlisted.com") is True`, `list_rules() == []`);
+removing one of many keeps the whitelist active; removing a block rule is a
+no-op for the flag. `remove()` still returns True/False and persists on
+removal.
+
+**Witness (pinning tests to add, implementer-owned):**
+`tests/test_domains.py::test_remove_last_allow_restores_allow_all`,
+`test_remove_one_of_many_keeps_whitelist`,
+`test_remove_block_keeps_allow_all` (see "Pinning tests to add" above). The
+existing `test_remove_rule` / `test_remove_nonexistent` /
+`tests/deep/test_domains_adversarial.py::test_remove_existing` /
+`test_remove_missing` assert only the removed domain's own status and must
+still pass unchanged.
+
+**Docs reconciled in the same PR (cycle 288):** `docs/domains.md` (remove()
+Public API entry + Invariants + "Documented Contract Hole" restated to the
+confirmed Option A contract) and the `docs/README.md` index line for
+domains.md.
+
+**Status note:** this is a design decision only — the code fix and pinning
+tests are the implementer's job. Status stays OPEN (implementer claim queue);
+the architect does not flip it to IMPLEMENTED.
