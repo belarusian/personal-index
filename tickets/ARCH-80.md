@@ -1,6 +1,6 @@
 # ARCH-80 — content_export_csv: `CSVExporter.export_to_file` hardcodes `encoding="utf-8"` and silently drops the caller's `encoding` kwarg (lossy, no signal)
 
-Status: CLAIMED 2026-09-16
+Status: IMPLEMENTED #1538@fdb2d88 (cycle 308)
 Component: `personal_index/content_export_csv.py` — `CSVExporter.export_to_file` (lines 191-200); specifically line 198 `content = self.export(items, **kwargs)` (forwards the caller's `encoding` into `export()`, where the parameter at line 80 is accepted but never read) and line 199 `with open(filepath, "w", encoding="utf-8") as f:` (hardcoded utf-8, the `encoding` kwarg never reaches this `open()`).
 Umbrella: ARCH-2 (#983)
 Issue: #1436
