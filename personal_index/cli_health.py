@@ -16,8 +16,10 @@ from personal_index.content_health import (
 @click.option("--min-title-length", type=int, default=3, help="Minimum title length")
 @click.option("--require-tags", is_flag=True, help="Require tags on all items")
 @click.option("--min-score", type=float, default=0.0, help="Minimum score threshold")
+@click.option("--max-title-length", type=int, default=200, help="Maximum title length")
+@click.option("--min-tags", type=int, default=1, help="Minimum tags per item (with --require-tags)")
 @click.pass_context
-def health(ctx, data_dir, min_content_length, min_title_length, require_tags, min_score):
+def health(ctx, data_dir, min_content_length, min_title_length, require_tags, min_score, max_title_length, min_tags):
     """Check the health of indexed content."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     idx, tag_store = _load_stores(dd)
@@ -28,7 +30,7 @@ def health(ctx, data_dir, min_content_length, min_title_length, require_tags, mi
         return
 
     items = _build_health_items(pages, tag_store)
-    config = _build_config(min_content_length, min_title_length, require_tags, min_score)
+    config = _build_config(min_content_length, min_title_length, require_tags, min_score, max_title_length, min_tags)
     checker = ContentHealthChecker(config=config)
     report = checker.check_all(items)
 
@@ -58,11 +60,13 @@ def _build_health_items(pages, tag_store):
     return items
 
 
-def _build_config(min_content_length, min_title_length, require_tags, min_score):
+def _build_config(min_content_length, min_title_length, require_tags, min_score, max_title_length, min_tags):
     return ContentHealthCheck(
         min_content_length=min_content_length,
         min_title_length=min_title_length,
+        max_title_length=max_title_length,
         require_tags=require_tags,
+        min_tags=min_tags,
         require_score=min_score > 0,
         min_score=min_score,
     )

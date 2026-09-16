@@ -70,3 +70,61 @@ class TestHealthCLI:
         )
         assert result.exit_code == 0
         assert "Issues Found" in result.output
+
+    def _setup_page(self, dd, url, title, content, tag=None):
+        idx = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
+        idx.add_page(IndexedPage(url=url, title=title, content=content, score=8.0))
+        idx._save()
+        if tag is not None:
+            from personal_index.tags import TagStore
+            ts = TagStore(store_path=os.path.join(dd, "tags.json"))
+            ts.add_tag_to_page(url, tag)
+        return idx
+
+    def test_health_max_title_length_flags_long_title(self, tmp_path):
+        dd = str(tmp_path)
+        os.makedirs(dd, exist_ok=True)
+        self._setup_page(dd, "https://example.com/long", "A" * 15, "x" * 60)
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["--data-dir", dd, "health", "--max-title-length", "10"],
+        )
+        assert result.exit_code == 0
+        assert "Title exceeds 10 characters" in result.output
+
+    def test_health_default_max_title_length_no_issue(self, tmp_path):
+        dd = str(tmp_path)
+        os.makedirs(dd, exist_ok=True)
+        self._setup_page(dd, "https://example.com/long", "A" * 15, "x" * 60)
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["--data-dir", dd, "health"],
+        )
+        assert result.exit_code == 0
+        assert "Title exceeds" not in result.output
+
+    def test_health_min_tags_2_flags_single_tag(self, tmp_path):
+        dd = str(tmp_path)
+        os.makedirs(dd, exist_ok=True)
+        self._setup_page(dd, "https://example.com/tagged", "A Good Page Title", "x" * 60, tag="python")
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["--data-dir", dd, "health", "--require-tags", "--min-tags", "2"],
+        )
+        assert result.exit_code == 0
+        assert "Content has no tags (min 2 required)" in result.output
+
+    def test_health_default_min_tags_single_tag_no_issue(self, tmp_path):
+        dd = str(tmp_path)
+        os.makedirs(dd, exist_ok=True)
+        self._setup_page(dd, "https://example.com/tagged", "A Good Page Title", "x" * 60, tag="python")
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["--data-dir", dd, "health", "--require-tags"],
+        )
+        assert result.exit_code == 0
+        assert "Content has no tags" not in result.output
