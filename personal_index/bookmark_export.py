@@ -182,8 +182,13 @@ class BookmarkExporter:
         if fmt is None:
             ext = Path(filepath).suffix.lstrip(".").lower()
             fmt = _EXTENSION_MAP.get(ext)
+            if fmt is None:
+                # Auto-detect failed: name the inspected extension, not None.
+                return BookmarkExportResult(
+                    errors=[f"Unsupported format: {ext} (from extension)"]
+                )
 
-        if fmt is None or fmt not in self.SUPPORTED_FORMATS:
+        if fmt not in self.SUPPORTED_FORMATS:
             return BookmarkExportResult(
                 errors=[f"Unsupported format: {fmt}"]
             )
