@@ -177,6 +177,35 @@ class TestBuildTree:
         tree = cycle_signals.build_tree(mods)
         assert tree["stats"]["modules"] == 0
 
+    def test_package_with_children_keeps_own_module(self):
+        """ARCH-90: a package that is both a module and a parent keeps its own
+        module entry alongside its children (stats and listing agree)."""
+        mods = [
+            {"name": "pkg.sub", "lines": 10, "functions": 1, "classes": 0, "tests": 0,
+             "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0},
+            {"name": "pkg.sub.beta", "lines": 10, "functions": 1, "classes": 0, "tests": 0,
+             "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0},
+        ]
+        tree = cycle_signals.build_tree(mods)
+        sub = tree["children"]["pkg"]["children"]["sub"]
+        # the package's own module is present AND its child is present
+        assert sub["modules"] == ["pkg.sub"]
+        assert sub["children"]["beta"]["modules"] == ["pkg.sub.beta"]
+        # stats counts both the own module and the descendant
+        assert sub["stats"]["modules"] == 2
+
+    def test_leaf_node_modules_unchanged(self):
+        """Guard path: a leaf node (no children) still lists its own modules."""
+        mods = [
+            {"name": "pkg.leaf", "lines": 5, "functions": 1, "classes": 0, "tests": 0,
+             "ruff_errors": 0, "mypy_errors": 0, "ruff_warnings": 0},
+        ]
+        tree = cycle_signals.build_tree(mods)
+        leaf = tree["children"]["pkg"]["children"]["leaf"]
+        assert leaf["modules"] == ["pkg.leaf"]
+        assert leaf["stats"]["modules"] == 1
+        assert "children" not in leaf
+
 
 # ---------------------------------------------------------------------------
 # format_tree

@@ -218,10 +218,11 @@ def _node_to_dict(key: str, tree: dict[str, dict]) -> dict:
                 if tl not in children:
                     children[tl] = _node_to_dict(child_key, tree)
 
-    # Only include modules that have signals (keep it compact)
-    signal_modules: list[str] = []
-    if not children:  # leaf node
-        signal_modules.extend(node["modules"])
+    # A node's own modules are always emitted, whether or not it has
+    # children: a package that is both a module (its own __init__.py has
+    # functions) and a parent must keep its own module entry alongside its
+    # children, so stats.modules and the visible module listing agree.
+    signal_modules: list[str] = list(node["modules"])
 
     # Convert signals set to sorted list
     signals = sorted(node["signals"])
@@ -259,7 +260,9 @@ def build_tree(modules: list[dict]) -> dict:
     Returns a tree node with aggregate stats. Each node has:
       - name: package/module name
       - children: nested package nodes (sorted by error count desc, then name)
-      - modules: leaf module names (only modules with signals, to keep it compact)
+      - modules: the node's own module names, emitted whenever non-empty
+        whether or not the node has children (a package that is both a module
+        and a parent keeps its own module entry alongside its children)
       - stats: {lines, functions, classes, errors, warnings, modules}
       - signals: list of active signal tags [S1, S2, S5, ...]
     """
