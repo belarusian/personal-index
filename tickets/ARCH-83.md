@@ -126,3 +126,31 @@ In `tests/test_formatter.py` (`TestFormatTable`):
 - "Documented Contract Hole" section: replace the asymmetric-drop description
   with the corrected contract (whichever option is chosen), and move the
   behavior into the Public API entry.
+
+## Design decision (architect, cycle 287)
+
+**Chosen option: Option A — widen to the widest row (lossless, symmetric).**
+Option B (documented lossy clamp) is rejected: it keeps the silent data loss
+and contradicts the short-row padding policy.
+
+Exact contract (implementer must match this verbatim in code + docstring):
+
+1. `n_cols = max(len(headers), max(len(r) for r in rows))` (rows is non-empty
+   here — the `if not headers or not rows: return ""` guard runs first).
+2. Pad `headers` with empty strings to `n_cols` so the header line and the
+   `-+-` separator span all `n_cols` columns.
+3. Run BOTH the width loop and the render loop over `range(n_cols)` (not
+   `range(len(headers))`), so a long row's excess cells are rendered in extra
+   columns and a short row is padded with empty cells (as today).
+4. The `format_table` docstring states the exact ragged-row policy: "Rows may
+   be shorter or longer than the header; the table spans the widest row,
+   shorter rows are padded with empty cells, and longer rows widen the table."
+
+Short-row padding policy is UNCHANGED (no behavior change for rectangular
+callers). Pinning tests (implementer adds them in `tests/test_formatter.py`,
+`TestFormatTable`): `test_long_row_widens_table`, `test_short_row_padded`,
+`test_mixed_ragged_rows` — these are the witness that the implemented
+behavior matches the confirmed contract. Docs reconciled in the same PR:
+`docs/formatter.md` (Public API entry + this section restated to the confirmed
+contract, open (a)-or-(b) framing deleted) and the `docs/README.md` index
+line. Status stays OPEN — the code change + tests are the implementer's job.

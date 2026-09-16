@@ -73,13 +73,18 @@ Hole for the asymmetry).
 ### format_table(headers: list[str], rows: list[list[str]]) -> str (line 110)
 
 Renders a ` | `-separated text table with a `-+-` separator. Empty `headers`
-or empty `rows` returns `""`. Column widths are the max of the header length
-and each cell's `len(str(cell))` — but **only for cells whose index is
-`< len(headers)`** (the width loop is `for i, cell in enumerate(row)` guarded
-by `if i < len(col_widths)`). The render loop is `for i in range(len(headers))`:
-a row with **fewer** cells than headers is padded with empty cells; a row with
-**more** cells than headers has the excess cells **silently dropped** (see the
-Documented Contract Hole).
+or empty `rows` returns `""`. **Ragged-row policy (confirmed contract,
+ARCH-83 Option A — widen to the widest row):** the table spans
+`n_cols = max(len(headers), max(len(r) for r in rows))` — headers are padded
+with empty strings to `n_cols`, and both the width loop and the render loop
+run over `range(n_cols)`. A row **shorter** than the table is padded with
+empty cells (lossless, unchanged); a row **longer** than the header widens the
+table — its excess cells are rendered in extra columns (lossless, symmetric).
+Column widths are the max of the header length and each cell's
+`len(str(cell))` across all `n_cols` columns. E.g.
+`format_table(["A", "B"], [["x", "y", "z"]])` renders a three-column table
+containing `x`, `y`, `z`; `format_table(["A", "B"], [["p"]])` renders `p | `
+(trailing empty column).
 
 ### format_duration(seconds: float) -> str (line 139)
 
@@ -137,27 +142,33 @@ files, and does not persist or mutate any backing store.
 
 ## Documented Contract Hole
 
-**`format_table` silently drops cells in a row that is LONGER than the header
-row (lossy), while padding a row that is SHORTER — an asymmetric,
-undocumented behavior.** The width loop (line 119-121, `for i, cell in
-enumerate(row)` guarded by `if i < len(col_widths)`) and the render loop
-(line 130-134, `for i in range(len(headers))`) both iterate only over
-`range(len(headers))`. Consequences, verified against the code:
+**`format_table` ragged-row handling — CONFIRMED contract (ARCH-83, Option A:
+widen to the widest row).** The hole was that the width loop and the render
+loop both iterated only over `range(len(headers))`, so a row LONGER than the
+header had its excess cells silently dropped (lossy) while a row SHORTER was
+padded (lossless) — an asymmetric, undocumented behavior. The architect
+resolved the open choice in cycle 287 by confirming **Option A (lossless,
+symmetric)** as the contract:
 
-- A row with **more** cells than headers: the excess cells are **never read**
-  and are **silently dropped** from the output. E.g.
-  `format_table(["A", "B"], [["x", "y", "z"]])` renders `x | y` — the cell
-  `z` vanishes with no error, no ellipsis, no truncation marker.
-- A row with **fewer** cells than headers: the missing columns are **padded**
-  with empty cells (line 134, `cells.append("".ljust(col_widths[i]))`). E.g.
+- `n_cols = max(len(headers), max(len(r) for r in rows))`; `headers` is padded
+  with empty strings to `n_cols`; the width loop and the render loop both run
+  over `range(n_cols)`.
+- A row with **fewer** cells than the table: the missing columns are **padded**
+  with empty cells (unchanged). E.g.
   `format_table(["A", "B"], [["p"]])` renders `p | ` (trailing empty column).
+- A row with **more** cells than the header: the excess cells are **rendered in
+  extra columns**, widening the table (no longer dropped). E.g.
+  `format_table(["A", "B"], [["x", "y", "z"]])` renders a three-column table
+  containing `x`, `y`, `z`.
 
-So the same function is lossy in one direction (long rows) and lossless in the
-other (short rows), and the asymmetry is not documented in the docstring
-(`"Format data as a text table."`). The existing tests
-(`test_basic_table`, `test_empty_table`, `test_no_rows`) only exercise
-**rectangular** tables (every row the same length as the header), so the
-ragged-row behavior is unpinned. See ARCH-83 for the precise contract.
+The `format_table` docstring must state this exact policy (no blanket
+`"Format data as a text table."` wording). The existing tests
+(`test_basic_table`, `test_empty_table`, `test_no_rows`) exercise only
+**rectangular** tables and must still pass unchanged; the ragged-row contract
+is pinned by the new `TestFormatTable` tests named in ARCH-83
+(`test_long_row_widens_table`, `test_short_row_padded`,
+`test_mixed_ragged_rows`), which are the witness that this corrected contract
+matches the implemented behavior.
 
 **Adjacent behaviors that are NOT holes** (do not re-ticket):
 - `format_search_results` negative-`limit` clamp (`max(0, limit)`) and the
