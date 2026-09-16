@@ -40,9 +40,13 @@ Five fields, all defaulted:
 
 - `include_metadata: bool = True` — emit the `**Published:**` date line.
 - `include_tags: bool = True` — emit the `**Tags:**` line.
-- `include_summary: bool = False` — see the Documented Contract Hole: the
-  default keeps the **full** content; `True` **replaces** the content with a
-  200-char truncation.
+- `truncate_content: bool = False` — content policy, applied identically by
+  all three renderers. `False` (the default) emits the **full** content
+  verbatim; `True` **replaces** the content with a 200-char word-boundary
+  truncation + `...` (lossy). The flag name states the behavior: `True`
+  truncates the content. Confirmed contract per ARCH-82 (Option A); the
+  implementer renames the code flag `include_summary` -> `truncate_content`
+  to match.
 - `sort_by: str = "date"` — one of `{"date", "title", "priority", "relevance"}`.
 - `group_by: str | None = None` — one of `{"tags", "date", "category", None}`.
 
@@ -121,24 +125,36 @@ chars, backs off to the last space (word boundary), appends `...`.
 read-only consumer of the item dicts; it does not persist or mutate any
 backing store.
 
-## Documented Contract Hole
+## Confirmed Contract (ARCH-82, Option A)
 
-**`include_summary` is inverted: the default keeps the FULL content and
-`True` makes the export LOSSY (replaces content with a 200-char truncation).**
-All three renderers use the same expression
-(`self._truncate(content, 200) if self.config.include_summary else content`)
-at line 173 (markdown), line 207 (HTML), and line 243 (plain text). The flag
-name `include_summary` implies "add a summary", but the code uses it as a
-*replace* flag: with the default `include_summary=False` the **full** content
-is emitted, and setting `include_summary=True` **drops** the content beyond
-200 chars (word-boundary truncation + `...`). A caller who reads the flag
-name and sets `include_summary=True` expecting a summary *in addition to* the
-content instead gets a lossy export that silently discards most of the
-content. The existing deep test
-`test_truncate_summary_mode_applies_to_content` only asserts `"..." in out`
-for the `True` case — it does **not** pin that the full content is dropped,
-nor that the default (`False`) keeps the full content, so the inversion is
-unpinned. See ARCH-82 for the precise contract.
+**The content flag is `truncate_content: bool = False`, and its name states
+the behavior: `True` *replaces* the content with a 200-char word-boundary
+truncation + `...` (lossy); `False` (the default) emits the full content
+verbatim.** All three renderers apply the identical content policy for the
+same config:
+
+- markdown `_render_md_item` (line 173)
+- HTML `_export_html` (line 207)
+- plain text `_export_plain_text` (line 243)
+
+each use `self._truncate(content, 200) if self.config.truncate_content else
+content`. The default config produces the same content policy as before the
+fix (full content), so there is no silent behavior change for existing
+callers relying on the default.
+
+**Design decision (architect, cycle 286):** Option A was chosen over Option B
+(additive summary line) because it is the smallest change — the three
+renderer expressions already match the renamed flag, so only the flag name
+changes and the default content policy is preserved. The implementer renames
+the code flag `include_summary` -> `truncate_content` and adds the pinning
+tests named in ARCH-82.
+
+**Witness (pinning tests, added by the implementer per ARCH-82):** the
+existing deep test `test_truncate_summary_mode_applies_to_content` (which
+asserts only `"..." in out` for the `True` case) is superseded by tests that
+pin BOTH the default (full content present) and the `True` case (full content
+dropped, only the `...`-terminated truncation remains), repeated for all
+three formats.
 
 **Adjacent behaviors that are NOT holes** (do not re-ticket):
 - HTML `content` is escaped exactly once (QA-33 double-escape fixed) — pinned
