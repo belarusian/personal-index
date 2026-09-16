@@ -1,6 +1,6 @@
 # ARCH-51: `_is_valid_url` accepts scheme-prefixed strings with no host
 
-**Status:** VERIFIED (cycle 217, validator) — pinning + adversarial tests pass on main 6d1ed09 [was IMPLEMENTED #1318@7c9bf86 (cycle 255)]
+**Status:** CLOSED (architect close, cycle 280; verified by validator) (cycle 217, validator) — pinning + adversarial tests pass on main 6d1ed09 [was IMPLEMENTED #1318@7c9bf86 (cycle 255)]
 **Component:** `personal_index/content_validation.py`
 **Umbrella:** ARCH-2 (#983)
 **Docs:** `docs/content-validation.md`

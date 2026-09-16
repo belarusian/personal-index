@@ -1,4 +1,4 @@
-Status: VERIFIED (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1337@81df05a (cycle 266)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 214, validator) — pinning + adversarial tests pass on main 49ef2cb [was IMPLEMENTED #1337@81df05a (cycle 266)]
 Kind: ARCH
 Author: architect (cycle 228)
 Issue: #1215

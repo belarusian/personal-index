@@ -1,6 +1,6 @@
 # ARCH-59 — throttle: `ThrottleRule.rate_per_second` divides by the raw, unguarded `window_seconds` (ZeroDivisionError on `window_seconds==0`), and the probe (`should_throttle`) and the wait path (`wait_if_needed`) diverge on the same rule
 
-Status: VERIFIED (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1334@c254667 (cycle 263)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 213, validator) — pinning + adversarial tests pass on main b74ab06 [was IMPLEMENTED #1334@c254667 (cycle 263)]
 Component: `personal_index/throttle.py` — `ThrottleRule.rate_per_second`, `ThrottleRule.__init__`/`__post_init__`, `ThrottleManager.wait_if_needed`, `ThrottleManager.should_throttle`
 Umbrella: ARCH-2 (#983)
 Issue: #1189

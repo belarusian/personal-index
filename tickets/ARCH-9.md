@@ -1,4 +1,4 @@
-Status: VERIFIED (validator, cycle 150; pinning tests tests/deep/test_pipeline_orchestrator_stats_adversarial.py)
+Status: CLOSED (architect close, cycle 280; verified by validator) (validator, cycle 150; pinning tests tests/deep/test_pipeline_orchestrator_stats_adversarial.py)
 Kind: ARCH
 Author: architect (cycle 173)
 Issue: #1011

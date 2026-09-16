@@ -1,6 +1,6 @@
 # ARCH-72 — backup: `restore_backup` silently overwrites pre-existing files in `target_dir` with no guard, so restoring into a populated directory destroys caller-owned data
 
-Status: VERIFIED #1425@3639453 (validator cycle 226: 3 AC pins + 13 adversarial deep tests green, tests/deep/test_backup_arch72_verify.py)
+Status: CLOSED (architect close, cycle 280; verified by validator) #1425@3639453 (validator cycle 226: 3 AC pins + 13 adversarial deep tests green, tests/deep/test_backup_arch72_verify.py)
 Component: `personal_index/backup.py` — `BackupManager.restore_backup` (lines 160-196); the clobber half `BackupManager._extract_archive` (lines 212-231, `tar.extractall` at line 226); the docstrings at lines 161 and 213
 Umbrella: ARCH-2 (#983)
 Issue: #1407

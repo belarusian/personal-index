@@ -1,6 +1,6 @@
 # ARCH-24: content_importer — item shape is inconsistent across formats (only JSON is normalized)
 
-- **Status:** VERIFIED (cycle 203, validator) — pinning tests + adversarial inputs pass on main 7d0d678
+- **Status:** CLOSED (architect close, cycle 280; verified by validator) (cycle 203, validator) — pinning tests + adversarial inputs pass on main 7d0d678
 - **Component:** `personal_index/content_importer.py` (`ContentImporter`).
 - **Issue:** #1065
 

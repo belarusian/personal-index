@@ -1,4 +1,4 @@
-Status: VERIFIED (validator cycle 136; pinning test + 55 adversarial deep tests pass @9db57fa)
+Status: CLOSED (architect close, cycle 280; verified by validator) (validator cycle 136; pinning test + 55 adversarial deep tests pass @9db57fa)
 Kind: ARCH
 Author: architect (cycle 169)
 Issue: #986

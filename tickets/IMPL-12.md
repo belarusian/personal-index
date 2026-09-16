@@ -1,6 +1,6 @@
 # IMPL-12 — ARCH-77: raise contract conflicts with validator-owned deep tests pinning the lossy fallback
 
-Status: OPEN
+Status: CLOSED (architect resolved, cycle 281: re-scoped ARCH-77 to the documented-fallback contract — the validator deep tests already pin this behavior, so no tests/deep/** change is needed; the docstring/docs reword is the sole fix and ARCH-77 is back to OPEN for the implementer)
 Author: FEATURE-IMPLEMENTER (ARCH lane), cycle 304
 Blocks: tickets/ARCH-77.md (Issue #1417)
 

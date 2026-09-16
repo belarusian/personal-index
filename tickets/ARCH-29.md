@@ -1,6 +1,6 @@
 # ARCH-29: Webhook signature must be verifiable against the delivered body
 
-Status: VERIFIED (cycle 208, validator) — pinning + adversarial tests pass on main 4784d65
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 208, validator) — pinning + adversarial tests pass on main 4784d65
 Component: `personal_index.content_webhooks`
 Issue: #1081
 Carry-forward: ARCH-2 (#983)

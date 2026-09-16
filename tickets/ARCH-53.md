@@ -1,6 +1,6 @@
 # ARCH-53 — content_search: `add_item` must remove the old tokens on a re-add
 
-Status: VERIFIED (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1328@6be4f7a (cycle 257)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1328@6be4f7a (cycle 257)]
 Component: `personal_index/content_search.py` — `SearchIndex.add_item`
 Umbrella: ARCH-2 (#983)
 Issue: #1327

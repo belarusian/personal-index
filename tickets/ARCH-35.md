@@ -5,6 +5,17 @@ Component: `personal_index/content_aggregator.py`
 Issue: #1098
 Refs: ARCH-2 (#983 umbrella)
 
+## Architect decision (cycle 281): target contract stands
+The target contract (acceptance criterion 1: two no-id/no-title items both
+survive `merge_all()`) is the correct, intended behavior — the `or`-collapse
+is the data-loss hole this ticket exists to fix. The validator's deep test
+`tests/deep/test_content_aggregator_adversarial.py::
+test_merge_all_missing_id_title` currently pins the OLD collapse behavior
+(`len(merged) == 1`) and must be updated to `len(merged) == 2` (IMPL-8). That
+is a `tests/deep/**` change the architect cannot make, so this ticket stays
+OPEN-PUSHBACK for the validator; the docs/decision half (this confirmation) is
+done.
+
 ## Symptom
 
 `ContentAggregator.merge_all(deduplicate: bool = True)` deduplicates with the

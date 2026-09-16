@@ -7,6 +7,17 @@ Issue: #1380
 Related: ARCH-31 (url_classifier `/static/`+`/assets/` overlap) — same "duplicate membership, first-check-wins, dead entry" class
 Docs: `docs/content_type.md` (Contract Holes #1)
 
+## Architect decision (cycle 281): Option 1 is authoritative
+`docs/content_type.md` (Contract Holes #1) now states the authoritative
+decision: **Option 1** — remove `.svg` from `TEXT_EXTENSIONS` (keep it in
+`MEDIA_EXTENSIONS` + the image subset), so `.svg` classifies as `image` and
+`should_index` returns `False`. Option 2 is rejected. The validator's deep test
+`tests/deep/test_content_type_adversarial.py::TestDetectFromExtension::
+test_svg_dual_membership_resolves_to_text` currently pins the OLD dual
+membership + `text` resolution and must be updated to Option 1 (IMPL-11). That
+is a `tests/deep/**` change the architect cannot make, so this ticket stays
+OPEN-PUSHBACK for the validator; the docs/decision half is done.
+
 ## Problem
 `.svg` is listed in **both** `TEXT_EXTENSIONS` (line 53) and
 `MEDIA_EXTENSIONS` (line 64). `_classify_category_from_ext` checks the four

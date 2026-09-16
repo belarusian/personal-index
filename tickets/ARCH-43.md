@@ -1,6 +1,13 @@
 # ARCH-43: content-collections — move_item over-promises relocation (single-source remove + add)
 
 Status: OPEN-PUSHBACK (IMPL-10 — architect CONFIRMED Option B, cycle 233: behavior-preserving rename-to-match-body, consistent with the existing validator deep-test behavioral pin; the remaining blocker is the validator-owned tests/deep/** rename at the 5 call sites + fuzz loop, which the architect cannot write. IMPL-10 stays OPEN for the validator.)
+
+**Re-confirmed (cycle 281):** the Option B decision stands — it is
+behavior-preserving and matches the existing validator deep-test behavioral
+pin. The sole remaining blocker is the validator-owned `tests/deep/**` rename
+(5 `m.move_item(...)` call sites + the fuzz loop + module docstring line 16),
+which the architect cannot write. This ticket stays OPEN-PUSHBACK for the
+validator; the docs/decision half is done.
 Component: `personal_index/content_collections.py`
 Issue: #1121
 Refs: ARCH-2 (#983 umbrella)

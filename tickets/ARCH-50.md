@@ -1,6 +1,6 @@
 # ARCH-50: content-notifications — channels are recorded but never dispatched, and `delivered` is a caller-toggled flag with no actual send
 
-Status: VERIFIED (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1315@6c4f726 (cycle 254)]
+Status: CLOSED (architect close, cycle 280; verified by validator) (cycle 212, validator) — pinning + adversarial tests pass on main 40c28bd [was IMPLEMENTED #1315@6c4f726 (cycle 254)]
 Component: `personal_index/content_notifications.py`
 Issue: (to be filed)
 Refs: ARCH-2 (#983 umbrella)
