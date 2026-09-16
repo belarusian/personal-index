@@ -34,11 +34,16 @@ class ContentAggregator:
         if deduplicate:
             seen = set()
             unique = []
+            counter = 0
             for item in merged:
                 item_id = item.get("id")
                 if item_id is None:
                     item_id = item.get("title")
-                key = str(item_id)
+                if item_id is None:
+                    key = ("none", counter)
+                    counter += 1
+                else:
+                    key = ("id", type(item_id).__name__, item_id)
                 if key not in seen:
                     seen.add(key)
                     unique.append(item)
