@@ -25,7 +25,16 @@ class InterestStore:
             self._load()
 
     def _load(self) -> None:
-        """Load interests from file."""
+        """Load interests from file.
+
+        Degrades to an empty store (``_interests = {}``) for any bad file
+        contents: a missing file, invalid JSON (``json.JSONDecodeError``), a
+        parsed value that is not a dict, a record value that is not a dict
+        (``AttributeError``), a record missing ``name`` (``TypeError``), and a
+        record whose ``interest_type`` or ``match_mode`` is a string not in the
+        corresponding enum (``ValueError``). When every record is constructible,
+        the store is populated exactly as before.
+        """
         if not self.store_path:
             return
         try:
@@ -38,7 +47,13 @@ class InterestStore:
                 name: Interest.from_dict(d)
                 for name, d in data.items()
             }
-        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
+        except (
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            ValueError,
+        ):
             self._interests = {}
 
     def _save(self) -> None:
