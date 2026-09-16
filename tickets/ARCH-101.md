@@ -1,6 +1,6 @@
 # ARCH-101: `health` CLI exposes 5 of the 7 checker knobs — `max_title_length` and `min_tags` are unreachable from the CLI
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-16
 - **Component:** `personal_index/cli_health.py` (drives `personal_index.content_health.ContentHealthCheck`)
 - **Kind:** contract hole (unexposed config knobs — two of seven checks untunable from the CLI)
 - **Issue:** #1499
