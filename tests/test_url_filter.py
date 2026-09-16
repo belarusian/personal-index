@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import inspect
+
+import pytest
+
 from personal_index.url_filter import UrlFilter, UrlFilterRule
 
 
@@ -141,14 +145,16 @@ class TestGetMatchingRuleContract:
         self.filter.add_whitelist("*.both.com", description="wl")
         rule = self.filter.get_matching_rule("http://x.both.com")
         assert rule is not None
-        assert rule.is_blacklist is False
+        assert rule in self.filter._whitelist
+        assert rule not in self.filter._blacklist
         assert rule.description == "wl"
 
     def test_blacklist_returned_when_no_whitelist_match(self):
         self.filter.add_blacklist("*.bad.com", description="blk")
         rule = self.filter.get_matching_rule("http://x.bad.com")
         assert rule is not None
-        assert rule.is_blacklist is True
+        assert rule in self.filter._blacklist
+        assert rule not in self.filter._whitelist
         assert rule.description == "blk"
 
     def test_first_in_insertion_order_within_whitelist(self):
@@ -190,3 +196,43 @@ class TestGetMatchingRuleContract:
         self.filter.get_matching_rule("http://x.other.com")
         assert self.filter._blacklist == before_blk
         assert self.filter._whitelist == before_wl
+
+
+class TestArch87DeadFieldRemoved:
+    """Pinning tests for ARCH-87 Option A: the dead is_blacklist field is gone.
+
+    Block/allow is decided by LIST MEMBERSHIP (whitelist list vs blacklist
+    list), not by a per-rule flag. The dead public surface is removed.
+    """
+
+    def test_signature_has_no_is_blacklist_param(self):
+        params = inspect.signature(UrlFilterRule).parameters
+        assert "is_blacklist" not in params
+        # Exactly two fields remain: pattern and description.
+        assert list(params) == ["pattern", "description"]
+
+    def test_is_blacklist_kwarg_raises_typeerror(self):
+        with pytest.raises(TypeError):
+            UrlFilterRule("*.x.com", is_blacklist=False)
+
+    def test_membership_decides_routing(self):
+        # A rule appended directly to _blacklist (bypassing add_whitelist)
+        # still blocks: list membership, not a per-rule flag, is the routing key.
+        f = UrlFilter()
+        f._blacklist.append(UrlFilterRule("*.evil.com", description="direct"))
+        assert f.is_allowed("http://x.evil.com") is False
+        assert f.is_blocked("http://x.evil.com") is True
+        assert f.get_matching_rule("http://x.evil.com") is f._blacklist[0]
+
+    def test_whitelist_membership_decides_allow(self):
+        # A rule appended directly to _whitelist still allows (precedence).
+        f = UrlFilter()
+        f.add_blacklist("*.both.com", description="blk")
+        f._whitelist.append(UrlFilterRule("*.both.com", description="wl"))
+        assert f.is_allowed("http://x.both.com") is True
+        assert f.get_matching_rule("http://x.both.com") is f._whitelist[0]
+
+    def test_empty_filter_guard_path(self):
+        f = UrlFilter()
+        assert f.is_allowed("http://anything.com") is True
+        assert f.get_matching_rule("http://anything.com") is None
