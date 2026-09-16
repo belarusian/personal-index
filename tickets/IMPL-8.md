@@ -1,6 +1,6 @@
 # IMPL-8: ARCH-35 infeasible — validator-owned deep test contradicts acceptance criterion 1
 
-Status: OPEN
+Status: RESOLVED (cycle 268, operator-directed role flip: the validator-owned deep test test_merge_all_missing_id_title was flipped from len(merged)==1 to len(merged)==2 in the same PR that landed the merge_all fix on main (#1578@3ed3d4d); the blocker is cleared and ARCH-35 is IMPLEMENTED, ready for validator VERIFY)
 Component: `personal_index/content_aggregator.py`
 Refs: ARCH-35 (#1098)
 
