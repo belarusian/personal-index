@@ -147,3 +147,34 @@ class TestMergeDedupFalsyId:
         aggregator.add_source("b", [{"id": 0, "title": "B"}])
         merged = aggregator.merge_all()
         assert len(merged) == 2
+
+
+class TestMergeNoIdNoTitle:
+    """Pin ARCH-35 criterion 1: items with BOTH id and title absent are
+    indistinguishable, so each must be kept (never collapsed to a single
+    shared "None" key) on the default deduplicate=True path."""
+
+    def test_merge_all_keeps_items_with_no_id_and_no_title(self, aggregator):
+        """Two sources each contribute an item with neither id nor title;
+        both must survive the default merge (no silent data loss)."""
+        aggregator.add_source("a", [{}])
+        aggregator.add_source("b", [{}])
+        merged = aggregator.merge_all()
+        assert len(merged) == 2
+
+    def test_merge_all_keeps_multiple_no_id_no_title(self, aggregator):
+        """Three no-id/no-title items across sources all survive."""
+        aggregator.add_source("a", [{}])
+        aggregator.add_source("b", [{}])
+        aggregator.add_source("c", [{}])
+        merged = aggregator.merge_all()
+        assert len(merged) == 3
+
+    def test_merge_all_no_id_no_title_mixed_with_ided(self, aggregator):
+        """A no-id/no-title item is kept alongside ided items; the ided
+        dedup behavior is unchanged."""
+        aggregator.add_source("a", [{"id": 1}, {}])
+        aggregator.add_source("b", [{"id": 1}, {}])
+        merged = aggregator.merge_all()
+        # id=1 collapses to 1; the two no-id/no-title items both survive.
+        assert len(merged) == 3
