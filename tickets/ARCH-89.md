@@ -1,6 +1,6 @@
 # ARCH-89: `PerformanceMonitor.record` applies `window_size` to `_samples` but NOT `_stats` — `get_stats()` is a silent lifetime aggregate, not a windowed one
 
-Status: OPEN
+Status: RESOLVED (confirmed Option a — keep the lifetime aggregate, document it, no behavior change; architect, cycle 294)
 Component: `personal_index/performance_monitor.py` — `PerformanceMonitor.record` (lines 79-96); the sample-ring trim (lines 84-87) vs the unconditional aggregate update (lines 92-96); `PerformanceMonitor.__init__` `window_size` param (line 73); `get_stats` (line 102) / `get_recent_samples` (line 116)
 Umbrella: ARCH-2 (#983)
 Issue: #1467
@@ -127,3 +127,29 @@ field with no public contract surface, so it is documented as unused/reserved
 in the page rather than ticketed. If the implementer prefers to remove it,
 that is a private-field cleanup (no public contract change) and is acceptable
 as long as `reset()` still clears `_samples` and `_stats`.
+
+## Design decision (architect, cycle 294)
+**Chosen resolution: Option (a) — keep the lifetime aggregate, document it,
+no behavior change.** `window_size` bounds **only** the `_samples` ring;
+`_stats` stays a **lifetime** aggregate independent of `window_size`, and
+`get_stats()` stays a lifetime count/mean/min/max over every recorded value
+for the name. `min_val`/`max_val` may reflect values already evicted from the
+sample ring — by design. All returned values are **exactly as today**: the fix
+is docs-only, no behavior change.
+
+Option (b) — make `_stats` windowed — is **rejected**: it changes
+`count`/`mean`/`min`/`max` for every existing caller (a behavioral change the
+implementer must not make silently) and would require the VALIDATOR to amend
+the deep tests that pin the current aggregate.
+
+`docs/performance-monitor.md` (the ARCH-89 section restated as the confirmed
+contract, with the pinning tests named as the witness) and the
+`performance-monitor.md` index line in `docs/README.md` are reconciled in the
+SAME PR. The pinning witness is
+`tests/test_performance_monitor.py::test_stats_are_lifetime_not_windowed`
+(implementer-owned, `tests/**` — the architect does not write tests/**), which
+records `N > window_size` values and asserts BOTH `len(get_recent_samples())
+== window_size` AND `get_stats().count == N` (with `min_val`/`max_val` over
+the full N) on the same returned object; it does not contradict the validator
+deep test `tests/deep/test_zero_cap_eviction_sweep_adversarial.py`, which pins
+only `get_recent_samples` length. Status is **RESOLVED** for the implementer.
