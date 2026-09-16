@@ -70,7 +70,7 @@ def test_config_defaults():
     c = ExportConfig()
     assert c.include_metadata is True
     assert c.include_tags is True
-    assert c.include_summary is False
+    assert c.truncate_content is False
     assert c.sort_by == "date"
     assert c.group_by is None
 
@@ -422,7 +422,7 @@ def test_truncate_breaks_at_word_boundary():
 
 
 def test_truncate_summary_mode_applies_to_content():
-    exp = MarkdownExporter(ExportConfig(include_summary=True))
+    exp = MarkdownExporter(ExportConfig(truncate_content=True))
     long_content = "word " * 50
     out = exp.export([_item(content=long_content)], ExportFormat.MARKDOWN)
     assert "..." in out
