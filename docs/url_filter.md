@@ -21,7 +21,13 @@ documents `personal_index.url_filter` (`UrlFilter` / `UrlFilterRule`), which is
 ## `UrlFilterRule` (dataclass, line 11)
 
 Fields (in declaration order): `pattern: str` (line 13),
-`is_blacklist: bool = True` (line 14), `description: str = ""` (line 15).
+`description: str = ""` (line 15). The former `is_blacklist: bool = True`
+field (line 14) is **removed** (ARCH-87, Option A) — it was a public field
+the decision logic never read; block/allow is decided purely by list
+membership, so the field was redundant with membership and its `True`
+default was unreachable via the public API. Constructing
+`UrlFilterRule(..., is_blacklist=...)` now raises `TypeError` (unexpected
+keyword).
 
 ### `matches(url: str) -> bool` (line 17)
 
@@ -60,9 +66,9 @@ whitelist rule matches is the blacklist consulted.
 ### Mutators
 
 - `add_blacklist(pattern, description="")` (line 47): appends a
-  `UrlFilterRule(pattern, is_blacklist=True, ...)` to `_blacklist` (line 49).
+  `UrlFilterRule(pattern, description=...)` to `_blacklist` (line 49).
 - `add_whitelist(pattern, description="")` (line 51): appends a
-  `UrlFilterRule(pattern, is_blacklist=False, ...)` to `_whitelist` (line 53).
+  `UrlFilterRule(pattern, description=...)` to `_whitelist` (line 53).
 - `clear()` (line 139): clears both lists.
 - `clear_blacklist()` (line 144): clears `_blacklist` only.
 - `clear_whitelist()` (line 148): clears `_whitelist` only.
@@ -91,12 +97,11 @@ whitelist rule matches is the blacklist consulted.
 - `blacklist_count` (property, line 130): `len(self._blacklist)`.
 - `whitelist_count` (property, line 135): `len(self._whitelist)`.
 
-## Contract hole (ARCH-87): `UrlFilterRule.is_blacklist` is never consulted
-
-`is_blacklist` (line 14) is a **public dataclass field** whose name implies it
-drives the block/allow decision, but **no filtering logic in the module reads
-it**. `grep -rn is_blacklist personal_index/ --include='*.py'` returns exactly
-three lines, all **writes**:
+## Confirmed contract (ARCH-87, Option A — remove the dead field)
+`UrlFilterRule.is_blacklist` (line 14) was a **public dataclass field** whose
+name implied it drove the block/allow decision, but **no filtering logic in
+the module read it**. `grep -rn is_blacklist personal_index/ --include='*.py'`
+returned exactly three lines, all **writes**:
 
     line 14:  is_blacklist: bool = True          # declaration
     line 49:  ...is_blacklist=True, ...          # add_blacklist
@@ -106,39 +111,45 @@ The block/allow decision is made **purely by list membership**: a rule is a
 whitelist rule iff it sits in `self._whitelist`, and a blacklist rule iff it
 sits in `self._blacklist`. `is_allowed` (lines 65-69) and `get_matching_rule`
 (lines 121-128) iterate the two lists and never inspect `rule.is_blacklist`.
-So the field is **redundant with list membership** and cannot route a rule:
-constructing `UrlFilterRule("*.x.com", is_blacklist=False)` and appending it to
-`_blacklist` (bypassing `add_whitelist`) still behaves as a blacklist rule,
-because the list — not the field — decides. The `True` default (line 14) is
-also **unreachable via the public API**: both `add_blacklist` and
-`add_whitelist` pass an explicit `is_blacklist`, so a caller can never observe
-the default through the documented surface.
+So the field was **redundant with list membership** and could not route a
+rule: constructing `UrlFilterRule("*.x.com", is_blacklist=False)` and
+appending it to `_blacklist` (bypassing `add_whitelist`) still behaved as a
+blacklist rule, because the list — not the field — decided. The `True`
+default (line 14) was also **unreachable via the public API**: both
+`add_blacklist` and `add_whitelist` passed an explicit `is_blacklist`, so a
+caller could never observe the default through the documented surface.
 
-The field is **masked by the tests**: `tests/test_url_filter.py`
+The hole was **masked by the tests**: `tests/test_url_filter.py`
 (`test_whitelist_returned_when_both_match`, line 144;
-`test_blacklist_returned_when_no_whitelist_match`, line 151) assert
+`test_blacklist_returned_when_no_whitelist_match`, line 151) asserted
 `rule.is_blacklist is False` / `is True` on the object returned by
-`get_matching_rule`. Those assertions pass because the field is *written*
-correctly by the add_* methods — but they do not exercise the field as a
-*decision input*, so the suite stays green whether or not the field is ever
+`get_matching_rule`. Those assertions passed because the field was *written*
+correctly by the add_* methods — but they did not exercise the field as a
+*decision input*, so the suite stayed green whether or not the field was ever
 read. This is the same "public field does nothing" class as ARCH-86
 (`StatsCollector.interest_store`).
 
-**Recommended resolution (a) — remove the dead field:** drop `is_blacklist`
-from `UrlFilterRule` (line 14) and the two `is_blacklist=` keyword arguments in
-`add_blacklist` (line 49) / `add_whitelist` (line 53). `UrlFilterRule` then has
-exactly two fields, `pattern` and `description`. All decision behavior
-(`is_allowed` / `is_blocked` / `filter_urls` / `get_blocked_urls` /
+**Confirmed contract (ARCH-87, Option A — remove the dead field):** the
+`is_blacklist` field is **removed** from `UrlFilterRule` (line 14), and the
+two `is_blacklist=` keyword arguments in `add_blacklist` (line 49) /
+`add_whitelist` (line 53) are **removed** too. `UrlFilterRule` then has
+exactly two fields, `pattern` and `description`, and its constructor is
+`UrlFilterRule(pattern, description=...)`; constructing it with
+`is_blacklist=...` raises `TypeError` (unexpected keyword). All decision
+behavior (`is_allowed` / `is_blocked` / `filter_urls` / `get_blocked_urls` /
 `get_matching_rule`) is **exactly as today** — it never read the field, so
 nothing about the returned values changes; only the dead public surface goes.
-The `UrlFilterRule` docstring and the `get_matching_rule` docstring must state
-that block/allow is decided by **list membership** (whitelist list vs
-blacklist list), not by a per-rule flag.
+Block/allow is decided by **list membership** (whitelist list vs blacklist
+list), not by a per-rule flag; the `UrlFilterRule` docstring and the
+`get_matching_rule` docstring state this explicitly.
 
-Resolution **(b)** — make `is_blacklist` the actual routing key (e.g. a single
-`_rules` list where `is_allowed` consults `rule.is_blacklist`) — is the
-alternative; it is a behavior change and is NOT recommended because it would
-restructure the two-list invariant the existing `tests/test_url_filter.py` and
-`tests/deep/test_url_filter_adversarial.py` suites pin. If (b) is chosen, the
-ticket must restate the exact new data layout and the pinning tests that
-change. **The implementer must not do both.**
+The pinning witness is `tests/test_url_filter.py`: the new dead-field-removed
+pin asserts `inspect.signature(UrlFilterRule)` has no `is_blacklist`
+parameter and `UrlFilterRule("*.x.com", is_blacklist=False)` raises
+`TypeError`; the membership-decides pin appends a rule directly to
+`filter._blacklist` (bypassing `add_whitelist`) and asserts it still blocks,
+pinning that list membership — not a per-rule flag — is the routing key; and
+the existing `test_whitelist_returned_when_both_match` /
+`test_blacklist_returned_when_no_whitelist_match` / `is_allowed` value
+assertions (updated to the two-field set) pin that removing the dead field
+changed no returned value. See `tickets/ARCH-87.md`.
