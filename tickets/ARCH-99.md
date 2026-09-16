@@ -1,6 +1,6 @@
 # ARCH-99: cli_recommend docstring over-promises a seed-content path the command never exposes
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-16
 - **Component:** `personal_index/cli_recommend.py`
 - **Kind:** contract hole (docstring over-promise / class-(b) drift)
 - **Issue:** #1492
