@@ -64,7 +64,18 @@ class EncodingDetector:
         return EncodingResult(encoding="iso-8859-1", confidence=0.5)
 
     def decode(self, data: bytes, encoding: str | None = None) -> str:
-        """Decode bytes to string, auto-detecting if needed."""
+        """Decode bytes to string, auto-detecting the encoding when omitted.
+
+        If ``encoding`` is ``None``, the encoding is auto-detected via
+        :meth:`detect` and the bytes are decoded with it. If ``encoding``
+        is given and decodes cleanly, ``data.decode(encoding)`` is returned.
+        If ``encoding`` is given but the bytes cannot be decoded with it
+        (``UnicodeDecodeError``) or the codec name is not registered
+        (``LookupError``), the error is NOT raised: the method falls back
+        to ``data.decode("utf-8", errors="replace")``, substituting U+FFFD
+        replacement characters for every undecodable byte (a documented
+        lossy fallback).
+        """
         if encoding is None:
             result = self.detect(data)
             encoding = result.encoding
@@ -81,7 +92,13 @@ class EncodingDetector:
             return text.encode("utf-8")
 
     def convert(self, data: bytes, from_encoding: str, to_encoding: str = "utf-8") -> bytes:
-        """Convert between encodings."""
+        """Convert between encodings.
+
+        Decodes ``data`` with ``from_encoding`` via :meth:`decode` (so a
+        bad/unknown ``from_encoding`` inherits ``decode``'s documented
+        lossy UTF-8 ``errors="replace"`` fallback rather than raising),
+        then encodes the result with ``to_encoding``.
+        """
         text = self.decode(data, from_encoding)
         return self.encode(text, to_encoding)
 
