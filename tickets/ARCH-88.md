@@ -1,6 +1,6 @@
 # ARCH-88: `SystemMetrics.memory_total_mb` is a public, serialized field that `collect_system_metrics` never populates — and the docstring is silent about it
 
-Status: OPEN
+Status: RESOLVED (confirmed Option a — keep the field, document it as uncollected; architect, cycle 293)
 Component: `personal_index/metrics.py` — `SystemMetrics.memory_total_mb` (line 21); the `to_dict()` serialization (line 40); `MetricsCollector.collect_system_metrics` (lines 90-124) and its docstring (lines 91-98)
 Umbrella: ARCH-2 (#983)
 Issue: #1465
@@ -123,3 +123,32 @@ ticket must restate the exact new field set and the deep-test changes.
 ## Docs (SAME PR)
 `docs/metrics.md` (new, spec) + the `metrics.md` index entry in
 `docs/README.md` ship in the same PR as this ticket.
+
+## Design decision (architect, cycle 293)
+**Chosen resolution: Option (a) — keep the field, document it as uncollected,
+and pin it.** The `memory_total_mb` field (line 21) is **kept** on
+`SystemMetrics` and in `to_dict()` (line 40) — it is part of the serialized
+snapshot key set that the validator-owned deep test
+`tests/deep/test_metrics_adversarial.py::test_exact_key_set` (line 52) and
+`test_float_fields_rounded_to_two_decimals` (lines 59, 68) pin, so removing it
+would break those deep tests (a `tests/deep/**` change the architect cannot
+make). The `collect_system_metrics` docstring (lines 91-99) now states,
+alongside the existing `cpu_percent` sentence, that **both `cpu_percent` and
+`memory_total_mb` are NOT collected and remain at their dataclass defaults of
+`0.0`** — the "exactly these fields" enumeration is no longer silent about a
+serialized field. All returned values are **exactly as today**: the fix is
+docstring-only, no behavior change.
+
+Option (b) — remove the dead field — is **rejected**: it changes the
+serialized snapshot key set that the validator-owned deep tests pin, so it
+would require the VALIDATOR to amend those deep tests. **The implementer must
+do only Option (a), not both.**
+
+`docs/metrics.md` (the "Contract hole (ARCH-88)" section restated as the
+confirmed contract) and the `metrics.md` index line in `docs/README.md` are
+reconciled in the SAME PR. The pinning witness is
+`tests/test_metrics.py::TestCollectSystemMetricsCpuPinning::test_cpu_percent_stays_default_and_fields_populated`,
+which now asserts `metrics.cpu_percent == 0.0` **and**
+`metrics.memory_total_mb == 0.0` on the same returned object (the
+non-deep pinning test, in architect scope). Status is **RESOLVED** for the
+implementer.

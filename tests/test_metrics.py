@@ -135,6 +135,10 @@ class TestCollectSystemMetricsCpuPinning:
         metrics = mc.collect_system_metrics()
         # Guard path: cpu_percent is never collected, stays at default 0.0.
         assert metrics.cpu_percent == 0.0
+        # Guard path (ARCH-88): memory_total_mb is never collected and stays
+        # at its dataclass default of 0.0 — pinned on the same returned object
+        # so both uncollected-field guard paths are witnessed together.
+        assert metrics.memory_total_mb == 0.0
         # Main behavior: uptime and disk fields ARE populated.
         assert metrics.uptime_seconds >= 0.0
         assert metrics.disk_total_mb >= 0.0
