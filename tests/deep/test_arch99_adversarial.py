@@ -29,7 +29,6 @@ from __future__ import annotations
 import os
 import re
 
-import pytest
 from click.core import Argument
 from click.testing import CliRunner, Result
 
