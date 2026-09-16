@@ -1363,6 +1363,7 @@ def generate(root: str = "personal_index", output: str = "personal_index/docs_da
     print(f"[docs_generator] Scanning tests in {test_root} ...")
     test_modules = scan_modules(test_root) if os.path.isdir(test_root) else []
     print(f"[docs_generator] Found {sum(m.test_count for m in test_modules)} tests in {len(test_modules)} test files")
+    _attribute_test_counts(modules, test_modules)
 
     # Build dependency graph
     dep_graph = detect_dependencies(modules)

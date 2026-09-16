@@ -20,6 +20,7 @@ from personal_index.docs_generator import (
     detect_dependencies,
     generate,
     generate_dashboard,
+    generate_fast,
     run_mypy,
     run_pytest,
     run_ruff,
@@ -390,3 +391,80 @@ class TestGenerate:
         mock_mypy.assert_called_once()
         mock_pytest.assert_called_once()
         mock_dashboard.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Integration test: generate() attributes per-source-module test counts
+# ---------------------------------------------------------------------------
+
+class TestGenerateTestCountAttribution:
+    """ARCH-94: the full pipeline must attribute real per-module test counts."""
+
+    def _build_tree(self, tmp_path: Path):
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "foo.py").write_text(
+            "def alpha():\n    return 1\n\n"
+            "def beta():\n    return 2\n",
+            encoding="utf-8",
+        )
+        tests = tmp_path / "tests"
+        tests.mkdir()
+        (tests / "test_foo.py").write_text(
+            "def test_one():\n    assert True\n\n"
+            "def test_two():\n    assert True\n\n"
+            "def test_three():\n    assert True\n",
+            encoding="utf-8",
+        )
+        return src, tests
+
+    def _patch_lint_and_test(self, monkeypatch):
+        from personal_index import docs_generator as dg
+        monkeypatch.setattr(dg, "run_ruff", lambda modules: None)
+        monkeypatch.setattr(dg, "run_mypy", lambda modules: None)
+        monkeypatch.setattr(dg, "run_pytest", lambda modules: "")
+
+    def test_generate_attributes_test_counts_like_fast(self, tmp_path: Path, monkeypatch):
+        from personal_index import docs_generator as dg
+        src, _ = self._build_tree(tmp_path)
+        self._patch_lint_and_test(monkeypatch)
+        captured = {}
+
+        def fake_write(data, output):
+            captured["data"] = data
+            return output
+
+        monkeypatch.setattr(dg, "_write_dashboard", fake_write)
+        out = tmp_path / "out.html"
+        generate(root=str(src), output=str(out))
+        data = captured["data"]
+        assert len(data.modules) == 1
+        foo = data.modules[0]
+        assert foo.module_name.rpartition(".")[2] == "foo"
+        assert foo.test_count == 3
+
+    def test_generate_and_fast_agree_on_per_module_test_counts(self, tmp_path: Path, monkeypatch):
+        from personal_index import docs_generator as dg
+        src, _ = self._build_tree(tmp_path)
+        self._patch_lint_and_test(monkeypatch)
+        captured = {}
+
+        def fake_write(data, output):
+            captured["data"] = data
+            return output
+
+        monkeypatch.setattr(dg, "_write_dashboard", fake_write)
+        out = tmp_path / "out.html"
+        generate(root=str(src), output=str(out))
+        gen_counts = {
+            m.module_name.rpartition(".")[2]: m.test_count
+            for m in captured["data"].modules
+        }
+        captured.clear()
+        generate_fast(root=str(src), output=str(out))
+        fast_counts = {
+            m.module_name.rpartition(".")[2]: m.test_count
+            for m in captured["data"].modules
+        }
+        assert gen_counts == fast_counts
+        assert gen_counts == {"foo": 3}
