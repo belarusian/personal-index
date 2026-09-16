@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from personal_index.interests import InterestStore
 from personal_index.search_index import SearchIndex
 from personal_index.url_utils import extract_domain
 
@@ -28,20 +27,14 @@ class IndexStats:
 
 
 @dataclass
-class CrawlStats:
-    """Statistics about crawling activity."""
-
-    total_crawls: int = 0
-    total_pages_crawled: int = 0
-    total_errors: int = 0
-    total_bytes_fetched: int = 0
-
-
-@dataclass
 class StatsCollector:
-    """Collects and reports statistics."""
+    """Collects and reports statistics.
 
-    interest_store: InterestStore | None = None
+    Interest statistics (``pages_with_interests`` and ``top_interests``)
+    are derived from ``CrawledPage.matched_interests`` on the pages held
+    by ``search_index``; no ``InterestStore`` is consulted.
+    """
+
     search_index: SearchIndex | None = None
 
     def get_index_stats(self) -> IndexStats:

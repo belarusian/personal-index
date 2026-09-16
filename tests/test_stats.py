@@ -1,5 +1,6 @@
 """Tests for personal_index.stats."""
 
+import inspect
 from datetime import datetime, timezone
 
 import pytest
@@ -7,7 +8,7 @@ import pytest
 from personal_index.interests import InterestStore
 from personal_index.models import CrawledPage, Interest, InterestType
 from personal_index.search_index import SearchIndex
-from personal_index.stats import CrawlStats, IndexStats, StatsCollector
+from personal_index.stats import IndexStats, StatsCollector
 
 
 @pytest.fixture
@@ -23,11 +24,8 @@ def search_index(tmp_path):
 
 
 @pytest.fixture
-def collector(interest_store, search_index):
-    return StatsCollector(
-        interest_store=interest_store,
-        search_index=search_index,
-    )
+def collector(search_index):
+    return StatsCollector(search_index=search_index)
 
 
 class TestIndexStats:
@@ -42,17 +40,22 @@ class TestIndexStats:
 
 
 class TestCrawlStats:
-    """Tests for CrawlStats."""
+    """Pin that the dead CrawlStats type is removed (ARCH-86, Option A)."""
 
-    def test_defaults(self):
-        stats = CrawlStats()
-        assert stats.total_crawls == 0
-        assert stats.total_pages_crawled == 0
-        assert stats.total_errors == 0
+    def test_crawlstats_removed(self):
+        import personal_index.stats as stats
+        assert not hasattr(stats, "CrawlStats")
 
 
 class TestStatsCollector:
     """Tests for StatsCollector."""
+
+    def test_interest_store_field_removed(self, interest_store):
+        # ARCH-86 (Option A): the dead interest_store field is gone.
+        params = inspect.signature(StatsCollector).parameters
+        assert "interest_store" not in params
+        with pytest.raises(TypeError):
+            StatsCollector(interest_store=interest_store)
 
     def test_empty_index(self, collector):
         stats = collector.get_index_stats()
@@ -147,8 +150,8 @@ class TestStatsCollector:
         assert "Total pages: 1" in output
         assert "Top domains:" in output
 
-    def test_no_search_index(self, interest_store):
-        collector = StatsCollector(interest_store=interest_store)
+    def test_no_search_index(self):
+        collector = StatsCollector()
         stats = collector.get_index_stats()
         assert stats.total_pages == 0
 
@@ -193,9 +196,9 @@ class TestGetIndexStatsDocPinning:
     returned object pins the main behavior and the guard path.
     """
 
-    def test_guard_path_returns_all_defaults(self, interest_store):
+    def test_guard_path_returns_all_defaults(self):
         # Guard path: no search_index -> every field at its dataclass default.
-        collector = StatsCollector(interest_store=interest_store)
+        collector = StatsCollector()
         stats = collector.get_index_stats()
         assert stats.total_pages == 0
         assert stats.total_words == 0
