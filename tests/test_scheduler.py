@@ -301,3 +301,65 @@ class TestScheduleStoreCorruptTimestamp:
         entry = store._entries["job1"]
         assert entry.last_run == datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
         assert entry.next_run == datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
+
+
+class TestScheduleStoreAtomicSave:
+    """Regression tests for ARCH-104: _save must be atomic (temp + os.replace).
+
+    A crash mid-write must not leave the target file truncated or empty, which
+    _load would then silently read as an empty store and lose all entries.
+    """
+
+    def test_save_is_atomic_no_partial_file(self, tmp_path, monkeypatch):
+        import json as _json
+
+        path = str(tmp_path / "schedules.json")
+        store1 = ScheduleStore(path=path)
+        store1.add(
+            ScheduleEntry(
+                name="daily",
+                config=ScheduleConfig(seed_urls=["https://example.com"]),
+            )
+        )
+        with open(path) as f:
+            good = f.read()
+        assert good.strip() != "{}"
+
+        # Simulate a crash mid-write: json.dump raises OSError.
+        def boom(*a, **k):
+            raise OSError("simulated crash mid-write")
+
+        monkeypatch.setattr("personal_index.scheduler.json.dump", boom)
+        with pytest.raises(OSError):
+            store1.add(ScheduleEntry(name="nightly", config=ScheduleConfig()))
+
+        # The target file must still hold the previous complete JSON.
+        with open(path) as f:
+            after = f.read()
+        assert after == good
+        data = _json.loads(after)
+        assert "daily" in data
+        assert "nightly" not in data
+
+    def test_save_roundtrip_after_failed_save(self, tmp_path, monkeypatch):
+        path = str(tmp_path / "schedules.json")
+        store1 = ScheduleStore(path=path)
+        store1.add(
+            ScheduleEntry(
+                name="daily",
+                config=ScheduleConfig(seed_urls=["https://example.com"]),
+            )
+        )
+
+        def boom(*a, **k):
+            raise OSError("simulated crash mid-write")
+
+        monkeypatch.setattr("personal_index.scheduler.json.dump", boom)
+        with pytest.raises(OSError):
+            store1.add(ScheduleEntry(name="nightly", config=ScheduleConfig()))
+
+        # A fresh store must load the pre-failure entries, not empty.
+        store2 = ScheduleStore(path=path)
+        assert len(store2.list_all()) == 1
+        assert store2.get("daily").config.seed_urls == ["https://example.com"]
+        assert store2.get("nightly") is None

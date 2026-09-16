@@ -87,7 +87,13 @@ class ScheduleStore:
             self._entries = {}
 
     def _save(self) -> None:
-        """Save entries to file."""
+        """Save entries to file atomically.
+
+        Writes the JSON to a temp file in the same directory, fsyncs it,
+        then os.replace over self.path. The target file is therefore
+        never left in a truncated or partial state: a crash mid-write
+        leaves the previous complete file intact.
+        """
         parent = Path(self.path).parent
         parent.mkdir(parents=True, exist_ok=True)
         data = {}
@@ -105,8 +111,12 @@ class ScheduleStore:
                     if entry.next_run else None
                 ),
             }
-        with open(self.path, "w") as f:
+        tmp = self.path + ".tmp"
+        with open(tmp, "w") as f:
             json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, self.path)
 
     def add(self, entry: ScheduleEntry) -> None:
         """Add a schedule entry."""
