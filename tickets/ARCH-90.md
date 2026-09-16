@@ -1,6 +1,6 @@
 # ARCH-90: build_tree drops a package's own module when it also has children
 
-Status: IMPLEMENTED #1555@2c2a83d (impl317, cycle 317)
+Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1555@2c2a83d (impl317, cycle 317)
 Component: personal_index/cycle_signals.py
 Issue: #1469
 

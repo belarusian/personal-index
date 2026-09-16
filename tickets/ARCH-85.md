@@ -1,6 +1,6 @@
 # ARCH-85: InterestStore._load raises `ValueError` on a valid-JSON-dict record with an out-of-enum `interest_type` or `match_mode`, breaking its graceful-degradation contract
 
-Status: IMPLEMENTED #1550@ed52ad1 (impl314, cycle 314)
+Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1550@ed52ad1 (impl314, cycle 314)
 Component: `personal_index/interests.py` — `InterestStore._load` (lines 27-42); the `except` tuple (line 41); the `Interest.from_dict` enum coercion it calls (models.py lines 79-84)
 Umbrella: ARCH-2 (#983)
 Issue: #1450
