@@ -89,6 +89,33 @@ class TestDedupCLI:
         )
         assert result.exit_code == 0
 
+    def test_dedup_similarity_group_uses_threshold_label(self, tmp_path):
+        dd = str(tmp_path)
+        os.makedirs(dd, exist_ok=True)
+        idx_path = os.path.join(dd, "search_index.json")
+        idx = SearchIndex(db_path=idx_path)
+        idx.add_page(IndexedPage(
+            url="https://a.com",
+            title="Page A",
+            content="one two three four five",
+            score=8.0,
+        ))
+        idx.add_page(IndexedPage(
+            url="https://b.com",
+            title="Page B",
+            content="one two three four five",
+            score=7.0,
+        ))
+        idx._save()
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["--data-dir", dd, "dedup", "--method", "similarity"],
+        )
+        assert result.exit_code == 0
+        assert "Threshold:" in result.output
+        assert "Score:" not in result.output
+
 
 class TestDedupHelpers:
     """Test the extracted helper functions from cli_dedup refactor."""

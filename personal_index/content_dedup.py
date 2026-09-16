@@ -17,6 +17,9 @@ class DuplicateGroup:
     """A group of duplicate content items."""
     representative: str  # URL of the representative (best) item
     duplicates: list[str] = field(default_factory=list)
+    # similarity_score: for exact_hash/normalized_url groups this is 1.0;
+    # for similarity groups it is the configured similarity_threshold
+    # (the grouping cutoff), NOT the measured per-pair Jaccard overlap.
     similarity_score: float = 1.0
     dedup_method: str = "exact"
 
