@@ -142,3 +142,7 @@ index or the new complete index — never a truncated/partial file.
   `tests/deep/test_defensive_load_sweep_adversarial.py` (Site 2) or
   `tests/test_search_index.py` — they pin the `_load` degrade and the current
   happy-path behavior, both of which remain correct after the fix.
+
+## Follow-up
+
+- Cycle 284 (architect): reconciled the stale `docs/search_index.md` Hole 1 "Fix direction (implementer)" callout to the confirmed atomic/durable contract (ARCH-71, verified cycle 225); the open fix-choice block was replaced with a one-line confirmed-fix note naming the pinning tests. Docs-only; no code or test change.
