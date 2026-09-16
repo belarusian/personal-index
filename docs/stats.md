@@ -3,11 +3,10 @@
 Spec page (matches CURRENT code as of cycle 254).
 
 `stats.py` is the read-only statistics reporter for the search index. It
-exposes three public types: the `IndexStats` and `CrawlStats` dataclasses
-(the result shapes) and the `StatsCollector` dataclass (the reporter). It
-performs **no** persistence of its own — it reads the in-memory
-`SearchIndex` (and, nominally, an `InterestStore`) and returns computed
-values. It does **not** own the `CrawledPage` / `Interest` value types —
+exposes two public types: the `IndexStats` dataclass (the result shape)
+and the `StatsCollector` dataclass (the reporter). It performs **no**
+persistence of its own — it reads the in-memory `SearchIndex` and returns
+computed values. It does **not** own the `CrawledPage` / `Interest` value types —
 those live in `personal_index.models` (see `docs/content-model.md`). This
 page documents `personal_index.stats` (`StatsCollector` — index statistics
 aggregation over a `SearchIndex`), which is **DIFFERENT** from the other
@@ -43,24 +42,35 @@ pages, **one per matched interest, not one per page**),
 `oldest_page: datetime | None = None` (line 26),
 `newest_page: datetime | None = None` (line 27).
 
-## `CrawlStats` (dataclass, line 31)
+## `CrawlStats` (dataclass, line 31) — removed (ARCH-86, Option A)
 
-Fields (in declaration order, all with defaults): `total_crawls: int = 0`
-(line 33), `total_pages_crawled: int = 0` (line 34), `total_errors: int = 0`
-(line 35), `total_bytes_fetched: int = 0` (line 36).
-
-**Contract hole (ARCH-86):** `CrawlStats` is a public dataclass with four
-fields, but **nothing in the module produces or populates it** — there is no
-method on `StatsCollector` (or anywhere else in `personal_index/`) that
-returns a `CrawlStats` or sets its fields. It is a dead public type: the
-only reference outside its own definition is the test
+`CrawlStats` was a public `@dataclass` (four fields, all defaulting to `0`:
+`total_crawls`, `total_pages_crawled`, `total_errors`, `total_bytes_fetched`)
+that **nothing in the module ever produced or populated** — no method on
+`StatsCollector` (or anywhere else in `personal_index/`) returned a
+`CrawlStats` or set its fields. It was a dead public type: the only reference
+outside its own definition was the test
 `tests/test_stats.py::TestCrawlStats::test_defaults`, which merely
-constructs the empty default. See ARCH-86.
+constructed the empty default.
+
+**Confirmed contract (ARCH-86, Option A — remove the dead surface):** the
+`CrawlStats` dataclass is **removed** from `personal_index.stats`. It is no
+longer importable from the module. `get_index_stats` returns only
+`IndexStats`, exactly as before — no returned value changes. The pinning
+witness is `tests/test_stats.py::TestCrawlStats` (updated to assert
+`CrawlStats` is no longer importable) alongside the existing
+`TestGetIndexStatsDocPinning` suite, which pins that `get_index_stats` still
+returns the same `IndexStats` values. See `tickets/ARCH-86.md`.
 
 ## `StatsCollector` (dataclass, line 41)
 
-Fields (in declaration order): `interest_store: InterestStore | None = None`
-(line 44), `search_index: SearchIndex | None = None` (line 45).
+Fields (in declaration order): `search_index: SearchIndex | None = None`
+(line 45). The former `interest_store: InterestStore | None = None` field
+(line 44) is **removed** (ARCH-86, Option A) — it was a public field that was
+accepted in the constructor but never read anywhere in the module, so
+constructing `StatsCollector(interest_store=...)` now raises `TypeError`
+(unexpected keyword). Interest statistics are derived from
+`CrawledPage.matched_interests` (the pages), **not** from an `InterestStore`.
 
 - `get_index_stats(self) -> IndexStats` (line 47): if `self.search_index` is
   **falsy**, returns an all-default `IndexStats` (every field at its
@@ -106,9 +116,8 @@ Fields (in declaration order): `interest_store: InterestStore | None = None`
 
 ## Invariants
 - `get_index_stats` and `format_index_stats` are **read-only**: they never
-  mutate the `SearchIndex` or (nominally) the `InterestStore`; they only
-  read `urls()` / `get()` / `page.content` / `page.matched_interests` /
-  `page.crawled_at`.
+  mutate the `SearchIndex`; they only read `urls()` / `get()` /
+  `page.content` / `page.matched_interests` / `page.crawled_at`.
 - The guard path is total: a falsy `search_index` returns an all-default
   `IndexStats` and never touches the index, so `StatsCollector()` with no
   arguments is safe to call.
@@ -128,28 +137,42 @@ Fields (in declaration order): `interest_store: InterestStore | None = None`
   `SearchIndex` — see `docs/search_index.md`) and returns computed values.
   There is no save/load, no serialization, and no round-trip to pin.
 
-## Contract hole (ARCH-86)
-`StatsCollector.interest_store` (line 44) is a **public field** that is
+## Confirmed contract (ARCH-86, Option A — remove the dead surface)
+`StatsCollector.interest_store` (line 44) was a **public field** that was
 accepted in the constructor but **never read** anywhere in the module. The
-only reference to `interest_store` in `stats.py` is its declaration at line
+only reference to `interest_store` in `stats.py` was its declaration at line
 44; `get_index_stats` / `_accumulate_page_stats` / `format_index_stats` never
-touch it. Every interest-derived statistic — `pages_with_interests`
+touched it. Every interest-derived statistic — `pages_with_interests`
 (line 80) and `top_interests` (line 85-88) — is computed from
 `page.matched_interests` (line 120), the `CrawledPage`'s own field, **not**
 from the `InterestStore`.
 
 So passing a populated `InterestStore` (e.g. one with an interest named
-"Py") has **zero effect** on any returned statistic. The test fixture
-`tests/test_stats.py::collector` even constructs the collector with a
+"Py") had **zero effect** on any returned statistic. The test fixture
+`tests/test_stats.py::collector` even constructed the collector with a
 populated `interest_store` (an "Py" interest added at line 16), which
-masks the dead field: the tests pass whether or not the store is populated
-because the store is never consulted.
+masked the dead field: the tests passed whether or not the store was
+populated because the store was never consulted.
 
-This is a "public field does nothing" contract hole — the field's presence
-implies the collector can draw interest statistics from the store, but the
-implementation sources all interest data from the pages themselves. The
-`CrawlStats` dataclass (line 31) is the sibling dead type: it is public but
-never produced by any method. See `tickets/ARCH-86.md`.
+**Confirmed contract (ARCH-86, Option A — remove the dead surface):** the
+`interest_store` field is **removed** from `StatsCollector` (along with the
+`InterestStore` import it pulled in), and the dead `CrawlStats` dataclass
+(line 31) is **removed** too. `StatsCollector` then has exactly one field,
+`search_index`, and its constructor is `StatsCollector(search_index=...)`;
+constructing it with `interest_store=...` raises `TypeError` (unexpected
+keyword). `get_index_stats` behavior is **exactly as today** — it still
+returns `IndexStats` computed from `search_index` and the pages'
+`matched_interests`; no returned value changes. The `StatsCollector`
+docstring states that interest statistics are derived from
+`CrawledPage.matched_interests` (the pages), not from an `InterestStore`.
+
+The pinning witness is `tests/test_stats.py`: the new dead-field-removed pin
+asserts `inspect.signature(StatsCollector)` has no `interest_store`
+parameter and `StatsCollector(interest_store=store)` raises `TypeError`, and
+the existing `TestGetIndexStatsDocPinning` suite (including
+`test_guard_path_returns_all_defaults` / `test_no_search_index`) pins that
+`get_index_stats` still returns the same `IndexStats` values for the same
+`search_index`. See `tickets/ARCH-86.md`.
 
 **Adjacent behaviors that are NOT holes** (do not re-ticket):
 - `avg_content_length` denominator/numerator mismatch — **not** a hole:
