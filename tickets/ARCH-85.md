@@ -114,3 +114,34 @@ an empty store) rather than the current blanket "Load interests from file."
 ## Docs (SAME PR)
 `docs/interests.md` (new, spec) + the `interests.md` index entry in
 docs/README.md ship in the same PR as this ticket.
+
+## Design decision (architect, cycle 289)
+**Chosen mechanism: Option A — add `ValueError` to the `_load` except tuple.**
+
+The observable contract is fixed by this ticket ("never raises on file
+contents, degrades to an empty store"); the architect picks the mechanism.
+Option A is confirmed as the contract:
+
+- `_load`'s except tuple becomes
+  `(json.JSONDecodeError, KeyError, TypeError, AttributeError, ValueError)`.
+  The enum `ValueError` raised by `Interest.from_dict` (models.py lines 79-84)
+  now degrades to the **same** empty-store path as every other bad input.
+- This is the lossless, minimal, self-consistent choice: it matches the
+  ticket's recommended contract exactly (degrade to an empty store) and the
+  existing "catch the structural errors" except-tuple style. Option B
+  (per-record guard that keeps the constructible records) was rejected — it
+  changes the observable behavior from "degrade to empty" to "keep the
+  constructible records", a broader contract change than this ticket
+  recommends.
+- Exact contract: constructing `InterestStore(store_path=p)` where `p` holds
+  a valid-JSON dict with a record whose `interest_type` **or** `match_mode` is
+  an out-of-enum string does **not** raise; the store is empty
+  (`list_all() == []`). A well-formed dict (all records constructible) still
+  populates the store exactly as today. All other methods and the `Interest`
+  model are unchanged.
+- Witness: the pinning tests named in this ticket (out-of-enum `interest_type`
+  pin, out-of-enum `match_mode` pin, and the normal-dict pin) are the witness
+  that the corrected contract matches the implemented behavior.
+
+Status stays **OPEN** for the implementer (the architect only decided the
+contract; implementation + the pinning tests are the implementer's job).

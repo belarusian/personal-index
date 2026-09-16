@@ -40,14 +40,14 @@ Fields (in declaration order): `store_path: str | None = None` (line 18),
   **not a dict**, `_interests` is set to `{}` and it returns. Otherwise it
   rebuilds `_interests` as `{name: Interest.from_dict(d) for name, d in
   data.items()}`. The whole read/rebuild is wrapped in
-  `except (json.JSONDecodeError, KeyError, TypeError, AttributeError)`, which
-  sets `_interests = {}`. **Contract hole (ARCH-85):** the except tuple does
-  **not** include `ValueError`, but `Interest.from_dict` calls
-  `InterestType(interest_type)` / `MatchMode(match_mode)` (models.py lines
-  79-84), which raise `ValueError` for an out-of-enum string — so a
-  valid-JSON-dict file whose record carries a corrupted `interest_type` or
-  `match_mode` crashes the constructor instead of degrading to empty. See
-  ARCH-85.
+  `except (json.JSONDecodeError, KeyError, TypeError, AttributeError,
+  ValueError)`, which sets `_interests = {}`. **Confirmed contract (ARCH-85,
+  Option A):** the except tuple includes `ValueError`, so a record whose
+  `interest_type` or `match_mode` is an out-of-enum string (which
+  `Interest.from_dict` coerces via `InterestType(...)` / `MatchMode(...)` at
+  models.py lines 79-84, raising `ValueError`) degrades to the same empty
+  store as every other bad input — the constructor never raises on file
+  contents. See ARCH-85.
 - `_save(self) -> None` (line 44): returns immediately when `store_path` is
   falsy. Otherwise `os.makedirs(os.path.dirname(store_path) or ".",
   exist_ok=True)`, then writes `{name: interest.to_dict() for ...}` as
@@ -113,24 +113,32 @@ Fields (in declaration order): `store_path: str | None = None` (line 18),
 - `_load` degrades to an empty store for: missing file, invalid JSON
   (`json.JSONDecodeError`), a parsed value that is not a dict, a record value
   that is not a dict (`from_dict` → `.get` raises `AttributeError`, caught),
-  and a record missing `name` (dataclass constructor raises `TypeError`,
-  caught). **It does NOT degrade for a record whose `interest_type` or
-  `match_mode` is an out-of-enum string** — that raises `ValueError`, which is
-  not in the except tuple (ARCH-85).
+  a record missing `name` (dataclass constructor raises `TypeError`, caught),
+  and a record whose `interest_type` or `match_mode` is an out-of-enum string
+  (`InterestType(...)` / `MatchMode(...)` raises `ValueError`, caught —
+  ARCH-85 Option A). The except tuple is
+  `(json.JSONDecodeError, KeyError, TypeError, AttributeError, ValueError)`.
 - `_save` is non-atomic (direct write); an interrupted write truncates the
   file, and the next `_load` degrades to `{}` (the truncation is caught, but
   the data is lost with no signal).
 
-## Contract hole (ARCH-85)
+## `_load` graceful degradation — CONFIRMED contract (ARCH-85, Option A)
 `_load` promises graceful degradation for bad file contents, and its except
-tuple `(json.JSONDecodeError, KeyError, TypeError, AttributeError)` covers
-every malformed-record shape **except** an out-of-enum `interest_type` or
-`match_mode`. `Interest.from_dict` (models.py lines 79-84) does
-`InterestType(interest_type)` / `MatchMode(match_mode)` on the raw string,
-which raises `ValueError` for any value not in the enum — and `ValueError` is
-not caught. So a valid-JSON-dict file with a corrupted enum value (e.g.
-`{"foo": {"name": "foo", "interest_type": "bogus"}}`) crashes the
-`InterestStore` constructor instead of degrading to an empty store. The
-existing tests pin the corrupt-JSON / non-dict / null / non-dict-value /
-missing-`name` guards but **none** pins a valid-dict-with-bad-enum. See
+tuple `(json.JSONDecodeError, KeyError, TypeError, AttributeError, ValueError)`
+covers every malformed-record shape **including** an out-of-enum
+`interest_type` or `match_mode`. `Interest.from_dict` (models.py lines 79-84)
+does `InterestType(interest_type)` / `MatchMode(match_mode)` on the raw
+string, which raises `ValueError` for any value not in the enum — and
+`ValueError` is now caught. So a valid-JSON-dict file with a corrupted enum
+value (e.g. `{"foo": {"name": "foo", "interest_type": "bogus"}}`) degrades to
+an empty store (`list_all() == []`) instead of crashing the `InterestStore`
+constructor. The architect resolved the open choice in cycle 289 by
+confirming **Option A (add `ValueError` to the except tuple — lossless,
+minimal, symmetric with the existing structural-error tuple)** as the
+contract. The existing tests pin the corrupt-JSON / non-dict / null /
+non-dict-value / missing-`name` guards; the corrected contract is pinned by
+the new out-of-enum pins named in ARCH-85 (a valid-dict record with an
+out-of-enum `interest_type` and one with an out-of-enum `match_mode`, each
+asserting no raise and `list_all() == []`), which are the witness that this
+corrected contract matches the implemented behavior. See
 `tickets/ARCH-85.md`.
