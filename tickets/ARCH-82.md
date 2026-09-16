@@ -1,6 +1,6 @@
 # ARCH-82: include_summary is inverted — default keeps FULL content, True makes the export lossy
 
-Status: CLAIMED 2026-09-11
+Status: IMPLEMENTED #1543@79a587c (cycle 311)
 Component: personal_index.export_markdown (personal_index/export_markdown.py)
 Issue: #1441
 
