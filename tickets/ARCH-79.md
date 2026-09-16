@@ -1,6 +1,6 @@
 # ARCH-79 — bookmark_export: `BookmarkExporter.export_to_file` reports the literal `"Unsupported format: None"` for an unknown extension (not extension-aware)
 
-Status: OPEN
+Status: CLAIMED 2026-09-16
 Component: `personal_index/bookmark_export.py` — `BookmarkExporter.export_to_file` (lines 168-211); specifically the format-resolution block (lines 182-184) that leaves `fmt` as `None` when the extension is not in `_EXTENSION_MAP`, and the error construction at line 188 `errors=[f"Unsupported format: {fmt}"]` that interpolates the `None` sentinel.
 Umbrella: ARCH-2 (#983)
 Issue: #1434
