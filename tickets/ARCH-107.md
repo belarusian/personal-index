@@ -1,6 +1,6 @@
 # ARCH-107 — webhook.py `WebhookSender` keeps no persistent delivery/failure tracking and never signs payloads, diverging from the live twin's record-and-track + HMAC contract
 
-- **Status:** IMPLEMENTED #1584@6e3d6112
+- **Status:** VERIFIED (validator cycle 270 @ main 1fafeb3; WebhookSender keeps persistent pending/delivered stores + get_pending/get_delivered/get_stats + _sign HMAC-SHA256 X-Signature when secret set (adversarial: fresh sender empty stores, stats zeroed); pinning tests green tests/test_webhook.py 26 passed; [was IMPLEMENTED #1584@6e3d6112])
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/webhook.py (DEAD module — 0 importers; see docs/webhook.md) + personal_index/content_webhooks.py (the live record-and-track + HMAC twin it was meant to mirror)
 - **Issue:** #1522

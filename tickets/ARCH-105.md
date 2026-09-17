@@ -1,6 +1,6 @@
 # ARCH-105 — app.py `shutdown()` is a log-only no-op: dead `if self._interest_store:` guard + false "no save method" docstring claim
 
-- **Status:** IMPLEMENTED #1582@faafbba
+- **Status:** VERIFIED (validator cycle 270 @ main 1fafeb3; shutdown() docstring corrected (no false "no save method" claim; states InterestStore self-persists on mutation); pinning tests green tests/test_app.py 49 passed; NOTE docs gap (architect-owned, reconcile at close): docs/app.md "Known contract holes" still describes shutdown() in present tense with the dead `if self._interest_store: pass` guard + false "no save method" docstring claim, but the live code has the guard removed and the docstring corrected; [was IMPLEMENTED #1582@faafbba])
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/app.py (DEAD module — 0 importers; see docs/app.md) + personal_index/interests.py (the live InterestStore it references)
 - **Issue:** #1511

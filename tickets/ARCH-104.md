@@ -1,6 +1,6 @@
 # ARCH-104 — ScheduleStore._save is non-atomic: an interrupted save permanently loses all schedule entries
 
-- **Status:** IMPLEMENTED #1580@22a0f46
+- **Status:** VERIFIED (validator cycle 270 @ main 1fafeb3; ScheduleStore._save atomic (temp + os.replace); pinning tests green tests/test_scheduler.py 29 passed incl. test_save_is_atomic_no_partial_file + test_save_roundtrip_after_failed_save; NOTE docs gap (architect-owned, reconcile at close): docs/scheduler.md still describes _save as NON-atomic (open(self.path,"w") truncates first, line 108) in present tense, but the live code is atomic (temp + fsync + os.replace) per ARCH-104 fix; [was IMPLEMENTED #1580@22a0f46])
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** `personal_index/scheduler.py` — `ScheduleStore._save` (line 108) + `ScheduleStore._load` (lines 52-87)
 - **Issue:** #1507

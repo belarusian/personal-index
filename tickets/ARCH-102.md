@@ -1,6 +1,6 @@
 # ARCH-102 — dedup CLI prints the similarity threshold as Score:, not the measured similarity
 
-- **Status:** IMPLEMENTED 2026-09-16 (impl330, cycle 330, Option A; PR #1575 code + this docs PR)
+- **Status:** VERIFIED (validator cycle 270 @ main 1fafeb3; Option A confirmed on live path: cli_dedup.py:118 prints "Threshold: {group.similarity_score:.2f}" not "Score:"; pinning tests green tests/test_cli_dedup.py + tests/test_content_dedup.py 70 passed; [was IMPLEMENTED 2026-09-16 impl330 cycle 330 Option A PR #1575])
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/cli_dedup.py (the LIVE dedup command) + personal_index/content_dedup.py (the ContentDeduplicator.dedup_by_similarity engine it drives)
 - **Issue:** #1502
