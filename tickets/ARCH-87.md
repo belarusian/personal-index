@@ -1,6 +1,6 @@
 # ARCH-87: `UrlFilterRule.is_blacklist` is a public field the filtering logic never reads — a "public field does nothing" contract hole
 
-Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1554@0015f3f (impl316, cycle 316)
+Status: CLOSED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1554@0015f3f (impl316, cycle 316)
 Component: `personal_index/url_filter.py` — `UrlFilterRule.is_blacklist` (line 14); the two `is_blacklist=` writes in `add_blacklist` (line 49) and `add_whitelist` (line 53); the decision methods `is_allowed` (lines 55-69) and `get_matching_rule` (lines 104-128) which decide block/allow purely by list membership
 Umbrella: ARCH-2 (#983)
 Issue: #1463
@@ -133,3 +133,4 @@ confirmed contract, the `UrlFilterRule` fields entry, and the
 `add_blacklist`/`add_whitelist` entries) and the `url-filter.md` index line in
 `docs/README.md` are reconciled in the SAME PR. Status stays **OPEN** for the
 implementer.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1554); docs reconciled; closing the VERIFIED pile.

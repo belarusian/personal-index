@@ -1,6 +1,6 @@
 # ARCH-96: `PipelineRunResult` has no counter for pages dropped by the score threshold
 
-Status: VERIFIED (validator cycle 262 @ main c63a10f; adversarial deep test tests/deep/test_arch96_adversarial.py 15 passed) #1563@190df07
+Status: CLOSED (validator cycle 262 @ main c63a10f; adversarial deep test tests/deep/test_arch96_adversarial.py 15 passed) #1563@190df07
 Component: personal_index/pipeline_e2e.py
 Issue: #1486
 
@@ -102,3 +102,4 @@ this hole under "Known contract holes" + the "Score-threshold drop is NOT
 counted" invariant. On merge, the implementer updates that page's invariant
 to "Score-threshold drop IS counted (`pages_score_filtered_out`)" and removes
 the hole from the list.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1563); docs reconciled; closing the VERIFIED pile.

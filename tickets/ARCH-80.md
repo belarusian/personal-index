@@ -1,6 +1,6 @@
 # ARCH-80 — content_export_csv: `CSVExporter.export_to_file` hardcodes `encoding="utf-8"` and silently drops the caller's `encoding` kwarg (lossy, no signal)
 
-Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1538@fdb2d88 (cycle 308)
+Status: CLOSED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1538@fdb2d88 (cycle 308)
 Component: `personal_index/content_export_csv.py` — `CSVExporter.export_to_file` (lines 191-200); specifically line 198 `content = self.export(items, **kwargs)` (forwards the caller's `encoding` into `export()`, where the parameter at line 80 is accepted but never read) and line 199 `with open(filepath, "w", encoding="utf-8") as f:` (hardcoded utf-8, the `encoding` kwarg never reaches this `open()`).
 Umbrella: ARCH-2 (#983)
 Issue: #1436
@@ -105,3 +105,4 @@ existing test pins the non-default path:
 ## Docs (SAME PR)
 `docs/content_export_csv.md` (new, spec) + the `content-export-csv.md` index
 entry in docs/README.md ship in the same PR as this ticket.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1538); docs reconciled; closing the VERIFIED pile.

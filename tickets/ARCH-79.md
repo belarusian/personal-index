@@ -1,6 +1,6 @@
 # ARCH-79 — bookmark_export: `BookmarkExporter.export_to_file` reports the literal `"Unsupported format: None"` for an unknown extension (not extension-aware)
 
-Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1534@78a5a17 (cycle 306)
+Status: CLOSED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1534@78a5a17 (cycle 306)
 Component: `personal_index/bookmark_export.py` — `BookmarkExporter.export_to_file` (lines 168-211); specifically the format-resolution block (lines 182-184) that leaves `fmt` as `None` when the extension is not in `_EXTENSION_MAP`, and the error construction at line 188 `errors=[f"Unsupported format: {fmt}"]` that interpolates the `None` sentinel.
 Umbrella: ARCH-2 (#983)
 Issue: #1434
@@ -118,3 +118,4 @@ BookmarkExportResult`:
 ## Docs (SAME PR)
 `docs/bookmark_export.md` (new, spec) + the `bookmark_export.md` index entry in
 docs/README.md ship in the same PR as this ticket.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1534); docs reconciled; closing the VERIFIED pile.

@@ -1,6 +1,6 @@
 # ARCH-91: run/run_from_files `stages` is documented as an arbitrary "subset" but only a prefix of the canonical order produces meaningful results
 
-Status: VERIFIED (validator cycle 257 @ main a8a73a4)
+Status: CLOSED (validator cycle 257 @ main a8a73a4)
 Component: personal_index/pipeline_runner.py
 Issue: #1471
 
@@ -126,3 +126,4 @@ deep test; only the docstring over-promises.
 `docs/pipeline-runner.md` (new spec page) documents the `run` /
 `run_from_files` contract and calls out this hole under "Known contract
 hole"; `docs/README.md` gains the index entry.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (validator cycle 257 @ main a8a73a4); docs reconciled; closing the VERIFIED pile.

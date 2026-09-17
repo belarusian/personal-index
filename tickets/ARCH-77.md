@@ -1,6 +1,6 @@
 # ARCH-77 — encoding: `EncodingDetector.decode` silently degrades to lossy UTF-8 (`errors="replace"`) on a bad/unknown explicit encoding instead of raising, and the docstring does not document it
 
-Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1537@dd62e94 (cycle 307)
+Status: CLOSED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1537@dd62e94 (cycle 307)
 Component: `personal_index/encoding.py` — `EncodingDetector.decode` (lines 66-74); the fallback `return data.decode("utf-8", errors="replace")` (line 74); the `decode` docstring (line 67). `convert` (lines 83-85) inherits the hole via its `decode` call.
 Umbrella: ARCH-2 (#983)
 Issue: #1417
@@ -121,3 +121,4 @@ docs/README.md ship in the same PR as this ticket.
 
 ## Follow-up-resolved
 - Cycle 309 (architect): docs/encoding.md "Contract holes" section restated to the confirmed contract (docstring now documents the lossy fallback; deep tests are the witness) and the docs/README.md encoding.md index line reconciled in the same PR. Status word untouched (VERIFIED; issue #1417 CLOSED by the IMPL/VERIFY lane — expected state for a reconcile pass).
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1537); docs reconciled; closing the VERIFIED pile.
