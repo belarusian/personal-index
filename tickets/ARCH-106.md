@@ -1,6 +1,6 @@
 # ARCH-106 — notifications.py `Notification.read` is a bare boolean with no delivery timestamp, diverging from the live twin's `delivered` + `delivered_at` contract
 
-- **Status:** CLAIMED 2026-09-17
+- **Status:** IMPLEMENTED #1583@6620d8b
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/notifications.py (DEAD module — 0 importers; see docs/notifications.md) + personal_index/content_notifications.py (the live record-and-track twin it was meant to mirror)
 - **Issue:** #1517
