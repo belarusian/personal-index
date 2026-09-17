@@ -8,26 +8,29 @@
 > (`tests/test_webhook.py`).
 >
 > **NEAR-NAME-COLLISION DISAMBIGUATION.** This page documents
-> `personal_index/webhook.py` (the **fire-and-forget sender**: `WebhookSender`
-> + `add_endpoint`/`send`, no persistent state). It is a DIFFERENT module from
+> `personal_index/webhook.py` (the **record-and-track sender**, resolution (a)
+> of ARCH-107: `WebhookSender` + `add_endpoint`/`send` + persistent
+> `pending`/`delivered` stores + HMAC `_sign`). It is a DIFFERENT module from
 > `personal_index/content_webhooks.py` (the **record-and-track manager**:
 > `WebhookManager` + `register_endpoint`/`dispatch_event`/`get_stats` + HMAC
 > `_sign`), which is the live integration and is covered by
 > [content-webhooks.md](content-webhooks.md). The two modules share the class
 > names `WebhookPayload` (and a near-name `WebhookEvent`/`WebhookEventType`)
-> but have **divergent, incompatible contracts** — do not conflate them. The
-> live twin is `content_webhooks` (imported by the pipeline); this module is
-> dead.
+> and now share the same record-and-track + HMAC contract (resolution (a)
+> aligned this module to the live twin). The live twin is `content_webhooks`
+> (imported by the pipeline); this module is still dead (0 importers).
 
 ## Purpose
 
-A standalone webhook **fire-and-forget sender**: build a `WebhookPayload`,
-attach one or more `WebhookConfig` endpoints via `add_endpoint`, and `send()`
-POSTs the payload to every matching endpoint and returns a transient
-per-endpoint result list. It keeps **no persistent record** of what was
-delivered or failed, and it **never signs** payloads. This is the opposite of
-the live twin's record-and-track model (which persists `pending`/`delivered`
-payloads, tracks per-endpoint retry state, and HMAC-signs every body).
+A standalone webhook **record-and-track sender** (resolution (a),
+ARCH-107, implementer cycle 335 / PR #1584 @ 6e3d6112): build a
+`WebhookPayload`, attach one or more `WebhookConfig` endpoints via
+`add_endpoint`, and `send()` POSTs the payload to every matching endpoint,
+recording each in a persistent `pending` store before dispatch and moving it
+to a persistent `delivered` store on success. It exposes `get_pending()`,
+`get_delivered()`, and `get_stats()`, and it **signs the body** with the
+endpoint's `secret` (HMAC-SHA256, `X-Signature` header) when a secret is set —
+mirroring the live twin `content_webhooks.WebhookManager`.
 
 ## Public API
 
@@ -53,7 +56,8 @@ Fields: `event: WebhookEvent`, `data: dict[str, Any] = {}`,
 ### `WebhookConfig` (dataclass, webhook.py:57)
 Fields: `url: str`, `events: list[WebhookEvent] = []`,
 `headers: dict[str, str] = {}`, `timeout: float = 10.0`,
-`retry_count: int = 3`, `retry_delay: float = 1.0`, `enabled: bool = True`.
+`retry_count: int = 3`, `retry_delay: float = 1.0`, `enabled: bool = True`,
+`secret: str | None = None` (webhook.py:69).
 - `should_send(event)` (webhook.py:68) — `False` when `enabled` is `False`
   (checked first); `True` for every event when `events` is empty; otherwise
   `True` only when `event in self.events`.
@@ -65,15 +69,18 @@ Fields: `url: str`, `events: list[WebhookEvent] = []`,
 - `remove_endpoint(url) -> bool` (webhook.py:97) — removes the **first**
   config whose `url` equals `url` and returns `True`; returns `False` and
   leaves the list unchanged when no config matches.
-- `send(payload) -> list[dict]` (webhook.py:110) — for each config whose
-  `should_send(payload.event)` is `True`, calls `_send_to_endpoint` and
-  appends the returned dict; returns the **transient** list. **Nothing is
-  stored** — there is no `get_delivered`/`get_pending`/`get_stats`.
+- `send(payload) -> list[dict]` (webhook.py:123) — for each config whose
+  `should_send(payload.event)` is `True`, records the payload in the persistent
+  `pending` store (webhook.py:135-139), calls `_send_to_endpoint`, and on
+  success moves the payload from `pending` to `delivered`; returns the
+  per-endpoint result list. No longer purely transient.
 - `_validate_url_scheme(url) -> str | None` (webhook.py:120) — returns an
   error string when the parsed scheme is not `http`/`https`, else `None`.
-- `_build_request(config, payload) -> Request` (webhook.py:128) — a `POST`
+- `_build_request(config, payload) -> Request` (webhook.py:151) — a `POST`
   `Request` with `Content-Type: application/json` merged over `config.headers`
-  and the JSON body.
+  and the JSON body; when `config.secret` is set it attaches an `X-Signature`
+  header via `_sign` (webhook.py:160-161). Unsigned only when no secret is
+  configured.
 - `_send_to_endpoint(config, payload) -> dict` (webhook.py:138) — short-circuits
   to a failure dict (`success: False`, `attempts: 0`) on a bad scheme;
   otherwise loops `range(config.retry_count + 1)` attempts, returning a
@@ -81,33 +88,41 @@ Fields: `url: str`, `events: list[WebhookEvent] = []`,
   `urlopen` success, or a failure dict (`success: False`, `error`,
   `attempts: config.retry_count + 1`) after all attempts raise
   `URLError`/`OSError`/`TimeoutError` (sleeping `retry_delay` between attempts).
+- `get_pending() -> list[WebhookPayload]` (webhook.py:221) — returns the
+  persistent pending payload store.
+- `get_delivered() -> list[WebhookPayload]` (webhook.py:225) — returns the
+  persistent delivered payload store.
+- `get_stats() -> dict[str, Any]` (webhook.py:229) — returns
+  `total_endpoints` / `enabled_endpoints` / `pending_payloads` /
+  `delivered_payloads`, mirroring the live twin.
+- `_sign(body: str, secret: str) -> str` (webhook.py:169) — HMAC-SHA256 hex
+  digest of `body` keyed by `secret`, same construction as the live twin.
 - `endpoint_count` (property, webhook.py:174) — `len(self._configs)`.
 
 ## Invariants
 
-1. `send()` returns a **transient** `list[dict]` of per-endpoint results and
-   keeps **no persistent record** — after it returns, the sender cannot answer
-   "what was delivered / what failed / how many endpoints" beyond
-   `endpoint_count` (which counts configs, not deliveries).
+1. `send()` records each matching payload in the persistent `pending` store
+   before dispatch and moves it to `delivered` on success — after it returns,
+   the sender CAN answer "what was delivered / what is still pending / how many
+   endpoints" via `get_delivered()`/`get_pending()`/`get_stats()`.
 2. `send()` performs a **per-call retry loop** (`retry_count + 1` attempts)
    inside `_send_to_endpoint`, but this is **ephemeral** — it is not the live
    twin's persistent per-endpoint `failure_count`/`should_retry` state.
-3. Payloads are **never signed**: `_build_request` (webhook.py:128) sets only
-   `Content-Type` + `config.headers`; there is no `_sign`/HMAC, so an endpoint
-   that verifies a signature header will reject every payload this module
-   sends.
+3. Payloads are **signed when a secret is configured**: `_build_request`
+   (webhook.py:151) attaches an `X-Signature` header (HMAC-SHA256 hex digest
+   via `_sign`) when `config.secret` is set; when no secret is configured the
+   body is sent unsigned (no signature header).
 4. `add_endpoint` does not validate the URL scheme; a bad scheme is only
    caught at `send()` time (as a per-endpoint failure dict, not an exception).
 
 ## Known contract holes
 
-- **ARCH-107** — the dead module keeps **no persistent delivery/failure
-  tracking** and **never signs payloads**, diverging from the live twin's
-  record-and-track + HMAC contract: `WebhookSender.send()` (webhook.py:110)
-  returns a transient `list[dict]` and offers no `get_delivered`/`get_pending`/
-  `get_stats`, while the live twin's `WebhookManager` persists `pending`/
-  `delivered` payloads and exposes `get_stats()` (content_webhooks.py:231); and
-  this module has no `_sign`/HMAC, while the live twin signs every body with
-  `WebhookManager._sign` (content_webhooks.py:270). A consumer mirroring the
-  live contract (querying delivery history / retry state, or verifying a
-  signature) cannot do so against the dead module. See tickets/ARCH-107.md.
+- **ARCH-107 (RESOLVED)** — resolution (a) chosen (implementer, cycle 335 /
+  PR #1584 @ 6e3d6112): `send()` now records payloads in persistent
+  `pending`/`delivered` stores, `get_pending()`/`get_delivered()`/
+  `get_stats()` are exposed, and `_build_request` signs the body with the
+  endpoint `secret` (HMAC-SHA256, `X-Signature`) when set — matching the live
+  twin's record-and-track + HMAC contract. Pinning witness: implementer's
+  `tests/test_webhook.py` (test_fresh_sender_has_empty_stores,
+  test_send_tracks_delivered, test_send_failure_keeps_payload_pending,
+  test_sign_attaches_signature_header). See tickets/ARCH-107.md.
