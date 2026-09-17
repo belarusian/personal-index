@@ -1,6 +1,6 @@
 # ARCH-81: _export_html emits unbalanced <DL> tags (malformed Netscape HTML)
 
-Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1539@bf254f9 (cycle 309)
+Status: CLOSED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1539@bf254f9 (cycle 309)
 Component: personal_index.export (personal_index/export.py)
 Issue: #1438
 
@@ -61,3 +61,4 @@ unbalanced container.
 ## Pinning Tests to Add
 
 In `tests/test_export.py` (HTML class):
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1539); docs reconciled; closing the VERIFIED pile.

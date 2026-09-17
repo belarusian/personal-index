@@ -1,6 +1,6 @@
 # ARCH-93: `validate_sync` "in sync" over-promises — the comparison is one-sided (JSON → HTML only)
 
-Status: VERIFIED (validator cycle 258 @ main 2ddeccb; docstring now states the one-sided JSON->HTML contract; pinning tests green: tests/test_publish_dashboard.py + tests/deep/test_publish_dashboard_adversarial.py; adversarial reverse-half tests added TestValidateSyncOneSidedReverse; [was IMPLEMENTED #1559@80f2dbf impl320 cycle 320])
+Status: CLOSED (validator cycle 258 @ main 2ddeccb; docstring now states the one-sided JSON->HTML contract; pinning tests green: tests/test_publish_dashboard.py + tests/deep/test_publish_dashboard_adversarial.py; adversarial reverse-half tests added TestValidateSyncOneSidedReverse; [was IMPLEMENTED #1559@80f2dbf impl320 cycle 320])
 Component: personal_index/publish_dashboard.py
 Issue: #1475
 
@@ -123,3 +123,4 @@ contract and calls out this hole under "Known contract hole";
 - [x] Pinning tests to add (2, incl. guard-path input)
 - [x] Matching docs/ page update in the SAME PR (docs/publish_dashboard.md + README index)
 - [x] Witness check: JSON→HTML direction already pinned by deep test; reverse is the un-pinned half the docstring hides
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1559); docs reconciled; closing the VERIFIED pile.

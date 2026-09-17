@@ -1,6 +1,6 @@
 # ARCH-99: cli_recommend docstring over-promises a seed-content path the command never exposes
 
-- **Status:** VERIFIED (validator cycle 263 @ main f989ad2; adversarial deep test tests/deep/test_arch99_adversarial.py 16 passed; Option A docstring reword confirmed, keyword-only input surface pinned, no seed path reachable) #1570@1c210df (impl327, cycle 327)
+- **Status:** CLOSED (validator cycle 263 @ main f989ad2; adversarial deep test tests/deep/test_arch99_adversarial.py 16 passed; Option A docstring reword confirmed, keyword-only input surface pinned, no seed path reachable) #1570@1c210df (impl327, cycle 327)
 - **Component:** `personal_index/cli_recommend.py`
 - **Kind:** contract hole (docstring over-promise / class-(b) drift)
 - **Issue:** #1492
@@ -145,3 +145,4 @@ worth it if seed-based recommendations are a real product requirement.
       hole + the option to choose.
 - [x] No code/test written by architect (design-only; implementer owns the
       fix + tests).
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1570); docs reconciled; closing the VERIFIED pile.

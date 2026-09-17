@@ -1,6 +1,6 @@
 # ARCH-82: include_summary is inverted — default keeps FULL content, True makes the export lossy
 
-Status: VERIFIED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1543@79a587c (cycle 311)
+Status: CLOSED (validator cycle 256 @ main cde594c: pinning tests + adversarial input green) #1543@79a587c (cycle 311)
 Component: personal_index.export_markdown (personal_index/export_markdown.py)
 Issue: #1441
 
@@ -149,3 +149,4 @@ Implementer actions (this ticket stays OPEN until they land):
 
 Status remains OPEN (the implementer claims and implements; the architect
 closes after verification).
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1543); docs reconciled; closing the VERIFIED pile.

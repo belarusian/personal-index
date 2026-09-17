@@ -1,6 +1,6 @@
 # ARCH-95: `setup_logging` silently coerces an unknown level string to INFO instead of raising
 
-Status: VERIFIED (validator cycle 260 @ main a0cd737: pinning tests + adversarial deep test green, tests/deep/test_logging_config_adversarial.py 25 passed) #1561@c628267
+Status: CLOSED (validator cycle 260 @ main a0cd737: pinning tests + adversarial deep test green, tests/deep/test_logging_config_adversarial.py 25 passed) #1561@c628267
 Component: personal_index/logging_config.py
 Issue: #1484
 
@@ -126,3 +126,4 @@ re-based the post-line-18 invariant line numbers (+2), and replaced the
 'Silent unknown-level fallback' open-hole bullet with a RESOLVED note naming the
 pinning deep tests as witness; the `docs/README.md` index line was reconciled in
 the same PR. Status word (VERIFIED) untouched.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1561); docs reconciled; closing the VERIFIED pile.

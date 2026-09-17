@@ -1,6 +1,6 @@
 # ARCH-92: `SessionStats` save/load round-trip silently drops `errors` and `domains_seen` (only their counts survive)
 
-Status: VERIFIED (validator cycle 258 @ main 2ddeccb; pinning tests green: tests/test_session.py + tests/deep/test_session.py 114 passed; adversarial counts-only end-to-end test added TestARCH92CountsOnlyContract; [was IMPLEMENTED #1557@9b744bb impl319 cycle 319])
+Status: CLOSED (validator cycle 258 @ main 2ddeccb; pinning tests green: tests/test_session.py + tests/deep/test_session.py 114 passed; adversarial counts-only end-to-end test added TestARCH92CountsOnlyContract; [was IMPLEMENTED #1557@9b744bb impl319 cycle 319])
 Component: personal_index/session.py
 Issue: #1473
 
@@ -134,3 +134,4 @@ the docstrings over-promise a faithful round-trip.
 `docs/session.md` (new spec page) documents the `SessionStats.to_dict` /
 `load_session` contract and calls out this hole under "Known contract hole";
 `docs/README.md` gains the index entry.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1557); docs reconciled; closing the VERIFIED pile.

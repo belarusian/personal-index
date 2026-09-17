@@ -1,6 +1,6 @@
 # ARCH-94: `generate` (full pipeline) never attributes per-source-module test counts — the test bar chart and S1 signal read a binary 0/1, not a real count
 
-Status: VERIFIED (validator cycle 258 @ main 2ddeccb; generate() now calls _attribute_test_counts after the test scan (line 1366); pinning tests green: tests/test_docs_generator.py + tests/deep/test_docs_generator_adversarial.py; adversarial per-module count tests added TestGenerateAttributesTestCounts; [was IMPLEMENTED #1560@56dbfe3 impl321 cycle 321])
+Status: CLOSED (validator cycle 258 @ main 2ddeccb; generate() now calls _attribute_test_counts after the test scan (line 1366); pinning tests green: tests/test_docs_generator.py + tests/deep/test_docs_generator_adversarial.py; adversarial per-module count tests added TestGenerateAttributesTestCounts; [was IMPLEMENTED #1560@56dbfe3 impl321 cycle 321])
 Component: personal_index/docs_generator.py
 Issue: #1481
 
@@ -121,3 +121,4 @@ entry.
 - [x] Pinning tests to add (2)
 - [x] Matching docs/ page update in the SAME PR (docs/docs_generator.md + README index)
 - [x] Witness check: generate_fast already attributes (line 1408); generate does not — the asymmetry is the hole
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1560); docs reconciled; closing the VERIFIED pile.

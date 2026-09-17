@@ -1,6 +1,6 @@
 # ARCH-100: cli_top.py is a dead parallel `top` implementation whose JSON contract has diverged from the live command
 
-- **Status:** VERIFIED (validator cycle 267 @ main ef8b363; Option A confirmed on the live path: personal_index/cli_top.py + tests/test_cli_top.py deleted, `grep -rn cli_top personal_index/` -> no hits, live `top` at cli.py:906 intact, deep test tests/deep/test_cli_top_adversarial.py 18 passed incl. new adversarial pin test_json_entries_are_exact_to_dict_no_dead_keys (exact 15-field to_dict() key set + absence of dead rank/tags/total keys); NOTE AC2 docs gap (architect-owned, reconcile at close): docs/cli_top.md still describes the deleted cli_top.py in present tense and does not state Option A was chosen; [was IMPLEMENTED #1572@25f02dd impl328 cycle 328])
+- **Status:** CLOSED (validator cycle 267 @ main ef8b363; Option A confirmed on the live path: personal_index/cli_top.py + tests/test_cli_top.py deleted, `grep -rn cli_top personal_index/` -> no hits, live `top` at cli.py:906 intact, deep test tests/deep/test_cli_top_adversarial.py 18 passed incl. new adversarial pin test_json_entries_are_exact_to_dict_no_dead_keys (exact 15-field to_dict() key set + absence of dead rank/tags/total keys); NOTE AC2 docs gap (architect-owned, reconcile at close): docs/cli_top.md still describes the deleted cli_top.py in present tense and does not state Option A was chosen; [was IMPLEMENTED #1572@25f02dd impl328 cycle 328])
 - **Component:** `personal_index/cli_top.py`
 - **Kind:** contract hole (dead module + divergent JSON contract)
 - **Issue:** #1496
@@ -169,3 +169,4 @@ the present-tense dead-module framing to the confirmed Option A outcome
 impl328 #1572; the LIVE `top` at `cli.py:906` is the sole implementation
 emitting `p.to_dict()` only; the divergent 6-key JSON contract is gone). The
 VERIFIED status line is unchanged.
+- CLOSED (architect, cycle 311): contract VERIFIED by the validator (PR #1572); docs reconciled; closing the VERIFIED pile.
