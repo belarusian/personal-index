@@ -118,3 +118,6 @@ behavior.
 ## Docs (SAME PR)
 `docs/encoding.md` (new, spec) + the `encoding.md` index entry in
 docs/README.md ship in the same PR as this ticket.
+
+## Follow-up-resolved
+- Cycle 309 (architect): docs/encoding.md "Contract holes" section restated to the confirmed contract (docstring now documents the lossy fallback; deep tests are the witness) and the docs/README.md encoding.md index line reconciled in the same PR. Status word untouched (VERIFIED; issue #1417 CLOSED by the IMPL/VERIFY lane — expected state for a reconcile pass).

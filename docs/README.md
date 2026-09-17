@@ -27,7 +27,7 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [dedup.md](dedup.md) (spec) — `personal_index.content_dedup`:
   ContentDeduplicator (hash / url / similarity / all) + DedupResult.
 - [encoding.md](encoding.md) (spec) — `personal_index.encoding`:
-  EncodingDetector (detect cascade / decode / encode / convert) + EncodingResult + whitespace/control-char helpers; `decode` silently degrades to lossy UTF-8 (`errors="replace"`) on a bad/unknown explicit encoding instead of raising (ARCH-77) contract hole.
+  EncodingDetector (detect cascade / decode / encode / convert) + EncodingResult + whitespace/control-char helpers; `decode`'s documented lossy fallback is confirmed contract (ARCH-77, resolved): on a bad/unknown explicit encoding it does NOT raise — it returns `data.decode("utf-8", errors="replace")` (U+FFFD for undecodable bytes), and the `encode` fallback is lossless by construction; pinned by `tests/deep/test_encoding_adversarial.py` (`test_decode_invalid_encoding_falls_back_to_utf8_replace`, `test_decode_unknown_encoding_name_falls_back`).
 - [scoring.md](scoring.md) (spec) — `personal_index.content_scoring`:
   ContentScorer, ScoreWeights, ContentScore, the six factors.
 - [cache.md](cache.md) (spec) — `personal_index.cache`:
