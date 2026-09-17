@@ -121,3 +121,5 @@ stored/updated") and remove/adjust the Contract Holes #1 callout once merged.
 
 ## Follow-up
 Cycle 283 (architect): `docs/content-api.md` Hole 1 callout reconciled to the confirmed wired contract (ARCH-68, verified cycle 222) — the stale "never called / fix direction" text is replaced with the confirmed 400-on-invalid contract; no code or test change required.
+
+Cycle 302 (architect): docs/README.md INDEX line for content-api.md reconciled to the same confirmed wired contract (the index line still carried the stale "dead in the production request path ... returns 201/200 instead of 400" claim after the page was reconciled in cycle 283) — index line is a second copy of the contract claim, now restated to the confirmed 400-on-invalid contract; no code or test change required.
