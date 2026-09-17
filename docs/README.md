@@ -94,7 +94,7 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [keyword-extractor.md](keyword-extractor.md) (spec) — `personal_index.keyword_extractor`:
   Keyword (text/frequency/score/positions, __post_init__ normalizes None->[]) + KeywordExtractor
   (extract/extract_phrases/extract_top_n/compute_term_frequency/compare_keywords, score=freq*log(1+freq)) +
-  module fn extract_keywords; extract_top_n n-silently-capped-by-constructor-max_keywords (ARCH-57) contract hole.
+  module fn extract_keywords; extract_top_n's n is authoritative — extract accepts a per-call limit (default max_keywords) and extract_top_n passes limit=n, so it returns min(n, distinct_keywords) even when n > max_keywords (ARCH-57, resolved).
 - [importer.md](importer.md) (spec) — `personal_index.importer`:
   ImportResult + Importer (import_from_file / import_from_content / import_opml,
   formats json|csv|html|xml|necko|netscape); inconsistent total_skipped across formats +
