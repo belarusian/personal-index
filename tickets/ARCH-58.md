@@ -69,3 +69,4 @@ Regardless of option, `PageResult.total_pages` should state its `per_page != 0` 
 
 ## Docs update (same PR)
 `docs/pagination.md` — the Contract Holes section documents this hole; after the fix, update it to state the new consistent-clamp contract (every entry point clamps `per_page` to `max(1, min(per_page, max_per_page))`; no path raises on `per_page=0`). Remove/adjust the Contract-holes bullet for this hole once merged, and keep the `PageResult.total_pages` `per_page != 0` precondition note.
+Follow-up-resolved (cycle 306, architect): docs/README.md index line reconciled to the confirmed clamped-per_page contract (the index line was the second stale copy still carrying the pre-262 "contract hole" framing); module page already reconciled cycle 262. Status unchanged (CLOSED).
