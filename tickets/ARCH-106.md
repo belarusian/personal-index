@@ -1,6 +1,6 @@
 # ARCH-106 — notifications.py `Notification.read` is a bare boolean with no delivery timestamp, diverging from the live twin's `delivered` + `delivered_at` contract
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-17
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/notifications.py (DEAD module — 0 importers; see docs/notifications.md) + personal_index/content_notifications.py (the live record-and-track twin it was meant to mirror)
 - **Issue:** #1517
@@ -66,6 +66,14 @@ Live-twin read-state (timestamped) — the contract the dead module diverges fro
   same stamp for a single notification.
 
 ## Proposed fix (implementer)
+
+
+**Resolution chosen: (a)** — align the dead module to the live twin's
+contract. Added `read_at: datetime | None = None` to `Notification`
+(notifications.py) and stamped `n.read_at = datetime.now(timezone.utc)` in
+`InMemoryHandler.mark_all_read()` on each transition, mirroring the live
+twin's `delivered_at` stamp. No live module changed (notifications.py has
+0 importers). docs/notifications.md update deferred to the architect.
 
 Two acceptable resolutions; pick one and record it in the ticket:
 

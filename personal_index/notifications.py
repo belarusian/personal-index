@@ -50,6 +50,7 @@ class Notification:
     timestamp: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
     read: bool = False
+    read_at: datetime | None = None
 
     def __post_init__(self):
         if not self.timestamp:
@@ -196,6 +197,7 @@ class InMemoryHandler(NotificationHandler):
         for n in self._notifications:
             if not n.read:
                 n.read = True
+                n.read_at = datetime.now(timezone.utc)
                 count += 1
         return count
 
