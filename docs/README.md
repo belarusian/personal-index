@@ -116,8 +116,8 @@ Each subsystem page is marked **(spec | stub | stale)**:
   (register_endpoint/remove_endpoint/dispatch_event/mark_delivered/mark_failed/get_stats/get_payload_json);
   signature-not-verifiable + exhausted-lands-in-delivered + no-http-delivery contract holes.
 - [webhook.md](webhook.md) (spec) — `personal_index.webhook` (DEAD module, 0 importers; distinct from the live `content_webhooks` above):
-  WebhookEvent + WebhookPayload (to_dict/to_json) + WebhookConfig (should_send) + WebhookSender
-  (add_endpoint/remove_endpoint/send/endpoint_count); transient-send-no-store + no-HMAC-signing contract holes.
+  WebhookEvent + WebhookPayload (to_dict/to_json) + WebhookConfig (should_send, optional secret) + WebhookSender
+  (add_endpoint/remove_endpoint/send/endpoint_count + get_pending/get_delivered/get_stats); RESOLVED — resolution (a) (align to the live twin, cycle 335 / #1584@6e3d6112): send() records each payload in a persistent pending store before dispatch and moves it to a persistent delivered store on success, and _build_request attaches an X-Signature HMAC-SHA256 header via _sign() when a secret is set — mirroring content_webhooks.WebhookManager (confirmed contract, ARCH-107).
 - [search-suggestions.md](search-suggestions.md) (spec) — `personal_index.search_suggestions`:
   Suggestion (to_dict 4dp) + TrendingEntry (age_seconds/record) + SearchSuggestions
   (add_search_history/add_tags/add_keywords/record_search/get_trending/suggest/get_related_queries/clear/to_dict/from_dict);
