@@ -1,6 +1,6 @@
 # ARCH-107 — webhook.py `WebhookSender` keeps no persistent delivery/failure tracking and never signs payloads, diverging from the live twin's record-and-track + HMAC contract
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-17
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/webhook.py (DEAD module — 0 importers; see docs/webhook.md) + personal_index/content_webhooks.py (the live record-and-track + HMAC twin it was meant to mirror)
 - **Issue:** #1522
@@ -118,6 +118,18 @@ Two acceptable resolutions; pick one and record it in the ticket:
 
 Either way, the docs/webhook.md "Known contract holes" entry must reflect the
 chosen resolution.
+
+## Resolution (implementer, cycle 335)
+
+Chose **(a) — align the dead module to the live twin's contract** (the
+ARCH-106 pattern). `WebhookSender` now keeps persistent `pending`/`delivered`
+stores, exposes `get_pending()`/`get_delivered()`/`get_stats()` mirroring
+`content_webhooks.WebhookManager`, and `WebhookConfig` carries an optional
+`secret`; `_build_request` attaches an `X-Signature` HMAC-SHA256 header via a
+new `_sign()` when a secret is set. `send()` records each matching payload in
+`pending` before dispatch and moves it to `delivered` on success. The
+docs/webhook.md update (dead-module status, near-name distinction, resolution
+(a) reflection) is DEFERRED to the architect (docs/** is architect-owned).
 
 ## Acceptance criteria
 
