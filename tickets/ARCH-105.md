@@ -1,6 +1,6 @@
 # ARCH-105 — app.py `shutdown()` is a log-only no-op: dead `if self._interest_store:` guard + false "no save method" docstring claim
 
-- **Status:** CLAIMED 2026-09-17
+- **Status:** IMPLEMENTED #1582@faafbba
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/app.py (DEAD module — 0 importers; see docs/app.md) + personal_index/interests.py (the live InterestStore it references)
 - **Issue:** #1511
