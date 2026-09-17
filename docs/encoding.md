@@ -32,7 +32,7 @@ Fixed priority cascade; returns the first match. Order matters:
 - `encoding` given: decode with that encoding.
 - **On `UnicodeDecodeError` or `LookupError` (unknown codec name), silently
   falls back to `data.decode("utf-8", errors="replace")`.** This is the
-  documented contract hole — see below.
+  confirmed contract (ARCH-77, resolved) — see below.
 
 ## encode(text: str, encoding: str = "utf-8") -> bytes
 Encode with `encoding`; on `UnicodeEncodeError` or `LookupError` fall back to
@@ -41,7 +41,7 @@ UTF-8-encodable).
 
 ## convert(data: bytes, from_encoding: str, to_encoding: str = "utf-8") -> bytes
 `decode(data, from_encoding)` then `encode(text, to_encoding)`. Inherits the
-`decode` fallback behavior (see contract hole).
+`decode` fallback behavior (see Confirmed contract below).
 
 ## Text helpers
 - `normalize_whitespace(text) -> str` — `re.sub(r"\s+", " ", text).strip()`.
@@ -49,21 +49,28 @@ UTF-8-encodable).
   (keeps `\t` `\n` `\r`).
 - `sanitize(text) -> str` — `remove_control_chars` then `normalize_whitespace`.
 
-## Contract holes
-- **`decode` silently degrades to lossy UTF-8 on a bad/unknown explicit
-  encoding (ARCH-77).** When the caller passes an explicit `encoding` that
-  cannot decode the data (`UnicodeDecodeError`) or is not a registered codec
-  (`LookupError`), `decode` does **not** raise — it returns
+## Confirmed contract (ARCH-77, resolved)
+- **`decode`'s lossy UTF-8 fallback on a bad/unknown explicit encoding is the
+  confirmed contract (ARCH-77).** When the caller passes an explicit
+  `encoding` that cannot decode the data (`UnicodeDecodeError`) or is not a
+  registered codec (`LookupError`), `decode` does **not** raise — it returns
   `data.decode("utf-8", errors="replace")`, substituting U+FFFD replacement
-  characters for undecodable bytes. The docstring ("Decode bytes to string,
-  auto-detecting if needed") does not state this silent lossy fallback, so a
-  caller who passes a wrong explicit encoding gets corrupted text with no
-  signal. Observed: `decode(b"caf\xe9", "utf-8")` -> `"caf\ufffd"` (lossy),
+  characters for undecodable bytes. This is now stated in the `decode`
+  docstring ("the error is NOT raised: the method falls back to
+  `data.decode("utf-8", errors="replace")` ... a documented lossy fallback").
+  Observed: `decode(b"caf\xe9", "utf-8")` -> `"caf\ufffd"` (lossy),
   whereas the correct lossless result for the same bytes is `"café"` (what
   `decode(b"caf\xe9")` auto-detects, since `detect` reports `iso-8859-1`).
-  The `encode` fallback is NOT a hole: `str` is always UTF-8-encodable, so the
-  `encode` fallback is lossless. The `convert` path inherits the `decode`
-  hole only when `from_encoding` is wrong.
+  The `encode` fallback is lossless by construction: `str` is always
+  UTF-8-encodable. The `convert` path inherits the `decode` fallback only
+  when `from_encoding` is wrong.
+- **Witness:** the pinning deep tests
+  `tests/deep/test_encoding_adversarial.py::test_decode_invalid_encoding_falls_back_to_utf8_replace`
+  (the `UnicodeDecodeError` branch returns U+FFFD, does not raise) and
+  `::test_decode_unknown_encoding_name_falls_back` (the `LookupError` branch
+  returns the clean UTF-8 decode) pin the confirmed behavior against the
+  returned object; the corrected docs match reality (no code/test change
+  required).
 - **Adjacent behaviors that are NOT holes** (do not re-ticket): the `detect`
   cascade (all five rules, the ASCII-over-UTF-8 priority, empty-bytes->ascii,
   `language` always `None`) is fully pinned by `TestDetectContract` and is
