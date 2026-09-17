@@ -1,5 +1,7 @@
 """Tests for the webhook notification system."""
 
+import hashlib
+import hmac
 import json
 from unittest.mock import MagicMock, patch
 from urllib.error import URLError
@@ -258,3 +260,87 @@ class TestWebhookSenderExceptionHandling:
 
         with patch("urllib.request.urlopen", side_effect=ValueError("unexpected")), pytest.raises(ValueError, match="unexpected"):
             sender.send(payload)
+
+
+class TestWebhookSenderDeliveryTracking:
+    """Pinning tests for ARCH-107 resolution (a): record-and-track + HMAC.
+
+    The dead module now mirrors the live twin's persistent delivery tracking
+    and HMAC signing contract.
+    """
+
+    def test_fresh_sender_has_empty_stores(self):
+        sender = WebhookSender()
+        assert sender.get_pending() == []
+        assert sender.get_delivered() == []
+        stats = sender.get_stats()
+        assert stats["pending_payloads"] == 0
+        assert stats["delivered_payloads"] == 0
+
+    def test_send_tracks_delivered(self):
+        sender = WebhookSender()
+        sender.add_endpoint(WebhookConfig(url="http://hook.example.com"))
+        payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
+
+        with patch("urllib.request.urlopen") as mock_urlopen:
+            mock_response = MagicMock()
+            mock_response.status = 200
+            mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
+            mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
+            sender.send(payload)
+
+        assert payload in sender.get_delivered()
+        assert payload not in sender.get_pending()
+        stats = sender.get_stats()
+        assert stats["delivered_payloads"] == 1
+        assert stats["pending_payloads"] == 0
+        assert stats["total_endpoints"] == 1
+        assert stats["enabled_endpoints"] == 1
+
+    def test_send_failure_keeps_payload_pending(self):
+        sender = WebhookSender()
+        sender.add_endpoint(
+            WebhookConfig(url="http://hook.example.com", retry_count=1, retry_delay=0.01)
+        )
+        payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
+
+        with patch("urllib.request.urlopen", side_effect=URLError("fail")), patch("personal_index.webhook.time.sleep"):
+            sender.send(payload)
+
+        assert payload in sender.get_pending()
+        assert payload not in sender.get_delivered()
+        stats = sender.get_stats()
+        assert stats["pending_payloads"] == 1
+        assert stats["delivered_payloads"] == 0
+
+    def test_sign_attaches_signature_header(self):
+        sender = WebhookSender()
+        config = WebhookConfig(url="http://hook.example.com", secret="s3cr3t")
+        sender.add_endpoint(config)
+        payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
+
+        with patch("urllib.request.urlopen") as mock_urlopen:
+            mock_response = MagicMock()
+            mock_response.status = 200
+            mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
+            mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
+            sender.send(payload)
+
+        req = mock_urlopen.call_args[0][0]
+        expected = hmac.new(b"s3cr3t", payload.to_json().encode("utf-8"), hashlib.sha256).hexdigest()
+        assert req.get_header("X-signature") == expected
+
+    def test_no_secret_means_no_signature_header(self):
+        sender = WebhookSender()
+        sender.add_endpoint(WebhookConfig(url="http://hook.example.com"))
+        payload = WebhookPayload(event=WebhookEvent.CRAWL_COMPLETE)
+
+        with patch("urllib.request.urlopen") as mock_urlopen:
+            mock_response = MagicMock()
+            mock_response.status = 200
+            mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
+            mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
+            sender.send(payload)
+
+        req = mock_urlopen.call_args[0][0]
+        assert req.get_header("X-signature") is None
