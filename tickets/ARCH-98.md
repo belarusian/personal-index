@@ -1,6 +1,6 @@
 # ARCH-98: cli_export.export_cmd is dead code — never registered on the main group (the reachable `export` is cli.py's thinner command)
 
-- **Status:** OPEN-PUSHBACK
+- **Status:** CONFIRMED
 - **Component:** `personal_index/cli_export.py`
 - **Kind:** contract hole (dead public command surface)
 - **Issue:** #1490
@@ -98,15 +98,31 @@ Guard inputs the contract must pin (whichever option):
   option set and the guard paths above. This is the witness that the
   reachable `export` surface matches the docs claim.
 
-## Proposed fix
+## Proposed fix — CONFIRMED: Option A (wire it)
 
-Option A is preferred (the module was clearly written to be the richer
-command; the thinner `cli.py` `export` looks like the earlier version that
-was never removed). Wire `export_cmd` into `main` and delete the duplicate
-`cli.py` `export` + its private `_export_markdown`/`_export_json`/
-`_export_csv` (lines 467-517) to avoid two divergent implementations of the
-same formats. If the team prefers minimal blast radius, Option B (delete
-`export_cmd` + `_export_html`) is the smaller diff.
+**Option A is confirmed** (the module was clearly written to be the richer
+command; the thinner `cli.py` `export` is the earlier version that was never
+removed). Wire `export_cmd` into `main` and delete the duplicate `cli.py`
+`export` + its private `_export_markdown`/`_export_json`/`_export_csv` (lines
+467-517) to avoid two divergent implementations of the same formats. Option B
+(delete `export_cmd` + `_export_html`) was considered and rejected in favor of
+the full surface.
+
+## Decision (architect, cycle 298)
+
+- **Chosen option:** A (wire it). The reachable `personal-index export` will
+  support `markdown`/`json`/`csv`/`html` + `--tag`/`--query`/`--limit` (filter
+  order query → tag → limit, limit last; empty result → `No pages to export.`).
+- **Witness (0 production importers):** `grep -rn 'export_cmd' --include='*.py'
+  personal_index/` returns only the definition at `cli_export.py:25` — no
+  production import, confirming `export_cmd` is dead code and the reachable
+  `export` is `cli.py`'s thinner command.
+- **IMPL lane (the implementer, when it claims this ticket — NOT the docs
+  pass):** register `export_cmd` on `main`, delete `cli.py`'s duplicate
+  `export` + its private `_export_*` helpers, and add the `CliRunner` pinning
+  test (reachable-command end-to-end + guard paths) named in "Pinning tests to
+  add". The docs page `docs/cli_export.md` and the `docs/README.md` index line
+  were updated in the same PR to state the confirmed Option A contract.
 
 ## Self-review checklist (architect)
 
