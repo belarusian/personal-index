@@ -331,19 +331,20 @@ class PersonalIndexApp:
         logger.info("PersonalIndexApp initialized with data_dir=%s", self.data_dir)
 
     def shutdown(self):
-        """Clean up application resources.
+        """Log a shutdown-complete message.
 
-        Guard path: when ``self._interest_store`` is falsy (never accessed),
-        the (currently empty) cleanup block is skipped.
+        Performs no component teardown and no persistence. ``InterestStore``
+        persists itself on every mutation (``_save`` at interests.py:44,
+        called from ``add``/``remove``), so there is nothing to flush at
+        shutdown.
+
+        Guard path: none. The method's behavior is identical whether
+        ``self._interest_store`` was ever accessed or not.
 
         Return object: None.
 
-        Side effects: logs a shutdown-complete message. No persistence, no
-        component teardown (InterestStore has no save method).
+        Side effects: logs a shutdown-complete message only.
         """
-        if self._interest_store:
-            # InterestStore doesn't have a save method, just pass
-            pass
         logger.info("PersonalIndexApp shutdown complete")
 
     def process_content(self, url: str, raw_content: str, title: str = "") -> dict:

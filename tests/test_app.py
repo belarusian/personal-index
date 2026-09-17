@@ -156,6 +156,46 @@ class TestPersonalIndexAppShutdown:
         app.shutdown()
         app.shutdown()  # Should not raise
 
+    def test_shutdown_is_log_only_and_store_already_persisted(self, app):
+        """Pin the corrected shutdown() contract (ARCH-105).
+
+        shutdown() is log-only: no teardown, no persistence. The interest
+        store is already persisted by add_interest (InterestStore._save on
+        mutation), so there is nothing to flush at shutdown. One test pins
+        both the accessed branch and the never-accessed (falsy-guard) branch.
+        """
+        import json
+
+        store_path = os.path.join(app.data_dir, "interests.json")
+
+        # Accessed branch: add_interest persists via InterestStore._save.
+        app.initialize()
+        app.add_interest("Python", keywords=["python"])
+        assert os.path.exists(store_path)
+        with open(store_path) as f:
+            data = json.load(f)
+        assert "Python" in data
+
+        # Snapshot the full data_dir contents before shutdown.
+        before = sorted(os.listdir(app.data_dir))
+        app.shutdown()
+        # No new file, no teardown side effect: data_dir is unchanged.
+        assert sorted(os.listdir(app.data_dir)) == before
+        # The store is still persisted exactly as add_interest left it.
+        with open(store_path) as f:
+            assert "Python" in json.load(f)
+
+        # Never-accessed branch: a fresh app that never touched
+        # interest_store (falsy _interest_store) is also log-only.
+        fresh = PersonalIndexApp(
+            config_path=os.path.join(app.data_dir, "config.yaml"),
+            data_dir=app.data_dir,
+        )
+        assert fresh._interest_store is None
+        before_fresh = sorted(os.listdir(app.data_dir))
+        fresh.shutdown()
+        assert sorted(os.listdir(app.data_dir)) == before_fresh
+
 
 class TestPersonalIndexAppProcessContent:
     """Test process_content() pipeline execution."""
