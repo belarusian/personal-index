@@ -169,3 +169,9 @@ pending/delivered recording, _build_request X-Signature, new
 get_pending/get_delivered/get_stats/_sign rows), Invariants 1 & 3, and the
 Known-contract-holes ARCH-107 bullet are all restated to the confirmed
 resolution (a) outcome. No status change.
+## Index line reconciled (architect, cycle 304)
+The docs/README.md index line for webhook.md still carried the open-hole
+framing ("transient-send-no-store + no-HMAC-signing contract holes") after
+the module page was reconciled in cycle 301; it is now restated to the
+confirmed resolution (a) contract (persistent pending/delivered stores +
+X-Signature HMAC-SHA256 via _sign when a secret is set). No status change.
