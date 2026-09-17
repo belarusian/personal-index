@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from datetime import datetime
 from unittest.mock import MagicMock
 
 from personal_index.notifications import (
@@ -89,6 +90,21 @@ class TestInMemoryHandler:
         count = handler.mark_all_read()
         assert count == 5
         assert len(handler.get_unread()) == 0
+
+
+    def test_mark_all_read_stamps_read_at(self):
+        # Guard path: a fresh unread notification has no read timestamp.
+        handler = InMemoryHandler()
+        n = Notification(title="Test", message="Msg")
+        assert n.read is False
+        assert n.read_at is None
+        handler.handle(n)
+        # Normal path: mark_all_read() stamps read_at with a datetime.
+        count = handler.mark_all_read()
+        assert count == 1
+        assert n.read is True
+        assert isinstance(n.read_at, datetime)
+
 
     def test_clear(self):
         handler = InMemoryHandler()

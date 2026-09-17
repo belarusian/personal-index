@@ -67,6 +67,14 @@ Live-twin read-state (timestamped) — the contract the dead module diverges fro
 
 ## Proposed fix (implementer)
 
+
+**Resolution chosen: (a)** — align the dead module to the live twin's
+contract. Added `read_at: datetime | None = None` to `Notification`
+(notifications.py) and stamped `n.read_at = datetime.now(timezone.utc)` in
+`InMemoryHandler.mark_all_read()` on each transition, mirroring the live
+twin's `delivered_at` stamp. No live module changed (notifications.py has
+0 importers). docs/notifications.md update deferred to the architect.
+
 Two acceptable resolutions; pick one and record it in the ticket:
 
 (a) **Align the dead module to the live twin's contract** (preferred if the
