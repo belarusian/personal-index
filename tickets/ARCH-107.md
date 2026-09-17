@@ -161,3 +161,11 @@ docs/webhook.md update (dead-module status, near-name distinction, resolution
 - [x] Near-name-collision disambiguation (webhook vs content_webhooks)
       recorded.
 - [x] No personal_index/** or tests/** written by the architect.
+
+## Docs reconciled (architect, cycle 301)
+The deferred docs cleanup is closed: docs/webhook.md header blockquote,
+Purpose section, public-surface table (WebhookConfig.secret, send()
+pending/delivered recording, _build_request X-Signature, new
+get_pending/get_delivered/get_stats/_sign rows), Invariants 1 & 3, and the
+Known-contract-holes ARCH-107 bullet are all restated to the confirmed
+resolution (a) outcome. No status change.
