@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import logging
 import time
@@ -64,6 +66,7 @@ class WebhookConfig:
     retry_count: int = 3
     retry_delay: float = 1.0
     enabled: bool = True
+    secret: str | None = None
 
     def should_send(self, event: WebhookEvent) -> bool:
         """Return whether this endpoint should receive the given event.
@@ -81,10 +84,20 @@ class WebhookConfig:
 
 
 class WebhookSender:
-    """Sends webhook notifications to configured endpoints."""
+    """Sends webhook notifications to configured endpoints.
+
+    Mirrors the live twin ``content_webhooks.WebhookManager`` record-and-track
+    + HMAC contract: every ``send()`` records each matching endpoint's payload
+    in a persistent ``pending`` store, moves it to ``delivered`` on success,
+    and signs the body with the endpoint's ``secret`` (HMAC-SHA256) when one is
+    set. Delivery history is queryable via ``get_pending()`` /
+    ``get_delivered()`` / ``get_stats()``.
+    """
 
     def __init__(self):
         self._configs: list[WebhookConfig] = []
+        self.pending: list[WebhookPayload] = []
+        self.delivered: list[WebhookPayload] = []
 
     def add_endpoint(self, config: WebhookConfig) -> None:
         """Append a webhook endpoint config to the sender's endpoint list.
@@ -108,12 +121,22 @@ class WebhookSender:
         return False
 
     def send(self, payload: WebhookPayload) -> list[dict]:
-        """Send a webhook payload to all matching endpoints."""
+        """Send a webhook payload to all matching endpoints.
+
+        Records each matching endpoint's payload in the persistent ``pending``
+        store before dispatching, and moves it to ``delivered`` when the
+        endpoint reports success (leaving it in ``pending`` on failure).
+        Returns the transient per-endpoint result list (unchanged shape).
+        """
         results = []
         for config in self._configs:
             if not config.should_send(payload.event):
                 continue
+            self.pending.append(payload)
             result = self._send_to_endpoint(config, payload)
+            if result.get("success"):
+                self.pending.remove(payload)
+                self.delivered.append(payload)
             results.append(result)
         return results
 
@@ -126,14 +149,34 @@ class WebhookSender:
         return None
 
     def _build_request(self, config: WebhookConfig, payload: WebhookPayload) -> Request:
-        """Build HTTP request from config and payload."""
-        data = payload.to_json().encode("utf-8")
+        """Build HTTP request from config and payload.
+
+        Signs the JSON body with the endpoint's ``secret`` (HMAC-SHA256) and
+        attaches it as the ``X-Signature`` header when a secret is set; when no
+        secret is configured the body is sent unsigned (no signature header).
+        """
+        body = payload.to_json()
+        headers = {"Content-Type": "application/json", **config.headers}
+        if config.secret:
+            headers["X-Signature"] = self._sign(body, config.secret)
         return Request(
             config.url,
-            data=data,
-            headers={"Content-Type": "application/json", **config.headers},
+            data=body.encode("utf-8"),
+            headers=headers,
             method="POST",
         )
+
+    def _sign(self, body: str, secret: str) -> str:
+        """Create an HMAC-SHA256 signature for a payload body.
+
+        Returns the hex digest of ``hmac.new(secret, body, sha256)`` — the
+        same construction as the live twin ``content_webhooks.WebhookManager._sign``.
+        """
+        return hmac.new(
+            secret.encode(),
+            body.encode(),
+            hashlib.sha256,
+        ).hexdigest()
 
     def _send_to_endpoint(self, config: WebhookConfig, payload: WebhookPayload) -> dict:
         scheme_error = self._validate_url_scheme(config.url)
@@ -174,3 +217,29 @@ class WebhookSender:
     def endpoint_count(self) -> int:
         """Return the number of configured endpoints (len of the config list)."""
         return len(self._configs)
+
+    def get_pending(self) -> list[WebhookPayload]:
+        """Return the list of payloads still pending delivery (not yet delivered)."""
+        return self.pending
+
+    def get_delivered(self) -> list[WebhookPayload]:
+        """Return the list of payloads delivered to at least one endpoint."""
+        return self.delivered
+
+    def get_stats(self) -> dict[str, Any]:
+        """Return delivery-tracking statistics.
+
+        Returns a dict with ``total_endpoints`` (configured endpoint count),
+        ``enabled_endpoints`` (endpoints whose ``enabled`` is True),
+        ``pending_payloads`` (len of the pending store), and
+        ``delivered_payloads`` (len of the delivered store) — mirroring the
+        live twin ``content_webhooks.WebhookManager.get_stats``.
+        """
+        return {
+            "total_endpoints": len(self._configs),
+            "enabled_endpoints": sum(
+                (1 for c in self._configs if c.enabled),
+            ),
+            "pending_payloads": len(self.pending),
+            "delivered_payloads": len(self.delivered),
+        }
