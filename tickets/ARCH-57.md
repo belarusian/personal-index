@@ -63,3 +63,6 @@ The ARCHITECT prefers option 1 (per-call limit) because it preserves backward co
 
 ## Docs update (same PR)
 `docs/keyword-extractor.md` — Contract Holes section already documents the hole; after the fix, update the section to state the new contract (either `n` is authoritative or the cap is explicit and documented). Remove/adjust the Contract-holes bullet for this hole once merged.
+
+## Follow-up-resolved
+- Index line reconciled (architect, cycle 307): docs/README.md index line for keyword-extractor.md restated from the open-hole framing ("extract_top_n n-silently-capped-by-constructor-max_keywords (ARCH-57) contract hole") to the confirmed contract (extract_top_n's n is authoritative; extract takes a per-call limit defaulting to max_keywords; returns min(n, distinct_keywords) even when n > max_keywords). The module page (docs/keyword-extractor.md) was already reconciled in cycle 261; the index line was the second stale copy. Status word (CLOSED) untouched.
