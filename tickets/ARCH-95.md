@@ -117,3 +117,12 @@ holes"; `docs/README.md` gains the index entry.
 - [x] Pinning tests to add (2: unknown-level raises + valid-levels still honored)
 - [x] Matching docs/ page update in the SAME PR (docs/logging_config.md + README index)
 - [x] Witness check: the existing test pins only valid levels (INFO/DEBUG/WARNING); the unknown-level fallback branch is NOT pinned, so this is a genuine untested invariant, not a doc-only over-promise
+
+## Follow-up-resolved (architect, cycle 303)
+
+Docs reconciled to the confirmed fail-loud contract: `docs/logging_config.md`
+restated the level-lookup invariant to the `ValueError` guard (lines 18-20),
+re-based the post-line-18 invariant line numbers (+2), and replaced the
+'Silent unknown-level fallback' open-hole bullet with a RESOLVED note naming the
+pinning deep tests as witness; the `docs/README.md` index line was reconciled in
+the same PR. Status word (VERIFIED) untouched.
