@@ -218,3 +218,42 @@ class TestContentVersionToDict:
         after = (v.url, v.version_id, v.content_hash, v.title,
                  v.content_length, v.captured_at, v.metadata)
         assert before == after
+
+
+class TestVersionTrackerInMemoryDivergence:
+    """Pinning tests for ARCH-108 Option (b): the dead module's in-memory,
+    url-keyed contract is intentionally NOT the live twin's JSON-backed,
+    item_id-keyed, rollback/delete contract.
+
+    A fresh VersionTracker() starts empty (nothing is persisted/reloaded), and
+    the module exposes no persistence or rollback/delete-by-id surface.
+    """
+
+    def test_fresh_tracker_starts_empty_nothing_persisted(self):
+        tracker = VersionTracker()
+        assert tracker.get_all_urls() == []
+        assert tracker.total_versions == 0
+        assert tracker.tracked_urls == 0
+        assert tracker.get_versions("http://example.com") == []
+        assert tracker.get_latest("http://example.com") is None
+
+    def test_recorded_version_not_reloaded_across_constructions(self):
+        tracker = VersionTracker()
+        tracker.record_version("http://example.com", "content v1", title="Page")
+        assert tracker.get_change_count("http://example.com") == 1
+        # A brand-new tracker does not reload anything from disk (there is no
+        # disk): the recorded version is gone, pinning the in-memory-only store.
+        fresh = VersionTracker()
+        assert fresh.get_versions("http://example.com") == []
+        assert fresh.get_latest("http://example.com") is None
+
+    def test_no_persistence_surface(self):
+        tracker = VersionTracker()
+        assert not hasattr(tracker, "storage_path")
+        assert not hasattr(tracker, "_save")
+        assert not hasattr(tracker, "_load")
+
+    def test_no_rollback_or_delete_by_id(self):
+        tracker = VersionTracker()
+        assert not hasattr(tracker, "rollback_to")
+        assert not hasattr(tracker, "delete_version")

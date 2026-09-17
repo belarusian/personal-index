@@ -107,15 +107,41 @@ chosen resolution.
       page header (done in this PR).
 - [ ] The in-memory/no-persistence + no-rollback/no-delete divergences are
       pinned with file:line evidence (above).
-- [ ] A resolution (a) or (b) is chosen and the docs page updated to match.
-- [ ] Pinning test (implementer, tests/** — NOT the architect's path): one
+- [x] A resolution (a) or (b) is chosen and the docs page updated to match. (Option (b) — chosen by the architect in cycle 297 and confirmed on main; the docs page already reflects it. This IMPL pass keeps the module, documents the divergence in the VersionTracker docstring, and pins it.)
+- [x] Pinning test (implementer, tests/** — NOT the architect's path): one
       behavior test that constructs a `VersionTracker`, records a version, and
       asserts the persistence/rollback contract the chosen resolution states —
       for (a) assert a fresh `VersionTracker` reloads the recorded version from
       disk and that `rollback_to`/`delete_version` exist and work; for (b)
       assert a fresh `VersionTracker()` starts empty (nothing persisted) and
       that no `rollback_to`/`delete_version`/`_save`/`storage_path` attribute
-      exists, pinning the documented divergence.
+      exists, pinning the documented divergence. (DONE: `TestVersionTrackerInMemoryDivergence` in tests/test_versioning.py.)
+
+## Resolution (implementer, cycle 336)
+
+**Option (b) — explicitly defer / document the divergence.** Chosen by the
+architect in cycle 297 (confirmed on main) and implemented here. The dead
+module `personal_index/versioning.py` is **kept** (not deleted): deleting it
+would break the validator-owned deep test
+`tests/deep/test_versioning_adversarial.py` (which imports `ContentVersion` /
+`VersionTracker` from it) and fail the gate. The live twin
+`content_versioning.py` is the **sole** content-versioning contract.
+
+What this pass changed:
+- `personal_index/versioning.py` — `VersionTracker` docstring now states the
+  in-memory-only, url-keyed, no-persistence, no-`rollback_to`/no-`delete_version`
+  contract and that it is intentionally NOT the live twin's JSON-backed,
+  item_id-keyed, rollback/delete contract (near-name disambiguation included).
+- `tests/test_versioning.py` — added `TestVersionTrackerInMemoryDivergence`
+  (Option (b) pinning test): a fresh `VersionTracker()` starts empty (nothing
+  persisted/reloaded across constructions) and exposes no
+  `storage_path`/`_save`/`_load`/`rollback_to`/`delete_version`.
+- `personal_index/content_versioning.py` — **unchanged** (live module, out of
+  scope).
+
+DEFERRED to the architect (docs/**, architect-owned): any further
+docs/versioning.md wording. The docs page already reflects Option (b) from
+cycle 297, so no docs change is required in this IMPL pass.
 
 ## Self-review checklist (architect)
 

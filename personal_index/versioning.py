@@ -47,7 +47,27 @@ class ContentVersion:
 
 
 class VersionTracker:
-    """Tracks content versions and detects changes."""
+    """Tracks content versions and detects changes (in-memory, url-keyed).
+
+    **Divergence from the live twin (ARCH-108, Option (b)).** This tracker is
+    **in-memory only**: it keeps every version in a process-local
+    ``dict[str, list[ContentVersion]]`` keyed by **url**, with **no**
+    ``storage_path``, **no** ``_load``/``_save``, and **no** file I/O. Nothing
+    survives a process restart and a fresh ``VersionTracker()`` always starts
+    empty. It also offers **no** ``rollback_to`` and **no** ``delete_version``
+    — the only removal operations are ``clear(url)`` (drop one url's whole
+    history) and ``clear()`` (drop everything). This is **intentionally NOT**
+    the live twin's contract: ``content_versioning.ContentVersioning``
+    (``personal_index/content_versioning.py``) is the JSON-file-backed,
+    **item_id**-keyed engine that persists to ``versions.json`` via
+    ``_load``/``_save`` and offers ``create_version``/``get_versions``/
+    ``get_version``/``delete_version``/``rollback_to``/``clear_versions``. The
+    live twin is the **sole** content-versioning contract; this module is a
+    dead parallel implementation (0 importers) and is **not** a substitute for
+    it. Do not conflate the two — they share the class name ``ContentVersion``
+    and the method name ``get_versions`` but have divergent, incompatible
+    contracts.
+    """
 
     def __init__(self, max_versions: int = 10):
         self._versions: dict[str, list[ContentVersion]] = {}
