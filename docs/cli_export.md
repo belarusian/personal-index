@@ -17,8 +17,12 @@ or stdout.
 > `--tag`/`--query`/`--limit` options. `tests/test_cli_export_e2e.py` imports
 > only the private helpers `_load_pages` (lines 95/119/148/160) and
 > `_dispatch_format` (lines 193/218/244/269) — it never imports or invokes
-> `export_cmd`, so the command surface of THIS module is untested. See the
-> contract hole below.
+> `export_cmd`, so the command surface of THIS module is untested. The
+> contract decision (ARCH-98) is confirmed below: **Option A (wire it)** —
+> `export_cmd` is to be registered on the `main` group and `cli.py`'s thinner
+> duplicate `export` removed, making the full four-format + three-filter
+> surface reachable. The code change is the IMPL lane (the implementer makes
+> it when it claims ARCH-98 — not this docs pass).
 
 ## Public surface
 
@@ -26,7 +30,7 @@ Line numbers refer to `personal_index/cli_export.py`.
 
 | symbol | line | signature | returns / behavior |
 |--------|------|-----------|--------------------|
-| `export_cmd` | 25 | `@click.command("export")` + `--format`/`fmt` (Choice `markdown`/`json`/`csv`/`html`, default `markdown`) + `--output`/`-o` (default `None`) + `--data-dir` (default `None`) + `--tag`/`-t` (multiple) + `--query`/`-q` (default `None`) + `--limit`/`-n` (int, default `0` = all) + `@click.pass_context` | Entry point. Resolves `dd = data_dir or ctx.obj.get("data_dir", ".personal_index")`, builds `SearchIndex` + `TagStore`, calls `_load_pages(...)`. If no pages, echoes `No pages to export.` and returns. Else `_dispatch_format(...)`, writes to `output` (utf-8) or echoes to stdout. **Never registered on the `main` group** — see contract hole. |
+| `export_cmd` | 25 | `@click.command("export")` + `--format`/`fmt` (Choice `markdown`/`json`/`csv`/`html`, default `markdown`) + `--output`/`-o` (default `None`) + `--data-dir` (default `None`) + `--tag`/`-t` (multiple) + `--query`/`-q` (default `None`) + `--limit`/`-n` (int, default `0` = all) + `@click.pass_context` | Entry point. Resolves `dd = data_dir or ctx.obj.get("data_dir", ".personal_index")`, builds `SearchIndex` + `TagStore`, calls `_load_pages(...)`. If no pages, echoes `No pages to export.` and returns. Else `_dispatch_format(...)`, writes to `output` (utf-8) or echoes to stdout. **Confirmed (ARCH-98, Option A):** to be registered on the `main` group (replacing `cli.py`'s thinner duplicate `export`); the code change is the IMPL lane. |
 
 ### Private helpers
 
@@ -59,20 +63,39 @@ Line numbers refer to `personal_index/cli_export.py`.
   after filtering the command echoes `No pages to export.` and returns
   without writing a file or dispatching a format.
 
-## Known contract holes
+## Contract decision (ARCH-98) — CONFIRMED: Option A (wire it)
 
-- **`export_cmd` is dead code — it is never registered on the `main` group**
-  (ARCH-98): `export_cmd` (line 25) is a complete, richer `export` click
-  command (adds the `html` format and `--tag`/`--query`/`--limit` filters),
-  but **nothing imports it**. `personal_index/cli.py` registers only
-  `dedup`/`health`/`recommend` via `main.add_command(...)` (lines 1509-1511)
-  and defines its OWN separate `export` command (line 431, `@main.command()`)
-  that is the one actually reachable as `personal-index export`. That
-  registered `export` is thinner: `click.Choice(["markdown", "json", "csv"])`
-  (no `html`) and no `--tag`/`--query`/`--limit` options. So the entire
-  `export_cmd` surface — the `html` format and all three filters — is
-  unreachable from the CLI. The module's only test coverage
-  (`tests/test_cli_export_e2e.py`) imports the private helpers
-  `_load_pages`/`_dispatch_format` directly and never invokes `export_cmd`,
-  so the dead command is never exercised end-to-end. See
-  `tickets/ARCH-98.md`.
+The dead-public-command-surface hole is **resolved by decision**: **Option A
+(wire it)** is confirmed. `export_cmd` (line 25) — the complete, richer
+`export` click command (four formats `markdown`/`json`/`csv`/`html` + the
+`--tag`/`--query`/`--limit` filters) — is to be **registered on the `main`
+group**, and `cli.py`'s thinner duplicate `export` (line 431,
+`click.Choice(["markdown", "json", "csv"])`, no filters) plus its private
+`_export_markdown`/`_export_json`/`_export_csv` helpers (lines 467-517) are to
+be **removed** so there is a single, non-divergent implementation.
+
+**Resulting reachable contract (after the IMPL-lane change):**
+`personal-index export` supports `markdown`/`json`/`csv`/`html` +
+`--tag`/`--query`/`--limit`, with filter order query → tag → limit (limit
+applied last), and an empty result echoing `No pages to export.` and returning
+without writing.
+
+**Why Option A over Option B:** the module was clearly written to be the
+richer command; `cli.py`'s thinner `export` is the earlier version that was
+never removed. Option A gives the user the full surface and deletes the
+duplicate divergent implementation (the ticket's "Proposed fix" prefers A).
+
+**Current state (pre-IMPL):** `export_cmd` is still dead code —
+`grep -rn 'export_cmd' --include='*.py' personal_index/` returns only its
+definition at `cli_export.py:25` (0 production importers), and `cli.py`
+registers only `dedup`/`health`/`recommend` (lines 1509-1511). The module's
+only test coverage (`tests/test_cli_export_e2e.py`) imports the private
+helpers `_load_pages`/`_dispatch_format` directly and never invokes
+`export_cmd`.
+
+**IMPL lane (the implementer, when it claims ARCH-98 — NOT this docs pass):**
+register `export_cmd` on `main`, delete `cli.py`'s duplicate `export` + its
+private `_export_*` helpers, and add a `CliRunner` pinning test that invokes
+the REACHABLE `export` end-to-end (default `--limit 0` exports all; `--limit N`
+truncates; unsatisfiable `--query`/`--tag` → `No pages to export.`; `--format
+html` emits a DOCTYPE + `<table>`). See `tickets/ARCH-98.md`.
