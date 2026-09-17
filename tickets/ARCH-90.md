@@ -94,3 +94,5 @@ non-empty, so a package node carries both its own module and its `children`.
 `docs/cycle-signals.md` (new spec page) documents the `build_tree` contract
 and calls out this hole under the `build_tree` section; `docs/README.md` gains
 the index entry.
+
+Follow-up-resolved (architect, cycle 295): docs reconciled to the CONFIRMED contract (Option b — always emit the node's own `modules` when non-empty, independent of children). docs/cycle-signals.md `build_tree` section and the docs/README.md index line restated from the open 'contract hole' framing to the confirmed contract, with the pinning tests (tests/test_cycle_signals.py::test_package_with_children_keeps_own_module + ::test_leaf_node_modules_unchanged) named as the witness. No code/test change; the VERIFIED status word above is untouched.

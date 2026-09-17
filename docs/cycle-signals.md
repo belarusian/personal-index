@@ -37,16 +37,25 @@ All public functions are module-level (no classes). Line numbers refer to
 
 Groups modules into a hierarchical tree by dotted package path. Each node has:
 `name`, `stats` (`{lines, functions, classes, errors, warnings, modules}`),
-`signals` (sorted list of active tags), and — for leaf nodes — `modules`
-(the leaf module names). Non-leaf nodes carry `children` instead.
-
-**Contract hole (ARCH-90):** a node that is BOTH a module (its own
+`signals` (sorted list of active tags), and `modules` (the node's own module
+names) whenever the node has any. A node that is BOTH a module (its own
 `__init__.py` / package file has functions, so it appears in `node["modules"]`)
-AND has children (a subpackage) **loses its own module entry** in the output.
-`_node_to_dict` (line 205) only emits `result["modules"]` when the node is a
-leaf (`if not children`, line 223); when `children` is non-empty the
-`signal_modules` list stays empty and the node's own module name is dropped,
-even though it is still counted in `stats.modules`. See ARCH-90.
+AND has children (a subpackage) carries BOTH its own `modules` list and its
+`children` — the own-module entry is never dropped (ARCH-90, confirmed
+Option b). `_node_to_dict` (line 205) populates `signal_modules` from
+`node["modules"]` unconditionally and emits `result["modules"]` whenever it is
+non-empty, so `stats.modules` (own + descendants) always agrees with the
+visible module listing.
+
+**Witness:** the implementer pinning tests
+`tests/test_cycle_signals.py::test_package_with_children_keeps_own_module`
+(the `pkg.sub` + `pkg.sub.beta` case: `sub["modules"] == ["pkg.sub"]`,
+`sub["children"]["beta"]["modules"] == ["pkg.sub.beta"]`,
+`sub["stats"]["modules"] == 2`) and
+`tests/test_cycle_signals.py::test_leaf_node_modules_unchanged` (guard path: a
+leaf node with no children still lists its own modules) pin the confirmed
+contract — a package node keeps its own module alongside its children, and a
+leaf node's behavior is unchanged.
 
 ### `format_tree` (line 270)
 
