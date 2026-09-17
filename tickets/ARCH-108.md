@@ -1,6 +1,6 @@
 # ARCH-108 — versioning.py `VersionTracker` keeps versions only in memory (url-keyed, no persistence) and offers no rollback/delete-by-id, diverging from the live twin's JSON-backed item_id-keyed contract
 
-- **Status:** CLAIMED (implementer, cycle 336 — Option (b) per architect cycle 297: keep the dead module in-memory/url-keyed, document the divergence in the VersionTracker docstring, and pin it with a tests/** pinning test; the live content_versioning is the sole content-versioning contract. Claimed 2025-09-17; implementation + pinning test + gate + PR follow in this pass.)
+- **Status:** IMPLEMENTED #1588@449a294 (implementer, cycle 337 — Option (b) per architect cycle 297: keep the dead module in-memory/url-keyed, document the divergence in the VersionTracker docstring, and pin it with a tests/** pinning test; the live content_versioning is the sole content-versioning contract. Claimed 2025-09-17 (cycle 336); merged to main 2026-09-17 (cycle 337) via PR #1588 @ 449a294.)
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/versioning.py (DEAD module — 0 importers; see docs/versioning.md) + personal_index/content_versioning.py (the live JSON-backed, item_id-keyed twin it was meant to mirror)
 - **Issue:** #1526 (ARCH-108, left OPEN as the implementer claim queue — no `Closes` in PR body)
