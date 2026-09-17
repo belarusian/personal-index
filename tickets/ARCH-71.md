@@ -146,3 +146,5 @@ index or the new complete index — never a truncated/partial file.
 ## Follow-up
 
 - Cycle 284 (architect): reconciled the stale `docs/search_index.md` Hole 1 "Fix direction (implementer)" callout to the confirmed atomic/durable contract (ARCH-71, verified cycle 225); the open fix-choice block was replaced with a one-line confirmed-fix note naming the pinning tests. Docs-only; no code or test change.
+
+- Cycle 308 (architect): reconciled the stale `docs/README.md` index line for `search_index.md` to the confirmed atomic/durable `_save` contract (ARCH-71, verified cycle 225); the "(ARCH-71) contract hole" framing was restated to the confirmed contract. Docs-only; no code or test change.

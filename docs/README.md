@@ -23,7 +23,7 @@ Each subsystem page is marked **(spec | stub | stale)**:
 - [search-index.md](search-index.md) (spec) — `personal_index.index`:
   SearchIndex (add/remove/get/list/clear/search) + word index + JSON persistence.
 - [search_index.md](search_index.md) (spec) — `personal_index.search_index`:
-  SearchIndex (add/remove/get/count/urls/clear/search) + word index + JSON persistence; distinct from `personal_index.index` (search-index.md) — `index_path`/`CrawledPage`/`(url,float)` tuples, no close/context-manager; `_save` non-atomic + unflushed so a crash mid-write truncates the file and the next `_load` silently degrades to empty (ARCH-71) contract hole.
+  SearchIndex (add/remove/get/count/urls/clear/search) + word index + JSON persistence; distinct from `personal_index.index` (search-index.md) — `index_path`/`CrawledPage`/`(url,float)` tuples, no close/context-manager; `_save` is atomic + durable (temp file + `f.flush()` + `os.fsync` + `os.replace`) so a crash mid-write leaves the prior complete file intact, and the `_load` degrade-to-empty on corrupt input is intentional and pinned (ARCH-71, resolved).
 - [dedup.md](dedup.md) (spec) — `personal_index.content_dedup`:
   ContentDeduplicator (hash / url / similarity / all) + DedupResult.
 - [encoding.md](encoding.md) (spec) — `personal_index.encoding`:
