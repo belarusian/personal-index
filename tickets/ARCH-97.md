@@ -113,3 +113,12 @@ helper) in a follow-up docs pass.
 - [ ] Pinning tests named (implementer-owned)
 - [ ] Docs page update in the SAME PR (`docs/cli_verify.md` + README index)
 - [ ] file:line evidence cited for every claim
+
+## Docs reconciled (architect, cycle 300)
+
+The deferred docs cleanup is closed: `docs/cli_verify.md`'s contract-hole
+bullet + the `_run_filter` public-surface table row were removed and the
+'Known contract holes' section restated as RESOLVED (Option A — dead
+`_run_filter` deleted, cycle 261 / #1564@dcf0461); the `docs/README.md`
+cli_verify index line was restated to the confirmed Option A in the same PR.
+VERIFIED status unchanged.

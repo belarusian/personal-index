@@ -19,8 +19,7 @@ removed in a `finally` block.
 > `from personal_index.cli_verify import verify`; the deep test
 > `tests/deep/test_content_filter_adversarial.py:476`
 > (`test_cli_verify_runs`) invokes the `verify` command end-to-end and is
-> the witness for the command surface (not for the dead `_run_filter`
-> helper, which it never calls).
+> the witness for the command surface.
 
 ## Public surface
 
@@ -56,7 +55,6 @@ Line numbers refer to `personal_index/cli_verify.py`.
 | `_run_score` | 224 | `(scorer, page, content) -> float` | Scores with `keyword_matches=2, total_keywords=2, word_count=len(content.split()), domain_authority=0.5`; sets `page.relevance_score` and returns `score.total`. |
 | `_run_tag_index` | 245 | `(tag_store, search_index, page) -> list` | Tags the page `python` + `programming`, `add_page`, returns `search_index.search("python")`. |
 | `_verify_filter` | 291 | `(filter, page) -> bool` | Returns `filter.should_include(page)`. **This is the filter check the full pipeline actually calls** (line 277). |
-| `_run_filter` | 209 | `(filter, page) -> tuple[bool, str]` | Returns `(False, "Content was filtered out")` if `should_include` is false, else `(True, "")`. **Dead in the production path** — see contract hole. |
 
 ## Invariants
 
@@ -73,22 +71,16 @@ Line numbers refer to `personal_index/cli_verify.py`.
   `finally` (line 289, `shutil.rmtree(..., ignore_errors=True)`), so it is
   cleaned even on a stage exception.
 - **Filter check in the full pipeline** (line 277): `_check_full_pipeline`
-  calls `_verify_filter` (returns `bool`), NOT `_run_filter` (returns
-  `tuple[bool, str]`). The two are separate functions with different
-  signatures.
+  calls `_verify_filter` (returns `bool`), the surviving filter check.
 
-## Known contract holes
+## Resolved contract holes
 
-- **`_run_filter` is dead code / a duplicate filter check** (ARCH-97):
-  `_run_filter` (line 209, returns `tuple[bool, str]`) is defined but
-  **never called** anywhere in the module — the only reference to the name
-  is its own `def`. The full-pipeline self-test calls the *other* filter
-  check, `_verify_filter` (line 291, returns `bool`), at line 277. The two
-  functions duplicate the same `filter.should_include(page)` call with
-  different return shapes, and `_run_filter`'s `tuple[bool, str]` signature
-  matches the `_VERIFY_CHECKS` convention (line 317) — strong evidence it
-  was the intended full-pipeline filter check that was superseded by
-  `_verify_filter` and left behind. It is exercised only in isolation by
-  `tests/test_cli_verify.py::test_run_filter_passes` /
-  `test_run_filter_fails` (lines 87-107), which pin its behavior but never
-  pin that the production path uses it (it does not). See `tickets/ARCH-97.md`.
+- **`_run_filter` dead code / duplicate filter check — RESOLVED (ARCH-97,
+  VERIFIED):** Option A was chosen (cycle 261 / #1564@dcf0461) — the dead
+  `_run_filter` helper (line 209, `tuple[bool, str]`) was deleted from
+  `personal_index/cli_verify.py`. The full pipeline's filter stage now calls
+  the surviving `bool`-returning `_verify_filter` (line 291) at line 277, so
+  the duplicate `tuple[bool, str]` check is gone. Witness: the pinning deep
+  test `tests/deep/test_pipeline_filter_adversarial.py` (12 passed, incl.
+  end-to-end CLI) + `tests/test_cli_verify.py` (12 passed). See
+  `tickets/ARCH-97.md`.
