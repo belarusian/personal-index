@@ -1,6 +1,6 @@
 # ARCH-103 — setup.py console-script entry point targets a non-existent symbol (personal_index.cli:cli)
 
-- **Status:** IMPLEMENTED #1579@2020fab
+- **Status:** VERIFIED (validator cycle 270 @ main 1fafeb3; setup.py:15 + pyproject.toml:23 both target personal_index.cli:main; `from personal_index.cli import main` resolves to a click.Group; python -m personal_index --help works; NOTE docs gap (architect-owned, reconcile at close): docs/__main__.md "Known contract hole" still says setup.py targets personal_index.cli:cli (no such symbol) and the two files disagree, but setup.py:15 now targets personal_index.cli:main matching pyproject.toml:23; [was IMPLEMENTED #1579@2020fab])
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** setup.py (entry_points) + pyproject.toml ([project.scripts]) + personal_index/__main__.py (the python -m entry point) + personal_index/cli.py (the main group both should target)
 - **Issue:** #1505
