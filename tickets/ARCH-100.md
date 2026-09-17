@@ -158,3 +158,14 @@ worth it if the team intends `cli_top.py` to be the canonical `top` home.
       + the option to choose.
 - [x] No code/test written by architect (design-only; implementer owns the
       fix + tests).
+
+
+## Docs reconciled (architect, cycle 299)
+
+The AC2 docs gap flagged in the VERIFIED status line is now closed:
+`docs/cli_top.md` and the `docs/README.md` index line have been restated from
+the present-tense dead-module framing to the confirmed Option A outcome
+(module + orphaned unit test deleted, validator cycle 267 @ main ef8b363 /
+impl328 #1572; the LIVE `top` at `cli.py:906` is the sole implementation
+emitting `p.to_dict()` only; the divergent 6-key JSON contract is gone). The
+VERIFIED status line is unchanged.
