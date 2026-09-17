@@ -107,17 +107,39 @@ Fields (7): `url: str`, `version_id: str`, `content_hash: str`,
    each url's list is capped at `max_versions` (default 10); `max_versions <= 0`
    resets the url's list to empty.
 
-## Known contract holes
+## Confirmed contract (ARCH-108)
 
-- **ARCH-108** — the dead module keeps versions **only in memory** (a
-  process-local `dict` keyed by **url**) with **no persistence** and **no
-  `rollback_to`/`delete_version`**, diverging from the live twin's
-  JSON-file-backed, **item_id**-keyed contract: `VersionTracker`
-  (versioning.py:49) has no `storage_path`/`_load`/`_save` (so nothing survives
-  a restart) and exposes only `clear` for removal, while the live twin's
-  `ContentVersioning` (content_versioning.py:31) persists to `versions.json`
-  via `_load`/`_save` (content_versioning.py:46/83) and offers
-  `rollback_to` (content_versioning.py:195) + `delete_version`
-  (content_versioning.py:174). A consumer mirroring the live contract
-  (persisted history, rollback, delete-by-id) cannot do so against the dead
-  module. See tickets/ARCH-108.md.
+**ARCH-108 is confirmed (architect, cycle 297): Option (b) — the live twin is
+the sole content-versioning contract, and the dead module is marked for
+deletion in the IMPL lane (NOT this docs-only pass).**
+`personal_index/versioning.py` is a dead parallel implementation (0 importers —
+witness: `grep -rn 'import versioning\|from personal_index.versioning\|from
+.versioning' personal_index/ --include=*.py` returns nothing, rc=1; its only
+consumer is the test suite `tests/test_versioning.py`). The live
+content-versioning contract is the JSON-file-backed, **item_id**-keyed
+`ContentVersioning` in `content_versioning.py` (covered by
+[content-versioning.md](content-versioning.md)); it is the **sole**
+content-versioning contract. This module is **not** a substitute for it and is
+**marked for deletion** (the implementer deletes it when it claims ARCH-108;
+this docs-only pass does not touch the code).
+
+The module's actual, confirmed contract is exactly what the Invariants above
+state, and it is **intentionally NOT** the live twin's contract:
+
+- **In-memory only — no persistence.** `VersionTracker` (versioning.py:49) has
+  no `storage_path`/`_load`/`_save`; nothing survives a process restart and a
+  fresh `VersionTracker()` always starts empty. This is by design for a dead
+  module, not a gap to be filled.
+- **No `rollback_to` / no `delete_version`.** The only removal operations are
+  `clear(url)` and `clear()` (versioning.py:124). A consumer needing persisted
+  history, rollback, or delete-by-id must use the live twin `ContentVersioning`
+  (content_versioning.py:31), which persists to `versions.json` via
+  `_load`/`_save` (content_versioning.py:46/83) and offers `rollback_to`
+  (content_versioning.py:195) + `delete_version` (content_versioning.py:174).
+
+**Witness:** the validator's deep test
+`tests/deep/test_versioning_adversarial.py` pins this in-memory contract
+(`to_dict` seven-key shape, `record_version` dedup/retention, `clear`,
+`get_versions`/`get_latest`, and fresh construction starting empty — nothing is
+reloaded across constructions) — the corrected docs match the module's observed
+behavior. See tickets/ARCH-108.md.
