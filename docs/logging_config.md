@@ -27,32 +27,37 @@ Line numbers refer to `personal_index/logging_config.py`.
 
 - **`verbose` overrides `level`** (line 15-16): if `verbose` is truthy,
   `level` is forced to `"DEBUG"` regardless of the `level` argument.
-- **Level is upper-cased then looked up** (line 18):
-  `numeric_level = getattr(logging, level.upper(), logging.INFO)`.
-- **Idempotent handler reset** (line 24): `root_logger.handlers.clear()` runs
+- **Level is upper-cased then looked up, fail-loud on unknown** (line 18):
+  `numeric_level = getattr(logging, level.upper(), None)`; if the result is
+  `None` or not an `int`, `setup_logging` raises `ValueError(
+  f"Unknown logging level: {level!r}")` (lines 19-20). An unrecognized level
+  string (e.g. `"VERBOSE"`, `"TRACE"`, a typo like `"WARNIN"`) therefore
+  raises instead of being silently coerced to `logging.INFO`.
+- **Idempotent handler reset** (line 26): `root_logger.handlers.clear()` runs
   before handlers are (re)attached, so calling `setup_logging` twice does not
   stack duplicate handlers.
-- **Console handler always attached** (lines 26-31): a `StreamHandler` with
+- **Console handler always attached** (lines 28-35): a `StreamHandler` with
   the `%(asctime)s - %(name)s - %(levelname)s - %(message)s` formatter is
   always added, at `numeric_level`.
-- **File handler is conditional** (lines 36-41): only when `log_file` is
+- **File handler is conditional** (lines 38-44): only when `log_file` is
   truthy. The parent directory is created with
-  `Path(log_file).parent.mkdir(parents=True, exist_ok=True)` (line 38) before
+  `Path(log_file).parent.mkdir(parents=True, exist_ok=True)` (line 40) before
   the `FileHandler` is opened, so a missing directory does not raise.
-- **Both handlers share one formatter and one level** (lines 27, 31, 40):
+- **Both handlers share one formatter and one level** (lines 29, 33, 42):
   the same `Formatter` instance and the same `numeric_level` are applied to
   the console and file handlers.
 
 ## Known contract holes
 
-- **Silent unknown-level fallback (ARCH-95):** line 18 uses
-  `getattr(logging, level.upper(), logging.INFO)`, so an unrecognized level
-  string (e.g. `"VERBOSE"`, `"TRACE"`, `"CRITICALX"`, or a typo like
-  `"WARNIN"`) is **silently coerced to `logging.INFO`** instead of raising.
-  The caller has no signal that their requested level was ignored. The
-  existing test (`tests/test_logging_config.py`) pins only the valid levels
-  (`INFO`/`DEBUG`/`WARNING`) and does **not** pin the unknown-level fallback,
-  so this lossy behavior is an untested invariant. See `tickets/ARCH-95.md`.
+- **Unknown-level handling — RESOLVED (ARCH-95, verified):** the former
+  silent-coercion hole is closed. `setup_logging` now raises `ValueError`
+  on an unrecognized level string (lines 18-20) instead of silently
+  coercing to `logging.INFO`. The confirmed fail-loud contract is pinned by
+  the validator's deep tests
+  `tests/deep/test_logging_config_adversarial.py` (`test_unknown_level_raises_valueerror`,
+  `test_valid_level_sets_root`, `test_verbose_with_bad_level_does_not_raise`),
+  which witness that the corrected docs match the live code. See
+  `tickets/ARCH-95.md`.
 - **Unwired in the CLI (observation, not ticketed):** `setup_logging` and
   `get_logger` are referenced **only** by `tests/test_logging_config.py`.
   `personal_index/cli.py` exposes a `--verbose` flag (line 52) and stores it
