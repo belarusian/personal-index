@@ -94,42 +94,15 @@ class URLHistory:
         seen = set()
         urls = []
         for v in reversed(self._history):
-            try:
-                if v.url not in seen:
-                    seen.add(v.url)
-                    urls.append(v.url)
-            except TypeError:
-                continue
+            if v.url not in seen:
+                seen.add(v.url)
+                urls.append(v.url)
         return urls
 
     def get_stats(self) -> dict[str, Any]:
         """Get statistics about URL history."""
         if not self._history:
             return {
-                "total_visits": 0,
-                "unique_urls": 0,
-                "avg_response_time_ms": 0.0,
-                "error_count": 0,
-                "success_count": 0,
-            }
-
-        total = len(self._history)
-        try:
-            unique = len({v.url for v in self._history})
-        except TypeError:
-            unique = len([v.url for v in self._history if isinstance(v.url, str)])
-        errors = sum(1 for v in self._history if v.status_code >= 400 or v.error)
-        successes = total - errors
-        response_times = [v.response_time_ms for v in self._history if v.response_time_ms > 0]
-        avg_response = sum(response_times) / len(response_times) if response_times else 0.0
-
-        return {
-            "total_visits": total,
-            "unique_urls": unique,
-            "avg_response_time_ms": round(avg_response, 2),
-            "error_count": errors,
-            "success_count": successes,
-        }
                 "total_visits": 0,
                 "unique_urls": 0,
                 "avg_response_time_ms": 0.0,
@@ -157,10 +130,7 @@ class URLHistory:
         domains: dict[str, dict[str, int]] = {}
         for v in self._history:
             try:
-                if not isinstance(v.url, str):
-                    domain = "unknown"
-                else:
-                    domain = urlparse(v.url).netloc or "unknown"
+                domain = urlparse(v.url).netloc or "unknown"
             except ValueError:
                 domain = "unknown"
             if domain not in domains:
@@ -190,7 +160,7 @@ class URLHistory:
         Returns 0 (leaving _history untouched) for a missing file, invalid
         JSON (json.JSONDecodeError), a parsed value that is not a list, or a
         list containing a record that URLVisit.from_dict cannot construct
-        (unexpected key, or missing url). When
+        (unexpected key, missing url, or a value of the wrong type). When
         every record is constructible, _history is replaced, _trim() is
         called, and the loaded count is returned.
         """

@@ -150,6 +150,6 @@ class TestUrlHistoryExceptionHandling:
         from personal_index import url_history
         source = _get_source_lines(url_history)
         blocks = _find_except_blocks(source)
-        domain_blocks = [b for b in blocks if 125 < b["lineno"] < 135]
+        domain_blocks = [b for b in blocks if 135 < b["lineno"] < 145]
         assert len(domain_blocks) == 1
         assert domain_blocks[0]["exc_type"] == "ValueError"
