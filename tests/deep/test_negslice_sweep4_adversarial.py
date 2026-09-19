@@ -45,7 +45,6 @@ the signal to re-verify and close QA-35.
 
 from __future__ import annotations
 
-import pytest
 
 from personal_index.search_suggestions import SearchSuggestions
 
@@ -66,14 +65,6 @@ def _fuzzy_suggestions(max_suggestions: int) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-35: suggest(fuzzy=True) with max_suggestions=-1 leaks "
-    "all-but-last ([:-1]) instead of []; the fuzzy path adds candidates "
-    "directly so the [:max_suggestions] slice is the only cap and it has no "
-    "N<=0 guard. Inconsistent with sibling get_trending/get_related_queries "
-    "which guard n<=0 -> [].",
-)
 class TestSuggestFuzzyNegativeMaxSuggestions:
     def test_fuzzy_negative_max_suggestions_returns_empty(self):
         # max_suggestions=-1 is out-of-range; contract says return [] (== 0)
