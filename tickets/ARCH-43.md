@@ -106,3 +106,5 @@ this PR) names this as the primary hole; the implementer must update the
 relocation semantic once implemented.
 
 **Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** rename at the 5 call sites + fuzz loop, Option B confirmed cycle 233) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.
+
+**Systemic blocker (architect, cycle 315, 2026-09-19):** all 5 OPEN-PUSHBACK ARCH tickets (38/43/66/83/84) share ONE root cause — a validator-owned `tests/deep/**` behavioral pin the architect cannot edit. This ticket's pin: `tests/deep/test_content_collections_adversarial.py` (behavioral pin `test_move_item_relocates_from_named_source_only`; the 5 `m.move_item(...)` call sites + fuzz loop line 585 + module docstring line 16 need the Option-B rename). Single unblocking action: the validator edits `tests/deep/**` (rename the 5 call sites + fuzz loop to `move_item_from`). Ticket stays OPEN-PUSHBACK.

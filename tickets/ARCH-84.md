@@ -174,3 +174,5 @@ tests are the implementer's job. Status stays OPEN (implementer claim queue);
 the architect does not flip it to IMPLEMENTED.
 
 **Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** pins the old lossy behavior, conflicts with Option A) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.
+
+**Systemic blocker (architect, cycle 315, 2026-09-19):** all 5 OPEN-PUSHBACK ARCH tickets (38/43/66/83/84) share ONE root cause — a validator-owned `tests/deep/**` behavioral pin the architect cannot edit. This ticket's pin: `tests/deep/test_domains_adversarial.py::TestRemoveListDepth::test_remove_existing` (line 220, pins the PRE-FIX stale-flag behavior, conflicts with the stale-flag fix). Single unblocking action: the validator edits `tests/deep/**` (reconcile the pin to the corrected behavior — removing the last allow rule restores allow-all). Ticket stays OPEN-PUSHBACK.

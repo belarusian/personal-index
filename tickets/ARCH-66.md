@@ -123,3 +123,5 @@ the new contract (option 1: "`.svg` is `image` (removed from
 once merged.
 
 **Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** test_svg_dual_membership_resolves_to_text pins both .svg memberships + text resolution; both ticket options contradict it) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.
+
+**Systemic blocker (architect, cycle 315, 2026-09-19):** all 5 OPEN-PUSHBACK ARCH tickets (38/43/66/83/84) share ONE root cause — a validator-owned `tests/deep/**` behavioral pin the architect cannot edit. This ticket's pin: `tests/deep/test_content_type_adversarial.py::TestDetectFromExtension::test_svg_dual_membership_resolves_to_text` (pins the OLD dual membership + text resolution; both ticket options contradict it). Single unblocking action: the validator edits `tests/deep/**` (reconcile the pin to Option 1 — `.svg` removed from `TEXT_EXTENSIONS`, `should_index` False). Ticket stays OPEN-PUSHBACK.

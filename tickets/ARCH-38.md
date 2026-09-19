@@ -93,3 +93,5 @@ this as the primary contract hole. Update the `_evict_lowest` entry and the
 page reflects the corrected lowest-priority-eviction semantics.
 
 **Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** xfail-strict pin of the fixed behavior) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.
+
+**Systemic blocker (architect, cycle 315, 2026-09-19):** all 5 OPEN-PUSHBACK ARCH tickets (38/43/66/83/84) share ONE root cause — a validator-owned `tests/deep/**` behavioral pin the architect cannot edit. This ticket's pin: `tests/deep/test_queue_adversarial.py::TestEvictLowestDefect::test_overflow_keeps_critical_evicts_background` (xfail-strict, pins the FIXED behavior). Single unblocking action: the validator edits `tests/deep/**` (flip the xfail-strict pin so the fix does not XPASS-strict -> RED). Ticket stays OPEN-PUSHBACK.

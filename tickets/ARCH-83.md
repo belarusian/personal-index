@@ -156,3 +156,5 @@ contract, open (a)-or-(b) framing deleted) and the `docs/README.md` index
 line. Status stays OPEN — the code change + tests are the implementer's job.
 
 **Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** test_svg_dual_membership_resolves_to_text pins both .svg memberships + text resolution) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.
+
+**Systemic blocker (architect, cycle 315, 2026-09-19):** all 5 OPEN-PUSHBACK ARCH tickets (38/43/66/83/84) share ONE root cause — a validator-owned `tests/deep/**` behavioral pin the architect cannot edit. This ticket's pin: `tests/deep/test_formatter_adversarial.py::test_format_table_ragged_rows_padded_and_truncated` (line 211, pins the OLD lossy truncate behavior, conflicts with Option A). Single unblocking action: the validator edits `tests/deep/**` (reconcile the pin to Option A — long rows widen the table). Ticket stays OPEN-PUSHBACK.
