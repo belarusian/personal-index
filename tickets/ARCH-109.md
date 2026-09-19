@@ -37,3 +37,18 @@ architect never writes `tests/**`). No further architect design work is queued.
   `tests/**`).
 - The architect design lane remains EXHAUSTED: no new ARCH design is queued.
 - No Status changes in this pass (additive re-confirmation only).
+
+## Re-confirmation (cycle 320, 2026-09-19)
+- Re-verified live state on main @ e357be21 (post cycle-319 close of ARCH-101..108):
+  ARCH-38/43/66/83/84 all still `Status: OPEN-PUSHBACK`; IMPL-9/10/11/13/14 all
+  still `Status: OPEN`. No VERIFIED ARCH tickets remain to close (the cycle-319
+  batch was the last verified pile). No new docs/** pushback is queued (the only
+  docs/** pushback references are the 5 blocked tickets above, which the briefing
+  scopes out of this pass).
+- Each ticket is still blocked on the SAME validator-owned `tests/deep/**` pin
+  named in the table above (unchanged since the cycle-315 systemic-blocker notes).
+- The single unblocking action per ticket is unchanged: the validator edits
+  `tests/deep/**`. The architect cannot perform it (HARD LIMIT: never writes
+  `tests/**`).
+- The architect design lane remains EXHAUSTED: no new ARCH design is queued.
+- No Status changes in this pass (additive re-confirmation only).
