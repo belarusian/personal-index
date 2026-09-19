@@ -44,9 +44,15 @@ class ContentAggregator:
                     # Both id and title absent: use a stable per-item
                     # (positional) key so distinct items are NOT collapsed
                     # to a single shared "None" key (ARCH-35 / IMPL-8).
-                    key: str | tuple[str, int] = ("__no_id_title__", index)
+                    key: tuple[str, Any] | str = ("__no_id_title__", index)
                 else:
-                    key = str(item_id)
+                    key = (type(item_id).__name__, item_id)
+                    try:
+                        hash(key)
+                    except TypeError:
+                        # Unhashable id (e.g. a list): fall back to str() so the
+                        # key stays hashable for the seen set (QA-40 list-id dedup).
+                        key = str(item_id)
                 if key not in seen:
                     seen.add(key)
                     unique.append(item)
