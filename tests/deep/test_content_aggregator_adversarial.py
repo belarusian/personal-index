@@ -220,7 +220,6 @@ def test_get_source_names_order():
 # ARCH-35's public contract requires: "Do not str()-collapse distinct id
 # types (int 1 and str "1" are different ids)."
 
-@pytest.mark.xfail(strict=True, reason="QA-41: str()-collapse of distinct id types (ARCH-35 AC2)")
 def test_merge_all_int_vs_str_id_distinct():
     # ARCH-35 AC2: id=1 (int) and id="1" (str) are distinct ids.
     # Currently str(1) == str("1") == "1", so they collapse to one.
@@ -230,7 +229,6 @@ def test_merge_all_int_vs_str_id_distinct():
     merged = agg.merge_all()
     assert len(merged) == 2
 
-@pytest.mark.xfail(strict=True, reason="QA-41: str()-collapse of distinct id types (ARCH-35 AC3)")
 def test_merge_all_int_zero_vs_str_zero_distinct():
     # ARCH-35 AC3: id=0 (int) and id="0" (str) are distinct ids.
     # Currently str(0) == str("0") == "0", so they collapse to one.
