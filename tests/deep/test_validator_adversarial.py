@@ -19,10 +19,10 @@ error paths, and an end-to-end programmatic run through the public API.
 
 Two REAL contract violations surfaced and are pinned with xfail-strict
 (documented, not hard-failed, so main stays green):
-  - QA-50 (issue #1633): URLValidator.validate crashes (AttributeError) on
+  - QA-50 (issue #1634): URLValidator.validate crashes (AttributeError) on
     non-string input (int/float/list) — the docstring/contract implies a
     robust validator but `url.strip()` is called on the raw value.
-  - QA-51 (issue #1634): ContentValidator._is_mostly_whitespace only counts
+  - QA-51 (issue #1635): ContentValidator._is_mostly_whitespace only counts
     SPACE characters, so tab/newline-heavy content that is effectively
     whitespace is NOT flagged as an error.
 """
