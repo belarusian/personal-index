@@ -170,7 +170,8 @@ class PriorityCalculator:
         Uses exponential decay: score = e^(-days/30)
         """
         import math
-        return math.exp(-days_since_indexed / 30.0)
+        days = max(0.0, days_since_indexed)
+        return math.exp(-days / 30.0)
 
     def _interest_score(self, matches: list[str]) -> float:
         """Calculate interest match score (0-1).
