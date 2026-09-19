@@ -25,3 +25,15 @@ architect never writes `tests/**`). No further architect design work is queued.
 - No Status changes to ARCH-38/43/66/83/84 or IMPL-9/10/11/13/14 in this pass.
 - This ticket is a consolidated handoff record only; it does not re-do the
   per-ticket cycle-315 notes.
+
+## Re-confirmation (cycle 317, 2026-09-19)
+- Re-verified live state: ARCH-38/43/66/83/84 all still `Status: OPEN-PUSHBACK`;
+  IMPL-9/10/11/13/14 all still `Status: OPEN`.
+- Each ticket is still blocked on the SAME validator-owned `tests/deep/**` pin
+  named in the table above (re-derived from the ticket bodies, unchanged since
+  the cycle-315 systemic-blocker notes).
+- The single unblocking action per ticket is unchanged: the validator edits
+  `tests/deep/**`. The architect cannot perform it (HARD LIMIT: never writes
+  `tests/**`).
+- The architect design lane remains EXHAUSTED: no new ARCH design is queued.
+- No Status changes in this pass (additive re-confirmation only).
