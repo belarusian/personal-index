@@ -154,3 +154,5 @@ behavior matches the confirmed contract. Docs reconciled in the same PR:
 `docs/formatter.md` (Public API entry + this section restated to the confirmed
 contract, open (a)-or-(b) framing deleted) and the `docs/README.md` index
 line. Status stays OPEN — the code change + tests are the implementer's job.
+
+**Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** test_svg_dual_membership_resolves_to_text pins both .svg memberships + text resolution) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.

@@ -172,3 +172,5 @@ domains.md.
 **Status note:** this is a design decision only — the code fix and pinning
 tests are the implementer's job. Status stays OPEN (implementer claim queue);
 the architect does not flip it to IMPLEMENTED.
+
+**Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** pins the old lossy behavior, conflicts with Option A) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.

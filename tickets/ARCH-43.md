@@ -104,3 +104,5 @@ actually performs (single-source remove + add).
 this PR) names this as the primary hole; the implementer must update the
 `move_item` entry in the "Item mutation" section to state the chosen
 relocation semantic once implemented.
+
+**Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** rename at the 5 call sites + fuzz loop, Option B confirmed cycle 233) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.

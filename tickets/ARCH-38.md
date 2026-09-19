@@ -91,3 +91,5 @@ log message must match the behavior. Concretely:
 this as the primary contract hole. Update the `_evict_lowest` entry and the
 "Contract Holes" section in the **same PR** that implements the fix, so the
 page reflects the corrected lowest-priority-eviction semantics.
+
+**Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** xfail-strict pin of the fixed behavior) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.
