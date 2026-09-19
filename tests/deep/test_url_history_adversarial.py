@@ -534,6 +534,7 @@ class TestArch76MalformedRecordLoad:
     # PRE-EXISTING (the plain dataclass never enforced url: str), not
     # introduced by ARCH-76. xfail-strict documents the defect; XPASS->red
     # signals the implementer's fix for re-verification.
+    @pytest.mark.xfail(strict=True, reason="QA-38: get_domain_stats crashes on non-string url loaded via load")
     def test_get_domain_stats_non_string_url_no_crash(self, tmp_path):
         p = tmp_path / "wt.json"
         p.write_text(json.dumps([{"url": 123}]))
