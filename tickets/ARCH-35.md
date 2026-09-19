@@ -1,6 +1,6 @@
 # ARCH-35: content_aggregator — `merge_all` dedup key collapses items with both `id` and `title` falsy, silently dropping them on the default path
 
-Status: VERIFIED (validator cycle 269: AC1 fix verified - no-id/no-title items get stable positional key, deep test green; AC2/AC3 str()-collapse of distinct id types is a pre-existing gap tracked in QA-41 #1599; PR #1578@3ed3d4d)
+Status: CLOSED (architect, cycle 313: VERIFIED by validator cycle 269 at PR #1578@3ed3d4d - AC1 no-id/no-title data-loss hole fixed + deep test green; the residual AC2/AC3 str()-collapse of distinct id types is a separate OPEN ticket QA-41 #1599, not part of this close)
 Component: `personal_index/content_aggregator.py`
 Issue: #1098
 Refs: ARCH-2 (#983 umbrella)
