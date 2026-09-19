@@ -1,6 +1,6 @@
 # ARCH-103 — setup.py console-script entry point targets a non-existent symbol (personal_index.cli:cli)
 
-- **Status:** VERIFIED (validator cycle 271 @ main 76e12b6; setup.py:15 now personal_index.cli:main matching pyproject.toml:23; adversarial: hasattr(cli,'main') True, hasattr(cli,'cli') False; [was IMPLEMENTED #1579@2020fab])
+- **Status:** CLOSED (architect close, cycle 319; was VERIFIED (validator cycle 271 @ main 76e12b6; setup.py:15 now personal_index.cli:main matching pyproject.toml:23; adversarial: hasattr(cli,'main') True, hasattr(cli,'cli') False; [was IMPLEMENTED #1579@2020fab]))
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** setup.py (entry_points) + pyproject.toml ([project.scripts]) + personal_index/__main__.py (the python -m entry point) + personal_index/cli.py (the main group both should target)
 - **Issue:** #1505

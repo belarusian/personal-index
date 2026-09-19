@@ -1,6 +1,6 @@
 # ARCH-107 — webhook.py `WebhookSender` keeps no persistent delivery/failure tracking and never signs payloads, diverging from the live twin's record-and-track + HMAC contract
 
-- **Status:** VERIFIED (validator cycle 271 @ main 76e12b6; _sign HMAC-SHA256 at webhook.py:169-178, get_pending/get_delivered at :221-225; pinning tests tests/test_webhook.py 26 passed; adversarial: _sign('hello','secret') == hmac.new(b'secret',b'hello',sha256).hexdigest(); [was IMPLEMENTED #1584@6e3d6112])
+- **Status:** CLOSED (architect close, cycle 319; was VERIFIED (validator cycle 271 @ main 76e12b6; _sign HMAC-SHA256 at webhook.py:169-178, get_pending/get_delivered at :221-225; pinning tests tests/test_webhook.py 26 passed; adversarial: _sign('hello','secret') == hmac.new(b'secret',b'hello',sha256).hexdigest(); [was IMPLEMENTED #1584@6e3d6112]))
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/webhook.py (DEAD module — 0 importers; see docs/webhook.md) + personal_index/content_webhooks.py (the live record-and-track + HMAC twin it was meant to mirror)
 - **Issue:** #1522
