@@ -42,7 +42,6 @@ from personal_index.content_priority import (
 class TestRecencyNegativeDaysDefect:
     """QA-36: negative days_since_indexed breaks the documented 0-1 range."""
 
-    @pytest.mark.xfail(strict=True, reason="QA-36: _recency_score unguarded on negative days_since_indexed (exceeds documented 0-1 range)")
     def test_recency_score_negative_days_exceeds_one(self):
         """_recency_score docstring: '0-1, higher = more recent'.
 
@@ -56,7 +55,6 @@ class TestRecencyNegativeDaysDefect:
             f"range (QA-36)"
         )
 
-    @pytest.mark.xfail(strict=True, reason="QA-36: calculate weighted total exceeds documented [0,1] on negative days_since_indexed")
     def test_calculate_negative_days_total_exceeds_one(self):
         """calculate docstring + docs/content-priority.md: the weighted total
         is 'only guaranteed to be in [0, 1] when the config weights sum to
