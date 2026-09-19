@@ -202,6 +202,8 @@ class SearchSuggestions:
             self._suggest_from_trending(prefix_lower, candidates, fuzzy=fuzzy)
 
         # Sort by score and return top N
+        if self.max_suggestions <= 0:
+            return []
         sorted_suggestions = sorted(candidates.values(), key=lambda s: s.score, reverse=True)
         return sorted_suggestions[: self.max_suggestions]
 
