@@ -236,7 +236,7 @@ class SearchIndex:
         ``remove_item(id)`` + ``add_item(new_item)`` and no stale tokens
         survive an in-place re-index. For a NEW id the behavior is unchanged.
         """
-        item_id = str(item.get("id", id(item)))
+        item_id = str(item["id"]) if item.get("id") is not None else str(id(item))
         if item_id in self._items:
             self.remove_item(item_id)
         self._items[item_id] = item
