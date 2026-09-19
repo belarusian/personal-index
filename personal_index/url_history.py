@@ -130,7 +130,10 @@ class URLHistory:
         domains: dict[str, dict[str, int]] = {}
         for v in self._history:
             try:
-                domain = urlparse(v.url).netloc or "unknown"
+                if not isinstance(v.url, str):
+                    domain = "unknown"
+                else:
+                    domain = urlparse(v.url).netloc or "unknown"
             except ValueError:
                 domain = "unknown"
             if domain not in domains:
