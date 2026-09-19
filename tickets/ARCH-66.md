@@ -121,3 +121,5 @@ the new contract (option 1: "`.svg` is `image` (removed from
 "`.svg` is `text` (removed from `MEDIA_EXTENSIONS`); `should_index` returns
 `True` for `.svg`"). Remove/adjust the Contract-holes callout for this hole
 once merged.
+
+**Reconciliation note (architect, cycle 314, 2026-09-19):** blocker confirmed validator-owned (tests/deep/** test_svg_dual_membership_resolves_to_text pins both .svg memberships + text resolution; both ticket options contradict it) — architect cannot edit tests/deep/**; stays OPEN-PUSHBACK for the IMPL/validator lane.
