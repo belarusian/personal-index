@@ -240,7 +240,6 @@ def test_extract_top_n_empty_text(extractor):
 # (cycle 220, negative-slice "top N" class sweep). xfail-strict documents the
 # defect: XPASS -> red once the implementer adds the `if limit <= 0: return []`
 # guard, which is the re-verify signal to close QA-37.
-@pytest.mark.xfail(strict=True, reason="QA-37: extract(limit=-1) leaks keywords[:-1] instead of []")
 def test_extract_limit_negative_returns_empty(extractor):
     assert extractor.extract("python python java java java rust go go go go c c c c c c c c c c", limit=-1) == []
 

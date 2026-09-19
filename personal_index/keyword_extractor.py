@@ -74,6 +74,8 @@ class KeywordExtractor:
 
         # Sort by score descending
         keywords.sort(key=lambda k: k.score, reverse=True)
+        if limit is not None and limit <= 0:
+            return []
         cap = self.max_keywords if limit is None else limit
         return keywords[: cap]
 
