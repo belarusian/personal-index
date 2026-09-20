@@ -240,7 +240,7 @@ class TestCliExportEndToEnd:
         idx = SearchIndex(db_path=os.path.join(dd, "search_index.json"))
         for i in range(3):
             idx.add_page(CrawledPage(url=f"http://x{i}", title=f"t{i}", content="c"))
-        result = CliRunner().invoke(main, ["export", "--format", "csv", "--data-dir", dd])
+        result = CliRunner(isolate_filesystem=False).invoke(main, ["export", "--format", "csv", "--data-dir", dd])
         assert result.exit_code == 0, result.output
         assert "http://x0" in result.output
         assert "http://x2" in result.output
@@ -248,6 +248,6 @@ class TestCliExportEndToEnd:
     def test_cli_export_empty_index(self, tmp_path: object) -> None:
         dd = str(tmp_path)
         SearchIndex(db_path=os.path.join(dd, "search_index.json"))
-        result = CliRunner().invoke(main, ["export", "--format", "csv", "--data-dir", dd])
+        result = CliRunner(isolate_filesystem=False).invoke(main, ["export", "--format", "csv", "--data-dir", dd])
         assert result.exit_code == 0, result.output
         assert "No indexed content" in result.output

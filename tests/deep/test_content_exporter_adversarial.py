@@ -406,7 +406,7 @@ class TestEndToEndCLI:
     def test_cli_smoke(self, tmp_dir):
         """A minimal CLI invocation should not crash (exit code 0 or a clean
         non-zero with no traceback)."""
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["--help"])
         assert result.exit_code == 0
         assert "Usage" in result.output or "usage" in result.output.lower()

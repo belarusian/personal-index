@@ -37,7 +37,7 @@ VALID_CONTENT = "This is a valid article with enough content to be indexed."
 
 
 def _run_watch_once(paths: list[str], dd: str) -> None:
-    runner = CliRunner()
+    runner = CliRunner(isolate_filesystem=False)
     result = runner.invoke(
         main,
         ["watch", *paths, "--once", "--data-dir", dd],

@@ -336,7 +336,7 @@ class TestEndToEndCli:
     def test_cli_schedule_add_list_remove(self, tmp_path):
         from personal_index.cli import main
 
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         dd = str(tmp_path / "data")
         r = runner.invoke(main, ["init", "--data-dir", dd])
         assert r.exit_code == 0, r.output

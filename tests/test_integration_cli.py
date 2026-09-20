@@ -13,14 +13,14 @@ class TestCLIInit:
     """Test CLI init command."""
 
     def test_init_creates_data_dir(self, tmp_path):
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         data_dir = str(tmp_path / "my_data")
         result = runner.invoke(main, ["init", "--data-dir", data_dir])
         assert result.exit_code == 0
         assert os.path.isdir(data_dir)
 
     def test_init_creates_config(self, tmp_path):
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         data_dir = str(tmp_path / "my_data")
         config_file = str(tmp_path / "config.yaml")
         result = runner.invoke(main, ["init", "--data-dir", data_dir, "--config", config_file])
@@ -33,21 +33,21 @@ class TestCLIInterests:
 
     def test_add_interest(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["interests", "add", "-n", "Python", "-k", "python", "-k", "programming"])
         assert result.exit_code == 0
         assert "Added interest: Python" in result.output
 
     def test_list_interests_empty(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["interests", "list"])
         assert result.exit_code == 0
         assert "No interests" in result.output
 
     def test_add_and_list_interest(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         runner.invoke(main, ["interests", "add", "-n", "AI", "-k", "artificial", "-k", "intelligence"])
         result = runner.invoke(main, ["interests", "list"])
         assert result.exit_code == 0
@@ -55,7 +55,7 @@ class TestCLIInterests:
 
     def test_remove_interest(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         runner.invoke(main, ["interests", "add", "-n", "Test", "-k", "test"])
         result = runner.invoke(main, ["interests", "remove", "Test"])
         assert result.exit_code == 0
@@ -67,7 +67,7 @@ class TestCLISearch:
 
     def test_search_no_results(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["search", "nonexistent"])
         assert result.exit_code == 0
 
@@ -77,7 +77,7 @@ class TestCLIStatus:
 
     def test_status_runs(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["status"])
         assert result.exit_code == 0
         assert result.exit_code == 0 or "No personal-index found" in result.output or "Status" in result.output
@@ -88,7 +88,7 @@ class TestCLIPipeline:
 
     def test_pipeline_dry_run(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["crawl", "https://example.com", "-d", "1"])
         # Should not crash even if network fails
         assert result.exit_code == 0 or "Crawled" in result.output or "Error" in result.output or "Connection" in result.output or "connection" in result.output.lower() or "failed" in result.output.lower() or "timeout" in result.output.lower() or "Timeout" in result.output or "Max" in result.output or "max" in result.output.lower()
@@ -99,7 +99,7 @@ class TestCLIImport:
 
     def test_import_file(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         # Create a test file
         test_file = tmp_path / "test.txt"
         test_file.write_text("This is test content for importing with enough words to pass the minimum content length filter in the pipeline runner for personal index.")
@@ -109,7 +109,7 @@ class TestCLIImport:
 
     def test_import_directory_recursive(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         # Create test files
         subdir = tmp_path / "docs"
         subdir.mkdir()
@@ -125,13 +125,13 @@ class TestCLITag:
 
     def test_tag_list_empty(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["tags", "list"])
         assert result.exit_code == 0
 
     def test_tag_add(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["tags", "add", "important", "https://example.com/page"])
         assert result.exit_code == 0
         assert "Added tag" in result.output
@@ -142,7 +142,7 @@ class TestCLIImportSearchRoundtrip:
 
     def test_import_then_search(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         # Create a test file with searchable content
         test_file = tmp_path / "article.txt"
         test_file.write_text("Python is a great programming language for web development and software engineering.")
@@ -159,7 +159,7 @@ class TestCLIExportWithQuery:
 
     def test_export_json_format(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         # Create and import a file
         test_file = tmp_path / "test.txt"
         test_file.write_text("Test content for export with python programming keywords.")
@@ -174,7 +174,7 @@ class TestCLIPipelineConfig:
 
     def test_pipeline_with_config(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         # Create a config file
         config_file = tmp_path / "test_config.yaml"
         config_file.write_text("""
@@ -197,7 +197,7 @@ class TestCLICrawl:
 
     def test_crawl_no_index(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["pipeline", "https://example.com", "-d", "1"])
         # Should not crash even if network fails
         assert result.exit_code == 0 or "Crawled" in result.output or "Error" in result.output or "Connection" in result.output or "connection" in result.output.lower() or "failed" in result.output.lower() or "timeout" in result.output.lower() or "Timeout" in result.output or "Max" in result.output or "max" in result.output.lower() or "connection" in str(result.exception).lower() if result.exception else True
@@ -208,7 +208,7 @@ class TestCLIStatusJSON:
 
     def test_status_runs(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["status"])
         # Should not crash
         assert result.exit_code == 0 or "No personal-index found" in result.output or "Status" in result.output
@@ -219,7 +219,7 @@ class TestCLISearchJSON:
 
     def test_search_json_empty(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["search", "--json", "nonexistent"])
         # Should not crash even with no indexed content
         assert result.exit_code == 0 or "No indexed content" in result.output
@@ -230,14 +230,14 @@ class TestCLIIndex:
 
     def test_index_count(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["status"])
         # Should not crash even without initialized data dir
         assert result.exit_code == 0 or "No personal-index found" in result.output or "Status" in result.output
 
     def test_index_rebuild(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(main, ["status"])
         # Should not crash
         assert result.exit_code == 0 or "No personal-index found" in result.output

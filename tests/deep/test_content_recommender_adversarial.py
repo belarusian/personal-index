@@ -267,7 +267,7 @@ class TestEndToEndCLI:
         idx.add_page(self._page("http://a", "Python Guide", "python programming tutorial"))
         idx.add_page(self._page("http://b", "Java Guide", "java programming tutorial"))
 
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         res = runner.invoke(
             main, ["recommend", "python", "--data-dir", dd, "--top-n", "5"]
         )
@@ -284,7 +284,7 @@ class TestEndToEndCLI:
         dd = str(tmp_path)
         SearchIndex(db_path=f"{dd}/search_index.json")
 
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         res = runner.invoke(main, ["recommend", "python", "--data-dir", dd])
         assert res.exit_code == 0, res.output
         assert "No indexed content found" in res.output
@@ -298,7 +298,7 @@ class TestEndToEndCLI:
         idx = SearchIndex(db_path=f"{dd}/search_index.json")
         idx.add_page(self._page("http://a", "Python Guide", "python programming"))
 
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         res = runner.invoke(
             main, ["recommend", "python", "--data-dir", dd, "--top-n", "-3"]
         )

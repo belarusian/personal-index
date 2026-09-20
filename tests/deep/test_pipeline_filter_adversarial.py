@@ -135,7 +135,7 @@ class TestEndToEndCli:
 
         from personal_index.cli import main
 
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(
             main, ["verify", "--data-dir", str(tmp_path)], catch_exceptions=False
         )

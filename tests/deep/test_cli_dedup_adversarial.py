@@ -461,7 +461,7 @@ def _seed(dd, pages):
 
 class TestCliEndToEnd:
     def test_empty_index(self, tmp_path):
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, ["dedup", "--data-dir", str(tmp_path)])
         assert r.exit_code == 0
         assert "No indexed content found." in r.output
@@ -471,7 +471,7 @@ class TestCliEndToEnd:
             ("http://a.com/1", "A1", "hello world body"),
             ("http://a.com/2", "A2", "hello world body"),
         ])
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, ["dedup", "--data-dir", str(tmp_path), "--dry-run"])
         assert r.exit_code == 0
         assert "(Dry run - no changes made)" in r.output
@@ -484,7 +484,7 @@ class TestCliEndToEnd:
             ("http://a.com/2", "A2", "hello world body"),
             ("http://b.com/3", "B", "unique content"),
         ])
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, ["dedup", "--data-dir", str(tmp_path)])
         assert r.exit_code == 0
         assert "Removed 1 duplicate pages." in r.output
@@ -499,7 +499,7 @@ class TestCliEndToEnd:
             ("http://a.com/1", "A1", "one"),
             ("http://b.com/2", "B2", "two"),
         ])
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, ["dedup", "--data-dir", str(tmp_path)])
         assert r.exit_code == 0
         assert "No duplicates found!" in r.output
@@ -510,7 +510,7 @@ class TestCliEndToEnd:
             ("http://a.com/x/", "A", "content one"),
             ("http://a.com/x", "B", "content two"),
         ])
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, ["dedup", "--data-dir", str(tmp_path), "-m", "hash"])
         assert r.exit_code == 0
         assert "No duplicates found!" in r.output
@@ -521,13 +521,13 @@ class TestCliEndToEnd:
             ("http://a.com/1", "A", "same body"),
             ("http://b.com/2", "B", "same body"),
         ])
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, ["dedup", "--data-dir", str(tmp_path), "-m", "url"])
         assert r.exit_code == 0
         assert "No duplicates found!" in r.output
 
     def test_invalid_method_rejected(self, tmp_path):
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, ["dedup", "--data-dir", str(tmp_path), "-m", "bogus"])
         assert r.exit_code != 0
 
@@ -537,7 +537,7 @@ class TestCliEndToEnd:
             ("http://a.com/1", "A", "the quick brown fox jumps over"),
             ("http://b.com/2", "B", "the quick brown fox jumps over"),
         ])
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         r = runner.invoke(main, [
             "dedup", "--data-dir", str(tmp_path),
             "-m", "similarity", "--similarity-threshold", "0.8",

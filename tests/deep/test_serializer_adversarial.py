@@ -341,7 +341,7 @@ def test_end_to_end_cli_init_and_export(tmp_path):
 
     from personal_index.cli import main
 
-    runner = CliRunner()
+    runner = CliRunner(isolate_filesystem=False)
     dd = str(tmp_path / "data")
     r = runner.invoke(main, ["init", "--data-dir", dd])
     assert r.exit_code == 0, r.output
@@ -485,7 +485,7 @@ def test_arch74_cli_smoke_export_json(tmp_path):
 
     from personal_index.cli import main
 
-    runner = CliRunner()
+    runner = CliRunner(isolate_filesystem=False)
     dd = str(tmp_path / "data")
     r = runner.invoke(main, ["init", "--data-dir", dd])
     assert r.exit_code == 0, r.output

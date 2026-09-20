@@ -451,7 +451,7 @@ class TestCliEndToEnd:
             "filter for the pipeline scoring stage.\n"
         )
         dd = str(tmp_path / "dd")
-        result = CliRunner().invoke(
+        result = CliRunner(isolate_filesystem=False).invoke(
             main, ["pipeline", "--import-file", str(doc), "--data-dir", dd]
         )
         assert result.exit_code == 0, result.output

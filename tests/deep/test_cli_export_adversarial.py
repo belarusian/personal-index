@@ -445,7 +445,7 @@ class TestExportHtml:
 
 class TestExportCmdE2E:
     def _run(self, tmp_path, args):
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         result = runner.invoke(export_cmd, args, obj={"data_dir": str(tmp_path)})
         return result
 

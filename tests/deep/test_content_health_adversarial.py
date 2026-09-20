@@ -275,7 +275,7 @@ class TestCliHealthEndToEnd:
     def _run(self, dd):
         from click.testing import CliRunner
         from personal_index.cli import main
-        return CliRunner().invoke(main, ["health", "--data-dir", dd])
+        return CliRunner(isolate_filesystem=False).invoke(main, ["health", "--data-dir", dd])
 
     def test_healthy_content(self, tmp_path):
         dd = str(tmp_path / "data")
@@ -336,7 +336,7 @@ class TestNoneFieldDefect:
                 "word_index": {}}, f)
         with open(os.path.join(dd, "tags.json"), "w") as f:
             json.dump({"tags": {}, "page_tags": {}}, f)
-        res = CliRunner().invoke(main, ["health", "--data-dir", dd])
+        res = CliRunner(isolate_filesystem=False).invoke(main, ["health", "--data-dir", dd])
         assert res.exit_code == 0, res.output
 
 
@@ -384,6 +384,6 @@ class TestNoneFieldArmor:
                 "word_index": {}}, f)
         with open(os.path.join(dd, "tags.json"), "w") as f:
             json.dump({"tags": {}, "page_tags": {}}, f)
-        res = CliRunner().invoke(main, ["health", "--data-dir", dd])
+        res = CliRunner(isolate_filesystem=False).invoke(main, ["health", "--data-dir", dd])
         assert res.exit_code == 0, res.output
         assert "Content Health Report" in res.output

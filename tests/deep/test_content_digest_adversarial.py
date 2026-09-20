@@ -324,14 +324,14 @@ class TestPeriodAndIdempotence:
 class TestCliEndToEnd:
     def test_search_empty_index_guard(self, tmp_path):
         dd = str(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         res = runner.invoke(main, ["search", "anything", "--data-dir", dd])
         assert res.exit_code == 0, res.output
         assert "No indexed content found" in res.output
 
     def test_export_empty_index_guard(self, tmp_path):
         dd = str(tmp_path)
-        runner = CliRunner()
+        runner = CliRunner(isolate_filesystem=False)
         res = runner.invoke(main, ["export", "--data-dir", dd])
         assert res.exit_code == 0, res.output
         assert "No indexed content to export" in res.output
