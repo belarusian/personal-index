@@ -10,7 +10,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def cleanup_personal_index():
     """Clean up .personal_index directory before and after each test."""
-    personal_index = os.environ.get("PERSONAL_INDEX_DIR", ".personal_index")
+    personal_index = os.environ.get("PERSONAL_INDEX_DIR", tempfile.mkdtemp(prefix="personal_index_") )
     backup = None
     if os.path.exists(personal_index):
         backup = tempfile.mkdtemp(prefix="personal_index_backup_")
