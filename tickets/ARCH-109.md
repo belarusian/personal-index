@@ -1,54 +1,42 @@
-# ARCH-109: Architect lane handoff — all remaining ARCH design blocked on validator-owned tests/deep/** pins
+# ARCH-109 — build and share a multi-city search index (15 cities across 4 continents)
 
-Status: OPEN
+- **Status:** OPEN
+- **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
+- **Component:** .personal_index/ (index data) + indexing pipeline
+- **Issue:** #1657 (ARCH-109)
 
-## Summary
-The architect DESIGN lane is exhausted. Every remaining OPEN-PUSHBACK ARCH
-ticket is blocked on the SAME systemic root cause: a validator-owned
-`tests/deep/**` behavioral pin the architect cannot edit (HARD LIMIT: the
-architect never writes `tests/**`). No further architect design work is queued.
+## Symptom
 
-## The 5 blocked tickets + their named pins
-| Ticket | IMPL pushback | Validator-owned pin (tests/deep/**) | Single unblocking action (validator) |
-|--------|---------------|--------------------------------------|--------------------------------------|
-| ARCH-38 | IMPL-9 | `test_queue_adversarial.py::TestEvictLowestDefect::test_overflow_keeps_critical_evicts_background` (xfail-strict, pins the FIXED behavior) | flip the xfail-strict pin so the fix does not XPASS-strict -> RED |
-| ARCH-43 | IMPL-10 | `test_content_collections_adversarial.py` (pin `test_move_item_relocates_from_named_source_only`; 5 `m.move_item(...)` call sites + fuzz loop line 585 + module docstring line 16) | rename the 5 call sites + fuzz loop to `move_item_from` |
-| ARCH-66 | IMPL-11 | `test_content_type_adversarial.py::TestDetectFromExtension::test_svg_dual_membership_resolves_to_text` (pins OLD dual membership + text resolution) | reconcile the pin to Option 1 — `.svg` removed from `TEXT_EXTENSIONS`, `should_index` False |
-| ARCH-83 | IMPL-13 | `test_formatter_adversarial.py::test_format_table_ragged_rows_padded_and_truncated` (line 211, pins OLD lossy truncate behavior) | reconcile the pin to Option A — long rows widen the table |
-| ARCH-84 | IMPL-14 | `test_domains_adversarial.py::TestRemoveListDepth::test_remove_existing` (line 220, pins PRE-FIX stale-flag behavior) | reconcile the pin to the corrected behavior — removing the last allow rule restores allow-all |
+The personal-index project supports crawling, filtering, scoring, tagging, and indexing web content. However, the index shipped with the repo is empty or minimal. Users who clone the repo must manually run the pipeline to build an index, and there's no shared baseline index for demonstrating or testing the search capability.
 
-## Handoff statement
-- The architect design lane is EXHAUSTED: no new ARCH design is queued.
-- The single unblocking action for ALL 5 tickets is a validator edit of
-  `tests/deep/**` (already named per ticket in the cycle-315 systemic-blocker
-  notes). The architect cannot perform it (HARD LIMIT: never writes `tests/**`).
-- No Status changes to ARCH-38/43/66/83/84 or IMPL-9/10/11/13/14 in this pass.
-- This ticket is a consolidated handoff record only; it does not re-do the
-  per-ticket cycle-315 notes.
+## Goal
 
-## Re-confirmation (cycle 317, 2026-09-19)
-- Re-verified live state: ARCH-38/43/66/83/84 all still `Status: OPEN-PUSHBACK`;
-  IMPL-9/10/11/13/14 all still `Status: OPEN`.
-- Each ticket is still blocked on the SAME validator-owned `tests/deep/**` pin
-  named in the table above (re-derived from the ticket bodies, unchanged since
-  the cycle-315 systemic-blocker notes).
-- The single unblocking action per ticket is unchanged: the validator edits
-  `tests/deep/**`. The architect cannot perform it (HARD LIMIT: never writes
-  `tests/**`).
-- The architect design lane remains EXHAUSTED: no new ARCH design is queued.
-- No Status changes in this pass (additive re-confirmation only).
+Create a production-quality shared index containing Wikipedia content for 15 major cities across 4 continents:
 
-## Re-confirmation (cycle 320, 2026-09-19)
-- Re-verified live state on main @ e357be21 (post cycle-319 close of ARCH-101..108):
-  ARCH-38/43/66/83/84 all still `Status: OPEN-PUSHBACK`; IMPL-9/10/11/13/14 all
-  still `Status: OPEN`. No VERIFIED ARCH tickets remain to close (the cycle-319
-  batch was the last verified pile). No new docs/** pushback is queued (the only
-  docs/** pushback references are the 5 blocked tickets above, which the briefing
-  scopes out of this pass).
-- Each ticket is still blocked on the SAME validator-owned `tests/deep/**` pin
-  named in the table above (unchanged since the cycle-315 systemic-blocker notes).
-- The single unblocking action per ticket is unchanged: the validator edits
-  `tests/deep/**`. The architect cannot perform it (HARD LIMIT: never writes
-  `tests/**`).
-- The architect design lane remains EXHAUSTED: no new ARCH design is queued.
-- No Status changes in this pass (additive re-confirmation only).
+**Americas:** Boston, New York City, Los Angeles, Chicago, Toronto
+**Europe:** Berlin, Munich, Amsterdam, Eindhoven, London, Paris
+**Asia-Pacific:** Tokyo, Singapore, Sydney, Dubai, Hong Kong
+
+## Proposed fix (implementer)
+
+1. Add city-specific interests to the interest store (one per city, with relevant keywords)
+2. Run the indexing pipeline on Wikipedia pages for each city (depth 1-2, ~10 pages per seed)
+3. Verify the index contains pages for all 15 cities and search works correctly
+4. Commit the complete index data to the repo (`.personal_index/` must not be in `.gitignore`)
+5. Document the index contents and size
+
+## Acceptance criteria
+
+- [ ] All 15 cities have corresponding interests defined
+- [ ] Index contains Wikipedia content for all 15 cities
+- [ ] Search queries for city names return relevant results
+- [ ] Index is committed to the repo and shareable via git clone
+- [ ] Search works without requiring re-crawling
+- [ ] Index size is reasonable (< 10MB) and documented
+
+## Self-review checklist (architect)
+
+- [x] Component + scope stated
+- [x] Acceptance criteria present
+- [x] Concrete, verifiable outcomes
+- [x] No tests/** written by the architect
