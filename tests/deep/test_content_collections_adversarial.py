@@ -293,9 +293,10 @@ def test_remove_absent_item_returns_true_but_no_index_change():
 # move_item — documented multi-collection semantic
 # ---------------------------------------------------------------------------
 
-def test_move_item_relocates_from_named_source_only():
-    """move_item removes from the NAMED source only; the item stays in any
-    other collection it belongs to (documented in content-collections.md)."""
+@pytest.mark.xfail(strict=True, reason="ARCH-43: move_item should relocate from every collection (Option A); fix pending implementer")
+def test_move_item_relocates_from_every_collection():
+    """move_item removes from EVERY collection the item belongs to, then adds to dest
+    (Option A: true relocation)."""
     m = CollectionManager()
     a = m.create("A")
     b = m.create("B")
@@ -306,10 +307,10 @@ def test_move_item_relocates_from_named_source_only():
     assert m.move_item("x", a, c) is True
     # removed from a, present in b and c
     assert "x" not in m.get_items(a)
-    assert "x" in m.get_items(b)
+    assert "x" not in m.get_items(b)
     assert "x" in m.get_items(c)
     # reverse index: x -> {b, c}
-    assert set(m._item_to_collections["x"]) == {b, c}
+    assert set(m._item_to_collections["x"]) == {c}
     _assert_reverse_index_consistent(m)
 
 

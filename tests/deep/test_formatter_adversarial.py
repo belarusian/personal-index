@@ -15,9 +15,9 @@ Functions armored:
   format_table, format_duration, format_file_size, format_timestamp,
   truncate, highlight.
 """
-
 from __future__ import annotations
 
+import pytest
 from personal_index.formatter import (
     format_duration,
     format_file_size,
@@ -208,13 +208,16 @@ def test_format_table_basic_alignment():
     assert lines[3] == "3 | 4"
 
 
-def test_format_table_ragged_rows_padded_and_truncated():
+
+@pytest.mark.xfail(strict=True, reason="ARCH-83: format_table should widen to widest row (Option A); fix pending implementer")
+def test_format_table_ragged_rows_widen_to_widest():
     # A row shorter than the headers is padded with spaces; a row longer than
+    # the headers widens the table (Option A: lossless, total).
     # the headers has its extra cells dropped.
     out = format_table(["A", "B"], [["1"], ["2", "3", "4"]])
     lines = out.split("\n")
-    assert lines[2] == "1 |  "
-    assert lines[3] == "2 | 3"
+    assert lines[2] == "1 |  |  "
+    assert lines[3] == "2 | 3 | 4"
 
 
 def test_format_table_column_width_driven_by_widest_cell():

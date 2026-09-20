@@ -307,13 +307,7 @@ class TestDuration:
 # task (the heap maximum), per the defensible contract in docs/queue.md.
 # ---------------------------------------------------------------------------
 class TestEvictLowestDefect:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="ARCH-38: on overflow _evict_lowest pops the heap MINIMUM "
-               "(the highest-priority task) and cancels it, while logging "
-               "'dropping lowest priority task'. The CRITICAL task must be "
-               "kept and the BACKGROUND task evicted.",
-    )
+    @pytest.mark.xfail(strict=True, reason="ARCH-38: queue overflow evicts highest-priority task instead of lowest")
     def test_overflow_keeps_critical_evicts_background(self):
         q = TaskQueue(max_size=2)
         q.enqueue("crit", priority=TaskPriority.CRITICAL)

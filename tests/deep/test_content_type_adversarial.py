@@ -89,15 +89,17 @@ class TestDetectFromExtension:
         info = det.detect_from_extension("")
         assert info.category == "unknown"
 
+    
+    @pytest.mark.xfail(strict=True, reason="ARCH-66: .svg should classify as image (Option 1); fix pending implementer")
     def test_svg_dual_membership_resolves_to_text(self, det):
         # .svg appears in BOTH TEXT_EXTENSIONS and MEDIA_EXTENSIONS; the
         # classifier checks TEXT_EXTENSIONS first, so it resolves to "text".
-        assert ".svg" in TEXT_EXTENSIONS
+        assert ".svg" not in TEXT_EXTENSIONS
         assert ".svg" in MEDIA_EXTENSIONS
         info = det.detect_from_extension(".svg")
-        assert info.category == "text"
-        assert info.is_text is True
-        assert info.is_media is False
+        assert info.category == "image"
+        assert info.is_text is False
+        assert info.is_media is True
 
     def test_cache_idempotence_same_object(self, det):
         a = det.detect_from_extension(".pdf")
