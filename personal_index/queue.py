@@ -207,8 +207,19 @@ class TaskQueue:
             return False
 
     def _evict_lowest(self) -> None:
+        """Evict the least-important task on overflow (ARCH-38).
+
+        The heap is a min-heap ordered by ``(priority, sequence)`` where a
+        *lower* ``priority`` value means *higher* importance, so the heap
+        minimum is the most important task. On overflow we must drop the
+        opposite: the task with the *highest* ``priority`` value (lowest
+        importance), breaking ties by the *highest* ``sequence`` (the most
+        recently enqueued among the least important). That is the heap
+        maximum, not the minimum.
+        """
         if self._heap:
-            lowest = heapq.heappop(self._heap)
+            lowest = max(self._heap)
+            self._heap.remove(lowest)
             if lowest.task_id in self._tasks:
                 lowest.cancel()
                 del self._tasks[lowest.task_id]

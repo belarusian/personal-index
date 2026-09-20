@@ -21,8 +21,6 @@ import os
 import subprocess
 import sys
 
-import pytest
-
 from personal_index.queue import (
     Task,
     TaskPriority,
@@ -301,13 +299,11 @@ class TestDuration:
 
 
 # ---------------------------------------------------------------------------
-# ARCH-38 (OPEN): _evict_lowest drops the HIGHEST-priority task on overflow.
-# Pinned xfail-strict: documents the defect without breaking the suite; flips
-# to a hard pass once the implementer makes overflow evict the least-important
-# task (the heap maximum), per the defensible contract in docs/queue.md.
+# ARCH-38 (FIXED, cycle 350): _evict_lowest now drops the LEAST-important task
+# (the heap maximum) on overflow, keeping the most important (CRITICAL) task.
+# This is a hard pass pinning the corrected lowest-priority-eviction contract.
 # ---------------------------------------------------------------------------
 class TestEvictLowestDefect:
-    @pytest.mark.xfail(strict=True, reason="ARCH-38: queue overflow evicts highest-priority task instead of lowest")
     def test_overflow_keeps_critical_evicts_background(self):
         q = TaskQueue(max_size=2)
         q.enqueue("crit", priority=TaskPriority.CRITICAL)

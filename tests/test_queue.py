@@ -268,13 +268,16 @@ class TestTaskQueue:
             order.append(t.task_id)
         assert order == ["crit", "high", "norm", "low", "bg"]
 
-    def test_eviction_removes_heap_top_on_full(self):
+    def test_eviction_removes_lowest_priority_on_full(self):
+        # ARCH-38: on overflow the LEAST-important task (highest priority
+        # value) is evicted; the most important (CRITICAL) survives.
         q = TaskQueue(max_size=2)
         q.enqueue("high", priority=TaskPriority.HIGH)
         q.enqueue("low", priority=TaskPriority.LOW)
         q.enqueue("critical", priority=TaskPriority.CRITICAL)
-        evicted = q.get_task("high")
-        assert evicted is None or evicted.status == TaskStatus.CANCELLED
+        assert q.get_task("low") is None, "LOW (least important) should be evicted"
+        assert q.get_task("high") is not None, "HIGH should survive"
+        assert q.get_task("critical") is not None, "CRITICAL should survive"
 
     def test_task_duration_not_started(self):
         task = Task(priority=0, sequence=0, task_id="t1")
@@ -307,3 +310,42 @@ class TestTaskQueue:
         assert stats["total_tasks"] == 0
         assert stats["completed"] == 0
         assert stats["status_breakdown"] == {}
+
+# ---------------------------------------------------------------------------
+# ARCH-38 pinning tests: overflow must evict the LEAST-important task
+# (highest priority value), tie-breaking by highest sequence.
+# ---------------------------------------------------------------------------
+class TestArch38EvictLowest:
+    def test_evict_drops_lowest_priority_not_highest(self):
+        q = TaskQueue(max_size=2)
+        q.enqueue("t_crit", priority=TaskPriority.CRITICAL)
+        q.enqueue("t_bg", priority=TaskPriority.BACKGROUND)
+        q.enqueue("t_new", priority=TaskPriority.NORMAL)
+        # BACKGROUND (least important) is evicted and removed from _tasks
+        assert q.get_task("t_bg") is None
+        # CRITICAL (most important) survives the overflow
+        crit = q.get_task("t_crit")
+        assert crit is not None
+        assert crit.status == TaskStatus.PENDING
+
+    def test_evict_tie_breaks_by_sequence(self):
+        q = TaskQueue(max_size=2)
+        q.enqueue("a", priority=TaskPriority.NORMAL)
+        q.enqueue("b", priority=TaskPriority.NORMAL)
+        q.enqueue("c", priority=TaskPriority.NORMAL)
+        # Among equal priority, the most recently enqueued (highest
+        # sequence) is evicted first: 'b' (seq 1) over 'a' (seq 0).
+        assert q.get_task("b") is None
+        a = q.get_task("a")
+        assert a is not None
+        assert a.status == TaskStatus.PENDING
+
+    def test_no_evict_below_max(self):
+        q = TaskQueue(max_size=10)
+        q.enqueue("x", priority=TaskPriority.NORMAL)
+        q.enqueue("y", priority=TaskPriority.NORMAL)
+        q.enqueue("z", priority=TaskPriority.NORMAL)
+        for tid in ("x", "y", "z"):
+            t = q.get_task(tid)
+            assert t is not None
+            assert t.status == TaskStatus.PENDING
