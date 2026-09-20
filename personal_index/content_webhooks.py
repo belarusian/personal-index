@@ -257,6 +257,7 @@ class WebhookManager:
         if endpoint.secret:
             signature = self._sign(body, endpoint.secret)
 
+        self._id_counter += 1
         return WebhookPayload(
             payload_id=f"pl-{self._id_counter}-{int(time.time())}",
             event_type=event_type,

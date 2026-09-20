@@ -171,15 +171,6 @@ class TestSigning:
 # Payload-id idempotency  (QA-45)
 # ---------------------------------------------------------------------------
 class TestPayloadIdUniqueness:
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-45: payload_id is documented as a 'Unique identifier' but is "
-            "built as pl-{counter}-{timestamp} where the counter only "
-            "increments on register_endpoint; two dispatches to the same "
-            "endpoint in the same second collide."
-        ),
-    )
     def test_payload_ids_unique_across_dispatches(self, mgr, monkeypatch):
         monkeypatch.setattr(time, "time", lambda: 1000.0)
         mgr.register_endpoint(
@@ -190,13 +181,6 @@ class TestPayloadIdUniqueness:
         p2 = mgr.dispatch_event(WebhookEventType.CONTENT_UPDATED, {"b": 2})
         assert p1[0].payload_id != p2[0].payload_id
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-45: with colliding payload_ids, mark_delivered on the shared "
-            "id removes only the first pending payload, orphaning the second."
-        ),
-    )
     def test_mark_delivered_does_not_orphan_twin(self, mgr, monkeypatch):
         monkeypatch.setattr(time, "time", lambda: 1000.0)
         mgr.register_endpoint(
@@ -205,11 +189,11 @@ class TestPayloadIdUniqueness:
         )
         p1 = mgr.dispatch_event(WebhookEventType.CONTENT_ADDED, {"a": 1})
         p2 = mgr.dispatch_event(WebhookEventType.CONTENT_UPDATED, {"b": 2})
-        assert p1[0].payload_id == p2[0].payload_id  # the collision
+        assert p1[0].payload_id != p2[0].payload_id  # unique now
         mgr.mark_delivered(p1[0].payload_id)
-        # Both payloads should be accounted for; the twin must not be left
-        # stranded in pending under an id that no longer resolves uniquely.
-        assert len(mgr.get_pending()) == 0
+        # Only p1 should be removed; p2 remains pending
+        assert len(mgr.get_pending()) == 1
+        assert len(mgr.get_delivered()) == 1
 
 
 # ---------------------------------------------------------------------------
