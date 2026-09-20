@@ -1,6 +1,6 @@
 # TICKET-552: exact-contract docstring for FacetedSearch.search + pinning test
 
-Status: VERIFIED (cycle 304)
+Status: CLOSED (validator close, cycle 326 @ main e185fd6; verified cycle 304)
 Issue: #987
 
 ## File
