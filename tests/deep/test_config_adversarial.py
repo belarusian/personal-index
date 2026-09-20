@@ -634,6 +634,7 @@ def test_config_env_var_override_log_level():
 
 def test_load_config_relative_path():
     """Loading config from a relative path."""
+    orig_cwd = os.getcwd()
     with tempfile.TemporaryDirectory() as tmpdir:
         os.chdir(tmpdir)
         with open("config.yaml", "w") as f:
@@ -642,7 +643,7 @@ def test_load_config_relative_path():
             cfg = load_config("config.yaml")
             assert cfg.data_dir == "/relative/test"
         finally:
-            os.chdir("/")
+            os.chdir(orig_cwd)
 
 
 def test_load_config_path_with_spaces():
