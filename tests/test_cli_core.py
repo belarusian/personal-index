@@ -20,7 +20,7 @@ from personal_index.cli import main
 @pytest.fixture
 def runner():
     """CliRunner for invoking CLI commands."""
-    return CliRunner(isolate_filesystem=False)
+    return CliRunner()
 
 
 # ── CLI Config Validation ─────────────────────────────────────────────
@@ -151,7 +151,7 @@ class TestCLIInitCommand:
 
     def test_init_creates_config_yaml(self, runner, tmp_path):
         """Test init creates config.yaml."""
-        runner = CliRunner(isolate_filesystem=False)
+        runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=str(tmp_path)):
             result = runner.invoke(main, ["init"])
             assert result.exit_code == 0
@@ -169,7 +169,7 @@ class TestCLIInitCommand:
     def test_init_config_yaml_content(self, runner, tmp_path):
         """Test init creates config.yaml with expected structure."""
         import yaml
-        runner = CliRunner(isolate_filesystem=False)
+        runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=str(tmp_path)):
             result = runner.invoke(main, ["init"])
             assert result.exit_code == 0

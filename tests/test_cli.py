@@ -11,7 +11,7 @@ from personal_index.index import SearchIndex
 
 @pytest.fixture
 def runner():
-    return CliRunner(isolate_filesystem=False)
+    return CliRunner()
 
 
 @pytest.fixture
