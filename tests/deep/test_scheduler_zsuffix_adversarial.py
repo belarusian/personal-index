@@ -4,12 +4,18 @@ unparseable-timestamp data-loss in ScheduleStore._load.
 Cycle 325 — probes the neighborhood of the QA-52 fix (commit 9676547,
 "normalize naive stored datetimes to UTC in ScheduleStore._load"). The QA-52
 fix hardened the naive (offset-less) case, but the defensive `_load` still has
-a whole-store data-loss hole: the `try` wraps the ENTIRE per-entry loop, and
-`datetime.fromisoformat` on Python 3.10 does NOT accept the ISO-8601 "Z"
-suffix (that support landed in 3.11). So a single entry whose last_run/next_run
-is written with a "Z" (e.g. by an external writer, a hand-edited file, or a
-newer Python that emits "Z") raises ValueError, the `except` fires, and
-`self._entries = {}` wipes EVERY entry — including perfectly valid ones.
+a whole-store data-loss hole on Python < 3.11: the `try` wraps the ENTIRE
+per-entry loop, and `datetime.fromisoformat` on Python 3.10 does NOT accept
+the ISO-8601 "Z" suffix (that support landed in 3.11). So a single entry whose
+last_run/next_run is written with a "Z" (e.g. by an external writer, a
+hand-edited file, or a newer Python that emits "Z") raises ValueError on
+< 3.11, the `except` fires, and `self._entries = {}` wipes EVERY entry —
+including perfectly valid ones.
+
+On Python >= 3.11 `fromisoformat` accepts "Z", so the defect is ABSENT there
+and the pin passes (no marker). The xfail-strict marker is therefore
+version-conditional: it documents the defect on < 3.11 (where it is real and
+unfixed) and is a no-op on >= 3.11 (where the test legitimately passes).
 
 The module's own `_save` emits `+00:00` (not "Z"), so a self round-trip is
 safe; the data loss is reachable only via externally-produced store files,
@@ -17,16 +23,18 @@ which is exactly the defensive case `_load` is documented to tolerate
 (defensive: "missing file -> empty; malformed JSON / non-dict JSON / entry
 missing config -> empty (defensive, no crash)").
 
-One REAL contract violation surfaced and is pinned xfail-strict (documented,
-not hard-failed, so main stays green):
+One REAL contract violation surfaced and is pinned (documented, not
+hard-failed, so main stays green):
   - QA-58: a single unparseable ("Z"-suffix) timestamp in ONE entry wipes the
-    ENTIRE store, losing all valid sibling entries. Expected per the defensive
-    contract: the bad entry is skipped and the valid entries are preserved.
+    ENTIRE store, losing all valid sibling entries (Python < 3.11). Expected
+    per the defensive contract: the bad entry is skipped and the valid
+    entries are preserved.
 """
 
 from __future__ import annotations
 
 import json
+import sys
 from datetime import timedelta
 
 import pytest
@@ -35,6 +43,25 @@ from personal_index.scheduler import (
     ScheduleConfig,
     ScheduleEntry,
     ScheduleStore,
+)
+
+# The "Z"-suffix data-loss defect is real only on Python < 3.11, where
+# datetime.fromisoformat rejects the "Z" suffix. On >= 3.11 it is parsed
+# fine, so the pin passes and the marker must be a no-op.
+_Z_DEFECT_ACTIVE = sys.version_info < (3, 11)
+
+_Z_XFAIL = pytest.mark.xfail(
+    _Z_DEFECT_ACTIVE,
+    strict=True,
+    reason=(
+        "QA-58 (Python < 3.11): a single entry with a 'Z'-suffix ISO timestamp "
+        "(unparseable by datetime.fromisoformat before 3.11) raises ValueError "
+        "inside the whole-loop try, so `except` sets self._entries = {} and "
+        "wipes ALL valid sibling entries. Expected per the defensive _load "
+        "contract: the bad entry is skipped and valid entries are preserved. "
+        "On Python >= 3.11 fromisoformat accepts 'Z', the defect is absent, "
+        "and this test passes (marker is a no-op)."
+    ),
 )
 
 
@@ -103,16 +130,7 @@ class TestAwareOffsetPreserved:
 
 # ── REAL DEFECT: one "Z"-suffix entry wipes the whole store (QA-58) ───────
 class TestZSuffixDataLoss:
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-58: a single entry with a 'Z'-suffix ISO timestamp (unparseable "
-            "by Python 3.10 datetime.fromisoformat) raises ValueError inside the "
-            "whole-loop try, so `except` sets self._entries = {} and wipes ALL "
-            "valid sibling entries. Expected per the defensive _load contract: "
-            "the bad entry is skipped and valid entries are preserved."
-        ),
-    )
+    @_Z_XFAIL
     def test_one_z_entry_does_not_wipe_valid_siblings(self, tmp_path):
         p = _write(
             tmp_path,
