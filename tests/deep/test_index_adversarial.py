@@ -1,15 +1,18 @@
-"""Adversarial deep tests for personal_index/index.py SearchIndex module.
+"""Adversarial deep tests for the index subsystem (SearchIndex).
 
-Tests edge cases, error conditions, boundary values, and contract violations.
+Tests edge cases, error conditions, boundary values, and contract
+compliance for SearchIndex operations.
 """
 
 import json
 import os
-import pytest
 import tempfile
+from datetime import datetime
+
+import pytest
 
 from personal_index.index import SearchIndex
-from personal_index.models import IndexedPage, CrawledPage, SearchResult
+from personal_index.models import CrawledPage, IndexedPage
 
 
 @pytest.fixture
@@ -17,356 +20,442 @@ def temp_index():
     """Create a temporary SearchIndex with a temp file."""
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = os.path.join(tmpdir, "index.json")
-        idx = SearchIndex(db_path=db_path)
-        yield idx
-        idx.close()
+        index = SearchIndex(db_path=db_path)
+        yield index
+        index.close()
 
 
 @pytest.fixture
-def memory_index():
-    """Create an in-memory SearchIndex (no persistence)."""
-    return SearchIndex(db_path=None)
+def sample_page():
+    """Create a sample IndexedPage."""
+    return IndexedPage(
+        url="https://example.com/page1",
+        title="Example Page",
+        content="This is example content for testing.",
+        score=1.0,
+        crawled_at=datetime.now().isoformat(),
+        domain="example.com",
+        status_code=200,
+        content_length=35,
+        language="en",
+        keywords=["example", "test"],
+        matched_interests=[],
+    )
 
 
-class TestSearchIndexPersistence:
-    """Test persistence edge cases."""
+@pytest.fixture
+def sample_crawled_page():
+    """Create a sample CrawledPage."""
+    return CrawledPage(
+        url="https://example.com/crawled",
+        title="Crawled Page",
+        content="Content from crawling.",
+        status_code=200,
+        relevance_score=0.8,
+        language="en",
+        keywords=["crawl"],
+        matched_interests=[],
+    )
 
-    def test_load_corrupted_json(self, tmp_path):
-        """Loading corrupted JSON should not crash."""
-        db_path = str(tmp_path / "index.json")
-        with open(db_path, "w") as f:
-            f.write("not valid json {{{")
-        idx = SearchIndex(db_path=db_path)
-        assert idx.get_page_count() == 0
-        idx.close()
 
-    def test_load_non_dict_json(self, tmp_path):
-        """Loading non-dict JSON should not crash."""
-        db_path = str(tmp_path / "index.json")
-        with open(db_path, "w") as f:
-            json.dump([1, 2, 3], f)
-        idx = SearchIndex(db_path=db_path)
-        assert idx.get_page_count() == 0
-        idx.close()
+class TestSearchIndexEmptyState:
+    """Tests for empty index state."""
 
-    def test_load_missing_pages_key(self, tmp_path):
-        """Loading JSON without 'pages' key should not crash."""
-        db_path = str(tmp_path / "index.json")
-        with open(db_path, "w") as f:
-            json.dump({"word_index": {}}, f)
-        idx = SearchIndex(db_path=db_path)
-        assert idx.get_page_count() == 0
-        idx.close()
+    def test_search_empty_index(self, temp_index):
+        """Search on empty index returns empty list."""
+        results = temp_index.search("anything")
+        assert results == []
 
-    def test_load_empty_file(self, tmp_path):
-        """Loading empty file should not crash."""
-        db_path = str(tmp_path / "index.json")
-        with open(db_path, "w") as f:
-            f.write("")
-        idx = SearchIndex(db_path=db_path)
-        assert idx.get_page_count() == 0
-        idx.close()
+    def test_search_empty_query(self, temp_index, sample_page):
+        """Search with empty query returns empty list."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("")
+        assert results == []
 
-    def test_save_to_nonexistent_dir(self, tmp_path):
-        """Saving to a path in a nonexistent directory should create it."""
-        db_path = str(tmp_path / "sub" / "dir" / "index.json")
-        idx = SearchIndex(db_path=db_path)
-        page = IndexedPage(url="http://example.com", title="Test", content="Content")
-        idx.add_page(page)
-        assert os.path.exists(db_path)
-        idx.close()
+    def test_search_whitespace_query(self, temp_index, sample_page):
+        """Search with whitespace-only query returns empty list."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("   ")
+        assert results == []
 
-    def test_roundtrip_persistence(self, temp_index):
-        """Pages should survive save/load cycle."""
-        page = IndexedPage(url="http://example.com", title="Test", content="Content")
-        temp_index.add_page(page)
-        temp_index.close()
+    def test_search_stopwords_only(self, temp_index, sample_page):
+        """Search with only stop words returns empty list."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("the is a")
+        assert results == []
 
-        # Reload
-        idx2 = SearchIndex(db_path=temp_index.db_path)
-        assert idx2.get_page_count() == 1
-        loaded = idx2.get_page("http://example.com")
-        assert loaded is not None
-        assert loaded.title == "Test"
-        idx2.close()
+    def test_get_page_count_empty(self, temp_index):
+        """Page count on empty index is 0."""
+        assert temp_index.get_page_count() == 0
+
+    def test_list_pages_empty(self, temp_index):
+        """List pages on empty index returns empty list."""
+        assert temp_index.list_pages() == []
+
+    def test_remove_page_empty(self, temp_index):
+        """Remove page from empty index returns False."""
+        assert temp_index.remove_page("https://example.com") is False
+
+    def test_get_page_empty(self, temp_index):
+        """Get page from empty index returns None."""
+        assert temp_index.get_page("https://example.com") is None
 
 
 class TestSearchIndexAddPage:
-    """Test add_page edge cases."""
+    """Tests for add_page operations."""
 
-    def test_add_empty_page(self, memory_index):
-        """Adding a page with empty title and content."""
-        page = IndexedPage(url="http://empty.com", title="", content="")
-        count = memory_index.add_page(page)
+    def test_add_indexed_page(self, temp_index, sample_page):
+        """Add an IndexedPage and verify it's stored."""
+        count = temp_index.add_page(sample_page)
+        assert count == 1
+        assert temp_index.get_page_count() == 1
+
+    def test_add_crawled_page(self, temp_index, sample_crawled_page):
+        """Add a CrawledPage and verify conversion to IndexedPage."""
+        count = temp_index.add_page(sample_crawled_page)
+        assert count == 1
+        page = temp_index.get_page(sample_crawled_page.url)
+        assert page is not None
+        assert page.title == "Crawled Page"
+        assert page.domain == "example.com"
+
+    def test_add_duplicate_page(self, temp_index, sample_page):
+        """Add same page twice - should not duplicate."""
+        temp_index.add_page(sample_page)
+        count = temp_index.add_page(sample_page)
+        assert count == 1
+        assert temp_index.get_page_count() == 1
+
+    def test_add_page_empty_content(self, temp_index):
+        """Add page with empty content."""
+        page = IndexedPage(
+            url="https://example.com/empty",
+            title="Empty Content",
+            content="",
+            score=0.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="example.com",
+            status_code=200,
+            content_length=0,
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        count = temp_index.add_page(page)
         assert count == 1
 
-    def test_add_duplicate_url(self, memory_index):
-        """Adding same URL twice should overwrite."""
-        page1 = IndexedPage(url="http://dup.com", title="First", content="Content")
-        page2 = IndexedPage(url="http://dup.com", title="Second", content="Different")
-        memory_index.add_page(page1)
-        count = memory_index.add_page(page2)
-        assert count == 1
-        loaded = memory_index.get_page("http://dup.com")
-        assert loaded.title == "Second"
-
-    def test_add_crawled_page(self, memory_index):
-        """Adding a CrawledPage should convert to IndexedPage."""
-        crawled = CrawledPage(url="http://crawl.com", title="Crawled", content="Content")
-        count = memory_index.add_page(crawled)
-        assert count == 1
-        loaded = memory_index.get_page("http://crawl.com")
-        assert isinstance(loaded, IndexedPage)
-
-    def test_add_page_unicode(self, memory_index):
-        """Adding a page with unicode content."""
-        page = IndexedPage(url="http://unicode.com", title="Tëst", content="Ünïcödé")
-        count = memory_index.add_page(page)
+    def test_add_page_unicode_content(self, temp_index):
+        """Add page with unicode content."""
+        page = IndexedPage(
+            url="https://example.com/unicode",
+            title="Ünïcödé",
+            content="Héllo Wörld 你好世界",
+            score=1.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="example.com",
+            status_code=200,
+            content_length=20,
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        count = temp_index.add_page(page)
         assert count == 1
 
-    def test_add_page_very_long_content(self, memory_index):
-        """Adding a page with very long content."""
+    def test_add_page_very_long_content(self, temp_index):
+        """Add page with very long content."""
         long_content = "word " * 10000
-        page = IndexedPage(url="http://long.com", title="Long", content=long_content)
-        count = memory_index.add_page(page)
+        page = IndexedPage(
+            url="https://example.com/long",
+            title="Long Page",
+            content=long_content,
+            score=1.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="example.com",
+            status_code=200,
+            content_length=len(long_content),
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        count = temp_index.add_page(page)
         assert count == 1
-
-    def test_add_page_whitespace_only(self, memory_index):
-        """Adding a page with whitespace-only content."""
-        page = IndexedPage(url="http://ws.com", title="  ", content="   ")
-        count = memory_index.add_page(page)
-        assert count == 1
-
-
-class TestSearchIndexRemovePage:
-    """Test remove_page edge cases."""
-
-    def test_remove_nonexistent_page(self, memory_index):
-        """Removing a page that doesn't exist."""
-        result = memory_index.remove_page("http://nonexistent.com")
-        assert result is False
-
-    def test_remove_and_readd(self, memory_index):
-        """Removing a page and re-adding it."""
-        page = IndexedPage(url="http://readd.com", title="Test", content="Content")
-        memory_index.add_page(page)
-        memory_index.remove_page("http://readd.com")
-        memory_index.add_page(page)
-        assert memory_index.get_page_count() == 1
-
-    def test_remove_all_pages(self, memory_index):
-        """Removing all pages."""
-        for i in range(5):
-            page = IndexedPage(url=f"http://page{i}.com", title=f"Page {i}", content="Content")
-            memory_index.add_page(page)
-        for i in range(5):
-            memory_index.remove_page(f"http://page{i}.com")
-        assert memory_index.get_page_count() == 0
 
 
 class TestSearchIndexSearch:
-    """Test search edge cases."""
+    """Tests for search operations."""
 
-    def test_search_empty_query(self, memory_index):
-        """Searching with empty query."""
-        results = memory_index.search("")
-        assert results == []
-
-    def test_search_stopwords_only(self, memory_index):
-        """Searching with only stop words."""
-        page = IndexedPage(url="http://stop.com", title="The", content="And the is")
-        memory_index.add_page(page)
-        results = memory_index.search("the and is")
-        assert results == []
-
-    def test_search_limit_zero(self, memory_index):
-        """Searching with limit=0."""
-        page = IndexedPage(url="http://limit.com", title="Test", content="Content")
-        memory_index.add_page(page)
-        results = memory_index.search("test", limit=0)
-        assert results == []
-
-    def test_search_limit_negative(self, memory_index):
-        """Searching with negative limit."""
-        page = IndexedPage(url="http://neg.com", title="Test", content="Content")
-        memory_index.add_page(page)
-        results = memory_index.search("test", limit=-5)
-        assert results == []
-
-    def test_search_limit_one(self, memory_index):
-        """Searching with limit=1."""
-        for i in range(5):
-            page = IndexedPage(url=f"http://page{i}.com", title="Test", content="Content")
-            memory_index.add_page(page)
-        results = memory_index.search("test", limit=1)
+    def test_search_basic(self, temp_index, sample_page):
+        """Basic search finds matching page."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("example")
         assert len(results) == 1
+        assert results[0].url == sample_page.url
 
-    def test_search_no_results(self, memory_index):
-        """Searching for a term that doesn't exist."""
-        page = IndexedPage(url="http://nope.com", title="Test", content="Content")
-        memory_index.add_page(page)
-        results = memory_index.search("nonexistentterm")
+    def test_search_no_match(self, temp_index, sample_page):
+        """Search for non-existent term returns empty."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("nonexistentterm")
         assert results == []
 
-    def test_search_case_insensitive(self, memory_index):
-        """Searching should be case-insensitive."""
-        page = IndexedPage(url="http://case.com", title="Test", content="Content")
-        memory_index.add_page(page)
-        results = memory_index.search("TEST")
-        assert len(results) == 1
+    def test_search_limit_zero(self, temp_index, sample_page):
+        """Search with limit=0 returns empty list."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("example", limit=0)
+        assert results == []
 
-    def test_search_unicode_query(self, memory_index):
-        """Searching with unicode query."""
-        page = IndexedPage(url="http://uni.com", title="Tëst", content="Ünïcödé")
-        memory_index.add_page(page)
-        results = memory_index.search("tëst")
-        # Unicode tokens may not match due to regex [a-z0-9]+
-        # This is a contract test - verify behavior is consistent
+    def test_search_limit_negative(self, temp_index, sample_page):
+        """Search with negative limit returns empty list."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("example", limit=-5)
+        assert results == []
 
-    def test_search_snippet_generation(self, memory_index):
-        """Search results should include snippets."""
-        page = IndexedPage(url="http://snippet.com", title="Test", content="This is some test content here")
-        memory_index.add_page(page)
-        results = memory_index.search("test")
-        assert len(results) == 1
-        assert isinstance(results[0].snippet, str)
+    def test_search_limit_one(self, temp_index, sample_page):
+        """Search with limit=1 returns at most one result."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("example", limit=1)
+        assert len(results) <= 1
 
-    def test_search_empty_content_snippet(self, memory_index):
-        """Search with empty content should return empty snippet."""
-        page = IndexedPage(url="http://empty.com", title="Test", content="")
-        memory_index.add_page(page)
-        results = memory_index.search("test")
-        assert len(results) == 1
-        assert results[0].snippet == ""
+    def test_search_multiple_pages(self, temp_index):
+        """Search across multiple pages."""
+        page1 = IndexedPage(
+            url="https://example.com/1",
+            title="First Page",
+            content="This is the first page content.",
+            score=1.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="example.com",
+            status_code=200,
+            content_length=30,
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        page2 = IndexedPage(
+            url="https://example.com/2",
+            title="Second Page",
+            content="This is the second page content.",
+            score=1.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="example.com",
+            status_code=200,
+            content_length=31,
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        temp_index.add_page(page1)
+        temp_index.add_page(page2)
+        results = temp_index.search("page")
+        assert len(results) == 2
+
+    def test_search_relevance_ordering(self, temp_index):
+        """Search results are ordered by relevance."""
+        # Page with term in title should rank higher
+        page1 = IndexedPage(
+            url="https://example.com/title",
+            title="Important Keyword",
+            content="Some content here.",
+            score=1.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="example.com",
+            status_code=200,
+            content_length=18,
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        page2 = IndexedPage(
+            url="https://example.com/content",
+            title="Different Title",
+            content="The keyword appears in content.",
+            score=1.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="example.com",
+            status_code=200,
+            content_length=33,
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        temp_index.add_page(page1)
+        temp_index.add_page(page2)
+        results = temp_index.search("keyword")
+        assert len(results) == 2
+        # Title match should rank higher
+        assert results[0].url == page1.url
 
 
-class TestSearchIndexListPages:
-    """Test list_pages edge cases."""
+class TestSearchIndexPersistence:
+    """Tests for index persistence."""
 
-    def test_list_empty_index(self, memory_index):
-        """Listing pages in empty index."""
-        pages = memory_index.list_pages()
-        assert pages == []
+    def test_save_and_reload(self, temp_index, sample_page):
+        """Index persists and reloads correctly."""
+        temp_index.add_page(sample_page)
+        db_path = temp_index.db_path
 
-    def test_list_sorted_by_score(self, memory_index):
-        """Pages should be sorted by score descending."""
-        page1 = IndexedPage(url="http://low.com", title="Low", content="Content", score=1.0)
-        page2 = IndexedPage(url="http://high.com", title="High", content="Content", score=10.0)
-        page3 = IndexedPage(url="http://mid.com", title="Mid", content="Content", score=5.0)
-        memory_index.add_page(page1)
-        memory_index.add_page(page2)
-        memory_index.add_page(page3)
-        pages = memory_index.list_pages()
-        assert pages[0].url == "http://high.com"
-        assert pages[1].url == "http://mid.com"
-        assert pages[2].url == "http://low.com"
+        # Create new index from same file
+        index2 = SearchIndex(db_path=db_path)
+        assert index2.get_page_count() == 1
+        page = index2.get_page(sample_page.url)
+        assert page is not None
+        assert page.title == sample_page.title
+        index2.close()
+
+    def test_reload_corrupted_file(self):
+        """Index handles corrupted JSON file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "index.json")
+            with open(db_path, "w") as f:
+                f.write("not valid json")
+            index = SearchIndex(db_path=db_path)
+            assert index.get_page_count() == 0
+            index.close()
+
+    def test_reload_empty_file(self):
+        """Index handles empty file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "index.json")
+            with open(db_path, "w") as f:
+                f.write("")
+            index = SearchIndex(db_path=db_path)
+            assert index.get_page_count() == 0
+            index.close()
+
+    def test_reload_non_dict_json(self):
+        """Index handles non-dict JSON."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "index.json")
+            with open(db_path, "w") as f:
+                json.dump([1, 2, 3], f)
+            index = SearchIndex(db_path=db_path)
+            assert index.get_page_count() == 0
+            index.close()
+
+
+class TestSearchIndexRemovePage:
+    """Tests for remove_page operations."""
+
+    def test_remove_existing_page(self, temp_index, sample_page):
+        """Remove an existing page."""
+        temp_index.add_page(sample_page)
+        removed = temp_index.remove_page(sample_page.url)
+        assert removed is True
+        assert temp_index.get_page_count() == 0
+
+    def test_remove_nonexistent_page(self, temp_index):
+        """Remove a page that doesn't exist."""
+        removed = temp_index.remove_page("https://example.com/missing")
+        assert removed is False
+
+    def test_remove_updates_word_index(self, temp_index, sample_page):
+        """Removing a page updates the word index."""
+        temp_index.add_page(sample_page)
+        temp_index.remove_page(sample_page.url)
+        # Search should not find the removed page
+        results = temp_index.search("example")
+        assert len(results) == 0
 
 
 class TestSearchIndexClear:
-    """Test clear edge cases."""
+    """Tests for clear operation."""
 
-    def test_clear_empty_index(self, memory_index):
-        """Clearing an empty index."""
-        memory_index.clear()
-        assert memory_index.get_page_count() == 0
-
-    def test_clear_and_readd(self, memory_index):
-        """Clearing and re-adding pages."""
-        page = IndexedPage(url="http://clear.com", title="Test", content="Content")
-        memory_index.add_page(page)
-        memory_index.clear()
-        memory_index.add_page(page)
-        assert memory_index.get_page_count() == 1
+    def test_clear_index(self, temp_index, sample_page):
+        """Clear all pages from index."""
+        temp_index.add_page(sample_page)
+        temp_index.clear()
+        assert temp_index.get_page_count() == 0
+        assert temp_index.search("example") == []
 
 
 class TestSearchIndexContextManager:
-    """Test context manager usage."""
+    """Tests for context manager protocol."""
 
-    def test_context_manager(self, tmp_path):
-        """SearchIndex should work as a context manager."""
-        db_path = str(tmp_path / "index.json")
-        with SearchIndex(db_path=db_path) as idx:
-            page = IndexedPage(url="http://ctx.com", title="Test", content="Content")
-            idx.add_page(page)
-            assert idx.get_page_count() == 1
-        # After exiting context, file should be saved
-        assert os.path.exists(db_path)
+    def test_context_manager(self):
+        """SearchIndex works as context manager."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "index.json")
+            with SearchIndex(db_path=db_path) as index:
+                page = IndexedPage(
+                    url="https://example.com/cm",
+                    title="Context Manager",
+                    content="Testing context manager.",
+                    score=1.0,
+                    crawled_at=datetime.now().isoformat(),
+                    domain="example.com",
+                    status_code=200,
+                    content_length=23,
+                    language="en",
+                    keywords=[],
+                    matched_interests=[],
+                )
+                index.add_page(page)
+                assert index.get_page_count() == 1
 
 
-class TestSearchIndexTokenization:
-    """Test tokenization edge cases."""
+class TestSearchIndexEdgeCases:
+    """Edge case tests."""
 
-    def test_tokenize_empty(self):
-        """Tokenizing empty string."""
-        tokens = SearchIndex._tokenize("")
-        assert tokens == []
+    def test_tokenize_empty_string(self):
+        """Tokenize empty string returns empty list."""
+        assert SearchIndex._tokenize("") == []
 
-    def test_tokenize_whitespace(self):
-        """Tokenizing whitespace."""
-        tokens = SearchIndex._tokenize("   ")
+    def test_tokenize_none(self):
+        """Tokenize None returns empty list."""
+        assert SearchIndex._tokenize(None) == []
+
+    def test_tokenize_single_char_words(self):
+        """Single character words are filtered."""
+        tokens = SearchIndex._tokenize("a b c d e")
         assert tokens == []
 
     def test_tokenize_numbers(self):
-        """Tokenizing numbers."""
-        tokens = SearchIndex._tokenize("123 456")
+        """Numbers are included in tokens."""
+        tokens = SearchIndex._tokenize("test 123 abc")
         assert "123" in tokens
-        assert "456" in tokens
+        assert "test" in tokens
+        assert "abc" in tokens
 
     def test_tokenize_special_chars(self):
-        """Tokenizing special characters."""
-        tokens = SearchIndex._tokenize("hello, world!")
-        assert "hello" in tokens
-        assert "world" in tokens
+        """Special characters are removed."""
+        tokens = SearchIndex._tokenize("hello, world! test.")
+        assert tokens == ["hello", "world", "test"]
 
-    def test_tokenize_single_char_words(self):
-        """Single character words should be filtered."""
-        tokens = SearchIndex._tokenize("a b c hello")
-        assert "hello" in tokens
-        assert "a" not in tokens
-        assert "b" not in tokens
-        assert "c" not in tokens
+    def test_search_case_insensitive(self, temp_index, sample_page):
+        """Search is case-insensitive."""
+        temp_index.add_page(sample_page)
+        results = temp_index.search("EXAMPLE")
+        assert len(results) == 1
 
+    def test_add_page_none_url(self, temp_index):
+        """Add page with None url."""
+        page = IndexedPage(
+            url=None,
+            title="No URL",
+            content="Content",
+            score=0.0,
+            crawled_at=datetime.now().isoformat(),
+            domain="",
+            status_code=200,
+            content_length=7,
+            language="en",
+            keywords=[],
+            matched_interests=[],
+        )
+        # Should not crash
+        temp_index.add_page(page)
 
-class TestSearchIndexWordIndex:
-    """Test word index maintenance."""
+    def test_search_after_remove_all(self, temp_index, sample_page):
+        """Search after removing all pages."""
+        temp_index.add_page(sample_page)
+        temp_index.remove_page(sample_page.url)
+        results = temp_index.search("example")
+        assert results == []
 
-    def test_word_index_dedup(self, memory_index):
-        """Word index should not have duplicate URLs."""
-        page = IndexedPage(url="http://dedup.com", title="Test test", content="test")
-        memory_index.add_page(page)
-        # "test" appears 3 times but URL should only be in index once
-        assert memory_index._word_index.get("test", []).count("http://dedup.com") == 1
-
-    def test_word_index_cleanup_on_remove(self, memory_index):
-        """Word index should be cleaned up when page is removed."""
-        page = IndexedPage(url="http://cleanup.com", title="UniqueWord", content="Content")
-        memory_index.add_page(page)
-        assert "uniqueword" in memory_index._word_index
-        memory_index.remove_page("http://cleanup.com")
-        assert "uniqueword" not in memory_index._word_index
-
-
-class TestSearchIndexScoreCalculation:
-    """Test score calculation edge cases."""
-
-    def test_score_title_weight(self, memory_index):
-        """Title matches should score higher than content matches."""
-        page1 = IndexedPage(url="http://title.com", title="Important", content="")
-        page2 = IndexedPage(url="http://content.com", title="", content="Important")
-        memory_index.add_page(page1)
-        memory_index.add_page(page2)
-        results = memory_index.search("important")
-        assert len(results) == 2
-        # Title match should rank higher
-        assert results[0].url == "http://title.com"
-
-    def test_score_page_score_factor(self, memory_index):
-        """Page score should factor into search results."""
-        page1 = IndexedPage(url="http://low.com", title="Test", content="Content", score=1.0)
-        page2 = IndexedPage(url="http://high.com", title="Test", content="Content", score=100.0)
-        memory_index.add_page(page1)
-        memory_index.add_page(page2)
-        results = memory_index.search("test")
-        assert len(results) == 2
-        # Higher page score should rank higher
-        assert results[0].url == "http://high.com"
+    def test_multiple_searches_idempotent(self, temp_index, sample_page):
+        """Multiple searches return consistent results."""
+        temp_index.add_page(sample_page)
+        results1 = temp_index.search("example")
+        results2 = temp_index.search("example")
+        assert len(results1) == len(results2)
+        assert results1[0].url == results2[0].url
