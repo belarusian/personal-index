@@ -89,8 +89,9 @@ State: `_heap: list[Task]` (the min-heap), `_tasks: dict[str, Task]`
   data: dict | None = None) -> Task`
   Under `_lock`: if `len(_heap) >= _max_size`, log a warning
   ("Task queue is full, dropping lowest priority task") and call
-  `_evict_lowest()` (see contract holes — it drops the *highest*-priority
-  task, not the lowest). Then build `Task(priority=priority.value,
+  `_evict_lowest()` (evicts the *least*-important task — the heap
+  maximum — see the Eviction section). Then build
+  `Task(priority=priority.value,
   sequence=_sequence, task_id=task_id, name=name, data=data or {})`,
   increment `_sequence`, `heapq.heappush(_heap, task)`, store
   `_tasks[task_id] = task`, and return the task. **A duplicate `task_id`
@@ -127,11 +128,14 @@ State: `_heap: list[Task]` (the min-heap), `_tasks: dict[str, Task]`
 #### Eviction
 
 - `_evict_lowest(self) -> None` (private)
-  If `_heap` is non-empty, `heapq.heappop(_heap)` (the **minimum** = the
-  highest-priority task) and, if that task's `task_id` is in `_tasks`,
-  `task.cancel()` and `del _tasks[task_id]`. See contract holes: this drops
-  the *highest*-priority task while the caller logs "dropping lowest
-  priority task".
+  If `_heap` is non-empty, select the **maximum** task by
+  `(priority, sequence)` — i.e. the *least*-important task (the highest
+  `priority` value, ties broken by the highest `sequence`) — remove it
+  from the heap, and, if that task's `task_id` is in `_tasks`,
+  `task.cancel()` and `del _tasks[task_id]`. This is the corrected
+  ARCH-38 contract: on overflow the queue evicts the *lowest*-priority
+  (least important) task, matching the caller's "dropping lowest
+  priority task" log message.
 
 #### Introspection
 
@@ -156,31 +160,30 @@ State: `_heap: list[Task]` (the min-heap), `_tasks: dict[str, Task]`
 
 ## Contract Holes
 
-### (ARCH-38) `_evict_lowest` drops the *highest*-priority task, not the lowest
+### (ARCH-38) ~~`_evict_lowest` drops the *highest*-priority task~~ — FIXED (cycle 350)
 
-`Task` is `@dataclass(order=True)` with `priority` as the first
-`compare=True` key, and `TaskPriority` is an `int` Enum where **lower value =
-higher priority** (`CRITICAL = 0` … `BACKGROUND = 4`). `heapq` is a min-heap,
-so the heap **minimum** is the task with the *lowest* `priority` value — i.e.
-the *highest*-priority task (a `CRITICAL` task sorts before a `BACKGROUND`
-one).
+**Resolved in cycle 350.** `Task` is `@dataclass(order=True)` with `priority`
+as the first `compare=True` key, and `TaskPriority` is an `int` Enum where
+**lower value = higher priority** (`CRITICAL = 0` … `BACKGROUND = 4`).
+`heapq` is a min-heap, so the heap **minimum** is the task with the *lowest*
+`priority` value — i.e. the *highest*-priority task. The original
+`_evict_lowest` did `heapq.heappop(self._heap)` (the **minimum**), so on
+overflow it evicted the **most important** pending task while logging
+`"Task queue is full, dropping lowest priority task"` — the exact opposite of the
+intended behavior.
 
-`_evict_lowest` does `heapq.heappop(self._heap)` — it pops that **minimum** —
-and cancels + deletes it. So when the queue is full, `enqueue` evicts the
-**most important** pending task (the `CRITICAL`/earliest one), while logging
-`"Task queue is full, dropping lowest priority task"`. The method name, the
-log message, and the actual behavior all disagree: the code drops the
-highest-priority task, the exact opposite of what the name and log claim.
-
-This is the single most important hole in the module: the queue's whole
-purpose is to keep the most important work, and its overflow path silently
-discards it. A defensible contract: on overflow, evict the task with the
-**highest** `priority` value (lowest importance, e.g. `BACKGROUND`), breaking
-ties by **highest** `sequence` (the most recently enqueued among the least
-important) — i.e. pop the heap **maximum**, not the minimum — and make the
-log message match. Concretely, with a full queue holding one `CRITICAL` and
-one `BACKGROUND` task, `enqueue` must cancel the `BACKGROUND` task and keep
-the `CRITICAL` one.
+The fix makes `_evict_lowest` evict the heap **maximum** instead: the task
+with the **highest** `priority` value (lowest importance, e.g. `BACKGROUND`),
+breaking ties by **highest** `sequence` (the most recently enqueued among
+the least important). Concretely, with a full queue holding one `CRITICAL`
+and one `BACKGROUND` task, `enqueue` now cancels the `BACKGROUND` task and
+keeps the `CRITICAL` one, and the log message matches the behavior. The
+acceptance pin
+`tests/deep/test_queue_adversarial.py::TestEvictLowestDefect::
+test_overflow_keeps_critical_evicts_background` is a hard pass, and the
+implementer pinning tests
+`tests/test_queue.py::TestArch38EvictLowest` cover the tie-break and
+below-max cases.
 
 ### Secondary holes (documented, not separately ticketed)
 
