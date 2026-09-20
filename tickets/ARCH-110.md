@@ -1,9 +1,35 @@
 # ARCH-110 — improve web search page (search.compsci.boutique)
 
-- **Status:** OPEN
+- **Status:** CLOSED (implemented 2026-09-20 — web search page live at https://www.compsci.boutique/search.html)
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** search.html, web search interface
 - **Issue:** #1659 (ARCH-110)
+
+## Work Done
+
+### Deployment
+- Web search page uploaded to S3 and served via Route53 CNAME
+- URL: https://www.compsci.boutique/search.html (and https://search.compsci.boutique/)
+- Deploy command: `aws s3 cp search.html s3://www.compsci.boutique/search.html --content-type text/html`
+
+### Features Implemented
+- Client-side inverted index search (loads JSON from GitHub)
+- Results with title, URL, score, content snippets
+- Responsive dark theme styled interface
+- Instant search with query input
+- No backend required — 100% client-side
+
+### Architecture
+- **Source**: `search.html` in personal-index artifact
+- **Index data**: `.personal_index/search_index.json` (27 pages, 16 cities, ~3MB)
+- **Hosting**: S3 bucket (www.compsci.boutique)
+- **DNS**: Route53 CNAME
+- **Search method**: JavaScript inverted index (word_index → URL lookup)
+
+### Notes
+- HTTPS works via CloudFront (www.compsci.boutique is behind CloudFront)
+- Page automatically reflects updated index as pipeline adds cities
+- No server traffic — static HTML + client-side JSON fetch
 
 ## Symptom
 
