@@ -81,7 +81,8 @@ def _load_pages(index, tag_store, query, tag, limit):
         filtered = []
         for p in pages:
             page_tags = tag_store.get_tags_for_page(p.url)
-            if page_tags and tag_set & set(page_tags):
+            page_tag_names = {t.name if hasattr(t, "name") else str(t) for t in page_tags}
+            if page_tag_names and tag_set & page_tag_names:
                 filtered.append(p)
         pages = filtered
 
