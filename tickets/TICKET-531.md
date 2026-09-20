@@ -1,6 +1,6 @@
 # TICKET-531: Pin DedupResult.summary() contract + empty-state guard test
 
-**Status:** IMPLEMENTED #1322@b93b471 (cycle 272)
+**Status:** VERIFIED (cycle 304)
 **File:** personal_index/content_dedup.py
 **Issue:** #917
 
