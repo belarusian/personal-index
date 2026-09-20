@@ -277,14 +277,15 @@ class ContentScorer:
     ) -> float:
         """Score based on keyword relevance.
 
-        Guard path: if ``total_keywords == 0`` there is nothing to match
-        against, so return ``0.0`` (no division by zero).
+        Guard path: if ``total_keywords <= 0`` there is nothing to match
+        against (or the bound is non-positive), so return ``0.0`` (no division
+        by zero and no negative score).
 
         Otherwise return ``round(min(1.0, keyword_matches / total_keywords),
         4)``: the fraction of keywords matched, capped at 1.0 and rounded
         to 4 decimal places.
         """
-        if total_keywords == 0:
+        if total_keywords <= 0:
             return 0.0
         return round(min(1.0, keyword_matches / total_keywords), 4)
 
@@ -303,6 +304,11 @@ class ContentScorer:
         (~6.9), clamped at 1.0. All-zero counts -> 0.0. No guard path; no
         side effects.
         """
+        # Floor each count to >= 0 so a negative count clamps to 0.0
+        # instead of raising a math domain error.
+        view_count = max(0, view_count)
+        bookmark_count = max(0, bookmark_count)
+        share_count = max(0, share_count)
         engagement = (
             math.log1p(view_count) * 0.4
             + math.log1p(bookmark_count) * 0.4
@@ -327,6 +333,9 @@ class ContentScorer:
         code_bonus), 4)``: the sum clamped at 1.0. word_count 0 with no
         bonuses -> 0.0. No guard path; no side effects.
         """
+        # Floor word_count to >= 0 so a negative count clamps to 0.0
+        # instead of raising a math domain error.
+        word_count = max(0, word_count)
         # Longer content tends to be higher quality (diminishing returns)
         length_score = min(1.0, math.log1p(word_count) / math.log1p(3000))
         # Bonus for rich media
@@ -478,10 +487,13 @@ class ContentScorer:
         ``score.total`` descending (stable sort; ties keep input order).
 
         Returns a NEW list of ``(item, score)`` tuples truncated to the first
-        ``limit`` entries (default 10). Guard path: an empty ``items`` list
-        returns an empty list. If limit <= 0, returns an empty list. No side effects (the input dicts are not
-        mutated and are paired by reference, not copied).
+        ``limit`` entries (default 10). Guard path: a ``None`` or empty
+        ``items`` list returns an empty list. If limit <= 0, returns an empty
+        list. No side effects (the input dicts are not mutated and are paired
+        by reference, not copied).
         """
+        if items is None:
+            return []
         if limit <= 0:
             return []
         scored = []

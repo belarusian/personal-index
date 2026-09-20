@@ -189,13 +189,6 @@ class TestScoreRelevance:
     def test_over_cap_clamped_to_one(self, scorer: ContentScorer) -> None:
         assert scorer._score_relevance(3, 2) == 1.0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-47 (related finding): _score_relevance guards only "
-        "total_keywords == 0; a negative total_keywords (e.g. -5) yields a "
-        "negative score (-0.6) instead of clamping to the documented 0.0 "
-        "floor. The guard is one-sided: zero handled, negative not.",
-    )
     def test_negative_total_clamped_to_zero(self, scorer: ContentScorer) -> None:
         assert scorer._score_relevance(3, -5) == 0.0
 
@@ -213,12 +206,6 @@ class TestScoreEngagement:
     def test_monotonic_in_views(self, scorer: ContentScorer) -> None:
         assert scorer._score_engagement(10, 0, 0) < scorer._score_engagement(100, 0, 0)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-47 (related finding): _score_engagement applies log1p to "
-        "the counts with no floor; a negative count (e.g. -2) raises "
-        "ValueError (math domain error) instead of clamping to 0.0.",
-    )
     def test_negative_count_clamped_to_zero(self, scorer: ContentScorer) -> None:
         assert scorer._score_engagement(-2, 0, 0) == 0.0
 
@@ -242,12 +229,6 @@ class TestScoreQuality:
     def test_long_content_capped_at_one(self, scorer: ContentScorer) -> None:
         assert scorer._score_quality(10_000_000, True, True) == 1.0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-47 (related finding): _score_quality applies log1p to "
-        "word_count with no floor; a negative word_count (e.g. -2) raises "
-        "ValueError (math domain error) instead of clamping to 0.0.",
-    )
     def test_negative_word_count_clamped_to_zero(self, scorer: ContentScorer) -> None:
         assert scorer._score_quality(-2, False, False) == 0.0
 
@@ -378,12 +359,6 @@ class TestRank:
         scorer.rank([item])
         assert item == {"word_count": 5}
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-47 (related finding): rank(None) raises TypeError "
-        "('NoneType' object is not iterable) instead of returning an empty "
-        "list; the guard only checks limit <= 0, not a None items list.",
-    )
     def test_none_items_returns_empty(self, scorer: ContentScorer) -> None:
         assert scorer.rank(None) == []  # type: ignore[arg-type]
 
