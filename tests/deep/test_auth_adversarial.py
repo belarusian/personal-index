@@ -20,6 +20,7 @@ from personal_index.auth.passwords import (
     verify_password,
 )
 from personal_index.auth.permissions import (
+    ROLE_PERMISSIONS,
     Permission,
     PermissionChecker,
     Role,
@@ -548,6 +549,29 @@ class TestSessionStoreAdversarial:
 
 
 class TestPermissionCheckerAdversarial:
+    @pytest.fixture(autouse=True)
+    def _restore_role_permissions(self):
+        """Snapshot and restore the module-level ROLE_PERMISSIONS after each
+        test.
+
+        QA-57: PermissionChecker.__init__ shallow-copies ROLE_PERMISSIONS, so
+        add_role_permissions mutates the shared inner sets and leaks into the
+        module-level constant. Without this fixture, a test that customizes a
+        role (e.g. test_custom_role_permissions adding WRITE_INDEX to CRAWLER)
+        would pollute the global and break the implementer-owned
+        tests/test_auth/test_permissions.py::test_crawler_role, which asserts
+        CRAWLER lacks WRITE_INDEX. This fixture keeps the deep suite
+        self-contained regardless of the QA-57 fix landing.
+        """
+        snapshot = {role: set(perms) for role, perms in ROLE_PERMISSIONS.items()}
+        yield
+        for role in list(ROLE_PERMISSIONS.keys()):
+            ROLE_PERMISSIONS[role] = set(snapshot.get(role, set()))
+        # Remove any roles added during the test that were not in the snapshot.
+        for role in list(ROLE_PERMISSIONS.keys()):
+            if role not in snapshot:
+                del ROLE_PERMISSIONS[role]
+
     def test_admin_has_all_permissions(self):
         checker = PermissionChecker()
         user = User(user_id="u1", username="admin", roles=[Role.ADMIN])
