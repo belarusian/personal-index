@@ -40,7 +40,6 @@ import json
 import os
 from datetime import datetime, timezone
 
-import pytest
 from click.testing import CliRunner
 
 from personal_index.scheduler import (
@@ -244,16 +243,6 @@ class TestGetDueSchedules:
         )
         assert [e.name for e in sch.get_due_schedules()] == ["past"]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-52 (issue #1636): ScheduleStore._load accepts a naive "
-            "(offset-less) ISO datetime for next_run, but "
-            "Scheduler.get_due_schedules compares it against an aware "
-            "datetime.now(timezone.utc), raising TypeError. A store file "
-            "written with naive timestamps makes the public API crash."
-        ),
-    )
     def test_naive_stored_datetime_does_not_crash_get_due(self, tmp_path):
         p = tmp_path / "naive.json"
         p.write_text(

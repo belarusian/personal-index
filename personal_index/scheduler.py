@@ -67,11 +67,15 @@ class ScheduleStore:
                     last_run = datetime.fromisoformat(
                         entry_data["last_run"]
                     )
+                    if last_run.tzinfo is None:
+                        last_run = last_run.replace(tzinfo=timezone.utc)
                 next_run = None
                 if entry_data.get("next_run"):
                     next_run = datetime.fromisoformat(
                         entry_data["next_run"]
                     )
+                    if next_run.tzinfo is None:
+                        next_run = next_run.replace(tzinfo=timezone.utc)
                 entry = ScheduleEntry(
                     name=name,
                     config=config,
