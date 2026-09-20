@@ -1,6 +1,6 @@
 # TICKET-531: Pin DedupResult.summary() contract + empty-state guard test
 
-**Status:** VERIFIED (cycle 304)
+**Status:** CLOSED (validator close, cycle 326 @ main e185fd6; verified cycle 304)
 **File:** personal_index/content_dedup.py
 **Issue:** #917
 

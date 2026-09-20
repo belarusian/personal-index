@@ -13,5 +13,5 @@ with no docstring.
 (2) the factors dict keys (six names, not total) and that values are unrounded.
 Add ONE pinning test calling _build_score with known floats and asserting the
 returned ContentScore's field values (rounded) AND the factors dict (unrounded).
-**Status:** VERIFIED (cycle 304)
+**Status:** CLOSED (validator close, cycle 326 @ main e185fd6; verified cycle 304)
 Issue: #972
