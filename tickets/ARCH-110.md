@@ -10,7 +10,7 @@
 ### Deployment
 - Web search page uploaded to S3 and served via Route53 CNAME
 - URL: https://www.compsci.boutique/search.html (and https://search.compsci.boutique/)
-- Deploy command: `aws s3 cp search.html s3://www.compsci.boutique/search.html --content-type text/html`
+- Deploy command: `aws s3 cp search.html s3://compsci.boutique/search.html --content-type text/html`
 
 ### Features Implemented
 - Client-side inverted index search (loads JSON from GitHub)
