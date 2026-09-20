@@ -1,9 +1,29 @@
 # ARCH-109 — build and share a multi-city search index (15 cities across 4 continents)
 
-- **Status:** OPEN
+- **Status:** CLOSED (implemented 2026-09-20 — 16 cities indexed, 27 pages, web interface live)
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** .personal_index/ (index data) + indexing pipeline
 - **Issue:** #1657 (ARCH-109)
+
+## Work Done
+
+### Cities Indexed (16 cities, 4 continents)
+- **Americas (5)**: Boston, New York City, Los Angeles, Chicago, Toronto
+- **Europe (6)**: Berlin, Munich, Amsterdam, Eindhoven, London, Paris
+- **Asia-Pacific (5)**: Tokyo, Singapore, Sydney, Dubai, Hong Kong
+
+### Index Statistics
+- **Total pages**: 27 unique Wikipedia articles
+- **Total interests**: 18 city interests
+- **Total tags**: 136 tags applied
+- **Storage**: 5.4 MB (search_index.json)
+- **Crawl**: depth 1-2, ~10 pages per seed URL
+
+### Web Search Interface
+- **URL**: https://www.compsci.boutique/search.html
+- **Features**: Client-side inverted index search, loads JSON from GitHub
+- **Hosting**: S3 + Route53 (static HTML)
+- **No server required** — 100% client-side
 
 ## Symptom
 
