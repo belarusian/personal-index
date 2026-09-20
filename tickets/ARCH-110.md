@@ -3,7 +3,7 @@
 - **Status:** OPEN
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** search.html, web search interface
-- **Issue:** #1658 (ARCH-110)
+- **Issue:** #1659 (ARCH-110)
 
 ## Symptom
 
