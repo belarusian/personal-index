@@ -19,7 +19,6 @@ import sys
 import pytest
 
 from personal_index.text_utils import (
-    STOPWORDS,
     count_characters,
     count_words,
     extract_keywords,
