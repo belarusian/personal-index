@@ -9,7 +9,6 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import pytest
 
 from personal_index.content_archive.archive_entry import ArchiveEntry, ArchiveStatus
 from personal_index.content_archive.archiver import ContentArchiver
@@ -201,7 +200,6 @@ class TestArchiverEdgeCases:
         archived = archiver.archive_old(days_threshold=-1)
         assert "neg1" in archived
 
-    @pytest.mark.xfail(strict=True, reason="QA-54: days_threshold=0 falls back to default due to falsy evaluation")
     def test_archive_old_zero_days(self):
         archiver = ContentArchiver()
         # Item from yesterday should archive with 0-day threshold

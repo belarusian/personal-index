@@ -74,7 +74,7 @@ class ContentArchiver:
         skipped.  Returns the list of archived item ids (empty when none
         qualify).
         """
-        threshold = days_threshold or self.config.days_threshold
+        threshold = days_threshold if days_threshold is not None else self.config.days_threshold
         cutoff = datetime.now(timezone.utc) - timedelta(days=threshold)
         archived_ids: list[str] = []
 
