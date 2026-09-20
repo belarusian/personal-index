@@ -177,5 +177,5 @@ class ContentValidator:
     def _is_mostly_whitespace(self, content: str) -> bool:
         if not content.strip():
             return True
-        whitespace_ratio = content.count(" ") / len(content) if content else 0
+        whitespace_ratio = sum(ch.isspace() for ch in content) / len(content) if content else 0
         return whitespace_ratio > 0.95

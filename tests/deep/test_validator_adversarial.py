@@ -29,7 +29,6 @@ Two REAL contract violations surfaced and are pinned with xfail-strict
 
 from __future__ import annotations
 
-import pytest
 
 from personal_index.validator import (
     ContentValidator,
@@ -311,23 +310,11 @@ class TestContentValidatorWhitespace:
 
 
 class TestContentValidatorTabWhitespace:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-51: ContentValidator._is_mostly_whitespace only counts "
-        "spaces, so tab-heavy content that is effectively whitespace is not "
-        "flagged as an error",
-    )
     def test_tab_heavy_content_flagged(self):
         r = ContentValidator().validate("a" + "\t" * 200)
         assert r.valid is False
         assert any("mostly whitespace" in e for e in r.errors)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-51: ContentValidator._is_mostly_whitespace only counts "
-        "spaces, so newline-heavy content that is effectively whitespace is "
-        "not flagged as an error",
-    )
     def test_newline_heavy_content_flagged(self):
         r = ContentValidator().validate("a" + "\n" * 200)
         assert r.valid is False
