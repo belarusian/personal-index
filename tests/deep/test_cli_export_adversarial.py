@@ -134,13 +134,11 @@ class TestLoadPages:
         pages = _load_pages(index, tag_store, query="zzzznomatch", tag=(), limit=0)
         assert pages == []
 
-    @pytest.mark.xfail(strict=True, reason="QA-44: --tag filter is a silent no-op (set[str] and set[Tag] always empty); implementer fix pending")
     def test_tag_filter_intersection(self, populated):
         index, tag_store = populated
         pages = _load_pages(index, tag_store, query=None, tag=("python",), limit=0)
         assert {p.url for p in pages} == {"http://a.com", "http://c.com"}
 
-    @pytest.mark.xfail(strict=True, reason="QA-44: --tag filter is a silent no-op (set[str] and set[Tag] always empty); implementer fix pending")
     def test_tag_filter_multiple_tags_any_match(self, populated):
         index, tag_store = populated
         # "tutorial" only on a.com; "python" on a.com + c.com -> union
@@ -173,7 +171,6 @@ class TestLoadPages:
         pages = _load_pages(index, tag_store, query=None, tag=(), limit=100)
         assert len(pages) == 3
 
-    @pytest.mark.xfail(strict=True, reason="QA-44: --tag filter is a silent no-op (set[str] and set[Tag] always empty); implementer fix pending")
     def test_filter_order_query_then_tag_then_limit(self, populated):
         # query "python" -> {a,c}; tag "tutorial" -> {a}; limit 1 -> {a}
         index, tag_store = populated
@@ -498,7 +495,6 @@ class TestExportCmdE2E:
         assert data[0]["url"] == "http://a.com"
         assert "Exported 1 pages to" in result.output
 
-    @pytest.mark.xfail(strict=True, reason="QA-44: --tag filter is a silent no-op (set[str] and set[Tag] always empty); implementer fix pending")
     def test_tag_filter_e2e(self, tmp_path):
         idx = SearchIndex(db_path=str(tmp_path / "search_index.json"))
         ts = TagStore(store_path=str(tmp_path / "tags.json"))
