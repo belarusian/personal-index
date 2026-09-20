@@ -125,10 +125,6 @@ class TestEmptyAndMalformedItems:
         out = exporter.export([{}], "json")
         assert json.loads(out) == [{}]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-48: explicit None field value crashes HTML export (html.escape(None) -> AttributeError)",
-    )
     def test_item_none_values(self, exporter):
         """None field values should not crash any format. The docstring promises
         every user-supplied field is escaped with html.escape, but html.escape(None)
@@ -220,10 +216,6 @@ class TestRssEscaping:
         guid = re.search(r"<guid>(.*?)</guid>", out).group(1)
         assert guid == "x&amp;y"
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-48: RSS guid double-escaped when item has no id but link has &",
-    )
     def test_rss_guid_fallback_single_escaped(self, exporter):
         """When an item has no 'id', guid falls back to the link. The link is
         already xml-escaped once, then escaped AGAIN for the guid, so 'a&b'

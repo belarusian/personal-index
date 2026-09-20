@@ -90,11 +90,11 @@ class ContentExporter:
         return "\n".join(parts)
 
     def _html_item(self, item: dict[str, Any]) -> str:
-        title = html.escape(item.get("title", "Untitled"))
-        desc = html.escape(item.get("description", ""))
-        link = item.get("link", "")
+        title = html.escape(item.get("title") or "Untitled")
+        desc = html.escape(item.get("description") or "")
+        link = item.get("link") or ""
         date_str = self._format_date(item.get("date"))
-        tags = item.get("tags", [])
+        tags = item.get("tags") or []
         tag_html = " ".join(f'<span class="tag">{html.escape(t)}</span>' for t in tags)
         href = f'href="{html.escape(link)}"' if link else ""
         return (
@@ -141,13 +141,13 @@ class ContentExporter:
         return target
 
     def _md_item(self, item: dict[str, Any]) -> str:
-        title = self._md_escape(item.get("title", "Untitled"))
-        raw_link = item.get("link", "")
-        desc = self._md_escape(item.get("description", ""))
+        title = self._md_escape(item.get("title") or "Untitled")
+        raw_link = item.get("link") or ""
+        desc = self._md_escape(item.get("description") or "")
         if desc.startswith("#"):
             desc = "\\" + desc
         date_str = self._format_date(item.get("date"))
-        tags = item.get("tags", [])
+        tags = item.get("tags") or []
         tag_str = ", ".join(self._md_escape(t) for t in tags) if tags else ""
         if raw_link:
             heading = f"## [{title}]({self._md_link_target(raw_link)})"
@@ -186,11 +186,12 @@ class ContentExporter:
         return "\n".join(lines)
 
     def _rss_item(self, item: dict[str, Any]) -> str:
-        title = xml_escape(item.get("title", "Untitled"))
-        desc = xml_escape(item.get("description", ""))
-        link = xml_escape(item.get("link", self.base_url))
+        title = xml_escape(item.get("title") or "Untitled")
+        desc = xml_escape(item.get("description") or "")
+        raw_link = item.get("link") or self.base_url
+        link = xml_escape(raw_link)
         date_str = self._format_rss_date(item.get("date"))
-        guid = xml_escape(item.get("id", link))
+        guid = xml_escape(item.get("id") or raw_link)
         return (
             "<item>"
             f"<title>{title}</title>"
