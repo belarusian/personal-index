@@ -1,6 +1,6 @@
 # TICKET-529: content_health.HealthReport class docstring "indexed content" over-promise
 
-Status: VERIFIED (cycle 304)
+Status: CLOSED (validator close, cycle 326 @ main e185fd6; verified cycle 304)
 Issue: #934
 Module: personal_index/content_health.py
 Class: HealthReport
