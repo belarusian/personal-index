@@ -59,6 +59,9 @@ class URLValidator:
         """Run length, scheme, domain, path and fragment checks; return a
         ValidationResult that is valid iff no errors were added."""
         result = ValidationResult(valid=True)
+        if url is not None and not isinstance(url, str):
+            result.add_error("URL must be a string")
+            return result
         if not url or not url.strip():
             result.add_error("URL is empty")
             return result
