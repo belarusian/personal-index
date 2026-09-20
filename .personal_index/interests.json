@@ -278,5 +278,22 @@
     "enabled": true,
     "topic": "",
     "match_mode": "any"
+  },
+  "hongkong": {
+    "name": "hongkong",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "hongkong",
+      "hkg",
+      "china"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:49:12.010596+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
   }
 }
