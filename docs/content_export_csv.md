@@ -47,7 +47,9 @@ Behavior, in order:
 
 1. `if not items: return ""` — an empty input list yields the empty string
    (no header, no rows), regardless of `include_header`.
-2. `filtered = self._apply_filter_sort(items, filter_fn, sort_key)[offset:]`
+2. `if offset < 0: offset = 0`
+   — a **negative offset is clamped to 0** (all rows returned, identical to
+   `offset=0`); then `filtered = self._apply_filter_sort(items, filter_fn, sort_key)[offset:]`
    — `filter_fn` (if given) is applied first, then `sort_key` (if given) sorts
    the filtered list, then the result is sliced from `offset`.
 3. `if limit is not None: if limit < 0: limit = 0; filtered = filtered[:limit]`

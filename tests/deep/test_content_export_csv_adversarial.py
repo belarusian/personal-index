@@ -154,14 +154,6 @@ class TestLimitOffsetGuards:
         items = [{"id": str(i)} for i in range(3)]
         assert exporter.export(items, offset=5) == ""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-46: negative offset leaks Python negative-slice semantics "
-        "(offset=-1 returns the last row); the binding negative-slice rule in "
-        "docs/CONTRACTS.md requires a non-positive offset to yield the same "
-        "empty result as offset=0. The guard is one-sided: limit is clamped, "
-        "offset is not.",
-    )
     def test_negative_offset_clamped_to_zero(self, exporter: CSVExporter) -> None:
         items = [{"id": str(i)} for i in range(3)]
         # offset=-1 must behave like offset=0 (all rows), NOT list[-1:] (last row).

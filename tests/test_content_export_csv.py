@@ -302,3 +302,18 @@ class TestCSVExporter:
         assert stats["column_names"] == []
         assert stats["total_items"] == 0
         assert stats["columns"] == 0
+
+    def test_negative_offset_clamped_to_zero(self):
+        """QA-46: negative offset must be clamped to 0 (all rows), not leak Python negative-slice semantics."""
+        e = CSVExporter()
+        items = [{"id": "1", "title": "a"}, {"id": "2", "title": "b"}, {"id": "3", "title": "c"}]
+        # offset=-1 must return all rows (clamped to 0), not just the last row
+        out_neg = e.export(items, offset=-1)
+        out_zero = e.export(items, offset=0)
+        assert out_neg == out_zero
+        assert "1,a" in out_neg
+        assert "2,b" in out_neg
+        assert "3,c" in out_neg
+        # offset=-2 must also return all rows
+        out_neg2 = e.export(items, offset=-2)
+        assert out_neg2 == out_zero

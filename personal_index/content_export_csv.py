@@ -82,10 +82,13 @@ class CSVExporter:
         """Export items to the specified format.
 
         A negative limit is out-of-range and is clamped to 0 (no rows emitted,
-        identical to limit=0).
+        identical to limit=0). A negative offset is clamped to 0 (all rows
+        returned, identical to offset=0).
         """
         if not items:
             return ""
+        if offset < 0:
+            offset = 0
         filtered = self._apply_filter_sort(items, filter_fn, sort_key)[offset:]
         if limit is not None:
             if limit < 0:
