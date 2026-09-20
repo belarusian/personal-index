@@ -506,15 +506,14 @@ class TestCliEndToEnd:
         import sys
 
         data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        config_path = data_dir / "config.yaml"
         base = [sys.executable, "-m", "personal_index.cli", "--data-dir", str(data_dir)]
 
-        init = subprocess.run(base + ["init"], capture_output=True, text=True, timeout=120)
+        init = subprocess.run(base + ["init", "--config", str(config_path)], capture_output=True, text=True, timeout=120)
         assert init.returncode == 0, f"init failed: {init.stderr}"
 
         search = subprocess.run(base + ["search", "python"], capture_output=True, text=True, timeout=120)
-        # An empty index search must exit cleanly (no crash) and report that
-        # there is no indexed content (cli.py:366 echoes this exact message and
-        # returns without erroring).
         assert search.returncode == 0, f"search failed: {search.stderr}"
         combined = (search.stdout + search.stderr).lower()
         assert "no indexed content found" in combined
