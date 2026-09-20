@@ -112,7 +112,7 @@ def init(ctx, data_dir, config):
     """Initialize a new personal-index data directory."""
     dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
     _create_data_dirs(dd)
-    config_path = config or "config.yaml"
+    config_path = config or os.path.join(dd, "config.yaml")
     _create_default_config(config_path, dd)
     click.echo(f"Initialized personal-index in '{dd}'")
     click.echo(f"Config written to '{config_path}'")
