@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Personal Index Search — global city knowledge base</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;font-family:'JetBrains Mono',monospace;color:#d4c5a9;line-height:1.6;font-size:.82rem}
+.wrap{max-width:900px;margin:0 auto;padding:48px 24px 80px}
+header{border-bottom:1px solid #262218;padding-bottom:16px;margin-bottom:30px}
+h1{font-size:1rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#e8d5a3}
+.sub{color:#8a7d6b;font-size:.74rem;margin-top:6px}
+.search-box{position:relative;margin:20px 0}
+input[type="text"]{
+  width:100%;padding:14px 18px;font-size:.9rem;font-family:inherit;
+  background:#0d0c09;border:1px solid #262218;color:#e8d5a3;
+  outline:none;
+}
+input[type="text"]:focus{border-color:#e8d5a3}
+input::placeholder{color:#5a5040}
+.results{margin-top:24px}
+.result{
+  border:1px solid #262218;background:#0d0c09;padding:16px 18px;
+  margin-bottom:12px;
+}
+.result-title{font-size:.9rem;font-weight:700;color:#e8d5a3;margin-bottom:4px}
+.result-title a{color:#e8d5a3;text-decoration:none}
+.result-title a:hover{text-decoration:underline}
+.result-url{font-size:.72rem;color:#6b5d45;margin-bottom:8px;word-break:break-all}
+.result-snippet{font-size:.78rem;color:#a89880;line-height:1.5}
+.result-score{float:right;font-size:.68rem;color:#6b5d45;border:1px solid #262218;padding:2px 6px;margin-left:8px;border-radius:2px}
+.status{font-size:.74rem;color:#8a7d6b;margin:8px 0}
+.error{color:#e8a38a}
+.loading{animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.3}}
+footer{border-top:1px solid #262218;margin-top:40px;padding-top:14px;font-size:.64rem;color:#6b5d45;line-height:1.9}
+footer a{color:#8a7d6b}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Personal Index</h1>
+    <p class="sub">search 16 cities across 4 continents · crawled & indexed by autonomous pipeline</p>
+  </header>
+
+  <div class="search-box">
+    <input type="text" id="query" placeholder="Search (e.g. 'Berlin nightlife', 'Tokyo transport', 'Amsterdam canals')" autofocus>
+  </div>
+  <div id="status" class="status loading">Loading index...</div>
+  <div id="results" class="results"></div>
+
+  <footer>
+    index: belarusian/personal-index · 27 pages · 2.6MB · crawled by personal-index CLI pipeline<br>
+    cities: Boston · NYC · LA · Chicago · Toronto · Berlin · Munich · Amsterdam · Eindhoven · London · Paris · Tokyo · Singapore · Sydney · Dubai · Hong Kong
+  </footer>
+</div>
+
+<script>
+const INDEX_URL = 'https://raw.githubusercontent.com/belarusian/personal-index/main/.personal_index/search_index.json';
+
+let index = null;
+let wordIndex = {};
+let pages = {};
+
+async function loadIndex() {
+  try {
+    const res = await fetch(INDEX_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    pages = data.pages || {};
+    wordIndex = data.word_index || {};
+    const count = Object.keys(pages).length;
+    document.getElementById('status').textContent = `Ready — ${count} pages indexed`;
+    document.getElementById('status').classList.remove('loading');
+  } catch (e) {
+    document.getElementById('status').textContent = `Error loading index: ${e.message}`;
+    document.getElementById('status').classList.add('error');
+  }
+}
+
+function tokenize(text) {
+  return (text || '').toLowerCase().match(/[a-z0-9]+/g) || [];
+}
+
+function search(query, limit = 10) {
+  if (!query.trim()) return [];
+  const tokens = tokenize(query);
+  if (!tokens.length) return [];
+
+  // Score by term frequency across results
+  const scores = {};
+  for (const token of tokens) {
+    if (wordIndex[token]) {
+      for (const url of wordIndex[token]) {
+        if (!scores[url]) scores[url] = 0;
+        const page = pages[url];
+        if (page) {
+          scores[url] += (page.title || '').toLowerCase().includes(token) ? 3 : 1;
+          scores[url] += page.score * 0.1;
+        }
+      }
+    }
+  }
+
+  const results = Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([url, score]) => {
+      const page = pages[url];
+      const snippet = createSnippet(page.content || '', query);
+      return { url, title: page.title || url, snippet, score };
+    });
+
+  return results;
+}
+
+function createSnippet(content, query) {
+  if (!content) return '';
+  const queryTokens = tokenize(query);
+  let bestIdx = -1;
+  for (const token of queryTokens) {
+    const idx = content.toLowerCase().indexOf(token);
+    if (idx !== -1) { bestIdx = idx; break; }
+  }
+  if (bestIdx === -1) return content.slice(0, 150);
+  const start = Math.max(0, bestIdx - 50);
+  const end = Math.min(content.length, bestIdx + 100);
+  let snippet = content.slice(start, end);
+  if (start > 0) snippet = '...' + snippet;
+  if (end < content.length) snippet = snippet + '...';
+  return snippet;
+}
+
+function renderResults(results) {
+  const container = document.getElementById('results');
+  if (!results.length) {
+    container.innerHTML = '<div class="status">No results found</div>';
+    return;
+  }
+  container.innerHTML = results.map(r => `
+    <div class="result">
+      <div class="result-title">
+        <a href="${r.url}" target="_blank">${escapeHtml(r.title)}</a>
+        <span class="result-score">${r.score.toFixed(1)}</span>
+      </div>
+      <div class="result-url">${escapeHtml(r.url)}</div>
+      <div class="result-snippet">${escapeHtml(r.snippet)}</div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+document.getElementById('query').addEventListener('input', function(e) {
+  const query = e.target.value;
+  if (!query.trim() || !index) {
+    document.getElementById('results').innerHTML = '';
+    return;
+  }
+  const results = search(query);
+  renderResults(results);
+});
+
+document.getElementById('query').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const query = e.target.value;
+    const results = search(query);
+    renderResults(results);
+  }
+});
+
+loadIndex();
+</script>
+</body>
+</html>
