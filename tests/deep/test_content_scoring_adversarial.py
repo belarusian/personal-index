@@ -266,24 +266,9 @@ class TestScoreAuthority:
         # Verified branch applies min(1.0, ...) -> 0.95 + 0.1 capped at 1.0.
         assert scorer._score_authority(0.95, True) == 1.0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-47: _score_authority's docstring promises the result is "
-        "'capped at 1.0', but the min(1.0, ...) cap is applied ONLY in the "
-        "is_verified_source branch. A non-verified domain_authority > 1.0 "
-        "(e.g. 1.5) is returned unchanged (1.5), violating the documented "
-        "0.0-1.0 factor range. The guard is one-sided: verified capped, "
-        "non-verified not.",
-    )
     def test_non_verified_over_cap_clamped_to_one(self, scorer: ContentScorer) -> None:
         assert scorer._score_authority(1.5, False) == 1.0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-47: same one-sided-cap defect as the over-cap case; a "
-        "non-verified negative domain_authority (e.g. -0.5) is returned "
-        "unchanged (-0.5) instead of clamping to the documented 0.0 floor.",
-    )
     def test_non_verified_negative_clamped_to_zero(self, scorer: ContentScorer) -> None:
         assert scorer._score_authority(-0.5, False) == 0.0
 
