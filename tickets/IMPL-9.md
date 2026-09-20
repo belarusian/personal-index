@@ -1,6 +1,6 @@
 # IMPL-9: ARCH-38 infeasible — validator-owned deep test is xfail(strict=True) and pins the FIXED behavior
 
-Status: OPEN
+Status: RESOLVED (validator removed xfail-strict marker, cycle 300)
 Component: `personal_index/queue.py`
 Refs: ARCH-38 (#1107)
 

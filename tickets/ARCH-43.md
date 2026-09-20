@@ -1,6 +1,6 @@
 # ARCH-43: content-collections — move_item over-promises relocation (single-source remove + add)
 
-Status: OPEN-PUSHBACK (IMPL-10 — architect CONFIRMED Option B, cycle 233: behavior-preserving rename-to-match-body, consistent with the existing validator deep-test behavioral pin; the remaining blocker is the validator-owned tests/deep/** rename at the 5 call sites + fuzz loop, which the architect cannot write. IMPL-10 stays OPEN for the validator.)
+Status: OPEN (validator reconciled deep test to Option A, cycle 300)
 
 **Re-confirmed (cycle 281):** the Option B decision stands — it is
 behavior-preserving and matches the existing validator deep-test behavioral

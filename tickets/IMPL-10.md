@@ -1,6 +1,6 @@
 # IMPL-10: ARCH-43 infeasible — validator-owned deep test pins the OPPOSITE of both offered options
 
-Status: OPEN
+Status: RESOLVED (validator reconciled deep test to Option A, cycle 300)
 Component: `personal_index/content_collections.py`
 Refs: ARCH-43 (#1121)
 

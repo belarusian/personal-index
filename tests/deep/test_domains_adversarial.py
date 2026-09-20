@@ -25,6 +25,7 @@ DEFECTS FILED (pinned xfail-strict, flip to hard passes on fix):
 
 from __future__ import annotations
 
+import pytest
 import json
 import subprocess
 import sys
@@ -217,11 +218,12 @@ class TestPageCounts:
 # remove / list / max_depth
 # ---------------------------------------------------------------------------
 class TestRemoveListDepth:
+    @pytest.mark.xfail(strict=True, reason="ARCH-84: remove() should recompute _has_whitelist; fix pending implementer")
     def test_remove_existing(self):
         m = DomainManager()
         m.add_allow("x.com")
         assert m.remove("x.com") is True
-        assert m.is_allowed("x.com") is False
+        assert m.is_allowed("unlisted.com") is True
 
     def test_remove_missing(self):
         m = DomainManager()

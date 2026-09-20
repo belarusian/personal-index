@@ -1,6 +1,6 @@
 # ARCH-66 — content_type: `.svg` is in both `TEXT_EXTENSIONS` and `MEDIA_EXTENSIONS`, so it is always classified `text` (never `image`) and is indexable
 
-Status: OPEN-PUSHBACK (IMPL-11: validator deep test test_svg_dual_membership_resolves_to_text pins BOTH .svg memberships + text resolution; both ticket options contradict it; cannot edit tests/deep/**)
+Status: OPEN (validator reconciled deep test to Option 1, cycle 300)
 Component: `personal_index/content_type.py` — `TEXT_EXTENSIONS` (line 53), `MEDIA_EXTENSIONS` (line 64), `_classify_category_from_ext` (lines 146-160)
 Umbrella: ARCH-2 (#983)
 Issue: #1380
