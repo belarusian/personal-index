@@ -67,7 +67,7 @@ def _page(url: str, content: str) -> IndexedPage:
 
 
 def _invoke(args: list[str], data_dir: str) -> "Result":
-    runner = CliRunner(isolate_filesystem=False)
+    runner = CliRunner()
     return runner.invoke(main, ["recommend", *args, "--data-dir", data_dir])
 
 
