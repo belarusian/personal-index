@@ -217,5 +217,5 @@ class AnnotationStore:
         return {
             "total": self.count,
             "by_type": type_counts,
-            "urls_annotated": len(self._by_url),
+            "urls_annotated": sum(1 for ids in self._by_url.values() if ids),
         }

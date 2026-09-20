@@ -345,15 +345,6 @@ class TestStats:
         assert stats["by_type"] == {"note": 2, "highlight": 1}
         assert stats["urls_annotated"] == 2
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-49: get_stats()['urls_annotated'] is len(self._by_url), but the "
-            "add() upsert reconciliation leaves an EMPTY index list for the old "
-            "URL, so a URL with zero annotations is still counted as annotated. "
-            "Docstring promises 'number of annotated URLs'."
-        ),
-    )
     def test_urls_annotated_excludes_empty_index_after_upsert(self, store: AnnotationStore) -> None:
         """After upserting id 'a' from u1 to u2, u1 has no annotations and must
         not be counted in urls_annotated."""
@@ -363,13 +354,6 @@ class TestStats:
         stats = store.get_stats()
         assert stats["urls_annotated"] == 1  # only u2 actually has an annotation
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-49: remove() leaves an empty index list for the URL, so "
-            "urls_annotated still counts a URL whose annotations were all removed."
-        ),
-    )
     def test_urls_annotated_excludes_empty_index_after_remove(self, store: AnnotationStore) -> None:
         store.add(_ann("a", "http://u1"))
         store.add(_ann("b", "http://u1"))
