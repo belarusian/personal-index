@@ -28,6 +28,7 @@ Improve the web search page with:
 - Add city filter dropdown
 - Support ?q= URL parameter for sharing searches
 - Show loading progress bar when fetching index
+- **Deploy to website**: upload the updated search.html to `s3://search.compsci.boutique/index.html` using `aws s3 cp search.html s3://search.compsci.boutique/index.html --content-type text/html`
 
 ## Acceptance criteria
 
@@ -37,6 +38,7 @@ Improve the web search page with:
 - [ ] City filter working
 - [ ] URLs with ?q= parameter work
 - [ ] Loading progress indicator shown
+- [ ] Changes deployed to https://search.compsci.boutique (S3 upload)
 
 ## Self-review checklist (architect)
 
