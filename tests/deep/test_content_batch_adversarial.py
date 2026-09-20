@@ -110,39 +110,18 @@ class TestProcessValid:
 # currently breaks for non-positive batch_size / max_retries.
 # ---------------------------------------------------------------------------
 class TestGuardParameterClass:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-43: batch_size=0 raises an unhandled ValueError (range() arg 3 "
-               "must not be zero) instead of isolating; the documented invariant "
-               "processed+failed==total_items is never reached.",
-    )
     def test_batch_size_zero_isolated_not_crash(self):
         r = BatchProcessor(batch_size=0).process(_items(5))
         assert r.processed + r.failed == r.total_items == 5
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-43: batch_size<0 makes range(0,total,neg) empty -> silent no-op, "
-               "processed=0 failed=0 total=5 (items vanish); invariant breaks.",
-    )
     def test_batch_size_negative_invariant(self):
         r = BatchProcessor(batch_size=-1).process(_items(5))
         assert r.processed + r.failed == r.total_items == 5
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-43: max_retries=0 makes range(0) empty -> silent no-op, "
-               "processed=0 failed=0 total=5 (items vanish); invariant breaks.",
-    )
     def test_max_retries_zero_invariant(self):
         r = BatchProcessor(batch_size=2).process_with_retry(_items(5), max_retries=0)
         assert r.processed + r.failed == r.total_items == 5
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-43: max_retries<0 makes range(neg) empty -> silent no-op, "
-               "processed=0 failed=0 total=5 (items vanish); invariant breaks.",
-    )
     def test_max_retries_negative_invariant(self):
         r = BatchProcessor(batch_size=2).process_with_retry(_items(5), max_retries=-1)
         assert r.processed + r.failed == r.total_items == 5

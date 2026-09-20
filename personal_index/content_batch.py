@@ -80,7 +80,7 @@ class BatchProcessor:
         processor: BatchProcessorFn | None = None,
         on_progress: Callable[[int, int], None] | None = None,
     ) -> None:
-        self.batch_size = batch_size
+        self.batch_size = max(1, batch_size)
         self.processor = processor or self._default_processor
         self.on_progress = on_progress
         self._batch_counter = 0
@@ -153,6 +153,7 @@ class BatchProcessor:
         ``_try_process_batch``, which retries the processor up to
         ``max_retries`` times before recording a failure.
         """
+        max_retries = max(1, max_retries)
         self._batch_counter += 1
         batch_id = f"batch-{self._batch_counter}"
         result = BatchResult(
