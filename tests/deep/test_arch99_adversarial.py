@@ -51,7 +51,7 @@ def _page(url: str, title: str = "", content: str = "", score: float = 1.0,
 
 
 def _invoke(args: list[str], data_dir: str) -> "Result":
-    runner = CliRunner(isolate_filesystem=False)
+    runner = CliRunner()
     return runner.invoke(main, ["recommend", *args, "--data-dir", data_dir])
 
 

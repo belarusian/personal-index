@@ -330,7 +330,7 @@ def test_end_to_end_cli_init_and_export(tmp_path):
 
     from personal_index.cli import main
 
-    runner = CliRunner(isolate_filesystem=False)
+    runner = CliRunner()
     dd = str(tmp_path / "data")
     r = runner.invoke(main, ["init", "--data-dir", dd])
     assert r.exit_code == 0, r.output

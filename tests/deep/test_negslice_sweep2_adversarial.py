@@ -130,7 +130,7 @@ class TestCliNegativeLimitEndToEnd:
     def test_cli_list_negative_limit(self, tmp_path):
         dd = str(tmp_path / "data")
         _seed_index(dd)
-        result = CliRunner(isolate_filesystem=False).invoke(main, ["list", "--limit", "-1", "--data-dir", dd])
+        result = CliRunner().invoke(main, ["list", "--limit", "-1", "--data-dir", dd])
         assert result.exit_code == 0, result.output
         # negative limit must behave like limit=0 (no pages)
         assert result.output.count("http://") == 0
@@ -138,7 +138,7 @@ class TestCliNegativeLimitEndToEnd:
     def test_cli_top_negative_limit(self, tmp_path):
         dd = str(tmp_path / "data")
         _seed_index(dd)
-        result = CliRunner(isolate_filesystem=False).invoke(main, ["top", "--limit", "-1", "--data-dir", dd])
+        result = CliRunner().invoke(main, ["top", "--limit", "-1", "--data-dir", dd])
         assert result.exit_code == 0, result.output
         assert result.output.count("http://") == 0
 
@@ -146,7 +146,7 @@ class TestCliNegativeLimitEndToEnd:
         """The 0 guard already works - clean armor (not xfail)."""
         dd = str(tmp_path / "data")
         _seed_index(dd)
-        result = CliRunner(isolate_filesystem=False).invoke(main, ["list", "--limit", "0", "--data-dir", dd])
+        result = CliRunner().invoke(main, ["list", "--limit", "0", "--data-dir", dd])
         assert result.exit_code == 0, result.output
         assert result.output.count("http://") == 0
 
@@ -154,6 +154,6 @@ class TestCliNegativeLimitEndToEnd:
         """Valid limit returns exactly that many - clean armor (not xfail)."""
         dd = str(tmp_path / "data")
         _seed_index(dd)
-        result = CliRunner(isolate_filesystem=False).invoke(main, ["list", "--limit", "2", "--data-dir", dd])
+        result = CliRunner().invoke(main, ["list", "--limit", "2", "--data-dir", dd])
         assert result.exit_code == 0, result.output
         assert result.output.count("http://") == 2

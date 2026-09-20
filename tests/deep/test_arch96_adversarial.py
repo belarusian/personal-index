@@ -305,7 +305,7 @@ def test_cli_end_to_end_import(tmp_path: Path) -> None:
 
     from personal_index.cli import main
 
-    runner = CliRunner(isolate_filesystem=False)
+    runner = CliRunner()
     data_dir = str(tmp_path / "cli_data")
 
     init_res = runner.invoke(main, ["init", "--data-dir", data_dir])

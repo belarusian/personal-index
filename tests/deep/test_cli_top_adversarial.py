@@ -40,7 +40,7 @@ def _make_index(data_dir: str, pages: list[IndexedPage]) -> None:
 
 
 def _invoke(args: list[str], data_dir: str) -> "Result":
-    runner = CliRunner(isolate_filesystem=False)
+    runner = CliRunner()
     return runner.invoke(main, ["top", *args, "--data-dir", data_dir])
 
 

@@ -211,7 +211,7 @@ class TestCliSearchEndToEnd:
     def test_cli_search_valid_limit(self, tmp_path):
         dd = str(tmp_path / "data")
         self._seed(dd)
-        result = CliRunner(isolate_filesystem=False).invoke(
+        result = CliRunner().invoke(
             main, ["search", "beta", "--limit", "10", "--data-dir", dd]
         )
         assert result.exit_code == 0, result.output
@@ -222,7 +222,7 @@ class TestCliSearchEndToEnd:
     def test_cli_search_limit_zero(self, tmp_path):
         dd = str(tmp_path / "data")
         self._seed(dd)
-        result = CliRunner(isolate_filesystem=False).invoke(
+        result = CliRunner().invoke(
             main, ["search", "beta", "--limit", "0", "--data-dir", dd]
         )
         assert result.exit_code == 0, result.output
@@ -231,7 +231,7 @@ class TestCliSearchEndToEnd:
     def test_cli_search_negative_limit(self, tmp_path):
         dd = str(tmp_path / "data")
         self._seed(dd)
-        result = CliRunner(isolate_filesystem=False).invoke(
+        result = CliRunner().invoke(
             main, ["search", "beta", "--limit", "-1", "--data-dir", dd]
         )
         assert result.exit_code == 0, result.output

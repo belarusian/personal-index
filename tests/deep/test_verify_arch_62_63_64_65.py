@@ -210,7 +210,7 @@ class TestVerifyArch65CliEndToEnd:
         )
 
     def _invoke(self, args: list[str], data_dir: str) -> Result:
-        runner = CliRunner(isolate_filesystem=False)
+        runner = CliRunner()
         return runner.invoke(main, ["search", *args, "--data-dir", data_dir])
 
     def test_cli_search_negative_limit_no_results(self, tmp_path):

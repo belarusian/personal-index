@@ -411,7 +411,7 @@ class TestEndToEndCLI:
     """
 
     def test_cli_init_runs_green(self, tmp_path):
-        runner = CliRunner(isolate_filesystem=False)
+        runner = CliRunner()
         dd = str(tmp_path / "data")
         result = runner.invoke(main, ["init", "--data-dir", dd])
         assert result.exit_code == 0, result.output

@@ -328,6 +328,6 @@ class TestCliHealthEndToEnd:
                {"pages": {"u": "notadict"}, "word_index": {}})
         _write(os.path.join(dd, "tags.json"), {"tags": {}, "page_tags": {}})
 
-        runner = CliRunner(isolate_filesystem=False)
+        runner = CliRunner()
         result = runner.invoke(main, ["health", "--data-dir", dd])
         assert result.exit_code == 0, result.output

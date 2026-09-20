@@ -317,7 +317,7 @@ def test_end_to_end_cli_init_and_export(tmp_path):
     from personal_index.cli import main
 
     dd = str(tmp_path / "data")
-    runner = CliRunner(isolate_filesystem=False)
+    runner = CliRunner()
     r = runner.invoke(main, ["init", "--data-dir", dd])
     assert r.exit_code == 0, r.output
     r = runner.invoke(main, ["export", "--format", "json", "--data-dir", dd])

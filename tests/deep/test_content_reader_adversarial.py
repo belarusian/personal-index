@@ -372,13 +372,13 @@ class TestUnicodeWhitespace:
 class TestCliSmoke:
     def test_cli_status_runs(self, tmp_path):
         dd = str(tmp_path)
-        runner = CliRunner(isolate_filesystem=False)
+        runner = CliRunner()
         res = runner.invoke(main, ["status", "--data-dir", dd])
         assert res.exit_code == 0
 
     def test_cli_top_empty(self, tmp_path):
         dd = str(tmp_path)
-        runner = CliRunner(isolate_filesystem=False)
+        runner = CliRunner()
         res = runner.invoke(main, ["top", "--data-dir", dd])
         assert res.exit_code == 0
 
