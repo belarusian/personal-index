@@ -363,3 +363,60 @@ class TestScheduleStoreAtomicSave:
         assert len(store2.list_all()) == 1
         assert store2.get("daily").config.seed_urls == ["https://example.com"]
         assert store2.get("nightly") is None
+
+
+class TestScheduleStoreNaiveDatetime:
+    """Regression tests for QA-52 (issue #1636): naive stored datetimes.
+
+    A store file written by an external writer / older version may carry
+    offset-NAIVE ISO timestamps for last_run/next_run. _load must normalize
+    them to UTC so the public get_due_schedules() (which compares against an
+    aware datetime.now(timezone.utc)) never raises TypeError.
+    """
+
+    def _write_naive(self, path):
+        import json
+
+        with open(path, "w") as f:
+            json.dump(
+                {
+                    "job1": {
+                        "config": {
+                            "interval_hours": 24,
+                            "enabled": True,
+                            "seed_urls": [],
+                            "max_pages_per_run": 50,
+                            "crawl_depth": 2,
+                            "delay": 1.0,
+                        },
+                        "last_run": "2024-01-01T12:00:00",
+                        "next_run": "2024-01-02T12:00:00",
+                        "run_count": 0,
+                        "total_pages_indexed": 0,
+                    }
+                },
+                f,
+            )
+
+    def test_naive_timestamps_normalized_to_utc(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        self._write_naive(path)
+        store = ScheduleStore(path=path)
+        entry = store.get("job1")
+        assert entry.last_run == datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
+        assert entry.next_run == datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
+
+    def test_naive_next_run_does_not_crash_get_due(self, tmp_path):
+        path = str(tmp_path / "schedules.json")
+        self._write_naive(path)
+        store = ScheduleStore(path=path)
+        sch = Scheduler(
+            interest_store=InterestStore(
+                store_path=str(tmp_path / "interests.json")
+            ),
+            search_index=SearchIndex(index_path=str(tmp_path / "index.json")),
+            schedule_store=store,
+        )
+        # A naive next_run in the past must be comparable and reported due.
+        due = sch.get_due_schedules()
+        assert [e.name for e in due] == ["job1"]
