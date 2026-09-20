@@ -1,0 +1,153 @@
+{
+  "web-dev": {
+    "name": "web-dev",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "python",
+      "javascript",
+      "web"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 8,
+    "created_at": "2026-09-20T03:11:48.779211+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "examples": {
+    "name": "examples",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "example",
+      "domain"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:15:49.053862+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "boston": {
+    "name": "boston",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "boston",
+      "massachusetts",
+      "ma"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:28:49.694900+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "berlin": {
+    "name": "berlin",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "berlin",
+      "germany",
+      "deutschland"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:28:50.600538+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "amsterdam": {
+    "name": "amsterdam",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "amsterdam",
+      "netherlands",
+      "holland"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:28:51.570402+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "eindhoven": {
+    "name": "eindhoven",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "eindhoven",
+      "brabant"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:28:52.535876+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "newyork": {
+    "name": "newyork",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "new york",
+      "nyc",
+      "manhattan"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:28:53.654291+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "losangeles": {
+    "name": "losangeles",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "los angeles",
+      "la",
+      "california"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:28:54.734751+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "munich": {
+    "name": "munich",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "munich",
+      "muenchen",
+      "bavaria"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:28:55.810175+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  }
+}

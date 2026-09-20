@@ -1,0 +1,615 @@
+{
+  "tags": {
+    "web-dev": {
+      "name": "web-dev",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:13:55.476303+00:00"
+    },
+    "examples": {
+      "name": "examples",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:15:51.456117+00:00"
+    },
+    "domain": {
+      "name": "domain",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:15:51.461706+00:00"
+    },
+    "use": {
+      "name": "use",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:15:51.461963+00:00"
+    },
+    "example": {
+      "name": "example",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:15:51.462063+00:00"
+    },
+    "documentation": {
+      "name": "documentation",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:15:51.462148+00:00"
+    },
+    "boston": {
+      "name": "boston",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.618723+00:00"
+    },
+    "newyork": {
+      "name": "newyork",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.618821+00:00"
+    },
+    "losangeles": {
+      "name": "losangeles",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.618915+00:00"
+    },
+    "city": {
+      "name": "city",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.626664+00:00"
+    },
+    "massachusetts": {
+      "name": "massachusetts",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.626796+00:00"
+    },
+    "united": {
+      "name": "united",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.626899+00:00"
+    },
+    "are": {
+      "name": "are",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.627004+00:00"
+    },
+    "berlin": {
+      "name": "berlin",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.627585+00:00"
+    },
+    "wikipedia": {
+      "name": "wikipedia",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.628612+00:00"
+    },
+    "page": {
+      "name": "page",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.628707+00:00"
+    },
+    "main": {
+      "name": "main",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.628799+00:00"
+    },
+    "english": {
+      "name": "english",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.628894+00:00"
+    },
+    "wikimedia": {
+      "name": "wikimedia",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.628985+00:00"
+    },
+    "articles": {
+      "name": "articles",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.630043+00:00"
+    },
+    "featured": {
+      "name": "featured",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.630146+00:00"
+    },
+    "contents": {
+      "name": "contents",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.630244+00:00"
+    },
+    "content": {
+      "name": "content",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.630491+00:00"
+    },
+    "amsterdam": {
+      "name": "amsterdam",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.632389+00:00"
+    },
+    "munich": {
+      "name": "munich",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.632758+00:00"
+    },
+    "2026": {
+      "name": "2026",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.635535+00:00"
+    },
+    "war": {
+      "name": "war",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.635674+00:00"
+    },
+    "september": {
+      "name": "september",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.635807+00:00"
+    },
+    "october": {
+      "name": "october",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.636059+00:00"
+    },
+    "proxy": {
+      "name": "proxy",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.637106+00:00"
+    },
+    "order": {
+      "name": "order",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.637247+00:00"
+    },
+    "2025": {
+      "name": "2025",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.637383+00:00"
+    },
+    "retrieved": {
+      "name": "retrieved",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.637520+00:00"
+    },
+    "germany": {
+      "name": "germany",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.648367+00:00"
+    },
+    "german": {
+      "name": "german",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.648530+00:00"
+    },
+    "diarra": {
+      "name": "diarra",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.659701+00:00"
+    },
+    "career": {
+      "name": "career",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.659856+00:00"
+    },
+    "edit": {
+      "name": "edit",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.660153+00:00"
+    },
+    "mali": {
+      "name": "mali",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.660325+00:00"
+    },
+    "2024": {
+      "name": "2024",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.660490+00:00"
+    },
+    "eindhoven": {
+      "name": "eindhoven",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.664364+00:00"
+    },
+    "dutch": {
+      "name": "dutch",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.671029+00:00"
+    },
+    "century": {
+      "name": "century",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.671218+00:00"
+    },
+    "ashraf": {
+      "name": "ashraf",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.682424+00:00"
+    },
+    "aliyev": {
+      "name": "aliyev",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.682603+00:00"
+    },
+    "wrestling": {
+      "name": "wrestling",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.682946+00:00"
+    },
+    "school": {
+      "name": "school",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.690424+00:00"
+    },
+    "jonas": {
+      "name": "jonas",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.703163+00:00"
+    },
+    "brothers": {
+      "name": "brothers",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.703552+00:00"
+    },
+    "rascal": {
+      "name": "rascal",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.703744+00:00"
+    },
+    "flatts": {
+      "name": "flatts",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.703938+00:00"
+    },
+    "new": {
+      "name": "new",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.713704+00:00"
+    },
+    "york": {
+      "name": "york",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.713914+00:00"
+    },
+    "world": {
+      "name": "world",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.714321+00:00"
+    },
+    "manhattan": {
+      "name": "manhattan",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.714530+00:00"
+    },
+    "greenlandic": {
+      "name": "greenlandic",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.727239+00:00"
+    },
+    "artists": {
+      "name": "artists",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.727448+00:00"
+    },
+    "arnannguaq": {
+      "name": "arnannguaq",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.727880+00:00"
+    },
+    "2020": {
+      "name": "2020",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.728092+00:00"
+    },
+    "los": {
+      "name": "los",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.738141+00:00"
+    },
+    "angeles": {
+      "name": "angeles",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.738401+00:00"
+    },
+    "california": {
+      "name": "california",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.738866+00:00"
+    },
+    "beyer": {
+      "name": "beyer",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.753854+00:00"
+    },
+    "speed": {
+      "name": "speed",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.754094+00:00"
+    },
+    "figure": {
+      "name": "figure",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.754333+00:00"
+    },
+    "horse": {
+      "name": "horse",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.754570+00:00"
+    },
+    "figures": {
+      "name": "figures",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.754812+00:00"
+    },
+    "bavaria": {
+      "name": "bavaria",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.766349+00:00"
+    },
+    "jersey": {
+      "name": "jersey",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.783789+00:00"
+    },
+    "falkenberg": {
+      "name": "falkenberg",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.784058+00:00"
+    },
+    "jacobs": {
+      "name": "jacobs",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.784295+00:00"
+    },
+    "delaware": {
+      "name": "delaware",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:29:38.784545+00:00"
+    }
+  },
+  "page_tags": {
+    "file:///Users/av4nda/Research/personal-index/README.md": [
+      "web-dev"
+    ],
+    "https://example.com": [
+      "example",
+      "domain",
+      "examples",
+      "documentation",
+      "use"
+    ],
+    "https://en.wikipedia.org/wiki/boston": [
+      "web-dev",
+      "losangeles",
+      "boston",
+      "examples",
+      "massachusetts",
+      "united",
+      "city",
+      "are",
+      "newyork"
+    ],
+    "https://en.wikipedia.org/wiki/main_page": [
+      "english",
+      "wikimedia",
+      "losangeles",
+      "boston",
+      "wikipedia",
+      "main",
+      "page",
+      "berlin"
+    ],
+    "https://en.wikipedia.org/wiki/wikipedia:contents": [
+      "articles",
+      "contents",
+      "content",
+      "losangeles",
+      "boston",
+      "wikipedia",
+      "featured"
+    ],
+    "https://en.wikipedia.org/wiki/portal:current_events": [
+      "web-dev",
+      "september",
+      "amsterdam",
+      "boston",
+      "losangeles",
+      "examples",
+      "munich",
+      "united",
+      "war",
+      "october",
+      "2026",
+      "berlin",
+      "newyork"
+    ],
+    "https://en.wikipedia.org/wiki/special:random": [
+      "horse",
+      "aliyev",
+      "artists",
+      "proxy",
+      "mali",
+      "edit",
+      "speed",
+      "figures",
+      "web-dev",
+      "new",
+      "2020",
+      "jonas",
+      "career",
+      "wikipedia",
+      "brothers",
+      "delaware",
+      "beyer",
+      "wrestling",
+      "jersey",
+      "amsterdam",
+      "boston",
+      "examples",
+      "figure",
+      "order",
+      "rascal",
+      "2024",
+      "falkenberg",
+      "berlin",
+      "newyork",
+      "flatts",
+      "jacobs",
+      "losangeles",
+      "retrieved",
+      "diarra",
+      "arnannguaq",
+      "ashraf",
+      "2025",
+      "2026",
+      "greenlandic"
+    ],
+    "https://en.wikipedia.org/wiki/berlin": [
+      "web-dev",
+      "german",
+      "amsterdam",
+      "boston",
+      "losangeles",
+      "germany",
+      "munich",
+      "city",
+      "are",
+      "berlin",
+      "newyork"
+    ],
+    "https://en.wikipedia.org/wiki/amsterdam": [
+      "web-dev",
+      "amsterdam",
+      "boston",
+      "losangeles",
+      "examples",
+      "eindhoven",
+      "century",
+      "city",
+      "dutch",
+      "are",
+      "berlin"
+    ],
+    "https://en.wikipedia.org/wiki/eindhoven": [
+      "school",
+      "web-dev",
+      "amsterdam",
+      "boston",
+      "losangeles",
+      "retrieved",
+      "examples",
+      "munich",
+      "eindhoven",
+      "city",
+      "edit",
+      "berlin"
+    ],
+    "https://en.wikipedia.org/wiki/new_york_city": [
+      "web-dev",
+      "new",
+      "amsterdam",
+      "boston",
+      "losangeles",
+      "world",
+      "examples",
+      "manhattan",
+      "city",
+      "york",
+      "newyork"
+    ],
+    "https://en.wikipedia.org/wiki/los_angeles": [
+      "web-dev",
+      "california",
+      "amsterdam",
+      "boston",
+      "losangeles",
+      "los",
+      "examples",
+      "angeles",
+      "city",
+      "are",
+      "berlin",
+      "newyork"
+    ],
+    "https://en.wikipedia.org/wiki/munich": [
+      "web-dev",
+      "german",
+      "amsterdam",
+      "boston",
+      "losangeles",
+      "examples",
+      "munich",
+      "city",
+      "edit",
+      "bavaria",
+      "berlin",
+      "newyork"
+    ]
+  }
+}
