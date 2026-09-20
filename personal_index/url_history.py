@@ -178,8 +178,15 @@ class URLHistory:
         if not isinstance(data, list):
             return 0
         try:
-            self._history = [URLVisit.from_dict(d) for d in data]
+            self._history = [
+                URLVisit.from_dict(d)
+                for d in data
+                if isinstance(d, dict) and isinstance(d.get("url"), str)
+            ]
         except TypeError:
+            return 0
+        if len(self._history) != len(data):
+            self._history = []
             return 0
         self._trim()
         return len(self._history)

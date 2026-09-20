@@ -472,30 +472,28 @@ class TestArch76MalformedRecordLoad:
         assert h.load(str(p)) == 0
         assert h.get_visits() == []
 
-    # nested-dict url value: constructible (plain dataclass, no type check)
-    # -> counted, NOT a 0-return. Pins the observable contract (bullet 3:
-    # "returns the number of visits actually loaded").
+    # nested-dict url value: url is not a str -> wrong-type clause -> 0-return
+    # (QA-38 fix: load rejects a record whose url is not a str, matching the
+    # docstring's wrong-type clause; a file load accepts yields a history whose
+    # query methods do not crash).
     def test_nested_dict_url_is_constructible_and_counted(self, tmp_path):
         p = tmp_path / "nd.json"
         p.write_text(json.dumps([{"url": {"a": 1}}]))
         h = URLHistory()
-        assert h.load(str(p)) == 1
-        assert len(h.get_visits()) == 1
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
 
-    # wrong-type url (int): constructible (plain dataclass) -> counted.
-    # NOTE: the load docstring (required by ARCH-76) says a "value of the
-    # wrong type" returns 0, but the observable contract (bullet 3) + the
-    # plain-dataclass reality mean it IS constructible and counted. This
-    # pins the CURRENT behavior; the docstring/contract discrepancy is
-    # flagged to the architect (cycle 230 log). See also
-    # test_get_domain_stats_non_string_url_no_crash (QA-38): a non-string
-    # url loaded this way crashes get_domain_stats.
+    # wrong-type url (int): url is not a str -> wrong-type clause -> 0-return
+    # (QA-38 fix: load rejects a record whose url is not a str, matching the
+    # docstring's wrong-type clause; the stored non-string url no longer
+    # crashes get_domain_stats). See also
+    # test_get_domain_stats_non_string_url_no_crash (QA-38).
     def test_wrong_type_url_currently_constructed_and_counted(self, tmp_path):
         p = tmp_path / "wt.json"
         p.write_text(json.dumps([{"url": 123}]))
         h = URLHistory()
-        assert h.load(str(p)) == 1
-        assert len(h.get_visits()) == 1
+        assert h.load(str(p)) == 0
+        assert h.get_visits() == []
 
     # idempotent re-load of a valid file
     def test_idempotent_reload_valid(self, tmp_path):
