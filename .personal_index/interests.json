@@ -149,5 +149,134 @@
     "enabled": true,
     "topic": "",
     "match_mode": "any"
+  },
+  "paris": {
+    "name": "paris",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "paris",
+      "france"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:19.391616+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "london": {
+    "name": "london",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "london",
+      "england",
+      "uk"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:20.381034+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "tokyo": {
+    "name": "tokyo",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "tokyo",
+      "japan",
+      "nippon"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:21.434074+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "singapore": {
+    "name": "singapore",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "singapore"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:22.322672+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "sydney": {
+    "name": "sydney",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "sydney",
+      "australia"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:23.338726+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "toronto": {
+    "name": "toronto",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "toronto",
+      "canada"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:24.271337+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "dubai": {
+    "name": "dubai",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "dubai",
+      "uae"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:25.244106+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
+  },
+  "chicago": {
+    "name": "chicago",
+    "interest_type": "keyword",
+    "value": "",
+    "keywords": [
+      "chicago",
+      "illinois"
+    ],
+    "url_patterns": [],
+    "topics": [],
+    "priority": 5,
+    "created_at": "2026-09-20T03:31:26.213830+00:00",
+    "enabled": true,
+    "topic": "",
+    "match_mode": "any"
   }
 }

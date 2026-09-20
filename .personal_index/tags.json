@@ -431,6 +431,330 @@
       "color": "#3498db",
       "description": "",
       "created_at": "2026-09-20T03:29:38.784545+00:00"
+    },
+    "paris": {
+      "name": "paris",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.606602+00:00"
+    },
+    "london": {
+      "name": "london",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.606890+00:00"
+    },
+    "tokyo": {
+      "name": "tokyo",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.607168+00:00"
+    },
+    "singapore": {
+      "name": "singapore",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.607454+00:00"
+    },
+    "sydney": {
+      "name": "sydney",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.607741+00:00"
+    },
+    "france": {
+      "name": "france",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.615425+00:00"
+    },
+    "french": {
+      "name": "french",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.615719+00:00"
+    },
+    "toronto": {
+      "name": "toronto",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.629673+00:00"
+    },
+    "men": {
+      "name": "men",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.635910+00:00"
+    },
+    "women": {
+      "name": "women",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.636209+00:00"
+    },
+    "throw": {
+      "name": "throw",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.636802+00:00"
+    },
+    "2017": {
+      "name": "2017",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.637098+00:00"
+    },
+    "help": {
+      "name": "help",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.639586+00:00"
+    },
+    "contact": {
+      "name": "contact",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.642567+00:00"
+    },
+    "article": {
+      "name": "article",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.643150+00:00"
+    },
+    "see": {
+      "name": "see",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.646898+00:00"
+    },
+    "view": {
+      "name": "view",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.649488+00:00"
+    },
+    "source": {
+      "name": "source",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.649794+00:00"
+    },
+    "don": {
+      "name": "don",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.659512+00:00"
+    },
+    "class": {
+      "name": "class",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.699088+00:00"
+    },
+    "hansa": {
+      "name": "hansa",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.699388+00:00"
+    },
+    "zeppelin": {
+      "name": "zeppelin",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.699708+00:00"
+    },
+    "1912": {
+      "name": "1912",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.700317+00:00"
+    },
+    "japan": {
+      "name": "japan",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.741215+00:00"
+    },
+    "national": {
+      "name": "national",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.741565+00:00"
+    },
+    "miles": {
+      "name": "miles",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.765328+00:00"
+    },
+    "gazette": {
+      "name": "gazette",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.766030+00:00"
+    },
+    "division": {
+      "name": "division",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.766363+00:00"
+    },
+    "general": {
+      "name": "general",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.766695+00:00"
+    },
+    "government": {
+      "name": "government",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.807566+00:00"
+    },
+    "country": {
+      "name": "country",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.807912+00:00"
+    },
+    "diamond": {
+      "name": "diamond",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.831257+00:00"
+    },
+    "sarah": {
+      "name": "sarah",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.831630+00:00"
+    },
+    "university": {
+      "name": "university",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.831983+00:00"
+    },
+    "selection": {
+      "name": "selection",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.832708+00:00"
+    },
+    "australia": {
+      "name": "australia",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.874671+00:00"
+    },
+    "south": {
+      "name": "south",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.875427+00:00"
+    },
+    "abbey": {
+      "name": "abbey",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.898836+00:00"
+    },
+    "glenstrup": {
+      "name": "glenstrup",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.899238+00:00"
+    },
+    "benedictine": {
+      "name": "benedictine",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.899996+00:00"
+    },
+    "dubai": {
+      "name": "dubai",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.935478+00:00"
+    },
+    "chicago": {
+      "name": "chicago",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.935875+00:00"
+    },
+    "canada": {
+      "name": "canada",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.943666+00:00"
+    },
+    "political": {
+      "name": "political",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.970227+00:00"
+    },
+    "dufeu-schubert": {
+      "name": "dufeu-schubert",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:45.970665+00:00"
+    },
+    "uae": {
+      "name": "uae",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.016986+00:00"
+    },
+    "iowa": {
+      "name": "iowa",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.042189+00:00"
+    },
+    "county": {
+      "name": "county",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.042616+00:00"
+    },
+    "republican": {
+      "name": "republican",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.043038+00:00"
+    },
+    "district": {
+      "name": "district",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.043454+00:00"
+    },
+    "democrat": {
+      "name": "democrat",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.043871+00:00"
+    },
+    "park": {
+      "name": "park",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.089140+00:00"
+    },
+    "bobrok": {
+      "name": "bobrok",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.114583+00:00"
+    },
+    "russian": {
+      "name": "russian",
+      "color": "#3498db",
+      "description": "",
+      "created_at": "2026-09-20T03:32:46.115863+00:00"
     }
   },
   "page_tags": {
@@ -438,178 +762,410 @@
       "web-dev"
     ],
     "https://example.com": [
-      "example",
-      "domain",
       "examples",
       "documentation",
-      "use"
+      "example",
+      "use",
+      "domain"
     ],
     "https://en.wikipedia.org/wiki/boston": [
-      "web-dev",
-      "losangeles",
-      "boston",
       "examples",
-      "massachusetts",
+      "boston",
       "united",
-      "city",
       "are",
-      "newyork"
+      "losangeles",
+      "massachusetts",
+      "city",
+      "newyork",
+      "web-dev"
     ],
     "https://en.wikipedia.org/wiki/main_page": [
       "english",
-      "wikimedia",
-      "losangeles",
       "boston",
-      "wikipedia",
-      "main",
+      "berlin",
+      "losangeles",
       "page",
-      "berlin"
+      "wikimedia",
+      "london",
+      "wikipedia",
+      "tokyo",
+      "main",
+      "paris",
+      "singapore"
     ],
     "https://en.wikipedia.org/wiki/wikipedia:contents": [
-      "articles",
       "contents",
-      "content",
-      "losangeles",
       "boston",
+      "losangeles",
+      "articles",
+      "content",
       "wikipedia",
       "featured"
     ],
     "https://en.wikipedia.org/wiki/portal:current_events": [
-      "web-dev",
+      "sydney",
+      "october",
+      "losangeles",
       "september",
+      "london",
+      "newyork",
+      "web-dev",
+      "singapore",
+      "examples",
+      "2026",
+      "toronto",
+      "paris",
+      "berlin",
       "amsterdam",
       "boston",
-      "losangeles",
-      "examples",
-      "munich",
       "united",
       "war",
-      "october",
-      "2026",
-      "berlin",
-      "newyork"
+      "munich",
+      "tokyo"
     ],
     "https://en.wikipedia.org/wiki/special:random": [
-      "horse",
-      "aliyev",
-      "artists",
-      "proxy",
-      "mali",
-      "edit",
-      "speed",
-      "figures",
-      "web-dev",
-      "new",
-      "2020",
-      "jonas",
-      "career",
-      "wikipedia",
-      "brothers",
-      "delaware",
-      "beyer",
-      "wrestling",
-      "jersey",
-      "amsterdam",
-      "boston",
-      "examples",
-      "figure",
-      "order",
-      "rascal",
-      "2024",
-      "falkenberg",
-      "berlin",
-      "newyork",
-      "flatts",
-      "jacobs",
-      "losangeles",
-      "retrieved",
-      "diarra",
-      "arnannguaq",
-      "ashraf",
       "2025",
+      "republican",
+      "delaware",
+      "horse",
+      "wrestling",
+      "order",
+      "retrieved",
+      "losangeles",
+      "london",
+      "2024",
+      "newyork",
+      "web-dev",
+      "wikipedia",
+      "ashraf",
+      "gazette",
+      "sarah",
+      "2017",
+      "general",
+      "university",
+      "beyer",
+      "glenstrup",
+      "examples",
+      "career",
+      "iowa",
+      "figure",
+      "new",
+      "jersey",
+      "class",
+      "benedictine",
+      "bobrok",
+      "page",
       "2026",
-      "greenlandic"
+      "speed",
+      "toronto",
+      "district",
+      "2020",
+      "paris",
+      "men",
+      "miles",
+      "political",
+      "hansa",
+      "berlin",
+      "russian",
+      "flatts",
+      "mali",
+      "democrat",
+      "french",
+      "proxy",
+      "rascal",
+      "edit",
+      "amsterdam",
+      "diarra",
+      "selection",
+      "figures",
+      "diamond",
+      "boston",
+      "division",
+      "dufeu-schubert",
+      "jacobs",
+      "county",
+      "brothers",
+      "artists",
+      "falkenberg",
+      "jonas",
+      "women",
+      "greenlandic",
+      "aliyev",
+      "1912",
+      "arnannguaq",
+      "abbey",
+      "zeppelin",
+      "throw"
     ],
     "https://en.wikipedia.org/wiki/berlin": [
-      "web-dev",
-      "german",
-      "amsterdam",
       "boston",
+      "berlin",
+      "are",
       "losangeles",
       "germany",
+      "german",
       "munich",
       "city",
-      "are",
-      "berlin",
-      "newyork"
+      "newyork",
+      "web-dev",
+      "amsterdam"
     ],
     "https://en.wikipedia.org/wiki/amsterdam": [
-      "web-dev",
-      "amsterdam",
-      "boston",
-      "losangeles",
       "examples",
+      "boston",
+      "berlin",
       "eindhoven",
-      "century",
-      "city",
-      "dutch",
       "are",
-      "berlin"
+      "losangeles",
+      "dutch",
+      "city",
+      "web-dev",
+      "century",
+      "amsterdam"
     ],
     "https://en.wikipedia.org/wiki/eindhoven": [
-      "school",
-      "web-dev",
-      "amsterdam",
-      "boston",
-      "losangeles",
-      "retrieved",
       "examples",
-      "munich",
+      "boston",
+      "berlin",
+      "retrieved",
       "eindhoven",
+      "losangeles",
+      "munich",
       "city",
+      "web-dev",
       "edit",
-      "berlin"
+      "amsterdam",
+      "school"
     ],
     "https://en.wikipedia.org/wiki/new_york_city": [
-      "web-dev",
-      "new",
-      "amsterdam",
-      "boston",
-      "losangeles",
-      "world",
       "examples",
-      "manhattan",
+      "boston",
+      "new",
+      "world",
+      "losangeles",
       "city",
       "york",
-      "newyork"
+      "manhattan",
+      "web-dev",
+      "newyork",
+      "amsterdam"
     ],
     "https://en.wikipedia.org/wiki/los_angeles": [
-      "web-dev",
-      "california",
-      "amsterdam",
-      "boston",
-      "losangeles",
-      "los",
       "examples",
       "angeles",
-      "city",
-      "are",
+      "boston",
       "berlin",
-      "newyork"
+      "are",
+      "losangeles",
+      "california",
+      "city",
+      "newyork",
+      "web-dev",
+      "los",
+      "amsterdam"
     ],
     "https://en.wikipedia.org/wiki/munich": [
-      "web-dev",
-      "german",
-      "amsterdam",
-      "boston",
-      "losangeles",
       "examples",
+      "boston",
+      "berlin",
+      "losangeles",
+      "german",
       "munich",
       "city",
+      "newyork",
+      "web-dev",
       "edit",
       "bavaria",
+      "amsterdam"
+    ],
+    "https://en.wikipedia.org/wiki/paris": [
+      "examples",
+      "boston",
       "berlin",
-      "newyork"
+      "sydney",
+      "france",
+      "are",
+      "losangeles",
+      "london",
+      "french",
+      "city",
+      "web-dev",
+      "tokyo",
+      "paris",
+      "singapore"
+    ],
+    "https://en.wikipedia.org/wiki/wikipedia:about": [
+      "boston",
+      "help",
+      "losangeles",
+      "page",
+      "articles",
+      "wikimedia",
+      "wikipedia",
+      "web-dev"
+    ],
+    "https://en.wikipedia.org/wiki/wikipedia:contact_us": [
+      "boston",
+      "losangeles",
+      "page",
+      "article",
+      "content",
+      "wikipedia",
+      "contact"
+    ],
+    "https://en.wikipedia.org/wiki/help:contents": [
+      "examples",
+      "boston",
+      "help",
+      "losangeles",
+      "page",
+      "article",
+      "wikipedia",
+      "see"
+    ],
+    "https://en.wikipedia.org/wiki/help:introduction": [
+      "view",
+      "source",
+      "boston",
+      "help",
+      "losangeles",
+      "page",
+      "london",
+      "wikipedia"
+    ],
+    "https://en.wikipedia.org/wiki/wikipedia:community_portal": [
+      "examples",
+      "don",
+      "boston",
+      "help",
+      "losangeles",
+      "page",
+      "2026",
+      "london",
+      "toronto",
+      "web-dev",
+      "wikipedia",
+      "tokyo",
+      "paris",
+      "singapore"
+    ],
+    "https://en.wikipedia.org/wiki/london": [
+      "boston",
+      "retrieved",
+      "world",
+      "are",
+      "losangeles",
+      "london",
+      "city",
+      "newyork",
+      "toronto",
+      "web-dev",
+      "paris",
+      "amsterdam"
+    ],
+    "https://en.wikipedia.org/wiki/tokyo": [
+      "examples",
+      "boston",
+      "berlin",
+      "sydney",
+      "are",
+      "losangeles",
+      "national",
+      "london",
+      "city",
+      "newyork",
+      "toronto",
+      "web-dev",
+      "japan",
+      "tokyo",
+      "paris",
+      "singapore"
+    ],
+    "https://en.wikipedia.org/wiki/singapore": [
+      "examples",
+      "boston",
+      "berlin",
+      "sydney",
+      "world",
+      "are",
+      "losangeles",
+      "government",
+      "london",
+      "country",
+      "web-dev",
+      "tokyo",
+      "paris",
+      "singapore"
+    ],
+    "https://en.wikipedia.org/wiki/sydney": [
+      "examples",
+      "boston",
+      "berlin",
+      "sydney",
+      "are",
+      "losangeles",
+      "south",
+      "london",
+      "city",
+      "newyork",
+      "toronto",
+      "web-dev",
+      "australia",
+      "tokyo",
+      "paris",
+      "singapore"
+    ],
+    "https://en.wikipedia.org/wiki/toronto": [
+      "examples",
+      "boston",
+      "are",
+      "losangeles",
+      "london",
+      "chicago",
+      "city",
+      "newyork",
+      "toronto",
+      "web-dev",
+      "york",
+      "canada",
+      "amsterdam",
+      "dubai"
+    ],
+    "https://en.wikipedia.org/wiki/dubai": [
+      "examples",
+      "boston",
+      "berlin",
+      "sydney",
+      "world",
+      "are",
+      "losangeles",
+      "uae",
+      "london",
+      "chicago",
+      "city",
+      "newyork",
+      "toronto",
+      "web-dev",
+      "tokyo",
+      "paris",
+      "singapore",
+      "dubai"
+    ],
+    "https://en.wikipedia.org/wiki/chicago": [
+      "examples",
+      "boston",
+      "berlin",
+      "world",
+      "are",
+      "losangeles",
+      "london",
+      "chicago",
+      "park",
+      "city",
+      "newyork",
+      "web-dev",
+      "paris",
+      "singapore"
     ]
   }
 }
