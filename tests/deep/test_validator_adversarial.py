@@ -233,29 +233,20 @@ class TestURLValidatorBatch:
 
 
 class TestURLValidatorNonString:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-50: URLValidator.validate crashes (AttributeError) on "
-        "non-string input; contract implies robust validation",
-    )
     def test_int_input_does_not_crash(self):
-        URLValidator().validate(123)
+        r = URLValidator().validate(123)
+        assert r.valid is False
+        assert r.errors == ["URL must be a string"]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-50: URLValidator.validate crashes (AttributeError) on "
-        "non-string input",
-    )
     def test_float_input_does_not_crash(self):
-        URLValidator().validate(3.14)
+        r = URLValidator().validate(3.14)
+        assert r.valid is False
+        assert r.errors == ["URL must be a string"]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-50: URLValidator.validate crashes (AttributeError) on "
-        "non-string input",
-    )
     def test_list_input_does_not_crash(self):
-        URLValidator().validate(["a"])
+        r = URLValidator().validate(["a"])
+        assert r.valid is False
+        assert r.errors == ["URL must be a string"]
 
 
 # ---------------------------------------------------------------------------
