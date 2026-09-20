@@ -124,6 +124,20 @@ class TestContentValidator:
         result = v.validate("One two three four five")
         assert len(result.warnings) > 0
 
+    def test_mostly_whitespace_tab(self):
+        v = ContentValidator()
+        content = "a" + "\t" * 200
+        result = v.validate(content)
+        assert result.valid is False
+        assert any("mostly whitespace" in e for e in result.errors)
+
+    def test_mostly_whitespace_newline(self):
+        v = ContentValidator()
+        content = "a" + "\n" * 200
+        result = v.validate(content)
+        assert result.valid is False
+        assert any("mostly whitespace" in e for e in result.errors)
+
     def test_mostly_whitespace(self):
         v = ContentValidator()
         content = "a" + " " * 1000
