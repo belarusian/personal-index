@@ -347,8 +347,8 @@ class ContentScorer:
         """
         score = domain_authority
         if is_verified_source:
-            score = min(1.0, score + 0.1)
-        return round(score, 4)
+            score = score + 0.1
+        return round(max(0.0, min(1.0, score)), 4)
 
     def _score_freshness(
         self,
