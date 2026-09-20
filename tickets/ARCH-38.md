@@ -1,6 +1,6 @@
 # ARCH-38: queue — `_evict_lowest` drops the *highest*-priority task, not the lowest
 
-Status: OPEN (validator reconciled deep test, cycle 300)
+Status: CLOSED (implemented + merged cycle 350, PR #1678, commit 3152390: _evict_lowest now evicts heap maximum on overflow; pinning tests + deep pin + docs updated)
 Component: `personal_index/queue.py`
 Issue: #1107
 Refs: ARCH-2 (#983 umbrella)
