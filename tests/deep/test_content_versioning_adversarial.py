@@ -204,6 +204,25 @@ class TestContentVersioningPersistence:
 class TestModuleLevelFunctions:
     """Edge cases for module-level convenience functions."""
 
+    @pytest.fixture(autouse=True)
+    def _reset_default_versioning(self):
+        """Reset the module-level singleton so the version counter starts fresh.
+
+        The module-level create_version/get_versions back onto a persistent
+        singleton (personal_index.content_versioning._default_versioning) that
+        loads from ~/.personal_index/versions.json. Without a reset the counter
+        accumulates across runs, so 'test_item' would not be v1 on a dirty home.
+        """
+        import personal_index.content_versioning as cv
+        saved = cv._default_versioning
+        cv._default_versioning = cv.ContentVersioning(
+            storage_path=os.path.join(tempfile.mkdtemp(), "versions.json")
+        )
+        try:
+            yield
+        finally:
+            cv._default_versioning = saved
+
     def test_create_version_module_level(self):
         """Module-level create_version should work."""
         v = create_version("test_item", "test content")
