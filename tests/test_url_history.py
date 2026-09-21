@@ -293,3 +293,46 @@ class TestURLHistoryMalformedRecordGuard:
         count = history.load(str(filepath))
         assert count == 1
         assert history.get_visits()[0].url == "http://example.com"
+
+
+class TestURLHistoryLoadUntouchedOnMalformed:
+    """QA-61: load() must leave a pre-existing _history untouched on a
+    malformed record (missing url / wrong-type url / non-dict), returning 0."""
+
+    def test_load_missing_url_leaves_preexisting_untouched(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text('[{"url": "http://good.com"}, {"status_code": 200}]')
+        history = URLHistory()
+        history.record("http://pre.com")
+        count = history.load(str(filepath))
+        assert count == 0
+        assert [v.url for v in history.get_visits()] == ["http://pre.com"]
+
+    def test_load_wrong_type_url_leaves_preexisting_untouched(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text('[{"url": "http://good.com"}, {"url": 123}]')
+        history = URLHistory()
+        history.record("http://pre.com")
+        count = history.load(str(filepath))
+        assert count == 0
+        assert [v.url for v in history.get_visits()] == ["http://pre.com"]
+
+    def test_load_non_dict_record_leaves_preexisting_untouched(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text('[{"url": "http://good.com"}, "not-a-dict"]')
+        history = URLHistory()
+        history.record("http://pre.com")
+        count = history.load(str(filepath))
+        assert count == 0
+        assert [v.url for v in history.get_visits()] == ["http://pre.com"]
+
+    def test_load_all_valid_replaces_and_trims(self, tmp_path):
+        filepath = tmp_path / "history.json"
+        filepath.write_text(
+            '[{"url": "http://a.com"}, {"url": "http://b.com"}]'
+        )
+        history = URLHistory()
+        history.record("http://pre.com")
+        count = history.load(str(filepath))
+        assert count == 2
+        assert [v.url for v in history.get_visits()] == ["http://a.com", "http://b.com"]

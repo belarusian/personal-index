@@ -549,12 +549,6 @@ class TestArch76MalformedRecordLoad:
 # test FAILS (as expected); once the implementer preserves _history it XPASSes
 # and xfail-strict turns it red — the signal to re-verify and close QA-61.
 class TestQA61LoadUntouchedOnMalformed:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-61: load clears _history (self._history = []) on a "
-               "missing-url record, contradicting the docstring's 'leaving "
-               "_history untouched' contract.",
-    )
     def test_load_missing_url_leaves_history_untouched(self, tmp_path):
         p = tmp_path / "missing_url.json"
         p.write_text(json.dumps([{"url": "http://good.com"}, {"status_code": 200}]))
@@ -564,12 +558,6 @@ class TestQA61LoadUntouchedOnMalformed:
         # docstring: _history left untouched -> pre-existing visit preserved
         assert [v.url for v in h.get_visits()] == ["http://pre.com"]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-61: load clears _history on a wrong-type (non-str) url "
-               "record, contradicting the docstring's 'leaving _history "
-               "untouched' contract.",
-    )
     def test_load_wrong_type_url_leaves_history_untouched(self, tmp_path):
         p = tmp_path / "wrong_type_url.json"
         p.write_text(json.dumps([{"url": "http://good.com"}, {"url": 123}]))
@@ -578,12 +566,6 @@ class TestQA61LoadUntouchedOnMalformed:
         assert h.load(str(p)) == 0
         assert [v.url for v in h.get_visits()] == ["http://pre.com"]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-61: load clears _history on a non-dict record, "
-               "contradicting the docstring's 'leaving _history untouched' "
-               "contract.",
-    )
     def test_load_non_dict_record_leaves_history_untouched(self, tmp_path):
         p = tmp_path / "non_dict.json"
         p.write_text(json.dumps([{"url": "http://good.com"}, "not-a-dict"]))

@@ -178,16 +178,17 @@ class URLHistory:
         if not isinstance(data, list):
             return 0
         try:
-            self._history = [
+            loaded = [
                 URLVisit.from_dict(d)
                 for d in data
                 if isinstance(d, dict) and isinstance(d.get("url"), str)
             ]
         except TypeError:
             return 0
-        if len(self._history) != len(data):
-            self._history = []
+        if len(loaded) != len(data):
+            # A malformed record was dropped: leave _history untouched.
             return 0
+        self._history = loaded
         self._trim()
         return len(self._history)
 
