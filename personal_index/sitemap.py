@@ -201,6 +201,8 @@ class SitemapParser:
             if entry.lastmod:
                 try:
                     lastmod = datetime.fromisoformat(entry.lastmod.replace("Z", "+00:00"))
+                    if lastmod.tzinfo is None:
+                        lastmod = lastmod.replace(tzinfo=timezone.utc)
                     if (cutoff - lastmod).days <= days:
                         entries.append(entry)
                 except (ValueError, TypeError):

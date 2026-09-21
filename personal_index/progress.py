@@ -86,6 +86,8 @@ class ProgressTracker:
             start = datetime.fromisoformat(self.started_at)
         except (ValueError, TypeError):
             return 0.0
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
         now = datetime.now(timezone.utc)
         return (now - start).total_seconds()
 
