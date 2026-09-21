@@ -358,3 +358,82 @@ def test_cli_init_runs_green(tmp_path):
         timeout=120,
     )
     assert init.returncode == 0, init.stderr
+
+
+# ---------------------------------------------------------------------------
+# Cycle 344 deepen armor (re-probe after QA-69/QA-70 fixes landed on main).
+# These pin contract-implied edge cases as regression armor. None is a
+# documented-contract violation (CONTRACTS.md has no Route.pattern clause),
+# so they document observed behavior rather than file a QA ticket.
+# ---------------------------------------------------------------------------
+def test_empty_pattern_matches_everything_python_quirk():
+    # "" in url is always True, so an empty pattern matches any content.
+    # This is a Python substring quirk, not a documented contract; pinned so a
+    # future refactor that guards empty patterns is caught.
+    m = RouteMatcher()
+    m.add_route(Route(name="empty", pattern="", handler=_handler("empty")))
+    got = m.match({"url": "http://x", "type": "article"})
+    assert got is not None and got.name == "empty"
+
+
+def test_none_pattern_raises_typeerror():
+    # pattern is typed str; a None pattern is a caller type violation. The
+    # substring check `None in url` raises TypeError. Pinned so the failure
+    # mode is documented (not silently swallowed).
+    m = RouteMatcher()
+    m.add_route(Route(name="none", pattern=None, handler=_handler("none")))
+    import pytest
+
+    with pytest.raises(TypeError):
+        m.match({"url": "http://x", "type": "article"})
+
+
+def test_register_handler_overwrites_by_name():
+    # handlers dict is keyed by handler.name; re-registering the same name
+    # replaces the previous handler (last-write-wins).
+    cr = ContentRouter()
+    h1 = PassThroughHandler()
+    h1.name = "dup"
+    h2 = TypeHandler()
+    h2.name = "dup"
+    cr.register_handler(h1)
+    cr.register_handler(h2)
+    assert isinstance(cr.get_handler("dup"), TypeHandler)
+
+
+def test_match_multi_key_conditions_are_anded():
+    # All condition keys must match (AND semantics); a single mismatch fails.
+    m = RouteMatcher()
+    m.add_route(
+        Route(
+            name="both",
+            pattern="*",
+            handler=_handler("both"),
+            conditions={"lang": "en", "tier": "pro"},
+        )
+    )
+    assert m.match({"lang": "en", "tier": "pro"}) is not None
+    assert m.match({"lang": "en", "tier": "free"}) is None
+    assert m.match({"lang": "en"}) is None
+
+
+def test_match_condition_value_none_vs_absent_key():
+    # content.get(key) returns None for an absent key; a condition value of
+    # None therefore matches an absent key. Pinned as observed behavior.
+    m = RouteMatcher()
+    m.add_route(
+        Route(name="n", pattern="*", handler=_handler("n"), conditions={"x": None})
+    )
+    assert m.match({"url": "http://x"}) is not None  # absent key -> None == None
+
+
+def test_route_batch_preserves_order_with_mixed_routes():
+    # route_batch maps element-wise and preserves input order even when
+    # different items hit different routes.
+    cr = ContentRouter()
+    cr.add_route(Route(name="news", pattern="news", handler=lambda c: {**c, "tag": "news"}))
+    cr.add_route(Route(name="blog", pattern="blog", handler=lambda c: {**c, "tag": "blog"}))
+    out = cr.route_batch(
+        [{"url": "http://x/news"}, {"url": "http://x/blog"}, {"url": "http://x/other"}]
+    )
+    assert [i.get("tag") for i in out] == ["news", "blog", None]

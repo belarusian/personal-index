@@ -344,18 +344,6 @@ def test_get_recent_entries_inclusive_days_boundary():
 
 # --- DEFECT: get_recent_entries naive lastmod (QA-14) -----------------------
 
-@pytest.mark.xfail(
-    strict=False,
-    reason=(
-        "QA-63 / IMPL-16 deadlock-break (validator cycle 336): pins the "
-        "CORRECTED contract - a parseable naive lastmod is normalized to UTC "
-        "and INCLUDED (not skipped). On current main (fix absent) the naive "
-        "entry is dropped -> xfail (main stays green). Once the implementer's "
-        "QA-63 fix lands on main the test XPASSes and non-strict xfail keeps "
-        "the fix branch green. Do NOT flip to a hard assert until the fix is "
-        "confirmed ON main (self-gating rule)."
-    ),
-)
 def test_get_recent_entries_naive_lastmod_included_per_qa63_contract():
     """QA-63 corrected contract: a timezone-NAIVE lastmod (no Z / no offset)
     parses fine via fromisoformat, so it is NOT 'unparseable' and MUST be
