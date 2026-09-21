@@ -100,6 +100,8 @@ class TimelineEvent:
                 ts = datetime.fromisoformat(ts)
             except ValueError:
                 ts = datetime.now(timezone.utc)
+        else:
+            ts = datetime.now(timezone.utc)
 
         return cls(
             event_id=data.get("event_id", ""),
