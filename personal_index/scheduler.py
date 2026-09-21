@@ -61,32 +61,39 @@ class ScheduleStore:
                 self._entries = {}
                 return
             for name, entry_data in data.items():
-                config = ScheduleConfig(**entry_data["config"])
-                last_run = None
-                if entry_data.get("last_run"):
-                    last_run = datetime.fromisoformat(
-                        entry_data["last_run"]
+                try:
+                    config = ScheduleConfig(**entry_data["config"])
+                    last_run = None
+                    if entry_data.get("last_run"):
+                        last_run = datetime.fromisoformat(
+                            entry_data["last_run"]
+                        )
+                        if last_run.tzinfo is None:
+                            last_run = last_run.replace(tzinfo=timezone.utc)
+                    next_run = None
+                    if entry_data.get("next_run"):
+                        next_run = datetime.fromisoformat(
+                            entry_data["next_run"]
+                        )
+                        if next_run.tzinfo is None:
+                            next_run = next_run.replace(tzinfo=timezone.utc)
+                    entry = ScheduleEntry(
+                        name=name,
+                        config=config,
+                        run_count=entry_data.get("run_count", 0),
+                        total_pages_indexed=entry_data.get(
+                            "total_pages_indexed", 0
+                        ),
+                        last_run=last_run,
+                        next_run=next_run,
                     )
-                    if last_run.tzinfo is None:
-                        last_run = last_run.replace(tzinfo=timezone.utc)
-                next_run = None
-                if entry_data.get("next_run"):
-                    next_run = datetime.fromisoformat(
-                        entry_data["next_run"]
-                    )
-                    if next_run.tzinfo is None:
-                        next_run = next_run.replace(tzinfo=timezone.utc)
-                entry = ScheduleEntry(
-                    name=name,
-                    config=config,
-                    run_count=entry_data.get("run_count", 0),
-                    total_pages_indexed=entry_data.get(
-                        "total_pages_indexed", 0
-                    ),
-                    last_run=last_run,
-                    next_run=next_run,
-                )
-                self._entries[name] = entry
+                    self._entries[name] = entry
+                except (KeyError, TypeError, ValueError):
+                    # A single malformed entry (missing config, or an
+                    # unparseable last_run/next_run timestamp) is skipped
+                    # rather than wiping the whole store: valid sibling
+                    # entries must survive a defensive load.
+                    continue
         except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             self._entries = {}
 

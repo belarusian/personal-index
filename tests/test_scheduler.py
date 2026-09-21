@@ -420,3 +420,82 @@ class TestScheduleStoreNaiveDatetime:
         # A naive next_run in the past must be comparable and reported due.
         due = sch.get_due_schedules()
         assert [e.name for e in due] == ["job1"]
+
+
+class TestScheduleStoreUnparseableTimestampPerEntry:
+    """Regression tests for QA-58 (issue #1690): per-entry timestamp tolerance.
+
+    _load must skip a single entry whose last_run/next_run timestamp is
+    unparseable (e.g. an ISO-8601 "Z"-suffix, which datetime.fromisoformat
+    rejects on Python < 3.11) WITHOUT wiping the whole store: valid sibling
+    entries must survive a defensive load.
+    """
+
+    def _write(self, path, entries):
+        import json
+
+        with open(path, "w") as f:
+            json.dump(entries, f)
+
+    def _entry(self, last_run, next_run):
+        return {
+            "config": {
+                "interval_hours": 24,
+                "enabled": True,
+                "seed_urls": [],
+                "max_pages_per_run": 50,
+                "crawl_depth": 2,
+                "delay": 1.0,
+            },
+            "run_count": 0,
+            "total_pages_indexed": 0,
+            "last_run": last_run,
+            "next_run": next_run,
+        }
+
+    def test_all_valid_entries_load(self, tmp_path):
+        """Normal case: every entry with a parseable timestamp loads."""
+        path = str(tmp_path / "schedules.json")
+        self._write(
+            path,
+            {
+                "a": self._entry(
+                    "2024-01-01T12:00:00+00:00",
+                    "2024-01-02T12:00:00+00:00",
+                ),
+                "b": self._entry(
+                    "2024-01-01T12:00:00+00:00",
+                    "2024-01-02T12:00:00+00:00",
+                ),
+            },
+        )
+        store = ScheduleStore(path=path)
+        assert set(store._entries) == {"a", "b"}
+        assert store.get("a").next_run == datetime(
+            2024, 1, 2, 12, 0, tzinfo=timezone.utc
+        )
+
+    def test_one_unparseable_entry_does_not_wipe_valid_siblings(self, tmp_path):
+        """Guard input: one bad entry is skipped, valid siblings survive."""
+        path = str(tmp_path / "schedules.json")
+        self._write(
+            path,
+            {
+                "good": self._entry(
+                    "2024-01-01T12:00:00+00:00",
+                    "2024-01-02T12:00:00+00:00",
+                ),
+                "bad": self._entry(
+                    "2024-01-01T12:00:00Z",
+                    "2024-01-02T12:00:00Z",
+                ),
+            },
+        )
+        store = ScheduleStore(path=path)
+        # The valid "good" entry must survive; only "bad" is dropped.
+        assert "good" in store._entries
+        assert store.get("good") is not None
+        assert store.get("good").next_run == datetime(
+            2024, 1, 2, 12, 0, tzinfo=timezone.utc
+        )
+        assert "bad" not in store._entries
