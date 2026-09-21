@@ -74,7 +74,7 @@ class PermissionChecker:
     """Checks if a user has specific permissions."""
 
     def __init__(self, custom_role_permissions: dict[Role, set[Permission]] | None = None):
-        self._role_permissions = custom_role_permissions or ROLE_PERMISSIONS.copy()
+        self._role_permissions = {r: set(p) for r, p in (custom_role_permissions or ROLE_PERMISSIONS).items()}
 
     def check(self, user: User, permission: Permission) -> bool:
         """Check if a user has a specific permission.

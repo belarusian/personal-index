@@ -636,17 +636,6 @@ class TestPermissionCheckerAdversarial:
         user = User(user_id="u1", username="c", roles=[Role.CRAWLER])
         assert checker.check(user, Permission.WRITE_INDEX) is True
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-57: PermissionChecker.__init__ uses ROLE_PERMISSIONS.copy() "
-            "(shallow dict copy) so the inner set[Permission] objects are shared "
-            "with the module-level constant. add_role_permissions on one instance "
-            "mutates the global, leaking across all instances in the process. "
-            "Expected: a fresh instance is unaffected by another instance's "
-            "customization."
-        ),
-    )
     def test_add_role_permissions_is_instance_isolated(self):
         """QA-57: customizing one PermissionChecker must not leak into another.
 
