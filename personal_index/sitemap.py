@@ -191,7 +191,9 @@ class SitemapParser:
         falsy (None or empty) are skipped. Each remaining ``lastmod`` is parsed
         with ``datetime.fromisoformat`` after replacing a trailing ``"Z"`` with
         ``"+00:00"``; entries whose ``lastmod`` raises ``ValueError`` or
-        ``TypeError`` are skipped. An entry is included when
+        ``TypeError`` are skipped. A parsed ``lastmod`` that is naive (no
+        timezone) is treated as UTC (``replace(tzinfo=timezone.utc)``) before
+        comparison. An entry is included when
         ``(datetime.now(timezone.utc) - lastmod).days <= days`` (inclusive
         boundary). Returns the collected entries as a new list.
         """
@@ -201,6 +203,8 @@ class SitemapParser:
             if entry.lastmod:
                 try:
                     lastmod = datetime.fromisoformat(entry.lastmod.replace("Z", "+00:00"))
+                    if lastmod.tzinfo is None:
+                        lastmod = lastmod.replace(tzinfo=timezone.utc)
                     if (cutoff - lastmod).days <= days:
                         entries.append(entry)
                 except (ValueError, TypeError):

@@ -79,13 +79,21 @@ class ProgressTracker:
 
     @property
     def elapsed_seconds(self) -> float:
-        """Get elapsed time in seconds."""
+        """Get elapsed time in seconds.
+
+        ``started_at`` is parsed with ``datetime.fromisoformat``; a naive
+        (timezone-less) value is treated as UTC (``replace(tzinfo=timezone.utc)``)
+        before subtracting from the current UTC time. Unparseable values return
+        ``0.0``.
+        """
         if not self.started_at:
             return 0.0
         try:
             start = datetime.fromisoformat(self.started_at)
         except (ValueError, TypeError):
             return 0.0
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
         now = datetime.now(timezone.utc)
         return (now - start).total_seconds()
 

@@ -27,7 +27,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-import pytest
 from click.testing import CliRunner
 
 from personal_index.cli import main
@@ -63,7 +62,6 @@ def _recent_aware_iso() -> str:
 # SitemapParser.get_recent_entries
 # ---------------------------------------------------------------------------
 class TestSitemapRecentEntriesNaive:
-    @pytest.mark.xfail(strict=True, reason="QA-63: naive lastmod silently skipped (naive<aware TypeError swallowed)")
     def test_naive_old_timestamp_is_included(self):
         """DEFECT (QA-63): a parseable naive lastmod is silently skipped.
 
@@ -106,7 +104,6 @@ class TestSitemapRecentEntriesNaive:
         result = SitemapParser().get_recent_entries(sm, days=3650)
         assert result == []
 
-    @pytest.mark.xfail(strict=True, reason="QA-63: naive lastmod silently skipped (naive<aware TypeError swallowed)")
     def test_naive_recent_timestamp_is_included(self):
         """DEFECT (QA-63): a recent naive lastmod is also silently skipped."""
         sm = Sitemap(entries=[SitemapEntry(loc="http://x", lastmod=_recent_naive_iso())])
@@ -127,7 +124,6 @@ class TestSitemapRecentEntriesNaive:
 # ProgressTracker.elapsed_seconds
 # ---------------------------------------------------------------------------
 class TestProgressElapsedSecondsNaive:
-    @pytest.mark.xfail(strict=True, reason="QA-63: naive started_at hard-crashes elapsed_seconds (aware-naive TypeError outside try)")
     def test_naive_started_at_returns_float(self):
         """DEFECT (QA-63): a naive started_at hard-crashes elapsed_seconds.
 
