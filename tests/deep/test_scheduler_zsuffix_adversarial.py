@@ -124,3 +124,67 @@ class TestZSuffixDataLoss:
         # Contract: the valid "good" entry must survive; only "bad" is dropped.
         assert "good" in s._entries
         assert s.get("good") is not None
+
+
+# ── QA-58 VERIFY adversarial probes (fix #1708@ade4ad85 on main) ─────────
+class TestPerEntrySkipAdversarial:
+    def test_missing_config_entry_skipped_siblings_survive(self, tmp_path):
+        """A single entry missing its required "config" key must be skipped
+        (KeyError caught per-entry), not wipe valid siblings."""
+        p = _write(
+            tmp_path,
+            {
+                "good": _entry("2026-01-01T00:00:00+00:00",
+                               "2026-01-01T00:00:00+00:00"),
+                "badcfg": {"run_count": 0, "total_pages_indexed": 0,
+                           "last_run": None, "next_run": None},
+            },
+        )
+        s = ScheduleStore(path=p)
+        assert "good" in s._entries
+        assert "badcfg" not in s._entries
+
+    def test_null_timestamps_entry_is_loaded(self, tmp_path):
+        """An entry with null last_run/next_run is valid and must load."""
+        p = _write(
+            tmp_path,
+            {
+                "nulls": {"config": _cfg(), "run_count": 3,
+                          "total_pages_indexed": 42,
+                          "last_run": None, "next_run": None},
+            },
+        )
+        s = ScheduleStore(path=p)
+        assert "nulls" in s._entries
+        e = s.get("nulls")
+        assert e.last_run is None
+        assert e.next_run is None
+        assert e.run_count == 3
+        assert e.total_pages_indexed == 42
+
+    def test_all_entries_bad_yields_empty_not_crash(self, tmp_path):
+        """If every entry is malformed, the store loads empty (no crash,
+        no wipe-of-a-valid-sibling concern)."""
+        p = _write(
+            tmp_path,
+            {
+                "b1": _entry("not-a-date", "also-not-a-date"),
+                "b2": _entry("2026-13-99T99:99:99+00:00", "x"),
+            },
+        )
+        s = ScheduleStore(path=p)
+        assert s._entries == {}
+
+    def test_malformed_file_yields_empty_not_crash(self, tmp_path):
+        """A file that is not valid JSON at all must load empty, not crash."""
+        p = tmp_path / "bad.json"
+        p.write_text("{ this is not json ]")
+        s = ScheduleStore(path=str(p))
+        assert s._entries == {}
+
+    def test_non_dict_json_yields_empty_not_crash(self, tmp_path):
+        """A JSON array (not a dict) must load empty, not crash."""
+        p = tmp_path / "arr.json"
+        p.write_text(json.dumps([1, 2, 3]))
+        s = ScheduleStore(path=str(p))
+        assert s._entries == {}
