@@ -34,10 +34,8 @@ hard-failed, so main stays green):
 from __future__ import annotations
 
 import json
-import sys
 from datetime import timedelta
 
-import pytest
 
 from personal_index.scheduler import (
     ScheduleConfig,
@@ -45,24 +43,6 @@ from personal_index.scheduler import (
     ScheduleStore,
 )
 
-# The "Z"-suffix data-loss defect is real only on Python < 3.11, where
-# datetime.fromisoformat rejects the "Z" suffix. On >= 3.11 it is parsed
-# fine, so the pin passes and the marker must be a no-op.
-_Z_DEFECT_ACTIVE = sys.version_info < (3, 11)
-
-_Z_XFAIL = pytest.mark.xfail(
-    _Z_DEFECT_ACTIVE,
-    strict=True,
-    reason=(
-        "QA-58 (Python < 3.11): a single entry with a 'Z'-suffix ISO timestamp "
-        "(unparseable by datetime.fromisoformat before 3.11) raises ValueError "
-        "inside the whole-loop try, so `except` sets self._entries = {} and "
-        "wipes ALL valid sibling entries. Expected per the defensive _load "
-        "contract: the bad entry is skipped and valid entries are preserved. "
-        "On Python >= 3.11 fromisoformat accepts 'Z', the defect is absent, "
-        "and this test passes (marker is a no-op)."
-    ),
-)
 
 
 def _cfg() -> dict:
@@ -130,7 +110,6 @@ class TestAwareOffsetPreserved:
 
 # ── REAL DEFECT: one "Z"-suffix entry wipes the whole store (QA-58) ───────
 class TestZSuffixDataLoss:
-    @_Z_XFAIL
     def test_one_z_entry_does_not_wipe_valid_siblings(self, tmp_path):
         p = _write(
             tmp_path,
