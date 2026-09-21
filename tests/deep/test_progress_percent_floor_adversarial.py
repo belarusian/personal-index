@@ -19,8 +19,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from personal_index.progress import (
     ProgressState,
     ProgressStore,
@@ -32,11 +30,6 @@ from personal_index.progress import (
 # QA-71: progress_percent floor (cap-without-floor) — xfail-strict pins
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-71: progress_percent docstring promises 0-100 but has no "
-           "lower clamp (max(0.0, ...)); negative current_step leaks -50.0",
-)
 def test_progress_percent_negative_current_step_is_floored():
     t = ProgressTracker(operation_name="x", total_steps=10, current_step=-5)
     p = t.progress_percent
@@ -44,22 +37,12 @@ def test_progress_percent_negative_current_step_is_floored():
     assert 0.0 <= p <= 100.0, f"progress_percent out of 0-100: {p}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-71: progress_percent has no lower clamp; negative total_steps "
-           "leaks a negative percentage",
-)
 def test_progress_percent_negative_total_steps_is_floored():
     t = ProgressTracker(operation_name="x", total_steps=-10, current_step=5)
     p = t.progress_percent
     assert 0.0 <= p <= 100.0, f"progress_percent out of 0-100: {p}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-71: the public to_dict() serialization path exposes the same "
-           "unfloored progress_percent",
-)
 def test_to_dict_progress_percent_floored():
     t = ProgressTracker(operation_name="x", total_steps=10, current_step=-5)
     d = t.to_dict()
