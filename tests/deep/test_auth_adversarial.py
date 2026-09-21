@@ -680,3 +680,36 @@ class TestPermissionCheckerAdversarial:
         user = User(user_id="u1", username="nobody", roles=[])
         assert checker.check(user, Permission.READ_INDEX) is False
         assert checker.check_any(user, Permission.READ_INDEX) is False
+
+    # ── QA-57 VERIFY adversarial probes (fix #1707@4ed3eb99 on main) ──────
+    def test_module_constant_not_mutated_by_add(self):
+        """QA-57: add_role_permissions must not mutate the module-level
+        ROLE_PERMISSIONS constant (the original leak vector)."""
+        before = {r: set(p) for r, p in ROLE_PERMISSIONS.items()}
+        a = PermissionChecker()
+        a.add_role_permissions(Role.CRAWLER, {Permission.WRITE_INDEX})
+        # The global constant must be byte-for-byte identical to before.
+        for role, perms in ROLE_PERMISSIONS.items():
+            assert perms == before[role], f"ROLE_PERMISSIONS[{role}] mutated"
+
+    def test_custom_role_permissions_is_deeply_isolated(self):
+        """QA-57: a custom_role_permissions dict passed to __init__ must not
+        be shared by reference with the instance's internal sets."""
+        custom = {Role.CRAWLER: {Permission.READ_INDEX}}
+        a = PermissionChecker(custom_role_permissions=custom)
+        a.add_role_permissions(Role.CRAWLER, {Permission.WRITE_INDEX})
+        # The caller's dict must not have been mutated in place.
+        assert Permission.WRITE_INDEX not in custom[Role.CRAWLER]
+        # A second instance built from the SAME custom dict is independent.
+        b = PermissionChecker(custom_role_permissions=custom)
+        user = User(user_id="u1", username="c", roles=[Role.CRAWLER])
+        assert b.check(user, Permission.WRITE_INDEX) is False
+
+    def test_add_role_permissions_new_role_does_not_leak(self):
+        """QA-57: adding a permission to a role absent from the defaults must
+        not create a shared set that leaks into other instances."""
+        a = PermissionChecker()
+        a.add_role_permissions(Role.VIEWER, {Permission.MANAGE_USERS})
+        b = PermissionChecker()
+        user = User(user_id="u1", username="v", roles=[Role.VIEWER])
+        assert b.check(user, Permission.MANAGE_USERS) is False
