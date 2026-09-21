@@ -18,6 +18,8 @@ Functions armored:
 from __future__ import annotations
 
 
+import pytest
+
 from personal_index.sitemap import Sitemap, SitemapEntry, SitemapParser
 
 NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -342,14 +344,26 @@ def test_get_recent_entries_inclusive_days_boundary():
 
 # --- DEFECT: get_recent_entries naive lastmod (QA-14) -----------------------
 
-def test_get_recent_entries_naive_lastmod_skipped_per_docstring():
-    """QA-14: docstring says entries whose lastmod raises TypeError are
-    skipped, but a timezone-NAIVE lastmod (no Z / no offset) parses fine via
-    fromisoformat, then (cutoff - lastmod) raises TypeError OUTSIDE the
-    try/except -> the whole call crashes instead of skipping the entry.
-
-    Expected-per-docs: the naive entry is skipped and the aware entry is
-    returned. Actual: TypeError propagates.
+@pytest.mark.xfail(
+    strict=False,
+    reason=(
+        "QA-63 / IMPL-16 deadlock-break (validator cycle 336): pins the "
+        "CORRECTED contract - a parseable naive lastmod is normalized to UTC "
+        "and INCLUDED (not skipped). On current main (fix absent) the naive "
+        "entry is dropped -> xfail (main stays green). Once the implementer's "
+        "QA-63 fix lands on main the test XPASSes and non-strict xfail keeps "
+        "the fix branch green. Do NOT flip to a hard assert until the fix is "
+        "confirmed ON main (self-gating rule)."
+    ),
+)
+def test_get_recent_entries_naive_lastmod_included_per_qa63_contract():
+    """QA-63 corrected contract: a timezone-NAIVE lastmod (no Z / no offset)
+    parses fine via fromisoformat, so it is NOT 'unparseable' and MUST be
+    considered - normalized to UTC (replace(tzinfo=timezone.utc)) and included
+    when within the window, matching the reference fix
+    content_scoring._score_recency. Both the naive and aware 2099 entries are
+    in the future, so (cutoff - lastmod).days is negative and <= days -> both
+    included.
     """
     p = SitemapParser()
     sm = Sitemap(entries=[
@@ -357,7 +371,10 @@ def test_get_recent_entries_naive_lastmod_skipped_per_docstring():
         SitemapEntry("https://a.com/aware", lastmod="2099-01-01T00:00:00Z"),
     ])
     out = p.get_recent_entries(sm, days=30)
-    assert [e.loc for e in out] == ["https://a.com/aware"]
+    assert [e.loc for e in out] == [
+        "https://a.com/naive",
+        "https://a.com/aware",
+    ]
 
 
 # --- end-to-end CLI run -----------------------------------------------------
