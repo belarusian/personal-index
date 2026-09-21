@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from personal_index.search_facets.facet import Facet
@@ -214,6 +214,7 @@ class FacetedSearch:
         parsed = self._parse_date_value(doc_value)
         if parsed is None:
             parsed = doc_value
+        parsed = self._normalize_tz(parsed)
 
         if not self._check_between(parsed, filter_spec):
             return False
@@ -238,7 +239,7 @@ class FacetedSearch:
         low, high = between
         lp, hp = self._parse_date_value(low), self._parse_date_value(high)
         if lp is not None and hp is not None:
-            return bool(lp <= val <= hp)
+            return bool(self._normalize_tz(lp) <= val <= self._normalize_tz(hp))
         return bool(low <= val <= high)
 
     def _check_gte(self, val: Any, spec: dict[str, Any]) -> bool:
@@ -246,7 +247,7 @@ class FacetedSearch:
             return True
         pv = self._parse_date_value(spec["$gte"])
         if pv is not None:
-            return bool(val >= pv)
+            return bool(val >= self._normalize_tz(pv))
         return bool(val >= spec["$gte"])
 
     def _check_lte(self, val: Any, spec: dict[str, Any]) -> bool:
@@ -254,7 +255,7 @@ class FacetedSearch:
             return True
         pv = self._parse_date_value(spec["$lte"])
         if pv is not None:
-            return bool(val <= pv)
+            return bool(val <= self._normalize_tz(pv))
         return bool(val <= spec["$lte"])
 
     def _check_gt(self, val: Any, spec: dict[str, Any]) -> bool:
@@ -262,7 +263,7 @@ class FacetedSearch:
             return True
         pv = self._parse_date_value(spec["$gt"])
         if pv is not None:
-            return bool(val > pv)
+            return bool(val > self._normalize_tz(pv))
         return bool(val > spec["$gt"])
 
     def _check_lt(self, val: Any, spec: dict[str, Any]) -> bool:
@@ -270,7 +271,7 @@ class FacetedSearch:
             return True
         pv = self._parse_date_value(spec["$lt"])
         if pv is not None:
-            return bool(val < pv)
+            return bool(val < self._normalize_tz(pv))
         return bool(val < spec["$lt"])
 
     def _check_in(self, val: Any, spec: dict[str, Any]) -> bool:
@@ -285,6 +286,20 @@ class FacetedSearch:
         if "$not" not in spec:
             return True
         return bool(val != spec["$not"])
+
+    def _normalize_tz(self, value: Any) -> Any:
+        """Normalize a naive datetime to UTC-aware for range-filter comparison.
+
+        A naive datetime (``tzinfo is None``) is made UTC-aware via
+        ``replace(tzinfo=timezone.utc)`` so that a naive document value and an
+        aware filter bound (or vice-versa) never raise
+        ``TypeError: can't compare offset-naive and offset-aware datetimes``.
+        Mirrors the reference fix in ``content_scoring._score_recency``.
+        Non-datetime values (numbers, strings, None) are returned unchanged.
+        """
+        if isinstance(value, datetime) and value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
 
     def _parse_date_value(self, value: Any) -> Any:
         """Parse a value as a date if it's a date-like string.

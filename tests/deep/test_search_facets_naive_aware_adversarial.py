@@ -56,15 +56,6 @@ def _fs(doc_published: str) -> FacetedSearch:
 class TestNaiveAwareRangeSeam:
     """The seam: naive doc value vs aware filter bound (and reverse)."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-65: naive doc value vs aware $gte bound raises uncaught "
-            "TypeError (naive-vs-aware datetime seam, faceted_search.py "
-            "_parse_date_value/_check_gte). Flip to hard pass once the "
-            "implementer's fix is confirmed ON main."
-        ),
-    )
     def test_naive_doc_aware_bound_gte(self):
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$gte": AWARE_BOUND}})
         assert r.total == 1
@@ -80,13 +71,6 @@ class TestNaiveAwareRangeSeam:
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$lte": AWARE_BOUND}})
         assert r.total == 1
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-65: naive doc value vs aware $gt bound raises uncaught "
-            "TypeError (naive-vs-aware datetime seam). Flip on fix ON main."
-        ),
-    )
     def test_naive_doc_aware_bound_gt(self):
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$gt": AWARE_BOUND}})
         assert r.total == 1
@@ -102,24 +86,10 @@ class TestNaiveAwareRangeSeam:
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$lt": AWARE_BOUND}})
         assert r.total == 1
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-65: aware doc value vs naive $gte bound raises uncaught "
-            "TypeError (reverse direction of the same seam). Flip on fix ON main."
-        ),
-    )
     def test_aware_doc_naive_bound_gte(self):
         r = _fs(AWARE_DOC).search("", filters={"published": {"$gte": NAIVE_BOUND}})
         assert r.total == 1
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-65: naive doc value vs aware $between bounds raises uncaught "
-            "TypeError (naive-vs-aware datetime seam). Flip on fix ON main."
-        ),
-    )
     def test_naive_doc_aware_between(self):
         r = _fs(NAIVE_DOC).search(
             "",
