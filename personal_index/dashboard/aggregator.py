@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -83,9 +83,12 @@ class DashboardAggregator:
         for p in pages:
             if hasattr(p, "crawled_at") and p.crawled_at:
                 try:
-                    dates.append(
+                    dt = (
                         datetime.fromisoformat(p.crawled_at) if isinstance(p.crawled_at, str) else p.crawled_at
                     )
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    dates.append(dt)
                 except (ValueError, TypeError):
                     pass
         if len(dates) < 2:

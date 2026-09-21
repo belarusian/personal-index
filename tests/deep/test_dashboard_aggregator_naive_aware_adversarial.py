@@ -76,15 +76,6 @@ class TestNaiveAwarePagesPerDaySeam:
     """The seam: a mixed naive/aware crawled_at list reaches max() outside
     the per-item try/except and raises an uncaught TypeError."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-66: mixed naive+aware crawled_at -> max(dates) at "
-            "aggregator.py:94 raises uncaught TypeError (naive-vs-aware "
-            "datetime seam, _compute_pages_per_day). Flip to hard pass once "
-            "the implementer's fix is confirmed ON main."
-        ),
-    )
     def test_mixed_naive_aware_raises_type_error(self):
         pages = [
             _page("http://a.com", "2024-01-01T00:00:00"),          # naive
@@ -93,14 +84,6 @@ class TestNaiveAwarePagesPerDaySeam:
         stats = _aggregate(pages)
         assert stats.pages_per_day >= 0.0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-66: reverse direction (aware first, naive second) still mixes "
-            "tz-awareness and hits the same uncaught TypeError. Flip on fix "
-            "ON main."
-        ),
-    )
     def test_mixed_aware_naive_raises_type_error(self):
         pages = [
             _page("http://a.com", "2024-01-02T00:00:00+00:00"),    # aware
@@ -109,13 +92,6 @@ class TestNaiveAwarePagesPerDaySeam:
         stats = _aggregate(pages)
         assert stats.pages_per_day >= 0.0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-66: three pages, two naive + one aware, still mixes "
-            "tz-awareness and hits the uncaught TypeError. Flip on fix ON main."
-        ),
-    )
     def test_mixed_three_pages_raises_type_error(self):
         pages = [
             _page("http://a.com", "2024-01-01T00:00:00"),
