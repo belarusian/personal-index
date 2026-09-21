@@ -16,7 +16,6 @@ from __future__ import annotations
 import subprocess
 import sys
 
-import pytest
 
 from personal_index.text_utils import (
     count_characters,
@@ -166,10 +165,6 @@ class TestTruncateText:
         result = truncate_text("hello world", 5, suffix="[...]")
         assert result.endswith("[...]")
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-60: truncate_text negative max_length leaks negative-slice semantics",
-    )
     def test_negative_max_length_negative_slice_leak(self):
         """CONTRACTS.md negative-slice guard: max_length < 0 must yield the
         same result as max_length == 0 (the zero bound).
@@ -186,10 +181,6 @@ class TestTruncateText:
             f"got {neg_result!r}, expected {zero_result!r} (same as max_length=0)"
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-60: truncate_text negative max_length leaks negative-slice semantics",
-    )
     def test_negative_max_length_small_text(self):
         """Even for short text, negative max_length must match zero bound."""
         text = "short"
