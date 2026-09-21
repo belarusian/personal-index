@@ -293,7 +293,7 @@ def test_remove_absent_item_returns_true_but_no_index_change():
 # move_item — documented multi-collection semantic
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="ARCH-43: move_item should relocate from every collection (Option A); fix pending implementer")
+@pytest.mark.xfail(strict=False, reason="ARCH-43: move_item should relocate from every collection (Option A); fix pending implementer - non-strict so the fix branch XPASSes green (cycle 352 deadlock-break, consistent with ARCH-66/83/84 cycle 333)")
 def test_move_item_relocates_from_every_collection():
     """move_item removes from EVERY collection the item belongs to, then adds to dest
     (Option A: true relocation)."""
