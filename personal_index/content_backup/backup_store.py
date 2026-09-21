@@ -9,6 +9,20 @@ from pathlib import Path
 from typing import Any
 
 
+def _normalize_tz(dt: datetime) -> datetime:
+    """Normalize a naive datetime to UTC-aware for sort/min comparison.
+
+    A naive datetime (``tzinfo is None``) is made UTC-aware via
+    ``replace(tzinfo=timezone.utc)`` so a naive ``timestamp`` and an aware
+    ``timestamp`` never raise ``TypeError: can't compare offset-naive and
+    offset-aware datetimes`` at the sort/min. Mirrors the reference fix in
+    ``content_scoring._score_recency``.
+    """
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 @dataclass
 class BackupEntry:
     """A single backup entry.
@@ -94,7 +108,7 @@ class BackupStore:
         """
         return sorted(
             self.backups.values(),
-            key=lambda b: b.timestamp,
+            key=lambda b: _normalize_tz(b.timestamp),
             reverse=True,
         )
 
@@ -123,7 +137,7 @@ class BackupStore:
 
     def _evict_oldest(self) -> None:
         """Remove the oldest backup when limit is exceeded."""
-        oldest = min(self.backups.values(), key=lambda b: b.timestamp)
+        oldest = min(self.backups.values(), key=lambda b: _normalize_tz(b.timestamp))
         del self.backups[oldest.backup_id]
 
     def export_to_file(

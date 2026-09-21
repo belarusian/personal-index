@@ -36,8 +36,6 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-import pytest
-
 from personal_index.content_backup.backup_store import BackupEntry, BackupStore
 from personal_index.content_feed import FeedGenerator, FeedItem
 from personal_index.content_timeline.timeline import Timeline
@@ -48,11 +46,6 @@ from personal_index.content_timeline.timeline_event import TimelineEvent
 # Site 1: content_feed.FeedGenerator.add_item sort (content_feed.py:107)
 # ---------------------------------------------------------------------------
 class TestContentFeedNaiveAwareSeam:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-67: naive-vs-aware seam at FeedGenerator.add_item sort "
-        "(content_feed.py:107); mixed naive+aware published raises TypeError",
-    )
     def test_mixed_naive_aware_published_sorts_without_error(self):
         g = FeedGenerator(title="t", link="http://x")
         g.add_item(
@@ -121,11 +114,6 @@ class TestContentFeedNaiveAwareSeam:
 # Site 2: content_timeline.Timeline.add_event / add_entry sort
 # ---------------------------------------------------------------------------
 class TestTimelineNaiveAwareSeam:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-67: naive-vs-aware seam at Timeline.add_event sort "
-        "(timeline.py:37); mixed naive+aware timestamp raises TypeError",
-    )
     def test_mixed_naive_aware_event_sorts_without_error(self):
         tl = Timeline()
         tl.add_event(
@@ -141,11 +129,6 @@ class TestTimelineNaiveAwareSeam:
         # Corrected contract: mixed list sorts without TypeError.
         assert {e.event_id for e in tl.events} == {"e1", "e2"}
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-67: naive-vs-aware seam at Timeline.add_entry sort "
-        "(timeline.py:67); mixed naive+aware timestamp raises TypeError",
-    )
     def test_mixed_naive_aware_entry_sorts_without_error(self):
         tl = Timeline()
         tl.add_entry(
@@ -186,11 +169,6 @@ class TestTimelineNaiveAwareSeam:
 # Site 3: content_backup.BackupStore.list_backups / _evict_oldest
 # ---------------------------------------------------------------------------
 class TestBackupStoreNaiveAwareSeam:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-67: naive-vs-aware seam at BackupStore.list_backups sort "
-        "(backup_store.py:95-97); mixed naive+aware timestamp raises TypeError",
-    )
     def test_mixed_naive_aware_list_backups_without_error(self):
         bs = BackupStore()
         bs.backups["b1"] = BackupEntry(
@@ -208,11 +186,6 @@ class TestBackupStoreNaiveAwareSeam:
         # Corrected contract: mixed list sorts without TypeError.
         assert {b.backup_id for b in bs.list_backups()} == {"b1", "b2"}
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-67: naive-vs-aware seam at BackupStore._evict_oldest min "
-        "(backup_store.py:126); mixed naive+aware timestamp raises TypeError",
-    )
     def test_mixed_naive_aware_evict_oldest_without_error(self):
         bs = BackupStore()
         bs.backups["b1"] = BackupEntry(

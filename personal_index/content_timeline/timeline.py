@@ -11,6 +11,20 @@ from personal_index.content_timeline.timeline_entry import TimelineEventType as 
 from personal_index.content_timeline.timeline_event import TimelineEvent, TimelineEventType
 
 
+def _normalize_tz(dt: datetime) -> datetime:
+    """Normalize a naive datetime to UTC-aware for sort comparison.
+
+    A naive datetime (``tzinfo is None``) is made UTC-aware via
+    ``replace(tzinfo=timezone.utc)`` so a naive ``timestamp`` and an aware
+    ``timestamp`` never raise ``TypeError: can't compare offset-naive and
+    offset-aware datetimes`` at the sort. Mirrors the reference fix in
+    ``content_scoring._score_recency``.
+    """
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 class Timeline:
     """Manages chronological timeline of content events."""
 
@@ -34,7 +48,7 @@ class Timeline:
         and re-sorts ``self.events`` in ascending order by ``timestamp``.
         """
         self.events.append(event)
-        self.events.sort(key=lambda e: e.timestamp)
+        self.events.sort(key=lambda e: _normalize_tz(e.timestamp))
 
     def add_entry(
         self,
@@ -64,7 +78,7 @@ class Timeline:
             metadata=metadata or {},
         )
         self.entries.append(entry)
-        self.entries.sort(key=lambda e: e.timestamp, reverse=True)
+        self.entries.sort(key=lambda e: _normalize_tz(e.timestamp), reverse=True)
         return entry
 
     @property

@@ -8,6 +8,23 @@ from datetime import datetime, timezone
 from enum import Enum
 
 
+def _normalize_tz(dt: datetime | None) -> datetime:
+    """Normalize a naive datetime to UTC-aware for sort comparison.
+
+    A naive datetime (``tzinfo is None``) is made UTC-aware via
+    ``replace(tzinfo=timezone.utc)`` so a naive ``published`` and an aware
+    ``published`` never raise ``TypeError: can't compare offset-naive and
+    offset-aware datetimes`` at the sort. ``None`` maps to the aware
+    ``datetime.min`` sentinel. Mirrors the reference fix in
+    ``content_scoring._score_recency``.
+    """
+    if dt is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 class FeedFormat(str, Enum):
     """Supported feed formats."""
 
@@ -104,7 +121,7 @@ class FeedGenerator:
         """Add an item, then sort by published date (newest first) and cap at max_items."""
         self.items.append(item)
         # Sort by published date, newest first
-        self.items.sort(key=lambda i: i.published or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+        self.items.sort(key=lambda i: _normalize_tz(i.published), reverse=True)
         # Enforce max items
         if len(self.items) > self.max_items:
             self.items = self.items[: self.max_items]
