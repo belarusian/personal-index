@@ -181,12 +181,6 @@ def test_match_unicode_content():
     assert got is not None and got.name == "u"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-69: RouteMatcher._matches crashes with TypeError when content['url'] is None "
-    "(route.pattern in url -> 'argument of type NoneType is not iterable'); "
-    "the guard content.get('url', '') only handles a MISSING key, not a None value.",
-)
 def test_match_none_url_treated_as_empty():
     # content.get("url", "") returns "" when key absent; a None value is distinct.
     m = RouteMatcher()

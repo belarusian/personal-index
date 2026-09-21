@@ -81,7 +81,7 @@ class RouteMatcher:
             True if content matches the route.
         """
         # Check pattern against URL or type
-        url = content.get("url", "")
+        url = content.get("url") or ""
         content_type = content.get("type", "")
 
         pattern_matches = (
