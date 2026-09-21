@@ -30,8 +30,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from personal_index.session import (
     CrawlSession,
     SessionManager,
@@ -58,13 +56,6 @@ class TestLoadSessionStatsShape:
     ``stats`` key. It must NOT raise out of ``load_session``.
     """
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-59: load_session calls stats_data.get(...) on the persisted "
-        "'stats' value; a non-dict value (list) raises AttributeError instead "
-        "of degrading to the empty stats state, violating the ARCH-63 "
-        "defensive-load guard.",
-    )
     def test_stats_as_list_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "s.json",
                    {"session_id": "x", "status": "active", "stats": [1, 2, 3]})
@@ -76,13 +67,6 @@ class TestLoadSessionStatsShape:
         assert s.stats.urls_failed == 0
         assert s.stats.urls_skipped == 0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-59: load_session calls stats_data.get(...) on the persisted "
-        "'stats' value; a non-dict value (int) raises AttributeError instead "
-        "of degrading to the empty stats state, violating the ARCH-63 "
-        "defensive-load guard.",
-    )
     def test_stats_as_number_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "s.json",
                    {"session_id": "x", "status": "active", "stats": 42})
@@ -91,13 +75,6 @@ class TestLoadSessionStatsShape:
         assert s is not None
         assert s.stats.urls_crawled == 0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-59: load_session calls stats_data.get(...) on the persisted "
-        "'stats' value; a non-dict value (null) raises AttributeError instead "
-        "of degrading to the empty stats state, violating the ARCH-63 "
-        "defensive-load guard.",
-    )
     def test_stats_as_null_degrades_to_empty(self, tmp_path):
         p = _write(tmp_path / "s.json",
                    {"session_id": "x", "status": "active", "stats": None})

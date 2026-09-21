@@ -443,3 +443,60 @@ class TestSessionManagerMissingSessionIdGuard:
         assert loaded is not None
         assert loaded.session_id == "s1"
         assert loaded.status == SessionStatus.PAUSED
+
+
+class TestSessionManagerNonDictStatsGuard:
+    """load_session must degrade a NON-DICT persisted "stats" value to the empty
+    stats state (all counters 0), exactly like a missing "stats" key, and must
+    NOT raise AttributeError out of load_session (ARCH-63 defensive-load guard)."""
+
+    def _write(self, tmp_path, stats_value, name="s.json"):
+        import json
+
+        p = tmp_path / name
+        p.write_text(json.dumps({"session_id": "x", "status": "active",
+                                 "stats": stats_value}))
+        return str(p)
+
+    def test_stats_as_list_degrades_to_empty(self, tmp_path):
+        mgr = SessionManager()
+        s = mgr.load_session(self._write(tmp_path, [1, 2, 3]))
+        assert s is not None
+        assert s.session_id == "x"
+        assert s.stats.urls_crawled == 0
+        assert s.stats.urls_failed == 0
+        assert s.stats.urls_skipped == 0
+        assert s.stats.bytes_downloaded == 0
+        assert s.stats.pages_indexed == 0
+
+    def test_stats_as_number_degrades_to_empty(self, tmp_path):
+        mgr = SessionManager()
+        s = mgr.load_session(self._write(tmp_path, 42))
+        assert s is not None
+        assert s.stats.urls_crawled == 0
+
+    def test_stats_as_string_degrades_to_empty(self, tmp_path):
+        mgr = SessionManager()
+        s = mgr.load_session(self._write(tmp_path, "oops"))
+        assert s is not None
+        assert s.stats.urls_crawled == 0
+
+    def test_stats_as_null_degrades_to_empty(self, tmp_path):
+        mgr = SessionManager()
+        s = mgr.load_session(self._write(tmp_path, None))
+        assert s is not None
+        assert s.stats.urls_crawled == 0
+
+    def test_stats_dict_still_loads_counters(self, tmp_path):
+        # Normal case: a well-formed dict stats value still loads its counters.
+        import json
+
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps(
+            {"session_id": "x", "status": "active",
+             "stats": {"urls_crawled": 7, "pages_indexed": 3}}))
+        mgr = SessionManager()
+        s = mgr.load_session(str(p))
+        assert s is not None
+        assert s.stats.urls_crawled == 7
+        assert s.stats.pages_indexed == 3

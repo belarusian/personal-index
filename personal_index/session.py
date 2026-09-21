@@ -328,6 +328,8 @@ class SessionManager:
             metadata=data.get("metadata", {}),
         )
         stats_data = data.get("stats", {})
+        if not isinstance(stats_data, dict):
+            stats_data = {}
         session.stats = SessionStats(
             urls_crawled=stats_data.get("urls_crawled", 0),
             urls_failed=stats_data.get("urls_failed", 0),
