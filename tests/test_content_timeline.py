@@ -232,10 +232,13 @@ class TestSerialization:
         assert isinstance(entry.timestamp, datetime)
         assert entry.item_id == "i1"
 
-    def test_timeline_entry_from_dict_non_string_timestamp_passthrough(self) -> None:
+    def test_timeline_entry_from_dict_non_string_timestamp_degrades(self) -> None:
         ts = _ts(3, 6)
         entry = TimelineEntry.from_dict({"item_id": "i1", "timestamp": ts})
-        assert entry.timestamp == ts
+        # non-string (datetime) value degrades to a tz-aware now-utc datetime
+        assert isinstance(entry.timestamp, datetime)
+        assert entry.timestamp.tzinfo is not None
+        assert entry.item_id == "i1"
 
     def test_timeline_entry_from_dict_valid_timestamp_round_trips(self) -> None:
         entry = TimelineEntry.from_dict(

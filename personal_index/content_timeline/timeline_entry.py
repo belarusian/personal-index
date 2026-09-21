@@ -84,6 +84,8 @@ class TimelineEntry:
                 ts = datetime.fromisoformat(ts)
             except ValueError:
                 ts = datetime.now(timezone.utc)
+        else:
+            ts = datetime.now(timezone.utc)
 
         return cls(
             item_id=data["item_id"],

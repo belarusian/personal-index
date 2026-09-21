@@ -33,7 +33,6 @@ def _ev(eid, ts, cid="c1", et=TimelineEventType.SAVED):
 
 # --- QA-68: non-string timestamp must degrade to now-utc per docstring ---
 
-@pytest.mark.xfail(strict=True, reason="QA-68: from_dict docstring promises non-string ts degrades to now-utc; code only catches ValueError, stores int verbatim -> to_dict AttributeError")
 def test_event_from_dict_nonstring_timestamp_degrades():
     e = TimelineEvent.from_dict({"event_id": "e1", "timestamp": 12345})
     # per docstring: ts should be a tz-aware datetime (now-utc), not the int
@@ -41,14 +40,12 @@ def test_event_from_dict_nonstring_timestamp_degrades():
     assert e.to_dict()["timestamp"]  # must not raise
 
 
-@pytest.mark.xfail(strict=True, reason="QA-68: same defect on TimelineEntry.from_dict")
 def test_entry_from_dict_nonstring_timestamp_degrades():
     e = TimelineEntry.from_dict({"item_id": "i1", "timestamp": 12345})
     assert isinstance(e.timestamp, datetime)
     assert e.to_dict()["timestamp"]
 
 
-@pytest.mark.xfail(strict=True, reason="QA-68: None timestamp is non-string; docstring says degrade to now-utc")
 def test_event_from_dict_none_timestamp_degrades():
     e = TimelineEvent.from_dict({"event_id": "e1", "timestamp": None})
     assert isinstance(e.timestamp, datetime)
