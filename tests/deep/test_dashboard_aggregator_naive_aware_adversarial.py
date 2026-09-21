@@ -48,7 +48,7 @@ import sys
 
 import pytest
 
-from personal_index.dashboard.aggregator import DashboardAggregator
+from personal_index.dashboard.aggregator import AggregatedStats, DashboardAggregator
 from personal_index.models import CrawledPage
 
 
@@ -198,6 +198,169 @@ class TestCliEndToEnd:
         )
         assert r2.returncode == 0, r2.stderr
         assert "Personal Index Statistics" in r2.stdout
+
+
+class TestRecentActivityNoSeam:
+    """Cycle 343 RE-PROBE: _compute_recent_activity (aggregator.py:195) is the
+    second fromisoformat site in the module. It only does ``dt.strftime`` string
+    grouping (no datetime comparison/subtraction), so a mixed naive/aware
+    crawled_at list must NOT raise - it groups by day-key. This is armor for the
+    site the QA-66 fix did NOT touch (the fix only normalized _compute_pages_per_day)."""
+
+    def test_mixed_naive_aware_groups_by_day(self):
+        pages = [
+            _page("http://a.com", "2024-01-01T00:00:00"),          # naive
+            _page("http://b.com", "2024-01-02T00:00:00+00:00"),    # aware
+            _page("http://c.com", "2024-01-01T05:00:00"),          # naive, same day as a
+        ]
+        stats = _aggregate(pages)
+        # Grouped by day: 2024-01-01 -> 2, 2024-01-02 -> 1; sorted desc.
+        got = [(p.timestamp, p.value) for p in stats.recent_activity]
+        assert got == [("2024-01-02", 1), ("2024-01-01", 2)]
+
+    def test_recent_activity_empty_pages(self):
+        stats = _aggregate([])
+        assert stats.recent_activity == []
+
+    def test_recent_activity_bad_crawled_at_skipped(self):
+        # from_dict normalizes "not-a-date" to now(utc) (aware) -> contributes a
+        # day-key; the two explicit aware dates contribute their own day-keys.
+        pages = [
+            _page("http://a.com", "not-a-date"),
+            _page("http://b.com", "2024-01-01T00:00:00+00:00"),
+            _page("http://c.com", "2024-01-01T00:00:00+00:00"),
+        ]
+        stats = _aggregate(pages)
+        # 2024-01-01 -> 2; the "now" page -> its own day-key (>= 1).
+        by_day = {p.timestamp: p.value for p in stats.recent_activity}
+        assert by_day.get("2024-01-01") == 2
+        assert sum(by_day.values()) == 3
+
+    def test_recent_activity_limit_caps_points(self):
+        # 30 distinct days -> limit (default 24) caps the returned points.
+        pages = [
+            _page(f"http://d{i}.com", f"2024-01-{(i % 28) + 1:02d}T00:00:00+00:00")
+            for i in range(30)
+        ]
+        stats = _aggregate(pages)
+        assert len(stats.recent_activity) <= 24
+
+
+class TestCacheIdempotence:
+    """Cycle 343 RE-PROBE: aggregate() caches for _cache_ttl (30s). A second
+    call within the TTL (force_refresh=False) returns the SAME cached object;
+    clear_cache() forces a fresh aggregation."""
+
+    def test_second_call_returns_cached_object(self):
+        pages = [_page("http://a.com", "2024-01-01T00:00:00+00:00")]
+        agg = DashboardAggregator()
+        s1 = agg.aggregate(index_instance=_FakeIndex(pages), force_refresh=True)
+        s2 = agg.aggregate(index_instance=_FakeIndex(pages), force_refresh=False)
+        assert s2 is s1
+
+    def test_clear_cache_forces_recompute(self):
+        pages = [_page("http://a.com", "2024-01-01T00:00:00+00:00")]
+        agg = DashboardAggregator()
+        s1 = agg.aggregate(index_instance=_FakeIndex(pages), force_refresh=True)
+        agg.clear_cache()
+        s2 = agg.aggregate(index_instance=_FakeIndex(pages), force_refresh=False)
+        assert s2 is not s1
+
+
+class TestSuccessRateAndBreakdowns:
+    """Cycle 343 RE-PROBE: _compute_success_rate, _compute_status_breakdown,
+    _compute_content_types, _compute_top_domains, _compute_total_keywords,
+    _compute_avg_relevance - guard inputs (empty, mixed codes, dedup, limit)."""
+
+    def test_success_rate_mixed_codes(self):
+        agg = DashboardAggregator()
+        pages = [
+            _page("http://a.com", "2024-01-01T00:00:00+00:00"),
+            CrawledPage.from_dict({"url": "http://b.com", "status_code": 404}),
+            CrawledPage.from_dict({"url": "http://c.com", "status_code": 500}),
+        ]
+        assert agg._compute_success_rate(pages) == pytest.approx(100.0 / 3)
+
+    def test_success_rate_empty_is_100(self):
+        assert DashboardAggregator()._compute_success_rate([]) == 100.0
+
+    def test_status_breakdown_categories(self):
+        agg = DashboardAggregator()
+        pages = [
+            CrawledPage.from_dict({"url": "a", "status_code": 200}),
+            CrawledPage.from_dict({"url": "b", "status_code": 404}),
+            CrawledPage.from_dict({"url": "c", "status_code": 500}),
+        ]
+        assert agg._compute_status_breakdown(pages) == {"2xx": 1, "4xx": 1, "5xx": 1}
+
+    def test_status_breakdown_zero_code_is_unknown(self):
+        agg = DashboardAggregator()
+        pages = [CrawledPage.from_dict({"url": "a", "status_code": 0})]
+        assert agg._compute_status_breakdown(pages) == {"unknown": 1}
+
+    def test_content_type_breakdown_defaults_unknown(self):
+        # CrawledPage has no content_type field -> getattr default -> "unknown".
+        agg = DashboardAggregator()
+        pages = [_page("http://a.com", "2024-01-01T00:00:00+00:00")]
+        assert agg._compute_content_types(pages) == {"unknown": 1}
+
+    def test_top_domains_counts_and_limit(self):
+        agg = DashboardAggregator()
+
+        class _P:
+            def __init__(self, d):
+                self.domain = d
+
+        pages = [_P("x.com"), _P("x.com"), _P("y.com")]
+        top = agg._compute_top_domains(pages)
+        assert top == [
+            {"domain": "x.com", "count": 2, "percentage": 66.7},
+            {"domain": "y.com", "count": 1, "percentage": 33.3},
+        ]
+        # limit caps the returned list.
+        assert len(agg._compute_top_domains([_P("a"), _P("b"), _P("c"), _P("d")], limit=2)) == 2
+
+    def test_top_domains_empty(self):
+        assert DashboardAggregator()._compute_top_domains([]) == []
+
+    def test_total_keywords_dedups_across_pages(self):
+        agg = DashboardAggregator()
+
+        class _K:
+            def __init__(self, k):
+                self.keywords = k
+
+        assert agg._compute_total_keywords([_K(["a", "b"]), _K(["b", "c"])]) == 3
+
+    def test_avg_relevance_empty_is_zero(self):
+        assert DashboardAggregator()._compute_avg_relevance([]) == 0.0
+
+
+class TestToDictRounding:
+    """Cycle 343 RE-PROBE: AggregatedStats.to_dict rounds the three float
+    fields (avg_relevance_score -> 2dp, pages_per_day -> 1dp,
+    crawl_success_rate -> 1dp) and serializes recent_activity points."""
+
+    def test_float_fields_rounded(self):
+        s = AggregatedStats(
+            total_pages=5,
+            avg_relevance_score=1.234,
+            pages_per_day=2.34,
+            crawl_success_rate=99.94,
+        )
+        d = s.to_dict()
+        assert d["avg_relevance_score"] == 1.23
+        assert d["pages_per_day"] == 2.3
+        assert d["crawl_success_rate"] == 99.9
+
+    def test_recent_activity_serialized_to_dicts(self):
+        from personal_index.dashboard.aggregator import TimeSeriesPoint
+
+        s = AggregatedStats(recent_activity=[TimeSeriesPoint("2024-01-01", 2, "2024-01-01")])
+        d = s.to_dict()
+        assert d["recent_activity"] == [{"timestamp": "2024-01-01", "value": 2, "label": "2024-01-01"}]
+
+
 
 
 if __name__ == "__main__":
