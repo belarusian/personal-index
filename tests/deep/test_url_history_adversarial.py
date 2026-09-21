@@ -538,3 +538,67 @@ class TestArch76MalformedRecordLoad:
         h = URLHistory()
         h.load(str(p))
         h.get_domain_stats()  # currently raises AttributeError: 'int' object has no attribute 'decode'
+
+
+# ── QA-61: load must leave _history untouched on a malformed record ─────────
+# Contract (load docstring + ARCH-76): load returns 0 "leaving _history
+# untouched" for a record that URLVisit.from_dict cannot construct (unexpected
+# key, MISSING url, or a WRONG-TYPE url). The QA-38 filter-drop path clears
+# _history (self._history = []) for the missing-url / wrong-type-url / non-dict
+# cases, contradicting "untouched". xfail-strict: while the defect exists the
+# test FAILS (as expected); once the implementer preserves _history it XPASSes
+# and xfail-strict turns it red — the signal to re-verify and close QA-61.
+class TestQA61LoadUntouchedOnMalformed:
+    @pytest.mark.xfail(
+        strict=True,
+        reason="QA-61: load clears _history (self._history = []) on a "
+               "missing-url record, contradicting the docstring's 'leaving "
+               "_history untouched' contract.",
+    )
+    def test_load_missing_url_leaves_history_untouched(self, tmp_path):
+        p = tmp_path / "missing_url.json"
+        p.write_text(json.dumps([{"url": "http://good.com"}, {"status_code": 200}]))
+        h = URLHistory()
+        h.record("http://pre.com")
+        assert h.load(str(p)) == 0
+        # docstring: _history left untouched -> pre-existing visit preserved
+        assert [v.url for v in h.get_visits()] == ["http://pre.com"]
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="QA-61: load clears _history on a wrong-type (non-str) url "
+               "record, contradicting the docstring's 'leaving _history "
+               "untouched' contract.",
+    )
+    def test_load_wrong_type_url_leaves_history_untouched(self, tmp_path):
+        p = tmp_path / "wrong_type_url.json"
+        p.write_text(json.dumps([{"url": "http://good.com"}, {"url": 123}]))
+        h = URLHistory()
+        h.record("http://pre.com")
+        assert h.load(str(p)) == 0
+        assert [v.url for v in h.get_visits()] == ["http://pre.com"]
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="QA-61: load clears _history on a non-dict record, "
+               "contradicting the docstring's 'leaving _history untouched' "
+               "contract.",
+    )
+    def test_load_non_dict_record_leaves_history_untouched(self, tmp_path):
+        p = tmp_path / "non_dict.json"
+        p.write_text(json.dumps([{"url": "http://good.com"}, "not-a-dict"]))
+        h = URLHistory()
+        h.record("http://pre.com")
+        assert h.load(str(p)) == 0
+        assert [v.url for v in h.get_visits()] == ["http://pre.com"]
+
+    # Armor (already-correct path): the unexpected-key case DOES leave
+    # _history untouched (TypeError caught before reassignment). Pin it green
+    # so a future "fix" that over-broadens the guard cannot regress it.
+    def test_load_unexpected_key_leaves_history_untouched(self, tmp_path):
+        p = tmp_path / "unexpected_key.json"
+        p.write_text(json.dumps([{"url": "http://a.com"}, {"url": "http://b.com", "bogus": 1}]))
+        h = URLHistory()
+        h.record("http://pre.com")
+        assert h.load(str(p)) == 0
+        assert [v.url for v in h.get_visits()] == ["http://pre.com"]
