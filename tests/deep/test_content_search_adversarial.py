@@ -20,6 +20,8 @@ content_aggregator.merge_all, QA-41). QA-42 documents the content_search site.
 
 from __future__ import annotations
 
+import pytest
+
 from personal_index.content_search import SearchIndex
 
 
@@ -282,3 +284,127 @@ def test_cli_search_end_to_end_empty_index_guard(tmp_path):
     )
     assert proc.returncode == 0, f"CLI exited {proc.returncode}: {proc.stderr}"
     assert "No indexed content found" in proc.stdout
+
+
+# ---------------------------------------------------------------------------
+# QA-73 (cycle 351): _matches_filters $gte/$lte branch crashes the public
+# search() API on a type-incompatible non-None item value.
+#
+# docs/content-search.md (SearchIndex, _matches_filters): "a dict value
+# supports $gte / $lte (skipped when the item value is None)". The code only
+# guards `item_value is not None`; a non-None value whose type is incompatible
+# with the filter value (e.g. a str item value vs an int $gte) makes
+# `item_value < value["$gte"]` raise TypeError, which propagates out of the
+# public search() call. The exact-match (`!=`) and list/set (`in` /
+# intersection) branches are safe under the same type mismatch (they never
+# order-compare).
+#
+# xfail-strict pins the CORRECTED contract (search() must not raise; it must
+# return the correctly filtered page). While the defect exists the test FAILS
+# (TypeError) -> xfail (expected) -> main stays green. Once the implementer
+# guards the comparison it XPASSes and xfail-strict turns red -> the signal to
+# re-verify and close QA-73.
+# ---------------------------------------------------------------------------
+@pytest.mark.xfail(
+    strict=True,
+    reason="QA-73: _matches_filters $gte branch raises TypeError on a "
+    "type-incompatible non-None item value (str vs int); search() must not "
+    "crash and must return the correctly filtered page.",
+)
+def test_search_filter_gte_type_mismatch_does_not_crash():
+    idx = _idx_with(
+        [
+            {"id": "a", "content": "alpha one", "priority": "high"},
+            {"id": "b", "content": "beta one", "priority": 5},
+        ]
+    )
+    # Corrected contract: no TypeError; the str item value cannot satisfy
+    # $gte 3, so only the numeric item (priority=5) is kept.
+    out = idx.search("one", filters={"priority": {"$gte": 3}})
+    assert out["total"] == 1
+    assert [r["item"].get("id") for r in out["results"]] == ["b"]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="QA-73: _matches_filters $lte branch raises TypeError on a "
+    "type-incompatible non-None item value (str vs int); search() must not "
+    "crash and must return the correctly filtered page.",
+)
+def test_search_filter_lte_type_mismatch_does_not_crash():
+    idx = _idx_with(
+        [
+            {"id": "a", "content": "alpha one", "priority": "high"},
+            {"id": "b", "content": "beta one", "priority": 5},
+        ]
+    )
+    # Corrected contract: no TypeError; the str item value cannot satisfy
+    # $lte 3, so only the numeric item (priority=5) is kept.
+    out = idx.search("one", filters={"priority": {"$lte": 3}})
+    assert out["total"] == 1
+    assert [r["item"].get("id") for r in out["results"]] == ["b"]
+
+
+# ---------------------------------------------------------------------------
+# Armor (cycle 351): the SAFE filter branches under the same type mismatch.
+# These are HARD PASSES pinning the branches that do NOT order-compare, so a
+# future refactor that "unifies" the branches into a single comparison must
+# not regress them.
+# ---------------------------------------------------------------------------
+def test_search_filter_exact_match_type_mismatch_is_safe():
+    # `!=` never order-compares: a str item value vs an int filter value is
+    # simply not equal, so the item is excluded without a crash.
+    idx = _idx_with(
+        [
+            {"id": "a", "content": "alpha one", "kind": "doc"},
+            {"id": "b", "content": "beta one", "kind": 5},
+        ]
+    )
+    out = idx.search("one", filters={"kind": "doc"})
+    assert out["total"] == 1
+    assert [r["item"].get("id") for r in out["results"]] == ["a"]
+
+
+def test_search_filter_list_set_type_mismatch_is_safe():
+    # list/set branch uses `in` / set-intersection, never order-compare: a
+    # non-list item value (int) vs a list filter value is simply not a member.
+    idx = _idx_with(
+        [
+            {"id": "a", "content": "alpha one", "tags": ["x"]},
+            {"id": "b", "content": "beta one", "tags": 5},
+        ]
+    )
+    out = idx.search("one", filters={"tags": ["x"]})
+    assert out["total"] == 1
+    assert [r["item"].get("id") for r in out["results"]] == ["a"]
+
+
+def test_search_filter_gte_homogeneous_numeric_is_correct():
+    # Homogeneous numeric values: $gte keeps items >= threshold, ranked desc.
+    idx = _idx_with(
+        [
+            {"id": "a", "content": "alpha one", "p": 1},
+            {"id": "b", "content": "beta one", "p": 5},
+            {"id": "c", "content": "gamma one", "p": 9},
+        ]
+    )
+    out = idx.search("one", filters={"p": {"$gte": 3}})
+    assert out["total"] == 2
+    # All three items share the same token count, so their scores tie and the
+    # page order is set-iteration (hash-randomized) order -- assert the KEPT
+    # set (the filter contract), not a specific tie order.
+    assert set(r["item"].get("id") for r in out["results"]) == {"b", "c"}
+
+
+def test_search_filter_gte_none_item_value_is_skipped():
+    # Documented contract: $gte is "skipped when the item value is None" --
+    # a None item value is kept (the comparison is not attempted).
+    idx = _idx_with(
+        [
+            {"id": "a", "content": "alpha one"},
+            {"id": "b", "content": "beta one", "p": 5},
+        ]
+    )
+    out = idx.search("one", filters={"p": {"$gte": 3}})
+    assert out["total"] == 2
+    assert set(r["item"].get("id") for r in out["results"]) == {"a", "b"}
