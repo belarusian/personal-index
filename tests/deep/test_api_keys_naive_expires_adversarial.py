@@ -22,8 +22,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
 from personal_index.auth.api_keys import APIKeyStore
 
 
@@ -46,7 +44,6 @@ def _future_aware_iso() -> str:
 
 
 class TestValidateKeyNaiveExpiresAt:
-    @pytest.mark.xfail(strict=True, reason="QA-64: naive expires_at raises uncaught TypeError (naive<aware); see tickets/QA-64.md")
     def test_naive_past_expires_at_is_treated_expired(self):
         """QA-64: a naive ISO expires_at in the past is a valid ISO format and
         must be treated as expired (return None), matching the aware-past path.
@@ -57,7 +54,6 @@ class TestValidateKeyNaiveExpiresAt:
         # Contract: expired key -> None (same as the aware-past path below).
         assert store.validate_key(raw) is None
 
-    @pytest.mark.xfail(strict=True, reason="QA-64: naive expires_at raises uncaught TypeError (naive<aware); see tickets/QA-64.md")
     def test_naive_future_expires_at_is_treated_valid(self):
         """QA-64: a naive ISO expires_at in the future is a valid ISO format and
         must be treated as valid (return the key), matching the aware-future
