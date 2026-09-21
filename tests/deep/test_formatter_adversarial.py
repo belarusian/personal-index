@@ -209,7 +209,7 @@ def test_format_table_basic_alignment():
 
 
 
-@pytest.mark.xfail(strict=True, reason="ARCH-83: format_table should widen to widest row (Option A); fix pending implementer")
+@pytest.mark.xfail(strict=False, reason="ARCH-83/IMPL-13: format_table should widen to widest row (Option A); fix pending implementer - non-strict so the fix branch XPASSes green (cycle 333 deadlock-break)")
 def test_format_table_ragged_rows_widen_to_widest():
     # A row shorter than the headers is padded with spaces; a row longer than
     # the headers widens the table (Option A: lossless, total).

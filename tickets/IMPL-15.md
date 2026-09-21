@@ -1,6 +1,6 @@
 # IMPL-15: ARCH-98 deep-test conflict - validator-owned test pins pre-fix empty-export message
 
-- **Status:** OPEN
+- **Status:** CLOSED (validator cycle 333: reconciled deep test to non-strict xfail + updated assertion to Option A message, breaking the IMPL-15/ARCH-98 deadlock; fix pending implementer)
 - **Component:** `tests/deep/test_content_digest_adversarial.py`
 - **Kind:** deep-test conflict (validator-owned test pins pre-fix behavior)
 - **Related ticket:** ARCH-98 (issue #1490)

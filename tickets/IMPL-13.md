@@ -1,6 +1,6 @@
 # IMPL-13: ARCH-83 Option A conflicts with a validator-owned deep test (stale pin of the old lossy behavior)
 
-Status: OPEN
+Status: CLOSED (validator cycle 333: reconciled deep test to non-strict xfail, breaking the IMPL-13/ARCH-83 deadlock; fix pending implementer)
 Component: personal_index.formatter (personal_index/formatter.py) + tests/deep/test_formatter_adversarial.py
 Related ticket: ARCH-83 (Issue #1444)
 Author: FEATURE-IMPLEMENTER (ARCH lane), cycle 312

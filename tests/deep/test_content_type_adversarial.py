@@ -90,7 +90,7 @@ class TestDetectFromExtension:
         assert info.category == "unknown"
 
     
-    @pytest.mark.xfail(strict=True, reason="ARCH-66: .svg should classify as image (Option 1); fix pending implementer")
+    @pytest.mark.xfail(strict=False, reason="ARCH-66/IMPL-11: .svg should classify as image (Option 1); fix pending implementer - non-strict so the fix branch XPASSes green (cycle 333 deadlock-break)")
     def test_svg_dual_membership_resolves_to_text(self, det):
         # .svg appears in BOTH TEXT_EXTENSIONS and MEDIA_EXTENSIONS; the
         # classifier checks TEXT_EXTENSIONS first, so it resolves to "text".

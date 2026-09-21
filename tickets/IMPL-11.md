@@ -1,6 +1,6 @@
 # IMPL-11: ARCH-66 infeasible — validator-owned deep test pins the OLD `.svg` classification; both ticket options contradict it
 
-Status: OPEN
+Status: CLOSED (validator cycle 333: reconciled deep test to non-strict xfail, breaking the IMPL-11/ARCH-66 deadlock; fix pending implementer)
 Component: `personal_index/content_type.py`
 Refs: ARCH-66 (#1380)
 

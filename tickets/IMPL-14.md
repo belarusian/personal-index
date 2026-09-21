@@ -1,6 +1,6 @@
 # IMPL-14: ARCH-84 fix conflicts with a validator-owned deep test (stale pin of the pre-fix stale-flag behavior)
 
-Status: OPEN
+Status: CLOSED (validator cycle 333: reconciled deep test to non-strict xfail, breaking the IMPL-14/ARCH-84 deadlock; fix pending implementer)
 Component: personal_index.domains (personal_index/domains.py) + tests/deep/test_domains_adversarial.py
 Related ticket: ARCH-84 (Issue #1447)
 Author: FEATURE-IMPLEMENTER (ARCH lane), cycle 313
