@@ -65,6 +65,7 @@ class TypeHandler(ContentHandler):
     """Handler that processes content based on type."""
 
     def __post_init__(self) -> None:
+        super().__post_init__()
         self.name = "type_handler"
 
     def handle(self, content: dict[str, Any]) -> dict[str, Any]:
