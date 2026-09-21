@@ -70,9 +70,11 @@ class ContentArchiver:
         never archived regardless of age.  The cutoff is ``now - threshold``
         (threshold = *days_threshold* arg or ``config.days_threshold``);
         an item is archived only when its parsed ``archived_at`` is strictly
-        before the cutoff.  Unparseable ``archived_at`` values are silently
-        skipped.  Returns the list of archived item ids (empty when none
-        qualify).
+        before the cutoff.  A naive ``archived_at`` (no tz suffix) is
+        treated as UTC (``replace(tzinfo=timezone.utc)``) so it compares
+        against the UTC-aware cutoff; unparseable ``archived_at`` values are
+        silently skipped.  Returns the list of archived item ids (empty when
+        none qualify).
         """
         threshold = days_threshold if days_threshold is not None else self.config.days_threshold
         cutoff = datetime.now(timezone.utc) - timedelta(days=threshold)
@@ -83,6 +85,8 @@ class ContentArchiver:
             if saved_at:
                 try:
                     saved_time = datetime.fromisoformat(saved_at)
+                    if saved_time.tzinfo is None:
+                        saved_time = saved_time.replace(tzinfo=timezone.utc)
                     if saved_time < cutoff:
                         entry.archive()
                         archived_ids.append(item_id)
