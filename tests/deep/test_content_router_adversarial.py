@@ -19,7 +19,6 @@ deep suite; this file focuses on the router's pure-Python contract.
 
 from __future__ import annotations
 
-import pytest
 
 from personal_index.content_router.handler import (
     ContentHandler,
@@ -299,13 +298,6 @@ def test_passthrough_can_handle_any_type():
     assert p.can_handle({}) is True  # type defaults to "unknown", "*" matches
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-70: TypeHandler.can_handle always returns False because TypeHandler.__post_init__ "
-    "overrides the base without calling super().__post_init__(), leaving supported_types=None; "
-    "the base can_handle returns False when supported_types is None, contradicting the base "
-    "docstring ('True if handler supports this content type') and its sibling PassThroughHandler.",
-)
 def test_typehandler_can_handle_typed_content():
     # TypeHandler is a concrete handler whose purpose (per its docstring) is to
     # process content based on type. Its can_handle must therefore report True
@@ -314,11 +306,6 @@ def test_typehandler_can_handle_typed_content():
     assert t.can_handle({"type": "article"}) is True
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-70: TypeHandler.can_handle always returns False (supported_types=None, see "
-    "test_typehandler_can_handle_typed_content); unknown-type content must also be accepted.",
-)
 def test_typehandler_can_handle_unknown_type():
     t = TypeHandler()
     assert t.can_handle({}) is True
