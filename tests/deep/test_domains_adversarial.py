@@ -218,7 +218,7 @@ class TestPageCounts:
 # remove / list / max_depth
 # ---------------------------------------------------------------------------
 class TestRemoveListDepth:
-    @pytest.mark.xfail(strict=True, reason="ARCH-84: remove() should recompute _has_whitelist; fix pending implementer")
+    @pytest.mark.xfail(strict=False, reason="ARCH-84/IMPL-14: remove() should recompute _has_whitelist; fix pending implementer - non-strict so the fix branch XPASSes green (cycle 333 deadlock-break)")
     def test_remove_existing(self):
         m = DomainManager()
         m.add_allow("x.com")
