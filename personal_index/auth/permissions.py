@@ -76,6 +76,18 @@ class PermissionChecker:
     def __init__(self, custom_role_permissions: dict[Role, set[Permission]] | None = None):
         self._role_permissions = {r: set(p) for r, p in (custom_role_permissions or ROLE_PERMISSIONS).items()}
 
+    def _user_permissions(self, user: User) -> set[Permission]:
+        """Compute a user's effective permissions from this instance's role map.
+
+        QA-57: instance-level role customization must be honored by check()
+        without mutating the module-level ROLE_PERMISSIONS constant.
+        """
+        perms: set[Permission] = set()
+        for role in user.roles:
+            perms.update(self._role_permissions.get(role, set()))
+        perms.update(user.extra_permissions)
+        return perms
+
     def check(self, user: User, permission: Permission) -> bool:
         """Check if a user has a specific permission.
 
@@ -88,7 +100,7 @@ class PermissionChecker:
         """
         if not user.is_active:
             return False
-        return permission in user.get_permissions()
+        return permission in self._user_permissions(user)
 
     def check_any(self, user: User, *permissions: Permission) -> bool:
         """Check if user has any of the given permissions.
@@ -102,7 +114,7 @@ class PermissionChecker:
         """
         if not user.is_active:
             return False
-        user_perms = user.get_permissions()
+        user_perms = self._user_permissions(user)
         return bool(user_perms & set(permissions))
 
     def check_all(self, user: User, *permissions: Permission) -> bool:
@@ -117,7 +129,7 @@ class PermissionChecker:
         """
         if not user.is_active:
             return False
-        user_perms = user.get_permissions()
+        user_perms = self._user_permissions(user)
         return set(permissions).issubset(user_perms)
 
     def add_role_permissions(self, role: Role, permissions: set[Permission]) -> None:
