@@ -23,8 +23,6 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
 from personal_index.content_archive.archive_entry import ArchiveStatus
 from personal_index.content_archive.archiver import ContentArchiver
 
@@ -51,16 +49,10 @@ def _recent_naive_iso():
 class TestArchiveOldNaiveDatetime:
     """archive_old must consider parseable naive timestamps (QA-62)."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-62: naive ISO saved_at is parseable and non-None so the "
-            "docstring contract requires it to be considered and archived "
-            "when old; instead naive<aware raises TypeError and the item is "
-            "silently skipped (stays ACTIVE). See tickets/QA-62.md."
-        ),
-    )
     def test_naive_old_timestamp_is_archived(self):
+        """QA-62: a naive ISO saved_at is parseable and non-None, so the
+        docstring contract requires it to be considered and archived when
+        old (naive is treated as UTC). See tickets/QA-62.md."""
         archiver = ContentArchiver(days_threshold=30)
         archiver.add_item("naive_old", "x", saved_at=_old_naive_iso())
         archived = archiver.archive_old()
