@@ -104,9 +104,11 @@ class APIKeyStore:
         if api_key.expires_at:
             try:
                 exp = datetime.fromisoformat(api_key.expires_at)
+                if exp.tzinfo is None:
+                    exp = exp.replace(tzinfo=timezone.utc)
                 if exp < datetime.now(timezone.utc):
                     return None
-            except ValueError:
+            except (ValueError, TypeError):
                 pass
         # Update usage
         api_key.last_used_at = datetime.now(timezone.utc).isoformat()
