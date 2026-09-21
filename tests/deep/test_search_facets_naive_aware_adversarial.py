@@ -60,31 +60,25 @@ class TestNaiveAwareRangeSeam:
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$gte": AWARE_BOUND}})
         assert r.total == 1
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-65: naive doc value vs aware $lte bound raises uncaught "
-            "TypeError (naive-vs-aware datetime seam). Flip on fix ON main."
-        ),
-    )
     def test_naive_doc_aware_bound_lte(self):
+        # RECONCILED (cycle 342, QA-65 fix 24a4220 ON main): the TypeError is
+        # gone. The prior xfail-strict pin asserted total == 1, a latent
+        # validator bug - NAIVE_DOC is June, AWARE_BOUND is March, so
+        # June <= March is False and the correct total is 0.
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$lte": AWARE_BOUND}})
-        assert r.total == 1
+        assert r.total == 0
 
     def test_naive_doc_aware_bound_gt(self):
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$gt": AWARE_BOUND}})
         assert r.total == 1
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-65: naive doc value vs aware $lt bound raises uncaught "
-            "TypeError (naive-vs-aware datetime seam). Flip on fix ON main."
-        ),
-    )
     def test_naive_doc_aware_bound_lt(self):
+        # RECONCILED (cycle 342, QA-65 fix 24a4220 ON main): the TypeError is
+        # gone. The prior xfail-strict pin asserted total == 1, a latent
+        # validator bug - NAIVE_DOC is June, AWARE_BOUND is March, so
+        # June < March is False and the correct total is 0.
         r = _fs(NAIVE_DOC).search("", filters={"published": {"$lt": AWARE_BOUND}})
-        assert r.total == 1
+        assert r.total == 0
 
     def test_aware_doc_naive_bound_gte(self):
         r = _fs(AWARE_DOC).search("", filters={"published": {"$gte": NAIVE_BOUND}})
