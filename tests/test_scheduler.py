@@ -486,8 +486,8 @@ class TestScheduleStoreUnparseableTimestampPerEntry:
                     "2024-01-02T12:00:00+00:00",
                 ),
                 "bad": self._entry(
-                    "2024-01-01T12:00:00Z",
-                    "2024-01-02T12:00:00Z",
+                    "not-a-timestamp",
+                    "not-a-timestamp",
                 ),
             },
         )
