@@ -104,6 +104,38 @@ class TestTruncateText:
         # It ends inside the unbroken x-run.
         assert result[:-3].endswith("x")
 
+    def test_negative_max_length_degrades_to_zero_bound(self):
+        """QA-60: negative max_length must yield the same result as max_length=0."""
+        text = "hello world this is a test"
+        zero_result = truncate_text(text, 0)
+        neg_result = truncate_text(text, -5)
+        assert neg_result == zero_result
+
+    def test_negative_max_length_small_text(self):
+        """QA-60: even short text with negative max_length matches zero bound."""
+        text = "short"
+        zero_result = truncate_text(text, 0)
+        neg_result = truncate_text(text, -1)
+        assert neg_result == zero_result
+
+    def test_negative_max_length_custom_suffix(self):
+        """QA-60: negative max_length returns the custom suffix (zero-bound result)."""
+        result = truncate_text("hello world", -3, suffix="[cut]")
+        assert result == "[cut]"
+
+    def test_zero_max_length_returns_suffix(self):
+        """QA-60: max_length=0 returns just the suffix (zero-bound contract)."""
+        result = truncate_text("hello world", 0)
+        assert result == "..."
+
+    def test_negative_max_length_empty_text(self):
+        """QA-60: empty text with negative max_length returns empty string."""
+        assert truncate_text("", -5) == ""
+
+    def test_negative_max_length_none_text(self):
+        """QA-60: None text with negative max_length returns empty string."""
+        assert truncate_text(None, -5) == ""  # type: ignore
+
 
 class TestExtractSentences:
     def test_basic_sentences(self):

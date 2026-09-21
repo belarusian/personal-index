@@ -63,8 +63,12 @@ def truncate_text(text: str, max_length: int = 200, suffix: str = "...") -> str:
     Returns:
         Truncated text.
     """
-    if not text or len(text) <= max_length:
-        return text or ""
+    if not text:
+        return ""
+    if max_length <= 0:
+        return suffix
+    if len(text) <= max_length:
+        return text
     truncated = text[:max_length]
     # Don't break in the middle of a word
     last_space = truncated.rfind(" ")
