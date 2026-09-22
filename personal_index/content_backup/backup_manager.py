@@ -6,7 +6,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from personal_index.content_backup.backup_store import BackupEntry, BackupStore
+from personal_index.content_backup.backup_store import (
+    BackupEntry,
+    BackupStore,
+    _normalize_tz,
+)
 
 
 @dataclass
@@ -128,7 +132,7 @@ class BackupManager:
         to_remove = [
             b.backup_id
             for b in self.store.list_backups()
-            if b.timestamp < cutoff
+            if _normalize_tz(b.timestamp) < cutoff
         ]
         for bid in to_remove:
             if self.store.delete_backup(bid):

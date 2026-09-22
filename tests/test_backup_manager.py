@@ -6,7 +6,7 @@ from personal_index.content_backup.backup_manager import (
     BackupConfig,
     BackupManager,
 )
-from personal_index.content_backup.backup_store import BackupStore
+from personal_index.content_backup.backup_store import BackupEntry, BackupStore
 
 
 class TestBackupConfig:
@@ -91,6 +91,27 @@ class TestBackupManager:
         mgr.create_backup([{"id": "1"}])
         removed = mgr.cleanup_old_backups(older_than=timedelta(days=30))
         assert removed == 0
+
+    def test_cleanup_naive_timestamp_returns_int(self):
+        """Pin: a naive-timestamp backup is normalized before compare.
+
+        A backup imported from a file with a naive ISO timestamp carries a
+        naive datetime; cleanup_old_backups must normalize it (UTC-aware)
+        before comparing to the aware cutoff, returning the int count of
+        removed backups instead of raising TypeError.
+        """
+        store = BackupStore()
+        store.backups["naive"] = BackupEntry(
+            backup_id="naive",
+            timestamp=datetime(2020, 1, 1),
+            item_count=1,
+            data=[{"id": "x"}],
+        )
+        mgr = BackupManager(store=store)
+        removed = mgr.cleanup_old_backups(older_than=timedelta(days=30))
+        assert isinstance(removed, int)
+        assert removed == 1
+        assert "naive" not in store.backups
 
     def test_config_max_backups_enforced(self):
         mgr = BackupManager(config=BackupConfig(max_backups=2))
