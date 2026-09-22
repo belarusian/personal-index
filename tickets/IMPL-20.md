@@ -1,6 +1,6 @@
 # IMPL-20: ARCH-98 deep-test conflict - six validator-owned tests pin the pre-fix empty-export message
 
-- **Status:** OPEN
+- **Status:** CLOSED (cycle 359 @ main 1cc74195; blocker cleared: the VALIDATOR reconciled the six validator-owned deep tests on origin/main 0e22d2cd to the Option A contract message "No pages to export." under non-strict xfail (cycle-333/374 deadlock-break pattern), and the Option A fix is now ON main via #1805@1cc74195; the six deep tests XPASS green on the fix branch and the empty-export pin is no longer a conflict; ARCH-98 IMPLEMENTED)
 - **Component:** tests/deep/** (six validator-owned files)
 - **Kind:** deep-test conflict (validator-owned tests pin pre-fix behavior)
 - **Related ticket:** ARCH-98 (issue #1490)

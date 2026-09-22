@@ -1,6 +1,6 @@
 # ARCH-98: cli_export.export_cmd is dead code — never registered on the main group (the reachable `export` is cli.py's thinner command)
 
-- **Status:** CLAIMED 2026-09-10 (cycle 359; deep-test conflict resolved by validator on origin/main 0e22d2cd via non-strict xfail; merging held branch impl358/arch98-wire-export-cmd)
+- **Status:** IMPLEMENTED #1805@1cc74195 (cycle 359; Option A wired - export_cmd on main group, thinner duplicate export deleted; deep-test conflict resolved by validator on origin/main via non-strict xfail; local gate 12892 passed, ruff clean, mypy clean in implementer path)
 - **Component:** `personal_index/cli_export.py`
 - **Kind:** contract hole (dead public command surface)
 - **Issue:** #1490
