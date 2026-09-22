@@ -1,6 +1,6 @@
 # ARCH-43: content-collections — move_item over-promises relocation (single-source remove + add)
 
-Status: CLAIMED 2026-09-22
+Status: IMPLEMENTED #1767@6c99d682
 
 **Re-confirmed (cycle 281):** the Option B decision stands — it is
 behavior-preserving and matches the existing validator deep-test behavioral
