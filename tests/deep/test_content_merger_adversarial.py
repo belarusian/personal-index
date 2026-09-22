@@ -313,3 +313,205 @@ def test_end_to_end_cli_init_and_stats(tmp_path):
     assert payload["indexed_pages"] == 0
     assert payload["interests"] == 0
     assert payload["total_tags"] == 0
+
+
+# ---------------------------------------------------------------------------
+# 5. PROBE cycle 368 — additional adversarial edge cases + QA-76 defect pin
+# ---------------------------------------------------------------------------
+
+class TestMergeConcatPhantomSeparator:
+    """QA-76: concatenate must skip whitespace-only sources, not inject a
+    phantom ``---`` separator for them. The merge() docstring promises to join
+    **non-empty** content; _merge_concatenate guards on raw truthiness so a
+    whitespace-only source survives the guard and is appended as ""."""
+
+    @pytest.mark.xfail(
+        strict=False,
+        reason="QA-76: _merge_concatenate uses `if source.content:` (raw "
+        "truthy) so a whitespace-only source injects a phantom separator; "
+        "expected 'A\\n\\n---\\n\\nB' with one separator. "
+        "tickets/QA-76.md",
+    )
+    def test_concatenate_whitespace_only_source_injects_phantom_separator(self):
+        r = ContentMerger(strategy="concatenate").merge(
+            [
+                _src(url="https://a.com", content="A"),
+                _src(url="https://ws.com", content="   "),
+                _src(url="https://b.com", content="B"),
+            ]
+        )
+        assert r is not None
+        # per docs: whitespace-only source is empty after strip -> skipped
+        assert r.content == "A\n\n---\n\nB"
+        assert r.content.count("---") == 1
+
+
+class TestMergeCycle368Armor:
+    """Cycle 368 regression armor: behaviors the cycle-164 file does not pin."""
+
+    def test_longest_tie_breaks_to_first_in_priority_order(self):
+        # equal length, equal priority: stable sort keeps input order, max()
+        # returns the first encountered max -> "AAAA"
+        r = ContentMerger(strategy="longest").merge(
+            [
+                _src(url="https://a.com", content="AAAA"),
+                _src(url="https://b.com", content="BBBB"),
+            ]
+        )
+        assert r is not None
+        assert r.content == "AAAA"
+
+    def test_highest_priority_empty_primary_does_not_fall_back(self):
+        # highest_priority uses primary.content verbatim; an empty primary is
+        # NOT replaced by a non-empty lower-priority source.
+        r = ContentMerger(strategy="highest_priority").merge(
+            [
+                _src(url="https://hi.com", content="", priority=10),
+                _src(url="https://lo.com", content="X", priority=1),
+            ]
+        )
+        assert r is not None
+        assert r.content == ""
+        assert r.url == "https://hi.com"
+
+    def test_metadata_equal_priority_first_wins(self):
+        # _merge_metadata iterates priority-desc and keeps the first value for
+        # a key; on equal priority the stable order makes the first source win.
+        r = ContentMerger().merge(
+            [
+                _src(url="https://a.com", priority=5, metadata={"k": "first"}),
+                _src(url="https://b.com", priority=5, metadata={"k": "second"}),
+            ]
+        )
+        assert r is not None
+        assert r.metadata["k"] == "first"
+
+    def test_metadata_disjoint_keys_all_present(self):
+        r = ContentMerger().merge(
+            [
+                _src(url="https://a.com", priority=3, metadata={"a": 1}),
+                _src(url="https://b.com", priority=2, metadata={"b": 2}),
+                _src(url="https://c.com", priority=1, metadata={"c": 3}),
+            ]
+        )
+        assert r is not None
+        assert r.metadata == {"a": 1, "b": 2, "c": 3}
+
+    def test_unique_paragraphs_preserves_first_seen_casing(self):
+        # dedup is case-insensitive but the kept paragraph keeps first casing
+        r = ContentMerger(strategy="unique_paragraphs").merge(
+            [
+                _src(url="https://a.com", content="Hello"),
+                _src(url="https://b.com", content="HELLO"),
+            ]
+        )
+        assert r is not None
+        assert r.content == "Hello"
+
+    def test_unique_paragraphs_source_count_and_sources(self):
+        r = ContentMerger(strategy="unique_paragraphs").merge(
+            [
+                _src(url="https://a.com", content="P1"),
+                _src(url="https://b.com", content="P2"),
+            ]
+        )
+        assert r is not None
+        assert r.source_count == 2
+        assert set(r.sources) == {"https://a.com", "https://b.com"}
+
+    def test_concatenate_single_source_has_no_separator(self):
+        r = ContentMerger(strategy="concatenate").merge(
+            [_src(url="https://a.com", content="only")]
+        )
+        assert r is not None
+        assert r.content == "only"
+        assert "---" not in r.content
+
+    def test_concatenate_empty_plus_real_skips_empty(self):
+        # an empty (falsy) source is skipped; only the real content remains
+        r = ContentMerger(strategy="concatenate").merge(
+            [
+                _src(url="https://a.com", content=""),
+                _src(url="https://b.com", content="A"),
+            ]
+        )
+        assert r is not None
+        assert r.content == "A"
+        assert r.content.count("---") == 0
+
+    def test_highest_priority_tags_aggregated_from_all_sources(self):
+        r = ContentMerger(strategy="highest_priority").merge(
+            [
+                _src(url="https://hi.com", content="H", priority=9, tags=["hi"]),
+                _src(url="https://lo.com", content="L", priority=1, tags=["lo"]),
+            ]
+        )
+        assert r is not None
+        assert r.tags == ["hi", "lo"]
+
+    def test_longest_tags_aggregated_from_all_sources(self):
+        r = ContentMerger(strategy="longest").merge(
+            [
+                _src(url="https://a.com", content="longest content", tags=["a"]),
+                _src(url="https://b.com", content="x", tags=["b"]),
+            ]
+        )
+        assert r is not None
+        assert r.tags == ["a", "b"]
+
+    def test_best_title_longest_non_empty_wins(self):
+        r = ContentMerger().merge(
+            [
+                _src(url="https://a.com", title="", content="A", priority=5),
+                _src(url="https://b.com", title="Short", content="B", priority=4),
+                _src(url="https://c.com", title="A Much Longer Title", content="C", priority=3),
+            ]
+        )
+        assert r is not None
+        # primary (priority 5) has empty title -> falls back to longest non-empty
+        assert r.title == "A Much Longer Title"
+
+    def test_best_title_unicode_length(self):
+        r = ContentMerger().merge(
+            [
+                _src(url="https://a.com", title="ascii", content="A", priority=5),
+                _src(url="https://b.com", title="日本語のタイトル", content="B", priority=4),
+            ]
+        )
+        assert r is not None
+        # primary empty? no, primary title is "ascii" (priority 5) -> used
+        assert r.title == "ascii"
+
+    def test_empty_string_url_preserved(self):
+        r = ContentMerger().merge([_src(url="", content="A")])
+        assert r is not None
+        assert r.url == ""
+
+    def test_merge_source_to_dict_roundtrip(self):
+        src = MergeSource(
+            url="https://a.com",
+            title="T",
+            content="C",
+            tags=["x"],
+            metadata={"k": "v"},
+            priority=7,
+        )
+        d = src.to_dict()
+        assert d == {
+            "url": "https://a.com",
+            "title": "T",
+            "content": "C",
+            "tags": ["x"],
+            "metadata": {"k": "v"},
+            "priority": 7,
+        }
+        rebuilt = MergeSource(**d)
+        assert rebuilt.to_dict() == d
+
+    def test_merge_strategy_field_matches_strategy(self):
+        for strat in ("concatenate", "longest", "highest_priority", "unique_paragraphs"):
+            r = ContentMerger(strategy=strat).merge(
+                [_src(url="https://a.com", content="A")]
+            )
+            assert r is not None
+            assert r.merge_strategy == strat
