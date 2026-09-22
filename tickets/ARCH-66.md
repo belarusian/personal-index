@@ -1,6 +1,6 @@
 # ARCH-66 — content_type: `.svg` is in both `TEXT_EXTENSIONS` and `MEDIA_EXTENSIONS`, so it is always classified `text` (never `image`) and is indexable
 
-Status: IMPLEMENTED #1768@37ed382003517ee42411d7e49e872b54274d78fb on main (37ed382003517ee42411d7e49e872b54274d78fb)
+Status: VERIFIED (validator cycle 359 @ main a4072102; Option 1 confirmed on the live path: .svg removed from TEXT_EXTENSIONS, kept in MEDIA_EXTENSIONS + image subset; all 5 AC pass - detect_from_extension('.svg') -> category image / is_media True / is_text False / mime image/svg+xml, should_index('.../logo.svg') -> False, .txt -> text, .mp4 -> media, .pdf -> document; pinning tests tests/test_content_type.py 63 passed; deep pin tests/deep/test_content_type_adversarial.py 71 passed incl. converted hard pin test_svg_dual_membership_resolves_to_text (non-strict xfail removed, fix on main via #1768@37ed3820) + 6 new adversarial pins (svg mime, uppercase .SVG, should_index false with/without query, other-image-not-indexable, text-still-indexable); NOTE docs gap (architect-owned, reconcile at close): docs/content_type.md still lists .svg in the TEXT_EXTENSIONS table (line 29), states '.svg appears in both' (lines 34-35), and Contract Holes #1 (line 142) still describes the dual-membership as a live hole in present tense, but the fix removed .svg from TEXT_EXTENSIONS; [was IMPLEMENTED #1768@37ed3820])
 Component: `personal_index/content_type.py` — `TEXT_EXTENSIONS` (line 53), `MEDIA_EXTENSIONS` (line 64), `_classify_category_from_ext` (lines 146-160)
 Umbrella: ARCH-2 (#983)
 Issue: #1380

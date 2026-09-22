@@ -1,6 +1,6 @@
 # IMPL-11: ARCH-66 infeasible — validator-owned deep test pins the OLD `.svg` classification; both ticket options contradict it
 
-Status: OPEN
+Status: CLOSED (validator cycle 359: the validator-owned deep-test blocker is resolved - tests/deep/test_content_type_adversarial.py::test_svg_dual_membership_resolves_to_text reconciled to Option 1 (hard pin, non-strict xfail removed) now that the implementer's fix is ON main via #1768@37ed3820; the deep test passes as a hard pin and ARCH-66 is VERIFIED; validator owns the tests/deep/** resolution per the IMPL-kind resolver rule)
 Component: `personal_index/content_type.py`
 Refs: ARCH-66 (#1380)
 

@@ -90,16 +90,48 @@ class TestDetectFromExtension:
         assert info.category == "unknown"
 
     
-    @pytest.mark.xfail(strict=False, reason="ARCH-66/IMPL-11: .svg should classify as image (Option 1); fix pending implementer - non-strict so the fix branch XPASSes green (cycle 333 deadlock-break)")
     def test_svg_dual_membership_resolves_to_text(self, det):
-        # .svg appears in BOTH TEXT_EXTENSIONS and MEDIA_EXTENSIONS; the
-        # classifier checks TEXT_EXTENSIONS first, so it resolves to "text".
+        # ARCH-66 Option 1 (authoritative, cycle 281): .svg was removed from
+        # TEXT_EXTENSIONS (kept in MEDIA_EXTENSIONS + the image subset), so it
+        # now classifies as "image" and is not indexable. (Was a non-strict
+        # xfail pinning the OLD dual-membership/text behavior; the fix landed
+        # on main via #1768@37ed3820, so this is now a hard pin - cycle 359.)
         assert ".svg" not in TEXT_EXTENSIONS
         assert ".svg" in MEDIA_EXTENSIONS
         info = det.detect_from_extension(".svg")
         assert info.category == "image"
         assert info.is_text is False
         assert info.is_media is True
+
+    def test_svg_mime_type_is_svg_xml(self, det):
+        # ARCH-66 AC1: the mime_type comes from mimetypes.guess_type("file.svg").
+        info = det.detect_from_extension(".svg")
+        assert info.mime_type == "image/svg+xml"
+
+    def test_svg_uppercase_extension_normalizes_to_image(self, det):
+        # ARCH-66 adversarial: extension normalization is case-insensitive, so
+        # ".SVG" resolves to the same image classification as ".svg".
+        info = det.detect_from_extension(".SVG")
+        assert info.category == "image"
+        assert info.is_media is True
+        assert info.is_text is False
+
+    def test_svg_should_index_false(self, det):
+        # ARCH-66 AC2: images are not indexable, so a .svg URL is not indexed.
+        assert det.should_index("https://example.com/logo.svg") is False
+
+    def test_svg_should_index_false_with_query(self, det):
+        # ARCH-66 adversarial: a query string does not change the extension
+        # classification, so the .svg URL is still not indexable.
+        assert det.should_index("https://example.com/logo.svg?v=2") is False
+
+    def test_other_images_still_not_indexable(self, det):
+        # Regression guard: the .svg fix did not change other image extensions.
+        assert det.should_index("https://example.com/a.png") is False
+
+    def test_text_extension_still_indexable(self, det):
+        # Regression guard: a genuine text extension is still indexable.
+        assert det.should_index("https://example.com/a.txt") is True
 
     def test_cache_idempotence_same_object(self, det):
         a = det.detect_from_extension(".pdf")

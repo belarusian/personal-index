@@ -323,3 +323,103 @@ class TestContentLinker:
         results = linker.find_related("1")
         # Should match on title
         assert len(results) > 0
+
+
+class TestLinkDataclass:
+    """Adversarial pins for the Link data model (to_dict/from_dict round-trip).
+
+    The existing deep test covered SimilarityEngine and ContentLinker but never
+    the Link dataclass itself - the serialization contract (to_dict -> from_dict
+    round-trip, default link_type/score, enum coercion, equality) was untested.
+    """
+
+    def test_round_trip_preserves_all_fields(self):
+        from personal_index.content_linker.link import Link, LinkType
+
+        link = Link("a", "b", LinkType.TOPIC, 0.7)
+        link2 = Link.from_dict(link.to_dict())
+        assert link == link2
+        assert link2.link_type is LinkType.TOPIC
+        assert link2.score == 0.7
+
+    def test_to_dict_serializes_link_type_to_value(self):
+        from personal_index.content_linker.link import Link, LinkType
+
+        d = Link("a", "b", LinkType.DOMAIN, 0.3).to_dict()
+        assert d["link_type"] == "domain"  # value, not the enum member
+        assert d["score"] == 0.3
+
+    def test_from_dict_defaults_link_type_to_content(self):
+        from personal_index.content_linker.link import Link, LinkType
+
+        link = Link.from_dict({"source_id": "x", "target_id": "y"})
+        assert link.link_type is LinkType.CONTENT
+        assert link.score == 0.5
+
+    def test_from_dict_accepts_enum_member_directly(self):
+        from personal_index.content_linker.link import Link, LinkType
+
+        link = Link.from_dict(
+            {"source_id": "x", "target_id": "y", "link_type": LinkType.KEYWORD, "score": 0.9}
+        )
+        assert link.link_type is LinkType.KEYWORD
+        assert link.score == 0.9
+
+    def test_from_dict_invalid_link_type_raises(self):
+        from personal_index.content_linker.link import Link
+
+        # A bogus string link_type is not a valid LinkType member; the enum
+        # constructor must reject it rather than silently defaulting.
+        try:
+            Link.from_dict({"source_id": "x", "target_id": "y", "link_type": "bogus"})
+            raised = False
+        except ValueError:
+            raised = True
+        assert raised
+
+    def test_equality_is_fieldwise(self):
+        from personal_index.content_linker.link import Link, LinkType
+
+        a = Link("a", "b", LinkType.CONTENT, 0.5)
+        assert a == Link("a", "b", LinkType.CONTENT, 0.5)
+        assert a != Link("a", "b", LinkType.CONTENT, 0.6)  # score differs
+        assert a != Link("a", "c", LinkType.CONTENT, 0.5)  # target differs
+        assert a != Link("b", "b", LinkType.CONTENT, 0.5)  # source differs
+        assert a != Link("a", "b", LinkType.TOPIC, 0.5)  # type differs
+
+    def test_equality_against_non_link_is_false(self):
+        from personal_index.content_linker.link import Link
+
+        assert (Link("a", "b") == "not a link") is False
+        assert (Link("a", "b") == None) is False  # noqa: E711
+
+
+class TestSimilarityEdgeCases:
+    """Adversarial pins for SimilarityEngine no-token guard and threshold boundary."""
+
+    def test_punctuation_only_scores_zero(self):
+        # Neither side yields any [a-z0-9]+ token -> no-token guard -> 0.0.
+        s = SimilarityEngine()
+        assert s.similarity("!!!", "???") == 0.0
+
+    def test_punctuation_vs_word_scores_zero(self):
+        # One side has no tokens -> 0.0 (not a crash, not a partial score).
+        s = SimilarityEngine()
+        assert s.similarity("!!!", "hello world") == 0.0
+
+    def test_threshold_one_is_inclusive(self):
+        # Identical strings score 1.0; threshold=1.0 is inclusive (>=), so the
+        # item is kept, not dropped.
+        s = SimilarityEngine()
+        res = s.find_similar("abc", [("i1", "abc")], threshold=1.0)
+        assert res == [{"id": "i1", "score": 1.0}]
+
+    def test_cache_key_is_symmetric_pair(self):
+        # The cache key is (min, max) of the RAW strings, so (a,b) and (b,a)
+        # share one entry and both return the same score.
+        s = SimilarityEngine()
+        a = s.similarity("alpha beta", "beta gamma")
+        b = s.similarity("beta gamma", "alpha beta")
+        assert a == b
+        # Exactly one cache entry for the symmetric pair.
+        assert len(s._cache) == 1
