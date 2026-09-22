@@ -105,13 +105,13 @@ Item mutation:
   `updated_at`. Returns `True` whenever the collection exists, regardless of
   whether it held any items.
 - `move_item(self, item_id: str, from_collection_id: str, to_collection_id: str) -> bool`
-  — returns `False` when **either** collection is absent. On success calls
-  `from_c.remove_item(item_id)` then `to_c.add_item(item_id)` and reconciles
-  the reverse index (removes `from_collection_id` from the item's list,
-  deleting the entry when empty, then ensures `to_collection_id` is listed).
-  See the contract hole below: the item does **not** need to be in the source,
-  and it is removed from **only the named source**, not from every collection
-  it belongs to.
+  — returns `False` when **either** collection is absent. On success performs a
+  **true relocation**: removes `item_id` from **every** collection in the
+  reverse index, then adds it to `to_collection_id`. Postcondition: the item is
+  in **exactly one** collection (the destination). An item absent from the named
+  source is still relocated (removed from wherever it lives, added to the
+  destination). (ARCH-43, Option A — confirmed by the validator's deep pin
+  `test_move_item_relocates_from_every_collection`.)
 
 Metadata mutation:
 
@@ -171,41 +171,18 @@ Persistence boundary:
 
 ## Contract Holes
 
-**Primary hole — `move_item` over-promises relocation (ARCH-43).** The name
-`move_item` and its docstring ("Add the item to the destination collection and
-remove it from the source collection if present") describe a relocation, but
-the body performs only a **single-source remove + destination add**, and two
-consequences the contract never states follow:
-
-1. **The item does not need to be in the source.** When the item is absent
-   from `from_collection_id`, `from_c.remove_item` is a no-op and the call is a
-   pure **add** (a copy) into `to_collection_id` — not a move. The docstring
-   states this ("the item does not need to be in the source") but the name
-   still over-promises a relocation.
-2. **The item is removed from only the named source, not from every collection
-   it belongs to.** When the item is present in multiple collections,
-   `move_item(item, C1, C2)` removes it from `C1` and adds it to `C2`, but it
-   **remains in every other collection** (e.g. `C3`). So the item is not
-   actually relocated out of all its collections — it ends up in `C2` *and*
-   `C3`. The "move" semantic is underspecified for the multi-collection case,
-   and the reverse index correctly reflects this (the item's list keeps `C3`
-   and `C2`, drops `C1`), so the divergence is between the name and the body,
-   not an index desync.
-
-This is the same class of hole as the docstring over-promise defects in the
-ARCH-41/42 lineage: a name/docstring that promises a stronger semantic
-(relocation) than the body actually performs (single-source remove + add).
-
-**Architect decision (cycle 233): Option B — rename to match the body.** The
-intended resolution is to keep the single-source remove + add body unchanged
-and rename the method to `move_item_from`, with a docstring that states the
-item is removed from **only the named source** and remains in any other
-collections (an item absent from the source is a pure add into the
-destination). Option B is behavior-preserving and matches the existing
-validator deep-test behavioral pin (which already asserts the single-source
-semantic); Option A (true relocation) would change public behavior and is not
-chosen. The remaining work is the validator-owned rename of the deep-test call
-sites (see ARCH-43 / IMPL-10).
+**Resolved — `move_item` relocation (ARCH-43, closed cycle 321).** The original
+hole was that `move_item`'s name/docstring promised a relocation but the body
+performed only a single-source remove + add (the item stayed in every other
+collection it belonged to). The shipped contract is **Option A — true
+relocation**: `move_item(item_id, from_collection_id, to_collection_id)` removes
+the item from **every** collection in the reverse index, then adds it to
+`to_collection_id`; the postcondition is that the item is in **exactly one**
+collection (the destination). The guard path is unchanged (`False` when either
+collection is absent). Witness: the validator's deep pin
+`tests/deep/test_content_collections_adversarial.py::test_move_item_relocates_from_every_collection`
+(converted from the stale non-strict xfail) + adversarial pins
+`test_move_item_self_move_from_equals_to` and `test_move_item_item_in_dest_not_in_source`.
 
 ## Secondary notes (not ticketed)
 
