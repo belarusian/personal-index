@@ -306,3 +306,36 @@ class TestDetectFromBytesDocstringClaim:
         info = self.detector.detect_from_bytes(b"")
         assert info.category == "unknown"
         assert info.mime_type == "application/octet-stream"
+
+    # --- ARCH-66: .svg dual-membership resolves to image (Option 1) ---
+
+    def test_svg_classified_image(self):
+        """ARCH-66: .svg is removed from TEXT_EXTENSIONS so the
+        MEDIA_EXTENSIONS image branch is reachable; it classifies as image."""
+        info = self.detector.detect_from_extension(".svg")
+        assert info.category == "image"
+        assert info.is_text is False
+        assert info.is_media is True
+        assert info.mime_type == "image/svg+xml"
+
+    def test_svg_should_index(self):
+        """ARCH-66: an SVG image is not indexable (image category)."""
+        assert self.detector.should_index("https://example.com/logo.svg") is False
+
+    def test_text_extension_regression(self):
+        """ARCH-66 regression guard: a genuine text extension is unchanged."""
+        info = self.detector.detect_from_extension(".txt")
+        assert info.category == "text"
+        assert info.is_text is True
+
+    def test_media_extension_regression(self):
+        """ARCH-66 regression guard: a genuine media extension is unchanged."""
+        info = self.detector.detect_from_extension(".mp4")
+        assert info.category == "media"
+        assert info.is_media is True
+
+    def test_document_extension_regression(self):
+        """ARCH-66 regression guard: a genuine document extension is unchanged."""
+        info = self.detector.detect_from_extension(".pdf")
+        assert info.category == "document"
+        assert info.is_document is True

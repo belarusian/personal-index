@@ -50,7 +50,7 @@ TEXT_EXTENSIONS = {
     ".yml", ".csv", ".tsv", ".py", ".js", ".ts", ".java", ".c", ".cpp",
     ".h", ".css", ".sql", ".sh", ".bash", ".zsh", ".rb", ".go", ".rs",
     ".php", ".pl", ".lua", ".r", ".ipynb", ".toml", ".ini", ".cfg",
-    ".conf", ".env", ".log", ".tex", ".bib", ".svg", ".graphql",
+    ".conf", ".env", ".log", ".tex", ".bib", ".graphql",
 }
 
 # Known document extensions
