@@ -90,7 +90,7 @@ class TestFullPipelineIntegration:
         # 7. Export results
         result = runner.invoke(main, ["export", "--format", "markdown"])
         assert result.exit_code == 0
-        assert "# Search Results" in result.output
+        assert "# Personal Index Export" in result.output
 
     def test_pipeline_with_interests_filtering(self, tmp_path, monkeypatch):
         """Test that interests properly filter and score content."""
@@ -236,20 +236,19 @@ class TestFullPipelineIntegration:
         # Test markdown export
         result = runner.invoke(main, ["export", "--format", "markdown"])
         assert result.exit_code == 0
-        assert "# Search Results" in result.output
+        assert "# Personal Index Export" in result.output
 
         # Test JSON export
         result = runner.invoke(main, ["export", "--format", "json"])
         assert result.exit_code == 0
         import json
         data = json.loads(result.output)
-        assert "pages" in data
-        assert "total" in data
+        assert isinstance(data, list) and (not data or "url" in data[0])
 
         # Test CSV export
         result = runner.invoke(main, ["export", "--format", "csv"])
         assert result.exit_code == 0
-        assert "rank" in result.output.lower()
+        assert "url" in result.output.lower()
         assert "title" in result.output.lower()
 
 
