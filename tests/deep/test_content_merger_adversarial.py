@@ -325,13 +325,6 @@ class TestMergeConcatPhantomSeparator:
     **non-empty** content; _merge_concatenate guards on raw truthiness so a
     whitespace-only source survives the guard and is appended as ""."""
 
-    @pytest.mark.xfail(
-        strict=False,
-        reason="QA-76: _merge_concatenate uses `if source.content:` (raw "
-        "truthy) so a whitespace-only source injects a phantom separator; "
-        "expected 'A\\n\\n---\\n\\nB' with one separator. "
-        "tickets/QA-76.md",
-    )
     def test_concatenate_whitespace_only_source_injects_phantom_separator(self):
         r = ContentMerger(strategy="concatenate").merge(
             [
