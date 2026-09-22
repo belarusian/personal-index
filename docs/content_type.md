@@ -26,13 +26,13 @@ downloadable; `image`, `video`, `audio`, `media`, `archive`, `unknown` are not.
 | Name | Contents |
 |------|----------|
 | `CATEGORY_MAP` | dict mapping MIME strings to a category: `text`/`image`/`video`/`audio` map to themselves; `application/json`, `application/xml`, `application/javascript` → `text`; `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument` → `document`; `application/zip`, `application/gzip`, `application/x-tar`, `application/x-rar` → `archive`; `application/octet-stream` → `unknown` |
-| `TEXT_EXTENSIONS` | 40 extensions incl. `.txt .md .rst .html .htm .xml .json .yaml .yml .csv .tsv .py .js .ts .java .c .cpp .h .css .sql .sh .bash .zsh .rb .go .rs .php .pl .lua .r .ipynb .toml .ini .cfg .conf .env .log .tex .bib .svg .graphql` |
+| `TEXT_EXTENSIONS` | 39 extensions incl. `.txt .md .rst .html .htm .xml .json .yaml .yml .csv .tsv .py .js .ts .java .c .cpp .h .css .sql .sh .bash .zsh .rb .go .rs .php .pl .lua .r .ipynb .toml .ini .cfg .conf .env .log .tex .bib .graphql` |
 | `DOCUMENT_EXTENSIONS` | `.pdf .doc .docx .xls .xlsx .ppt .pptx .odt .ods .odp .epub .mobi .djvu` |
 | `MEDIA_EXTENSIONS` | image exts (`.jpg .jpeg .png .gif .bmp .webp .svg .ico`) + video (`.mp4 .avi .mkv .mov .wmv .flv .webm`) + audio (`.mp3 .wav .flac .ogg .aac .wma`) |
 | `ARCHIVE_EXTENSIONS` | `.zip .tar .gz .bz2 .xz .7z .rar .tgz` |
 
-**Note**: `.svg` appears in **both** `TEXT_EXTENSIONS` and `MEDIA_EXTENSIONS`
-(see Contract Holes #1).
+**Note**: `.svg` is in `MEDIA_EXTENSIONS` only (removed from `TEXT_EXTENSIONS`);
+it classifies as `image` and is not indexable (see Contract Holes #1, resolved).
 
 ### `ContentTypeDetector`
 
@@ -139,35 +139,24 @@ So `text` and `document` are indexed; `image`, `video`, `audio`, `media`,
 
 ## Contract Holes
 
-### 1. `.svg` is in both `TEXT_EXTENSIONS` and `MEDIA_EXTENSIONS` (dead media entry)
+### 1. `.svg` dual-membership — RESOLVED (Option 1, ARCH-66 closed cycle 321)
 
-`.svg` is listed in `TEXT_EXTENSIONS` (line 53) **and** in `MEDIA_EXTENSIONS`
-(line 64). `_classify_category_from_ext` checks `TEXT_EXTENSIONS` first
-(line 146), so any `.svg` input is classified as `text` before the
-`MEDIA_EXTENSIONS` branch (line 151) is ever reached. The `MEDIA_EXTENSIONS`
-entry for `.svg` is **dead**: it can never fire.
-
-Consequences:
-- `detect_from_extension(".svg")` → `category == "text"`, `is_text == True`,
-  `is_media == False` (never `image`).
-- `should_index("https://example.com/logo.svg")` → `True` (an SVG image is
-  treated as indexable text).
-
-A reader of `MEDIA_EXTENSIONS` would expect `.svg` to be `image`/`media`; the
-actual result is `text`. This is a silent priority trap, the same class as the
-`/static/`+`/assets/` overlap in `url_classifier` (ARCH-31).
-
-**Authoritative decision (architect, cycle 281): Option 1.** `.svg` is a
-vector image; the `TEXT_EXTENSIONS` entry is the copy-paste anomaly. The
-corrected contract is: remove `.svg` from `TEXT_EXTENSIONS` (keep it in
-`MEDIA_EXTENSIONS` and the image subset), so `detect_from_extension(".svg")`
-→ `category == "image"`, `is_media is True`, `is_text is False`,
-`mime_type == "image/svg+xml"`, and `should_index("…/logo.svg")` → `False`.
-Option 2 (keep `.svg` as `text`) is rejected: it contradicts the module's own
-image-subset intent and the semantic meaning of SVG. The validator's deep test
-(`test_svg_dual_membership_resolves_to_text`) currently pins the OLD dual
-membership + `text` resolution and must be updated to Option 1 (IMPL-11);
-until then this ticket stays OPEN-PUSHBACK.
+`.svg` was originally listed in **both** `TEXT_EXTENSIONS` and
+`MEDIA_EXTENSIONS`; because `_classify_category_from_ext` checks
+`TEXT_EXTENSIONS` first, the `MEDIA_EXTENSIONS` entry was dead and `.svg`
+resolved to `text`/indexable. The shipped contract is **Option 1**: `.svg` is a
+vector image, so it was **removed from `TEXT_EXTENSIONS`** (kept in
+`MEDIA_EXTENSIONS` and the image subset). Confirmed behavior:
+- `detect_from_extension(".svg")` → `category == "image"`, `is_media is True`,
+  `is_text is False`, `mime_type == "image/svg+xml"`.
+- `should_index("https://example.com/logo.svg")` → `False` (an SVG image is not
+  indexable text).
+Option 2 (keep `.svg` as `text`) was rejected: it contradicts the module's own
+image-subset intent and the semantic meaning of SVG. Witness: the validator's
+deep pin `tests/deep/test_content_type_adversarial.py::test_svg_dual_membership_resolves_to_text`
+(reconciled to Option 1 — hard pin, non-strict xfail removed) + 6 adversarial
+pins (svg mime, uppercase `.SVG`, `should_index` false with/without query,
+other-image-not-indexable, text-still-indexable).
 
 ### 2. `is_media` is computed with two divergent category sets
 
@@ -185,11 +174,11 @@ routes a `media` category through `_make_info` would silently drop `is_media`.
 
 ## Pinning Tests (for ARCH-66)
 
-1. **`.svg` → text (not image)**: `ContentTypeDetector().detect_from_extension(".svg")`
-   → `category == "text"`, `is_text is True`, `is_media is False`,
-   `mime_type == "text/plain"`.
-2. **`.svg` is indexable**: `ContentTypeDetector().should_index("https://example.com/logo.svg")`
-   → `True`.
+1. **`.svg` → image (not text)**: `ContentTypeDetector().detect_from_extension(".svg")`
+   → `category == "image"`, `is_media is True`, `is_text is False`,
+   `mime_type == "image/svg+xml"`.
+2. **`.svg` is NOT indexable**: `ContentTypeDetector().should_index("https://example.com/logo.svg")`
+   → `False`.
 3. **Guard path — empty bytes**: `ContentTypeDetector().detect_from_bytes(b"")`
    → `category == "unknown"`, `mime_type == "application/octet-stream"`,
    `extension == ""`, all flags False.
