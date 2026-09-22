@@ -141,8 +141,9 @@ class ContentMerger:
         all_sources = []
 
         for source in sources:
-            if source.content:
-                contents.append(source.content.strip())
+            stripped = source.content.strip()
+            if stripped:
+                contents.append(stripped)
             all_tags.update(t.lower() for t in source.tags if isinstance(t, str))
             all_sources.append(source.url)
 
