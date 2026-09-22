@@ -293,7 +293,6 @@ def test_remove_absent_item_returns_true_but_no_index_change():
 # move_item — documented multi-collection semantic
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="ARCH-43: move_item should relocate from every collection (Option A); fix pending implementer - non-strict so the fix branch XPASSes green (cycle 352 deadlock-break, consistent with ARCH-66/83/84 cycle 333)")
 def test_move_item_relocates_from_every_collection():
     """move_item removes from EVERY collection the item belongs to, then adds to dest
     (Option A: true relocation)."""
@@ -614,3 +613,45 @@ def test_cli_boots_and_collections_importable():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_move_item_self_move_from_equals_to():
+    """Adversarial: from_collection_id == to_collection_id (self-move).
+
+    Option A: the item is removed from EVERY collection it belongs to, then
+    re-added to the destination (which is the same collection). Postcondition:
+    the item ends up in exactly one collection (the destination) and the
+    reverse index agrees. An item also present in a third collection is
+    relocated out of it.
+    """
+    m = CollectionManager()
+    a = m.create("A")
+    b = m.create("B")
+    m.add_item(a, "x")
+    m.add_item(b, "x")
+    assert m.move_item("x", a, a) is True
+    # relocated: x in a only, removed from b
+    assert m.get_items(a) == ["x"]
+    assert "x" not in m.get_items(b)
+    assert m._item_to_collections["x"] == [a]
+    _assert_reverse_index_consistent(m)
+
+
+def test_move_item_item_in_dest_not_in_source():
+    """Adversarial: item is in the destination and a third collection, but NOT
+    in the named source. Option A still relocates: after the call the item is
+    in exactly one collection (the destination), removed from the third.
+    """
+    m = CollectionManager()
+    a = m.create("A")
+    b = m.create("B")
+    c = m.create("C")
+    m.add_item(b, "y")
+    m.add_item(c, "y")
+    assert m.move_item("y", a, b) is True
+    # relocated: y in b only, removed from c, a stays empty
+    assert m.get_items(b) == ["y"]
+    assert "y" not in m.get_items(c)
+    assert m.get_items(a) == []
+    assert m._item_to_collections["y"] == [b]
+    _assert_reverse_index_consistent(m)

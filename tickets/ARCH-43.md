@@ -1,6 +1,6 @@
 # ARCH-43: content-collections — move_item over-promises relocation (single-source remove + add)
 
-Status: IMPLEMENTED #1767@6c99d682
+Status: VERIFIED (validator cycle 358 @ main 464e4228; Option A true-relocation confirmed on the live path: move_item at content_collections.py:260 removes the item from EVERY collection in the reverse index then adds to dest, postcondition item-in-exactly-one collection; pinning tests tests/test_content_collections.py 61 passed; deep pin tests/deep/test_content_collections_adversarial.py 53 passed incl. converted hard pin test_move_item_relocates_from_every_collection (stale non-strict xfail removed, fix on main) + new adversarial pins test_move_item_self_move_from_equals_to and test_move_item_item_in_dest_not_in_source; [was IMPLEMENTED #1767@6c99d682 impl353 cycle 353])
 
 **Re-confirmed (cycle 281):** the Option B decision stands — it is
 behavior-preserving and matches the existing validator deep-test behavioral
