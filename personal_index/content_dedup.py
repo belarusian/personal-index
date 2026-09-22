@@ -487,7 +487,12 @@ class ContentDeduplicator:
           * ``duplicate_groups = url_result.duplicate_groups +
             hash_result.duplicate_groups + sim_result.duplicate_groups``
           * ``removed_count = url_result.removed_count +
-            hash_result.removed_count + sim_result.removed_count``
+            hash_result.removed_count + sim_result.removed_count +
+            url_rebuild_dropped + hash_rebuild_dropped``, where the two
+            ``*_rebuild_dropped`` terms count the empty-key drops made by the
+            rebuild loops in stages 2 and 4 (which ``dedup_by_url`` /
+            ``dedup_by_hash`` skip and therefore never report), so
+            ``unique_items`` reflects the true survivor count (QA-74).
 
         Args:
             items: List of content item dicts.
@@ -501,14 +506,22 @@ class ContentDeduplicator:
         # First dedup by URL (exact matches)
         url_result = self.dedup_by_url(items)
 
-        # Get unique items after URL dedup
+        # Get unique items after URL dedup. The rebuild loop collapses
+        # all-but-first items that share a normalize_url key; dedup_by_url
+        # skips empty-URL items (they are never grouped), so the empty-key
+        # drops made here are NOT counted by url_result.removed_count. Count
+        # them (url_rebuild_dropped) so unique_items reflects the true
+        # survivor count instead of silently overstating it (QA-74).
         seen_urls = set()
         unique_items = []
+        url_rebuild_dropped = 0
         for item in items:
             normalized = normalize_url(item.get("url", ""))
             if normalized not in seen_urls:
                 seen_urls.add(normalized)
                 unique_items.append(item)
+            elif not normalized:
+                url_rebuild_dropped += 1
 
         # Then dedup by content hash
         hash_result = self.dedup_by_hash(unique_items)
@@ -517,13 +530,20 @@ class ContentDeduplicator:
         # the similarity stage only sees content-hash-unique items (mirrors
         # the URL stage above; empty content hashes to "" and the first such
         # item survives).
+        # Mirrors the URL stage: dedup_by_hash skips empty-content items
+        # (they are never grouped), so the empty-key drops made here are NOT
+        # counted by hash_result.removed_count. Count them (hash_rebuild_
+        # dropped) so unique_items reflects the true survivor count (QA-74).
         seen_hashes = set()
         hash_unique = []
+        hash_rebuild_dropped = 0
         for item in unique_items:
             h = content_hash(item.get("content", ""))
             if h not in seen_hashes:
                 seen_hashes.add(h)
                 hash_unique.append(item)
+            elif not h:
+                hash_rebuild_dropped += 1
 
         # Finally dedup by content similarity (near-duplicates)
         sim_result = self.dedup_by_similarity(hash_unique)
@@ -538,6 +558,8 @@ class ContentDeduplicator:
             url_result.removed_count
             + hash_result.removed_count
             + sim_result.removed_count
+            + url_rebuild_dropped
+            + hash_rebuild_dropped
         )
 
         return DedupResult(

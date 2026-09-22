@@ -15,8 +15,6 @@ import os
 import subprocess
 import sys
 
-import pytest
-
 from personal_index.content_dedup import (
     ContentDeduplicator,
     content_hash,
@@ -115,16 +113,12 @@ class TestDedupAllInvariants:
 
 
 class TestDedupAllEmptyKeyDataLoss:
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-74: dedup_all URL rebuild collapses all-but-first empty-URL "
-        "items to one survivor but never counts the drop in removed_count, so "
-        "unique_items overstates the true survivor count (silent data loss).",
-    )
     def test_empty_url_distinct_content_survivor_count_matches_unique_items(self):
+        # QA-74 (fixed): the URL rebuild loop's empty-key drop is now counted
+        # in removed_count, so unique_items reflects the true survivor count.
         # Two genuinely distinct items (different content) both with an empty
-        # URL. Neither is a duplicate of the other, so both should survive and
-        # be counted unique. The pipeline actually retains only one.
+        # URL. The URL rebuild loop retains only the first empty-URL item and
+        # now counts the drop, so unique_items == 1 == the true survivor count.
         items = [
             {"url": "", "content": "alpha"},
             {"url": "", "content": "beta"},
@@ -138,15 +132,11 @@ class TestDedupAllEmptyKeyDataLoss:
             f"removed_count={r.removed_count}"
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="QA-74: dedup_all hash rebuild collapses all-but-first "
-        "empty-content items to one survivor but never counts the drop in "
-        "removed_count (silent data loss).",
-    )
     def test_empty_content_distinct_url_survivor_count_matches_unique_items(self):
+        # QA-74 (fixed): the hash rebuild loop's empty-key drop is now counted
+        # in removed_count, so unique_items reflects the true survivor count.
         # Two distinct items (different URL) both with empty content. The hash
-        # rebuild stage collapses them to one survivor without counting the drop.
+        # rebuild stage collapses them to one survivor and now counts the drop.
         items = [
             {"url": "a.com", "content": ""},
             {"url": "b.com", "content": ""},

@@ -504,10 +504,12 @@ class TestContentDeduplicator:
         # Returned DedupResult fields.
         # Stage 1 (dedup_by_url) removes 1 (the a.com pair; empty-URL items are
         # skipped, not grouped). Stage 3 (dedup_by_hash on the reduced list)
-        # removes 1 (the Body B pair). Total removed = 2.
+        # removes 1 (the Body B pair). The stage-2 URL rebuild also drops the
+        # second empty-URL item (Body D) and now counts that empty-key drop
+        # (QA-74). Total removed = 3.
         assert result.total_items == 6
-        assert result.removed_count == 2
-        assert result.unique_items == 4
+        assert result.removed_count == 3
+        assert result.unique_items == 3
         assert result.method == "combined"
         # Combined groups: 1 URL group + 1 hash group.
         assert len(result.duplicate_groups) == 2
