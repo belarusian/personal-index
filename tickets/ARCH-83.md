@@ -1,6 +1,6 @@
 # ARCH-83: format_table is asymmetric on ragged rows — long rows silently drop cells (lossy), short rows are padded
 
-Status: OPEN (validator reconciled deep test to Option A, cycle 300)
+Status: CLAIMED 2026-09-22
 Component: personal_index.formatter (personal_index/formatter.py)
 Issue: #1444
 
