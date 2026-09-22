@@ -486,3 +486,181 @@ class TestExtractUrlHintsTldFalsePositive:
         assert "business" not in hints, (
             f"spurious business hint from TLD 'com': {hints}"
         )
+
+
+# ===========================================================================
+# Cycle 371 - internal-helper regression armor (unpinned helpers)
+#
+# Targets internal helpers the existing file does NOT pin:
+#   get_topic, __post_init__, _lowercase_signals, _tokenize_signals,
+#   _primary_and_confidence, _match_keywords, _add_matches, _score_topic,
+#   _build_reasons. All pins PASS on current main (no contract violation).
+# ===========================================================================
+
+class TestGetTopicHelper:
+    """get_topic() case-insensitive lookup + miss -> None."""
+
+    def test_get_topic_case_insensitive_hit(self):
+        c = ContentCategorizer()
+        assert c.get_topic("TECHNOLOGY") is not None
+        assert c.get_topic("technology") is not None
+
+    def test_get_topic_miss_returns_none(self):
+        c = ContentCategorizer()
+        assert c.get_topic("no-such-topic") is None
+
+    def test_get_topic_empty_string_returns_none(self):
+        c = ContentCategorizer()
+        assert c.get_topic("") is None
+
+
+class TestTopicCategoryPostInit:
+    """__post_init__ lowercases keywords in place."""
+
+    def test_post_init_lowercases_keywords(self):
+        tc = TopicCategory(name="X", keywords=["PyThOn", "ML"])
+        assert tc.keywords == ["python", "ml"]
+
+    def test_post_init_empty_keywords(self):
+        tc = TopicCategory(name="X", keywords=[])
+        assert tc.keywords == []
+
+    def test_post_init_unicode_keywords_lowercased(self):
+        tc = TopicCategory(name="X", keywords=["ÉCOLE", "Straße"])
+        assert tc.keywords == ["école", "straße"]
+
+
+class TestLowercaseAndTokenizeSignals:
+    """_lowercase_signals / _tokenize_signals shape."""
+
+    def test_lowercase_signals_all_three(self):
+        c = ContentCategorizer()
+        assert c._lowercase_signals("AbC", "DeF", "GhI") == ("abc", "def", "ghi")
+
+    def test_lowercase_signals_empty(self):
+        c = ContentCategorizer()
+        assert c._lowercase_signals("", "", "") == ("", "", "")
+
+    def test_tokenize_signals_keys_and_types(self):
+        c = ContentCategorizer()
+        tok = c._tokenize_signals("python programming", "tech news", "")
+        assert set(tok.keys()) == {"text", "title", "meta"}
+        assert all(isinstance(v, set) for v in tok.values())
+
+    def test_tokenize_signals_empty_inputs(self):
+        c = ContentCategorizer()
+        tok = c._tokenize_signals("", "", "")
+        assert tok == {"text": set(), "title": set(), "meta": set()}
+
+
+class TestPrimaryAndConfidence:
+    """_primary_and_confidence empty vs non-empty."""
+
+    def test_empty_returns_uncategorized_zero(self):
+        c = ContentCategorizer()
+        assert c._primary_and_confidence([]) == ("uncategorized", 0.0)
+
+    def test_nonempty_returns_first(self):
+        c = ContentCategorizer()
+        ts = [TopicScore("a", 0.5), TopicScore("b", 0.9)]
+        assert c._primary_and_confidence(ts) == ("a", 0.5)
+
+
+class TestMatchKeywords:
+    """_match_keywords single-word vs multi-word phrase matching."""
+
+    def test_single_word_token_match(self):
+        c = ContentCategorizer()
+        assert c._match_keywords(["python", "ml"], {"python", "foo"}, "i love python") == ["python"]
+
+    def test_multi_word_phrase_substring(self):
+        c = ContentCategorizer()
+        assert c._match_keywords(["machine learning"], set(), "a machine learning model") == ["machine learning"]
+
+    def test_multi_word_phrase_miss(self):
+        c = ContentCategorizer()
+        assert c._match_keywords(["machine learning"], set(), "no match here") == []
+
+    def test_no_keywords_returns_empty(self):
+        c = ContentCategorizer()
+        assert c._match_keywords([], {"python"}, "python") == []
+
+
+class TestAddMatches:
+    """_add_matches dedup of kw, src appended only on non-empty matches."""
+
+    def test_dedup_and_src_labels(self):
+        c = ContentCategorizer()
+        kw: list[str] = []
+        src: list[str] = []
+        c._add_matches(["a", "b"], kw, src, "text")
+        c._add_matches(["b", "c"], kw, src, "title")
+        assert kw == ["a", "b", "c"]
+        assert src == ["text", "title"]
+
+    def test_empty_matches_appends_nothing(self):
+        c = ContentCategorizer()
+        kw: list[str] = []
+        src: list[str] = []
+        c._add_matches([], kw, src, "text")
+        assert kw == []
+        assert src == []
+
+
+class TestScoreTopicHelper:
+    """_score_topic single-source, zero, and url-hint contributions."""
+
+    def test_single_text_match_score(self):
+        c = ContentCategorizer()
+        tc = c.get_topic("technology")
+        score, matched, src = c._score_topic(
+            topic=tc, text_tokens={"python"}, title_tokens=set(),
+            meta_tokens=set(), text_lower="python", title_lower="",
+            meta_lower="", url_hints=set(),
+        )
+        assert score == 0.15
+        assert matched == ["python"]
+        assert src == ["text"]
+
+    def test_zero_signals(self):
+        c = ContentCategorizer()
+        tc = c.get_topic("technology")
+        score, matched, src = c._score_topic(
+            topic=tc, text_tokens=set(), title_tokens=set(),
+            meta_tokens=set(), text_lower="", title_lower="",
+            meta_lower="", url_hints=set(),
+        )
+        assert (score, matched, src) == (0.0, [], [])
+
+    def test_url_hint_flat_boost(self):
+        c = ContentCategorizer()
+        tc = c.get_topic("technology")
+        score, matched, src = c._score_topic(
+            topic=tc, text_tokens=set(), title_tokens=set(),
+            meta_tokens=set(), text_lower="", title_lower="",
+            meta_lower="", url_hints={"technology"},
+        )
+        assert score == c.URL_HINT_BOOST
+        assert src == ["url_hint"]
+
+
+class TestBuildReasonsHelper:
+    """_build_reasons empty, preview cap, and source fallback."""
+
+    def test_empty_scores(self):
+        c = ContentCategorizer()
+        assert c._build_reasons([], "x") == ["no matching topics found in content"]
+
+    def test_more_than_five_keywords_preview(self):
+        c = ContentCategorizer()
+        ts = [TopicScore("tech", 0.5, ["a", "b", "c", "d", "e", "f"], ["text", "title"])]
+        reasons = c._build_reasons(ts, "x")
+        assert len(reasons) == 1
+        assert "(+1 more)" in reasons[0]
+        assert "signals=text, title" in reasons[0]
+
+    def test_no_sources_falls_back_to_text(self):
+        c = ContentCategorizer()
+        ts = [TopicScore("tech", 0.5, ["a"], [])]
+        reasons = c._build_reasons(ts, "x")
+        assert "signals=text" in reasons[0]
