@@ -1,6 +1,6 @@
 # ARCH-84: DomainManager.remove() leaves _has_whitelist stale — removing the last allow rule silently flips unlisted domains to deny-all
 
-Status: CLAIMED 2026-09-14 (validator reconciled deep test, cycle 300)
+Status: IMPLEMENTED #1784@
 Component: personal_index.domains (personal_index/domains.py)
 Issue: #1447
 
