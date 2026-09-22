@@ -432,3 +432,242 @@ class TestCliEndToEnd:
         assert result.exit_code == 0, result.output
         assert "Scored:" in result.output
         assert "Indexed:      1" in result.output
+
+
+# ── Cycle 370: additional adversarial pins ─────────────────────────────
+
+
+class TestComputeTotalDirect:
+    """Pin _compute_total as a raw weighted sum (no rounding/clamping)."""
+
+    def test_raw_sum_no_rounding(self, scorer: ContentScorer) -> None:
+        # With default normalized weights (sum=1.0), all factors=0.1
+        # -> total = 0.1 * sum(weights) = 0.1. No rounding applied here.
+        result = scorer._compute_total(0.1, 0.1, 0.1, 0.1, 0.1, 0.1)
+        assert result == pytest.approx(0.1, abs=1e-10)
+
+    def test_zero_factors_give_zero(self, scorer: ContentScorer) -> None:
+        assert scorer._compute_total(0, 0, 0, 0, 0, 0) == 0.0
+
+    def test_all_ones_gives_one(self, scorer: ContentScorer) -> None:
+        # All factors at 1.0 with normalized weights (sum=1.0) -> 1.0
+        assert scorer._compute_total(1.0, 1.0, 1.0, 1.0, 1.0, 1.0) == pytest.approx(1.0)
+
+    def test_negative_factor_propagates(self, scorer: ContentScorer) -> None:
+        # _compute_total does NOT clamp; negative input -> negative output.
+        result = scorer._compute_total(-1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        assert result < 0.0
+
+
+class TestBuildScoreDirect:
+    """Pin _build_score rounding and factors dict construction."""
+
+    def test_rounds_to_4_places(self, scorer: ContentScorer) -> None:
+        cs = scorer._build_score(0.123456789, 0.987654321, 0.5, 0.25, 0.1, 0.05, 0.15)
+        assert cs.total == 0.1235
+        assert cs.recency == 0.9877
+        assert cs.relevance == 0.5
+
+    def test_factors_dict_unrounded(self, scorer: ContentScorer) -> None:
+        cs = scorer._build_score(0.5, 0.123456789, 0.0, 0.0, 0.0, 0.0, 0.0)
+        assert cs.factors["recency"] == 0.123456789  # unrounded
+        assert cs.recency == 0.1235  # rounded field
+
+    def test_factors_has_exactly_six_keys(self, scorer: ContentScorer) -> None:
+        cs = scorer._build_score(0.5, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
+        assert set(cs.factors.keys()) == {
+            "recency", "relevance", "engagement", "quality", "authority", "freshness"
+        }
+
+
+class TestScoreEdgeInputs:
+    """Pin score() with edge-case parameter values."""
+
+    def test_empty_string_change_frequency_defaults_to_monthly(
+        self, scorer: ContentScorer
+    ) -> None:
+        # change_frequency="" -> frequency_hours.get("", 720) -> 720 (monthly)
+        # With last_crawled=None, freshness is 0.5 regardless.
+        cs = scorer.score(last_crawled=None, change_frequency="")
+        assert cs.freshness == 0.5
+
+    def test_none_change_frequency_defaults_to_monthly(
+        self, scorer: ContentScorer
+    ) -> None:
+        # change_frequency=None -> frequency_hours.get(None, 720) -> 720
+        cs = scorer.score(last_crawled=None, change_frequency=None)  # type: ignore[arg-type]
+        assert cs.freshness == 0.5
+
+    def test_negative_domain_authority_clamped_to_zero(
+        self, scorer: ContentScorer
+    ) -> None:
+        # _score_authority applies max(0.0, min(1.0, score)) unconditionally.
+        cs = scorer.score(domain_authority=-0.5, is_verified_source=False)
+        assert cs.authority == 0.0
+
+    def test_domain_authority_over_one_clamped(
+        self, scorer: ContentScorer
+    ) -> None:
+        cs = scorer.score(domain_authority=1.5, is_verified_source=False)
+        assert cs.authority == 1.0
+
+    def test_idempotent_double_call(self, scorer: ContentScorer) -> None:
+        kwargs = dict(
+            published_at=_now() - timedelta(days=5),
+            keyword_matches=3, total_keywords=10,
+            view_count=100, bookmark_count=10, share_count=5,
+            word_count=500, has_images=True, has_code=False,
+            domain_authority=0.7, is_verified_source=True,
+        )
+        r1 = scorer.score(**kwargs)
+        r2 = scorer.score(**kwargs)
+        assert r1.total == r2.total
+        assert r1.recency == r2.recency
+        assert r1.factors == r2.factors
+
+
+class TestScorePageEdgeInputs:
+    """Pin score_page() with edge-case page objects."""
+
+    def test_content_none_defaults_to_empty(self, scorer: ContentScorer) -> None:
+        class _Page:
+            content = None
+            word_count = 0
+            domain_authority = 0.5
+            crawled_at = None
+        cs = scorer.score_page(_Page())
+        assert isinstance(cs, ContentScore)
+        assert cs.quality == 0.0  # no content -> no quality
+
+    def test_word_count_none_falls_back_to_split(self, scorer: ContentScorer) -> None:
+        class _Page:
+            content = "hello world foo bar"
+            word_count = None
+            domain_authority = 0.5
+            crawled_at = None
+        cs = scorer.score_page(_Page())
+        # word_count=None -> len("hello world foo bar".split()) = 4
+        expected_quality = round(min(1.0, math.log1p(4) / math.log1p(3000)), 4)
+        assert cs.quality == expected_quality
+
+    def test_interest_store_empty_lists(self, scorer: ContentScorer) -> None:
+        class _Interest:
+            keywords: list = []
+            topics: list = []
+            value = ""
+
+        class _Store:
+            def list_all(self):
+                return [_Interest()]
+
+        class _Page:
+            content = "some content"
+            word_count = 10
+            domain_authority = 0.5
+            crawled_at = None
+
+        cs = scorer.score_page(_Page(), _Store())
+        # No keywords/topics/value -> total_keywords=0 -> max(0,1)=1, matches=0
+        # relevance = 0/1 = 0.0
+        assert cs.relevance == 0.0
+
+    def test_crawled_at_naive_datetime(self, scorer: ContentScorer) -> None:
+        class _Page:
+            content = "test"
+            word_count = 5
+            domain_authority = 0.5
+            crawled_at = datetime.now()  # naive
+
+        cs = scorer.score_page(_Page())
+        # Naive crawled_at treated as UTC -> freshness should be 1.0 (just crawled)
+        assert cs.freshness == pytest.approx(1.0, abs=0.01)
+
+
+class TestRankEdgeCases:
+    """Pin rank() with additional edge cases."""
+
+    def test_limit_equals_len(self, scorer: ContentScorer) -> None:
+        items = [
+            {"keyword_matches": 1, "total_keywords": 1},
+            {"keyword_matches": 2, "total_keywords": 2},
+            {"keyword_matches": 3, "total_keywords": 3},
+        ]
+        result = scorer.rank(items, limit=3)
+        assert len(result) == 3
+
+    def test_extra_unknown_key_raises_type_error(self, scorer: ContentScorer) -> None:
+        # Docstring: "the dict's keys must be valid score keyword arguments"
+        items = [{"keyword_matches": 1, "total_keywords": 1, "bogus_key": 99}]
+        with pytest.raises(TypeError):
+            scorer.rank(items, limit=1)
+
+    def test_empty_dict_item_scores_zero_relevance(self, scorer: ContentScorer) -> None:
+        # An empty dict -> score() with all defaults -> relevance 0.0
+        items = [{}]
+        result = scorer.rank(items, limit=1)
+        assert len(result) == 1
+        assert result[0][1].relevance == 0.0
+
+
+class TestScoreWeightsTinyValues:
+    """Pin ScoreWeights.normalize() with near-zero (but non-zero) weights."""
+
+    def test_very_small_weights_normalize_to_equal(self) -> None:
+        w = ScoreWeights(1e-10, 1e-10, 1e-10, 1e-10, 1e-10, 1e-10).normalize()
+        total = (
+            w.recency + w.relevance + w.engagement
+            + w.quality + w.authority + w.freshness
+        )
+        assert total == pytest.approx(1.0, abs=1e-6)
+
+    def test_mixed_tiny_and_normal(self) -> None:
+        w = ScoreWeights(1e-10, 1.0, 1.0, 1.0, 1.0, 1.0).normalize()
+        # recency is negligible compared to others
+        assert w.recency < 1e-8
+        assert w.relevance == pytest.approx(0.2, abs=1e-6)
+
+
+class TestContentScoreToDictExtremes:
+    """Pin ContentScore.to_dict() with extreme values."""
+
+    def test_negative_values_rounded_correctly(self) -> None:
+        cs = ContentScore(total=-0.123456789, recency=-0.987654321)
+        d = cs.to_dict()
+        assert d["total"] == -0.1235
+        assert d["recency"] == -0.9877
+
+    def test_very_large_values(self) -> None:
+        cs = ContentScore(total=99999.123456789)
+        d = cs.to_dict()
+        assert d["total"] == 99999.1235
+
+    def test_zero_values(self) -> None:
+        cs = ContentScore()
+        d = cs.to_dict()
+        assert d["total"] == 0.0
+        assert d["recency"] == 0.0
+        assert d["factors"] == {}
+
+
+class TestScoreFreshnessUnknownFrequency:
+    """Pin _score_freshness with unknown/edge frequency strings."""
+
+    def test_unknown_frequency_string_defaults_to_monthly(
+        self, scorer: ContentScorer
+    ) -> None:
+        # "biweekly" is not in the table -> defaults to 720 (monthly)
+        # With last_crawled=now, age_hours~0 -> freshness ~1.0
+        cs = scorer._score_freshness(_now(), "biweekly", None)
+        assert cs == pytest.approx(1.0, abs=0.01)
+
+    def test_empty_string_frequency_defaults_to_monthly(
+        self, scorer: ContentScorer
+    ) -> None:
+        cs = scorer._score_freshness(_now(), "", None)
+        assert cs == pytest.approx(1.0, abs=0.01)
+
+    def test_none_frequency_defaults_to_monthly(
+        self, scorer: ContentScorer
+    ) -> None:
+        cs = scorer._score_freshness(_now(), None, None)  # type: ignore[arg-type]
+        assert cs == pytest.approx(1.0, abs=0.01)
