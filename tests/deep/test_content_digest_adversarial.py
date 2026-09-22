@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import json
 import re
-import pytest
 
 from click.testing import CliRunner
 
@@ -330,7 +329,6 @@ class TestCliEndToEnd:
         assert res.exit_code == 0, res.output
         assert "No indexed content found" in res.output
 
-    @pytest.mark.xfail(strict=False, reason="ARCH-98/IMPL-15: export empty-index guard should echo the Option A message 'No pages to export.'; fix pending implementer - non-strict so the fix branch XPASSes green (cycle 333 deadlock-break)")
     def test_export_empty_index_guard(self, tmp_path):
         dd = str(tmp_path)
         runner = CliRunner()

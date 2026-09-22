@@ -245,7 +245,6 @@ class TestCliExportEndToEnd:
         assert "http://x0" in result.output
         assert "http://x2" in result.output
 
-    @pytest.mark.xfail(strict=False, reason="ARCH-98/IMPL-20: reachable export empty-index guard must echo the Option A message 'No pages to export.'; fix held on branch impl358/arch98-wire-export-cmd (not yet on main) - non-strict xfail so the fix branch XPASSes green (cycle 374 deadlock-break, cycle-333 pattern)")
     def test_cli_export_empty_index(self, tmp_path: object) -> None:
         dd = str(tmp_path)
         SearchIndex(db_path=os.path.join(dd, "search_index.json"))
