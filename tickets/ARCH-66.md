@@ -1,6 +1,6 @@
 # ARCH-66 — content_type: `.svg` is in both `TEXT_EXTENSIONS` and `MEDIA_EXTENSIONS`, so it is always classified `text` (never `image`) and is indexable
 
-Status: CLAIMED 2026-09-22
+Status: IMPLEMENTED #1768@37ed382003517ee42411d7e49e872b54274d78fb on main (37ed382003517ee42411d7e49e872b54274d78fb)
 Component: `personal_index/content_type.py` — `TEXT_EXTENSIONS` (line 53), `MEDIA_EXTENSIONS` (line 64), `_classify_category_from_ext` (lines 146-160)
 Umbrella: ARCH-2 (#983)
 Issue: #1380
