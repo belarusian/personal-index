@@ -26,6 +26,8 @@ unguarded sub-factor. Pinned xfail-strict below; the implementer must clamp
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -202,3 +204,159 @@ class TestSummaryAndBatch:
         results = calc.batch_calculate(items)
         assert results[0].url == "high"
         assert results[0].score >= results[1].score
+
+
+# ---------------------------------------------------------------------------
+# Cycle 364 PROBE — additional adversarial pins for the documented contracts
+# not yet covered by the cycle-216 file (factor thresholds, first-3 truncation,
+# to_dict shape, idempotence, custom-weight total, batch empty, CLI e2e).
+# ---------------------------------------------------------------------------
+class TestFactorThresholds:
+    """Each sub-factor is added to ``factors`` only when STRICTLY > 0.7
+    (the documented ``_add_factor`` threshold), and the engagement factor
+    fires only when ``view_count > 10`` (strict)."""
+
+    def test_content_score_factor_strict_seven(self):
+        calc = PriorityCalculator()
+        # content_score 7.0 -> 0.7 (NOT > 0.7) -> no factor; 7.01 -> 0.701 -> factor.
+        r7 = calc.calculate("u", "t", content_score=7.0, days_since_indexed=0.0)
+        r701 = calc.calculate("u", "t", content_score=7.01, days_since_indexed=0.0)
+        assert not any("high content" in f for f in r7.factors)
+        assert any("high content" in f for f in r701.factors)
+
+    def test_engagement_factor_strict_eleven(self):
+        calc = PriorityCalculator()
+        r10 = calc.calculate("u", "t", view_count=10, days_since_indexed=0.0)
+        r11 = calc.calculate("u", "t", view_count=11, days_since_indexed=0.0)
+        assert not any("high engagement" in f for f in r10.factors)
+        assert any("high engagement (11 views)" in f for f in r11.factors)
+
+    def test_recency_factor_strict_seven(self):
+        calc = PriorityCalculator()
+        # e^(-10/30) = 0.7165 (> 0.7 -> factor); e^(-11/30) = 0.693 (<= 0.7 -> none).
+        r10 = calc.calculate("u", "t", days_since_indexed=10.0)
+        r11 = calc.calculate("u", "t", days_since_indexed=11.0)
+        assert any("recently indexed" in f for f in r10.factors)
+        assert not any("recently indexed" in f for f in r11.factors)
+
+
+class TestInterestFactorTruncation:
+    """The interest factor lists only the FIRST 3 matches (documented
+    ``interest_matches[:3]``), even when more are supplied."""
+
+    def test_interest_factor_truncates_to_first_three(self):
+        calc = PriorityCalculator()
+        r = calc.calculate(
+            "u", "t", interest_matches=["a", "b", "c", "d", "e"],
+            days_since_indexed=0.0,
+        )
+        interest_factors = [f for f in r.factors if "interests" in f]
+        assert interest_factors == ["matches interests: a, b, c"]
+        # The score still reflects ALL 5 matches (capped at 1.0), not just 3.
+        assert r.breakdown["interest_match"] == 1.0
+
+
+class TestToDictShape:
+    """PriorityResult.to_dict() — exact key set, priority serialized to its
+    string value, score/breakdown rounded to 4 places."""
+
+    def test_to_dict_exact_keys_and_priority_value(self):
+        calc = PriorityCalculator()
+        r = calc.calculate(
+            "https://x.com/a", "Title", content_score=10.0,
+            interest_matches=["a", "b", "c", "d"], view_count=100,
+            days_since_indexed=0.0,
+        )
+        d = r.to_dict()
+        assert set(d.keys()) == {"url", "title", "priority", "score", "breakdown", "factors"}
+        assert d["priority"] == "critical"          # serialized to .value (str)
+        assert isinstance(d["priority"], str)
+        assert d["url"] == "https://x.com/a"
+        assert d["title"] == "Title"
+        # score is the weighted total, rounded to 4 places.
+        assert d["score"] == round(r.score, 4)
+        # breakdown keys are the four documented sub-factors.
+        assert set(d["breakdown"].keys()) == {"recency", "content_score", "interest_match", "engagement"}
+
+
+class TestIdempotenceAndWeights:
+    """calculate() is a pure function of its inputs (idempotent), and the
+    weighted total is bounded by the config weights (sum 1.0 -> total in [0,1])."""
+
+    def test_calculate_is_idempotent(self):
+        calc = PriorityCalculator()
+        a = calc.calculate("u", "t", content_score=5.0, interest_matches=["x"],
+                           view_count=20, days_since_indexed=3.0)
+        b = calc.calculate("u", "t", content_score=5.0, interest_matches=["x"],
+                           view_count=20, days_since_indexed=3.0)
+        assert a.score == b.score
+        assert a.priority is b.priority
+        assert a.breakdown == b.breakdown
+        assert a.factors == b.factors
+
+    def test_default_weights_total_bounded_one(self):
+        """With default weights (sum 1.0) and every sub-factor at its max,
+        the weighted total is exactly 1.0 (the documented [0,1] bound)."""
+        calc = PriorityCalculator()
+        r = calc.calculate(
+            "u", "t", content_score=10.0, interest_matches=["a", "b", "c", "d"],
+            view_count=100, days_since_indexed=0.0,
+        )
+        assert r.score == 1.0
+        assert r.priority is PriorityLevel.CRITICAL
+
+    def test_custom_weights_total_exceeds_one(self):
+        """With weights that sum to 4.0 the total is NOT bounded to [0,1]
+        (documented bound holds only when weights sum to 1.0); the level is
+        still clamped to CRITICAL by the threshold."""
+        cfg = PriorityConfig(
+            recency_weight=1.0, score_weight=1.0,
+            interest_weight=1.0, engagement_weight=1.0,
+        )
+        calc = PriorityCalculator(config=cfg)
+        r = calc.calculate(
+            "u", "t", content_score=10.0, interest_matches=["a", "b", "c", "d"],
+            view_count=100, days_since_indexed=0.0,
+        )
+        assert r.score == 4.0
+        assert r.priority is PriorityLevel.CRITICAL
+
+
+class TestBatchAndSummaryEdge:
+    """batch_calculate([]) -> [] and get_summary over a single result."""
+
+    def test_batch_empty_returns_empty(self):
+        calc = PriorityCalculator()
+        assert calc.batch_calculate([]) == []
+
+    def test_summary_single_result(self):
+        calc = PriorityCalculator()
+        # All sub-factors maxed -> weighted total 1.0 -> CRITICAL.
+        r = calc.calculate(
+            "u", "t", content_score=10.0, interest_matches=["a", "b", "c", "d"],
+            view_count=100, days_since_indexed=0.0,
+        )
+        assert r.priority is PriorityLevel.CRITICAL
+        assert calc.get_summary([r]) == {"critical": 1}
+
+
+class TestCliEndToEnd:
+    """One end-to-end run through the installed CLI entry point (init + stats)
+    to confirm the installed package runs without error on a fresh data dir."""
+
+    def test_cli_init_and_stats(self, tmp_path):
+        import subprocess
+        data_dir = tmp_path / "cli_data"
+        init = subprocess.run(
+            [sys.executable, "-m", "personal_index", "init", "--data-dir", str(data_dir)],
+            capture_output=True, text=True,
+            cwd=str(Path(__file__).resolve().parent.parent.parent),
+        )
+        assert init.returncode == 0, f"init failed: {init.stderr}"
+        stats = subprocess.run(
+            [sys.executable, "-m", "personal_index", "stats", "--data-dir", str(data_dir)],
+            capture_output=True, text=True,
+            cwd=str(Path(__file__).resolve().parent.parent.parent),
+        )
+        assert stats.returncode == 0, f"stats failed: {stats.stderr}"
+        assert "indexed_pages" in stats.stdout

@@ -25,7 +25,6 @@ DEFECTS FILED (pinned xfail-strict, flip to hard passes on fix):
 
 from __future__ import annotations
 
-import pytest
 import json
 import subprocess
 import sys
@@ -218,12 +217,50 @@ class TestPageCounts:
 # remove / list / max_depth
 # ---------------------------------------------------------------------------
 class TestRemoveListDepth:
-    @pytest.mark.xfail(strict=False, reason="ARCH-84/IMPL-14: remove() should recompute _has_whitelist; fix pending implementer - non-strict so the fix branch XPASSes green (cycle 333 deadlock-break)")
     def test_remove_existing(self):
         m = DomainManager()
         m.add_allow("x.com")
         assert m.remove("x.com") is True
         assert m.is_allowed("unlisted.com") is True
+
+    def test_remove_last_allow_restores_allow_all(self):
+        """ARCH-84 AC1: removing the last allow rule restores the allow-all
+        default (the stale-flag fix) and empties the rule set."""
+        m = DomainManager()
+        m.add_allow("a.com")
+        assert m.is_allowed("unlisted.com") is False   # whitelist active
+        assert m.remove("a.com") is True
+        assert m.list_rules() == []
+        assert m.is_allowed("unlisted.com") is True    # allow-all restored
+
+    def test_remove_one_of_many_keeps_whitelist(self):
+        """ARCH-84 AC2: removing one of several allow rules keeps the
+        whitelist active (another allow survives)."""
+        m = DomainManager()
+        m.add_allow("a.com")
+        m.add_allow("b.com")
+        assert m.remove("a.com") is True
+        assert m.is_allowed("unlisted.com") is False   # whitelist still active
+        assert m.is_allowed("b.com") is True
+
+    def test_remove_block_keeps_allow_all(self):
+        """ARCH-84 AC3: removing a block rule is a no-op for the flag
+        (block-only was never a whitelist)."""
+        m = DomainManager()
+        m.add_block("b.com")
+        assert m.remove("b.com") is True
+        assert m.is_allowed("unlisted.com") is True    # allow-all unchanged
+
+    def test_remove_mixed_allow_and_block(self):
+        """Removing the allow rule while a block rule survives: the flag
+        re-derives to False (no allow remains) -> allow-all for unlisted,
+        but the block rule still denies its own domain."""
+        m = DomainManager()
+        m.add_allow("a.com")
+        m.add_block("b.com")
+        assert m.remove("a.com") is True
+        assert m.is_allowed("unlisted.com") is True    # no allow remains
+        assert m.is_allowed("b.com") is False          # block still active
 
     def test_remove_missing(self):
         m = DomainManager()

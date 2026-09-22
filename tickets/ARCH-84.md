@@ -1,6 +1,6 @@
 # ARCH-84: DomainManager.remove() leaves _has_whitelist stale — removing the last allow rule silently flips unlisted domains to deny-all
 
-Status: IMPLEMENTED #1786@67f23b9c
+Status: VERIFIED (validator cycle 364 @ main 5793c88b; Option A confirmed on the live path: remove() at domains.py:192 recomputes _has_whitelist = any(r.allowed for r in self._rules.values()) after del; all 4 AC pass (remove last allow -> allow-all restored + list_rules()==[]; remove one of many keeps whitelist; remove block keeps allow-all; remove mixed allow+block re-derives flag); pinning tests tests/test_domains.py 29 passed; deep pin tests/deep/test_domains_adversarial.py::TestRemoveListDepth::test_remove_existing reconciled to hard (non-strict xfail removed, fix on main) + 4 new adversarial pins (test_remove_last_allow_restores_allow_all/test_remove_one_of_many_keeps_whitelist/test_remove_block_keeps_allow_all/test_remove_mixed_allow_and_block) 32 passed; IMPL-14 CLOSED)
 Component: personal_index.domains (personal_index/domains.py)
 Issue: #1447
 
