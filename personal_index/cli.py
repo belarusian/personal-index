@@ -26,6 +26,7 @@ from personal_index.tags import TagStore
 from personal_index.cli_dedup import dedup
 from personal_index.cli_health import health
 from personal_index.cli_recommend import recommend
+from personal_index.cli_export import export_cmd
 
 
 def get_search_index(data_dir: str) -> SearchIndex:
@@ -419,100 +420,6 @@ def _output_search_csv(results):
     for i, r in enumerate(results, 1):
         writer.writerow([i, r.title, r.url, f"{r.relevance_score:.4f}", r.snippet[:200]])
     click.echo(output.getvalue().strip())
-
-
-# ── export ────────────────────────────────────────────────────────────
-@main.command()
-@click.option("--format", "fmt", default="markdown",
-              type=click.Choice(["markdown", "json", "csv"]), help="Export format")
-@click.option("--output", "-o", default=None, help="Output file path")
-@click.option("--data-dir", default=None, help="Data directory")
-@click.pass_context
-def export(ctx, fmt, output, data_dir):
-    """Export indexed content.
-
-    Exports all indexed pages in the specified format.
-
-    Examples:
-        personal-index export --format markdown
-        personal-index export --format json -o results.json
-        personal-index export --format csv
-    """
-    dd = data_dir or ctx.obj.get("data_dir", ".personal_index")
-    index = get_search_index(dd)
-    tag_store = get_tag_store(dd)
-    pages = index.list_pages()
-
-    if not pages:
-        click.echo("No indexed content to export.")
-        return
-
-    if fmt == "markdown":
-        content = _export_markdown(pages, tag_store)
-    elif fmt == "json":
-        content = _export_json(pages, tag_store)
-    elif fmt == "csv":
-        content = _export_csv(pages, tag_store)
-    else:
-        content = _export_markdown(pages, tag_store)
-
-    if output:
-        with open(output, "w") as f:
-            f.write(content)
-        click.echo(f"Exported {len(pages)} pages to '{output}'")
-    else:
-        click.echo(content)
-
-
-def _export_markdown(pages, tag_store):
-    """Export pages as markdown."""
-    lines = ["# Search Results", ""]
-    for i, page in enumerate(pages, 1):
-        lines.append(f"## {i}. {page.title}")
-        lines.append(f"- **URL**: {page.url}")
-        lines.append(f"- **Score**: {page.score:.4f}")
-        tags = tag_store.get_tags_for_page(page.url)
-        if tags:
-            lines.append(f"- **Tags**: {', '.join(t.name for t in tags)}")
-        snippet = page.content[:200] if page.content else ""
-        if snippet:
-            lines.append(f"\n{snippet}...")
-        lines.append("")
-    return "\n".join(lines)
-
-
-def _export_json(pages, tag_store):
-    """Export pages as JSON."""
-    data = {
-        "pages": [
-            {
-                "url": page.url,
-                "title": page.title,
-                "score": page.score,
-                "tags": [t.name for t in tag_store.get_tags_for_page(page.url)],
-                "snippet": (page.content or "")[:200],
-            }
-            for page in pages
-        ],
-        "total": len(pages),
-    }
-    return json.dumps(data, indent=2)
-
-
-def _export_csv(pages, tag_store):
-    """Export pages as CSV."""
-    import csv
-    import io
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["rank", "title", "url", "score", "tags", "snippet"])
-    for i, page in enumerate(pages, 1):
-        tags = [t.name for t in tag_store.get_tags_for_page(page.url)]
-        writer.writerow([
-            i, page.title, page.url, f"{page.score:.4f}",
-            "; ".join(tags), (page.content or "")[:200]
-        ])
-    return output.getvalue().strip()
 
 
 # ── status ────────────────────────────────────────────────────────────
@@ -1509,6 +1416,7 @@ def watch(ctx, paths, interval, once, data_dir):
 main.add_command(dedup)
 main.add_command(health)
 main.add_command(recommend)
+main.add_command(export_cmd)
 
 
 if __name__ == "__main__":
