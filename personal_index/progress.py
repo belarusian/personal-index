@@ -75,7 +75,7 @@ class ProgressTracker:
         """Get progress as percentage (0-100)."""
         if self.total_steps == 0:
             return 0.0
-        return min(100.0, (self.current_step / self.total_steps) * 100.0)
+        return min(100.0, max(0.0, (self.current_step / self.total_steps) * 100.0))
 
     @property
     def elapsed_seconds(self) -> float:
