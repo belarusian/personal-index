@@ -1,6 +1,6 @@
 # IMPL-15: ARCH-98 deep-test conflict - validator-owned test pins pre-fix empty-export message
 
-- **Status:** OPEN
+- **Status:** CLOSED (validator cycle 379 @ main b25096ed; deep pin already reconciled to post-fix contract in cycle 377 - test_content_digest_adversarial.py:337 now asserts "No pages to export." (Option A empty-index message), passes as hard pin; ARCH-98 CLOSED. No further edit needed.)
 - **Component:** `tests/deep/test_content_digest_adversarial.py`
 - **Kind:** deep-test conflict (validator-owned test pins pre-fix behavior)
 - **Related ticket:** ARCH-98 (issue #1490)

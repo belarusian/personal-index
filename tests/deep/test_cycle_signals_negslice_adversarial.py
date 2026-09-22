@@ -21,7 +21,6 @@ breaking the suite, and XPASSes (turns red) the moment the implementer adds
 the floor guard, prompting removal of the marker.
 """
 
-import pytest
 
 from personal_index.cycle_signals import format_tree
 
@@ -58,13 +57,6 @@ def test_format_tree_zero_max_lines_is_empty():
     assert out == ""
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="QA-72: format_tree max_lines has no floor guard; a negative value "
-           "returns all-but-last lines (Python negative-slice leak) instead of "
-           "clamping to 0 like every sibling top-N site. Expected-per-docs: "
-           "negative max_lines is out-of-range and must yield empty output.",
-)
 def test_format_tree_negative_max_lines_clamps_to_empty():
     """DEFECT pin (QA-72): negative max_lines must clamp to empty, not leak all-but-last."""
     tree = _flagged_tree(10)
@@ -93,14 +85,6 @@ def test_format_tree_negative_max_lines_does_not_exceed_full():
     assert len(out_neg.splitlines()) <= full_lines
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="QA-72/IMPL-17 (cycle 357): negative max_lines must clamp to 0 "
-    "(empty), not leak all-but-last. This regular test previously pinned the "
-    "leak signature (-1 -> full-1, -2 -> full-2), which is the DEFECT QA-72 "
-    "fixes; reconciled to the post-fix contract. Non-strict xfail: main stays "
-    "green (xfail, fix not yet on main); the fix branch XPASSes green.",
-)
 def test_format_tree_double_negative_max_lines_clamps_to_empty():
     """Post-fix contract (QA-72): a negative max_lines clamps to 0 -> empty.
 
@@ -141,7 +125,8 @@ def _write_codemap(tmp_path):
 
 
 def _cli_tree(cm_path, lines):
-    import subprocess, sys
+    import subprocess
+    import sys
     r = subprocess.run(
         [sys.executable, "-m", "personal_index.cycle_signals", cm_path,
          "--format", "tree", "--depth", "1", "--lines", str(lines)],
@@ -151,13 +136,6 @@ def _cli_tree(cm_path, lines):
     return r.stdout
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="QA-72: CLI --lines has no lower bound; `--lines -1` returns "
-           "all-but-last lines (negative-slice leak) instead of clamping to the "
-           "`--lines 0` floor. Expected-per-docs: negative --lines is out-of-range "
-           "and must yield at most the zero-cap output.",
-)
 def test_cli_negative_lines_clamps_to_zero_floor(tmp_path):
     """DEFECT pin (QA-72): `--lines -1` must not exceed the `--lines 0` output."""
     cm = _write_codemap(tmp_path)

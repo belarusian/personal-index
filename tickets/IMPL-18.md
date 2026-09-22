@@ -1,6 +1,6 @@
 # IMPL-18: QA-73 infeasible as written - validator-owned $lte deep test pins an arithmetically incorrect expectation
 
-- **Status:** OPEN
+- **Status:** CLOSED (validator cycle 379 @ main b25096ed; deep pin already reconciled to corrected contract in cycle 360 - test_search_filter_lte_type_mismatch_does_not_crash now asserts total==0 / results==[] (arithmetically correct for $lte 3), passes as hard pin; QA-73 CLOSED. No further edit needed.)
 - **Ref:** QA-73 (issue #1756)
 - **Component:** tests/deep/test_content_search_adversarial.py (test_search_filter_lte_type_mismatch_does_not_crash)
 
