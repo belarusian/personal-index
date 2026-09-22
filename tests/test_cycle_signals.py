@@ -237,6 +237,15 @@ class TestFormatTree:
         # Smaller limit should produce fewer or equal lines
         assert len(result_small.split("\n")) <= len(result_large.split("\n"))
 
+    def test_negative_max_lines_clamps_to_empty(self, sample_modules):
+        """QA-72: max_lines is a hard cap; a negative value is out-of-range and
+        must clamp to 0 (empty output), matching the max_lines=0 floor rather
+        than leaking all-but-last lines via Python negative-slice semantics."""
+        tree = cycle_signals.build_tree(sample_modules)
+        assert cycle_signals.format_tree(tree, max_depth=1, max_lines=0) == ""
+        assert cycle_signals.format_tree(tree, max_depth=1, max_lines=-1) == ""
+        assert cycle_signals.format_tree(tree, max_depth=1, max_lines=-2) == ""
+
 
 # ---------------------------------------------------------------------------
 # signal_no_tests
