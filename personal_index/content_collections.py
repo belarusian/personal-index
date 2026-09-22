@@ -260,27 +260,39 @@ class CollectionManager:
     def move_item(
         self, item_id: str, from_collection_id: str, to_collection_id: str
     ) -> bool:
-        """Add the item to the destination collection and remove it from the
-        source collection if present. Returns True iff both collections exist
-        (the item does not need to be in the source); False if either collection
-        is missing."""
+        """Relocate an item to the destination collection.
+
+        Option A (true relocation): the item is removed from every collection
+        it currently belongs to, then added to ``to_collection_id``. After a
+        successful call the item is in exactly one collection (the
+        destination). ``from_collection_id`` is the origin hint: the guard
+        requires both collections to exist, but the item does not need to be
+        present in the source (an item absent from the source is still added
+        to the destination).
+
+        Guard path: returns False when either ``from_collection_id`` or
+        ``to_collection_id`` is missing, with no change to any collection or
+        the ``_item_to_collections`` reverse index.
+
+        On success (both collections exist):
+          1. ``item_id`` is removed from every collection listed in the
+             ``_item_to_collections[item_id]`` reverse index (each removal
+             also drops that collection from the item's list).
+          2. ``item_id`` is added to ``to_collection_id`` and the reverse
+             index is set to exactly ``[to_collection_id]``.
+        Returns True on success, False on the guard path.
+        """
         from_c = self._collections.get(from_collection_id)
         to_c = self._collections.get(to_collection_id)
-        if from_c and to_c:
-            from_c.remove_item(item_id)
-            to_c.add_item(item_id)
-            # Update index
-            if item_id in self._item_to_collections:
-                if from_collection_id in self._item_to_collections[item_id]:
-                    self._item_to_collections[item_id].remove(from_collection_id)
-                if not self._item_to_collections[item_id]:
-                    del self._item_to_collections[item_id]
-            if item_id not in self._item_to_collections:
-                self._item_to_collections[item_id] = []
-            if to_collection_id not in self._item_to_collections[item_id]:
-                self._item_to_collections[item_id].append(to_collection_id)
-            return True
-        return False
+        if not (from_c and to_c):
+            return False
+        # Option A: remove from EVERY collection the item currently belongs
+        # to (snapshot the reverse-index list because each removal mutates it),
+        # then add to the destination.
+        for cid in list(self._item_to_collections.get(item_id, [])):
+            self.remove_item(cid, item_id)
+        self.add_item(to_collection_id, item_id)
+        return True
 
     def merge(self, target_id: str, source_id: str) -> bool:
         """Merge source collection into target collection, deleting source.
