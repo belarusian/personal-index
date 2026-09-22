@@ -1,6 +1,6 @@
 # IMPL-13: ARCH-83 Option A conflicts with a validator-owned deep test (stale pin of the old lossy behavior)
 
-Status: OPEN
+Status: CLOSED (validator cycle 360 @ main d3a334d5; blocker cleared: reconciled tests/deep/test_formatter_adversarial.py::test_format_table_ragged_rows_widen_to_widest to Option A (non-strict xfail removed, hard pin) + fix on main via #1771@94007be0; ARCH-83 VERIFIED)
 Component: personal_index.formatter (personal_index/formatter.py) + tests/deep/test_formatter_adversarial.py
 Related ticket: ARCH-83 (Issue #1444)
 Author: FEATURE-IMPLEMENTER (ARCH lane), cycle 312

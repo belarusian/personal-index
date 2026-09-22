@@ -269,20 +269,12 @@ class TestDedupBySimilarity:
 
 
 class TestDedupAll:
-    @pytest.mark.xfail(
-        strict=False,
-        reason="QA-74/IMPL-19 (cycle 357): dedup_all silently drops "
-        "all-but-first empty-URL/empty-content items in the rebuild loops "
-        "without counting them (silent data loss; unique_items overstates "
-        "survivors). This regular test previously pinned the pre-fix "
-        "behavior (removed_count==0, unique_items==2); reconciled to the "
-        "post-fix contract. Non-strict xfail: main stays green (xfail, fix "
-        "not yet on main); the fix branch XPASSes green.",
-    )
     def test_empty_url_content_not_grouped(self):
         # Post-fix contract (QA-74): the empty-key drops made by the URL and
         # hash rebuild loops are counted, so unique_items reflects the true
         # survivor count. Two empty items -> one survivor, one counted drop.
+        # Reconciled to a hard pin in cycle 360 (fix on main via
+        # #1777@ab28f409): the non-strict xfail marker is removed.
         r = ContentDeduplicator().dedup_all(
             [{"url": "", "content": ""}, {"url": "", "content": ""}])
         assert r.total_items == 2

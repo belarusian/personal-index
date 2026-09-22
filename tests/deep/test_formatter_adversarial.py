@@ -17,7 +17,6 @@ Functions armored:
 """
 from __future__ import annotations
 
-import pytest
 from personal_index.formatter import (
     format_duration,
     format_file_size,
@@ -209,14 +208,16 @@ def test_format_table_basic_alignment():
 
 
 
-@pytest.mark.xfail(strict=False, reason="ARCH-83/IMPL-13: format_table should widen to widest row (Option A); fix pending implementer - non-strict so the fix branch XPASSes green (cycle 333 deadlock-break)")
 def test_format_table_ragged_rows_widen_to_widest():
-    # A row shorter than the headers is padded with spaces; a row longer than
-    # the headers widens the table (Option A: lossless, total).
-    # the headers has its extra cells dropped.
+    # A row shorter than the headers is padded with empty cells; a row longer
+    # than the headers widens the table (Option A: lossless, total). Reconciled
+    # to the corrected contract (fix on main via #1771@94007be0, cycle 360):
+    # the non-strict xfail marker is removed and the pin is a hard assertion.
     out = format_table(["A", "B"], [["1"], ["2", "3", "4"]])
     lines = out.split("\n")
-    assert lines[2] == "1 |  |  "
+    assert lines[0] == "A | B |  "
+    assert lines[1] == "--+---+--"
+    assert lines[2] == "1 |   |  "
     assert lines[3] == "2 | 3 | 4"
 
 

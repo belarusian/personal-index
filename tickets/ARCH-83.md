@@ -1,6 +1,6 @@
 # ARCH-83: format_table is asymmetric on ragged rows — long rows silently drop cells (lossy), short rows are padded
 
-Status: IMPLEMENTED #1771@94007be0 on main (94007be0)
+Status: VERIFIED (validator cycle 360 @ main d3a334d5; Option A confirmed on the live path: format_table at formatter.py:110 computes n_cols=max(len(headers),max(len(r) for r in rows)), pads headers, runs width+render loops over range(n_cols); all 5 AC pass - long row widens (['x','y','z'] -> 3-col table), short row padded, docstring states the exact ragged-row policy, docs/formatter.md Public API + Contract Hole restated to Option A, rectangular tests unchanged; pinning tests tests/test_formatter.py 68 passed incl. test_long_row_widens_table/test_short_row_padded/test_mixed_ragged_rows; deep pin tests/deep/test_formatter_adversarial.py::test_format_table_ragged_rows_widen_to_widest reconciled to the corrected contract (non-strict xfail removed, hard pin, fix on main via #1771@94007be0); [was IMPLEMENTED #1771@94007be0])
 Component: personal_index.formatter (personal_index/formatter.py)
 Issue: #1444
 
