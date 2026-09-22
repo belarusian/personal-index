@@ -328,17 +328,6 @@ class TestBackupManager:
         assert "old" not in mgr.store.backups
         assert "new" in mgr.store.backups
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "QA-75: cleanup_old_backups compares raw b.timestamp < cutoff "
-            "(backup_manager.py:131) without _normalize_tz, so a backup "
-            "imported from a file with a naive ISO timestamp raises "
-            "TypeError: can't compare offset-naive and offset-aware "
-            "datetimes. _normalize_tz is applied in list_backups/_evict_oldest "
-            "but not here. Flip to a hard pin once fixed."
-        ),
-    )
     def test_cleanup_naive_timestamp_no_typeerror(self):
         # A backup imported from a file with a naive ISO timestamp has a
         # naive datetime; cleanup must normalize it before comparing.
