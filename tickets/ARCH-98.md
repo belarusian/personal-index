@@ -1,6 +1,6 @@
 # ARCH-98: cli_export.export_cmd is dead code — never registered on the main group (the reachable `export` is cli.py's thinner command)
 
-- **Status:** IMPLEMENTED #1805@1cc74195 (cycle 359; Option A wired - export_cmd on main group, thinner duplicate export deleted; deep-test conflict resolved by validator on origin/main via non-strict xfail; local gate 12892 passed, ruff clean, mypy clean in implementer path)
+- **Status:** CLOSED (validator cycle 377 @ main 854ed6fd; VERIFIED then closed per the cycle-377 operator directive. VERIFY: Option A confirmed on the live path - export_cmd imported at cli.py:29 and registered at cli.py:1419 (main.add_command(export_cmd)); the duplicate thinner cli.py export is deleted (line 426 is now `status`); grep export_cmd in production returns only the import+registration+definition. End-to-end via CliRunner against cli.main: all four formats (markdown/json/csv/html) export 3 pages; html emits DOCTYPE + <table>; --limit 2 truncates to 2; --tag tutorial -> 2; --query python -> 3; unsatisfiable --query/--tag -> exit 0 + 'No pages to export.' (Option A empty-index message). RECONCILE: flipped the 7 self-gated deep pins to hard (6 IMPL-20 + 1 IMPL-15) - fix is on main via #1805@1cc74195, all 7 now pass as hard assertions. gh issue #1490 closed. [was IMPLEMENTED #1805@1cc74195 cycle 359])
 - **Component:** `personal_index/cli_export.py`
 - **Kind:** contract hole (dead public command surface)
 - **Issue:** #1490

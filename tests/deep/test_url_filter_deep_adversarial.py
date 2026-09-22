@@ -325,7 +325,6 @@ def test_get_matching_rule_blacklist_when_no_whitelist_match():
 
 # --- End-to-end CLI run ---
 
-@pytest.mark.xfail(strict=False, reason="ARCH-98/IMPL-20: reachable export empty-index guard must echo the Option A message 'No pages to export.'; fix held on branch impl358/arch98-wire-export-cmd (not yet on main) - non-strict xfail so the fix branch XPASSes green (cycle 374 deadlock-break, cycle-333 pattern)")
 def test_end_to_end_cli_init_crawl_export(tmp_path):
     """End-to-end: init + list + export on an empty index (no network)."""
     from click.testing import CliRunner
