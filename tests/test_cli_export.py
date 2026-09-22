@@ -30,7 +30,7 @@ class TestExportCommand:
 
         result = runner.invoke(main, ["export", "--format", "markdown"])
         assert result.exit_code == 0
-        assert "# Search Results" in result.output
+        assert "# Personal Index Export" in result.output
 
     def test_export_json(self, tmp_path, monkeypatch):
         """Test export in JSON format."""
@@ -44,7 +44,7 @@ class TestExportCommand:
 
         result = runner.invoke(main, ["export", "--format", "json"])
         assert result.exit_code == 0
-        assert "pages" in result.output
+        assert "url" in result.output
 
     def test_export_csv(self, tmp_path, monkeypatch):
         """Test export in CSV format."""
@@ -58,7 +58,7 @@ class TestExportCommand:
 
         result = runner.invoke(main, ["export", "--format", "csv"])
         assert result.exit_code == 0
-        assert "rank" in result.output
+        assert "url" in result.output
 
     def test_export_to_file(self, tmp_path, monkeypatch):
         """Test export to a file."""

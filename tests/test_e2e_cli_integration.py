@@ -262,7 +262,7 @@ class TestCLIExportWorkflow:
         result = runner.invoke(main, ["export", "--format", "json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
-        assert "results" in data or "pages" in data or "indexed" in str(data).lower()
+        assert isinstance(data, list) and (not data or "url" in data[0])
 
     def test_export_csv(self, tmp_path, monkeypatch):
         """Export in CSV format."""

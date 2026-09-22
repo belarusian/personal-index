@@ -160,7 +160,7 @@ class TestCLIPipelineEndToEnd:
 
         # Verify JSON output
         data = json.loads(result.output)
-        assert "results" in data or "pages" in data or "indexed" in str(data).lower()
+        assert isinstance(data, list) and (not data or "url" in data[0])
 
     def test_cli_pipeline_multiple_interests(self, tmp_path, monkeypatch):
         """Pipeline with multiple interests."""

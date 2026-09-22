@@ -397,7 +397,7 @@ class TestCLIExportCommand:
             "--data-dir", data_dir, "export", "--format", "json"
         ])
         assert result.exit_code == 0
-        assert "No indexed content" in result.output
+        assert "No pages to export." in result.output
 
     def test_export_markdown_empty(self, runner, tmp_path):
         """Test export markdown with empty index."""
@@ -406,7 +406,7 @@ class TestCLIExportCommand:
             "--data-dir", data_dir, "export", "--format", "markdown"
         ])
         assert result.exit_code == 0
-        assert "No indexed content" in result.output
+        assert "No pages to export." in result.output
 
     def test_export_csv_empty(self, runner, tmp_path):
         """Test export csv with empty index."""
@@ -415,7 +415,7 @@ class TestCLIExportCommand:
             "--data-dir", data_dir, "export", "--format", "csv"
         ])
         assert result.exit_code == 0
-        assert "No indexed content" in result.output
+        assert "No pages to export." in result.output
 
 
 # ── CLI Config Commands ───────────────────────────────────────────────

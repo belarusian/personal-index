@@ -146,7 +146,7 @@ class TestCLIIntegration:
             "export", "--format", "markdown"
         ])
         assert result.exit_code == 0
-        assert "# Search Results" in result.output
+        assert "# Personal Index Export" in result.output
 
     def test_export_json_format(self, tmp_path, monkeypatch):
         """Test exporting in JSON format."""
