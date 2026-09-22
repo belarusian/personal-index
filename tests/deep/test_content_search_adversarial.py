@@ -20,7 +20,6 @@ content_aggregator.merge_all, QA-41). QA-42 documents the content_search site.
 
 from __future__ import annotations
 
-import pytest
 
 from personal_index.content_search import SearchIndex
 
@@ -299,19 +298,15 @@ def test_cli_search_end_to_end_empty_index_guard(tmp_path):
 # intersection) branches are safe under the same type mismatch (they never
 # order-compare).
 #
-# xfail-strict pins the CORRECTED contract (search() must not raise; it must
-# return the correctly filtered page). While the defect exists the test FAILS
-# (TypeError) -> xfail (expected) -> main stays green. Once the implementer
-# guards the comparison it XPASSes and xfail-strict turns red -> the signal to
-# re-verify and close QA-73.
+# These pins assert the CORRECTED contract (search() must not raise; it must
+# return the correctly filtered page). Reconciled to hard pins in cycle 360
+# (fix on main via #1776@7d9213f3): the prior non-strict xfail markers were
+# removed once the implementer guarded the comparison with try/except TypeError.
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=False,
-    reason="QA-73: _matches_filters $gte branch raises TypeError on a "
-    "type-incompatible non-None item value (str vs int); search() must not "
-    "crash and must return the correctly filtered page.",
-)
 def test_search_filter_gte_type_mismatch_does_not_crash():
+    # Reconciled to the corrected contract (fix on main via #1776@7d9213f3,
+    # cycle 360): the non-strict xfail marker is removed; this is now a hard
+    # pin asserting search() does not raise and drops the non-comparable item.
     idx = _idx_with(
         [
             {"id": "a", "content": "alpha one", "priority": "high"},
@@ -325,13 +320,10 @@ def test_search_filter_gte_type_mismatch_does_not_crash():
     assert [r["item"].get("id") for r in out["results"]] == ["b"]
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="QA-73: _matches_filters $lte branch raises TypeError on a "
-    "type-incompatible non-None item value (str vs int); search() must not "
-    "crash and must return the correctly filtered page.",
-)
 def test_search_filter_lte_type_mismatch_does_not_crash():
+    # Reconciled to the corrected contract (fix on main via #1776@7d9213f3,
+    # cycle 360): the non-strict xfail marker is removed; this is now a hard
+    # pin asserting search() does not raise and returns the empty page.
     idx = _idx_with(
         [
             {"id": "a", "content": "alpha one", "priority": "high"},

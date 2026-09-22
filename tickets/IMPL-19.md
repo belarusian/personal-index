@@ -1,6 +1,6 @@
 # IMPL-19: QA-74 infeasible as written - validator-owned deep test pins the pre-fix empty-key data-loss behavior
 
-- **Status:** OPEN
+- **Status:** CLOSED (validator cycle 360 @ main d3a334d5; blocker cleared: reconciled tests/deep/test_content_dedup_adversarial.py::TestDedupAll::test_empty_url_content_not_grouped to the post-fix contract (non-strict xfail removed, hard pin) + fix on main via #1777@ab28f409; QA-74 VERIFIED)
 - **Ref:** QA-74 (issue #1764)
 - **Component:** tests/deep/test_content_dedup_adversarial.py (TestDedupAll::test_empty_url_content_not_grouped)
 
