@@ -666,7 +666,8 @@ def test_update_name_success():
     mgr = CollectionManager()
     cid = mgr.create("My Col")
     old_updated = mgr.get(cid).updated_at
-    import time; time.sleep(0.01)
+    import time
+    time.sleep(0.01)
     assert mgr.update_name(cid, "Renamed") is True
     c = mgr.get(cid)
     assert c.name == "Renamed"
@@ -702,7 +703,8 @@ def test_update_description_success():
     mgr = CollectionManager()
     cid = mgr.create("Col")
     old_updated = mgr.get(cid).updated_at
-    import time; time.sleep(0.01)
+    import time
+    time.sleep(0.01)
     assert mgr.update_description(cid, "A description") is True
     c = mgr.get(cid)
     assert c.description == "A description"
@@ -743,7 +745,8 @@ def test_toggle_public_flips_and_refreshes():
     cid = mgr.create("Col")
     assert mgr.get(cid).is_public is False
     old_updated = mgr.get(cid).updated_at
-    import time; time.sleep(0.01)
+    import time
+    time.sleep(0.01)
     assert mgr.toggle_public(cid) is True
     assert mgr.get(cid).is_public is True
     assert mgr.get(cid).updated_at != old_updated
@@ -823,10 +826,10 @@ def test_count_after_create_and_delete():
 def test_collection_item_count_property():
     """Collection.item_count returns len(item_ids)."""
     c = Collection(name="Test")
-    assert c.item_count == 0
+    assert c.item_count() == 0
     c.add_item("x")
     c.add_item("y")
     c.add_item("x")  # dedup
-    assert c.item_count == 2
+    assert c.item_count() == 2
     c.remove_item("x")
-    assert c.item_count == 1
+    assert c.item_count() == 1
