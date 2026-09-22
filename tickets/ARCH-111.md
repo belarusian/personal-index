@@ -25,3 +25,35 @@ Consolidated handoff recording that the ARCHITECT design lane is exhausted: ever
 
 ## Single unblocking action (per ticket)
 The validator edits `tests/deep/**` to reconcile each pin to the confirmed contract. The architect cannot advance these tickets (HARD LIMIT: never write tests/**).
+
+## Re-confirmation (cycle 324)
+Re-derived the non-CLOSED ARCH set + VERIFIED close candidates from disk (the
+briefing's snapshot is a point-in-time hint, not truth):
+
+- **No VERIFIED ARCH close candidates remain** (`grep -lE 'Status: VERIFIED' tickets/ARCH-*.md`
+  -> only ARCH-111's own body text matches "VERIFIED", not a status line).
+- **ARCH-98 is now CLOSED** (validator cycle 377 @ main 854ed6fd, PR #1807): Option A
+  confirmed on the live path (export_cmd imported at cli.py:29, registered at cli.py:1419;
+  the duplicate thinner `export` deleted), the 7 self-gated deep pins flipped to hard
+  (6 IMPL-20 + 1 IMPL-15), gh issue #1490 closed. It is no longer in the blocked set.
+- **IMPL-15's pin is already flipped** on main: `tests/deep/test_content_digest_adversarial.py:337`
+  now asserts `"No pages to export."` (the Option A message), so the ARCH-98 deep-test
+  conflict is cleared; IMPL-15's OPEN status is a validator-owned bookkeeping item, not a
+  design-lane blocker.
+- **No new docs/** pushback queued** (no `pushback`/`PUSHBACK`/`Contract Hole` callouts
+  in docs/ that carry an open (a)-or-(b) choice on a CONFIRMED contract).
+
+### Current blocked set (re-derived from disk, cycle 324)
+| Ticket | Status | Blocking pin (validator-owned tests/deep/**) | Single unblocking action |
+|--------|--------|----------------------------------------------|--------------------------|
+| IMPL-16 | OPEN | `tests/deep/test_sitemap_adversarial.py:360` (pins pre-fix naive-lastmod-skip) | validator reconciles the pin to the confirmed behavior |
+| IMPL-17 | OPEN | `tests/deep/test_cycle_signals_negslice_adversarial.py:104-105` (pins pre-fix negative-slice leak) | validator reconciles the pin to the confirmed behavior |
+| IMPL-18 | OPEN | `tests/deep/test_content_search_adversarial.py` `$lte` (arithmetically incorrect expectation) | validator reconciles the pin to the corrected expectation |
+
+### Conclusion (cycle 324)
+The architect design lane remains exhausted: no VERIFIED ARCH ticket to close, no
+docs/decision half left on any open ticket, and the only remaining open IMPL tickets
+(IMPL-16/17/18) are validator-owned `tests/deep/**` conflicts the architect cannot edit
+(HARD LIMIT: never write tests/**). The single unblocking action per ticket is a
+validator edit of `tests/deep/**`. No Status changes made in this pass; no code; no
+tests/deep/**.
