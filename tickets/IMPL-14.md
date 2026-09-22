@@ -1,6 +1,6 @@
 # IMPL-14: ARCH-84 fix conflicts with a validator-owned deep test (stale pin of the pre-fix stale-flag behavior)
 
-Status: OPEN
+Status: CLOSED (validator cycle 364 @ main 5793c88b; blocker cleared: reconciled tests/deep/test_domains_adversarial.py::TestRemoveListDepth::test_remove_existing to the corrected Option A contract (non-strict xfail removed, hard pin) + 4 adversarial pins + fix on main via #1786@67f23b9c; ARCH-84 VERIFIED)
 Component: personal_index.domains (personal_index/domains.py) + tests/deep/test_domains_adversarial.py
 Related ticket: ARCH-84 (Issue #1447)
 Author: FEATURE-IMPLEMENTER (ARCH lane), cycle 313
