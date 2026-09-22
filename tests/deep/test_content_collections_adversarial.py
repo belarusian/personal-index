@@ -655,3 +655,181 @@ def test_move_item_item_in_dest_not_in_source():
     assert m.get_items(a) == []
     assert m._item_to_collections["y"] == [b]
     _assert_reverse_index_consistent(m)
+
+
+# ---------------------------------------------------------------------------
+# Cycle 367: additional adversarial pins for functions not previously covered
+# ---------------------------------------------------------------------------
+
+def test_update_name_success():
+    """update_name sets name and refreshes updated_at; returns True."""
+    mgr = CollectionManager()
+    cid = mgr.create("My Col")
+    old_updated = mgr.get(cid).updated_at
+    import time
+    time.sleep(0.01)
+    assert mgr.update_name(cid, "Renamed") is True
+    c = mgr.get(cid)
+    assert c.name == "Renamed"
+    assert c.updated_at is not None
+    assert c.updated_at != old_updated
+
+
+def test_update_name_missing_collection_returns_false():
+    """update_name on a non-existent collection returns False, no side effects."""
+    mgr = CollectionManager()
+    assert mgr.update_name("nonexistent", "X") is False
+    assert mgr.count() == 0
+
+
+def test_update_name_empty_string():
+    """update_name with empty string is valid (name becomes '')."""
+    mgr = CollectionManager()
+    cid = mgr.create("Original")
+    assert mgr.update_name(cid, "") is True
+    assert mgr.get(cid).name == ""
+
+
+def test_update_name_unicode():
+    """update_name with unicode characters works."""
+    mgr = CollectionManager()
+    cid = mgr.create("test")
+    assert mgr.update_name(cid, "Ünïcödé 集合 📚") is True
+    assert mgr.get(cid).name == "Ünïcödé 集合 📚"
+
+
+def test_update_description_success():
+    """update_description sets description and refreshes updated_at."""
+    mgr = CollectionManager()
+    cid = mgr.create("Col")
+    old_updated = mgr.get(cid).updated_at
+    import time
+    time.sleep(0.01)
+    assert mgr.update_description(cid, "A description") is True
+    c = mgr.get(cid)
+    assert c.description == "A description"
+    assert c.updated_at != old_updated
+
+
+def test_update_description_missing_collection():
+    """update_description on non-existent collection returns False."""
+    mgr = CollectionManager()
+    assert mgr.update_description("nope", "desc") is False
+
+
+def test_update_description_empty_string():
+    """update_description with empty string is valid."""
+    mgr = CollectionManager()
+    cid = mgr.create("Col")
+    assert mgr.update_description(cid, "") is True
+    assert mgr.get(cid).description == ""
+
+
+def test_rename_is_alias_for_update_name():
+    """rename() is an alias for update_name() - same behavior."""
+    mgr = CollectionManager()
+    cid = mgr.create("Before")
+    assert mgr.rename(cid, "After") is True
+    assert mgr.get(cid).name == "After"
+
+
+def test_rename_missing_collection():
+    """rename on non-existent collection returns False."""
+    mgr = CollectionManager()
+    assert mgr.rename("ghost", "X") is False
+
+
+def test_toggle_public_flips_and_refreshes():
+    """toggle_public flips is_public and refreshes updated_at."""
+    mgr = CollectionManager()
+    cid = mgr.create("Col")
+    assert mgr.get(cid).is_public is False
+    old_updated = mgr.get(cid).updated_at
+    import time
+    time.sleep(0.01)
+    assert mgr.toggle_public(cid) is True
+    assert mgr.get(cid).is_public is True
+    assert mgr.get(cid).updated_at != old_updated
+    # Toggle back
+    assert mgr.toggle_public(cid) is True
+    assert mgr.get(cid).is_public is False
+
+
+def test_toggle_public_missing_collection():
+    """toggle_public on non-existent collection returns False."""
+    mgr = CollectionManager()
+    assert mgr.toggle_public("nope") is False
+
+
+def test_search_by_name_case_insensitive():
+    """search matches name case-insensitively."""
+    mgr = CollectionManager()
+    mgr.create("Python Tips")
+    mgr.create("Java Notes")
+    results = mgr.search("python")
+    assert len(results) == 1
+    assert results[0].name == "Python Tips"
+
+
+def test_search_by_description():
+    """search matches description text."""
+    mgr = CollectionManager()
+    mgr.create("Col A", description="about databases")
+    mgr.create("Col B", description="about networks")
+    results = mgr.search("databases")
+    assert len(results) == 1
+    assert results[0].name == "Col A"
+
+
+def test_search_no_match_returns_empty():
+    """search with no match returns empty list."""
+    mgr = CollectionManager()
+    mgr.create("Alpha")
+    assert mgr.search("zzz") == []
+
+
+def test_search_empty_query_matches_all():
+    """search with empty string matches every collection (substring of all)."""
+    mgr = CollectionManager()
+    mgr.create("A")
+    mgr.create("B")
+    results = mgr.search("")
+    assert len(results) == 2
+
+
+def test_search_unicode_query():
+    """search with unicode query works."""
+    mgr = CollectionManager()
+    mgr.create("日本語コレクション")
+    results = mgr.search("日本語")
+    assert len(results) == 1
+
+
+def test_count_empty_manager():
+    """count returns 0 for an empty manager."""
+    mgr = CollectionManager()
+    assert mgr.count() == 0
+
+
+def test_count_after_create_and_delete():
+    """count reflects creates and deletes correctly."""
+    mgr = CollectionManager()
+    c1 = mgr.create("A")
+    c2 = mgr.create("B")
+    assert mgr.count() == 2
+    mgr.delete(c1)
+    assert mgr.count() == 1
+    mgr.delete(c2)
+    assert mgr.count() == 0
+
+
+def test_collection_item_count_property():
+    """Collection.item_count returns len(item_ids)."""
+    c = Collection(name="Test")
+    assert c.item_count() == 0
+    c.add_item("x")
+    c.add_item("y")
+    c.add_item("x")  # dedup
+    assert c.item_count() == 2
+    c.remove_item("x")
+    assert c.item_count() == 1
