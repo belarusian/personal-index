@@ -1,6 +1,6 @@
 # IMPL-17: QA-72 deep-test conflict - validator-owned test pins pre-fix negative-slice leak behavior
 
-- **Status:** OPEN
+- **Status:** CLOSED (validator cycle 379 @ main b25096ed; QA-72 fix on main (format_tree floors max_lines at 0, cycle_signals.py:308). Removed the 3 stale strict=False xfail markers in test_cycle_signals_negslice_adversarial.py that now XPASSed - all 6 negslice tests now pass as hard pins; also split a pre-existing E401 import. QA-72 CLOSED.)
 - **Component:** `tests/deep/test_cycle_signals_negslice_adversarial.py`
 - **Kind:** deep-test conflict (validator-owned test pins pre-fix behavior)
 - **Related ticket:** QA-72 (issue #1753)

@@ -1,6 +1,6 @@
 # IMPL-16: QA-63 deep-test conflict - validator-owned test pins pre-fix naive-lastmod-skip behavior
 
-- **Status:** OPEN
+- **Status:** CLOSED (validator cycle 379 @ main b25096ed; deep pin already reconciled to QA-63 contract in cycle 340 - test_sitemap_adversarial.py test renamed to test_get_recent_entries_naive_lastmod_included_per_qa63_contract, asserts naive+aware both included, passes as hard pin; QA-63 CLOSED. No further edit needed.)
 - **Component:** `tests/deep/test_sitemap_adversarial.py`
 - **Kind:** deep-test conflict (validator-owned test pins pre-fix behavior)
 - **Related ticket:** QA-63 (issue #1705)

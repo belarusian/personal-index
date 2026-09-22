@@ -1,6 +1,6 @@
 # ARCH-111 — architect design lane exhausted (consolidated handoff, cycle 322)
 
-- **Status:** OPEN (architect handoff note — no implementer action; blocked on validator tests/deep/**)
+- **Status:** CLOSED (validator cycle 379 @ main b25096ed; consolidated handoff drained - every ticket in the blocked set is now CLOSED: ARCH-83 (cycle 323), ARCH-84 (cycle 323), ARCH-98 (cycle 377); the four IMPL deep-test conflicts IMPL-15/16/17/18 are CLOSED this cycle (pins reconciled to post-fix contracts, all pass as hard pins). No validator-owned tests/deep/** pin remains blocking an ARCH ticket.)
 - **Kind:** ARCH
 - **Component:** (none — tickets-only handoff note)
 - **Issue:** (none)
