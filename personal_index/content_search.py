@@ -434,10 +434,18 @@ class SearchIndex:
                     if item_value not in value:
                         return False
             elif isinstance(value, dict):
-                if "$gte" in value and item_value is not None and item_value < value["$gte"]:
-                    return False
-                if "$lte" in value and item_value is not None and item_value > value["$lte"]:
-                    return False
+                if "$gte" in value and item_value is not None:
+                    try:
+                        if item_value < value["$gte"]:
+                            return False
+                    except TypeError:
+                        return False
+                if "$lte" in value and item_value is not None:
+                    try:
+                        if item_value > value["$lte"]:
+                            return False
+                    except TypeError:
+                        return False
             else:
                 if item_value != value:
                     return False

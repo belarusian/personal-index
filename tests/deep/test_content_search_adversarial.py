@@ -305,12 +305,6 @@ def test_cli_search_end_to_end_empty_index_guard(tmp_path):
 # guards the comparison it XPASSes and xfail-strict turns red -> the signal to
 # re-verify and close QA-73.
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-73: _matches_filters $gte branch raises TypeError on a "
-    "type-incompatible non-None item value (str vs int); search() must not "
-    "crash and must return the correctly filtered page.",
-)
 def test_search_filter_gte_type_mismatch_does_not_crash():
     idx = _idx_with(
         [
@@ -325,12 +319,6 @@ def test_search_filter_gte_type_mismatch_does_not_crash():
     assert [r["item"].get("id") for r in out["results"]] == ["b"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="QA-73: _matches_filters $lte branch raises TypeError on a "
-    "type-incompatible non-None item value (str vs int); search() must not "
-    "crash and must return the correctly filtered page.",
-)
 def test_search_filter_lte_type_mismatch_does_not_crash():
     idx = _idx_with(
         [
