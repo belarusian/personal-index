@@ -278,6 +278,62 @@ class TestCollectionManager:
         assert "item1" not in self.manager.get(cid_src).item_ids
         assert "item1" in self.manager.get(cid_dst).item_ids
 
+    def test_move_item_absent_from_source_is_pure_add(self):
+        # Option A: item in C1 only; move from C2 (absent) to C3. The item is
+        # removed from every collection it belongs to (C1) and added to C3, so
+        # it ends up in exactly one collection (C3), not in C1.
+        c1 = self.manager.create("C1")
+        c2 = self.manager.create("C2")
+        c3 = self.manager.create("C3")
+        self.manager.add_item(c1, "item1")
+        result = self.manager.move_item("item1", c2, c3)
+        assert result is True
+        assert "item1" not in self.manager.get(c1).item_ids
+        assert "item1" not in self.manager.get(c2).item_ids
+        assert self.manager.get(c3).item_ids == ["item1"]
+        got = {c.collection_id for c in self.manager.get_collections_for_item("item1")}
+        assert got == {c3}
+
+    def test_move_item_multi_collection_relocation(self):
+        # Option A: item in C1 and C3; move from C1 to C2. The item is removed
+        # from EVERY collection (C1 and C3) and added to C2, so it ends up in
+        # exactly one collection (C2).
+        c1 = self.manager.create("C1")
+        c2 = self.manager.create("C2")
+        c3 = self.manager.create("C3")
+        self.manager.add_item(c1, "item1")
+        self.manager.add_item(c3, "item1")
+        result = self.manager.move_item("item1", c1, c2)
+        assert result is True
+        assert "item1" not in self.manager.get(c1).item_ids
+        assert "item1" not in self.manager.get(c3).item_ids
+        assert self.manager.get(c2).item_ids == ["item1"]
+        got = {c.collection_id for c in self.manager.get_collections_for_item("item1")}
+        assert got == {c2}
+        # reverse index agrees with the registry
+        reg = {
+            cid
+            for cid, col in self.manager._collections.items()
+            if "item1" in col.item_ids
+        }
+        assert set(self.manager._item_to_collections["item1"]) == reg == {c2}
+
+    def test_move_item_guard_missing_collection(self):
+        # Guard path: missing source or destination returns False with no
+        # change to any collection or the reverse index.
+        c1 = self.manager.create("C1")
+        c2 = self.manager.create("C2")
+        self.manager.add_item(c1, "item1")
+        before = {cid: list(col.item_ids) for cid, col in self.manager._collections.items()}
+        before_index = {k: list(v) for k, v in self.manager._item_to_collections.items()}
+        assert self.manager.move_item("item1", "nope", c2) is False
+        assert self.manager.move_item("item1", c1, "nope") is False
+        after = {cid: list(col.item_ids) for cid, col in self.manager._collections.items()}
+        after_index = {k: list(v) for k, v in self.manager._item_to_collections.items()}
+        assert after == before
+        assert after_index == before_index
+
+
     def test_merge_collections(self):
         cid1 = self.manager.create("A")
         cid2 = self.manager.create("B")
