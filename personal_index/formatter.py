@@ -110,14 +110,22 @@ def format_schedule_job(job: dict[str, Any] | ScheduledJob) -> str:
 def format_table(
     headers: list[str], rows: list[list[str]]
 ) -> str:
-    """Format data as a text table."""
+    """Format data as a text table.
+
+    Rows may be shorter or longer than the header; the table spans the
+    widest row, shorter rows are padded with empty cells, and longer rows
+    widen the table.
+    """
     if not headers or not rows:
         return ""
+
+    n_cols = max(len(headers), max(len(r) for r in rows))
+    headers = headers + [""] * (n_cols - len(headers))
 
     col_widths = [len(h) for h in headers]
     for row in rows:
         for i, cell in enumerate(row):
-            if i < len(col_widths):
+            if i < n_cols:
                 col_widths[i] = max(col_widths[i], len(str(cell)))
 
     header_line = " | ".join(
@@ -127,7 +135,7 @@ def format_table(
     lines = [header_line, separator]
     for row in rows:
         cells = []
-        for i in range(len(headers)):
+        for i in range(n_cols):
             if i < len(row):
                 cells.append(str(row[i]).ljust(col_widths[i]))
             else:

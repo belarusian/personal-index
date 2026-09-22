@@ -141,6 +141,35 @@ class TestFormatTable:
         output = format_table(["Name"], [])
         assert output == ""
 
+    def test_long_row_widens_table(self):
+        # Option A: a row longer than the header widens the table;
+        # all three cells render and the header/separator span 3 columns.
+        output = format_table(["A", "B"], [["x", "y", "z"]])
+        lines = output.split("\n")
+        assert lines[0] == "A | B |  "
+        assert lines[1] == "--+---+--"
+        assert lines[2] == "x | y | z"
+        assert "x" in output and "y" in output and "z" in output
+
+    def test_short_row_padded(self):
+        # Guard path: a row shorter than the header is padded with an
+        # empty cell (lossless short-row policy, unchanged).
+        output = format_table(["A", "B"], [["p"]])
+        lines = output.split("\n")
+        assert lines[0] == "A | B"
+        assert lines[1] == "--+--"
+        assert lines[2] == "p |  "
+
+    def test_mixed_ragged_rows(self):
+        # Symmetric policy end-to-end: a long row and a short row in the
+        # same call render consistently across the widest (3) columns.
+        output = format_table(["A", "B"], [["x", "y", "z"], ["p"]])
+        lines = output.split("\n")
+        assert lines[0] == "A | B |  "
+        assert lines[1] == "--+---+--"
+        assert lines[2] == "x | y | z"
+        assert lines[3] == "p |   |  "
+
 
 class TestFormatDuration:
     def test_seconds(self):
