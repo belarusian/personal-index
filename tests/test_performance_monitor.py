@@ -122,3 +122,16 @@ class TestPerformanceMonitor:
         samples = monitor.get_recent_samples("seq", count=5)
         assert len(samples) == 5
         assert samples[0].value == 15.0
+
+    def test_stats_are_lifetime_not_windowed(self):
+        monitor = PerformanceMonitor(window_size=3)
+        for i in range(10):
+            monitor.record("m", float(i))
+        # sample ring is bounded by window_size
+        assert len(monitor.get_recent_samples("m")) == 3
+        # ...but the aggregate is a LIFETIME count over all 10 values
+        stats = monitor.get_stats("m")
+        assert stats.count == 10
+        assert stats.min_val == 0.0   # value 0 was evicted from the ring
+        assert stats.max_val == 9.0
+        assert stats.mean == 4.5      # (0+...+9)/10, not the window mean
