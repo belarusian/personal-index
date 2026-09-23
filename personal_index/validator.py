@@ -12,7 +12,14 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ValidationResult:
-    """Result of a validation check."""
+    """Result of a validation check.
+
+    DEAD MODULE (0 production importers): this ``ValidationResult`` is
+    intentionally NOT the live ``content_validation.ValidationResult``.
+    The live twin uses an ``is_valid`` field and ``ValidationError``-object
+    ``errors``/``warnings`` lists; this one uses a ``valid`` field and plain
+    ``str`` ``errors``/``warnings`` lists. The two are not interchangeable.
+    """
 
     valid: bool
     errors: list[str] = field(default_factory=list)
@@ -125,7 +132,14 @@ class URLValidator:
 
 
 class ContentValidator:
-    """Validates extracted content quality."""
+    """Validates extracted content quality.
+
+    DEAD MODULE (0 production importers): this ``ContentValidator`` is
+    intentionally NOT the live ``content_validation.ContentValidator``.
+    The live twin validates ``list[dict]`` items; this one validates a
+    single ``str`` (length / word-count / link-ratio / whitespace). The
+    two are not interchangeable.
+    """
 
     MIN_CONTENT_LENGTH = 50
     MAX_CONTENT_LENGTH = 10_000_000

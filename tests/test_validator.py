@@ -164,3 +164,34 @@ def test_validator_module_docstring_and_imports():
     # Verify the module imports correctly without E402 issues
     assert hasattr(mod, "URLValidator")
     assert hasattr(mod, "ContentValidator")
+
+
+def test_arch113_dead_module_divergence_pinned():
+    """Pin ARCH-113 resolution (b): the dead validator.py types are
+    intentionally NOT the live content_validation types.
+
+    - The dead ValidationResult uses a ``valid`` field (not ``is_valid``)
+      and plain ``str`` error/warning elements (not ValidationError objects).
+    - The dead ContentValidator.validate accepts a single ``str`` (not
+      ``list[dict]``).
+    """
+    import dataclasses
+
+    # Dead ValidationResult: validity field named `valid`, not `is_valid`.
+    vr_fields = {f.name for f in dataclasses.fields(ValidationResult)}
+    assert "valid" in vr_fields
+    assert "is_valid" not in vr_fields
+
+    # Dead ValidationResult: errors/warnings hold plain str elements.
+    r = ValidationResult(valid=True)
+    r.add_error("boom")
+    assert all(isinstance(e, str) for e in r.errors)
+    assert r.errors == ["boom"]
+    assert r.valid is False
+
+    # Dead ContentValidator.validate accepts a single str (not list[dict]).
+    v = ContentValidator()
+    content = "This is a valid piece of content with enough words to pass."
+    result = v.validate(content)
+    assert isinstance(result, ValidationResult)
+    assert result.valid is True

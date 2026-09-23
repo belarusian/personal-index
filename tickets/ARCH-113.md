@@ -1,6 +1,6 @@
 # ARCH-113 — validator.py is a dead near-twin of content_validation.py: two incompatible `ValidationResult` and two incompatible `ContentValidator` types for the same domain, and an orphaned `URLValidator` with no live home
 
-- **Status:** OPEN
+- **Status:** CLAIMED 2026-09-23
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/validator.py (DEAD module — 0 production importers; see docs/validator.md) + personal_index/content_validation.py (the live content-validation twin it was meant to mirror)
 - **Issue:** #1529 (ARCH-113, left OPEN as the implementer claim queue — no `Closes` in PR body)
