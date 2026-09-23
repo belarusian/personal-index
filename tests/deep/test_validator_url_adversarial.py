@@ -339,3 +339,71 @@ def test_end_to_end_cli_init_and_export(tmp_path):
     r = runner.invoke(main, ["export", "--format", "json", "--data-dir", dd])
     assert r.exit_code == 0, r.output
     assert "No pages to export." in r.output
+
+
+# ---------------------------------------------------------------------------
+# ARCH-113 (cycle 387): option (b) — the dead-module divergence is DOCUMENTED.
+# Pin the corrected contract: the dead ValidationResult uses `valid` (not the
+# live twin's `is_valid`) with plain `str` error elements, and the dead
+# ContentValidator.validate accepts a single `str` (not the live twin's
+# list[dict]). These pins prove the documented divergence matches reality.
+# ---------------------------------------------------------------------------
+
+def test_arch113_dead_validationresult_uses_valid_not_is_valid():
+    """ARCH-113 option (b): the dead ValidationResult diverges from the live twin.
+
+    The dead module's validity field is named `valid` (not the live
+    content_validation.ValidationResult's `is_valid`), and its errors/warnings
+    hold plain `str` elements (not ValidationError objects). The two are not
+    interchangeable — pin that the documented divergence is real.
+    """
+    import dataclasses
+
+    fields = {f.name for f in dataclasses.fields(ValidationResult)}
+    assert "valid" in fields, (
+        "ARCH-113: dead ValidationResult must keep its `valid` field "
+        "(documented divergence from the live twin's `is_valid`)"
+    )
+    assert "is_valid" not in fields, (
+        "ARCH-113: dead ValidationResult must NOT adopt the live twin's "
+        "`is_valid` field (that would collapse the documented divergence)"
+    )
+
+    # errors/warnings hold plain str elements, not ValidationError objects.
+    r = ValidationResult(valid=True)
+    r.add_error("boom")
+    assert r.errors == ["boom"]
+    assert all(isinstance(e, str) for e in r.errors)
+    assert r.valid is False
+
+
+def test_arch113_dead_contentvalidator_accepts_str():
+    """ARCH-113 option (b): the dead ContentValidator.validate takes a single str.
+
+    The live content_validation.ContentValidator.validate takes list[dict];
+    the dead twin takes a single str. Pin that the documented divergence is
+    real by feeding a str and getting a dead ValidationResult back.
+    """
+    cv = ContentValidator()
+    # A long-enough, word-rich str validates cleanly (no errors).
+    content = "word " * 20  # 20 words, well over MIN_WORD_COUNT and length
+    result = cv.validate(content)
+    assert isinstance(result, ValidationResult)
+    assert result.valid is True
+    assert result.errors == []
+    # A short str (under MIN_CONTENT_LENGTH) is a WARNING, not an error —
+    # the dead ContentValidator only errors on empty content. Pin the actual
+    # behavior: valid stays True, warnings carry the soft-limit messages, and
+    # the elements are plain str (the documented divergence from the live
+    # twin's ValidationError objects).
+    short = "tiny"
+    short_result = cv.validate(short)
+    assert short_result.valid is True
+    assert short_result.errors == []
+    assert len(short_result.warnings) >= 1
+    assert all(isinstance(w, str) for w in short_result.warnings)
+    # Empty str is the one error path — still a str input, str error element.
+    empty_result = cv.validate("")
+    assert empty_result.valid is False
+    assert empty_result.errors == ["Content is empty"]
+    assert all(isinstance(e, str) for e in empty_result.errors)
