@@ -399,14 +399,35 @@ class TestProgressStore:
         t.cancel()
         assert t.completed_at is not None
 
-    def test_progress_step_to_dict(self):
-        from personal_index.progress import ProgressStep
-        step = ProgressStep(step_id="s1", description="crawl", completed=True, details={"url": "x"})
-        d = step.to_dict()
-        assert d["step_id"] == "s1"
-        assert d["description"] == "crawl"
-        assert d["completed"] is True
-        assert d["details"]["url"] == "x"
+    def test_progress_step_class_removed(self):
+        # ARCH-112: the dead ProgressStep dataclass is gone from the module
+        # namespace; the tracker stores plain dicts as its single step model.
+        import personal_index.progress as progress_mod
+        assert not hasattr(progress_mod, "ProgressStep")
+
+    def test_advance_records_dict_step(self):
+        # Normal case: advance() on a RUNNING tracker appends a dict step
+        # carrying exactly the six serialized keys.
+        t = ProgressTracker(operation_name="op", total_steps=3)
+        t.start()
+        t.advance("do it", {"k": "v"})
+        assert len(t.steps) == 1
+        step = t.steps[0]
+        assert isinstance(step, dict)
+        assert set(step) == {
+            "step_id", "description", "completed",
+            "started_at", "finished_at", "details",
+        }
+        assert step["description"] == "do it"
+        assert step["details"] == {"k": "v"}
+        assert step["completed"] is True
+
+    def test_advance_on_non_running_appends_nothing(self):
+        # Guard path: advance() on a non-RUNNING tracker produces no step,
+        # so the step model is only produced from the live RUNNING path.
+        t = ProgressTracker(operation_name="op", total_steps=3)
+        t.advance("doomed")
+        assert len(t.steps) == 0
 
     def test_store_save_no_storage_path(self):
         store = ProgressStore()

@@ -23,32 +23,6 @@ class ProgressState(Enum):
 
 
 @dataclass
-class ProgressStep:
-    """A single step within a progress operation."""
-    step_id: str
-    description: str
-    completed: bool = False
-    started_at: str | None = None
-    finished_at: str | None = None
-    details: dict[str, Any] = field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize the progress step to a dictionary.
-
-        Returns:
-            Dictionary representation of the step.
-        """
-        return {
-            "step_id": self.step_id,
-            "description": self.description,
-            "completed": self.completed,
-            "started_at": self.started_at,
-            "finished_at": self.finished_at,
-            "details": self.details,
-        }
-
-
-@dataclass
 class ProgressTracker:
     """Track progress of a long-running operation."""
     operation_id: str = ""
