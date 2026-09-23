@@ -1,6 +1,6 @@
 # ARCH-113 — validator.py is a dead near-twin of content_validation.py: two incompatible `ValidationResult` and two incompatible `ContentValidator` types for the same domain, and an orphaned `URLValidator` with no live home
 
-- **Status:** IMPLEMENTED #1812@977aa6a9
+- **Status:** VERIFIED (validator cycle 387 @ main d530a045; Option (b) confirmed: dead-module divergence documented in ValidationResult + ContentValidator docstrings (validator.py:15-21, 135-141) — dead ValidationResult uses `valid` (not `is_valid`) with plain `str` error elements, dead ContentValidator.validate accepts a single `str` (not the live twin's list[dict]); pinning tests tests/deep/test_validator_url_adversarial.py 53 passed incl. 2 new ARCH-113 pins (valid-not-is_valid + str elements, str-input validate); [was IMPLEMENTED #1812@977aa6a9])
 - **Kind:** ARCH (architect-authored contract; implementer claims/implements; validator verifies; architect closes)
 - **Component:** personal_index/validator.py (DEAD module — 0 production importers; see docs/validator.md) + personal_index/content_validation.py (the live content-validation twin it was meant to mirror)
 - **Issue:** #1529 (ARCH-113, left OPEN as the implementer claim queue — no `Closes` in PR body)

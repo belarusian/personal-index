@@ -370,3 +370,77 @@ def test_cli_end_to_end_init_import_search():
         )
         assert r.returncode == 0, r.stderr
         assert "python" in (r.stdout + r.stderr).lower()
+
+
+# ---------------------------------------------------------------------------
+# ARCH-112 (cycle 387): the dead ProgressStep class was DELETED (option B).
+# Pin the corrected contract: the module no longer advertises a type it never
+# produces, the serialized step shape is unchanged (exactly the 6 keys), and
+# the step model is only produced from the live RUNNING path.
+# ---------------------------------------------------------------------------
+
+def test_arch112_progressstep_class_deleted_from_namespace():
+    """ARCH-112 option B: the dead ProgressStep dataclass is removed.
+
+    The acceptance criterion is that `ProgressStep` no longer exists in the
+    module namespace (the tracker stores plain dicts, so the dataclass was
+    unreachable and is deleted rather than promoted).
+    """
+    import importlib
+
+    progress_mod = importlib.import_module("personal_index.progress")
+    assert not hasattr(progress_mod, "ProgressStep"), (
+        "ARCH-112: dead ProgressStep class must be deleted from the module "
+        "namespace (the tracker stores plain dicts, not ProgressStep)"
+    )
+
+
+def test_arch112_serialized_step_shape_is_exactly_six_keys():
+    """ARCH-112: the serialized step shape is unchanged.
+
+    Each step still carries exactly step_id / description / completed /
+    started_at / finished_at / details — no more, no fewer.
+    """
+    t = ProgressTracker(operation_name="op", total_steps=3)
+    t.start()
+    t.advance("do it", {"k": "v"})
+    step = t.steps[0]
+    assert set(step.keys()) == {
+        "step_id", "description", "completed",
+        "started_at", "finished_at", "details",
+    }
+    # to_dict() emits the same dict shape (the serialization path).
+    dumped = t.to_dict()
+    assert set(dumped["steps"][0].keys()) == {
+        "step_id", "description", "completed",
+        "started_at", "finished_at", "details",
+    }
+
+
+def test_arch112_step_model_only_from_running_path():
+    """ARCH-112: the step model is only produced from the live RUNNING path.
+
+    advance() on a non-RUNNING tracker (pending / paused / completed /
+    failed / cancelled) appends nothing, so no step is ever produced outside
+    the RUNNING state.
+    """
+    # pending (never started) -> no-op
+    t = ProgressTracker(operation_name="op", total_steps=3)
+    t.advance("x")
+    assert t.steps == []
+
+    # paused -> no-op
+    t2 = ProgressTracker(operation_name="op", total_steps=3)
+    t2.start()
+    t2.pause()
+    t2.advance("x")
+    assert t2.steps == []
+
+    # completed -> no-op
+    t3 = ProgressTracker(operation_name="op", total_steps=1)
+    t3.start()
+    t3.advance("x")
+    t3.complete()
+    n_before = len(t3.steps)
+    t3.advance("y")
+    assert len(t3.steps) == n_before
