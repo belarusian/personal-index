@@ -1,6 +1,6 @@
 # ARCH-89: `PerformanceMonitor.record` applies `window_size` to `_samples` but NOT `_stats` — `get_stats()` is a silent lifetime aggregate, not a windowed one
 
-Status: RESOLVED (confirmed Option a — keep the lifetime aggregate, document it, no behavior change; architect, cycle 294)
+Status: RESOLVED (confirmed Option a — keep the lifetime aggregate, document it, no behavior change; architect, cycle 294) (implementer cycle 362: pinning witness test_stats_are_lifetime_not_windowed added to tests/test_performance_monitor.py — implementer path, no code change, no docs/** or tests/deep/** touched; IMPLEMENTED #1816@70171992)
 Component: `personal_index/performance_monitor.py` — `PerformanceMonitor.record` (lines 79-96); the sample-ring trim (lines 84-87) vs the unconditional aggregate update (lines 92-96); `PerformanceMonitor.__init__` `window_size` param (line 73); `get_stats` (line 102) / `get_recent_samples` (line 116)
 Umbrella: ARCH-2 (#983)
 Issue: #1467
